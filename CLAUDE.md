@@ -7,6 +7,22 @@
 ## Current Status
 **Last Updated:** 2026-01-27
 
+### Next Steps
+**UI/UX Review** - Need to review the user interface and experience across the site.
+
+### Recently Completed (2026-01-27)
+- **Tips Submission System** - Full feature allowing users to submit news tips with photos
+  - Database: `tips` and `tip_photos` tables (migrations 008, 009)
+  - Storage: `tip-photos` bucket for photo uploads
+  - API: `/api/tips/submit`, `/api/tips/upload-photo`
+  - Admin: `/admin/tips` for reviewing/approving tips
+  - Components: PhotoUploader, TipSubmitForm, TipSubmitModal, SubmitTipButton
+  - Integration: "Submit a Tip" button in Header and neighborhood pages
+  - Legal pages: `/terms` and `/privacy`
+- **Cron Job Fix** - Fixed `/api/cron/publish-scheduled` endpoint
+  - Added query param authentication support (`?secret=...`)
+  - URL: `https://readflaneur.com/api/cron/publish-scheduled?secret=CRON_SECRET`
+
 ### What's Live
 - **Website:** https://readflaneur.com
 - **Deployed via:** Vercel
@@ -25,8 +41,11 @@ readflaneur-web/
 │   │   ├── admin/
 │   │   │   ├── articles/          # Article management
 │   │   │   ├── comments/          # Comment moderation queue
+│   │   │   ├── tips/              # Tip review/approval queue
 │   │   │   ├── regenerate-images/ # AI image regeneration
 │   │   │   └── generate-content/  # Manual content generation
+│   │   ├── terms/                 # Terms of Service page
+│   │   ├── privacy/               # Privacy Policy page
 │   │   ├── advertiser/            # Advertiser dashboard
 │   │   │   └── ads/new/           # Create new ad
 │   │   ├── advertise/             # Advertising info page
@@ -35,6 +54,9 @@ readflaneur-web/
 │   │       ├── comments/          # Comments CRUD + moderation
 │   │       ├── guides/            # Neighborhood guides API
 │   │       ├── search/            # Article search
+│   │       ├── tips/              # Tip submission + photo upload
+│   │       ├── admin/tips/        # Admin tip review API
+│   │       ├── cron/              # Cron job endpoints
 │   │       └── revalidate/        # Cache revalidation
 │   ├── components/
 │   │   ├── admin/
@@ -55,8 +77,13 @@ readflaneur-web/
 │   │   │   └── Footer.tsx
 │   │   ├── maps/
 │   │   │   └── NeighborhoodMap.tsx   # Leaflet map component
-│   │   └── neighborhoods/
-│   │       └── NeighborhoodSelector.tsx
+│   │   ├── neighborhoods/
+│   │   │   └── NeighborhoodSelector.tsx
+│   │   └── tips/
+│   │       ├── PhotoUploader.tsx      # Drag-drop photo upload
+│   │       ├── TipSubmitForm.tsx      # Multi-step tip form
+│   │       ├── TipSubmitModal.tsx     # Modal wrapper
+│   │       └── SubmitTipButton.tsx    # Button variants
 │   └── lib/
 │       └── supabase/
 │           ├── client.ts          # Browser client
@@ -69,7 +96,9 @@ readflaneur-web/
 │       ├── 004_comments_system.sql
 │       ├── 005_neighborhood_guides.sql
 │       ├── 006_images_storage.sql
-│       └── 007_neighborhood_preferences.sql
+│       ├── 007_neighborhood_preferences.sql
+│       ├── 008_tips_system.sql          # Tips + tip_photos tables
+│       └── 009_tips_storage.sql         # tip-photos storage bucket
 └── public/
 ```
 
@@ -100,8 +129,20 @@ readflaneur-web/
 ### Admin Pages
 - `/admin/articles` - Review and manage articles
 - `/admin/comments` - Comment moderation queue
+- `/admin/tips` - Review submitted tips (approve/reject/mark under review)
 - `/admin/regenerate-images` - Regenerate AI images for articles
 - `/admin/generate-content` - Manually trigger scraping/generation
+
+### Tips Submission System
+- **Submit a Tip** button in header and on neighborhood pages
+- Multi-step form: Content → Photos → Contact → Terms
+- Supports anonymous and authenticated submissions
+- Photo upload (max 5, 10MB each, JPEG/PNG/WebP/HEIC)
+- GPS location tracking (optional, with user permission)
+- Device/browser tracking for fraud prevention
+- OpenAI content moderation
+- Admin review workflow with email notifications
+- Rate limiting: 5 tips per hour per IP
 
 ### Advertiser Pages
 - `/advertiser` - Dashboard showing active ads
@@ -180,6 +221,7 @@ RESEND_API_KEY=
 EMAIL_FROM=
 ADMIN_EMAIL=
 NEXT_PUBLIC_APP_URL=https://readflaneur.com
+CRON_SECRET=                    # For cron job authentication
 ```
 
 ## Deployment
@@ -187,8 +229,22 @@ NEXT_PUBLIC_APP_URL=https://readflaneur.com
 Deploy to Vercel:
 ```bash
 cd C:\Users\morga\Desktop\readflaneur-web
-vercel --prod
+git add . && git commit -m "message" && git push origin master
 ```
+
+### Vercel Deployment Gotchas
+
+**IMPORTANT: Preview vs Production**
+- Git pushes to `master` deploy to **Preview** environment, NOT Production
+- To deploy to Production (readflaneur.com):
+  1. Go to Vercel → Deployments tab
+  2. Click the **3 dots menu** on the green deployment
+  3. Select **"Promote to Production"**
+- If changes aren't showing on the live site, this is likely the issue
+
+**After adding/changing environment variables:**
+- Must redeploy for changes to take effect
+- Use "Promote to Production" after redeploy
 
 ## Known Quirks
 
