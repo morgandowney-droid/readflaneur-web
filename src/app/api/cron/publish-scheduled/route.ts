@@ -8,8 +8,13 @@ export async function GET(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
-    // Auth temporarily disabled for debugging
-    // TODO: Re-enable after confirming endpoint works
+    // Verify cron secret to prevent unauthorized access
+    const url = new URL(request.url);
+    const querySecret = url.searchParams.get('secret');
+
+    if (process.env.CRON_SECRET && querySecret !== process.env.CRON_SECRET) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const now = new Date().toISOString();
 
