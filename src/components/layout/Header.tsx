@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+import { SubmitTipButton } from '@/components/tips';
 import type { User } from '@supabase/supabase-js';
 
 export function Header() {
@@ -158,6 +159,7 @@ export function Header() {
           >
             Neighborhoods
           </Link>
+          <SubmitTipButton variant="header" />
           {pathname !== '/' && (
             <Link
               href="/advertise"

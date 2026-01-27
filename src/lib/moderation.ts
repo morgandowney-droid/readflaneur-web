@@ -185,3 +185,13 @@ export async function moderateAd(
 
   return { passed: true, flags: [] };
 }
+
+// Moderation for tip submissions
+export async function moderateTipContent(
+  content: string,
+  headline?: string
+): Promise<ModerationResult> {
+  const textToModerate = headline ? `${headline}\n\n${content}` : content;
+
+  return moderateText(textToModerate);
+}

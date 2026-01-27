@@ -126,6 +126,12 @@ export default function AdminAdsPage() {
 
           <div className="flex items-center gap-6">
             <Link
+              href="/admin/tips"
+              className="text-sm text-neutral-500 hover:text-black"
+            >
+              Tips
+            </Link>
+            <Link
               href="/admin/articles"
               className="text-sm text-neutral-500 hover:text-black"
             >

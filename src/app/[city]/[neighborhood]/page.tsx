@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { FeedList } from '@/components/feed/FeedList';
 import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { NeighborhoodMap } from '@/components/maps/NeighborhoodMap';
+import { SubmitTipButton } from '@/components/tips';
 import { injectAds } from '@/lib/ad-engine';
 import { Article, Ad } from '@/types';
 
@@ -111,12 +112,15 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
           <h1 className="text-2xl font-light tracking-wide mb-4">
             {neighborhoodData.name}
           </h1>
-          <Link
-            href={`/${city}/${neighborhood}/guides`}
-            className="inline-block text-xs tracking-widest uppercase border border-neutral-200 px-4 py-2 hover:border-black transition-colors"
-          >
-            Neighborhood Guide
-          </Link>
+          <div className="flex items-center justify-center gap-4">
+            <Link
+              href={`/${city}/${neighborhood}/guides`}
+              className="inline-block text-xs tracking-widest uppercase border border-neutral-200 px-4 py-2 hover:border-black transition-colors"
+            >
+              Neighborhood Guide
+            </Link>
+            <SubmitTipButton variant="neighborhood" neighborhoodId={neighborhoodId} />
+          </div>
         </header>
 
         <NeighborhoodMap neighborhoodId={neighborhoodId} className="mb-8" />

@@ -173,3 +173,129 @@ export async function notifyAdvertiserRejected(ad: {
     html,
   });
 }
+
+// Notify admin about new tip submission
+export async function notifyAdminNewTip(tip: {
+  id: string;
+  content: string;
+  headline?: string;
+  neighborhood_name: string;
+  submitter_name?: string;
+  submitter_email?: string;
+  photo_count: number;
+  is_anonymous: boolean;
+}): Promise<boolean> {
+  const adminEmail = process.env.ADMIN_EMAIL;
+
+  if (!adminEmail) {
+    console.warn('No admin email configured');
+    return false;
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const preview = tip.content.length > 200 ? tip.content.substring(0, 200) + '...' : tip.content;
+
+  const html = `
+    <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h1 style="font-weight: 300; letter-spacing: 0.1em;">FLÂNEUR</h1>
+      <h2 style="font-weight: 400;">New Tip Submitted</h2>
+
+      <p>A new tip has been submitted for review:</p>
+
+      <div style="background: #f5f5f5; padding: 20px; margin: 20px 0;">
+        ${tip.headline ? `<p><strong>Headline:</strong> ${tip.headline}</p>` : ''}
+        <p><strong>Neighborhood:</strong> ${tip.neighborhood_name}</p>
+        <p><strong>Submitter:</strong> ${tip.is_anonymous ? 'Anonymous' : (tip.submitter_name || tip.submitter_email || 'Not provided')}</p>
+        <p><strong>Photos:</strong> ${tip.photo_count} attached</p>
+      </div>
+
+      <div style="background: #fff; border: 1px solid #ddd; padding: 20px; margin: 20px 0;">
+        <p style="margin: 0; white-space: pre-wrap;">${preview}</p>
+      </div>
+
+      <div style="margin: 30px 0;">
+        <a href="${appUrl}/admin/tips" style="background: #000; color: #fff; padding: 12px 24px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.1em; font-size: 14px;">
+          Review Tips
+        </a>
+      </div>
+
+      <p style="color: #666; font-size: 14px;">
+        Review this tip in the admin dashboard to approve, reject, or mark for further review.
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to: adminEmail,
+    subject: `[Flâneur] New Tip: ${tip.headline || tip.neighborhood_name}`,
+    html,
+  });
+}
+
+// Notify tip submitter about approval
+export async function notifyTipSubmitterApproved(tip: {
+  submitter_email: string;
+  submitter_name?: string;
+  headline?: string;
+  neighborhood_name: string;
+}): Promise<boolean> {
+  const html = `
+    <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h1 style="font-weight: 300; letter-spacing: 0.1em;">FLÂNEUR</h1>
+      <h2 style="font-weight: 400;">Thank You for Your Tip!</h2>
+
+      <p>Dear ${tip.submitter_name || 'Reader'},</p>
+
+      <p>We wanted to let you know that your tip${tip.headline ? ` regarding "${tip.headline}"` : ''} for ${tip.neighborhood_name} has been reviewed and approved.</p>
+
+      <p>Our editorial team may use your submission in an upcoming story. Thank you for contributing to Flâneur and helping us cover your neighborhood.</p>
+
+      <p style="color: #666; font-size: 14px; margin-top: 30px;">
+        Thank you for being part of the Flâneur community.
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to: tip.submitter_email,
+    subject: `[Flâneur] Your Tip Has Been Received`,
+    html,
+  });
+}
+
+// Notify tip submitter about rejection
+export async function notifyTipSubmitterRejected(tip: {
+  submitter_email: string;
+  submitter_name?: string;
+  headline?: string;
+  rejection_reason: string;
+}): Promise<boolean> {
+  const html = `
+    <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h1 style="font-weight: 300; letter-spacing: 0.1em;">FLÂNEUR</h1>
+      <h2 style="font-weight: 400;">Tip Submission Update</h2>
+
+      <p>Dear ${tip.submitter_name || 'Reader'},</p>
+
+      <p>Thank you for submitting a tip${tip.headline ? ` regarding "${tip.headline}"` : ''} to Flâneur.</p>
+
+      <p>After review, we were unable to use your submission at this time:</p>
+
+      <div style="background: #fff5f5; padding: 20px; margin: 20px 0; border-left: 4px solid #e53e3e;">
+        <p style="margin: 0;"><strong>Reason:</strong> ${tip.rejection_reason}</p>
+      </div>
+
+      <p>We appreciate you taking the time to contribute and encourage you to submit future tips.</p>
+
+      <p style="color: #666; font-size: 14px; margin-top: 30px;">
+        Thank you for being part of the Flâneur community.
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to: tip.submitter_email,
+    subject: `[Flâneur] Tip Submission Update`,
+    html,
+  });
+}
