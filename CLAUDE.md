@@ -5,11 +5,12 @@
 > **See also:** `../flaneur/CLAUDE.md` for the full project overview and mobile app details.
 
 ## Current Status
-**Last Updated:** 2026-01-26 11:30pm
+**Last Updated:** 2026-01-27
 
 ### What's Live
 - **Website:** https://readflaneur.com
 - **Deployed via:** Vercel
+- **GitHub:** https://github.com/morgandowney-droid/readflaneur-web
 
 ## Project Structure
 
@@ -37,18 +38,25 @@ readflaneur-web/
 │   │       └── revalidate/        # Cache revalidation
 │   ├── components/
 │   │   ├── admin/
-│   │   │   └── PersonaSwitcher.tsx # View-as persona tool
+│   │   │   └── PersonaSwitcher.tsx  # View-as persona tool
 │   │   ├── comments/
-│   │   │   ├── CommentSection.tsx
-│   │   │   └── CommentForm.tsx
+│   │   │   ├── Comments.tsx
+│   │   │   └── RecentComments.tsx
 │   │   ├── feed/
 │   │   │   ├── ArticleCard.tsx
+│   │   │   ├── FallbackAd.tsx
+│   │   │   ├── StoryOpenAd.tsx
 │   │   │   └── LoadMoreButton.tsx
+│   │   ├── home/
+│   │   │   ├── HomeSignup.tsx        # Neighborhood + newsletter signup
+│   │   │   └── TypewriterHeadlines.tsx # Animated headlines
 │   │   ├── layout/
 │   │   │   ├── Header.tsx
 │   │   │   └── Footer.tsx
-│   │   └── maps/
-│   │       └── NeighborhoodMap.tsx # Leaflet map component
+│   │   ├── maps/
+│   │   │   └── NeighborhoodMap.tsx   # Leaflet map component
+│   │   └── neighborhoods/
+│   │       └── NeighborhoodSelector.tsx
 │   └── lib/
 │       └── supabase/
 │           ├── client.ts          # Browser client
@@ -60,14 +68,29 @@ readflaneur-web/
 │       ├── 003_update_ad_pricing.sql
 │       ├── 004_comments_system.sql
 │       ├── 005_neighborhood_guides.sql
-│       └── 006_images_storage.sql
+│       ├── 006_images_storage.sql
+│       └── 007_neighborhood_preferences.sql
 └── public/
 ```
 
 ## Key Features
 
+### Homepage Features
+- **Typewriter Headlines** - Animated typing effect showing latest articles
+  - Static "latest · Neighborhood" label above typing text
+  - Fixed height container prevents button jittering
+  - Clickable - navigates to full article
+- **Neighborhood Selector** - Chip-style buttons to select neighborhoods
+  - Saves to database for logged-in users
+  - Saves to localStorage for guests
+  - "+ Suggest" option for requesting new neighborhoods
+- **Newsletter Signup** - Combined with neighborhood selection
+  - Creates user account with magic link
+  - Only sends newsletters for selected neighborhoods
+
 ### Public Pages
-- **Homepage** (`/`) - Neighborhood selector, recent articles, recent comments
+- **Homepage** (`/`) - Typewriter headlines, neighborhood selector, newsletter signup
+- **Feed** (`/feed`) - Personalized feed based on selected neighborhoods
 - **Neighborhood Feed** (`/[city]/[neighborhood]`) - Article feed with infinite scroll
 - **Article Detail** (`/[city]/[neighborhood]/[slug]`) - Full article with comments
 - **Neighborhood Guides** (`/[city]/[neighborhood]/guides`) - Curated local venues
@@ -86,6 +109,21 @@ readflaneur-web/
 
 ## Components
 
+### TypewriterHeadlines
+- Animated typing effect for latest article headlines
+- Static "latest · Neighborhood" label (neighborhood in grey)
+- Fixed height (`h-20`) prevents button jittering below
+- Click to navigate to article (uses article ID if slug is null)
+- URL format: `/{city}/{neighborhood}/{article-id}`
+
+### HomeSignup
+- Combined neighborhood selector + newsletter signup
+- Chip-style neighborhood buttons (centered)
+- Saves preferences to:
+  - `user_neighborhood_preferences` table (logged-in users)
+  - `localStorage` (guests, key: `flaneur-neighborhood-preferences`)
+- Redirects to `/feed` after successful subscription
+
 ### PersonaSwitcher
 - Activate: `Ctrl+Shift+A`
 - Floating button (bottom right)
@@ -97,11 +135,37 @@ readflaneur-web/
 - Shows core neighborhood + hinterland boundaries
 - CartoDB Positron tiles
 
-### CommentSection
+### Comments
 - Nested replies (3 levels max)
 - Upvote/downvote
 - AI moderation via OpenAI
 - Rate limiting (5/hour per IP)
+
+## URL Routing
+
+### Article URLs
+Format: `/{city-slug}/{neighborhood-slug}/{article-slug-or-id}`
+
+City prefix mapping (in `[slug]/page.tsx`):
+- `new-york` → `nyc`
+- `san-francisco` → `sf`
+- `london` → `london`
+- `sydney` → `sydney`
+
+Example: `/new-york/west-village/5cf1eaf0-b9bd-4c11-b817-19925f06a9f8`
+
+The article page looks up by both `slug` and `id` to support articles without slugs.
+
+## Database Tables
+
+### user_neighborhood_preferences
+- `user_id` (uuid, FK to auth.users)
+- `neighborhood_id` (text, FK to neighborhoods)
+- Primary key: (user_id, neighborhood_id)
+- RLS: Users can only manage their own preferences
+
+### newsletter_subscribers
+- Has `neighborhood_ids` array column for newsletter targeting
 
 ## Environment Variables (Vercel)
 
@@ -125,6 +189,29 @@ Deploy to Vercel:
 cd C:\Users\morga\Desktop\readflaneur-web
 vercel --prod
 ```
+
+## Known Quirks
+
+### Supabase Query Limitations
+- Complex queries with joins can silently fail and return `null`
+- The homepage headlines query must be simple: `select('id, headline, slug, neighborhood_id')`
+- Adding `neighborhoods(name, slug, city)` to the query breaks it
+- Workaround: Fetch neighborhoods separately and build a lookup map
+
+### Image Configuration
+- Supabase storage images require hostname in `next.config.ts`:
+  ```typescript
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'ujpdhueytlfqkwzvqetd.supabase.co' },
+    ],
+  }
+  ```
+
+### Article Slugs
+- Many articles have `slug: null` in the database
+- The article page handles this by looking up via `slug` OR `id`
+- Homepage uses article ID as fallback when building URLs
 
 ## Related Project
 
