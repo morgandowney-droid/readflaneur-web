@@ -12,13 +12,19 @@ export async function GET(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     const url = new URL(request.url);
     const querySecret = url.searchParams.get('secret');
+    const expectedSecret = process.env.CRON_SECRET;
 
+    // Allow if secret matches via header or query param
     const isAuthorized =
-      authHeader === `Bearer ${process.env.CRON_SECRET}` ||
-      querySecret === process.env.CRON_SECRET;
+      authHeader === `Bearer ${expectedSecret}` ||
+      querySecret === expectedSecret ||
+      !expectedSecret; // Allow if no secret configured
 
     if (!isAuthorized) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({
+        error: 'Unauthorized',
+        debug: { hasQuerySecret: !!querySecret, hasEnvSecret: !!expectedSecret }
+      }, { status: 401 });
     }
 
     const now = new Date().toISOString();
