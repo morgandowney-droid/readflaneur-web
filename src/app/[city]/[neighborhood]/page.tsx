@@ -1,0 +1,136 @@
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
+import { FeedList } from '@/components/feed/FeedList';
+import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
+import { NeighborhoodMap } from '@/components/maps/NeighborhoodMap';
+import { injectAds } from '@/lib/ad-engine';
+import { Article, Ad } from '@/types';
+
+const INITIAL_PAGE_SIZE = 10;
+
+interface NeighborhoodPageProps {
+  params: Promise<{
+    city: string;
+    neighborhood: string;
+  }>;
+}
+
+export async function generateMetadata({ params }: NeighborhoodPageProps) {
+  const { city, neighborhood } = await params;
+  const supabase = await createClient();
+
+  // Find neighborhood by constructing possible IDs
+  const possibleIds = [
+    `${city}-${neighborhood}`,
+    `${city.slice(0, 3)}-${neighborhood}`,
+    neighborhood,
+  ];
+
+  const { data } = await supabase
+    .from('neighborhoods')
+    .select('*')
+    .or(possibleIds.map((id) => `id.eq.${id}`).join(','))
+    .single();
+
+  if (!data) {
+    return { title: 'Neighborhood | Flâneur' };
+  }
+
+  return {
+    title: `${data.name}, ${data.city} | Flâneur`,
+    description: `Local stories from ${data.name} in ${data.city}.`,
+  };
+}
+
+export default async function NeighborhoodPage({ params }: NeighborhoodPageProps) {
+  const { city, neighborhood } = await params;
+  const supabase = await createClient();
+
+  // Map city slug to neighborhood prefix
+  const cityPrefixMap: Record<string, string> = {
+    'new-york': 'nyc',
+    'san-francisco': 'sf',
+    'london': 'london',
+    'sydney': 'sydney',
+    'stockholm': 'stockholm',
+  };
+
+  const prefix = cityPrefixMap[city] || city;
+  const neighborhoodId = `${prefix}-${neighborhood}`;
+
+  // Fetch neighborhood details
+  const { data: neighborhoodData } = await supabase
+    .from('neighborhoods')
+    .select('*')
+    .eq('id', neighborhoodId)
+    .single();
+
+  if (!neighborhoodData) {
+    notFound();
+  }
+
+  // Fetch initial articles for this neighborhood (limited for fast load)
+  const { data: articles } = await supabase
+    .from('articles')
+    .select('*')
+    .eq('neighborhood_id', neighborhoodId)
+    .eq('status', 'published')
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .limit(INITIAL_PAGE_SIZE);
+
+  // Check if there are more articles
+  const { count: totalCount } = await supabase
+    .from('articles')
+    .select('*', { count: 'exact', head: true })
+    .eq('neighborhood_id', neighborhoodId)
+    .eq('status', 'published');
+
+  const hasMoreArticles = (totalCount || 0) > INITIAL_PAGE_SIZE;
+
+  // Fetch ads (global or for this neighborhood)
+  const { data: ads } = await supabase
+    .from('ads')
+    .select('*')
+    .or(`is_global.eq.true,neighborhood_id.eq.${neighborhoodId}`);
+
+  // Inject ads into feed
+  const feedItems = injectAds(
+    (articles || []) as Article[],
+    (ads || []) as Ad[],
+    [neighborhoodId]
+  );
+
+  return (
+    <div className="py-8 px-4">
+      <div className="mx-auto max-w-2xl">
+        <header className="mb-8 text-center">
+          <p className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-2">
+            {neighborhoodData.city}
+          </p>
+          <h1 className="text-2xl font-light tracking-wide mb-4">
+            {neighborhoodData.name}
+          </h1>
+          <Link
+            href={`/${city}/${neighborhood}/guides`}
+            className="inline-block text-xs tracking-widest uppercase border border-neutral-200 px-4 py-2 hover:border-black transition-colors"
+          >
+            Neighborhood Guide
+          </Link>
+        </header>
+
+        <NeighborhoodMap neighborhoodId={neighborhoodId} className="mb-8" />
+
+        <FeedList items={feedItems} />
+
+        {hasMoreArticles && (
+          <LoadMoreButton
+            neighborhoodId={neighborhoodId}
+            initialOffset={INITIAL_PAGE_SIZE}
+            pageSize={INITIAL_PAGE_SIZE}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
