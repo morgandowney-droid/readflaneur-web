@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import Image from 'next/image';
+import { MagicLinkReminder } from '@/components/feed/MagicLinkReminder';
+
+export const dynamic = 'force-dynamic';
 
 interface FeedPageProps {
   searchParams: Promise<{ neighborhoods?: string }>;
@@ -27,10 +30,10 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       image_url,
       slug,
       published_at,
+      neighborhood_id,
       neighborhoods (
         id,
         name,
-        slug,
         city
       )
     `)
@@ -62,18 +65,32 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               Stories from {neighborhoodNames.join(', ')}
             </p>
           )}
-          <p className="text-xs text-neutral-400 mt-2">
-            Check your email for a magic link to complete your account.
-          </p>
+          <MagicLinkReminder />
         </div>
 
         {articles && articles.length > 0 ? (
           <div className="space-y-6">
             {articles.map((article: any) => {
               const hood = article.neighborhoods;
-              const articleUrl = hood
-                ? `/${hood.city}/${hood.slug}/${article.slug}`
-                : '#';
+
+              // Derive URL slugs from neighborhood_id (e.g., "nyc-west-village")
+              let articleUrl = '#';
+              if (article.neighborhood_id) {
+                const parts = article.neighborhood_id.split('-');
+                const prefix = parts[0];
+                const neighborhoodSlug = parts.slice(1).join('-');
+                const citySlugMap: Record<string, string> = {
+                  'nyc': 'new-york',
+                  'london': 'london',
+                  'sf': 'san-francisco',
+                  'stockholm': 'stockholm',
+                  'sydney': 'sydney',
+                };
+                const citySlug = citySlugMap[prefix] || prefix;
+                // Use slug if available, otherwise fallback to article ID
+                const articleSlug = article.slug || article.id;
+                articleUrl = `/${citySlug}/${neighborhoodSlug}/${articleSlug}`;
+              }
 
               return (
                 <Link key={article.id} href={articleUrl}>

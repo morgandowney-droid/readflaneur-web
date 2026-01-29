@@ -47,6 +47,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     'san-francisco': 'sf',
     'london': 'london',
     'sydney': 'sydney',
+    'stockholm': 'stockholm',
   };
 
   const prefix = cityPrefixMap[city] || city;
