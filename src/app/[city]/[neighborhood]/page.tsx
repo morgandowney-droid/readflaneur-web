@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { FeedList } from '@/components/feed/FeedList';
+import { FeedWithViewToggle } from '@/components/feed/FeedWithViewToggle';
 import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { NeighborhoodMap } from '@/components/maps/NeighborhoodMap';
 import { SubmitTipButton } from '@/components/tips';
@@ -125,7 +125,7 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
 
         <NeighborhoodMap neighborhoodId={neighborhoodId} className="mb-8" />
 
-        <FeedList items={feedItems} />
+        <FeedWithViewToggle items={feedItems} defaultView="compact" />
 
         {hasMoreArticles && (
           <LoadMoreButton

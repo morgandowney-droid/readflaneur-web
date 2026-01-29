@@ -43,7 +43,7 @@ export default async function NeighborhoodsPage() {
                 <Link
                   key={neighborhood.id}
                   href={`/${city.toLowerCase().replace(/\s+/g, '-')}/${neighborhood.id.split('-').slice(1).join('-')}`}
-                  className="group block p-6 bg-white border border-neutral-200 hover:border-black transition-colors"
+                  className="group block p-6 bg-white border border-neutral-200 hover:border-black transition-colors min-h-[56px]"
                 >
                   <h3 className="text-lg font-medium group-hover:underline">
                     {neighborhood.name}

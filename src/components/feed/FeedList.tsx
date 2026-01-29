@@ -2,13 +2,16 @@
 
 import { FeedItem, Article, Ad } from '@/types';
 import { ArticleCard } from './ArticleCard';
+import { CompactArticleCard } from './CompactArticleCard';
 import { AdCard } from './AdCard';
+import { FeedView } from './ViewToggle';
 
 interface FeedListProps {
   items: FeedItem[];
+  view?: FeedView;
 }
 
-export function FeedList({ items }: FeedListProps) {
+export function FeedList({ items, view = 'gallery' }: FeedListProps) {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -19,10 +22,15 @@ export function FeedList({ items }: FeedListProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className={view === 'compact' ? 'space-y-0' : 'space-y-4'}>
       {items.map((item, index) => {
         if (item.type === 'article') {
-          return (
+          return view === 'compact' ? (
+            <CompactArticleCard
+              key={`article-${item.data.id}-${index}`}
+              article={item.data as Article}
+            />
+          ) : (
             <ArticleCard
               key={`article-${item.data.id}-${index}`}
               article={item.data as Article}

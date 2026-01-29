@@ -21,11 +21,20 @@ export async function generateMetadata({ params }: ArticlePageProps) {
   const { slug } = await params;
   const supabase = await createClient();
 
-  const { data: article } = await supabase
+  // Check if slug looks like a UUID
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+
+  let query = supabase
     .from('articles')
-    .select('headline, body_text')
-    .or(`slug.eq.${slug},id.eq.${slug}`)
-    .single();
+    .select('headline, body_text');
+
+  if (isUUID) {
+    query = query.or(`slug.eq.${slug},id.eq.${slug}`);
+  } else {
+    query = query.eq('slug', slug);
+  }
+
+  const { data: article } = await query.single();
 
   if (!article) {
     return { title: 'Article | Flâneur' };
@@ -53,16 +62,25 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const prefix = cityPrefixMap[city] || city;
   const neighborhoodId = `${prefix}-${neighborhood}`;
 
-  // Fetch the article
-  const { data: article } = await supabase
+  // Check if slug looks like a UUID (for backwards compatibility with old URLs)
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+
+  // Fetch the article - query by slug, or by id if it's a UUID
+  let articleQuery = supabase
     .from('articles')
     .select(`
       *,
       neighborhood:neighborhoods(*),
       author:profiles(full_name, avatar_url)
-    `)
-    .or(`slug.eq.${slug},id.eq.${slug}`)
-    .single();
+    `);
+
+  if (isUUID) {
+    articleQuery = articleQuery.or(`slug.eq.${slug},id.eq.${slug}`);
+  } else {
+    articleQuery = articleQuery.eq('slug', slug);
+  }
+
+  const { data: article } = await articleQuery.single();
 
   if (!article) {
     notFound();

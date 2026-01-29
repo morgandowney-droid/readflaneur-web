@@ -158,13 +158,13 @@ export function HomeSignup({ neighborhoods }: HomeSignupProps) {
   return (
     <div className="space-y-3">
       {/* Neighborhood Selection - Simple centered chips */}
-      <div className="flex flex-wrap gap-2 justify-center">
+      <div className="flex flex-wrap gap-2 justify-center max-w-full overflow-hidden">
         {neighborhoods.map(hood => (
           <button
             key={hood.id}
             onClick={() => toggleNeighborhood(hood.id)}
             type="button"
-            className={`px-3 py-1.5 text-sm border transition-colors ${
+            className={`px-4 py-2.5 text-sm border transition-colors min-h-[44px] ${
               selected.includes(hood.id)
                 ? 'bg-black text-white border-black'
                 : 'bg-white text-neutral-600 border-neutral-300 hover:border-black'
@@ -175,7 +175,7 @@ export function HomeSignup({ neighborhoods }: HomeSignupProps) {
         ))}
         <a
           href="/suggest"
-          className="px-3 py-1.5 text-sm border border-dashed border-neutral-300 text-neutral-400 hover:border-black hover:text-neutral-600 transition-colors"
+          className="px-4 py-2.5 text-sm border border-dashed border-neutral-300 text-neutral-400 hover:border-black hover:text-neutral-600 transition-colors min-h-[44px] flex items-center"
         >
           + Suggest
         </a>

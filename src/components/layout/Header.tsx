@@ -16,6 +16,7 @@ export function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleNeighborhoodsClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -159,14 +160,16 @@ export function Header() {
           FLÂNEUR
         </Link>
 
-        <nav className="flex items-center gap-3 sm:gap-6">
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-6">
           <Link
             href="/search"
             className={cn(
-              'transition-colors hover:text-black',
+              'transition-colors hover:text-black min-w-[44px] min-h-[44px] flex items-center justify-center',
               pathname === '/search' ? 'text-black' : 'text-neutral-400'
             )}
             title="Search"
+            aria-label="Search articles"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -175,7 +178,7 @@ export function Header() {
           <button
             onClick={handleNeighborhoodsClick}
             className={cn(
-              'text-xs tracking-widest uppercase transition-colors hover:text-black',
+              'text-xs tracking-widest uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
               pathname === '/neighborhoods' || pathname === '/feed' ? 'text-black' : 'text-neutral-400'
             )}
           >
@@ -189,7 +192,7 @@ export function Header() {
                 <Link
                   href="/admin/ads"
                   className={cn(
-                    'text-xs tracking-widest uppercase transition-colors hover:text-black',
+                    'text-xs tracking-widest uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
                     pathname.startsWith('/admin') ? 'text-black' : 'text-neutral-400'
                   )}
                 >
@@ -199,7 +202,7 @@ export function Header() {
               <Link
                 href="/advertiser"
                 className={cn(
-                  'text-xs tracking-widest uppercase transition-colors hover:text-black',
+                  'text-xs tracking-widest uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
                   pathname.startsWith('/advertiser') ? 'text-black' : 'text-neutral-400'
                 )}
               >
@@ -207,7 +210,7 @@ export function Header() {
               </Link>
               <button
                 onClick={handleSignOut}
-                className="text-xs tracking-widest uppercase text-neutral-400 hover:text-black transition-colors"
+                className="text-xs tracking-widest uppercase text-neutral-400 hover:text-black transition-colors min-h-[44px]"
               >
                 Sign Out
               </button>
@@ -216,7 +219,7 @@ export function Header() {
             <Link
               href="/login"
               className={cn(
-                'text-xs tracking-widest uppercase transition-colors hover:text-black',
+                'text-xs tracking-widest uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
                 pathname === '/login' ? 'text-black' : 'text-neutral-400'
               )}
             >
@@ -224,7 +227,108 @@ export function Header() {
             </Link>
           )}
         </nav>
+
+        {/* Mobile Navigation */}
+        <div className="flex md:hidden items-center gap-2">
+          <Link
+            href="/search"
+            className={cn(
+              'transition-colors hover:text-black min-w-[44px] min-h-[44px] flex items-center justify-center',
+              pathname === '/search' ? 'text-black' : 'text-neutral-400'
+            )}
+            aria-label="Search articles"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </Link>
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-neutral-600 hover:text-black"
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            {mobileMenuOpen ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-neutral-200 bg-white">
+          <nav className="flex flex-col py-4 px-4 gap-1">
+            <button
+              onClick={() => {
+                handleNeighborhoodsClick({ preventDefault: () => {} } as React.MouseEvent);
+                setMobileMenuOpen(false);
+              }}
+              className={cn(
+                'text-sm tracking-widest uppercase transition-colors hover:text-black text-left py-3 min-h-[44px]',
+                pathname === '/neighborhoods' || pathname === '/feed' ? 'text-black' : 'text-neutral-600'
+              )}
+            >
+              Neighborhoods
+            </button>
+            <div className="py-3 min-h-[44px]">
+              <SubmitTipButton variant="header" />
+            </div>
+            {user ? (
+              <>
+                {isAdmin && (
+                  <Link
+                    href="/admin/ads"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={cn(
+                      'text-sm tracking-widest uppercase transition-colors hover:text-black py-3 min-h-[44px]',
+                      pathname.startsWith('/admin') ? 'text-black' : 'text-neutral-600'
+                    )}
+                  >
+                    Admin
+                  </Link>
+                )}
+                <Link
+                  href="/advertiser"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    'text-sm tracking-widest uppercase transition-colors hover:text-black py-3 min-h-[44px]',
+                    pathname.startsWith('/advertiser') ? 'text-black' : 'text-neutral-600'
+                  )}
+                >
+                  Dashboard
+                </Link>
+                <button
+                  onClick={() => {
+                    handleSignOut();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-sm tracking-widest uppercase text-neutral-600 hover:text-black transition-colors text-left py-3 min-h-[44px]"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  'text-sm tracking-widest uppercase transition-colors hover:text-black py-3 min-h-[44px]',
+                  pathname === '/login' ? 'text-black' : 'text-neutral-600'
+                )}
+              >
+                Login
+              </Link>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

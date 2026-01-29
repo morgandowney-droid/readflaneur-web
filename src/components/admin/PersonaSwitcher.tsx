@@ -174,6 +174,7 @@ export function PersonaSwitcher() {
           onClick={() => setIsOpen(!isOpen)}
           className="w-12 h-12 rounded-full bg-neutral-900 text-white shadow-lg flex items-center justify-center text-xl hover:bg-neutral-700 transition-colors"
           title="Switch Persona"
+          aria-label={`Switch persona. Currently viewing as ${currentConfig.label}`}
         >
           {currentConfig.icon}
         </button>

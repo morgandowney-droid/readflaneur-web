@@ -17,8 +17,8 @@ export default function SubmitTipButton({
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const baseStyles = {
-    header: 'text-xs tracking-widest uppercase transition-colors hover:text-black text-neutral-400',
-    neighborhood: 'px-4 py-2 border border-neutral-300 text-sm hover:border-black transition-colors',
+    header: 'text-xs tracking-widest uppercase transition-colors hover:text-black text-neutral-400 min-h-[44px] flex items-center',
+    neighborhood: 'px-4 py-3 border border-neutral-300 text-sm hover:border-black transition-colors min-h-[44px]',
     floating: `
       fixed bottom-6 right-6 z-40
       w-14 h-14 rounded-full
