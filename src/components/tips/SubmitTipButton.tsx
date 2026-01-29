@@ -58,7 +58,8 @@ export default function SubmitTipButton({
           onClick={() => setIsModalOpen(true)}
           className={`${baseStyles[variant]} ${className}`}
         >
-          Submit a Tip
+          <span className="hidden sm:inline">Submit a Tip</span>
+          <span className="sm:hidden">Tip</span>
         </button>
       )}
 

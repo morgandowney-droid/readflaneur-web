@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const NEIGHBORHOODS = [
   { id: 'nyc-west-village', name: 'West Village, NYC' },
@@ -10,6 +10,8 @@ const NEIGHBORHOODS = [
   { id: 'sydney-paddington', name: 'Paddington, Sydney' },
 ];
 
+const CRON_SECRET_KEY = 'flaneur_cron_secret';
+
 export default function RegenerateImagesPage() {
   const [neighborhood, setNeighborhood] = useState('nyc-west-village');
   const [limit, setLimit] = useState(3);
@@ -17,6 +19,18 @@ export default function RegenerateImagesPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Load cron secret from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(CRON_SECRET_KEY);
+    if (saved) setCronSecret(saved);
+  }, []);
+
+  // Save cron secret to localStorage when it changes
+  const handleCronSecretChange = (value: string) => {
+    setCronSecret(value);
+    localStorage.setItem(CRON_SECRET_KEY, value);
+  };
 
   const handleRegenerate = async () => {
     if (!cronSecret) {
@@ -73,7 +87,7 @@ export default function RegenerateImagesPage() {
             <input
               type="password"
               value={cronSecret}
-              onChange={(e) => setCronSecret(e.target.value)}
+              onChange={(e) => handleCronSecretChange(e.target.value)}
               placeholder="Enter cron secret for authentication"
               className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900"
             />

@@ -29,7 +29,7 @@ export function LoadMoreButton({
 
     const { data: articles, error } = await supabase
       .from('articles')
-      .select('*')
+      .select('*, neighborhood:neighborhoods(id, name, city)')
       .eq('neighborhood_id', neighborhoodId)
       .eq('status', 'published')
       .order('published_at', { ascending: false, nullsFirst: false })

@@ -1,11 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+const CRON_SECRET_KEY = 'flaneur_cron_secret';
 
 export default function GenerateContentPage() {
   const [cronSecret, setCronSecret] = useState('');
   const [loading, setLoading] = useState<string | null>(null);
   const [results, setResults] = useState<any[]>([]);
+
+  // Load cron secret from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(CRON_SECRET_KEY);
+    if (saved) setCronSecret(saved);
+  }, []);
+
+  // Save cron secret to localStorage when it changes
+  const handleCronSecretChange = (value: string) => {
+    setCronSecret(value);
+    localStorage.setItem(CRON_SECRET_KEY, value);
+  };
 
   const addResult = (action: string, data: any) => {
     setResults(prev => [...prev, { action, data, timestamp: new Date().toISOString() }]);
@@ -83,7 +97,7 @@ export default function GenerateContentPage() {
             <input
               type="password"
               value={cronSecret}
-              onChange={(e) => setCronSecret(e.target.value)}
+              onChange={(e) => handleCronSecretChange(e.target.value)}
               placeholder="Enter cron secret"
               className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900"
             />

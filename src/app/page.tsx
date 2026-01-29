@@ -32,6 +32,7 @@ export default async function HomePage() {
     'sf': 'san-francisco',
     'london': 'london',
     'sydney': 'sydney',
+    'stockholm': 'stockholm',
   };
 
   const headlines = (articles || []).map((a: any) => {
@@ -76,23 +77,16 @@ export default async function HomePage() {
           </p>
 
           {/* Typewriter Headlines */}
-          <div className="mb-12">
+          <div className="mb-8">
             <TypewriterHeadlines headlines={headlines} />
           </div>
-
-          <Link
-            href="/neighborhoods"
-            className="inline-block border border-white px-8 py-3 text-sm tracking-widest uppercase hover:bg-white hover:text-black transition-colors"
-          >
-            Explore Neighborhoods
-          </Link>
         </div>
       </section>
 
-      {/* Newsletter Signup with Neighborhood Selection */}
-      <section className="py-4 px-4 border-t border-neutral-200">
+      {/* Neighborhood Selection & Explore */}
+      <section className="py-6 px-4 border-t border-neutral-200">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm text-neutral-500 mb-3">
+          <p className="text-sm text-neutral-500 mb-4">
             Choose your neighborhoods and get stories in your inbox
           </p>
           <HomeSignup neighborhoods={neighborhoods} />

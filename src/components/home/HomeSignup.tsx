@@ -145,6 +145,16 @@ export function HomeSignup({ neighborhoods }: HomeSignupProps) {
   }
 
 
+  const handleExplore = () => {
+    if (selected.length > 0) {
+      // Go directly to feed with selected neighborhoods
+      router.push(`/feed?neighborhoods=${selected.join(',')}`);
+    } else {
+      // No selection, go to neighborhoods page
+      router.push('/neighborhoods');
+    }
+  };
+
   return (
     <div className="space-y-3">
       {/* Neighborhood Selection - Simple centered chips */}
@@ -169,6 +179,16 @@ export function HomeSignup({ neighborhoods }: HomeSignupProps) {
         >
           + Suggest
         </a>
+      </div>
+
+      {/* Explore Button - goes to feed if neighborhoods selected */}
+      <div className="pt-2">
+        <button
+          onClick={handleExplore}
+          className="inline-block border border-black px-8 py-3 text-sm tracking-widest uppercase hover:bg-black hover:text-white transition-colors"
+        >
+          Explore Neighborhoods
+        </button>
       </div>
 
       {/* Email Input */}

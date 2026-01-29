@@ -8,12 +8,34 @@ import { cn } from '@/lib/utils';
 import { SubmitTipButton } from '@/components/tips';
 import type { User } from '@supabase/supabase-js';
 
+const PREFS_KEY = 'flaneur-neighborhood-preferences';
+
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const handleNeighborhoodsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    // Check for saved neighborhood preferences
+    const stored = localStorage.getItem(PREFS_KEY);
+    if (stored) {
+      try {
+        const selected = JSON.parse(stored);
+        if (Array.isArray(selected) && selected.length > 0) {
+          // Go directly to feed with selected neighborhoods
+          router.push(`/feed?neighborhoods=${selected.join(',')}`);
+          return;
+        }
+      } catch {
+        // Invalid stored data, fall through to neighborhoods page
+      }
+    }
+    // No selection, go to neighborhoods page
+    router.push('/neighborhoods');
+  };
 
   useEffect(() => {
     const supabase = createClient();
@@ -137,7 +159,7 @@ export function Header() {
           FLÂNEUR
         </Link>
 
-        <nav className="flex items-center gap-6 ml-8">
+        <nav className="flex items-center gap-3 sm:gap-6">
           <Link
             href="/search"
             className={cn(
@@ -150,27 +172,16 @@ export function Header() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </Link>
-          <Link
-            href="/neighborhoods"
+          <button
+            onClick={handleNeighborhoodsClick}
             className={cn(
               'text-xs tracking-widest uppercase transition-colors hover:text-black',
-              pathname === '/neighborhoods' ? 'text-black' : 'text-neutral-400'
+              pathname === '/neighborhoods' || pathname === '/feed' ? 'text-black' : 'text-neutral-400'
             )}
           >
             Neighborhoods
-          </Link>
+          </button>
           <SubmitTipButton variant="header" />
-          {pathname !== '/' && (
-            <Link
-              href="/advertise"
-              className={cn(
-                'text-xs tracking-widest uppercase transition-colors hover:text-black',
-                pathname === '/advertise' ? 'text-black' : 'text-neutral-400'
-              )}
-            >
-              Advertise
-            </Link>
-          )}
 
           {user ? (
             <div className="flex items-center gap-4">

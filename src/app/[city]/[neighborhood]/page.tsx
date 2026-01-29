@@ -74,7 +74,7 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
   // Fetch initial articles for this neighborhood (limited for fast load)
   const { data: articles } = await supabase
     .from('articles')
-    .select('*')
+    .select('*, neighborhood:neighborhoods(id, name, city)')
     .eq('neighborhood_id', neighborhoodId)
     .eq('status', 'published')
     .order('published_at', { ascending: false, nullsFirst: false })

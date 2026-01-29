@@ -5,12 +5,45 @@
 > **See also:** `../flaneur/CLAUDE.md` for the full project overview and mobile app details.
 
 ## Current Status
-**Last Updated:** 2026-01-27
+**Last Updated:** 2026-01-29
 
 ### Next Steps
-**UI/UX Review** - Need to review the user interface and experience across the site.
+**Continue UI/UX Review** - Article links now work. Continue testing and polish.
 
-### Recently Completed (2026-01-27)
+### Recently Completed (2026-01-29)
+- **Feed Page Fixes**
+  - Fixed broken query (removed non-existent `neighborhoods.slug` field)
+  - Added `force-dynamic` export to prevent stale caching
+  - URLs now derived from `neighborhood_id` (e.g., `nyc-west-village` → `/new-york/west-village/...`)
+  - Falls back to article ID when slug is missing
+  - File: `src/app/feed/page.tsx`
+
+- **Article Page Fixes**
+  - Added Stockholm to `cityPrefixMap` (was missing, causing 404s)
+  - File: `src/app/[city]/[neighborhood]/[slug]/page.tsx`
+
+- **Homepage Navigation**
+  - "Explore Neighborhoods" now goes directly to `/feed` if user has neighborhoods selected
+  - Checks localStorage for saved preferences
+  - Files: `src/components/home/HomeSignup.tsx`, `src/components/layout/Header.tsx`
+
+- **Header Cleanup**
+  - Removed "Advertise" link from header navigation
+  - File: `src/components/layout/Header.tsx`
+
+- **Mobile UI Improvements**
+  - "Submit a Tip" shortened to "Tip" on mobile screens
+  - File: `src/components/tips/SubmitTipButton.tsx`
+
+- **Magic Link Reminder**
+  - New component shows "Resend magic link" only for non-signed-in users
+  - File: `src/components/feed/MagicLinkReminder.tsx`
+
+- **Admin Pages**
+  - Cron secret persists in localStorage (no re-entry needed)
+  - Files: `src/app/admin/regenerate-images/page.tsx`, `src/app/admin/generate-content/page.tsx`
+
+### Previously Completed (2026-01-27)
 - **Tips Submission System** - Full feature allowing users to submit news tips with photos
   - Database: `tips` and `tip_photos` tables (migrations 008, 009)
   - Storage: `tip-photos` bucket for photo uploads
@@ -192,6 +225,7 @@ City prefix mapping (in `[slug]/page.tsx`):
 - `san-francisco` → `sf`
 - `london` → `london`
 - `sydney` → `sydney`
+- `stockholm` → `stockholm`
 
 Example: `/new-york/west-village/5cf1eaf0-b9bd-4c11-b817-19925f06a9f8`
 
