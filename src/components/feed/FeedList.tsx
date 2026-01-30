@@ -41,6 +41,7 @@ export function FeedList({ items, view = 'gallery' }: FeedListProps) {
           <AdCard
             key={`ad-${item.data.id}-${index}`}
             ad={item.data as Ad}
+            variant={view}
           />
         );
       })}

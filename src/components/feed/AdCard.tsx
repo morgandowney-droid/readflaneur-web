@@ -3,12 +3,14 @@
 import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Ad } from '@/types';
+import { cn } from '@/lib/utils';
 
 interface AdCardProps {
   ad: Ad;
+  variant?: 'compact' | 'gallery';
 }
 
-export function AdCard({ ad }: AdCardProps) {
+export function AdCard({ ad, variant = 'gallery' }: AdCardProps) {
   const hasTrackedImpression = useRef(false);
 
   useEffect(() => {
@@ -34,11 +36,19 @@ export function AdCard({ ad }: AdCardProps) {
 
   return (
     <article
-      className="bg-white overflow-hidden cursor-pointer"
+      className={cn(
+        'overflow-hidden cursor-pointer transition-all',
+        variant === 'gallery'
+          ? 'bg-amber-50 border-2 border-amber-200 rounded-lg'
+          : 'bg-white'
+      )}
       onClick={handleClick}
     >
       <div className="px-4 py-2">
-        <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
+        <span className={cn(
+          'text-[10px] tracking-[0.2em] uppercase',
+          variant === 'gallery' ? 'text-amber-600 font-medium' : 'text-neutral-400'
+        )}>
           {ad.sponsor_label}
         </span>
       </div>
@@ -52,7 +62,7 @@ export function AdCard({ ad }: AdCardProps) {
         />
       </div>
       <div className="p-4">
-        <h3 className="text-lg font-semibold">{ad.headline}</h3>
+        <h3 className="text-lg font-semibold truncate">{ad.headline}</h3>
       </div>
     </article>
   );

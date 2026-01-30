@@ -1,10 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Article, Ad, FeedItem } from '@/types';
 import { ArticleCard } from './ArticleCard';
+import { CompactArticleCard } from './CompactArticleCard';
 import { AdCard } from './AdCard';
+import { FeedView } from './ViewToggle';
+
+const VIEW_PREF_KEY = 'flaneur-feed-view';
 
 interface LoadMoreButtonProps {
   neighborhoodId: string;
@@ -21,6 +25,28 @@ export function LoadMoreButton({
   const [offset, setOffset] = useState(initialOffset);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [view, setView] = useState<FeedView>('compact');
+
+  // Listen for view preference changes
+  useEffect(() => {
+    const updateView = () => {
+      const saved = localStorage.getItem(VIEW_PREF_KEY) as FeedView | null;
+      if (saved && (saved === 'compact' || saved === 'gallery')) {
+        setView(saved);
+      }
+    };
+    updateView();
+
+    // Listen for storage changes (when view toggle is clicked)
+    window.addEventListener('storage', updateView);
+    // Also poll for changes since storage event doesn't fire in same tab
+    const interval = setInterval(updateView, 500);
+
+    return () => {
+      window.removeEventListener('storage', updateView);
+      clearInterval(interval);
+    };
+  }, []);
 
   const loadMore = async () => {
     setLoading(true);
@@ -63,10 +89,15 @@ export function LoadMoreButton({
     <div className="mt-4">
       {/* Render loaded items */}
       {items.length > 0 && (
-        <div className="space-y-4 mb-4">
+        <div className={view === 'compact' ? 'space-y-0 mb-4' : 'space-y-4 mb-4'}>
           {items.map((item, index) => {
             if (item.type === 'article') {
-              return (
+              return view === 'compact' ? (
+                <CompactArticleCard
+                  key={`more-article-${item.data.id}-${index}`}
+                  article={item.data as Article}
+                />
+              ) : (
                 <ArticleCard
                   key={`more-article-${item.data.id}-${index}`}
                   article={item.data as Article}
@@ -77,6 +108,7 @@ export function LoadMoreButton({
               <AdCard
                 key={`more-ad-${item.data.id}-${index}`}
                 ad={item.data as Ad}
+                variant={view}
               />
             );
           })}
