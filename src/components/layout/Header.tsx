@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { SubmitTipButton } from '@/components/tips';
+import TipSubmitModal from '@/components/tips/TipSubmitModal';
 import type { User } from '@supabase/supabase-js';
 
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
@@ -17,6 +18,7 @@ export function Header() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [tipModalOpen, setTipModalOpen] = useState(false);
 
   const handleNeighborhoodsClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -264,7 +266,7 @@ export function Header() {
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-neutral-200 bg-white">
-          <nav className="flex flex-col py-2 px-4">
+          <nav className="flex flex-col px-4">
             <button
               onClick={() => {
                 handleNeighborhoodsClick({ preventDefault: () => {} } as React.MouseEvent);
@@ -277,9 +279,15 @@ export function Header() {
             >
               Neighborhoods
             </button>
-            <div className="py-4 border-b border-neutral-100">
-              <SubmitTipButton variant="header" />
-            </div>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setTipModalOpen(true);
+              }}
+              className="text-sm tracking-widest uppercase text-neutral-600 hover:text-black transition-colors text-left py-4 border-b border-neutral-100"
+            >
+              Submit a Tip
+            </button>
             {user ? (
               <>
                 {isAdmin && (
@@ -329,6 +337,12 @@ export function Header() {
           </nav>
         </div>
       )}
+
+      {/* Tip Modal for mobile menu */}
+      <TipSubmitModal
+        isOpen={tipModalOpen}
+        onClose={() => setTipModalOpen(false)}
+      />
     </header>
   );
 }
