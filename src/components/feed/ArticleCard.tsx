@@ -39,6 +39,13 @@ export function ArticleCard({ article }: ArticleCardProps) {
           )}
           {!isHovered && (
             <div className="absolute bottom-0 left-0 right-0 p-4">
+              <div className="flex items-center gap-2 text-xs text-white/70 mb-1">
+                <span className="uppercase tracking-wider">
+                  {article.neighborhood?.name}
+                </span>
+                <span>&middot;</span>
+                <span>{formatRelativeTime(article.created_at)}</span>
+              </div>
               <h2 className="text-white text-lg font-semibold leading-tight line-clamp-2">
                 {article.headline}
               </h2>

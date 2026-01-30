@@ -264,20 +264,20 @@ export function Header() {
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-neutral-200 bg-white">
-          <nav className="flex flex-col py-4 px-4 gap-1">
+          <nav className="flex flex-col py-2 px-4">
             <button
               onClick={() => {
                 handleNeighborhoodsClick({ preventDefault: () => {} } as React.MouseEvent);
                 setMobileMenuOpen(false);
               }}
               className={cn(
-                'text-sm tracking-widest uppercase transition-colors hover:text-black text-left py-3 min-h-[44px]',
-                pathname === '/neighborhoods' || pathname === '/feed' ? 'text-black' : 'text-neutral-600'
+                'text-sm tracking-widest uppercase transition-colors hover:text-black text-left py-4 border-b border-neutral-100',
+                pathname === '/neighborhoods' || pathname === '/feed' ? 'text-black font-medium' : 'text-neutral-600'
               )}
             >
               Neighborhoods
             </button>
-            <div className="py-3 min-h-[44px]">
+            <div className="py-4 border-b border-neutral-100">
               <SubmitTipButton variant="header" />
             </div>
             {user ? (
@@ -287,8 +287,8 @@ export function Header() {
                     href="/admin/ads"
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
-                      'text-sm tracking-widest uppercase transition-colors hover:text-black py-3 min-h-[44px]',
-                      pathname.startsWith('/admin') ? 'text-black' : 'text-neutral-600'
+                      'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 border-b border-neutral-100 block',
+                      pathname.startsWith('/admin') ? 'text-black font-medium' : 'text-neutral-600'
                     )}
                   >
                     Admin
@@ -298,8 +298,8 @@ export function Header() {
                   href="/advertiser"
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    'text-sm tracking-widest uppercase transition-colors hover:text-black py-3 min-h-[44px]',
-                    pathname.startsWith('/advertiser') ? 'text-black' : 'text-neutral-600'
+                    'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 border-b border-neutral-100 block',
+                    pathname.startsWith('/advertiser') ? 'text-black font-medium' : 'text-neutral-600'
                   )}
                 >
                   Dashboard
@@ -309,7 +309,7 @@ export function Header() {
                     handleSignOut();
                     setMobileMenuOpen(false);
                   }}
-                  className="text-sm tracking-widest uppercase text-neutral-600 hover:text-black transition-colors text-left py-3 min-h-[44px]"
+                  className="text-sm tracking-widest uppercase text-neutral-600 hover:text-black transition-colors text-left py-4 w-full"
                 >
                   Sign Out
                 </button>
@@ -319,8 +319,8 @@ export function Header() {
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
-                  'text-sm tracking-widest uppercase transition-colors hover:text-black py-3 min-h-[44px]',
-                  pathname === '/login' ? 'text-black' : 'text-neutral-600'
+                  'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 block',
+                  pathname === '/login' ? 'text-black font-medium' : 'text-neutral-600'
                 )}
               >
                 Login
