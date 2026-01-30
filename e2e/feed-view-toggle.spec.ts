@@ -34,8 +34,12 @@ test.describe('Feed View Toggle', () => {
   test('can switch between views', async ({ page }) => {
     await page.goto('/feed?neighborhoods=nyc-west-village');
 
+    // Wait for hydration
+    await page.waitForTimeout(500);
+
     // Click gallery view
     await page.locator('button[aria-label="Gallery view"]').click();
+    await page.waitForTimeout(100);
 
     // Gallery view button should now be selected
     const galleryButton = page.locator('button[aria-label="Gallery view"]');
@@ -43,6 +47,7 @@ test.describe('Feed View Toggle', () => {
 
     // Click compact view
     await page.locator('button[aria-label="Compact view"]').click();
+    await page.waitForTimeout(100);
 
     // Compact view button should now be selected
     const compactButton = page.locator('button[aria-label="Compact view"]');
@@ -52,8 +57,12 @@ test.describe('Feed View Toggle', () => {
   test('persists view preference in localStorage', async ({ page }) => {
     await page.goto('/feed?neighborhoods=nyc-west-village');
 
+    // Wait for hydration
+    await page.waitForTimeout(500);
+
     // Switch to gallery view
     await page.locator('button[aria-label="Gallery view"]').click();
+    await page.waitForTimeout(200);
 
     // Check localStorage
     const savedView = await page.evaluate(() => localStorage.getItem('flaneur-feed-view'));
@@ -61,6 +70,7 @@ test.describe('Feed View Toggle', () => {
 
     // Reload page
     await page.reload();
+    await page.waitForTimeout(500);
 
     // Gallery view should still be selected
     const galleryButton = page.locator('button[aria-label="Gallery view"]');
@@ -70,10 +80,13 @@ test.describe('Feed View Toggle', () => {
   test('view preference persists across different pages', async ({ page }) => {
     // Set preference on feed page
     await page.goto('/feed?neighborhoods=nyc-west-village');
+    await page.waitForTimeout(500);
     await page.locator('button[aria-label="Gallery view"]').click();
+    await page.waitForTimeout(200);
 
     // Navigate to neighborhood page
     await page.goto('/stockholm/ostermalm');
+    await page.waitForTimeout(500);
 
     // Gallery view should be selected
     const galleryButton = page.locator('button[aria-label="Gallery view"]');

@@ -35,7 +35,8 @@ export default function TipSubmitForm({
 }: TipSubmitFormProps) {
   const [step, setStep] = useState<Step>('content');
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -61,19 +62,29 @@ export default function TipSubmitForm({
   useEffect(() => {
     const fetchNeighborhoods = async () => {
       setLoading(true);
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from('neighborhoods')
-        .select('id, name, city')
-        .order('city')
-        .order('name');
+      setLoadError(null);
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('neighborhoods')
+          .select('id, name, city')
+          .order('city')
+          .order('name');
 
-      if (error) {
-        console.error('Failed to load neighborhoods:', error);
-      } else {
-        setNeighborhoods(data || []);
+        if (error) {
+          console.error('Failed to load neighborhoods:', error);
+          setLoadError(`Failed to load neighborhoods: ${error.message}`);
+        } else if (!data || data.length === 0) {
+          setLoadError('No neighborhoods found. Please try again later.');
+        } else {
+          setNeighborhoods(data);
+        }
+      } catch (err) {
+        console.error('Error fetching neighborhoods:', err);
+        setLoadError(err instanceof Error ? err.message : 'Failed to connect to server');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchNeighborhoods();
@@ -192,6 +203,30 @@ export default function TipSubmitForm({
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="py-8 text-center space-y-4">
+        <p className="text-red-600 text-sm">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 text-sm border border-neutral-300 hover:border-black transition-colors"
+        >
+          Retry
+        </button>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="ml-2 px-4 py-2 text-sm text-neutral-500 hover:text-black"
+          >
+            Close
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Progress indicator */}
@@ -241,7 +276,7 @@ export default function TipSubmitForm({
       {/* Step 1: Content */}
       {step === 'content' && (
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">What&apos;s your tip?</h3>
+          <h3 className="text-lg font-medium">Oh, do spill some tea..</h3>
 
           <div>
             <label className="block text-sm text-neutral-600 mb-1">
@@ -267,7 +302,7 @@ export default function TipSubmitForm({
 
           <div>
             <label className="block text-sm text-neutral-600 mb-1">
-              Headline (optional)
+              A TLDR on what this is all about (optional)
             </label>
             <input
               type="text"

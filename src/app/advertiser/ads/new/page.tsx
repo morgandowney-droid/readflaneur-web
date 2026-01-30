@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Neighborhood } from '@/types';
+import { Neighborhood, Section } from '@/types';
 
 // Mock articles for preview context
 const mockArticles = [
@@ -70,6 +70,7 @@ export default function CreateAdPage() {
   const router = useRouter();
   const [step, setStep] = useState<'details' | 'submitted'>('details');
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
+  const [sections, setSections] = useState<Section[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,18 +81,27 @@ export default function CreateAdPage() {
     isGlobal: false,
     neighborhoodId: '',
     placement: 'feed' as 'feed' | 'story_open',
+    sectionIds: [] as string[],
   });
 
   useEffect(() => {
     async function fetchData() {
       const supabase = createClient();
 
-      const neighborhoodsRes = await supabase
-        .from('neighborhoods')
-        .select('*')
-        .order('city', { ascending: true });
+      const [neighborhoodsRes, sectionsRes] = await Promise.all([
+        supabase
+          .from('neighborhoods')
+          .select('*')
+          .order('city', { ascending: true }),
+        supabase
+          .from('sections')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true }),
+      ]);
 
       setNeighborhoods(neighborhoodsRes.data || []);
+      setSections(sectionsRes.data || []);
     }
     fetchData();
   }, []);
@@ -114,6 +124,7 @@ export default function CreateAdPage() {
           isGlobal: formData.isGlobal,
           neighborhoodId: formData.neighborhoodId,
           placement: formData.placement,
+          sectionIds: formData.sectionIds,
         }),
       });
 
@@ -378,6 +389,44 @@ export default function CreateAdPage() {
                       </option>
                     ))}
                   </select>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+                  Section Targeting (Optional)
+                </label>
+                <p className="text-sm text-neutral-500 mb-3">
+                  Target your ad to specific content sections. Leave empty to show everywhere.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {sections.map((section) => (
+                    <button
+                      key={section.id}
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          sectionIds: prev.sectionIds.includes(section.id)
+                            ? prev.sectionIds.filter(id => id !== section.id)
+                            : [...prev.sectionIds, section.id]
+                        }));
+                      }}
+                      className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm border transition-colors ${
+                        formData.sectionIds.includes(section.id)
+                          ? 'bg-black text-white border-black'
+                          : 'bg-white text-neutral-700 border-neutral-200 hover:border-neutral-400'
+                      }`}
+                    >
+                      {section.icon && <span>{section.icon}</span>}
+                      <span>{section.name}</span>
+                    </button>
+                  ))}
+                </div>
+                {formData.sectionIds.length > 0 && (
+                  <p className="text-xs text-neutral-400 mt-2">
+                    {formData.sectionIds.length} section{formData.sectionIds.length !== 1 ? 's' : ''} selected
+                  </p>
                 )}
               </div>
 

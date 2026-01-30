@@ -26,6 +26,7 @@ export interface Article {
   // Joined data
   neighborhood?: Neighborhood;
   author?: Profile;
+  sections?: ArticleSection[];
 }
 
 export type AdPlacement = 'feed' | 'story_open';
@@ -47,6 +48,9 @@ export interface Ad {
   impressions: number;
   clicks: number;
   created_at: string;
+  // Joined data for section targeting
+  ad_sections?: AdSection[];
+  section_ids?: string[];
 }
 
 export interface Profile {
@@ -178,4 +182,45 @@ export interface TipSubmission {
   gps_accuracy?: number;
   terms_accepted: boolean;
   terms_version?: string;
+}
+
+// Sections system types
+export interface Section {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ArticleSection {
+  id: string;
+  article_id: string;
+  section_id: string;
+  confidence?: number;
+  created_at: string;
+  // Joined data
+  section?: Section;
+}
+
+export interface UserSectionInterest {
+  id: string;
+  user_id: string;
+  section_id: string;
+  created_at: string;
+  // Joined data
+  section?: Section;
+}
+
+export interface AdSection {
+  id: string;
+  ad_id: string;
+  section_id: string;
+  created_at: string;
+  // Joined data
+  section?: Section;
 }

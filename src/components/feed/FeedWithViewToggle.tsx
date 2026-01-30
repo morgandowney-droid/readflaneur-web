@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { FeedItem } from '@/types';
 import { FeedList } from './FeedList';
 import { ViewToggle, FeedView } from './ViewToggle';
@@ -10,9 +10,10 @@ const VIEW_PREF_KEY = 'flaneur-feed-view';
 interface FeedWithViewToggleProps {
   items: FeedItem[];
   defaultView?: FeedView;
+  renderHeader?: (viewToggle: ReactNode) => ReactNode;
 }
 
-export function FeedWithViewToggle({ items, defaultView = 'compact' }: FeedWithViewToggleProps) {
+export function FeedWithViewToggle({ items, defaultView = 'compact', renderHeader }: FeedWithViewToggleProps) {
   const [view, setView] = useState<FeedView>(defaultView);
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -30,24 +31,23 @@ export function FeedWithViewToggle({ items, defaultView = 'compact' }: FeedWithV
     localStorage.setItem(VIEW_PREF_KEY, newView);
   };
 
-  // Prevent hydration mismatch by rendering default view until client-side
-  if (!isHydrated) {
-    return (
-      <div>
-        <div className="flex justify-end mb-4">
-          <ViewToggle view={defaultView} onChange={() => {}} />
-        </div>
-        <FeedList items={items} view={defaultView} />
-      </div>
-    );
-  }
+  const viewToggle = (
+    <ViewToggle
+      view={isHydrated ? view : defaultView}
+      onChange={isHydrated ? handleViewChange : () => {}}
+    />
+  );
 
   return (
     <div>
-      <div className="flex justify-end mb-4">
-        <ViewToggle view={view} onChange={handleViewChange} />
-      </div>
-      <FeedList items={items} view={view} />
+      {renderHeader ? (
+        renderHeader(viewToggle)
+      ) : (
+        <div className="flex justify-end mb-4">
+          {viewToggle}
+        </div>
+      )}
+      <FeedList items={items} view={isHydrated ? view : defaultView} />
     </div>
   );
 }

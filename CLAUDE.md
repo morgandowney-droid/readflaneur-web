@@ -5,56 +5,74 @@
 > **See also:** `../flaneur/CLAUDE.md` for the full project overview and mobile app details.
 
 ## Current Status
-**Last Updated:** 2026-01-29
+**Last Updated:** 2026-01-30
 
-### Next Steps
-**Continue UI/UX Review** - Article links now work. Continue testing and polish.
+### Recent Changes (2026-01-30)
 
-### Recently Completed (2026-01-29)
-- **Feed Page Fixes**
-  - Fixed broken query (removed non-existent `neighborhoods.slug` field)
-  - Added `force-dynamic` export to prevent stale caching
-  - URLs now derived from `neighborhood_id` (e.g., `nyc-west-village` → `/new-york/west-village/...`)
-  - Falls back to article ID when slug is missing
-  - File: `src/app/feed/page.tsx`
+**Google & Apple OAuth Login:**
+- Added social login buttons to `/login` and `/signup` pages
+- OAuth callback handler at `/api/auth/callback`
+- Requires Supabase OAuth provider configuration
+- Files: `src/app/login/page.tsx`, `src/app/signup/page.tsx`, `src/app/api/auth/callback/route.ts`
 
-- **Article Page Fixes**
-  - Added Stockholm to `cityPrefixMap` (was missing, causing 404s)
-  - File: `src/app/[city]/[neighborhood]/[slug]/page.tsx`
+**Luxury Ads Added:**
+- 15 new premium ads: NetJets, Half Moon, JPM Private Bank, Cartier, Bentley, Soho House, La Mer, Sotheby's, Patek Philippe, Blade, RH, Singita, White Cube, Savills, Sotheby's Realty
+- Mix of global and neighborhood-specific targeting
+- Migration: `flaneur/supabase/migrations/017_luxury_ads.sql`
 
-- **Homepage Navigation**
-  - "Explore Neighborhoods" now goes directly to `/feed` if user has neighborhoods selected
-  - Checks localStorage for saved preferences
-  - Files: `src/components/home/HomeSignup.tsx`, `src/components/layout/Header.tsx`
+**Engagement Features - Tonight, Spotted, Property Watch:**
 
-- **Header Cleanup**
-  - Removed "Advertise" link from header navigation
-  - File: `src/components/layout/Header.tsx`
+1. **Tonight Picks** (`/[city]/[neighborhood]/tonight`)
+   - Curated daily events
+   - Date selector (Today, Tomorrow, Weekend)
+   - AI-scored events with Flâneur voice
+   - Tables: `tonight_picks`, `tonight_sources`
 
-- **Mobile UI Improvements**
-  - "Submit a Tip" shortened to "Tip" on mobile screens
-  - File: `src/components/tips/SubmitTipButton.tsx`
+2. **Spotted** (`/[city]/[neighborhood]/spotted`)
+   - Real-time neighborhood sightings from social media
+   - Categories: restaurant_crowd, construction, celebrity, new_business, closure, traffic, event
+   - Sources: Reddit, Google Reviews (Twitter skipped - $200/mo)
+   - Real-time Supabase subscription
+   - Tables: `spotted_items`, `spotted_clusters`, `spotted_monitors`
 
-- **Magic Link Reminder**
-  - New component shows "Resend magic link" only for non-signed-in users
-  - File: `src/components/feed/MagicLinkReminder.tsx`
+3. **Property Watch** (`/[city]/[neighborhood]/property-watch`)
+   - Crowdsourced property sightings (works globally)
+   - Tabs: All Activity, For Sale/Rent, Storefronts, Development
+   - Multi-currency support ($, £, kr, AUD)
+   - User submission form
+   - Tables: `property_sightings`, `storefront_changes`, `development_projects`, `neighborhood_property_config`, `property_watch_digests`
 
-- **Admin Pages**
-  - Cron secret persists in localStorage (no re-entry needed)
-  - Files: `src/app/admin/regenerate-images/page.tsx`, `src/app/admin/generate-content/page.tsx`
+**Sections & User Interests System:**
+- 10 content sections: Art, Fashion, Real Estate, Travel, Food, Wellness, Cars, Schools, Money, Kids
+- AI auto-tags articles with sections
+- Users can select interests for personalized feed
+- Ad targeting by section
+- Tables: `sections`, `article_sections`, `user_section_interests`, `ad_sections`
+- Migration: `flaneur/supabase/migrations/012_sections_and_interests.sql`
 
-### Previously Completed (2026-01-27)
-- **Tips Submission System** - Full feature allowing users to submit news tips with photos
-  - Database: `tips` and `tip_photos` tables (migrations 008, 009)
-  - Storage: `tip-photos` bucket for photo uploads
-  - API: `/api/tips/submit`, `/api/tips/upload-photo`
-  - Admin: `/admin/tips` for reviewing/approving tips
-  - Components: PhotoUploader, TipSubmitForm, TipSubmitModal, SubmitTipButton
-  - Integration: "Submit a Tip" button in Header and neighborhood pages
-  - Legal pages: `/terms` and `/privacy`
-- **Cron Job Fix** - Fixed `/api/cron/publish-scheduled` endpoint
-  - Added query param authentication support (`?secret=...`)
-  - URL: `https://readflaneur.com/api/cron/publish-scheduled?secret=CRON_SECRET`
+**Neighborhood Guide Improvements:**
+- Google star ratings and review counts
+- Google Places photos
+- "Near Me" sorting with geolocation
+- Sort options: Featured, Top Rated, Most Reviewed, Near Me
+- Services category with 11 subcategories (Nanny, Personal Chefs, etc.)
+- Compact 3-column grid layout
+- File: `src/app/[city]/[neighborhood]/guides/page.tsx`
+
+**Automated Cron Jobs:**
+| Job | Schedule | Purpose |
+|-----|----------|---------|
+| sync-guides | Daily 3 AM UTC | Sync Google Places data |
+| sync-tonight | Daily 2 PM UTC | Fetch & curate events |
+| sync-spotted | Every 30 min* | Monitor social media |
+| process-property-watch | Daily 7 AM UTC | Process user submissions |
+| generate-digests | Weekly Mon 8 AM UTC | Weekly property summaries |
+
+*Requires Vercel Pro ($20/mo) for sub-daily crons
+
+**Data Pipeline Libraries:**
+- `src/lib/event-sources.ts` - Eventbrite, RSS, Google Places event fetching
+- `src/lib/social-sources.ts` - Reddit, Twitter, Google Reviews monitoring
 
 ### What's Live
 - **Website:** https://readflaneur.com
@@ -66,249 +84,129 @@
 ```
 readflaneur-web/
 ├── src/
-│   ├── app/                        # Next.js App Router
-│   │   ├── [city]/[neighborhood]/  # Dynamic neighborhood pages
-│   │   │   ├── page.tsx           # Main feed page
-│   │   │   ├── [slug]/page.tsx    # Article detail page
-│   │   │   └── guides/page.tsx    # Neighborhood guides
+│   ├── app/
+│   │   ├── [city]/[neighborhood]/
+│   │   │   ├── page.tsx              # Main feed
+│   │   │   ├── [slug]/page.tsx       # Article detail
+│   │   │   ├── guides/page.tsx       # Neighborhood guides
+│   │   │   ├── tonight/page.tsx      # Tonight picks
+│   │   │   ├── spotted/page.tsx      # Spotted sightings
+│   │   │   └── property-watch/page.tsx # Property tracking
 │   │   ├── admin/
-│   │   │   ├── articles/          # Article management
-│   │   │   ├── comments/          # Comment moderation queue
-│   │   │   ├── tips/              # Tip review/approval queue
-│   │   │   ├── regenerate-images/ # AI image regeneration
-│   │   │   └── generate-content/  # Manual content generation
-│   │   ├── terms/                 # Terms of Service page
-│   │   ├── privacy/               # Privacy Policy page
-│   │   ├── advertiser/            # Advertiser dashboard
-│   │   │   └── ads/new/           # Create new ad
-│   │   ├── advertise/             # Advertising info page
-│   │   ├── search/                # Search results page
+│   │   │   ├── articles/
+│   │   │   ├── comments/
+│   │   │   ├── tips/
+│   │   │   ├── sections/page.tsx     # Section management
+│   │   │   ├── regenerate-images/
+│   │   │   └── generate-content/
+│   │   ├── login/page.tsx            # Login with OAuth
+│   │   ├── signup/page.tsx           # Signup with OAuth
+│   │   ├── feed/page.tsx             # Personalized feed
 │   │   └── api/
-│   │       ├── comments/          # Comments CRUD + moderation
-│   │       ├── guides/            # Neighborhood guides API
-│   │       ├── search/            # Article search
-│   │       ├── tips/              # Tip submission + photo upload
-│   │       ├── admin/tips/        # Admin tip review API
-│   │       ├── cron/              # Cron job endpoints
-│   │       └── revalidate/        # Cache revalidation
+│   │       ├── auth/
+│   │       │   ├── callback/route.ts # OAuth callback
+│   │       │   ├── session/route.ts
+│   │       │   └── signout/route.ts
+│   │       ├── cron/
+│   │       │   ├── sync-guides/route.ts
+│   │       │   ├── sync-tonight/route.ts
+│   │       │   ├── sync-spotted/route.ts
+│   │       │   ├── process-property-watch/route.ts
+│   │       │   ├── generate-digests/route.ts
+│   │       │   └── publish-scheduled/route.ts
+│   │       ├── stripe/
+│   │       │   ├── checkout/route.ts
+│   │       │   └── webhook/route.ts
+│   │       └── ...
 │   ├── components/
-│   │   ├── admin/
-│   │   │   └── PersonaSwitcher.tsx  # View-as persona tool
-│   │   ├── comments/
-│   │   │   ├── Comments.tsx
-│   │   │   └── RecentComments.tsx
 │   │   ├── feed/
-│   │   │   ├── ArticleCard.tsx
-│   │   │   ├── FallbackAd.tsx
-│   │   │   ├── StoryOpenAd.tsx
-│   │   │   └── LoadMoreButton.tsx
-│   │   ├── home/
-│   │   │   ├── HomeSignup.tsx        # Neighborhood + newsletter signup
-│   │   │   └── TypewriterHeadlines.tsx # Animated headlines
-│   │   ├── layout/
-│   │   │   ├── Header.tsx
-│   │   │   └── Footer.tsx
-│   │   ├── maps/
-│   │   │   └── NeighborhoodMap.tsx   # Leaflet map component
-│   │   ├── neighborhoods/
-│   │   │   └── NeighborhoodSelector.tsx
-│   │   └── tips/
-│   │       ├── PhotoUploader.tsx      # Drag-drop photo upload
-│   │       ├── TipSubmitForm.tsx      # Multi-step tip form
-│   │       ├── TipSubmitModal.tsx     # Modal wrapper
-│   │       └── SubmitTipButton.tsx    # Button variants
+│   │   │   ├── NeighborhoodHeader.tsx  # Nav links to Tonight/Spotted/Property
+│   │   │   └── ...
+│   │   ├── sections/
+│   │   │   └── SectionInterestSelector.tsx
+│   │   └── ...
 │   └── lib/
-│       └── supabase/
-│           ├── client.ts          # Browser client
-│           └── server.ts          # Server client
+│       ├── supabase/
+│       ├── ad-engine.ts              # Section-based ad targeting
+│       ├── google-places.ts          # Places API + photos
+│       ├── event-sources.ts          # Event fetching
+│       └── social-sources.ts         # Social media monitoring
 ├── supabase/
-│   └── migrations/                # Database migrations
-│       ├── 001_add_platform_tables.sql
-│       ├── 002_add_ad_review_fields.sql
-│       ├── 003_update_ad_pricing.sql
-│       ├── 004_comments_system.sql
-│       ├── 005_neighborhood_guides.sql
-│       ├── 006_images_storage.sql
-│       ├── 007_neighborhood_preferences.sql
-│       ├── 008_tips_system.sql          # Tips + tip_photos tables
-│       └── 009_tips_storage.sql         # tip-photos storage bucket
-└── public/
+│   └── migrations/
+│       ├── 012_guide_photos_and_services.sql
+│       └── ...
+└── vercel.json                       # Cron schedules
 ```
 
-## Key Features
+## Environment Variables
 
-### Homepage Features
-- **Typewriter Headlines** - Animated typing effect showing latest articles
-  - Static "latest · Neighborhood" label above typing text
-  - Fixed height container prevents button jittering
-  - Clickable - navigates to full article
-- **Neighborhood Selector** - Chip-style buttons to select neighborhoods
-  - Saves to database for logged-in users
-  - Saves to localStorage for guests
-  - "+ Suggest" option for requesting new neighborhoods
-- **Newsletter Signup** - Combined with neighborhood selection
-  - Creates user account with magic link
-  - Only sends newsletters for selected neighborhoods
-
-### Public Pages
-- **Homepage** (`/`) - Typewriter headlines, neighborhood selector, newsletter signup
-- **Feed** (`/feed`) - Personalized feed based on selected neighborhoods
-- **Neighborhood Feed** (`/[city]/[neighborhood]`) - Article feed with infinite scroll
-- **Article Detail** (`/[city]/[neighborhood]/[slug]`) - Full article with comments
-- **Neighborhood Guides** (`/[city]/[neighborhood]/guides`) - Curated local venues
-- **Search** (`/search`) - Full-text article search
-- **Advertise** (`/advertise`) - Advertising info and pricing
-
-### Admin Pages
-- `/admin/articles` - Review and manage articles
-- `/admin/comments` - Comment moderation queue
-- `/admin/tips` - Review submitted tips (approve/reject/mark under review)
-- `/admin/regenerate-images` - Regenerate AI images for articles
-- `/admin/generate-content` - Manually trigger scraping/generation
-
-### Tips Submission System
-- **Submit a Tip** button in header and on neighborhood pages
-- Multi-step form: Content → Photos → Contact → Terms
-- Supports anonymous and authenticated submissions
-- Photo upload (max 5, 10MB each, JPEG/PNG/WebP/HEIC)
-- GPS location tracking (optional, with user permission)
-- Device/browser tracking for fraud prevention
-- OpenAI content moderation
-- Admin review workflow with email notifications
-- Rate limiting: 5 tips per hour per IP
-
-### Advertiser Pages
-- `/advertiser` - Dashboard showing active ads
-- `/advertiser/ads/new` - Create and purchase new ad
-
-## Components
-
-### TypewriterHeadlines
-- Animated typing effect for latest article headlines
-- Static "latest · Neighborhood" label (neighborhood in grey)
-- Fixed height (`h-20`) prevents button jittering below
-- Click to navigate to article (uses article ID if slug is null)
-- URL format: `/{city}/{neighborhood}/{article-id}`
-
-### HomeSignup
-- Combined neighborhood selector + newsletter signup
-- Chip-style neighborhood buttons (centered)
-- Saves preferences to:
-  - `user_neighborhood_preferences` table (logged-in users)
-  - `localStorage` (guests, key: `flaneur-neighborhood-preferences`)
-- Redirects to `/feed` after successful subscription
-
-### PersonaSwitcher
-- Activate: `Ctrl+Shift+A`
-- Floating button (bottom right)
-- Personas: Admin, New Visitor, Subscriber, Advertiser
-- Stores state in localStorage
-
-### NeighborhoodMap
-- Uses Leaflet with dynamic import (SSR-safe)
-- Shows core neighborhood + hinterland boundaries
-- CartoDB Positron tiles
-
-### Comments
-- Nested replies (3 levels max)
-- Upvote/downvote
-- AI moderation via OpenAI
-- Rate limiting (5/hour per IP)
-
-## URL Routing
-
-### Article URLs
-Format: `/{city-slug}/{neighborhood-slug}/{article-slug-or-id}`
-
-City prefix mapping (in `[slug]/page.tsx`):
-- `new-york` → `nyc`
-- `san-francisco` → `sf`
-- `london` → `london`
-- `sydney` → `sydney`
-- `stockholm` → `stockholm`
-
-Example: `/new-york/west-village/5cf1eaf0-b9bd-4c11-b817-19925f06a9f8`
-
-The article page looks up by both `slug` and `id` to support articles without slugs.
-
-## Database Tables
-
-### user_neighborhood_preferences
-- `user_id` (uuid, FK to auth.users)
-- `neighborhood_id` (text, FK to neighborhoods)
-- Primary key: (user_id, neighborhood_id)
-- RLS: Users can only manage their own preferences
-
-### newsletter_subscribers
-- Has `neighborhood_ids` array column for newsletter targeting
-
-## Environment Variables (Vercel)
-
+### Required
 ```
-NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_URL=https://ujpdhueytlfqkwzvqetd.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+ANTHROPIC_API_KEY=               # AI summaries for crons
+GOOGLE_PLACES_API_KEY=           # Guides, reviews, photos
+CRON_SECRET=
+```
+
+### Payments & Email
+```
 STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
-OPENAI_API_KEY=
 RESEND_API_KEY=
-EMAIL_FROM=
+EMAIL_FROM=hello@readflaneur.com
 ADMIN_EMAIL=
 NEXT_PUBLIC_APP_URL=https://readflaneur.com
-CRON_SECRET=                    # For cron job authentication
 ```
+
+### Optional
+```
+OPENAI_API_KEY=                  # Content moderation
+EVENTBRITE_API_KEY=              # Events (API deprecated)
+TWITTER_BEARER_TOKEN=            # Spotted tweets ($200/mo)
+```
+
+## Database Tables (New)
+
+### Engagement Features
+- `tonight_picks` - Curated events
+- `tonight_sources` - Event source tracking
+- `spotted_items` - Social media sightings
+- `spotted_clusters` - Related sighting grouping
+- `spotted_monitors` - Social media monitor config
+- `property_sightings` - For sale/rent/construction sightings
+- `storefront_changes` - Business openings/closings
+- `development_projects` - Construction tracking
+- `neighborhood_property_config` - Currency, API availability per neighborhood
+- `property_watch_digests` - Weekly summaries
+
+### Sections System
+- `sections` - Content categories (Art, Food, etc.)
+- `article_sections` - Article-to-section mapping with AI confidence
+- `user_section_interests` - User preferences
+- `ad_sections` - Ad targeting by section
+
+## OAuth Setup (Pending)
+
+To enable Google/Apple login:
+
+1. **Supabase:** https://supabase.com/dashboard/project/ujpdhueytlfqkwzvqetd/auth/providers
+2. **Google:** Create OAuth credentials at https://console.cloud.google.com/apis/credentials
+   - Redirect URI: `https://ujpdhueytlfqkwzvqetd.supabase.co/auth/v1/callback`
+3. **Apple:** Requires Apple Developer account ($99/yr)
 
 ## Deployment
 
-Deploy to Vercel:
 ```bash
 cd C:\Users\morga\Desktop\readflaneur-web
 git add . && git commit -m "message" && git push origin master
+npx vercel --prod
 ```
 
-### Vercel Deployment Gotchas
-
-**IMPORTANT: Preview vs Production**
-- Git pushes to `master` deploy to **Preview** environment, NOT Production
-- To deploy to Production (readflaneur.com):
-  1. Go to Vercel → Deployments tab
-  2. Click the **3 dots menu** on the green deployment
-  3. Select **"Promote to Production"**
-- If changes aren't showing on the live site, this is likely the issue
-
-**After adding/changing environment variables:**
-- Must redeploy for changes to take effect
-- Use "Promote to Production" after redeploy
-
-## Known Quirks
-
-### Supabase Query Limitations
-- Complex queries with joins can silently fail and return `null`
-- The homepage headlines query must be simple: `select('id, headline, slug, neighborhood_id')`
-- Adding `neighborhoods(name, slug, city)` to the query breaks it
-- Workaround: Fetch neighborhoods separately and build a lookup map
-
-### Image Configuration
-- Supabase storage images require hostname in `next.config.ts`:
-  ```typescript
-  images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'ujpdhueytlfqkwzvqetd.supabase.co' },
-    ],
-  }
-  ```
-
-### Article Slugs
-- Many articles have `slug: null` in the database
-- The article page handles this by looking up via `slug` OR `id`
-- Homepage uses article ID as fallback when building URLs
+**Note:** Vercel Hobby plan limits crons to once daily. Upgrade to Pro ($20/mo) for 30-minute spotted sync.
 
 ## Related Project
 
-The backend API and mobile app are in `../flaneur/`:
-- News scraping
-- AI article generation
-- AI image generation
-- Cron jobs
-
-See `../flaneur/CLAUDE.md` for full details.
+Backend API and mobile app in `../flaneur/` - see `../flaneur/CLAUDE.md`

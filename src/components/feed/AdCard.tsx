@@ -62,7 +62,7 @@ export function AdCard({ ad, variant = 'gallery' }: AdCardProps) {
         />
       </div>
       <div className="p-4">
-        <h3 className="text-lg font-semibold truncate">{ad.headline}</h3>
+        <h3 className="text-lg font-semibold overflow-hidden whitespace-nowrap">{ad.headline}</h3>
       </div>
     </article>
   );

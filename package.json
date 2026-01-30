@@ -13,6 +13,7 @@
     "test:report": "playwright show-report"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.72.1",
     "@stripe/stripe-js": "^8.6.4",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.91.1",
@@ -35,6 +36,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.4",
+    "pg": "^8.17.2",
     "playwright": "^1.58.0",
     "tailwindcss": "^4",
     "typescript": "^5"

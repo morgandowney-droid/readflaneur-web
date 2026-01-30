@@ -1,10 +1,7 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { FeedWithViewToggle } from '@/components/feed/FeedWithViewToggle';
+import { NeighborhoodFeed } from '@/components/feed/NeighborhoodFeed';
 import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
-import { NeighborhoodMap } from '@/components/maps/NeighborhoodMap';
-import { SubmitTipButton } from '@/components/tips';
 import { injectAds } from '@/lib/ad-engine';
 import { Article, Ad } from '@/types';
 
@@ -103,29 +100,17 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
   );
 
   return (
-    <div className="py-8 px-4">
+    <div className="py-6 px-4">
       <div className="mx-auto max-w-2xl">
-        <header className="mb-8 text-center">
-          <p className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-2">
-            {neighborhoodData.city}
-          </p>
-          <h1 className="text-2xl font-light tracking-wide mb-4">
-            {neighborhoodData.name}
-          </h1>
-          <div className="flex items-center justify-center gap-4">
-            <Link
-              href={`/${city}/${neighborhood}/guides`}
-              className="inline-block text-xs tracking-widest uppercase border border-neutral-200 px-4 py-2 hover:border-black transition-colors"
-            >
-              Neighborhood Guide
-            </Link>
-            <SubmitTipButton variant="neighborhood" neighborhoodId={neighborhoodId} />
-          </div>
-        </header>
-
-        <NeighborhoodMap neighborhoodId={neighborhoodId} className="mb-8" />
-
-        <FeedWithViewToggle items={feedItems} defaultView="compact" />
+        <NeighborhoodFeed
+          items={feedItems}
+          city={neighborhoodData.city}
+          citySlug={city}
+          neighborhoodName={neighborhoodData.name}
+          neighborhoodSlug={neighborhood}
+          neighborhoodId={neighborhoodId}
+          defaultView="compact"
+        />
 
         {hasMoreArticles && (
           <LoadMoreButton

@@ -129,6 +129,18 @@ export default function TipSubmitModal({
             />
           )}
         </div>
+
+        {/* Footer with email contact */}
+        {!showSuccess && (
+          <div className="px-6 py-3 border-t border-neutral-100 bg-neutral-50">
+            <p className="text-xs text-neutral-500 text-center">
+              If you feel like emailing us instead:{' '}
+              <a href="mailto:contact@readflaneur.com" className="text-black hover:underline">
+                contact@readflaneur.com
+              </a>
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -15,12 +15,14 @@ interface LoadMoreButtonProps {
   neighborhoodId: string;
   initialOffset: number;
   pageSize?: number;
+  sectionSlug?: string;
 }
 
 export function LoadMoreButton({
   neighborhoodId,
   initialOffset,
-  pageSize = 10
+  pageSize = 10,
+  sectionSlug
 }: LoadMoreButtonProps) {
   const [items, setItems] = useState<FeedItem[]>([]);
   const [offset, setOffset] = useState(initialOffset);
@@ -28,6 +30,7 @@ export function LoadMoreButton({
   const [hasMore, setHasMore] = useState(true);
   const [view, setView] = useState<FeedView>('compact');
   const [ads, setAds] = useState<Ad[]>([]);
+  const [sectionArticleIds, setSectionArticleIds] = useState<string[] | null>(null);
 
   // Listen for view preference changes and fetch ads once
   useEffect(() => {
@@ -52,6 +55,33 @@ export function LoadMoreButton({
     };
     fetchAds();
 
+    // If section filter is specified, get article IDs for this section
+    const fetchSectionArticleIds = async () => {
+      if (!sectionSlug) {
+        setSectionArticleIds(null);
+        return;
+      }
+      const supabase = createClient();
+      // Get section ID first
+      const { data: sectionData } = await supabase
+        .from('sections')
+        .select('id')
+        .eq('slug', sectionSlug)
+        .eq('is_active', true)
+        .single();
+
+      if (sectionData) {
+        const { data: articleSections } = await supabase
+          .from('article_sections')
+          .select('article_id')
+          .eq('section_id', sectionData.id);
+        setSectionArticleIds(articleSections?.map(as => as.article_id) || []);
+      } else {
+        setSectionArticleIds([]);
+      }
+    };
+    fetchSectionArticleIds();
+
     // Listen for storage changes (when view toggle is clicked)
     window.addEventListener('storage', updateView);
     // Also poll for changes since storage event doesn't fire in same tab
@@ -61,20 +91,31 @@ export function LoadMoreButton({
       window.removeEventListener('storage', updateView);
       clearInterval(interval);
     };
-  }, [neighborhoodId]);
+  }, [neighborhoodId, sectionSlug]);
 
   const loadMore = async () => {
     setLoading(true);
 
     const supabase = createClient();
 
-    const { data: articles, error } = await supabase
+    let query = supabase
       .from('articles')
       .select('*, neighborhood:neighborhoods(id, name, city)')
       .eq('neighborhood_id', neighborhoodId)
       .eq('status', 'published')
-      .order('published_at', { ascending: false, nullsFirst: false })
-      .range(offset, offset + pageSize - 1);
+      .order('published_at', { ascending: false, nullsFirst: false });
+
+    // Apply section filter if specified
+    if (sectionArticleIds !== null) {
+      if (sectionArticleIds.length === 0) {
+        setHasMore(false);
+        setLoading(false);
+        return;
+      }
+      query = query.in('id', sectionArticleIds);
+    }
+
+    const { data: articles, error } = await query.range(offset, offset + pageSize - 1);
 
     if (error) {
       console.error('Error loading more articles:', error);

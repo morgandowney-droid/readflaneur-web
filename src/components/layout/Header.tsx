@@ -7,7 +7,9 @@ import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { SubmitTipButton } from '@/components/tips';
 import TipSubmitModal from '@/components/tips/TipSubmitModal';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
 import type { User } from '@supabase/supabase-js';
+import type { Section } from '@/types';
 
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
 
@@ -19,6 +21,18 @@ export function Header() {
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [tipModalOpen, setTipModalOpen] = useState(false);
+  const [sections, setSections] = useState<Section[]>([]);
+  const { scrollDirection, scrollY } = useScrollDirection({ threshold: 10 });
+
+  // Determine if we're on a feed page where hiding should be enabled
+  const isFeedPage = pathname === '/feed' || pathname.match(/^\/[^/]+\/[^/]+$/);
+
+  // Header should be visible when:
+  // - At the top of the page (scrollY < 50)
+  // - Scrolling up
+  // - Mobile menu is open
+  // - Not on a feed page
+  const shouldHideHeader = isFeedPage && scrollDirection === 'down' && scrollY > 50 && !mobileMenuOpen;
 
   const handleNeighborhoodsClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -98,6 +112,20 @@ export function Header() {
 
     initAuth();
 
+    // Fetch sections
+    const fetchSections = async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('sections')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+      if (data && mounted) {
+        setSections(data as Section[]);
+      }
+    };
+    fetchSections();
+
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -156,7 +184,13 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-neutral-200 bg-white">
+    <header
+      className={cn(
+        'sticky top-0 z-50 w-full border-b border-neutral-200 bg-white',
+        'transition-transform duration-300 ease-in-out',
+        shouldHideHeader && '-translate-y-full'
+      )}
+    >
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
         <Link href="/" className="text-xl tracking-[0.3em] font-light">
           FLÂNEUR
@@ -279,6 +313,28 @@ export function Header() {
             >
               Neighborhoods
             </button>
+
+            {/* Browse by Section */}
+            {sections.length > 0 && (
+              <div className="py-4 border-b border-neutral-100">
+                <p className="text-[10px] tracking-widest uppercase text-neutral-400 mb-3 text-right">
+                  Browse by Section
+                </p>
+                <div className="flex flex-wrap gap-2 justify-end">
+                  {sections.map((section) => (
+                    <Link
+                      key={section.id}
+                      href={`/feed?section=${section.slug}`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors"
+                    >
+                      {section.icon && <span>{section.icon}</span>}
+                      <span>{section.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
             <button
               onClick={() => {
                 setMobileMenuOpen(false);

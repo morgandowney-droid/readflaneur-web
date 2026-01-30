@@ -39,7 +39,32 @@ interface GooglePlaceNew {
   nationalPhoneNumber?: string;
   editorialSummary?: { text: string };
   reviews?: { text: { text: string }; rating: number }[];
-  photos?: { name: string }[];
+  photos?: { name: string; widthPx?: number; heightPx?: number }[];
+}
+
+// Get photo URL from Google Places photo reference
+export function getPhotoUrl(photoName: string, maxWidth: number = 400): string {
+  if (!GOOGLE_PLACES_API_KEY || !photoName) return '';
+  // New API format: photos/{photo_reference}/media
+  return `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=${maxWidth}&key=${GOOGLE_PLACES_API_KEY}`;
+}
+
+// Calculate distance between two points (Haversine formula)
+export function calculateDistance(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in km
 }
 
 // Convert Google price level to our format
@@ -105,7 +130,7 @@ export async function searchPlaces(
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.shortFormattedAddress,places.location,places.rating,places.userRatingCount,places.priceLevel,places.types,places.businessStatus,places.websiteUri,places.nationalPhoneNumber,places.editorialSummary',
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.shortFormattedAddress,places.location,places.rating,places.userRatingCount,places.priceLevel,places.types,places.businessStatus,places.websiteUri,places.nationalPhoneNumber,places.editorialSummary,places.photos',
       },
       body: JSON.stringify({
         includedTypes: placeTypes.slice(0, 50), // API allows max 50 types
@@ -199,4 +224,4 @@ export function generateDescription(place: GooglePlaceNew, details?: GooglePlace
   return 'A local neighborhood favorite.';
 }
 
-export { formatPriceRange, generateTags };
+export { formatPriceRange, generateTags, NEIGHBORHOOD_CENTERS };

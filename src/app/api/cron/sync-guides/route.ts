@@ -6,6 +6,7 @@ import {
   formatPriceRange,
   generateTags,
   generateDescription,
+  getPhotoUrl,
 } from '@/lib/google-places';
 
 // Vercel Cron configuration - runs daily at 3 AM UTC
@@ -88,6 +89,10 @@ export async function GET(request: Request) {
             ? await getPlaceDetails(place.id)
             : null;
 
+          // Get photo URL if available
+          const photoReference = place.photos?.[0]?.name || null;
+          const photoUrl = photoReference ? getPhotoUrl(photoReference, 400) : null;
+
           const listingData = {
             neighborhood_id: neighborhoodId,
             category_id: categoryId,
@@ -103,6 +108,10 @@ export async function GET(request: Request) {
             google_place_id: place.id,
             google_rating: place.rating || null,
             google_reviews_count: place.userRatingCount || null,
+            google_photo_url: photoUrl,
+            google_photo_reference: photoReference,
+            latitude: place.location?.latitude || null,
+            longitude: place.location?.longitude || null,
             updated_at: new Date().toISOString(),
           };
 

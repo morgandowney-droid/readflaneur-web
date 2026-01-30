@@ -2,6 +2,31 @@
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 60
+    },
+    "app/api/cron/**/*.ts": {
+      "maxDuration": 300
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/sync-guides",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/sync-tonight",
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/sync-spotted",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/process-property-watch",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/generate-digests",
+      "schedule": "0 8 * * 1"
+    }
+  ]
 }

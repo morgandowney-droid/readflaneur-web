@@ -119,7 +119,7 @@ export default function PrivacyPage() {
             <li>Withdraw consent for data processing</li>
           </ul>
           <p className="text-sm text-neutral-700 mb-4">
-            To exercise these rights, please contact us at privacy@readflaneur.com.
+            To exercise these rights, please contact us at contact@readflaneur.com.
           </p>
         </section>
 
@@ -188,7 +188,7 @@ export default function PrivacyPage() {
             If you have any questions about this Privacy Policy, please contact us at:
           </p>
           <p className="text-sm text-neutral-700">
-            Email: privacy@readflaneur.com
+            Email: contact@readflaneur.com
           </p>
         </section>
       </div>
