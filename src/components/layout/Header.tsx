@@ -273,7 +273,7 @@ export function Header() {
                 setMobileMenuOpen(false);
               }}
               className={cn(
-                'text-sm tracking-widest uppercase transition-colors hover:text-black text-left py-4 border-b border-neutral-100',
+                'text-sm tracking-widest uppercase transition-colors hover:text-black text-right py-4 border-b border-neutral-100',
                 pathname === '/neighborhoods' || pathname === '/feed' ? 'text-black font-medium' : 'text-neutral-600'
               )}
             >
@@ -284,7 +284,7 @@ export function Header() {
                 setMobileMenuOpen(false);
                 setTipModalOpen(true);
               }}
-              className="text-sm tracking-widest uppercase text-neutral-600 hover:text-black transition-colors text-left py-4 border-b border-neutral-100"
+              className="text-sm tracking-widest uppercase text-neutral-600 hover:text-black transition-colors text-right py-4 border-b border-neutral-100"
             >
               Submit a Tip
             </button>
@@ -295,7 +295,7 @@ export function Header() {
                     href="/admin/ads"
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
-                      'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 border-b border-neutral-100 block',
+                      'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 border-b border-neutral-100 block text-right',
                       pathname.startsWith('/admin') ? 'text-black font-medium' : 'text-neutral-600'
                     )}
                   >
@@ -306,7 +306,7 @@ export function Header() {
                   href="/advertiser"
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 border-b border-neutral-100 block',
+                    'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 border-b border-neutral-100 block text-right',
                     pathname.startsWith('/advertiser') ? 'text-black font-medium' : 'text-neutral-600'
                   )}
                 >
@@ -317,7 +317,7 @@ export function Header() {
                     handleSignOut();
                     setMobileMenuOpen(false);
                   }}
-                  className="text-sm tracking-widest uppercase text-neutral-600 hover:text-black transition-colors text-left py-4 w-full"
+                  className="text-sm tracking-widest uppercase text-neutral-600 hover:text-black transition-colors text-right py-4 w-full"
                 >
                   Sign Out
                 </button>
@@ -327,7 +327,7 @@ export function Header() {
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
-                  'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 block',
+                  'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 block text-right',
                   pathname === '/login' ? 'text-black font-medium' : 'text-neutral-600'
                 )}
               >
