@@ -15,6 +15,7 @@ interface SpottedItem {
   ai_sentiment: string | null;
   ai_urgency: string | null;
   is_featured: boolean;
+  is_published: boolean;
   spotted_at: string;
   created_at: string;
 }
