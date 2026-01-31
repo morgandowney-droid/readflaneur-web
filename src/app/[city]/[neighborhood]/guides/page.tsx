@@ -52,7 +52,7 @@ interface Listing {
   } | null;
 }
 
-type SortOption = 'featured' | 'rating' | 'reviews' | 'distance';
+type SortOption = 'rating' | 'reviews' | 'distance';
 
 function getMapsUrl(listing: { name: string; address: string | null; latitude: number | null; longitude: number | null }): string {
   // Build a search query using name + address for better results
@@ -111,7 +111,7 @@ export default function GuidesPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<SortOption>('featured');
+  const [sortBy, setSortBy] = useState<SortOption>('rating');
   const [initialLoading, setInitialLoading] = useState(true);
   const [filterLoading, setFilterLoading] = useState(false);
   const [neighborhoodName, setNeighborhoodName] = useState('');
@@ -256,16 +256,6 @@ export default function GuidesPage() {
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-neutral-400 uppercase tracking-wide">Sort:</span>
             <button
-              onClick={() => setSortBy('featured')}
-              className={`px-3 py-1.5 text-xs transition-colors ${
-                sortBy === 'featured'
-                  ? 'bg-black text-white'
-                  : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700'
-              }`}
-            >
-              Featured
-            </button>
-            <button
               onClick={() => setSortBy('rating')}
               className={`px-3 py-1.5 text-xs transition-colors ${
                 sortBy === 'rating'
@@ -394,9 +384,7 @@ export default function GuidesPage() {
             {listings.map((listing) => (
               <div
                 key={listing.id}
-                className={`border bg-white overflow-hidden ${
-                  listing.is_featured ? 'border-black' : 'border-neutral-200'
-                }`}
+                className="border border-neutral-200 bg-white overflow-hidden"
               >
                 {/* Photo */}
                 {listing.google_photo_url && (
@@ -409,11 +397,6 @@ export default function GuidesPage() {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}
                     />
-                    {listing.is_featured && (
-                      <span className="absolute top-2 left-2 text-[9px] tracking-[0.15em] uppercase bg-black text-white px-2 py-0.5">
-                        Featured
-                      </span>
-                    )}
                   </div>
                 )}
 

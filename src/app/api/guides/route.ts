@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const neighborhoodId = searchParams.get('neighborhoodId');
   const categorySlug = searchParams.get('category');
   const subcategorySlug = searchParams.get('subcategory');
-  const sortBy = searchParams.get('sort') || 'featured'; // 'featured', 'rating', 'reviews', 'distance'
+  const sortBy = searchParams.get('sort') || 'rating'; // 'rating', 'reviews', 'distance'
   const userLat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null;
   const userLng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null;
 
@@ -43,11 +43,6 @@ export async function GET(request: NextRequest) {
 
   // Apply sorting based on parameter
   switch (sortBy) {
-    case 'rating':
-      listingsQuery = listingsQuery
-        .order('google_rating', { ascending: false, nullsFirst: false })
-        .order('google_reviews_count', { ascending: false, nullsFirst: false });
-      break;
     case 'reviews':
       listingsQuery = listingsQuery
         .order('google_reviews_count', { ascending: false, nullsFirst: false })
@@ -58,11 +53,10 @@ export async function GET(request: NextRequest) {
       listingsQuery = listingsQuery
         .order('name', { ascending: true });
       break;
-    default: // 'featured'
+    default: // 'rating'
       listingsQuery = listingsQuery
-        .order('is_featured', { ascending: false })
         .order('google_rating', { ascending: false, nullsFirst: false })
-        .order('name', { ascending: true });
+        .order('google_reviews_count', { ascending: false, nullsFirst: false });
   }
 
   // Filter by category if specified
