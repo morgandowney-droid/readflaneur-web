@@ -8,6 +8,7 @@ import { FallbackAd } from '@/components/feed/FallbackAd';
 import { ArticleViewTracker } from '@/components/tracking/ArticleViewTracker';
 import { Comments } from '@/components/comments/Comments';
 import { Ad } from '@/types';
+import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
 
 interface ArticlePageProps {
   params: Promise<{
@@ -51,16 +52,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const supabase = await createClient();
 
   // Map city slug to neighborhood prefix
-  const cityPrefixMap: Record<string, string> = {
-    'new-york': 'nyc',
-    'san-francisco': 'sf',
-    'london': 'london',
-    'sydney': 'sydney',
-    'stockholm': 'stockholm',
-  };
-
-  const prefix = cityPrefixMap[city] || city;
-  const neighborhoodId = `${prefix}-${neighborhood}`;
+  const neighborhoodId = buildNeighborhoodId(city, neighborhood);
 
   // Check if slug looks like a UUID (for backwards compatibility with old URLs)
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);

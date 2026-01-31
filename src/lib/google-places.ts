@@ -100,16 +100,19 @@ function generateTags(place: GooglePlaceNew): string[] {
 }
 
 // Search for places in a neighborhood using new API
+// Can accept either a neighborhoodId (will use NEIGHBORHOOD_CENTERS) or explicit coordinates
 export async function searchPlaces(
   neighborhoodId: string,
-  categorySlug: string
+  categorySlug: string,
+  coordinates?: { lat: number; lng: number; radius: number }
 ): Promise<GooglePlaceNew[]> {
   if (!GOOGLE_PLACES_API_KEY) {
     console.error('GOOGLE_PLACES_API_KEY not configured');
     return [];
   }
 
-  const center = NEIGHBORHOOD_CENTERS[neighborhoodId];
+  // Use provided coordinates or fall back to NEIGHBORHOOD_CENTERS
+  const center = coordinates || NEIGHBORHOOD_CENTERS[neighborhoodId];
   if (!center) {
     console.error(`No coordinates configured for neighborhood: ${neighborhoodId}`);
     return [];

@@ -4,6 +4,7 @@ import { NeighborhoodFeed } from '@/components/feed/NeighborhoodFeed';
 import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { injectAds } from '@/lib/ad-engine';
 import { Article, Ad } from '@/types';
+import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
 
 const INITIAL_PAGE_SIZE = 10;
 
@@ -46,16 +47,7 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
   const supabase = await createClient();
 
   // Map city slug to neighborhood prefix
-  const cityPrefixMap: Record<string, string> = {
-    'new-york': 'nyc',
-    'san-francisco': 'sf',
-    'london': 'london',
-    'sydney': 'sydney',
-    'stockholm': 'stockholm',
-  };
-
-  const prefix = cityPrefixMap[city] || city;
-  const neighborhoodId = `${prefix}-${neighborhood}`;
+  const neighborhoodId = buildNeighborhoodId(city, neighborhood);
 
   // Fetch neighborhood details
   const { data: neighborhoodData } = await supabase

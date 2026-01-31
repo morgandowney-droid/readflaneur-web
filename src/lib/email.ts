@@ -299,3 +299,212 @@ export async function notifyTipSubmitterRejected(tip: {
     html,
   });
 }
+
+// Helper to build Google Maps URL
+function getMapsUrl(place: { name: string; address: string | null; latitude: number | null; longitude: number | null }): string {
+  const query = place.address ? `${place.name}, ${place.address}` : place.name;
+  if (place.latitude && place.longitude) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}&center=${place.latitude},${place.longitude}`;
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+// Helper to format neighborhood ID to readable name
+function formatNeighborhood(id: string): string {
+  return id.split('-').slice(1).map(w =>
+    w.charAt(0).toUpperCase() + w.slice(1)
+  ).join(' ');
+}
+
+// Notify admin about new places discovered during sync
+export async function notifyAdminNewPlaces(places: {
+  id: string;
+  name: string;
+  address: string | null;
+  neighborhood_id: string;
+  category_name: string;
+  google_rating: number | null;
+  google_reviews_count: number | null;
+  latitude: number | null;
+  longitude: number | null;
+}[]): Promise<boolean> {
+  const adminEmail = process.env.ADMIN_EMAIL;
+
+  if (!adminEmail) {
+    console.warn('No admin email configured');
+    return false;
+  }
+
+  if (places.length === 0) {
+    return true;
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+  // Group places by neighborhood
+  const byNeighborhood = places.reduce((acc, place) => {
+    const key = place.neighborhood_id;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(place);
+    return acc;
+  }, {} as Record<string, typeof places>);
+
+  const neighborhoodSections = Object.entries(byNeighborhood).map(([neighborhoodId, neighborhoodPlaces]) => {
+    const placesHtml = neighborhoodPlaces.map(place => `
+      <tr>
+        <td style="padding: 12px; border-bottom: 1px solid #eee;">
+          <strong>${place.name}</strong>
+          ${place.category_name ? `<br><span style="color: #666; font-size: 12px;">${place.category_name}</span>` : ''}
+          ${place.address ? `<br><span style="color: #888; font-size: 12px;">${place.address}</span>` : ''}
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">
+          ${place.google_rating ? `${place.google_rating.toFixed(1)} ★` : '-'}
+          ${place.google_reviews_count ? `<br><span style="color: #888; font-size: 11px;">(${place.google_reviews_count} reviews)</span>` : ''}
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">
+          <a href="${getMapsUrl(place)}" style="color: #000; text-decoration: underline;">View Map</a>
+        </td>
+      </tr>
+    `).join('');
+
+    return `
+      <div style="margin-bottom: 30px;">
+        <h3 style="font-weight: 500; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 16px;">
+          ${formatNeighborhood(neighborhoodId)} (${neighborhoodPlaces.length} new)
+        </h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f5f5f5;">
+              <th style="padding: 10px; text-align: left; font-weight: 500;">Place</th>
+              <th style="padding: 10px; text-align: center; font-weight: 500;">Rating</th>
+              <th style="padding: 10px; text-align: center; font-weight: 500;">Map</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${placesHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }).join('');
+
+  const html = `
+    <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 700px; margin: 0 auto;">
+      <h1 style="font-weight: 300; letter-spacing: 0.1em;">FLÂNEUR</h1>
+      <h2 style="font-weight: 400;">New Places Discovered</h2>
+
+      <p>The daily sync discovered <strong>${places.length} new place${places.length === 1 ? '' : 's'}</strong>:</p>
+
+      ${neighborhoodSections}
+
+      <div style="margin: 30px 0;">
+        <a href="${appUrl}" style="background: #000; color: #fff; padding: 12px 24px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.1em; font-size: 14px;">
+          View on Flâneur
+        </a>
+      </div>
+
+      <p style="color: #666; font-size: 14px;">
+        Discovered during the daily Google Places sync at ${new Date().toUTCString()}.
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to: adminEmail,
+    subject: `[Flâneur] ${places.length} New Place${places.length === 1 ? '' : 's'} Discovered`,
+    html,
+  });
+}
+
+// Notify admin about places that have closed (disappeared from Google Places)
+export async function notifyAdminClosedPlaces(places: {
+  id: string;
+  name: string;
+  address: string | null;
+  neighborhood_id: string;
+  category_name: string;
+  latitude: number | null;
+  longitude: number | null;
+}[]): Promise<boolean> {
+  const adminEmail = process.env.ADMIN_EMAIL;
+
+  if (!adminEmail) {
+    console.warn('No admin email configured');
+    return false;
+  }
+
+  if (places.length === 0) {
+    return true;
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+  // Group places by neighborhood
+  const byNeighborhood = places.reduce((acc, place) => {
+    const key = place.neighborhood_id;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(place);
+    return acc;
+  }, {} as Record<string, typeof places>);
+
+  const neighborhoodSections = Object.entries(byNeighborhood).map(([neighborhoodId, neighborhoodPlaces]) => {
+    const placesHtml = neighborhoodPlaces.map(place => `
+      <tr>
+        <td style="padding: 12px; border-bottom: 1px solid #eee;">
+          <strong>${place.name}</strong>
+          ${place.category_name ? `<br><span style="color: #666; font-size: 12px;">${place.category_name}</span>` : ''}
+          ${place.address ? `<br><span style="color: #888; font-size: 12px;">${place.address}</span>` : ''}
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">
+          <a href="${getMapsUrl(place)}" style="color: #000; text-decoration: underline;">View Map</a>
+        </td>
+      </tr>
+    `).join('');
+
+    return `
+      <div style="margin-bottom: 30px;">
+        <h3 style="font-weight: 500; border-bottom: 2px solid #dc2626; padding-bottom: 8px; margin-bottom: 16px;">
+          ${formatNeighborhood(neighborhoodId)} (${neighborhoodPlaces.length} closed)
+        </h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #fef2f2;">
+              <th style="padding: 10px; text-align: left; font-weight: 500;">Place</th>
+              <th style="padding: 10px; text-align: center; font-weight: 500;">Last Location</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${placesHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }).join('');
+
+  const html = `
+    <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 700px; margin: 0 auto;">
+      <h1 style="font-weight: 300; letter-spacing: 0.1em;">FLÂNEUR</h1>
+      <h2 style="font-weight: 400; color: #dc2626;">Places Recently Closed</h2>
+
+      <p>The following <strong>${places.length} place${places.length === 1 ? '' : 's'}</strong> no longer appear in Google Places and may have closed:</p>
+
+      ${neighborhoodSections}
+
+      <div style="margin: 30px 0;">
+        <a href="${appUrl}" style="background: #000; color: #fff; padding: 12px 24px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.1em; font-size: 14px;">
+          View on Flâneur
+        </a>
+      </div>
+
+      <p style="color: #666; font-size: 14px;">
+        Detected during the daily Google Places sync at ${new Date().toUTCString()}.
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to: adminEmail,
+    subject: `[Flâneur] ${places.length} Place${places.length === 1 ? '' : 's'} Recently Closed`,
+    html,
+  });
+}

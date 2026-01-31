@@ -18,7 +18,7 @@ export interface RawSocialPost {
   has_media: boolean;
 }
 
-// Neighborhood hashtags and keywords for monitoring
+// Hardcoded neighborhood keywords (for backwards compatibility and enrichment)
 export const NEIGHBORHOOD_KEYWORDS: Record<string, { hashtags: string[]; subreddits: string[]; keywords: string[] }> = {
   'nyc-west-village': {
     hashtags: ['#westvillage', '#westvillagenyc', '#greenwichvillage', '#wvnyc'],
@@ -46,6 +46,90 @@ export const NEIGHBORHOOD_KEYWORDS: Record<string, { hashtags: string[]; subredd
     keywords: ['paddington sydney', 'oxford street paddington', 'five ways paddington'],
   },
 };
+
+// City to subreddit mapping for neighborhoods without specific config
+const CITY_SUBREDDITS: Record<string, string[]> = {
+  'New York': ['r/nyc', 'r/newyorkcity'],
+  'San Francisco': ['r/sanfrancisco', 'r/bayarea'],
+  'Los Angeles': ['r/LosAngeles', 'r/LAlist'],
+  'Washington DC': ['r/washingtondc', 'r/nova'],
+  'Chicago': ['r/chicago'],
+  'Miami': ['r/Miami'],
+  'London': ['r/london'],
+  'Paris': ['r/paris'],
+  'Berlin': ['r/berlin', 'r/germany'],
+  'Amsterdam': ['r/Amsterdam'],
+  'Barcelona': ['r/Barcelona'],
+  'Milan': ['r/milan', 'r/italy'],
+  'Tokyo': ['r/tokyo', 'r/japanlife'],
+  'Hong Kong': ['r/HongKong'],
+  'Singapore': ['r/singapore'],
+  'Sydney': ['r/sydney', 'r/australia'],
+  'Melbourne': ['r/melbourne'],
+  'Toronto': ['r/toronto'],
+  'Dubai': ['r/dubai'],
+  'Tel Aviv': ['r/Israel', 'r/TelAviv'],
+  'Lisbon': ['r/lisboa', 'r/portugal'],
+  'Copenhagen': ['r/copenhagen', 'r/Denmark'],
+  'Stockholm': ['r/stockholm', 'r/sweden'],
+};
+
+/**
+ * Generate keywords config for any neighborhood (from database)
+ */
+export function generateNeighborhoodKeywords(
+  neighborhoodId: string,
+  neighborhoodName: string,
+  city: string
+): { hashtags: string[]; subreddits: string[]; keywords: string[] } {
+  // Check if we have hardcoded config
+  if (NEIGHBORHOOD_KEYWORDS[neighborhoodId]) {
+    return NEIGHBORHOOD_KEYWORDS[neighborhoodId];
+  }
+
+  // Generate from neighborhood name
+  const nameLower = neighborhoodName.toLowerCase();
+  const nameNoSpaces = nameLower.replace(/\s+/g, '');
+  const nameHyphenated = nameLower.replace(/\s+/g, '-');
+
+  return {
+    hashtags: [
+      `#${nameNoSpaces}`,
+      `#${nameHyphenated}`,
+      `#${nameNoSpaces}${city.toLowerCase().replace(/\s+/g, '')}`,
+    ],
+    subreddits: CITY_SUBREDDITS[city] || [],
+    keywords: [
+      neighborhoodName.toLowerCase(),
+      // Add variations
+      ...(neighborhoodName.includes(' ') ? [nameHyphenated] : []),
+    ],
+  };
+}
+
+/**
+ * Get keywords for a neighborhood from database
+ */
+export async function getNeighborhoodKeywordsFromDB(
+  supabase: any,
+  neighborhoodId: string
+): Promise<{ hashtags: string[]; subreddits: string[]; keywords: string[] } | null> {
+  // First check hardcoded
+  if (NEIGHBORHOOD_KEYWORDS[neighborhoodId]) {
+    return NEIGHBORHOOD_KEYWORDS[neighborhoodId];
+  }
+
+  // Fetch from database
+  const { data } = await supabase
+    .from('neighborhoods')
+    .select('name, city')
+    .eq('id', neighborhoodId)
+    .single();
+
+  if (!data) return null;
+
+  return generateNeighborhoodKeywords(neighborhoodId, data.name, data.city);
+}
 
 /**
  * Fetch posts from Reddit

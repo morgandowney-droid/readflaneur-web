@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { buildNeighborhoodId, formatNeighborhoodName, formatCityName } from '@/lib/neighborhood-utils';
 
 interface Category {
   id: string;
@@ -38,6 +39,8 @@ interface Listing {
   longitude: number | null;
   distance: number | null;
   is_featured: boolean;
+  isNew?: boolean;
+  isClosed?: boolean;
   category: {
     id: string;
     name: string;
@@ -117,17 +120,12 @@ export default function GuidesPage() {
   const [neighborhoodName, setNeighborhoodName] = useState('');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<'all' | 'new' | 'closed'>('all');
+  const [newCount, setNewCount] = useState(0);
+  const [closedCount, setClosedCount] = useState(0);
 
   // Build neighborhood ID from URL params
-  const cityPrefixMap: Record<string, string> = {
-    'new-york': 'nyc',
-    'san-francisco': 'sf',
-    'london': 'london',
-    'sydney': 'sydney',
-    'stockholm': 'stockholm',
-  };
-  const prefix = cityPrefixMap[city] || city;
-  const neighborhoodId = `${prefix}-${neighborhood}`;
+  const neighborhoodId = buildNeighborhoodId(city, neighborhood);
 
   useEffect(() => {
     fetchGuides(true);
@@ -137,7 +135,16 @@ export default function GuidesPage() {
     if (!initialLoading) {
       fetchGuides(false);
     }
-  }, [selectedCategory, selectedSubcategory, sortBy, userLocation]);
+  }, [selectedCategory, selectedSubcategory, sortBy, userLocation, filterStatus]);
+
+  // Reset filter if the selected filter type becomes unavailable
+  useEffect(() => {
+    if (filterStatus === 'new' && newCount === 0) {
+      setFilterStatus('all');
+    } else if (filterStatus === 'closed' && closedCount === 0) {
+      setFilterStatus('all');
+    }
+  }, [newCount, closedCount]);
 
   const requestLocation = () => {
     if (!navigator.geolocation) {
@@ -179,6 +186,9 @@ export default function GuidesPage() {
       if (userLocation) {
         url += `&lat=${userLocation.lat}&lng=${userLocation.lng}`;
       }
+      if (filterStatus !== 'all') {
+        url += `&filter=${filterStatus}`;
+      }
 
       const res = await fetch(url);
       const data = await res.json();
@@ -187,6 +197,8 @@ export default function GuidesPage() {
         setCategories(data.categories || []);
         setSubcategories(data.subcategories || []);
         setListings(data.listings || []);
+        setNewCount(data.newCount || 0);
+        setClosedCount(data.closedCount || 0);
 
         if (!neighborhoodName) {
           const formattedName = neighborhood
@@ -298,6 +310,45 @@ export default function GuidesPage() {
             {locationError && (
               <span className="text-xs text-red-500">{locationError}</span>
             )}
+
+            {/* Status Filters - only show if there are new or closed places */}
+            {(newCount > 0 || closedCount > 0) && (
+              <>
+                {/* Separator */}
+                <span className="text-neutral-200">|</span>
+
+                {newCount > 0 && (
+                  <button
+                    onClick={() => setFilterStatus(filterStatus === 'new' ? 'all' : 'new')}
+                    className={`px-3 py-1.5 text-xs transition-colors flex items-center gap-1 ${
+                      filterStatus === 'new'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-green-50 hover:bg-green-100 text-green-700 border border-green-200'
+                    }`}
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    New ({newCount})
+                  </button>
+                )}
+                {closedCount > 0 && (
+                  <button
+                    onClick={() => setFilterStatus(filterStatus === 'closed' ? 'all' : 'closed')}
+                    className={`px-3 py-1.5 text-xs transition-colors flex items-center gap-1 ${
+                      filterStatus === 'closed'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-red-50 hover:bg-red-100 text-red-700 border border-red-200'
+                    }`}
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Closed ({closedCount})
+                  </button>
+                )}
+              </>
+            )}
           </div>
 
           {/* Category Filter */}
@@ -403,11 +454,30 @@ export default function GuidesPage() {
                 <div className="p-3">
                   {/* Header */}
                   <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="text-sm font-medium leading-tight">{listing.name}</h3>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h3 className="text-sm font-medium leading-tight truncate">{listing.name}</h3>
+                      {listing.isNew && (
+                        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 uppercase tracking-wide shrink-0">
+                          New
+                        </span>
+                      )}
+                      {listing.isClosed && (
+                        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-red-100 text-red-700 uppercase tracking-wide shrink-0">
+                          Closed
+                        </span>
+                      )}
+                    </div>
                     {listing.price_range && (
                       <span className="text-xs text-neutral-400 shrink-0">{listing.price_range}</span>
                     )}
                   </div>
+
+                  {/* Place Type */}
+                  {(listing.subcategory?.name || listing.category?.name) && (
+                    <p className="text-[11px] text-neutral-400 mb-1">
+                      {listing.subcategory?.name || listing.category?.name}
+                    </p>
+                  )}
 
                   {/* Rating */}
                   <StarRating rating={listing.google_rating} reviewCount={listing.google_reviews_count} />

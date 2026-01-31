@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
-import { fetchAllEvents, NEIGHBORHOOD_COORDS, RawEvent } from '@/lib/event-sources';
+import { fetchAllEvents, getActiveNeighborhoods, RawEvent } from '@/lib/event-sources';
 
 /**
  * Tonight Picks Sync Cron Job
@@ -14,8 +14,6 @@ import { fetchAllEvents, NEIGHBORHOOD_COORDS, RawEvent } from '@/lib/event-sourc
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
-
-const NEIGHBORHOODS = Object.keys(NEIGHBORHOOD_COORDS);
 
 const TONIGHT_SYSTEM_PROMPT = `You are The Flâneur's events curator. You write enticing one-liners that make readers want to show up.
 
@@ -83,7 +81,20 @@ export async function GET(request: Request) {
     errors: [] as string[],
   };
 
-  for (const neighborhoodId of NEIGHBORHOODS) {
+  // Fetch active neighborhoods from database
+  const activeNeighborhoods = await getActiveNeighborhoods(supabase);
+
+  if (activeNeighborhoods.length === 0) {
+    return NextResponse.json({
+      success: true,
+      message: 'No active neighborhoods to process',
+      ...results,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  for (const neighborhood of activeNeighborhoods) {
+    const neighborhoodId = neighborhood.id;
     try {
       // Fetch events for next 7 days
       const events = await fetchAllEvents(neighborhoodId, 7);

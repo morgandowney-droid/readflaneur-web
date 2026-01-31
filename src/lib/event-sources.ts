@@ -4,7 +4,8 @@
  * Integrates with various event APIs to find local happenings.
  */
 
-// Neighborhood coordinates for event searches
+// Legacy hardcoded coordinates (kept for backwards compatibility)
+// New code should use getNeighborhoodCoords() which fetches from database
 export const NEIGHBORHOOD_COORDS: Record<string, { lat: number; lng: number; radius: number; city: string }> = {
   'nyc-west-village': { lat: 40.7336, lng: -74.0027, radius: 1, city: 'New York' },
   'london-notting-hill': { lat: 51.5117, lng: -0.2054, radius: 2, city: 'London' },
@@ -12,6 +13,57 @@ export const NEIGHBORHOOD_COORDS: Record<string, { lat: number; lng: number; rad
   'stockholm-ostermalm': { lat: 59.3380, lng: 18.0850, radius: 2, city: 'Stockholm' },
   'sydney-paddington': { lat: -33.8847, lng: 151.2265, radius: 2, city: 'Sydney' },
 };
+
+/**
+ * Get neighborhood coordinates from database
+ * Returns coords in the same format as NEIGHBORHOOD_COORDS
+ */
+export async function getNeighborhoodCoords(
+  supabase: any,
+  neighborhoodId: string
+): Promise<{ lat: number; lng: number; radius: number; city: string } | null> {
+  const { data } = await supabase
+    .from('neighborhoods')
+    .select('latitude, longitude, radius, city')
+    .eq('id', neighborhoodId)
+    .single();
+
+  if (!data || !data.latitude || !data.longitude) {
+    // Fall back to hardcoded if not in database
+    return NEIGHBORHOOD_COORDS[neighborhoodId] || null;
+  }
+
+  return {
+    lat: parseFloat(data.latitude),
+    lng: parseFloat(data.longitude),
+    radius: (data.radius || 1000) / 1000, // Convert meters to km
+    city: data.city,
+  };
+}
+
+/**
+ * Get all active neighborhoods from database
+ */
+export async function getActiveNeighborhoods(
+  supabase: any
+): Promise<{ id: string; lat: number; lng: number; radius: number; city: string }[]> {
+  const { data } = await supabase
+    .from('neighborhoods')
+    .select('id, latitude, longitude, radius, city')
+    .eq('is_active', true);
+
+  if (!data) return [];
+
+  return data
+    .filter((n: any) => n.latitude && n.longitude)
+    .map((n: any) => ({
+      id: n.id,
+      lat: parseFloat(n.latitude),
+      lng: parseFloat(n.longitude),
+      radius: (n.radius || 1000) / 1000,
+      city: n.city,
+    }));
+}
 
 export interface RawEvent {
   title: string;

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { NeighborhoodMap } from '@/components/maps/NeighborhoodMap';
+import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
 
 interface MapPageProps {
   params: Promise<{
@@ -13,17 +14,7 @@ interface MapPageProps {
 export async function generateMetadata({ params }: MapPageProps) {
   const { city, neighborhood } = await params;
   const supabase = await createClient();
-
-  const cityPrefixMap: Record<string, string> = {
-    'new-york': 'nyc',
-    'san-francisco': 'sf',
-    'london': 'london',
-    'sydney': 'sydney',
-    'stockholm': 'stockholm',
-  };
-
-  const prefix = cityPrefixMap[city] || city;
-  const neighborhoodId = `${prefix}-${neighborhood}`;
+  const neighborhoodId = buildNeighborhoodId(city, neighborhood);
 
   const { data } = await supabase
     .from('neighborhoods')
@@ -44,17 +35,7 @@ export async function generateMetadata({ params }: MapPageProps) {
 export default async function MapPage({ params }: MapPageProps) {
   const { city, neighborhood } = await params;
   const supabase = await createClient();
-
-  const cityPrefixMap: Record<string, string> = {
-    'new-york': 'nyc',
-    'san-francisco': 'sf',
-    'london': 'london',
-    'sydney': 'sydney',
-    'stockholm': 'stockholm',
-  };
-
-  const prefix = cityPrefixMap[city] || city;
-  const neighborhoodId = `${prefix}-${neighborhood}`;
+  const neighborhoodId = buildNeighborhoodId(city, neighborhood);
 
   const { data: neighborhoodData } = await supabase
     .from('neighborhoods')

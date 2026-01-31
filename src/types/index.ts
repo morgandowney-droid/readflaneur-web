@@ -1,8 +1,18 @@
+export type GlobalRegion = 'north-america' | 'europe' | 'asia-pacific' | 'middle-east';
+
 export interface Neighborhood {
   id: string;
   name: string;
   city: string;
   timezone: string;
+  country?: string;
+  region?: GlobalRegion;
+  latitude?: number;
+  longitude?: number;
+  radius?: number; // meters
+  is_active?: boolean;
+  is_coming_soon?: boolean;
+  seeded_at?: string; // When first seeded - places discovered after this are "new"
 }
 
 export interface Article {

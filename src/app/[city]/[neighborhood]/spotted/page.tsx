@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
 
 interface SpottedItem {
   id: string;
@@ -73,15 +74,7 @@ export default function SpottedPage() {
   const [filter, setFilter] = useState<string | null>(null);
   const [neighborhoodName, setNeighborhoodName] = useState('');
 
-  const cityPrefixMap: Record<string, string> = {
-    'new-york': 'nyc',
-    'san-francisco': 'sf',
-    'london': 'london',
-    'sydney': 'sydney',
-    'stockholm': 'stockholm',
-  };
-  const prefix = cityPrefixMap[city] || city;
-  const neighborhoodId = `${prefix}-${neighborhood}`;
+  const neighborhoodId = buildNeighborhoodId(city, neighborhood);
 
   useEffect(() => {
     fetchItems();

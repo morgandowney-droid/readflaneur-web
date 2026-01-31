@@ -8,14 +8,28 @@ export async function GET(request: NextRequest) {
   const categorySlug = searchParams.get('category');
   const subcategorySlug = searchParams.get('subcategory');
   const sortBy = searchParams.get('sort') || 'rating'; // 'rating', 'reviews', 'distance'
+  const filter = searchParams.get('filter'); // 'new', 'closed', or null
   const userLat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null;
   const userLng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null;
+
+  // Calculate date threshold for "new" places (30 days)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
   if (!neighborhoodId) {
     return NextResponse.json({ error: 'neighborhoodId required' }, { status: 400 });
   }
 
   const supabase = await createClient();
+
+  // Get neighborhood's seeded_at timestamp (for determining "new" places)
+  const { data: neighborhood } = await supabase
+    .from('neighborhoods')
+    .select('seeded_at')
+    .eq('id', neighborhoodId)
+    .single();
+
+  const seededAt = neighborhood?.seeded_at ? new Date(neighborhood.seeded_at) : null;
 
   // Get categories with listing counts for this neighborhood
   const { data: categories, error: catError } = await supabase
@@ -38,25 +52,50 @@ export async function GET(request: NextRequest) {
   let listingsQuery = supabase
     .from('guide_listings')
     .select('*')
-    .eq('neighborhood_id', neighborhoodId)
-    .eq('is_active', true);
+    .eq('neighborhood_id', neighborhoodId);
+
+  // Filter by active/closed status
+  if (filter === 'closed') {
+    // Show recently closed places (within last 30 days)
+    listingsQuery = listingsQuery
+      .eq('is_active', false)
+      .gte('closed_at', thirtyDaysAgo.toISOString());
+  } else {
+    // Default: show active places
+    listingsQuery = listingsQuery.eq('is_active', true);
+  }
+
+  // Filter for new places (discovered AFTER the neighborhood was seeded)
+  if (filter === 'new' && seededAt) {
+    listingsQuery = listingsQuery.gt('discovered_at', seededAt.toISOString());
+  }
 
   // Apply sorting based on parameter
-  switch (sortBy) {
-    case 'reviews':
-      listingsQuery = listingsQuery
-        .order('google_reviews_count', { ascending: false, nullsFirst: false })
-        .order('google_rating', { ascending: false, nullsFirst: false });
-      break;
-    case 'distance':
-      // Distance sorting will be done client-side after fetching
-      listingsQuery = listingsQuery
-        .order('name', { ascending: true });
-      break;
-    default: // 'rating'
-      listingsQuery = listingsQuery
-        .order('google_rating', { ascending: false, nullsFirst: false })
-        .order('google_reviews_count', { ascending: false, nullsFirst: false });
+  // When filtering by new/closed, sort by date (most recent first) by default
+  if (filter === 'new') {
+    listingsQuery = listingsQuery
+      .order('discovered_at', { ascending: false, nullsFirst: false });
+  } else if (filter === 'closed') {
+    listingsQuery = listingsQuery
+      .order('closed_at', { ascending: false, nullsFirst: false });
+  } else {
+    // Normal sorting options
+    switch (sortBy) {
+      case 'reviews':
+        listingsQuery = listingsQuery
+          .order('google_reviews_count', { ascending: false, nullsFirst: false })
+          .order('google_rating', { ascending: false, nullsFirst: false });
+        break;
+      case 'distance':
+        // Distance sorting will be done client-side after fetching
+        listingsQuery = listingsQuery
+          .order('name', { ascending: true });
+        break;
+      default: // 'rating'
+        listingsQuery = listingsQuery
+          .order('google_rating', { ascending: false, nullsFirst: false })
+          .order('google_reviews_count', { ascending: false, nullsFirst: false });
+    }
   }
 
   // Filter by category if specified
@@ -98,11 +137,22 @@ export async function GET(request: NextRequest) {
       distance = calculateDistance(centerLat, centerLng, listing.latitude, listing.longitude);
     }
 
+    // Determine if place is new (discovered AFTER the neighborhood was first seeded)
+    // Only mark as new if we have a seeded_at timestamp to compare against
+    const isNew = seededAt && listing.discovered_at &&
+      new Date(listing.discovered_at) > seededAt;
+
+    // Determine if place is recently closed
+    const isClosed = !listing.is_active && listing.closed_at &&
+      new Date(listing.closed_at) > thirtyDaysAgo;
+
     return {
       ...listing,
       category: categoryMap.get(listing.category_id) || null,
       subcategory: subcategoryMap.get(listing.subcategory_id) || null,
       distance, // Distance in km
+      isNew,
+      isClosed,
     };
   });
 
@@ -140,11 +190,33 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Count new places (discovered AFTER the neighborhood was seeded)
+  // Only count if we have a seeded_at timestamp
+  let newCount = 0;
+  if (seededAt) {
+    const { count } = await supabase
+      .from('guide_listings')
+      .select('*', { count: 'exact', head: true })
+      .eq('neighborhood_id', neighborhoodId)
+      .eq('is_active', true)
+      .gt('discovered_at', seededAt.toISOString());
+    newCount = count || 0;
+  }
+
+  const { count: closedCount } = await supabase
+    .from('guide_listings')
+    .select('*', { count: 'exact', head: true })
+    .eq('neighborhood_id', neighborhoodId)
+    .eq('is_active', false)
+    .gte('closed_at', thirtyDaysAgo.toISOString());
+
   return NextResponse.json({
     categories: categoriesWithCounts,
     subcategories: relevantSubcategories,
     listings: transformedListings,
     total: transformedListings.length,
+    newCount: newCount || 0,
+    closedCount: closedCount || 0,
     userLocation: userLat && userLng ? { lat: userLat, lng: userLng } : null,
   });
 }

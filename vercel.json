@@ -27,6 +27,14 @@
     {
       "path": "/api/cron/generate-digests",
       "schedule": "0 8 * * 1"
+    },
+    {
+      "path": "/api/cron/sync-news",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/generate-guide-digests",
+      "schedule": "0 10 * * 1"
     }
   ]
 }

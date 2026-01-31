@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import {
   fetchAllSocialPosts,
   filterSpottedContent,
-  NEIGHBORHOOD_KEYWORDS,
+  getNeighborhoodKeywordsFromDB,
   RawSocialPost,
 } from '@/lib/social-sources';
 
@@ -18,8 +18,6 @@ import {
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
-
-const NEIGHBORHOODS = Object.keys(NEIGHBORHOOD_KEYWORDS);
 
 const SPOTTED_SYSTEM_PROMPT = `You are The Flâneur's street correspondent. You rewrite tips and sightings in a consistent, anonymous voice.
 
@@ -88,7 +86,24 @@ export async function GET(request: Request) {
     errors: [] as string[],
   };
 
-  for (const neighborhoodId of NEIGHBORHOODS) {
+  // Fetch active neighborhoods from database
+  const { data: activeNeighborhoods } = await supabase
+    .from('neighborhoods')
+    .select('id, name')
+    .eq('is_active', true);
+
+  if (!activeNeighborhoods || activeNeighborhoods.length === 0) {
+    return NextResponse.json({
+      success: true,
+      message: 'No active neighborhoods to process',
+      ...results,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  for (const hood of activeNeighborhoods) {
+    const neighborhoodId = hood.id;
+    const neighborhoodName = hood.name;
     try {
       // Fetch social posts from last 6 hours
       const allPosts = await fetchAllSocialPosts(neighborhoodId, 6);
@@ -97,15 +112,6 @@ export async function GET(request: Request) {
       // Filter for spotted-worthy content
       const spottedPosts = filterSpottedContent(allPosts);
       results.posts_filtered += spottedPosts.length;
-
-      // Get neighborhood name
-      const { data: neighborhood } = await supabase
-        .from('neighborhoods')
-        .select('name')
-        .eq('id', neighborhoodId)
-        .single();
-
-      const neighborhoodName = neighborhood?.name || neighborhoodId;
 
       // In dry run mode, just collect sample posts
       if (isDryRun) {
