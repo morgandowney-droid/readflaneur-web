@@ -125,43 +125,53 @@ export async function searchPlaces(
   }
 
   const allPlaces: GooglePlaceNew[] = [];
+  const seenIds = new Set<string>();
 
-  // The new API allows multiple types in one request
-  try {
-    const response = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.shortFormattedAddress,places.location,places.rating,places.userRatingCount,places.priceLevel,places.types,places.businessStatus,places.websiteUri,places.nationalPhoneNumber,places.editorialSummary,places.photos',
-      },
-      body: JSON.stringify({
-        includedTypes: placeTypes.slice(0, 50), // API allows max 50 types
-        maxResultCount: 20,
-        locationRestriction: {
-          circle: {
-            center: {
-              latitude: center.lat,
-              longitude: center.lng,
-            },
-            radius: center.radius,
-          },
+  // Make two API calls with different ranking to get more diverse results
+  const rankPreferences = ['POPULARITY', 'DISTANCE'];
+
+  for (const rankPreference of rankPreferences) {
+    try {
+      const response = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+          'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.shortFormattedAddress,places.location,places.rating,places.userRatingCount,places.priceLevel,places.types,places.businessStatus,places.websiteUri,places.nationalPhoneNumber,places.editorialSummary,places.photos',
         },
-        rankPreference: 'POPULARITY',
-      }),
-    });
+        body: JSON.stringify({
+          includedTypes: placeTypes.slice(0, 50), // API allows max 50 types
+          maxResultCount: 20,
+          locationRestriction: {
+            circle: {
+              center: {
+                latitude: center.lat,
+                longitude: center.lng,
+              },
+              radius: center.radius,
+            },
+          },
+          rankPreference,
+        }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (data.places) {
-      // Filter out permanently closed places
-      const openPlaces = data.places.filter(
-        (p: GooglePlaceNew) => p.businessStatus !== 'CLOSED_PERMANENTLY'
-      );
-      allPlaces.push(...openPlaces);
+      if (data.places) {
+        // Filter out permanently closed places and deduplicate
+        for (const place of data.places) {
+          if (place.businessStatus !== 'CLOSED_PERMANENTLY' && !seenIds.has(place.id)) {
+            seenIds.add(place.id);
+            allPlaces.push(place);
+          }
+        }
+      }
+
+      // Small delay between API calls
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (error) {
+      console.error(`Error fetching places for ${categorySlug} (${rankPreference}):`, error);
     }
-  } catch (error) {
-    console.error(`Error fetching places for ${categorySlug}:`, error);
   }
 
   // Sort by rating and number of reviews
