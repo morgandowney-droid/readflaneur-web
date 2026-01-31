@@ -7,6 +7,8 @@ import { FeedList } from './FeedList';
 import { ViewToggle, FeedView } from './ViewToggle';
 import { BackToTopButton } from './BackToTopButton';
 
+const MAX_VISIBLE_CHIPS = 2;
+
 const VIEW_PREF_KEY = 'flaneur-feed-view';
 
 // Map neighborhood prefix to city slug for URLs
@@ -72,8 +74,14 @@ export function MultiFeed({
     />
   );
 
+  const [showAllNeighborhoods, setShowAllNeighborhoods] = useState(false);
   const isMultiple = neighborhoods.length > 1;
   const isEmpty = neighborhoods.length === 0;
+  const hasOverflow = neighborhoods.length > MAX_VISIBLE_CHIPS;
+  const visibleNeighborhoods = showAllNeighborhoods
+    ? neighborhoods
+    : neighborhoods.slice(0, MAX_VISIBLE_CHIPS);
+  const hiddenCount = neighborhoods.length - MAX_VISIBLE_CHIPS;
 
   return (
     <div>
@@ -82,11 +90,6 @@ export function MultiFeed({
         <div className="flex items-center justify-between mb-2">
           <div>
             <h1 className="text-xl font-light tracking-wide">Your Feed</h1>
-            {isMultiple && (
-              <p className="text-sm text-neutral-500">
-                Stories from {neighborhoods.map(n => n.name).join(', ')}
-              </p>
-            )}
             {isEmpty && (
               <p className="text-sm text-neutral-500">
                 Select neighborhoods to see local stories
@@ -97,7 +100,7 @@ export function MultiFeed({
         </div>
         {isMultiple && (
           <div className="flex items-center gap-2 flex-wrap mt-2">
-            {neighborhoods.map((hood) => (
+            {visibleNeighborhoods.map((hood) => (
               <Link
                 key={hood.id}
                 href={`/${getCitySlug(hood.id)}/${getNeighborhoodSlug(hood.id)}`}
@@ -106,6 +109,22 @@ export function MultiFeed({
                 {hood.name}
               </Link>
             ))}
+            {hasOverflow && !showAllNeighborhoods && (
+              <button
+                onClick={() => setShowAllNeighborhoods(true)}
+                className="text-xs tracking-widest uppercase border border-neutral-200 px-3 py-1.5 hover:border-black transition-colors bg-neutral-50"
+              >
+                +{hiddenCount} more
+              </button>
+            )}
+            {showAllNeighborhoods && hasOverflow && (
+              <button
+                onClick={() => setShowAllNeighborhoods(false)}
+                className="text-xs tracking-widest uppercase text-neutral-400 px-2 py-1.5 hover:text-black transition-colors"
+              >
+                Show less
+              </button>
+            )}
           </div>
         )}
         {reminder}

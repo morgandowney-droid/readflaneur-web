@@ -54,6 +54,20 @@ interface Listing {
 
 type SortOption = 'featured' | 'rating' | 'reviews' | 'distance';
 
+function getMapsUrl(listing: { name: string; address: string | null; latitude: number | null; longitude: number | null }): string {
+  // Build a search query using name + address for better results
+  const query = listing.address
+    ? `${listing.name}, ${listing.address}`
+    : listing.name;
+
+  // If we have coordinates, include them for precision
+  if (listing.latitude && listing.longitude) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}&center=${listing.latitude},${listing.longitude}`;
+  }
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
 function StarRating({ rating, reviewCount }: { rating: number | null; reviewCount: number | null }) {
   if (!rating) return null;
 
@@ -454,16 +468,16 @@ export default function GuidesPage() {
                         Call
                       </a>
                     )}
-                    {listing.latitude && listing.longitude && (
+                    {(listing.latitude && listing.longitude) || listing.address ? (
                       <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${listing.latitude},${listing.longitude}`}
+                        href={getMapsUrl(listing)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-neutral-400 hover:text-black transition-colors"
                       >
-                        Map
+                        Directions
                       </a>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>
