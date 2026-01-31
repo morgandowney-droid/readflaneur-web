@@ -55,7 +55,7 @@ interface Listing {
   } | null;
 }
 
-type SortOption = 'rating' | 'reviews' | 'distance';
+type SortOption = 'best' | 'rating' | 'reviews' | 'distance';
 
 function getMapsUrl(listing: { name: string; address: string | null; latitude: number | null; longitude: number | null }): string {
   // Build a search query using name + address for better results
@@ -114,7 +114,7 @@ export default function GuidesPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<SortOption>('rating');
+  const [sortBy, setSortBy] = useState<SortOption>('best');
   const [initialLoading, setInitialLoading] = useState(true);
   const [filterLoading, setFilterLoading] = useState(false);
   const [neighborhoodName, setNeighborhoodName] = useState('');
@@ -267,6 +267,16 @@ export default function GuidesPage() {
           {/* Sort Options */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-neutral-400 uppercase tracking-wide">Sort:</span>
+            <button
+              onClick={() => setSortBy('best')}
+              className={`px-3 py-1.5 text-xs transition-colors ${
+                sortBy === 'best'
+                  ? 'bg-black text-white'
+                  : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700'
+              }`}
+            >
+              Best
+            </button>
             <button
               onClick={() => setSortBy('rating')}
               className={`px-3 py-1.5 text-xs transition-colors ${

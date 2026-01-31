@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const neighborhoodId = searchParams.get('neighborhoodId');
   const categorySlug = searchParams.get('category');
   const subcategorySlug = searchParams.get('subcategory');
-  const sortBy = searchParams.get('sort') || 'rating'; // 'rating', 'reviews', 'distance'
+  const sortBy = searchParams.get('sort') || 'best'; // 'best', 'rating', 'reviews', 'distance'
   const filter = searchParams.get('filter'); // 'new', 'closed', or null
   const userLat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null;
   const userLng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null;
@@ -86,15 +86,21 @@ export async function GET(request: NextRequest) {
           .order('google_reviews_count', { ascending: false, nullsFirst: false })
           .order('google_rating', { ascending: false, nullsFirst: false });
         break;
+      case 'rating':
+        // Pure rating sort (still useful for finding hidden gems)
+        listingsQuery = listingsQuery
+          .order('google_rating', { ascending: false, nullsFirst: false })
+          .order('google_reviews_count', { ascending: false, nullsFirst: false });
+        break;
       case 'distance':
         // Distance sorting will be done client-side after fetching
         listingsQuery = listingsQuery
           .order('name', { ascending: true });
         break;
-      default: // 'rating'
+      default: // 'best' - weighted score combining rating and reviews
+        // Fetch all and sort client-side with weighted algorithm
         listingsQuery = listingsQuery
-          .order('google_rating', { ascending: false, nullsFirst: false })
-          .order('google_reviews_count', { ascending: false, nullsFirst: false });
+          .order('google_rating', { ascending: false, nullsFirst: false });
     }
   }
 
@@ -156,8 +162,23 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  // Sort by distance if requested and we have coordinates
-  if (sortBy === 'distance' && centerLat && centerLng) {
+  // Calculate weighted popularity score for each listing
+  // Formula: rating * log10(reviews + 1) - balances quality with popularity
+  // A 5.0 with 5 reviews = 3.9, a 4.8 with 500 reviews = 13.0
+  transformedListings = transformedListings.map((listing: any) => ({
+    ...listing,
+    popularityScore: listing.google_rating && listing.google_reviews_count
+      ? listing.google_rating * Math.log10(listing.google_reviews_count + 1)
+      : 0,
+  }));
+
+  // Sort based on selected option
+  if (sortBy === 'best') {
+    // Sort by weighted popularity score (rating * log(reviews))
+    transformedListings = transformedListings.sort((a: any, b: any) => {
+      return b.popularityScore - a.popularityScore;
+    });
+  } else if (sortBy === 'distance' && centerLat && centerLng) {
     transformedListings = transformedListings.sort((a: any, b: any) => {
       if (a.distance === null) return 1;
       if (b.distance === null) return -1;
