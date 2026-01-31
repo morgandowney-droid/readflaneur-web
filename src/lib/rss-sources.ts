@@ -26,19 +26,19 @@ export const RSS_FEEDS: RSSFeed[] = [
   // NEW YORK
   { url: 'https://gothamist.com/feed', name: 'Gothamist', city: 'New York', country: 'USA', category: 'news' },
   { url: 'https://ny.eater.com/rss/index.xml', name: 'Eater NY', city: 'New York', country: 'USA', category: 'food' },
-  { url: 'https://www.timeout.com/newyork/rss', name: 'Time Out NYC', city: 'New York', country: 'USA', category: 'lifestyle' },
   { url: 'https://www.6sqft.com/feed/', name: '6sqft', city: 'New York', country: 'USA', category: 'real-estate' },
-  { url: 'https://www.westvillagewestside.com/feed/', name: 'West Village West Side', city: 'New York', country: 'USA', category: 'news' },
+  { url: 'https://www.curbed.com/rss/index.xml', name: 'Curbed', city: 'New York', country: 'USA', category: 'real-estate' },
+  { url: 'https://www.grubstreet.com/feed/rss/index.xml', name: 'Grub Street', city: 'New York', country: 'USA', category: 'food' },
 
   // SAN FRANCISCO
   { url: 'https://sfist.com/feed/', name: 'SFist', city: 'San Francisco', country: 'USA', category: 'news' },
   { url: 'https://sf.eater.com/rss/index.xml', name: 'Eater SF', city: 'San Francisco', country: 'USA', category: 'food' },
-  { url: 'https://hoodline.com/atom/neighborhoods/pacific-heights', name: 'Hoodline', city: 'San Francisco', country: 'USA', category: 'news' },
+  { url: 'https://sfstandard.com/feed/', name: 'SF Standard', city: 'San Francisco', country: 'USA', category: 'news' },
 
   // LOS ANGELES
-  { url: 'https://laist.com/feed', name: 'LAist', city: 'Los Angeles', country: 'USA', category: 'news' },
+  { url: 'https://laist.com/rss', name: 'LAist', city: 'Los Angeles', country: 'USA', category: 'news' },
   { url: 'https://la.eater.com/rss/index.xml', name: 'Eater LA', city: 'Los Angeles', country: 'USA', category: 'food' },
-  { url: 'https://www.timeout.com/los-angeles/rss', name: 'Time Out LA', city: 'Los Angeles', country: 'USA', category: 'lifestyle' },
+  { url: 'https://www.lamag.com/feed/', name: 'Los Angeles Magazine', city: 'Los Angeles', country: 'USA', category: 'lifestyle' },
 
   // WASHINGTON DC
   { url: 'https://dcist.com/feed/', name: 'DCist', city: 'Washington DC', country: 'USA', category: 'news' },
@@ -56,8 +56,8 @@ export const RSS_FEEDS: RSSFeed[] = [
 
   // LONDON
   { url: 'https://london.eater.com/rss/index.xml', name: 'Eater London', city: 'London', country: 'UK', category: 'food' },
-  { url: 'https://www.timeout.com/london/rss', name: 'Time Out London', city: 'London', country: 'UK', category: 'lifestyle' },
   { url: 'https://londonist.com/feed', name: 'Londonist', city: 'London', country: 'UK', category: 'news' },
+  { url: 'https://www.standard.co.uk/rss', name: 'Evening Standard', city: 'London', country: 'UK', category: 'news' },
 
   // PARIS
   { url: 'https://paris.eater.com/rss/index.xml', name: 'Eater Paris', city: 'Paris', country: 'France', category: 'food' },
@@ -79,12 +79,12 @@ export const RSS_FEEDS: RSSFeed[] = [
   { url: 'https://www.tokyoweekender.com/feed/', name: 'Tokyo Weekender', city: 'Tokyo', country: 'Japan', category: 'lifestyle' },
 
   // SYDNEY
-  { url: 'https://www.timeout.com/sydney/rss', name: 'Time Out Sydney', city: 'Sydney', country: 'Australia', category: 'lifestyle' },
-  { url: 'https://www.broadsheet.com.au/sydney/rss', name: 'Broadsheet Sydney', city: 'Sydney', country: 'Australia', category: 'lifestyle' },
+  { url: 'https://www.smh.com.au/rss/feed.xml', name: 'Sydney Morning Herald', city: 'Sydney', country: 'Australia', category: 'news' },
+  { url: 'https://concreteplayground.com/sydney/feed', name: 'Concrete Playground Sydney', city: 'Sydney', country: 'Australia', category: 'lifestyle' },
 
   // MELBOURNE
-  { url: 'https://www.timeout.com/melbourne/rss', name: 'Time Out Melbourne', city: 'Melbourne', country: 'Australia', category: 'lifestyle' },
-  { url: 'https://www.broadsheet.com.au/melbourne/rss', name: 'Broadsheet Melbourne', city: 'Melbourne', country: 'Australia', category: 'lifestyle' },
+  { url: 'https://www.theage.com.au/rss/feed.xml', name: 'The Age', city: 'Melbourne', country: 'Australia', category: 'news' },
+  { url: 'https://concreteplayground.com/melbourne/feed', name: 'Concrete Playground Melbourne', city: 'Melbourne', country: 'Australia', category: 'lifestyle' },
 
   // TORONTO
   { url: 'https://www.blogto.com/feed/', name: 'blogTO', city: 'Toronto', country: 'Canada', category: 'news' },
@@ -110,7 +110,7 @@ export const RSS_FEEDS: RSSFeed[] = [
   { url: 'https://www.timeout.com/copenhagen/rss', name: 'Time Out Copenhagen', city: 'Copenhagen', country: 'Denmark', category: 'lifestyle' },
 
   // STOCKHOLM
-  { url: 'https://www.timeout.com/stockholm/rss', name: 'Time Out Stockholm', city: 'Stockholm', country: 'Sweden', category: 'lifestyle' },
+  { url: 'https://www.thelocal.se/feed/', name: 'The Local Sweden', city: 'Stockholm', country: 'Sweden', category: 'news' },
 
   // MILAN
   { url: 'https://www.timeout.com/milan/rss', name: 'Time Out Milan', city: 'Milan', country: 'Italy', category: 'lifestyle' },

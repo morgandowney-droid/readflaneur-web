@@ -83,6 +83,17 @@ async function main() {
     let totalUpdated = 0;
     const syncTimestamp = new Date().toISOString();
 
+    // Set seeded_at BEFORE inserting places (use 1 second earlier to ensure discovered_at > seeded_at is false)
+    // This prevents all initially seeded places from showing as "New"
+    if (!neighborhood.seeded_at) {
+      const seededAtTime = new Date(Date.now() - 1000).toISOString(); // 1 second ago
+      await supabase
+        .from('neighborhoods')
+        .update({ seeded_at: seededAtTime })
+        .eq('id', neighborhoodId);
+      console.log(`  Set seeded_at to ${seededAtTime}`);
+    }
+
     for (const categorySlug of CATEGORIES) {
       const categoryId = categoryMap.get(categorySlug);
       if (!categoryId) {
@@ -130,8 +141,6 @@ async function main() {
             google_reviews_count: place.userRatingCount || null,
             google_photo_url: photoUrl,
             google_photo_reference: photoReference,
-            latitude: place.location?.latitude || null,
-            longitude: place.location?.longitude || null,
             updated_at: new Date().toISOString(),
           };
 
@@ -143,20 +152,28 @@ async function main() {
             .single();
 
           if (existing) {
-            await supabase
+            const { error: updateError } = await supabase
               .from('guide_listings')
               .update({ ...listingData, last_seen_at: syncTimestamp })
               .eq('id', existing.id);
-            updated++;
+            if (updateError) {
+              console.error(`    Update error: ${updateError.message}`);
+            } else {
+              updated++;
+            }
           } else {
-            await supabase
+            const { error: insertError } = await supabase
               .from('guide_listings')
               .insert({
                 ...listingData,
                 discovered_at: syncTimestamp,
                 last_seen_at: syncTimestamp,
               });
-            added++;
+            if (insertError) {
+              console.error(`    Insert error: ${insertError.message}`);
+            } else {
+              added++;
+            }
           }
         }
 
@@ -172,18 +189,12 @@ async function main() {
     }
 
     // Mark neighborhood as active
-    const updateData: Record<string, any> = {
-      is_active: true,
-      is_coming_soon: false,
-    };
-
-    if (!neighborhood.seeded_at) {
-      updateData.seeded_at = syncTimestamp;
-    }
-
     await supabase
       .from('neighborhoods')
-      .update(updateData)
+      .update({
+        is_active: true,
+        is_coming_soon: false,
+      })
       .eq('id', neighborhoodId);
 
     console.log(`\n✓ ${neighborhoodId}: ${totalAdded} added, ${totalUpdated} updated`);
