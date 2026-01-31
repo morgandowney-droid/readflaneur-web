@@ -5,14 +5,31 @@
 > **See also:** `../flaneur/CLAUDE.md` for the full project overview and mobile app details.
 
 ## Current Status
-**Last Updated:** 2026-01-30
+**Last Updated:** 2026-01-31
 
-### Recent Changes (2026-01-30)
+### Recent Changes (2026-01-31)
+
+**Google OAuth Now Live:**
+- Google login working at https://readflaneur.com/login
+- OAuth configured in Supabase + Google Cloud Console
+- Users can sign in/up with Google
+
+**Vercel Pro Activated:**
+- Upgraded from Hobby to Pro ($20/mo)
+- 30-minute cron intervals now supported
+- Deployed to production
+
+**Content Pipeline Running:**
+- ~15 new articles generated via AI
+- Sydney Paddington: 44 sources → ~5 articles
+- Stockholm Östermalm: 18 sources → ~8 articles
+- Backend API fully configured with env vars
+
+### Previous Changes (2026-01-30)
 
 **Google & Apple OAuth Login:**
 - Added social login buttons to `/login` and `/signup` pages
 - OAuth callback handler at `/api/auth/callback`
-- Requires Supabase OAuth provider configuration
 - Files: `src/app/login/page.tsx`, `src/app/signup/page.tsx`, `src/app/api/auth/callback/route.ts`
 
 **Luxury Ads Added:**
@@ -48,36 +65,12 @@
 - Users can select interests for personalized feed
 - Ad targeting by section
 - Tables: `sections`, `article_sections`, `user_section_interests`, `ad_sections`
-- Migration: `flaneur/supabase/migrations/012_sections_and_interests.sql`
-
-**Neighborhood Guide Improvements:**
-- Google star ratings and review counts
-- Google Places photos
-- "Near Me" sorting with geolocation
-- Sort options: Featured, Top Rated, Most Reviewed, Near Me
-- Services category with 11 subcategories (Nanny, Personal Chefs, etc.)
-- Compact 3-column grid layout
-- File: `src/app/[city]/[neighborhood]/guides/page.tsx`
-
-**Automated Cron Jobs:**
-| Job | Schedule | Purpose |
-|-----|----------|---------|
-| sync-guides | Daily 3 AM UTC | Sync Google Places data |
-| sync-tonight | Daily 2 PM UTC | Fetch & curate events |
-| sync-spotted | Every 30 min* | Monitor social media |
-| process-property-watch | Daily 7 AM UTC | Process user submissions |
-| generate-digests | Weekly Mon 8 AM UTC | Weekly property summaries |
-
-*Requires Vercel Pro ($20/mo) for sub-daily crons
-
-**Data Pipeline Libraries:**
-- `src/lib/event-sources.ts` - Eventbrite, RSS, Google Places event fetching
-- `src/lib/social-sources.ts` - Reddit, Twitter, Google Reviews monitoring
 
 ### What's Live
 - **Website:** https://readflaneur.com
-- **Deployed via:** Vercel
+- **Backend API:** https://flaneur-azure.vercel.app
 - **GitHub:** https://github.com/morgandowney-droid/readflaneur-web
+- **Google OAuth:** Working
 
 ## Project Structure
 
@@ -168,7 +161,17 @@ EVENTBRITE_API_KEY=              # Events (API deprecated)
 TWITTER_BEARER_TOKEN=            # Spotted tweets ($200/mo)
 ```
 
-## Database Tables (New)
+## Automated Cron Jobs
+
+| Job | Schedule | Purpose |
+|-----|----------|---------|
+| sync-guides | Daily 3 AM UTC | Sync Google Places data |
+| sync-tonight | Daily 2 PM UTC | Fetch & curate events |
+| sync-spotted | Every 30 min | Monitor social media |
+| process-property-watch | Daily 7 AM UTC | Process user submissions |
+| generate-digests | Weekly Mon 8 AM UTC | Weekly property summaries |
+
+## Database Tables
 
 ### Engagement Features
 - `tonight_picks` - Curated events
@@ -188,14 +191,17 @@ TWITTER_BEARER_TOKEN=            # Spotted tweets ($200/mo)
 - `user_section_interests` - User preferences
 - `ad_sections` - Ad targeting by section
 
-## OAuth Setup (Pending)
+## Completed Setup
 
-To enable Google/Apple login:
+- [x] Google OAuth configured and working
+- [x] Vercel Pro activated ($20/mo)
+- [x] All environment variables set
+- [x] Content pipeline tested
+- [x] ~15 articles generated
 
-1. **Supabase:** https://supabase.com/dashboard/project/ujpdhueytlfqkwzvqetd/auth/providers
-2. **Google:** Create OAuth credentials at https://console.cloud.google.com/apis/credentials
-   - Redirect URI: `https://ujpdhueytlfqkwzvqetd.supabase.co/auth/v1/callback`
-3. **Apple:** Requires Apple Developer account ($99/yr)
+## Pending Setup
+
+1. **Apple OAuth** - Requires Apple Developer account ($99/yr)
 
 ## Deployment
 
@@ -204,8 +210,6 @@ cd C:\Users\morga\Desktop\readflaneur-web
 git add . && git commit -m "message" && git push origin master
 npx vercel --prod
 ```
-
-**Note:** Vercel Hobby plan limits crons to once daily. Upgrade to Pro ($20/mo) for 30-minute spotted sync.
 
 ## Related Project
 
