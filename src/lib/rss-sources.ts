@@ -249,7 +249,7 @@ async function getFeedsFromDatabase(city: string): Promise<RSSFeed[] | null> {
       return null;
     }
 
-    return data.map((source: DBRSSSource) => ({
+    return data.map((source) => ({
       url: source.feed_url,
       name: source.name,
       city: source.city,
