@@ -11,6 +11,17 @@
 
 ### Recent Changes (2026-02-01)
 
+**Playwright MCP for UI/UX Testing:**
+- Configured Playwright MCP server for browser automation
+- Enables interactive page testing, screenshots, visual verification
+- Setup: `claude mcp add --transport stdio playwright -- npx -y @microsoft/playwright-mcp`
+
+**Guide Cards with Rank Numbers (Deployed):**
+- Each place card shows rank (1, 2, 3...) based on sort order
+- Number overlaid on photo for cards with images
+- Number inline with name for cards without images
+- Live at https://readflaneur.com/stockholm/ostermalm/guides
+
 **Neighborhood Expansion System:**
 - Expanded from 5 to 91 neighborhoods globally
 - 84 neighborhoods being batch-seeded with Google Places data
@@ -37,11 +48,6 @@ npx tsx scripts/seed-neighborhoods.ts nyc-tribeca la-beverly-hills
 - View/add/edit/delete RSS feed sources
 - Color-coded status: green (good), yellow (low), red (none)
 - Database table: `rss_sources` (50+ feeds pre-populated)
-
-**Guide Cards with Rank Numbers:**
-- Each place card shows rank (1, 2, 3...) based on sort order
-- Number on photo for cards with images
-- Number inline with name for cards without images
 
 **New Files:**
 - `scripts/seed-all-neighborhoods.ts` - Batch seeder
@@ -164,6 +170,26 @@ GEMINI_API_KEY=                  # Primary image generation (on flaneur API)
 cd C:\Users\morga\Desktop\readflaneur-web
 git add . && git commit -m "message" && git push origin master
 npx vercel --prod
+```
+
+## Claude Code Setup
+
+**MCP Servers Configured:**
+- **Playwright MCP** - Browser automation, screenshots, UI testing
+- **Supermemory** - Persistent context across sessions
+- **Frontend Design** - Polished UI code generation
+
+**Useful Commands:**
+```bash
+# UI screenshot
+npx playwright screenshot --wait-for-timeout=5000 [url] [output.png]
+
+# Deploy to production
+git add . && git commit -m "message" && git push origin master
+npx vercel --prod
+
+# Check MCP status
+/mcp
 ```
 
 ## Related Project
