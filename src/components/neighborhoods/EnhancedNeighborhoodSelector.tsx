@@ -1,0 +1,712 @@
+'use client';
+
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { Neighborhood, GlobalRegion } from '@/types';
+import Link from 'next/link';
+
+// City gradient configurations - each city has a characteristic color palette
+const CITY_GRADIENTS: Record<string, string> = {
+  // North America
+  'New York': 'from-slate-900 via-zinc-800 to-neutral-700',
+  'San Francisco': 'from-orange-400 via-amber-500 to-rose-400',
+  'Los Angeles': 'from-purple-400 via-pink-400 to-orange-300',
+  'Chicago': 'from-sky-800 via-blue-700 to-indigo-800',
+  'Miami': 'from-cyan-400 via-teal-400 to-emerald-400',
+  'Washington DC': 'from-slate-600 via-stone-500 to-zinc-600',
+  'Toronto': 'from-red-600 via-rose-500 to-red-700',
+  // Europe
+  'London': 'from-slate-500 via-gray-400 to-stone-500',
+  'Paris': 'from-rose-300 via-pink-200 to-amber-100',
+  'Berlin': 'from-zinc-700 via-neutral-600 to-stone-700',
+  'Amsterdam': 'from-orange-500 via-amber-400 to-yellow-500',
+  'Stockholm': 'from-blue-400 via-sky-300 to-cyan-400',
+  'Copenhagen': 'from-indigo-400 via-blue-400 to-sky-400',
+  'Barcelona': 'from-amber-500 via-orange-400 to-red-500',
+  'Milan': 'from-emerald-600 via-teal-500 to-cyan-600',
+  'Lisbon': 'from-yellow-400 via-amber-400 to-blue-500',
+  // Asia Pacific
+  'Tokyo': 'from-pink-500 via-fuchsia-500 to-purple-600',
+  'Hong Kong': 'from-red-500 via-rose-400 to-pink-500',
+  'Singapore': 'from-emerald-500 via-green-400 to-teal-500',
+  'Sydney': 'from-sky-500 via-blue-400 to-indigo-400',
+  'Melbourne': 'from-violet-500 via-purple-400 to-fuchsia-400',
+  // Middle East
+  'Dubai': 'from-amber-500 via-yellow-400 to-orange-400',
+  'Tel Aviv': 'from-blue-500 via-sky-400 to-cyan-400',
+};
+
+const REGION_DATA: Record<GlobalRegion, { label: string; icon: string; description: string }> = {
+  'north-america': {
+    label: 'North America',
+    icon: '◉',
+    description: 'New York to San Francisco'
+  },
+  'europe': {
+    label: 'Europe',
+    icon: '◈',
+    description: 'London to Barcelona'
+  },
+  'asia-pacific': {
+    label: 'Asia Pacific',
+    icon: '◇',
+    description: 'Tokyo to Sydney'
+  },
+  'middle-east': {
+    label: 'Middle East',
+    icon: '◆',
+    description: 'Dubai to Tel Aviv'
+  },
+};
+
+const PREFS_KEY = 'flaneur-neighborhood-preferences';
+
+interface EnhancedNeighborhoodSelectorProps {
+  neighborhoods: Neighborhood[];
+  articleCounts?: Record<string, number>; // neighborhood_id -> article count
+  mode?: 'page' | 'modal';
+  onSelectionChange?: (selectedIds: string[]) => void;
+  onClose?: () => void;
+}
+
+interface CityData {
+  name: string;
+  country: string;
+  region: GlobalRegion;
+  neighborhoods: Neighborhood[];
+  totalArticles: number;
+}
+
+export function EnhancedNeighborhoodSelector({
+  neighborhoods,
+  articleCounts = {},
+  mode = 'page',
+  onSelectionChange,
+  onClose,
+}: EnhancedNeighborhoodSelectorProps) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [userId, setUserId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedRegions, setExpandedRegions] = useState<Set<string>>(new Set(['europe', 'north-america']));
+  const [expandedCities, setExpandedCities] = useState<Set<string>>(new Set());
+  const [activeRegion, setActiveRegion] = useState<GlobalRegion | 'all'>('all');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Load preferences on mount
+  useEffect(() => {
+    const loadPreferences = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        setUserId(session.user.id);
+        const { data } = await supabase
+          .from('user_neighborhood_preferences')
+          .select('neighborhood_id')
+          .eq('user_id', session.user.id);
+
+        if (data && data.length > 0) {
+          const ids = new Set(data.map(p => p.neighborhood_id));
+          setSelected(ids);
+          onSelectionChange?.(Array.from(ids));
+        }
+      } else {
+        const stored = localStorage.getItem(PREFS_KEY);
+        if (stored) {
+          try {
+            const ids = new Set(JSON.parse(stored) as string[]);
+            setSelected(ids);
+            onSelectionChange?.(Array.from(ids));
+          } catch {
+            // Invalid stored data
+          }
+        }
+      }
+    };
+
+    loadPreferences();
+  }, []);
+
+  // Keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '/' && !searchQuery) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      if (e.key === 'Escape') {
+        if (searchQuery) {
+          setSearchQuery('');
+        } else if (onClose) {
+          onClose();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [searchQuery, onClose]);
+
+  // Organize neighborhoods by region -> city
+  const organizedData = useMemo(() => {
+    const byRegion: Record<GlobalRegion, CityData[]> = {
+      'north-america': [],
+      'europe': [],
+      'asia-pacific': [],
+      'middle-east': [],
+    };
+
+    const cityMap = new Map<string, CityData>();
+
+    neighborhoods.forEach(n => {
+      const key = `${n.city}-${n.country}`;
+      if (!cityMap.has(key)) {
+        cityMap.set(key, {
+          name: n.city,
+          country: n.country || '',
+          region: n.region || 'europe',
+          neighborhoods: [],
+          totalArticles: 0,
+        });
+      }
+      const city = cityMap.get(key)!;
+      city.neighborhoods.push(n);
+      city.totalArticles += articleCounts[n.id] || 0;
+    });
+
+    cityMap.forEach(city => {
+      if (byRegion[city.region]) {
+        byRegion[city.region].push(city);
+      }
+    });
+
+    // Sort cities by article count (most active first)
+    Object.values(byRegion).forEach(cities => {
+      cities.sort((a, b) => b.totalArticles - a.totalArticles);
+    });
+
+    return byRegion;
+  }, [neighborhoods, articleCounts]);
+
+  // Filter based on search
+  const filteredData = useMemo(() => {
+    if (!searchQuery.trim()) return organizedData;
+
+    const query = searchQuery.toLowerCase();
+    const result: Record<GlobalRegion, CityData[]> = {
+      'north-america': [],
+      'europe': [],
+      'asia-pacific': [],
+      'middle-east': [],
+    };
+
+    Object.entries(organizedData).forEach(([region, cities]) => {
+      cities.forEach(city => {
+        const matchingNeighborhoods = city.neighborhoods.filter(n =>
+          n.name.toLowerCase().includes(query) ||
+          n.city.toLowerCase().includes(query) ||
+          (n.country && n.country.toLowerCase().includes(query))
+        );
+
+        if (matchingNeighborhoods.length > 0) {
+          result[region as GlobalRegion].push({
+            ...city,
+            neighborhoods: matchingNeighborhoods,
+          });
+        }
+      });
+    });
+
+    return result;
+  }, [organizedData, searchQuery]);
+
+  // Get regions to display based on filter
+  const displayRegions = useMemo(() => {
+    if (activeRegion === 'all') {
+      return Object.keys(filteredData) as GlobalRegion[];
+    }
+    return [activeRegion];
+  }, [activeRegion, filteredData]);
+
+  const toggleNeighborhood = async (id: string) => {
+    setSaving(true);
+    const newSelected = new Set(selected);
+
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+
+    setSelected(newSelected);
+    onSelectionChange?.(Array.from(newSelected));
+
+    if (userId) {
+      const supabase = createClient();
+      if (selected.has(id)) {
+        await supabase
+          .from('user_neighborhood_preferences')
+          .delete()
+          .eq('user_id', userId)
+          .eq('neighborhood_id', id);
+      } else {
+        await supabase
+          .from('user_neighborhood_preferences')
+          .insert({ user_id: userId, neighborhood_id: id });
+      }
+    } else {
+      localStorage.setItem(PREFS_KEY, JSON.stringify(Array.from(newSelected)));
+    }
+
+    setSaving(false);
+  };
+
+  const selectAllInCity = async (cityNeighborhoods: Neighborhood[]) => {
+    setSaving(true);
+    const ids = cityNeighborhoods.filter(n => !n.is_coming_soon).map(n => n.id);
+    const newSelected = new Set([...selected, ...ids]);
+
+    setSelected(newSelected);
+    onSelectionChange?.(Array.from(newSelected));
+
+    if (userId) {
+      const supabase = createClient();
+      const toAdd = ids.filter(id => !selected.has(id));
+      if (toAdd.length > 0) {
+        await supabase
+          .from('user_neighborhood_preferences')
+          .upsert(toAdd.map(id => ({ user_id: userId, neighborhood_id: id })));
+      }
+    } else {
+      localStorage.setItem(PREFS_KEY, JSON.stringify(Array.from(newSelected)));
+    }
+
+    setSaving(false);
+  };
+
+  const toggleRegion = (region: GlobalRegion) => {
+    const newExpanded = new Set(expandedRegions);
+    if (newExpanded.has(region)) {
+      newExpanded.delete(region);
+    } else {
+      newExpanded.add(region);
+    }
+    setExpandedRegions(newExpanded);
+  };
+
+  const toggleCity = (cityKey: string) => {
+    const newExpanded = new Set(expandedCities);
+    if (newExpanded.has(cityKey)) {
+      newExpanded.delete(cityKey);
+    } else {
+      newExpanded.add(cityKey);
+    }
+    setExpandedCities(newExpanded);
+  };
+
+  const getCityUrl = (city: CityData, neighborhood: Neighborhood) => {
+    const citySlug = city.name.toLowerCase().replace(/\s+/g, '-');
+    const neighborhoodSlug = neighborhood.id.split('-').slice(1).join('-');
+    return `/${citySlug}/${neighborhoodSlug}`;
+  };
+
+  const totalSelected = selected.size;
+  const totalNeighborhoods = neighborhoods.filter(n => !n.is_coming_soon).length;
+
+  return (
+    <div className={`${mode === 'modal' ? 'max-h-[80vh] overflow-hidden flex flex-col' : ''}`}>
+      {/* Header */}
+      <div className={`${mode === 'modal' ? 'px-6 pt-6 pb-4 border-b border-neutral-200' : 'mb-8'}`}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-light tracking-tight text-neutral-900">
+              {mode === 'modal' ? 'Select Neighborhoods' : 'Neighborhoods'}
+            </h2>
+            <p className="mt-1 text-neutral-500 text-sm">
+              {totalSelected > 0 ? (
+                <span className="text-neutral-900 font-medium">{totalSelected} selected</span>
+              ) : (
+                'Choose neighborhoods to personalize your feed'
+              )}
+              <span className="mx-2 text-neutral-300">·</span>
+              <span>{totalNeighborhoods} available</span>
+            </p>
+          </div>
+          {mode === 'modal' && onClose && (
+            <button
+              onClick={onClose}
+              className="p-2 -m-2 text-neutral-400 hover:text-neutral-900 transition-colors"
+              aria-label="Close"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Search Bar */}
+        <div className="mt-4 relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            ref={searchInputRef}
+            type="text"
+            placeholder="Search neighborhoods, cities, or countries..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-11 pr-12 py-3 text-sm bg-neutral-100 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:bg-white transition-all placeholder:text-neutral-400"
+          />
+          {searchQuery ? (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-0 pr-4 flex items-center text-neutral-400 hover:text-neutral-900"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          ) : (
+            <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+              <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-xs text-neutral-400 bg-neutral-200 rounded">
+                /
+              </kbd>
+            </div>
+          )}
+        </div>
+
+        {/* Region Quick Filters */}
+        {!searchQuery && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              onClick={() => setActiveRegion('all')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+                activeRegion === 'all'
+                  ? 'bg-neutral-900 text-white'
+                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+              }`}
+            >
+              All Regions
+            </button>
+            {(Object.keys(REGION_DATA) as GlobalRegion[]).map(region => (
+              <button
+                key={region}
+                onClick={() => setActiveRegion(region)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+                  activeRegion === region
+                    ? 'bg-neutral-900 text-white'
+                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                }`}
+              >
+                {REGION_DATA[region].label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className={`${mode === 'modal' ? 'flex-1 overflow-y-auto px-6 py-4' : ''}`}>
+        {/* Search Results View */}
+        {searchQuery && (
+          <div className="mb-4">
+            <p className="text-xs text-neutral-500 mb-4">
+              {Object.values(filteredData).flat().reduce((acc, city) => acc + city.neighborhoods.length, 0)} results for "{searchQuery}"
+            </p>
+          </div>
+        )}
+
+        {/* Regions */}
+        <div className="space-y-8">
+          {displayRegions.map(region => {
+            const cities = filteredData[region];
+            if (cities.length === 0) return null;
+
+            const regionData = REGION_DATA[region];
+            const isExpanded = expandedRegions.has(region) || searchQuery.length > 0;
+            const regionNeighborhoodCount = cities.reduce((acc, c) => acc + c.neighborhoods.length, 0);
+
+            return (
+              <div key={region} className="group">
+                {/* Region Header */}
+                <button
+                  onClick={() => toggleRegion(region)}
+                  className="w-full flex items-center justify-between py-3 border-b border-neutral-200 hover:border-neutral-400 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg text-neutral-300 group-hover:text-neutral-500 transition-colors">
+                      {regionData.icon}
+                    </span>
+                    <div className="text-left">
+                      <h3 className="text-sm font-semibold tracking-wide uppercase text-neutral-900">
+                        {regionData.label}
+                      </h3>
+                      <p className="text-xs text-neutral-400 mt-0.5">{regionData.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-neutral-400">
+                      {regionNeighborhoodCount} neighborhoods
+                    </span>
+                    <svg
+                      className={`w-4 h-4 text-neutral-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </button>
+
+                {/* Cities Grid */}
+                <div
+                  className={`grid gap-4 mt-4 transition-all duration-300 ${
+                    isExpanded ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 opacity-100' : 'hidden opacity-0'
+                  }`}
+                >
+                  {cities.map(city => {
+                    const cityKey = `${city.name}-${city.country}`;
+                    const isCityExpanded = expandedCities.has(cityKey) || searchQuery.length > 0;
+                    const gradient = CITY_GRADIENTS[city.name] || 'from-neutral-600 to-neutral-800';
+                    const selectedInCity = city.neighborhoods.filter(n => selected.has(n.id)).length;
+                    const availableInCity = city.neighborhoods.filter(n => !n.is_coming_soon).length;
+
+                    return (
+                      <div
+                        key={cityKey}
+                        className={`relative overflow-hidden rounded-xl border transition-all duration-200 ${
+                          selectedInCity > 0
+                            ? 'border-neutral-900 shadow-lg'
+                            : 'border-neutral-200 hover:border-neutral-300 hover:shadow-md'
+                        }`}
+                      >
+                        {/* City Card Header */}
+                        <button
+                          onClick={() => toggleCity(cityKey)}
+                          className="w-full text-left"
+                        >
+                          <div className={`relative h-24 bg-gradient-to-br ${gradient} overflow-hidden`}>
+                            {/* Decorative pattern */}
+                            <div className="absolute inset-0 opacity-10">
+                              <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <pattern id={`grid-${cityKey}`} width="10" height="10" patternUnits="userSpaceOnUse">
+                                  <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5"/>
+                                </pattern>
+                                <rect width="100" height="100" fill={`url(#grid-${cityKey})`}/>
+                              </svg>
+                            </div>
+
+                            {/* City name overlay */}
+                            <div className="absolute inset-0 flex flex-col justify-end p-4">
+                              <h4 className="text-lg font-semibold text-white drop-shadow-lg">
+                                {city.name}
+                              </h4>
+                              <p className="text-xs text-white/70">{city.country}</p>
+                            </div>
+
+                            {/* Selection indicator */}
+                            {selectedInCity > 0 && (
+                              <div className="absolute top-3 right-3 px-2 py-1 bg-white rounded-full text-xs font-medium text-neutral-900 shadow-lg">
+                                {selectedInCity}/{availableInCity}
+                              </div>
+                            )}
+
+                            {/* Trending indicator */}
+                            {city.totalArticles > 50 && (
+                              <div className="absolute top-3 left-3 px-2 py-1 bg-amber-400 rounded-full text-xs font-medium text-amber-900">
+                                Popular
+                              </div>
+                            )}
+                          </div>
+                        </button>
+
+                        {/* Neighborhoods List */}
+                        <div
+                          className={`bg-white transition-all duration-200 ${
+                            isCityExpanded ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+                          }`}
+                        >
+                          <div className="p-3 space-y-1">
+                            {/* Select All for City */}
+                            <div className="flex items-center justify-between pb-2 mb-2 border-b border-neutral-100">
+                              <span className="text-xs text-neutral-400">
+                                {city.neighborhoods.length} neighborhood{city.neighborhoods.length !== 1 ? 's' : ''}
+                              </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  selectAllInCity(city.neighborhoods);
+                                }}
+                                disabled={saving}
+                                className="text-xs text-neutral-500 hover:text-neutral-900 font-medium disabled:opacity-50"
+                              >
+                                Select all
+                              </button>
+                            </div>
+
+                            {/* Neighborhood Pills */}
+                            <div className="flex flex-wrap gap-1.5">
+                              {city.neighborhoods.map((neighborhood, idx) => {
+                                const isSelected = selected.has(neighborhood.id);
+                                const articleCount = articleCounts[neighborhood.id] || 0;
+
+                                return (
+                                  <button
+                                    key={neighborhood.id}
+                                    onClick={() => toggleNeighborhood(neighborhood.id)}
+                                    disabled={saving || neighborhood.is_coming_soon}
+                                    className={`group/pill relative px-3 py-1.5 text-sm rounded-lg transition-all duration-150 ${
+                                      neighborhood.is_coming_soon
+                                        ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
+                                        : isSelected
+                                        ? 'bg-neutral-900 text-white shadow-md'
+                                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                                    }`}
+                                    style={{
+                                      animationDelay: `${idx * 30}ms`,
+                                    }}
+                                  >
+                                    <span className="relative z-10 flex items-center gap-1.5">
+                                      {neighborhood.name}
+                                      {articleCount > 0 && !neighborhood.is_coming_soon && (
+                                        <span className={`text-[10px] px-1 py-0.5 rounded ${
+                                          isSelected ? 'bg-white/20' : 'bg-neutral-200'
+                                        }`}>
+                                          {articleCount}
+                                        </span>
+                                      )}
+                                      {neighborhood.is_coming_soon && (
+                                        <span className="text-[10px]">Soon</span>
+                                      )}
+                                    </span>
+
+                                    {/* Checkmark for selected */}
+                                    {isSelected && (
+                                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center">
+                                        <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {/* View City Link */}
+                            {city.neighborhoods.length > 0 && (
+                              <Link
+                                href={getCityUrl(city, city.neighborhoods[0])}
+                                className="mt-3 flex items-center justify-center gap-1 py-2 text-xs text-neutral-500 hover:text-neutral-900 transition-colors"
+                              >
+                                View {city.name} stories
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Empty State */}
+        {Object.values(filteredData).every(cities => cities.length === 0) && (
+          <div className="py-12 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-neutral-100 flex items-center justify-center">
+              <svg className="w-8 h-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <p className="text-neutral-500">No neighborhoods found for "{searchQuery}"</p>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="mt-2 text-sm text-neutral-900 font-medium hover:underline"
+            >
+              Clear search
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Footer (for modal mode) */}
+      {mode === 'modal' && (
+        <div className="px-6 py-4 border-t border-neutral-200 bg-neutral-50 flex items-center justify-between">
+          <p className="text-sm text-neutral-500">
+            {totalSelected > 0 ? (
+              <>
+                <span className="font-medium text-neutral-900">{totalSelected}</span> neighborhood{totalSelected !== 1 ? 's' : ''} selected
+              </>
+            ) : (
+              'Select at least one neighborhood'
+            )}
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onClose}
+              disabled={totalSelected === 0}
+              className="px-5 py-2 text-sm font-medium bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Export a modal wrapper component
+export function NeighborhoodSelectorModal({
+  isOpen,
+  onClose,
+  neighborhoods,
+  articleCounts,
+  onSelectionChange,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  neighborhoods: Neighborhood[];
+  articleCounts?: Record<string, number>;
+  onSelectionChange?: (selectedIds: string[]) => void;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="absolute inset-4 md:inset-8 lg:inset-16 bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <EnhancedNeighborhoodSelector
+          neighborhoods={neighborhoods}
+          articleCounts={articleCounts}
+          mode="modal"
+          onSelectionChange={onSelectionChange}
+          onClose={onClose}
+        />
+      </div>
+    </div>
+  );
+}

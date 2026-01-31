@@ -1,58 +1,45 @@
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { Neighborhood } from '@/types';
+import { EnhancedNeighborhoodSelector } from '@/components/neighborhoods/EnhancedNeighborhoodSelector';
 
 export const metadata = {
-  title: 'All Neighborhoods | Flâneur',
-  description: 'Browse all neighborhoods covered by Flâneur.',
+  title: 'Neighborhoods | Flâneur',
+  description: 'Browse and select from 91 neighborhoods across 23 global cities. Personalize your Flâneur feed with local stories from the places you love.',
 };
 
 export default async function NeighborhoodsPage() {
   const supabase = await createClient();
 
+  // Fetch all neighborhoods
   const { data: neighborhoods } = await supabase
     .from('neighborhoods')
     .select('*')
     .order('city', { ascending: true });
 
-  // Group by city
-  const groupedByCity: Record<string, Neighborhood[]> = (neighborhoods || []).reduce(
-    (acc: Record<string, Neighborhood[]>, n: Neighborhood) => {
-      if (!acc[n.city]) acc[n.city] = [];
-      acc[n.city].push(n);
-      return acc;
-    },
-    {}
-  );
+  // Fetch article counts per neighborhood
+  const { data: articleCountsRaw } = await supabase
+    .from('articles')
+    .select('neighborhood_id')
+    .eq('status', 'published');
+
+  // Aggregate article counts
+  const articleCounts: Record<string, number> = {};
+  if (articleCountsRaw) {
+    articleCountsRaw.forEach(article => {
+      if (article.neighborhood_id) {
+        articleCounts[article.neighborhood_id] = (articleCounts[article.neighborhood_id] || 0) + 1;
+      }
+    });
+  }
 
   return (
-    <div className="py-12 px-4">
-      <div className="mx-auto max-w-5xl">
-        <h1 className="text-3xl font-light tracking-wide mb-2">Neighborhoods</h1>
-        <p className="text-neutral-500 mb-12">
-          Choose a neighborhood to see local stories.
-        </p>
-
-        {(Object.entries(groupedByCity) as [string, Neighborhood[]][]).map(([city, items]) => (
-          <div key={city} className="mb-12">
-            <h2 className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-4">
-              {city}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {items.map((neighborhood) => (
-                <Link
-                  key={neighborhood.id}
-                  href={`/${city.toLowerCase().replace(/\s+/g, '-')}/${neighborhood.id.split('-').slice(1).join('-')}`}
-                  className="group block p-6 bg-white border border-neutral-200 hover:border-black transition-colors min-h-[56px]"
-                >
-                  <h3 className="text-lg font-medium group-hover:underline">
-                    {neighborhood.name}
-                  </h3>
-                </Link>
-              ))}
-            </div>
-          </div>
-        ))}
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto max-w-6xl px-4 py-12">
+        <EnhancedNeighborhoodSelector
+          neighborhoods={(neighborhoods || []) as Neighborhood[]}
+          articleCounts={articleCounts}
+          mode="page"
+        />
       </div>
     </div>
   );

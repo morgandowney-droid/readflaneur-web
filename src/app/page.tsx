@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { TypewriterHeadlines } from '@/components/home/TypewriterHeadlines';
-import { HomeSignup } from '@/components/home/HomeSignup';
+import { HomeSignupEnhanced } from '@/components/home/HomeSignupEnhanced';
+import { Neighborhood } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,11 +59,7 @@ export default async function HomePage() {
     };
   });
 
-  const neighborhoods = (neighborhoodsData || []).map((n: any) => ({
-    id: n.id,
-    name: n.name,
-    city: n.city,
-  }));
+  const neighborhoods = (neighborhoodsData || []) as Neighborhood[];
 
   return (
     <div>
@@ -89,7 +86,7 @@ export default async function HomePage() {
           <p className="text-sm text-neutral-500 mb-4">
             Choose your neighborhoods and get stories in your inbox
           </p>
-          <HomeSignup neighborhoods={neighborhoods} />
+          <HomeSignupEnhanced neighborhoods={neighborhoods} />
         </div>
       </section>
     </div>
