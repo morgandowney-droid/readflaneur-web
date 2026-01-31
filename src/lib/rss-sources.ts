@@ -2,7 +2,10 @@
  * RSS News Sources for Neighborhood Content
  *
  * Aggregates local news from RSS feeds and filters for neighborhood relevance.
+ * Sources are managed via database (rss_sources table) with fallback to hardcoded list.
  */
+
+import { createClient } from '@supabase/supabase-js';
 
 export interface RSSFeed {
   url: string;
@@ -10,6 +13,14 @@ export interface RSSFeed {
   city: string;
   country: string;
   category: 'news' | 'lifestyle' | 'food' | 'culture' | 'real-estate';
+}
+
+interface DBRSSSource {
+  id: string;
+  city: string;
+  name: string;
+  feed_url: string;
+  is_active: boolean;
 }
 
 export interface RSSItem {
@@ -216,10 +227,53 @@ function cleanText(text: string): string {
 }
 
 /**
+ * Get RSS feeds from database for a city
+ */
+async function getFeedsFromDatabase(city: string): Promise<RSSFeed[] | null> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    return null;
+  }
+
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data, error } = await supabase
+      .from('rss_sources')
+      .select('city, name, feed_url')
+      .eq('city', city)
+      .eq('is_active', true);
+
+    if (error || !data || data.length === 0) {
+      return null;
+    }
+
+    return data.map((source: DBRSSSource) => ({
+      url: source.feed_url,
+      name: source.name,
+      city: source.city,
+      country: '', // Not stored in DB
+      category: 'news' as const,
+    }));
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Fetch all feeds for a specific city
+ * Tries database first, falls back to hardcoded list
  */
 export async function fetchCityFeeds(city: string): Promise<RSSItem[]> {
-  const cityFeeds = RSS_FEEDS.filter(f => f.city === city);
+  // Try database first
+  let cityFeeds = await getFeedsFromDatabase(city);
+
+  // Fall back to hardcoded list
+  if (!cityFeeds || cityFeeds.length === 0) {
+    cityFeeds = RSS_FEEDS.filter(f => f.city === city);
+  }
+
   const allItems: RSSItem[] = [];
 
   for (const feed of cityFeeds) {

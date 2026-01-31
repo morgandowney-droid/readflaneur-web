@@ -3,6 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import { fetchCityFeeds, RSSItem } from '@/lib/rss-sources';
 
+// Flaneur backend API for image generation
+const FLANEUR_API_URL = process.env.FLANEUR_API_URL || 'https://flaneur-azure.vercel.app';
+
 /**
  * News Aggregation Cron Job
  *
@@ -178,27 +181,49 @@ export async function GET(request: Request) {
           const neighborhoodId = result.neighborhood_id || cityNeighborhoods[0]?.id;
           if (!neighborhoodId) continue;
 
-          // Create article
+          // Create article first
+          const headline = result.rewritten_headline || item.title;
           const slug = generateSlug(item.link);
-          const { error: insertError } = await supabase.from('articles').insert({
-            neighborhood_id: neighborhoodId,
-            headline: result.rewritten_headline || item.title,
-            slug,
-            preview_text: result.rewritten_preview || item.description?.slice(0, 150),
-            body_text: result.rewritten_body || item.description || '',
-            image_url: '', // Could extract from RSS if available
-            status: 'published',
-            published_at: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            // Store source reference in editor_notes
-            editor_notes: `Source: ${item.source} - ${item.link}`,
-          });
+
+          const { data: insertedArticle, error: insertError } = await supabase
+            .from('articles')
+            .insert({
+              neighborhood_id: neighborhoodId,
+              headline,
+              slug,
+              preview_text: result.rewritten_preview || item.description?.slice(0, 150),
+              body_text: result.rewritten_body || item.description || '',
+              image_url: '', // Will be filled by flaneur API
+              status: 'published',
+              published_at: new Date().toISOString(),
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              editor_notes: `Source: ${item.source} - ${item.link}`,
+            })
+            .select('id')
+            .single();
 
           if (insertError) {
             results.errors.push(`Insert failed: ${insertError.message}`);
           } else {
             results.articles_created++;
+
+            // Call flaneur API to generate image for this article
+            try {
+              await fetch(`${FLANEUR_API_URL}/api/regenerate-images`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-cron-secret': cronSecret || '',
+                },
+                body: JSON.stringify({
+                  article_id: insertedArticle.id,
+                  provider: 'gemini',
+                }),
+              });
+            } catch (imgErr) {
+              results.errors.push(`Image generation failed for: ${headline.slice(0, 30)}`);
+            }
           }
 
           // Rate limiting

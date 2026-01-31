@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 
+// Flaneur backend API for image generation
+const FLANEUR_API_URL = process.env.FLANEUR_API_URL || 'https://flaneur-azure.vercel.app';
+
 /**
  * Neighborhood Guide Digest Generator
  *
@@ -213,24 +216,45 @@ export async function GET(request: Request) {
         continue;
       }
 
-      // Insert article
-      const { error: insertError } = await supabase.from('articles').insert({
-        neighborhood_id: neighborhood.id,
-        headline: result.headline,
-        slug: `${slug}-${Date.now()}`,
-        preview_text: result.preview_text,
-        body_text: result.body_text,
-        image_url: '', // Default image or empty
-        status: 'published',
-        published_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+      // Insert article first
+      const { data: insertedArticle, error: insertError } = await supabase
+        .from('articles')
+        .insert({
+          neighborhood_id: neighborhood.id,
+          headline: result.headline,
+          slug: `${slug}-${Date.now()}`,
+          preview_text: result.preview_text,
+          body_text: result.body_text,
+          image_url: '', // Will be filled by flaneur API
+          status: 'published',
+          published_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
 
       if (insertError) {
         results.errors.push(`${neighborhood.id}: ${insertError.message}`);
       } else {
         results.articles_generated++;
+
+        // Call flaneur API to generate image for this article
+        try {
+          await fetch(`${FLANEUR_API_URL}/api/regenerate-images`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-cron-secret': cronSecret || '',
+            },
+            body: JSON.stringify({
+              article_id: insertedArticle.id,
+              provider: 'gemini',
+            }),
+          });
+        } catch (imgErr) {
+          results.errors.push(`${neighborhood.id}: Image generation failed`);
+        }
       }
 
       results.neighborhoods_processed++;

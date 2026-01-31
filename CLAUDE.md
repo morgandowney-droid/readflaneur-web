@@ -3,74 +3,68 @@
 > **How to use:** When starting a new Claude session, say "read CLAUDE.md and pick up where we left off"
 >
 > **See also:** `../flaneur/CLAUDE.md` for the full project overview and mobile app details.
+>
+> **User Location:** Stockholm, Sweden (CET/CEST timezone) - use this for time-related references.
 
 ## Current Status
-**Last Updated:** 2026-01-31
+**Last Updated:** 2026-02-01
 
-### Recent Changes (2026-01-31)
+### Recent Changes (2026-02-01)
+
+**Neighborhood Expansion System:**
+- Expanded from 5 to 91 neighborhoods globally
+- 84 neighborhoods being batch-seeded with Google Places data
+- Neighborhoods now have: country, region, latitude, longitude, radius, seeded_at
+- Shared utility `src/lib/neighborhood-utils.ts` for city prefix mapping
+
+**Batch Seeding Script:**
+```bash
+# Seed all neighborhoods at once
+npx tsx scripts/seed-all-neighborhoods.ts
+
+# Seed specific neighborhoods
+npx tsx scripts/seed-neighborhoods.ts nyc-tribeca la-beverly-hills
+```
+
+**Image Generation (Unified with Flaneur API):**
+- Cron jobs call flaneur backend API for image generation
+- Uses Google Gemini 2.5 Flash Image (primary) with DALL-E fallback
+- Images uploaded to Supabase storage automatically
+- API: `https://flaneur-azure.vercel.app/api/regenerate-images`
+
+**News Coverage Admin (`/admin/news-coverage`):**
+- Monitor article coverage by neighborhood
+- View/add/edit/delete RSS feed sources
+- Color-coded status: green (good), yellow (low), red (none)
+- Database table: `rss_sources` (50+ feeds pre-populated)
+
+**Guide Cards with Rank Numbers:**
+- Each place card shows rank (1, 2, 3...) based on sort order
+- Number on photo for cards with images
+- Number inline with name for cards without images
+
+**New Files:**
+- `scripts/seed-all-neighborhoods.ts` - Batch seeder
+- `src/lib/neighborhood-utils.ts` - City prefix mapping
+- `src/app/admin/news-coverage/page.tsx` - Coverage monitor
+- `src/app/api/admin/rss-sources/route.ts` - RSS CRUD API
+- `supabase/migrations/020_rss_sources_table.sql` - RSS sources table
+
+### Previous Changes (2026-01-31)
 
 **Google OAuth Now Live:**
 - Google login working at https://readflaneur.com/login
 - OAuth configured in Supabase + Google Cloud Console
-- Users can sign in/up with Google
 
 **Vercel Pro Activated:**
 - Upgraded from Hobby to Pro ($20/mo)
 - 30-minute cron intervals now supported
-- Deployed to production
-
-**Content Pipeline Running:**
-- ~15 new articles generated via AI
-- Sydney Paddington: 44 sources → ~5 articles
-- Stockholm Östermalm: 18 sources → ~8 articles
-- Backend API fully configured with env vars
-
-### Previous Changes (2026-01-30)
-
-**Google & Apple OAuth Login:**
-- Added social login buttons to `/login` and `/signup` pages
-- OAuth callback handler at `/api/auth/callback`
-- Files: `src/app/login/page.tsx`, `src/app/signup/page.tsx`, `src/app/api/auth/callback/route.ts`
-
-**Luxury Ads Added:**
-- 15 new premium ads: NetJets, Half Moon, JPM Private Bank, Cartier, Bentley, Soho House, La Mer, Sotheby's, Patek Philippe, Blade, RH, Singita, White Cube, Savills, Sotheby's Realty
-- Mix of global and neighborhood-specific targeting
-- Migration: `flaneur/supabase/migrations/017_luxury_ads.sql`
-
-**Engagement Features - Tonight, Spotted, Property Watch:**
-
-1. **Tonight Picks** (`/[city]/[neighborhood]/tonight`)
-   - Curated daily events
-   - Date selector (Today, Tomorrow, Weekend)
-   - AI-scored events with Flâneur voice
-   - Tables: `tonight_picks`, `tonight_sources`
-
-2. **Spotted** (`/[city]/[neighborhood]/spotted`)
-   - Real-time neighborhood sightings from social media
-   - Categories: restaurant_crowd, construction, celebrity, new_business, closure, traffic, event
-   - Sources: Reddit, Google Reviews (Twitter skipped - $200/mo)
-   - Real-time Supabase subscription
-   - Tables: `spotted_items`, `spotted_clusters`, `spotted_monitors`
-
-3. **Property Watch** (`/[city]/[neighborhood]/property-watch`)
-   - Crowdsourced property sightings (works globally)
-   - Tabs: All Activity, For Sale/Rent, Storefronts, Development
-   - Multi-currency support ($, £, kr, AUD)
-   - User submission form
-   - Tables: `property_sightings`, `storefront_changes`, `development_projects`, `neighborhood_property_config`, `property_watch_digests`
-
-**Sections & User Interests System:**
-- 10 content sections: Art, Fashion, Real Estate, Travel, Food, Wellness, Cars, Schools, Money, Kids
-- AI auto-tags articles with sections
-- Users can select interests for personalized feed
-- Ad targeting by section
-- Tables: `sections`, `article_sections`, `user_section_interests`, `ad_sections`
 
 ### What's Live
 - **Website:** https://readflaneur.com
 - **Backend API:** https://flaneur-azure.vercel.app
 - **GitHub:** https://github.com/morgandowney-droid/readflaneur-web
-- **Google OAuth:** Working
+- **Neighborhoods:** 91 total (7 seeded, 84 seeding)
 
 ## Project Structure
 
@@ -81,127 +75,88 @@ readflaneur-web/
 │   │   ├── [city]/[neighborhood]/
 │   │   │   ├── page.tsx              # Main feed
 │   │   │   ├── [slug]/page.tsx       # Article detail
-│   │   │   ├── guides/page.tsx       # Neighborhood guides
+│   │   │   ├── guides/page.tsx       # Neighborhood guides (ranked)
 │   │   │   ├── tonight/page.tsx      # Tonight picks
 │   │   │   ├── spotted/page.tsx      # Spotted sightings
-│   │   │   └── property-watch/page.tsx # Property tracking
+│   │   │   ├── property-watch/page.tsx
+│   │   │   └── map/page.tsx
 │   │   ├── admin/
 │   │   │   ├── articles/
-│   │   │   ├── comments/
-│   │   │   ├── tips/
-│   │   │   ├── sections/page.tsx     # Section management
+│   │   │   ├── news-coverage/        # RSS & coverage monitor
 │   │   │   ├── regenerate-images/
-│   │   │   └── generate-content/
-│   │   ├── login/page.tsx            # Login with OAuth
-│   │   ├── signup/page.tsx           # Signup with OAuth
-│   │   ├── feed/page.tsx             # Personalized feed
-│   │   └── api/
-│   │       ├── auth/
-│   │       │   ├── callback/route.ts # OAuth callback
-│   │       │   ├── session/route.ts
-│   │       │   └── signout/route.ts
-│   │       ├── cron/
-│   │       │   ├── sync-guides/route.ts
-│   │       │   ├── sync-tonight/route.ts
-│   │       │   ├── sync-spotted/route.ts
-│   │       │   ├── process-property-watch/route.ts
-│   │       │   ├── generate-digests/route.ts
-│   │       │   └── publish-scheduled/route.ts
-│   │       ├── stripe/
-│   │       │   ├── checkout/route.ts
-│   │       │   └── webhook/route.ts
-│   │       └── ...
-│   ├── components/
-│   │   ├── feed/
-│   │   │   ├── NeighborhoodHeader.tsx  # Nav links to Tonight/Spotted/Property
+│   │   │   ├── guides/add-place/     # Manual place entry
 │   │   │   └── ...
-│   │   ├── sections/
-│   │   │   └── SectionInterestSelector.tsx
-│   │   └── ...
+│   │   └── api/
+│   │       ├── cron/
+│   │       │   ├── sync-guides/      # Daily Google Places sync
+│   │       │   ├── sync-news/        # Every 6 hrs RSS aggregation
+│   │       │   ├── generate-guide-digests/ # Weekly neighborhood digests
+│   │       │   └── ...
+│   │       └── admin/
+│   │           └── rss-sources/      # RSS feed CRUD
 │   └── lib/
-│       ├── supabase/
-│       ├── ad-engine.ts              # Section-based ad targeting
-│       ├── google-places.ts          # Places API + photos
-│       ├── event-sources.ts          # Event fetching
-│       └── social-sources.ts         # Social media monitoring
-├── supabase/
-│   └── migrations/
-│       ├── 012_guide_photos_and_services.sql
-│       └── ...
-└── vercel.json                       # Cron schedules
+│       ├── neighborhood-utils.ts     # City prefix mapping
+│       ├── google-places.ts          # Places API
+│       └── rss-sources.ts            # RSS fetching (DB + fallback)
+├── scripts/
+│   ├── seed-neighborhoods.ts         # Single neighborhood seeder
+│   └── seed-all-neighborhoods.ts     # Batch seeder
+└── supabase/migrations/
+    └── 020_rss_sources_table.sql     # RSS sources table
 ```
 
 ## Environment Variables
 
 ### Required
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://ujpdhueytlfqkwzvqetd.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-ANTHROPIC_API_KEY=               # AI summaries for crons
-GOOGLE_PLACES_API_KEY=           # Guides, reviews, photos
+ANTHROPIC_API_KEY=               # AI content curation
+GOOGLE_PLACES_API_KEY=           # Guides, photos
 CRON_SECRET=
-```
-
-### Payments & Email
-```
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
-RESEND_API_KEY=
-EMAIL_FROM=hello@readflaneur.com
-ADMIN_EMAIL=
-NEXT_PUBLIC_APP_URL=https://readflaneur.com
+FLANEUR_API_URL=https://flaneur-azure.vercel.app  # Image generation
 ```
 
 ### Optional
 ```
-OPENAI_API_KEY=                  # Content moderation
-EVENTBRITE_API_KEY=              # Events (API deprecated)
-TWITTER_BEARER_TOKEN=            # Spotted tweets ($200/mo)
+OPENAI_API_KEY=                  # Fallback image generation
+GEMINI_API_KEY=                  # Primary image generation (on flaneur API)
 ```
 
 ## Automated Cron Jobs
 
 | Job | Schedule | Purpose |
 |-----|----------|---------|
-| sync-guides | Daily 3 AM UTC | Sync Google Places data |
+| sync-guides | Daily 3 AM UTC | Update Google Places data |
+| sync-news | Every 6 hours | Fetch RSS, create articles with AI images |
+| generate-guide-digests | Monday 10 AM UTC | Weekly "What's New" articles |
 | sync-tonight | Daily 2 PM UTC | Fetch & curate events |
 | sync-spotted | Every 30 min | Monitor social media |
 | process-property-watch | Daily 7 AM UTC | Process user submissions |
-| generate-digests | Weekly Mon 8 AM UTC | Weekly property summaries |
+| generate-digests | Weekly Mon 8 AM UTC | Property watch summaries |
 
 ## Database Tables
 
-### Engagement Features
-- `tonight_picks` - Curated events
-- `tonight_sources` - Event source tracking
-- `spotted_items` - Social media sightings
-- `spotted_clusters` - Related sighting grouping
-- `spotted_monitors` - Social media monitor config
-- `property_sightings` - For sale/rent/construction sightings
-- `storefront_changes` - Business openings/closings
-- `development_projects` - Construction tracking
-- `neighborhood_property_config` - Currency, API availability per neighborhood
-- `property_watch_digests` - Weekly summaries
+### Neighborhood System
+- `neighborhoods` - All 91 neighborhoods with coordinates, region, country
+- `guide_listings` - Places from Google Places API
+- `guide_categories` - Restaurant, Coffee, Bars, etc.
+- `rss_sources` - RSS feed URLs by city (manageable via admin)
 
-### Sections System
-- `sections` - Content categories (Art, Food, etc.)
-- `article_sections` - Article-to-section mapping with AI confidence
-- `user_section_interests` - User preferences
-- `ad_sections` - Ad targeting by section
+### Content
+- `articles` - News articles with AI-generated images
+- `article_sections` - Article-to-section mapping
 
-## Completed Setup
+## Admin Pages
 
-- [x] Google OAuth configured and working
-- [x] Vercel Pro activated ($20/mo)
-- [x] All environment variables set
-- [x] Content pipeline tested
-- [x] ~15 articles generated
-
-## Pending Setup
-
-1. **Apple OAuth** - Requires Apple Developer account ($99/yr)
+| Page | URL | Purpose |
+|------|-----|---------|
+| News Coverage | `/admin/news-coverage` | Monitor coverage, manage RSS feeds |
+| Regenerate Images | `/admin/regenerate-images` | Regenerate article images |
+| Add Place | `/admin/guides/add-place` | Manually add guide listings |
+| Articles | `/admin/articles` | Manage articles |
+| Sections | `/admin/sections` | Manage content sections |
 
 ## Deployment
 

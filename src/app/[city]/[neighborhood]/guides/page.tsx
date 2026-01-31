@@ -432,7 +432,7 @@ export default function GuidesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {listings.map((listing) => (
+            {listings.map((listing, index) => (
               <div
                 key={listing.id}
                 className="border border-neutral-200 bg-white overflow-hidden"
@@ -440,6 +440,10 @@ export default function GuidesPage() {
                 {/* Photo */}
                 {listing.google_photo_url && (
                   <div className="relative h-32 bg-neutral-100">
+                    {/* Rank Number - on photo */}
+                    <div className="absolute top-2 left-2 z-10 w-6 h-6 bg-black text-white text-xs font-medium flex items-center justify-center">
+                      {index + 1}
+                    </div>
                     <img
                       src={listing.google_photo_url}
                       alt={listing.name}
@@ -455,6 +459,12 @@ export default function GuidesPage() {
                   {/* Header */}
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="flex items-center gap-2 min-w-0">
+                      {/* Rank Number - inline when no photo */}
+                      {!listing.google_photo_url && (
+                        <span className="w-5 h-5 bg-black text-white text-[10px] font-medium flex items-center justify-center shrink-0">
+                          {index + 1}
+                        </span>
+                      )}
                       <h3 className="text-sm font-medium leading-tight truncate">{listing.name}</h3>
                       {listing.isNew && (
                         <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 uppercase tracking-wide shrink-0">
