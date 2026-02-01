@@ -212,7 +212,7 @@ export async function GET(request: Request) {
             // Generate image for this article
             try {
               const imageApiUrl = USE_LOCAL_IMAGE_GEN
-                ? `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/images/generate`
+                ? `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/internal/generate-image`
                 : `${FLANEUR_API_URL}/api/regenerate-images`;
 
               const imgResponse = await fetch(imageApiUrl, {
