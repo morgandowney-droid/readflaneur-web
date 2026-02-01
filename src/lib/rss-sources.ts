@@ -62,7 +62,6 @@ export const RSS_FEEDS: RSSFeed[] = [
 
   // MIAMI
   { url: 'https://miami.eater.com/rss/index.xml', name: 'Eater Miami', city: 'Miami', country: 'USA', category: 'food' },
-  { url: 'https://www.timeout.com/miami/rss', name: 'Time Out Miami', city: 'Miami', country: 'USA', category: 'lifestyle' },
   { url: 'https://thenewtropic.com/feed/', name: 'The New Tropic', city: 'Miami', country: 'USA', category: 'news' },
 
   // LONDON
@@ -72,7 +71,7 @@ export const RSS_FEEDS: RSSFeed[] = [
 
   // PARIS
   { url: 'https://paris.eater.com/rss/index.xml', name: 'Eater Paris', city: 'Paris', country: 'France', category: 'food' },
-  { url: 'https://www.timeout.com/paris/en/rss', name: 'Time Out Paris', city: 'Paris', country: 'France', category: 'lifestyle' },
+  { url: 'https://www.thelocal.fr/feed/', name: 'The Local France', city: 'Paris', country: 'France', category: 'news' },
 
   // BERLIN
   { url: 'https://www.exberliner.com/feed/', name: 'ExBerliner', city: 'Berlin', country: 'Germany', category: 'lifestyle' },
@@ -80,14 +79,15 @@ export const RSS_FEEDS: RSSFeed[] = [
 
   // AMSTERDAM
   { url: 'https://www.iamsterdam.com/en/rss', name: 'I Amsterdam', city: 'Amsterdam', country: 'Netherlands', category: 'lifestyle' },
+  { url: 'https://www.dutchnews.nl/feed/', name: 'Dutch News', city: 'Amsterdam', country: 'Netherlands', category: 'news' },
 
   // BARCELONA
-  { url: 'https://www.timeout.com/barcelona/rss', name: 'Time Out Barcelona', city: 'Barcelona', country: 'Spain', category: 'lifestyle' },
+  { url: 'https://www.thelocal.es/feed/', name: 'The Local Spain', city: 'Barcelona', country: 'Spain', category: 'news' },
 
   // TOKYO
-  { url: 'https://www.timeout.com/tokyo/rss', name: 'Time Out Tokyo', city: 'Tokyo', country: 'Japan', category: 'lifestyle' },
   { url: 'https://tokyocheapo.com/feed/', name: 'Tokyo Cheapo', city: 'Tokyo', country: 'Japan', category: 'lifestyle' },
   { url: 'https://www.tokyoweekender.com/feed/', name: 'Tokyo Weekender', city: 'Tokyo', country: 'Japan', category: 'lifestyle' },
+  { url: 'https://www.japantimes.co.jp/feed/', name: 'Japan Times', city: 'Tokyo', country: 'Japan', category: 'news' },
 
   // SYDNEY
   { url: 'https://www.smh.com.au/rss/feed.xml', name: 'Sydney Morning Herald', city: 'Sydney', country: 'Australia', category: 'news' },
@@ -102,33 +102,31 @@ export const RSS_FEEDS: RSSFeed[] = [
   { url: 'https://toronto.eater.com/rss/index.xml', name: 'Eater Toronto', city: 'Toronto', country: 'Canada', category: 'food' },
 
   // SINGAPORE
-  { url: 'https://www.timeout.com/singapore/rss', name: 'Time Out Singapore', city: 'Singapore', country: 'Singapore', category: 'lifestyle' },
-  { url: 'https://sg.eater.com/rss/index.xml', name: 'Eater Singapore', city: 'Singapore', country: 'Singapore', category: 'food' },
   { url: 'https://thehoneycombers.com/singapore/feed/', name: 'Honeycombers SG', city: 'Singapore', country: 'Singapore', category: 'lifestyle' },
+  { url: 'https://www.straitstimes.com/news/singapore/rss.xml', name: 'Straits Times', city: 'Singapore', country: 'Singapore', category: 'news' },
 
   // HONG KONG
-  { url: 'https://www.timeout.com/hong-kong/rss', name: 'Time Out Hong Kong', city: 'Hong Kong', country: 'Hong Kong', category: 'lifestyle' },
   { url: 'https://thehoneycombers.com/hong-kong/feed/', name: 'Honeycombers HK', city: 'Hong Kong', country: 'Hong Kong', category: 'lifestyle' },
+  { url: 'https://hongkongfp.com/feed/', name: 'Hong Kong Free Press', city: 'Hong Kong', country: 'Hong Kong', category: 'news' },
 
   // DUBAI
-  { url: 'https://www.timeout.com/dubai/rss', name: 'Time Out Dubai', city: 'Dubai', country: 'UAE', category: 'lifestyle' },
   { url: 'https://whatson.ae/feed/', name: "What's On Dubai", city: 'Dubai', country: 'UAE', category: 'lifestyle' },
+  { url: 'https://gulfnews.com/rss', name: 'Gulf News', city: 'Dubai', country: 'UAE', category: 'news' },
 
   // LISBON
-  { url: 'https://www.timeout.com/lisbon/rss', name: 'Time Out Lisbon', city: 'Lisbon', country: 'Portugal', category: 'lifestyle' },
+  { url: 'https://www.theportugalnews.com/feed', name: 'Portugal News', city: 'Lisbon', country: 'Portugal', category: 'news' },
 
   // COPENHAGEN
-  { url: 'https://www.timeout.com/copenhagen/rss', name: 'Time Out Copenhagen', city: 'Copenhagen', country: 'Denmark', category: 'lifestyle' },
+  { url: 'https://www.thelocal.dk/feed/', name: 'The Local Denmark', city: 'Copenhagen', country: 'Denmark', category: 'news' },
 
   // STOCKHOLM
   { url: 'https://www.thelocal.se/feed/', name: 'The Local Sweden', city: 'Stockholm', country: 'Sweden', category: 'news' },
 
   // MILAN
-  { url: 'https://www.timeout.com/milan/rss', name: 'Time Out Milan', city: 'Milan', country: 'Italy', category: 'lifestyle' },
-  { url: 'https://milano.eater.com/rss/index.xml', name: 'Eater Milan', city: 'Milan', country: 'Italy', category: 'food' },
+  { url: 'https://www.thelocal.it/feed/', name: 'The Local Italy', city: 'Milan', country: 'Italy', category: 'news' },
 
   // TEL AVIV
-  { url: 'https://www.timeout.com/israel/rss', name: 'Time Out Israel', city: 'Tel Aviv', country: 'Israel', category: 'lifestyle' },
+  { url: 'https://www.timesofisrael.com/feed/', name: 'Times of Israel', city: 'Tel Aviv', country: 'Israel', category: 'news' },
 ];
 
 /**
