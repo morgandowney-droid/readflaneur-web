@@ -114,7 +114,7 @@ export default function MichelinAdminPage() {
     if (queryError) {
       setError(queryError.message);
     } else {
-      setListings((data || []) as Listing[]);
+      setListings((data || []) as unknown as Listing[]);
     }
 
     setLoading(false);
