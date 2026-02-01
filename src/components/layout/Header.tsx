@@ -5,12 +5,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
-import { SubmitTipButton } from '@/components/tips';
-import TipSubmitModal from '@/components/tips/TipSubmitModal';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import type { User } from '@supabase/supabase-js';
-import type { Section } from '@/types';
+import type { Section, Neighborhood } from '@/types';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
+
+const PREFS_KEY = 'flaneur-neighborhood-preferences';
 
 export function Header() {
   const pathname = usePathname();
@@ -19,8 +19,8 @@ export function Header() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [tipModalOpen, setTipModalOpen] = useState(false);
   const [sections, setSections] = useState<Section[]>([]);
+  const [selectedNeighborhoods, setSelectedNeighborhoods] = useState<Neighborhood[]>([]);
   const { scrollDirection, scrollY } = useScrollDirection({ threshold: 10 });
   const { openModal } = useNeighborhoodModal();
 
@@ -111,6 +111,46 @@ export function Header() {
     };
     fetchSections();
 
+    // Fetch selected neighborhoods
+    const fetchSelectedNeighborhoods = async () => {
+      const supabase = createClient();
+
+      // Get selected IDs from localStorage or database
+      let selectedIds: string[] = [];
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data } = await supabase
+          .from('user_neighborhood_preferences')
+          .select('neighborhood_id')
+          .eq('user_id', session.user.id);
+        if (data) {
+          selectedIds = data.map(p => p.neighborhood_id);
+        }
+      } else {
+        const stored = localStorage.getItem(PREFS_KEY);
+        if (stored) {
+          try {
+            selectedIds = JSON.parse(stored);
+          } catch {
+            // Invalid stored data
+          }
+        }
+      }
+
+      // Fetch neighborhood details for selected IDs
+      if (selectedIds.length > 0) {
+        const { data: neighborhoods } = await supabase
+          .from('neighborhoods')
+          .select('*')
+          .in('id', selectedIds);
+        if (neighborhoods && mounted) {
+          setSelectedNeighborhoods(neighborhoods as Neighborhood[]);
+        }
+      }
+    };
+    fetchSelectedNeighborhoods();
+
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -177,7 +217,7 @@ export function Header() {
       )}
     >
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
-        <Link href="/" className="text-xl tracking-[0.3em] font-light">
+        <Link href="/" className="font-display text-xl tracking-[0.35em] font-light hover:opacity-70 transition-opacity">
           FLÂNEUR
         </Link>
 
@@ -199,13 +239,12 @@ export function Header() {
           <button
             onClick={handleNeighborhoodsClick}
             className={cn(
-              'text-xs tracking-widest uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
-              pathname === '/neighborhoods' || pathname === '/feed' ? 'text-black' : 'text-neutral-400'
+              'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
+              pathname === '/neighborhoods' || pathname === '/feed' ? 'text-black font-medium' : 'text-neutral-500'
             )}
           >
             Neighborhoods
           </button>
-          <SubmitTipButton variant="header" />
 
           {user ? (
             <div className="flex items-center gap-4">
@@ -213,8 +252,8 @@ export function Header() {
                 <Link
                   href="/admin/ads"
                   className={cn(
-                    'text-xs tracking-widest uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
-                    pathname.startsWith('/admin') ? 'text-black' : 'text-neutral-400'
+                    'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
+                    pathname.startsWith('/admin') ? 'text-black font-medium' : 'text-neutral-500'
                   )}
                 >
                   Admin
@@ -223,15 +262,15 @@ export function Header() {
               <Link
                 href="/advertiser"
                 className={cn(
-                  'text-xs tracking-widest uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
-                  pathname.startsWith('/advertiser') ? 'text-black' : 'text-neutral-400'
+                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
+                  pathname.startsWith('/advertiser') ? 'text-black font-medium' : 'text-neutral-500'
                 )}
               >
                 Dashboard
               </Link>
               <button
                 onClick={handleSignOut}
-                className="text-xs tracking-widest uppercase text-neutral-400 hover:text-black transition-colors min-h-[44px]"
+                className="text-[11px] tracking-[0.2em] uppercase text-neutral-500 hover:text-black transition-colors min-h-[44px]"
               >
                 Sign Out
               </button>
@@ -240,8 +279,8 @@ export function Header() {
             <Link
               href="/login"
               className={cn(
-                'text-xs tracking-widest uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
-                pathname === '/login' ? 'text-black' : 'text-neutral-400'
+                'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
+                pathname === '/login' ? 'text-black font-medium' : 'text-neutral-500'
               )}
             >
               Login
@@ -286,18 +325,56 @@ export function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-neutral-200 bg-white">
           <nav className="flex flex-col px-4">
-            <button
-              onClick={() => {
-                handleNeighborhoodsClick({ preventDefault: () => {} } as React.MouseEvent);
-                setMobileMenuOpen(false);
-              }}
-              className={cn(
-                'text-sm tracking-widest uppercase transition-colors hover:text-black text-right py-4 border-b border-neutral-100',
-                pathname === '/neighborhoods' || pathname === '/feed' ? 'text-black font-medium' : 'text-neutral-600'
-              )}
-            >
-              Neighborhoods
-            </button>
+            {/* Selected Neighborhoods */}
+            {selectedNeighborhoods.length > 0 && (
+              <div className="py-4 border-b border-neutral-100">
+                <p className="text-[10px] tracking-widest uppercase text-neutral-400 mb-3 text-right">
+                  Your Neighborhoods
+                </p>
+                <div className="flex flex-wrap gap-2 justify-end">
+                  {selectedNeighborhoods.slice(0, 6).map((hood) => (
+                    <Link
+                      key={hood.id}
+                      href={`/feed?neighborhoods=${hood.id}`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-black text-white"
+                    >
+                      <span>{hood.name}</span>
+                    </Link>
+                  ))}
+                  {selectedNeighborhoods.length > 6 && (
+                    <span className="text-xs text-neutral-400 py-1.5">
+                      +{selectedNeighborhoods.length - 6} more
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => {
+                    handleNeighborhoodsClick({ preventDefault: () => {} } as React.MouseEvent);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="mt-3 text-xs text-neutral-500 hover:text-black transition-colors block text-right w-full"
+                >
+                  Edit selections
+                </button>
+              </div>
+            )}
+
+            {/* Add Neighborhoods (when none selected) */}
+            {selectedNeighborhoods.length === 0 && (
+              <button
+                onClick={() => {
+                  handleNeighborhoodsClick({ preventDefault: () => {} } as React.MouseEvent);
+                  setMobileMenuOpen(false);
+                }}
+                className={cn(
+                  'text-sm tracking-widest uppercase transition-colors hover:text-black text-right py-4 border-b border-neutral-100',
+                  pathname === '/neighborhoods' || pathname === '/feed' ? 'text-black font-medium' : 'text-neutral-600'
+                )}
+              >
+                Choose Neighborhoods
+              </button>
+            )}
 
             {/* Browse by Section */}
             {sections.length > 0 && (
@@ -320,15 +397,6 @@ export function Header() {
                 </div>
               </div>
             )}
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                setTipModalOpen(true);
-              }}
-              className="text-sm tracking-widest uppercase text-neutral-600 hover:text-black transition-colors text-right py-4 border-b border-neutral-100"
-            >
-              Submit a Tip
-            </button>
             {user ? (
               <>
                 {isAdmin && (
@@ -379,11 +447,6 @@ export function Header() {
         </div>
       )}
 
-      {/* Tip Modal for mobile menu */}
-      <TipSubmitModal
-        isOpen={tipModalOpen}
-        onClose={() => setTipModalOpen(false)}
-      />
     </header>
   );
 }

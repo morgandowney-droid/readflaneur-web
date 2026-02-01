@@ -8,32 +8,44 @@ import { getCityCode } from '@/lib/neighborhood-utils';
 
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
 
-// City gradient configurations
-const CITY_GRADIENTS: Record<string, string> = {
-  'New York': 'from-slate-900 to-neutral-700',
-  'San Francisco': 'from-orange-400 to-rose-400',
-  'Los Angeles': 'from-purple-400 to-orange-300',
-  'Chicago': 'from-sky-800 to-indigo-800',
-  'Miami': 'from-cyan-400 to-emerald-400',
-  'Washington DC': 'from-slate-600 to-zinc-600',
-  'Toronto': 'from-red-600 to-red-700',
-  'London': 'from-slate-500 to-stone-500',
-  'Paris': 'from-rose-300 to-amber-100',
-  'Berlin': 'from-zinc-700 to-stone-700',
-  'Amsterdam': 'from-orange-500 to-yellow-500',
-  'Stockholm': 'from-blue-400 to-cyan-400',
-  'Copenhagen': 'from-indigo-400 to-sky-400',
-  'Barcelona': 'from-amber-500 to-red-500',
-  'Milan': 'from-emerald-600 to-cyan-600',
-  'Lisbon': 'from-yellow-400 to-blue-500',
-  'Tokyo': 'from-pink-500 to-purple-600',
-  'Hong Kong': 'from-red-500 to-pink-500',
-  'Singapore': 'from-emerald-500 to-teal-500',
-  'Sydney': 'from-sky-500 to-indigo-400',
-  'Melbourne': 'from-violet-500 to-fuchsia-400',
-  'Dubai': 'from-amber-500 to-orange-400',
-  'Tel Aviv': 'from-blue-500 to-cyan-400',
+// City coordinates for distance calculation
+const CITY_COORDINATES: Record<string, [number, number]> = {
+  'New York': [40.7128, -74.0060],
+  'San Francisco': [37.7749, -122.4194],
+  'Los Angeles': [34.0522, -118.2437],
+  'Chicago': [41.8781, -87.6298],
+  'Miami': [25.7617, -80.1918],
+  'Washington DC': [38.9072, -77.0369],
+  'Toronto': [43.6532, -79.3832],
+  'London': [51.5074, -0.1278],
+  'Paris': [48.8566, 2.3522],
+  'Berlin': [52.5200, 13.4050],
+  'Amsterdam': [52.3676, 4.9041],
+  'Stockholm': [59.3293, 18.0686],
+  'Copenhagen': [55.6761, 12.5683],
+  'Barcelona': [41.3851, 2.1734],
+  'Milan': [45.4642, 9.1900],
+  'Lisbon': [38.7223, -9.1393],
+  'Tokyo': [35.6762, 139.6503],
+  'Hong Kong': [22.3193, 114.1694],
+  'Singapore': [1.3521, 103.8198],
+  'Sydney': [-33.8688, 151.2093],
+  'Melbourne': [-37.8136, 144.9631],
+  'Dubai': [25.2048, 55.2708],
+  'Tel Aviv': [32.0853, 34.7818],
 };
+
+// Calculate distance between two points using Haversine formula
+function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
 
 // Modal Context
 interface NeighborhoodModalContextType {
@@ -77,7 +89,37 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCity, setActiveCity] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<'name' | 'nearest'>('name');
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Get user location when sorting by nearest
+  const handleSortByNearest = () => {
+    if (sortBy === 'nearest') {
+      setSortBy('name');
+      return;
+    }
+
+    if (userLocation) {
+      setSortBy('nearest');
+      return;
+    }
+
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation([position.coords.latitude, position.coords.longitude]);
+        setSortBy('nearest');
+        setLocationLoading(false);
+      },
+      () => {
+        setLocationLoading(false);
+        // Silently fail - just don't sort by nearest
+      },
+      { timeout: 5000 }
+    );
+  };
 
   // Load neighborhoods and preferences
   useEffect(() => {
@@ -148,20 +190,30 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
     };
   }, [isOpen, onClose]);
 
-  // Group neighborhoods by city
+  // Group neighborhoods by city and sort
   const citiesWithNeighborhoods = useMemo(() => {
     const map = new Map<string, Neighborhood[]>();
     neighborhoods.forEach(n => {
       if (!map.has(n.city)) map.set(n.city, []);
       map.get(n.city)!.push(n);
     });
-    return Array.from(map.entries()).map(([city, hoods]) => ({
+
+    let cities = Array.from(map.entries()).map(([city, hoods]) => ({
       city,
       code: getCityCode(city),
       neighborhoods: hoods,
-      gradient: CITY_GRADIENTS[city] || 'from-neutral-600 to-neutral-800',
+      distance: userLocation && CITY_COORDINATES[city]
+        ? getDistance(userLocation[0], userLocation[1], CITY_COORDINATES[city][0], CITY_COORDINATES[city][1])
+        : Infinity,
     }));
-  }, [neighborhoods]);
+
+    // Sort by distance if sorting by nearest
+    if (sortBy === 'nearest' && userLocation) {
+      cities = cities.sort((a, b) => a.distance - b.distance);
+    }
+
+    return cities;
+  }, [neighborhoods, sortBy, userLocation]);
 
   // Filter based on search
   const filteredCities = useMemo(() => {
@@ -254,14 +306,14 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
         <div className="px-6 py-5 border-b border-neutral-200">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-light tracking-tight text-neutral-900">
+              <h2 className="font-display text-2xl font-light tracking-wide text-neutral-900">
                 Choose Neighborhoods
               </h2>
               <p className="text-sm text-neutral-500 mt-1">
                 {selected.size > 0 ? (
                   <><span className="font-medium text-neutral-900">{selected.size}</span> selected</>
                 ) : (
-                  'Select neighborhoods to personalize your feed'
+                  'Select neighborhoods to personalize your stories'
                 )}
               </p>
             </div>
@@ -276,29 +328,48 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
             </button>
           </div>
 
-          {/* Search */}
-          <div className="mt-4 relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search cities or neighborhoods..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-sm bg-neutral-100 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:bg-white transition-all"
-              autoFocus
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
+          {/* Search and Sort */}
+          <div className="mt-4 flex gap-3">
+            <div className="relative flex-1">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search cities or neighborhoods..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 text-sm bg-neutral-100 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:bg-white transition-all"
+                autoFocus
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Sort by Nearest Button */}
+            <button
+              onClick={handleSortByNearest}
+              disabled={locationLoading}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm rounded-lg border transition-all whitespace-nowrap ${
+                sortBy === 'nearest'
+                  ? 'bg-neutral-900 text-white border-neutral-900'
+                  : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-400'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {locationLoading ? '...' : 'Nearest'}
+            </button>
           </div>
         </div>
 
@@ -310,17 +381,17 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredCities.map(({ city, code, neighborhoods: cityHoods, gradient }) => {
+              {filteredCities.map(({ city, code, neighborhoods: cityHoods, distance }) => {
                 const selectedInCity = cityHoods.filter(n => selected.has(n.id)).length;
                 const isExpanded = activeCity === city || searchQuery.length > 0;
 
                 return (
                   <div
                     key={city}
-                    className={`rounded-xl overflow-hidden border transition-all duration-200 ${
+                    className={`rounded-lg overflow-hidden border transition-all duration-200 ${
                       selectedInCity > 0
-                        ? 'border-neutral-900 shadow-lg'
-                        : 'border-neutral-200 hover:border-neutral-300'
+                        ? 'border-neutral-900'
+                        : 'border-neutral-200 hover:border-neutral-400'
                     }`}
                   >
                     {/* City Header */}
@@ -328,22 +399,23 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
                       onClick={() => setActiveCity(activeCity === city ? null : city)}
                       className="w-full text-left"
                     >
-                      <div className={`relative h-16 bg-gradient-to-br ${gradient}`}>
-                        <div className="absolute inset-0 flex items-center justify-between px-4">
-                          <div>
-                            <h3 className="text-sm font-semibold text-white drop-shadow">
-                              {city}
-                            </h3>
-                            <p className="text-xs text-white/70">
-                              {code} · {cityHoods.length} area{cityHoods.length !== 1 ? 's' : ''}
-                            </p>
-                          </div>
-                          {selectedInCity > 0 && (
-                            <span className="px-2 py-0.5 bg-white rounded-full text-xs font-medium text-neutral-900 shadow">
-                              {selectedInCity}
-                            </span>
-                          )}
+                      <div className="h-14 bg-neutral-900 flex items-center justify-between px-4">
+                        <div>
+                          <h3 className="text-sm font-medium text-white">
+                            {city}
+                          </h3>
+                          <p className="text-[11px] text-neutral-400">
+                            {code} · {cityHoods.length} area{cityHoods.length !== 1 ? 's' : ''}
+                            {sortBy === 'nearest' && distance < Infinity && (
+                              <span className="ml-1">· {Math.round(distance)} km</span>
+                            )}
+                          </p>
                         </div>
+                        {selectedInCity > 0 && (
+                          <span className="px-2 py-0.5 bg-white rounded-full text-[11px] font-medium text-neutral-900">
+                            {selectedInCity}
+                          </span>
+                        )}
                       </div>
                     </button>
 
@@ -425,9 +497,9 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
           <button
             onClick={handleExplore}
             disabled={selected.size === 0}
-            className="px-5 py-2 text-sm font-medium bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-8 py-2.5 text-[11px] tracking-[0.15em] uppercase font-medium bg-neutral-900 text-white hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300"
           >
-            {selected.size > 0 ? 'Explore Feed' : 'Browse All'}
+            {selected.size > 0 ? 'Read Stories' : 'Browse All'}
           </button>
         </div>
       </div>

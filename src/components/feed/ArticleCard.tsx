@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Article } from '@/types';
 import { formatRelativeTime, cityToSlug, neighborhoodToSlug } from '@/lib/utils';
+
+const ARTICLE_BOOKMARKS_KEY = 'flaneur-article-bookmarks';
 
 interface ArticleCardProps {
   article: Article;
@@ -12,12 +14,71 @@ interface ArticleCardProps {
 
 export function ArticleCard({ article }: ArticleCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
 
   const citySlug = article.neighborhood?.city
     ? cityToSlug(article.neighborhood.city)
     : 'unknown';
   const neighborhoodSlug = neighborhoodToSlug(article.neighborhood_id);
   const articleUrl = `/${citySlug}/${neighborhoodSlug}/${article.slug || article.id}`;
+
+  useEffect(() => {
+    const stored = localStorage.getItem(ARTICLE_BOOKMARKS_KEY);
+    if (stored) {
+      try {
+        const bookmarks = JSON.parse(stored) as string[];
+        setIsBookmarked(bookmarks.includes(article.id));
+      } catch {
+        // Invalid stored data
+      }
+    }
+  }, [article.id]);
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const shareData = {
+      title: article.headline,
+      text: article.preview_text || article.headline,
+      url: window.location.origin + articleUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        // User cancelled or error
+      }
+    } else {
+      await navigator.clipboard.writeText(window.location.origin + articleUrl);
+      alert('Link copied to clipboard');
+    }
+  };
+
+  const handleBookmark = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const stored = localStorage.getItem(ARTICLE_BOOKMARKS_KEY);
+    let bookmarks: string[] = [];
+    if (stored) {
+      try {
+        bookmarks = JSON.parse(stored);
+      } catch {
+        // Invalid stored data
+      }
+    }
+
+    if (isBookmarked) {
+      bookmarks = bookmarks.filter(id => id !== article.id);
+    } else {
+      bookmarks.push(article.id);
+    }
+
+    localStorage.setItem(ARTICLE_BOOKMARKS_KEY, JSON.stringify(bookmarks));
+    setIsBookmarked(!isBookmarked);
+  };
 
   return (
     <Link href={articleUrl}>
@@ -46,11 +107,36 @@ export function ArticleCard({ article }: ArticleCardProps) {
                 <span>&middot;</span>
                 <span>{formatRelativeTime(article.created_at)}</span>
               </div>
-              <h2 className="text-white text-lg font-semibold leading-tight line-clamp-2">
+              <h2 className="text-white text-lg font-semibold leading-tight whitespace-nowrap overflow-hidden">
                 {article.headline}
               </h2>
             </div>
           )}
+          {/* Action buttons overlay */}
+          <div className="absolute top-2 right-2 flex gap-1">
+            <button
+              onClick={handleShare}
+              className="w-8 h-8 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-colors"
+              aria-label="Share"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+            </button>
+            <button
+              onClick={handleBookmark}
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                isBookmarked
+                  ? 'bg-white text-black'
+                  : 'bg-black/50 hover:bg-black/70 text-white'
+              }`}
+              aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark'}
+            >
+              <svg className="w-4 h-4" fill={isBookmarked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {isHovered && (
@@ -62,7 +148,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
               <span>&middot;</span>
               <span>{formatRelativeTime(article.created_at)}</span>
             </div>
-            <h2 className="text-lg font-semibold mb-3">{article.headline}</h2>
+            <h2 className="text-lg font-semibold mb-3 whitespace-nowrap overflow-hidden">{article.headline}</h2>
             <p className="text-neutral-600 text-sm leading-relaxed mb-4">
               {article.preview_text || article.body_text.substring(0, 200)}
             </p>

@@ -39,7 +39,7 @@ export function BackToTopButton({
         'hover:bg-neutral-800 hover:shadow-xl active:scale-95'
       )}
       style={{
-        animation: 'slideInFromTop 0.3s ease-out'
+        animation: 'fadeIn 0.2s ease-out'
       }}
       aria-label={label || 'Back to top'}
     >

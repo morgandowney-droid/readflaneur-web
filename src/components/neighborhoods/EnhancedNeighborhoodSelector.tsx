@@ -5,35 +5,35 @@ import { createClient } from '@/lib/supabase/client';
 import { Neighborhood, GlobalRegion } from '@/types';
 import Link from 'next/link';
 
-// City gradient configurations - each city has a characteristic color palette
+// City gradient configurations - muted neutral palette for sophisticated aesthetic
 const CITY_GRADIENTS: Record<string, string> = {
   // North America
-  'New York': 'from-slate-900 via-zinc-800 to-neutral-700',
-  'San Francisco': 'from-orange-400 via-amber-500 to-rose-400',
-  'Los Angeles': 'from-purple-400 via-pink-400 to-orange-300',
-  'Chicago': 'from-sky-800 via-blue-700 to-indigo-800',
-  'Miami': 'from-cyan-400 via-teal-400 to-emerald-400',
-  'Washington DC': 'from-slate-600 via-stone-500 to-zinc-600',
-  'Toronto': 'from-red-600 via-rose-500 to-red-700',
+  'New York': 'from-neutral-800 via-neutral-700 to-stone-700',
+  'San Francisco': 'from-stone-700 via-neutral-600 to-zinc-600',
+  'Los Angeles': 'from-zinc-700 via-stone-600 to-neutral-600',
+  'Chicago': 'from-slate-700 via-gray-600 to-neutral-600',
+  'Miami': 'from-stone-600 via-neutral-600 to-zinc-600',
+  'Washington DC': 'from-slate-700 via-stone-600 to-zinc-600',
+  'Toronto': 'from-neutral-700 via-stone-600 to-slate-600',
   // Europe
-  'London': 'from-slate-500 via-gray-400 to-stone-500',
-  'Paris': 'from-rose-300 via-pink-200 to-amber-100',
-  'Berlin': 'from-zinc-700 via-neutral-600 to-stone-700',
-  'Amsterdam': 'from-orange-500 via-amber-400 to-yellow-500',
-  'Stockholm': 'from-blue-400 via-sky-300 to-cyan-400',
-  'Copenhagen': 'from-indigo-400 via-blue-400 to-sky-400',
-  'Barcelona': 'from-amber-500 via-orange-400 to-red-500',
-  'Milan': 'from-emerald-600 via-teal-500 to-cyan-600',
-  'Lisbon': 'from-yellow-400 via-amber-400 to-blue-500',
+  'London': 'from-slate-700 via-gray-600 to-stone-600',
+  'Paris': 'from-stone-700 via-neutral-600 to-zinc-600',
+  'Berlin': 'from-zinc-800 via-neutral-700 to-stone-700',
+  'Amsterdam': 'from-neutral-700 via-stone-600 to-slate-600',
+  'Stockholm': 'from-slate-700 via-neutral-600 to-stone-600',
+  'Copenhagen': 'from-stone-700 via-slate-600 to-neutral-600',
+  'Barcelona': 'from-neutral-700 via-zinc-600 to-stone-600',
+  'Milan': 'from-zinc-700 via-stone-600 to-neutral-600',
+  'Lisbon': 'from-stone-700 via-neutral-600 to-slate-600',
   // Asia Pacific
-  'Tokyo': 'from-pink-500 via-fuchsia-500 to-purple-600',
-  'Hong Kong': 'from-red-500 via-rose-400 to-pink-500',
-  'Singapore': 'from-emerald-500 via-green-400 to-teal-500',
-  'Sydney': 'from-sky-500 via-blue-400 to-indigo-400',
-  'Melbourne': 'from-violet-500 via-purple-400 to-fuchsia-400',
+  'Tokyo': 'from-neutral-800 via-zinc-700 to-stone-700',
+  'Hong Kong': 'from-stone-700 via-neutral-600 to-zinc-600',
+  'Singapore': 'from-zinc-700 via-stone-600 to-neutral-600',
+  'Sydney': 'from-slate-700 via-neutral-600 to-stone-600',
+  'Melbourne': 'from-neutral-700 via-stone-600 to-zinc-600',
   // Middle East
-  'Dubai': 'from-amber-500 via-yellow-400 to-orange-400',
-  'Tel Aviv': 'from-blue-500 via-sky-400 to-cyan-400',
+  'Dubai': 'from-stone-700 via-neutral-600 to-zinc-600',
+  'Tel Aviv': 'from-slate-700 via-stone-600 to-neutral-600',
 };
 
 const REGION_DATA: Record<GlobalRegion, { label: string; icon: string; description: string }> = {
@@ -327,7 +327,7 @@ export function EnhancedNeighborhoodSelector({
               {totalSelected > 0 ? (
                 <span className="text-neutral-900 font-medium">{totalSelected} selected</span>
               ) : (
-                'Choose neighborhoods to personalize your feed'
+                'Choose neighborhoods to personalize your stories'
               )}
               <span className="mx-2 text-neutral-300">·</span>
               <span>{totalNeighborhoods} available</span>

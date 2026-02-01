@@ -1,12 +1,12 @@
-import { Metadata } from 'next';
-import Link from 'next/link';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Contact | Flâneur',
-  description: 'Get in touch with Flâneur. We\'d love to hear from you.',
-};
+import Link from 'next/link';
+import { useState } from 'react';
+import TipSubmitModal from '@/components/tips/TipSubmitModal';
 
 export default function ContactPage() {
+  const [isTipModalOpen, setIsTipModalOpen] = useState(false);
+
   return (
     <div className="py-12 px-4">
       <div className="mx-auto max-w-2xl">
@@ -34,9 +34,12 @@ export default function ContactPage() {
             </p>
             <p className="text-sm text-neutral-700">
               Use our{' '}
-              <Link href="/" className="text-black underline hover:no-underline">
+              <button
+                onClick={() => setIsTipModalOpen(true)}
+                className="text-black underline hover:no-underline"
+              >
                 tip submission form
-              </Link>{' '}
+              </button>{' '}
               or email us at{' '}
               <a href="mailto:tips@readflaneur.com" className="text-black underline hover:no-underline">
                 tips@readflaneur.com
@@ -60,6 +63,12 @@ export default function ContactPage() {
 
         </div>
       </div>
+
+      {/* Tip Submission Modal */}
+      <TipSubmitModal
+        isOpen={isTipModalOpen}
+        onClose={() => setIsTipModalOpen(false)}
+      />
     </div>
   );
 }

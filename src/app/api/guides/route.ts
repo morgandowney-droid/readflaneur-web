@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
   const subcategorySlug = searchParams.get('subcategory');
   const sortBy = searchParams.get('sort') || 'best'; // 'best', 'rating', 'reviews', 'distance'
   const filter = searchParams.get('filter'); // 'new', 'closed', or null
+  const michelinOnly = searchParams.get('michelin') === 'true';
   const userLat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null;
   const userLng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null;
 
@@ -49,10 +50,12 @@ export async function GET(request: NextRequest) {
     .order('display_order', { ascending: true });
 
   // Build listings query - get listings first
+  // Only show places with 4.0+ star rating
   let listingsQuery = supabase
     .from('guide_listings')
     .select('*')
-    .eq('neighborhood_id', neighborhoodId);
+    .eq('neighborhood_id', neighborhoodId)
+    .gte('google_rating', 4.0);
 
   // Filter by active/closed status
   if (filter === 'closed') {
@@ -118,6 +121,11 @@ export async function GET(request: NextRequest) {
     if (subcategory) {
       listingsQuery = listingsQuery.eq('subcategory_id', subcategory.id);
     }
+  }
+
+  // Filter for Michelin-rated places only
+  if (michelinOnly) {
+    listingsQuery = listingsQuery.or('michelin_stars.not.is.null,michelin_designation.not.is.null');
   }
 
   const { data: listings, error: listingsError } = await listingsQuery;
@@ -213,6 +221,7 @@ export async function GET(request: NextRequest) {
 
   // Count new places (discovered AFTER the neighborhood was seeded)
   // Only count if we have a seeded_at timestamp
+  // Also filter for 4.0+ rating to match the main query
   let newCount = 0;
   if (seededAt) {
     const { count } = await supabase
@@ -220,6 +229,7 @@ export async function GET(request: NextRequest) {
       .select('*', { count: 'exact', head: true })
       .eq('neighborhood_id', neighborhoodId)
       .eq('is_active', true)
+      .gte('google_rating', 4.0)
       .gt('discovered_at', seededAt.toISOString());
     newCount = count || 0;
   }
@@ -229,7 +239,17 @@ export async function GET(request: NextRequest) {
     .select('*', { count: 'exact', head: true })
     .eq('neighborhood_id', neighborhoodId)
     .eq('is_active', false)
+    .gte('google_rating', 4.0)
     .gte('closed_at', thirtyDaysAgo.toISOString());
+
+  // Count Michelin-rated places
+  const { count: michelinCount } = await supabase
+    .from('guide_listings')
+    .select('*', { count: 'exact', head: true })
+    .eq('neighborhood_id', neighborhoodId)
+    .eq('is_active', true)
+    .gte('google_rating', 4.0)
+    .or('michelin_stars.not.is.null,michelin_designation.not.is.null');
 
   return NextResponse.json({
     categories: categoriesWithCounts,
@@ -238,6 +258,7 @@ export async function GET(request: NextRequest) {
     total: transformedListings.length,
     newCount: newCount || 0,
     closedCount: closedCount || 0,
+    michelinCount: michelinCount || 0,
     userLocation: userLat && userLng ? { lat: userLat, lng: userLng } : null,
   });
 }
