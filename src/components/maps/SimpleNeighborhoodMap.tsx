@@ -11,6 +11,79 @@ interface SimpleNeighborhoodMapProps {
   className?: string;
 }
 
+/**
+ * Generate an irregular polygon that looks like a natural neighborhood boundary
+ * Uses seeded randomness based on name for consistent results
+ */
+function generateNeighborhoodPolygon(
+  center: [number, number],
+  radius: number,
+  seed: string
+): [number, number][] {
+  // Simple hash function for consistent randomness
+  const hash = (str: string, i: number) => {
+    let h = 0;
+    for (let j = 0; j < str.length; j++) {
+      h = ((h << 5) - h + str.charCodeAt(j) + i) | 0;
+    }
+    return (Math.abs(h) % 1000) / 1000;
+  };
+
+  const points: [number, number][] = [];
+  const numPoints = 8; // Octagon-like shape with variation
+
+  // Convert radius from meters to approximate degrees
+  // 1 degree lat ≈ 111km, 1 degree lng varies by latitude
+  const latRadius = radius / 111000;
+  const lngRadius = radius / (111000 * Math.cos((center[0] * Math.PI) / 180));
+
+  for (let i = 0; i < numPoints; i++) {
+    const angle = (i / numPoints) * 2 * Math.PI;
+    // Add variation to radius (0.7 to 1.3x) based on seed
+    const variation = 0.7 + hash(seed, i) * 0.6;
+    const lat = center[0] + Math.sin(angle) * latRadius * variation;
+    const lng = center[1] + Math.cos(angle) * lngRadius * variation;
+    points.push([lat, lng]);
+  }
+
+  return points;
+}
+
+/**
+ * Generate hinterland polygons (4 adjacent areas around the main neighborhood)
+ */
+function generateHinterlandPolygons(
+  center: [number, number],
+  radius: number,
+  seed: string
+): { name: string; polygon: [number, number][] }[] {
+  const hinterlands: { name: string; polygon: [number, number][] }[] = [];
+  const directions = ['North', 'East', 'South', 'West'];
+
+  const latRadius = radius / 111000;
+  const lngRadius = radius / (111000 * Math.cos((center[0] * Math.PI) / 180));
+
+  directions.forEach((dir, idx) => {
+    const angle = (idx / 4) * 2 * Math.PI;
+    const offsetLat = Math.sin(angle) * latRadius * 1.8;
+    const offsetLng = Math.cos(angle) * lngRadius * 1.8;
+    const hinterlandCenter: [number, number] = [
+      center[0] + offsetLat,
+      center[1] + offsetLng,
+    ];
+
+    const polygon = generateNeighborhoodPolygon(
+      hinterlandCenter,
+      radius * 0.8,
+      seed + dir
+    );
+
+    hinterlands.push({ name: dir, polygon });
+  });
+
+  return hinterlands;
+}
+
 export function SimpleNeighborhoodMap({
   center,
   name,
@@ -79,24 +152,25 @@ export function SimpleNeighborhoodMap({
         maxZoom: 19,
       }).addTo(map);
 
-      // Add hinterland circle (surrounding area) - larger, dashed, subtle
-      const hinterlandRadius = radius * 2.5;
-      L.circle(center, {
-        color: '#94a3b8',
-        weight: 1,
-        fillColor: '#e2e8f0',
-        fillOpacity: 0.2,
-        dashArray: '4, 4',
-        radius: hinterlandRadius,
-      }).addTo(map).bindPopup(`<strong>Surrounding Area</strong>`);
+      // Generate and add hinterland polygons
+      const hinterlands = generateHinterlandPolygons(center, radius, name);
+      hinterlands.forEach((hinterland) => {
+        L.polygon(hinterland.polygon, {
+          color: '#94a3b8',
+          weight: 1,
+          fillColor: '#e2e8f0',
+          fillOpacity: 0.2,
+          dashArray: '4, 4',
+        }).addTo(map);
+      });
 
-      // Add main neighborhood circle (core area) - on top
-      L.circle(center, {
+      // Generate and add main neighborhood polygon - on top
+      const mainPolygon = generateNeighborhoodPolygon(center, radius, name);
+      L.polygon(mainPolygon, {
         color: '#dc2626',
         weight: 3,
         fillColor: '#fecaca',
         fillOpacity: 0.15,
-        radius: radius,
       }).addTo(map).bindPopup(`<strong>${name}</strong><br/>${city}`);
 
       mapInstanceRef.current = map;
@@ -131,11 +205,11 @@ export function SimpleNeighborhoodMap({
       <div className="mt-3 flex items-center justify-between">
         <div className="flex items-center gap-4 text-xs text-neutral-500">
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 bg-red-100 border-2 border-red-600 rounded-full" />
+            <span className="w-3 h-3 bg-red-100 border-2 border-red-600 rounded-sm" />
             {name}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 bg-slate-100 border border-slate-400 border-dashed rounded-full" />
+            <span className="w-3 h-3 bg-slate-100 border border-slate-400 border-dashed rounded-sm" />
             Hinterlands
           </span>
         </div>
