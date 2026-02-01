@@ -2,7 +2,9 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { NeighborhoodMap } from '@/components/maps/NeighborhoodMap';
+import { SimpleNeighborhoodMap } from '@/components/maps/SimpleNeighborhoodMap';
 import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
+import { NEIGHBORHOOD_BOUNDARIES } from '@/lib/neighborhood-boundaries';
 
 interface MapPageProps {
   params: Promise<{
@@ -67,11 +69,25 @@ export default async function MapPage({ params }: MapPageProps) {
         </header>
 
         <div className="aspect-[4/3] w-full">
-          <NeighborhoodMap neighborhoodId={neighborhoodId} className="h-full" />
+          {NEIGHBORHOOD_BOUNDARIES[neighborhoodId] ? (
+            <NeighborhoodMap neighborhoodId={neighborhoodId} className="h-full" />
+          ) : (
+            <SimpleNeighborhoodMap
+              center={[neighborhoodData.latitude, neighborhoodData.longitude]}
+              name={neighborhoodData.name}
+              city={neighborhoodData.city}
+              radius={neighborhoodData.radius || 1000}
+              className="h-full"
+            />
+          )}
         </div>
 
         <div className="mt-6 text-center text-sm text-neutral-500">
-          <p>The highlighted area shows the core neighborhood boundaries.</p>
+          {NEIGHBORHOOD_BOUNDARIES[neighborhoodId] ? (
+            <p>The highlighted area shows the core neighborhood boundaries.</p>
+          ) : (
+            <p>Approximate neighborhood area centered on {neighborhoodData.name}.</p>
+          )}
         </div>
       </div>
     </div>
