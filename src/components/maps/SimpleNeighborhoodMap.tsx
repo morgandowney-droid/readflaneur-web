@@ -59,8 +59,8 @@ export function SimpleNeighborhoodMap({
 
       const L = (await import('leaflet')).default;
 
-      // Calculate zoom based on radius
-      const zoom = radius < 500 ? 16 : radius < 1000 ? 15 : radius < 2000 ? 14 : 13;
+      // Use zoom level 13 to match the detailed neighborhood maps (zoomed out 2 clicks)
+      const zoom = 13;
 
       const map = L.map(mapRef.current!, {
         center: center,
@@ -79,22 +79,25 @@ export function SimpleNeighborhoodMap({
         maxZoom: 19,
       }).addTo(map);
 
-      // Add circle to show approximate neighborhood area
+      // Add hinterland circle (surrounding area) - larger, dashed, subtle
+      const hinterlandRadius = radius * 2.5;
+      L.circle(center, {
+        color: '#94a3b8',
+        weight: 1,
+        fillColor: '#e2e8f0',
+        fillOpacity: 0.2,
+        dashArray: '4, 4',
+        radius: hinterlandRadius,
+      }).addTo(map).bindPopup(`<strong>Surrounding Area</strong>`);
+
+      // Add main neighborhood circle (core area) - on top
       L.circle(center, {
         color: '#dc2626',
-        weight: 2,
+        weight: 3,
         fillColor: '#fecaca',
         fillOpacity: 0.15,
         radius: radius,
       }).addTo(map).bindPopup(`<strong>${name}</strong><br/>${city}`);
-
-      // Add center marker
-      L.circleMarker(center, {
-        color: '#dc2626',
-        fillColor: '#dc2626',
-        fillOpacity: 1,
-        radius: 6,
-      }).addTo(map);
 
       mapInstanceRef.current = map;
     };
@@ -130,6 +133,10 @@ export function SimpleNeighborhoodMap({
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 bg-red-100 border-2 border-red-600 rounded-full" />
             {name}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 bg-slate-100 border border-slate-400 border-dashed rounded-full" />
+            Hinterlands
           </span>
         </div>
 
