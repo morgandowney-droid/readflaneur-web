@@ -76,7 +76,7 @@ export default function TipSubmitModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
           <h2 className="text-lg font-medium">
-            {showSuccess ? 'Thank You!' : 'Submit a Tip'}
+            {showSuccess ? 'Thank You!' : 'Share a Tip or Suggestion'}
           </h2>
           <button
             type="button"
@@ -100,11 +100,11 @@ export default function TipSubmitModal({
                 </svg>
               </div>
 
-              <h3 className="text-xl font-medium">Tip Submitted Successfully</h3>
+              <h3 className="text-xl font-medium">Submitted Successfully</h3>
 
               <p className="text-neutral-600 text-sm">
                 Thank you for contributing to local journalism. Our editorial team
-                will review your tip and may reach out if we have questions.
+                will review your submission and may reach out if we have questions.
               </p>
 
               {tipId && (

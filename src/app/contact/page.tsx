@@ -28,9 +28,9 @@ export default function ContactPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-medium mb-3">Got a Tip?</h2>
+            <h2 className="text-lg font-medium mb-3">Tips & Suggestions</h2>
             <p className="text-sm text-neutral-700 mb-3">
-              Know something happening in your neighborhood? We&apos;re all ears.
+              Know something happening in your neighborhood? Have an idea for a story? We&apos;re all ears.
             </p>
             <p className="text-sm text-neutral-700">
               Use our{' '}
@@ -38,7 +38,7 @@ export default function ContactPage() {
                 onClick={() => setIsTipModalOpen(true)}
                 className="text-black underline hover:no-underline"
               >
-                tip submission form
+                submission form
               </button>{' '}
               or email us at{' '}
               <a href="mailto:tips@readflaneur.com" className="text-black underline hover:no-underline">

@@ -267,7 +267,7 @@ export default function SpottedPage() {
             href={`/${city}/${neighborhood}?tip=true`}
             className="inline-block px-6 py-2 bg-black text-white text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors"
           >
-            Submit a Tip
+            Share a Tip
           </Link>
         </div>
       </div>

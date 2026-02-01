@@ -70,15 +70,15 @@ export default function AboutPage() {
         <section className="mb-12">
           <h2 className="text-lg font-medium mb-4">Community-Sourced</h2>
           <p className="text-sm text-neutral-700 leading-relaxed mb-4">
-            The best local news comes from the people who live it. We welcome tips from our readers
-            about what&apos;s happening in their neighborhoods. Spotted something interesting? Heard about
-            a new opening? Let us know.
+            The best local news comes from the people who live it. We welcome tips and suggestions
+            from our readers about what&apos;s happening in their neighborhoods. Spotted something
+            interesting? Heard about a new opening? Have an idea for a story? Let us know.
           </p>
           <Link
             href="/contact"
             className="inline-block text-xs tracking-widest uppercase border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors"
           >
-            Submit a Tip
+            Share a Tip or Suggestion
           </Link>
         </section>
 

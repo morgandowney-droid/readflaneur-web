@@ -36,7 +36,7 @@ export default function SubmitTipButton({
           type="button"
           onClick={() => setIsModalOpen(true)}
           className={`${baseStyles[variant]} ${className}`}
-          aria-label="Submit a tip"
+          aria-label="Share a tip or suggestion"
         >
           {/* Whisper/secret icon - person with hand cupped near mouth */}
           <svg
@@ -72,7 +72,7 @@ export default function SubmitTipButton({
           onClick={() => setIsModalOpen(true)}
           className={`${baseStyles[variant]} ${className}`}
         >
-          <span className="hidden sm:inline">Submit a Tip</span>
+          <span className="hidden sm:inline">Share a Tip</span>
           <span className="sm:hidden">Tip</span>
         </button>
       )}
