@@ -2,28 +2,31 @@
 
 ## Overview
 
-A hyper-local news platform with three user types:
-- **Readers** - Browse neighborhood-based articles and ads
-- **Advertisers** - Submit, pay for, and manage ads
-- **Journalists/Stringers** - Create and manage content
+Flâneur is a luxury hyper-local news platform serving 91 neighborhoods across 23 cities globally. The platform combines curated journalism with community-sourced content and local business advertising.
+
+### User Types
+
+- **Readers** - Browse neighborhood feeds, guides, and events
+- **Advertisers** - Create and manage local advertisements
+- **Admins** - Manage content, users, and Michelin ratings
 
 ## Tech Stack
 
 | Component | Technology |
 |-----------|------------|
-| Website | Next.js 14+ (App Router) |
-| Mobile App | Expo / React Native |
+| Framework | Next.js 14+ (App Router) |
+| Styling | Tailwind CSS v4 |
 | Database | Supabase (PostgreSQL) |
 | Auth | Supabase Auth |
 | Payments | Stripe |
 | Storage | Supabase Storage (images) |
-| Hosting | Vercel (website) |
+| Hosting | Vercel |
 
 ---
 
 ## Database Schema
 
-### Existing Tables (from MVP)
+### Core Tables
 
 ```sql
 -- Neighborhoods
@@ -31,34 +34,17 @@ neighborhoods (
   id TEXT PRIMARY KEY,           -- e.g., 'nyc-west-village'
   name TEXT NOT NULL,            -- e.g., 'West Village'
   city TEXT NOT NULL,            -- e.g., 'New York'
-  timezone TEXT NOT NULL         -- e.g., 'America/New_York'
+  city_slug TEXT NOT NULL,       -- e.g., 'new-york'
+  slug TEXT NOT NULL,            -- e.g., 'west-village'
+  country TEXT,
+  region TEXT,                   -- e.g., 'North America', 'Europe'
+  timezone TEXT NOT NULL,
+  latitude DECIMAL,
+  longitude DECIMAL,
+  article_count INTEGER DEFAULT 0,
+  is_trending BOOLEAN DEFAULT FALSE
 )
 
--- Articles
-articles (
-  id UUID PRIMARY KEY,
-  neighborhood_id TEXT REFERENCES neighborhoods(id),
-  headline TEXT NOT NULL,
-  body_text TEXT NOT NULL,
-  image_url TEXT NOT NULL,
-  timestamp TIMESTAMPTZ DEFAULT NOW()
-)
-
--- Ads
-ads (
-  id UUID PRIMARY KEY,
-  image_url TEXT NOT NULL,
-  headline TEXT NOT NULL,
-  click_url TEXT NOT NULL,
-  is_global BOOLEAN DEFAULT FALSE,
-  neighborhood_id TEXT REFERENCES neighborhoods(id),
-  sponsor_label TEXT DEFAULT 'SPONSORED'
-)
-```
-
-### New Tables
-
-```sql
 -- User Profiles (extends Supabase Auth)
 profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id),
@@ -66,87 +52,125 @@ profiles (
   full_name TEXT,
   role TEXT NOT NULL CHECK (role IN ('reader', 'journalist', 'advertiser', 'admin')),
   avatar_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+)
+
+-- User Neighborhood Preferences
+user_neighborhood_preferences (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES profiles(id),
+  neighborhood_id TEXT REFERENCES neighborhoods(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  UNIQUE(user_id, neighborhood_id)
 )
 
--- Journalist assignments to neighborhoods
-journalist_neighborhoods (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  journalist_id UUID REFERENCES profiles(id),
-  neighborhood_id TEXT REFERENCES neighborhoods(id),
-  assigned_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(journalist_id, neighborhood_id)
+-- Sections (content categories)
+sections (
+  id UUID PRIMARY KEY,
+  name TEXT NOT NULL,            -- e.g., 'Dining', 'Culture'
+  slug TEXT UNIQUE NOT NULL,
+  icon TEXT,                     -- Emoji or icon name
+  display_order INTEGER,
+  is_active BOOLEAN DEFAULT TRUE
 )
+```
 
--- Articles (updated)
+### Content Tables
+
+```sql
+-- Articles
 articles (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id UUID PRIMARY KEY,
   neighborhood_id TEXT REFERENCES neighborhoods(id),
-  author_id UUID REFERENCES profiles(id),      -- NEW
+  section_id UUID REFERENCES sections(id),
+  author_id UUID REFERENCES profiles(id),
   headline TEXT NOT NULL,
-  slug TEXT UNIQUE,                             -- NEW: for SEO URLs
+  slug TEXT UNIQUE,
   body_text TEXT NOT NULL,
   image_url TEXT NOT NULL,
-  status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'pending', 'published', 'archived')), -- NEW
-  published_at TIMESTAMPTZ,                     -- NEW
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  status TEXT CHECK (status IN ('draft', 'pending', 'published', 'archived')),
+  published_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 )
 
--- Ads (updated)
+-- Guide Listings (curated places)
+guide_listings (
+  id UUID PRIMARY KEY,
+  neighborhood_id TEXT REFERENCES neighborhoods(id),
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,        -- e.g., 'restaurant', 'cafe', 'bar'
+  subcategory TEXT,
+  address TEXT,
+  google_place_id TEXT,
+  google_rating DECIMAL,         -- Filtered to 4.0+ in queries
+  google_review_count INTEGER,
+  price_level INTEGER,           -- 1-4 ($-$$$$)
+  website_url TEXT,
+  phone TEXT,
+  latitude DECIMAL,
+  longitude DECIMAL,
+  michelin_stars INTEGER CHECK (michelin_stars >= 1 AND michelin_stars <= 3),
+  michelin_designation TEXT CHECK (michelin_designation IN ('star', 'bib_gourmand', 'green_star')),
+  is_featured BOOLEAN DEFAULT FALSE
+)
+
+-- Tips (community submissions)
+tips (
+  id UUID PRIMARY KEY,
+  neighborhood_id TEXT REFERENCES neighborhoods(id),
+  content TEXT NOT NULL,
+  category TEXT,
+  submitter_name TEXT,           -- Optional
+  submitter_email TEXT,          -- Optional
+  submitter_phone TEXT,          -- Optional
+  is_anonymous BOOLEAN DEFAULT FALSE,
+  status TEXT CHECK (status IN ('pending', 'reviewed', 'published', 'rejected')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+)
+```
+
+### Advertising Tables
+
+```sql
+-- Ads
 ads (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  advertiser_id UUID REFERENCES profiles(id),  -- NEW
+  id UUID PRIMARY KEY,
+  advertiser_id UUID REFERENCES profiles(id),
   image_url TEXT NOT NULL,
   headline TEXT NOT NULL,
   click_url TEXT NOT NULL,
   is_global BOOLEAN DEFAULT FALSE,
   neighborhood_id TEXT REFERENCES neighborhoods(id),
   sponsor_label TEXT DEFAULT 'SPONSORED',
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'active', 'paused', 'expired')), -- NEW
-  start_date DATE,                              -- NEW
-  end_date DATE,                                -- NEW
-  impressions INTEGER DEFAULT 0,               -- NEW
-  clicks INTEGER DEFAULT 0,                    -- NEW
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  status TEXT CHECK (status IN ('pending', 'approved', 'active', 'paused', 'expired')),
+  start_date DATE,
+  end_date DATE,
+  impressions INTEGER DEFAULT 0,
+  clicks INTEGER DEFAULT 0
 )
 
--- Ad Packages / Pricing
+-- Ad Packages
 ad_packages (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,                          -- e.g., 'Weekly Local', 'Monthly Global'
+  id UUID PRIMARY KEY,
+  name TEXT NOT NULL,
   description TEXT,
-  price_cents INTEGER NOT NULL,                -- Price in cents
-  duration_days INTEGER NOT NULL,              -- How long the ad runs
-  is_global BOOLEAN DEFAULT FALSE,             -- Global or neighborhood-specific
-  max_neighborhoods INTEGER DEFAULT 1,         -- How many neighborhoods included
-  active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  price_cents INTEGER NOT NULL,
+  duration_days INTEGER NOT NULL,
+  is_global BOOLEAN DEFAULT FALSE,
+  max_neighborhoods INTEGER DEFAULT 1,
+  active BOOLEAN DEFAULT TRUE
 )
 
--- Ad Orders / Purchases
+-- Ad Orders
 ad_orders (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id UUID PRIMARY KEY,
   advertiser_id UUID REFERENCES profiles(id),
   ad_id UUID REFERENCES ads(id),
   package_id UUID REFERENCES ad_packages(id),
   stripe_payment_intent_id TEXT,
-  stripe_session_id TEXT,
   amount_cents INTEGER NOT NULL,
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'failed', 'refunded')),
-  paid_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-)
-
--- Analytics / Impressions tracking
-ad_events (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  ad_id UUID REFERENCES ads(id),
-  event_type TEXT CHECK (event_type IN ('impression', 'click')),
-  user_agent TEXT,
-  ip_hash TEXT,                                -- Hashed for privacy
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  status TEXT CHECK (status IN ('pending', 'paid', 'failed', 'refunded')),
+  paid_at TIMESTAMPTZ
 )
 ```
 
@@ -158,203 +182,131 @@ ad_events (
 
 | Role | Permissions |
 |------|-------------|
-| `reader` | Browse articles, save neighborhoods |
-| `journalist` | Create/edit articles in assigned neighborhoods |
-| `advertiser` | Create ads, view own ad performance, make payments |
-| `admin` | Full access, approve ads, manage users |
+| `reader` | Browse content, save neighborhoods, submit tips |
+| `advertiser` | Create ads, view performance, make payments |
+| `admin` | Full access, manage Michelin ratings, approve content |
 
 ### Auth Flow
 
-1. **Sign Up** - Email/password via Supabase Auth
-2. **Role Selection** - After signup, user selects role (reader default, journalist/advertiser require approval)
-3. **Profile Creation** - Trigger creates profile row with role
-
-### Row Level Security (RLS)
-
-```sql
--- Articles: anyone can read published, authors can edit own
-CREATE POLICY "Public can read published articles"
-  ON articles FOR SELECT
-  USING (status = 'published');
-
-CREATE POLICY "Journalists can manage own articles"
-  ON articles FOR ALL
-  USING (auth.uid() = author_id);
-
--- Ads: only show active to public, advertisers manage own
-CREATE POLICY "Public can read active ads"
-  ON ads FOR SELECT
-  USING (status = 'active');
-
-CREATE POLICY "Advertisers can manage own ads"
-  ON ads FOR ALL
-  USING (auth.uid() = advertiser_id);
-```
-
----
-
-## Stripe Integration
-
-### Payment Flow for Advertisers
-
-1. Advertiser creates ad (draft)
-2. Selects package (e.g., "Weekly - West Village - $50")
-3. Clicks "Pay & Submit"
-4. Redirected to Stripe Checkout
-5. On success:
-   - Webhook updates ad_orders.status = 'paid'
-   - Ad status changes to 'pending' (awaiting approval) or 'active'
-   - Start/end dates calculated from package duration
-6. On failure:
-   - User returned to payment page
-   - Order marked as 'failed'
-
-### Stripe Setup
-
-```
-STRIPE_SECRET_KEY=sk_...
-STRIPE_PUBLISHABLE_KEY=pk_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-```
-
-### Webhook Events to Handle
-
-- `checkout.session.completed` - Mark order paid, activate ad
-- `payment_intent.payment_failed` - Mark order failed
-- `charge.refunded` - Handle refunds
+1. Sign up via email/password (Supabase Auth)
+2. Profile created automatically via database trigger
+3. Role defaults to `reader`
+4. Advertisers upgrade via dashboard
 
 ---
 
 ## URL Structure
 
-### Public (Reader)
+### Public Pages
 
 ```
-/                           # Landing page
-/neighborhoods              # Browse all neighborhoods
-/[city]/[neighborhood]      # Feed for specific neighborhood (e.g., /new-york/west-village)
-/[city]/[neighborhood]/[slug] # Individual article
-/login                      # Sign in
-/signup                     # Sign up
+/                               # Homepage with neighborhood selector
+/feed                           # Multi-neighborhood feed
+/feed?neighborhoods=id1,id2     # Filtered feed
+/feed?section=dining            # Section-filtered feed
+/search                         # Global search
+/legal                          # Privacy Policy & Terms of Service
+/contact                        # Contact page with tip submission
+/advertise                      # Advertising information
 ```
 
-### Advertiser Portal
+### Neighborhood Pages
 
 ```
-/advertiser                 # Dashboard
-/advertiser/ads             # List of my ads
-/advertiser/ads/new         # Create new ad
-/advertiser/ads/[id]        # Edit ad
-/advertiser/rates           # View packages & pricing
-/advertiser/checkout/[pkg]  # Stripe checkout
-/advertiser/orders          # Payment history
+/[city]/[neighborhood]          # Neighborhood feed
+/[city]/[neighborhood]/guides   # Curated guide listings
+/[city]/[neighborhood]/map      # Interactive map view
+/[city]/[neighborhood]/tonight  # Today's events
+/[city]/[neighborhood]/spotted  # Local sightings
+/[city]/[neighborhood]/property-watch  # Real estate
 ```
 
-### Journalist Portal
+### Portals
 
 ```
-/journalist                 # Dashboard
-/journalist/articles        # My articles
-/journalist/articles/new    # Create article
-/journalist/articles/[id]   # Edit article
-```
-
-### Admin
-
-```
-/admin                      # Dashboard
-/admin/articles             # Review/approve articles
-/admin/ads                  # Review/approve ads
-/admin/users                # Manage users
-/admin/neighborhoods        # Manage neighborhoods
+/login                          # Sign in
+/signup                         # Sign up
+/advertiser                     # Advertiser dashboard
+/advertiser/ads                 # Manage ads
+/advertiser/ads/new             # Create ad
+/admin/ads                      # Admin ad management
+/admin/guides/michelin          # Michelin ratings management
 ```
 
 ---
 
-## API Routes (Next.js)
+## API Routes
 
 ```
-/api/auth/callback          # Supabase auth callback
-/api/stripe/checkout        # Create Stripe checkout session
-/api/stripe/webhook         # Handle Stripe webhooks
-/api/ads/[id]/impression    # Track ad impression
-/api/ads/[id]/click         # Track ad click
-```
-
----
-
-## File Structure
-
-```
-readflaneur/
-├── src/
-│   ├── app/
-│   │   ├── (public)/                    # Reader-facing pages
-│   │   │   ├── page.tsx                 # Landing
-│   │   │   ├── neighborhoods/
-│   │   │   ├── [city]/[neighborhood]/
-│   │   │   └── login, signup
-│   │   ├── (dashboard)/                 # Protected portals
-│   │   │   ├── advertiser/
-│   │   │   ├── journalist/
-│   │   │   └── admin/
-│   │   ├── api/
-│   │   │   ├── auth/
-│   │   │   └── stripe/
-│   │   └── layout.tsx
-│   ├── components/
-│   │   ├── ui/                          # Shared UI components
-│   │   ├── feed/                        # Article cards, ad cards
-│   │   ├── forms/                       # Article editor, ad creator
-│   │   └── layout/                      # Header, footer, nav
-│   ├── lib/
-│   │   ├── supabase/
-│   │   │   ├── client.ts                # Browser client
-│   │   │   ├── server.ts                # Server client
-│   │   │   └── middleware.ts            # Auth middleware
-│   │   ├── stripe.ts
-│   │   └── utils.ts
-│   └── types/
-│       └── index.ts
-├── supabase/
-│   └── migrations/                      # Schema migrations
-└── public/
+/api/auth/callback              # Supabase auth callback
+/api/auth/signout               # Server-side sign out
+/api/guides                     # Guide listings (GET)
+/api/tips                       # Tip submission (POST)
+/api/stripe/checkout            # Create Stripe checkout
+/api/stripe/webhook             # Stripe webhooks
+/api/ads/[id]/impression        # Track impression
+/api/ads/[id]/click             # Track click
 ```
 
 ---
 
-## Implementation Phases
+## Key Components
 
-### Phase 1: Reader Website (Week 1-2)
-- [ ] Landing page with neighborhood grid
-- [ ] Neighborhood feed page (articles + ads)
-- [ ] Individual article page
-- [ ] Mobile-responsive design
-- [ ] Connect to existing Supabase data
+### Layout Components
 
-### Phase 2: Authentication (Week 2-3)
-- [ ] Supabase Auth setup
-- [ ] Login/signup pages
-- [ ] Profile creation with roles
-- [ ] Protected route middleware
+- `Header` - Navigation with neighborhood selector, search, auth
+- `Footer` - Links to Advertise, Careers, Contact, Legal
+- `NeighborhoodHeader` - Neighborhood page header with sub-navigation
 
-### Phase 3: Journalist Portal (Week 3-4)
-- [ ] Article creation form with rich text
-- [ ] Image upload to Supabase Storage
-- [ ] Draft/publish workflow
-- [ ] My articles list
+### Neighborhood Selector
 
-### Phase 4: Advertiser Portal (Week 4-5)
-- [ ] Ad creation form
-- [ ] Package selection & pricing display
-- [ ] Stripe Checkout integration
-- [ ] Ad performance dashboard
+- `NeighborhoodSelectorModal` - Global modal for selecting neighborhoods
+- `EnhancedNeighborhoodSelector` - Full selector with city cards, search, regions
+- Uses `useNeighborhoodModal` hook for global state
 
-### Phase 5: Admin & Polish (Week 5-6)
-- [ ] Admin dashboard
-- [ ] Content moderation
-- [ ] Analytics
-- [ ] SEO optimization
+### Feed Components
+
+- `FeedItem` - Article card in feed
+- `AdCard` - Sponsored content card
+- `MichelinBadge` - Michelin rating display
+
+### Tips System
+
+- `TipSubmitButton` - Button variants for different contexts
+- `TipSubmitModal` - Submission form with categories
+
+---
+
+## Data Flow
+
+### Neighborhood Preferences
+
+1. Anonymous users: Stored in `localStorage` (`flaneur-neighborhood-preferences`)
+2. Logged-in users: Synced to `user_neighborhood_preferences` table
+3. On login: Local preferences merged with database preferences
+
+### Guide Listings
+
+1. Fetched via `/api/guides?neighborhoodId=xxx`
+2. Filtered to 4.0+ Google rating by default
+3. Optional Michelin filter via `?michelinOnly=true`
+4. Grouped by category for display
+
+---
+
+## Migrations
+
+Located in `supabase/migrations/`:
+
+| Migration | Description |
+|-----------|-------------|
+| 001-021 | Core schema, articles, ads, sections |
+| 022 | Michelin ratings fields |
+
+Run migrations:
+```bash
+npx supabase db push
+```
 
 ---
 

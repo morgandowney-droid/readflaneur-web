@@ -13,6 +13,9 @@ export function Footer() {
 
         {/* Navigation */}
         <div className="flex justify-center gap-8 mb-10">
+          <Link href="/about" className="text-sm text-neutral-600 hover:text-black transition-colors">
+            About
+          </Link>
           <Link href="/advertise" className="text-sm text-neutral-600 hover:text-black transition-colors">
             Advertise
           </Link>
