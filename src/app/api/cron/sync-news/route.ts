@@ -3,7 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import { fetchCityFeeds, RSSItem } from '@/lib/rss-sources';
 
-// Flaneur backend API for image generation
+// Image generation - use local API if GEMINI_API_KEY is set, otherwise fallback to flaneur-azure
+const USE_LOCAL_IMAGE_GEN = !!process.env.GEMINI_API_KEY;
 const FLANEUR_API_URL = process.env.FLANEUR_API_URL || 'https://flaneur-azure.vercel.app';
 
 /**
@@ -208,9 +209,13 @@ export async function GET(request: Request) {
           } else {
             results.articles_created++;
 
-            // Call flaneur API to generate image for this article
+            // Generate image for this article
             try {
-              await fetch(`${FLANEUR_API_URL}/api/regenerate-images`, {
+              const imageApiUrl = USE_LOCAL_IMAGE_GEN
+                ? `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/images/generate`
+                : `${FLANEUR_API_URL}/api/regenerate-images`;
+
+              const imgResponse = await fetch(imageApiUrl, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -221,6 +226,11 @@ export async function GET(request: Request) {
                   provider: 'gemini',
                 }),
               });
+
+              if (!imgResponse.ok) {
+                const imgError = await imgResponse.text();
+                results.errors.push(`Image API ${imgResponse.status}: ${imgError.slice(0, 100)}`);
+              }
             } catch (imgErr) {
               results.errors.push(`Image generation failed for: ${headline.slice(0, 30)}`);
             }
