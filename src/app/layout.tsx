@@ -4,6 +4,7 @@ import './globals.css';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { PersonaSwitcher } from '@/components/admin/PersonaSwitcher';
+import { NeighborhoodModalProvider } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -29,10 +30,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased bg-neutral-50`}>
-        <Header />
-        <main>{children}</main>
-        <Footer />
-        <PersonaSwitcher />
+        <NeighborhoodModalProvider>
+          <Header />
+          <main>{children}</main>
+          <Footer />
+          <PersonaSwitcher />
+        </NeighborhoodModalProvider>
       </body>
     </html>
   );

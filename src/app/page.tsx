@@ -1,109 +1,74 @@
 import { createClient } from '@/lib/supabase/server';
-import { EditorialHero } from '@/components/home/EditorialHero';
 import { HomeSignupEnhanced } from '@/components/home/HomeSignupEnhanced';
 import { Neighborhood } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
-// Map city prefix to URL city slug
-const prefixToCitySlug: Record<string, string> = {
-  'nyc': 'new-york',
-  'sf': 'san-francisco',
-  'la': 'los-angeles',
-  'chicago': 'chicago',
-  'miami': 'miami',
-  'dc': 'washington-dc',
-  'toronto': 'toronto',
-  'london': 'london',
-  'paris': 'paris',
-  'berlin': 'berlin',
-  'amsterdam': 'amsterdam',
-  'stockholm': 'stockholm',
-  'copenhagen': 'copenhagen',
-  'barcelona': 'barcelona',
-  'milan': 'milan',
-  'lisbon': 'lisbon',
-  'tokyo': 'tokyo',
-  'hongkong': 'hong-kong',
-  'singapore': 'singapore',
-  'sydney': 'sydney',
-  'melbourne': 'melbourne',
-  'dubai': 'dubai',
-  'telaviv': 'tel-aviv',
-};
-
 export default async function HomePage() {
   const supabase = await createClient();
-
-  // Fetch featured stories with images for the editorial hero
-  const { data: articles } = await supabase
-    .from('articles')
-    .select('id, headline, slug, preview_text, image_url, neighborhood_id, published_at')
-    .eq('status', 'published')
-    .not('image_url', 'is', null)
-    .order('published_at', { ascending: false })
-    .limit(5);
 
   // Fetch all neighborhoods
   const { data: neighborhoodsData } = await supabase
     .from('neighborhoods')
     .select('*')
+    .eq('is_active', true)
     .order('city')
     .order('name');
 
-  // Build neighborhood lookup map
-  const neighborhoodMap = new Map((neighborhoodsData || []).map((n: any) => [n.id, n]));
+  // Count total articles today
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  // Transform articles for the editorial hero
-  const featuredStories = (articles || []).map((a: any) => {
-    const hood = neighborhoodMap.get(a.neighborhood_id);
-    let url = '#';
-
-    const articleSlug = a.slug || a.id;
-
-    if (hood && articleSlug && a.neighborhood_id) {
-      const parts = a.neighborhood_id.split('-');
-      const prefix = parts[0];
-      const neighborhoodSlug = parts.slice(1).join('-');
-      const citySlug = prefixToCitySlug[prefix] || prefix;
-      url = `/${citySlug}/${neighborhoodSlug}/${articleSlug}`;
-    }
-
-    return {
-      headline: a.headline,
-      preview: a.preview_text || '',
-      neighborhood: hood?.name || 'Local',
-      imageUrl: a.image_url,
-      url,
-      publishedAt: a.published_at || new Date().toISOString(),
-    };
-  });
+  const { count: todayCount } = await supabase
+    .from('articles')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'published')
+    .gte('published_at', today.toISOString());
 
   const neighborhoods = (neighborhoodsData || []) as Neighborhood[];
+  const cityCount = new Set(neighborhoods.map(n => n.city)).size;
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative">
-        {/* Logo + Tagline Overlay */}
-        <div className="absolute top-0 left-0 right-0 z-10 pt-8 pb-6 text-center pointer-events-none">
-          <h1 className="text-3xl md:text-4xl font-light tracking-[0.25em] text-white drop-shadow-lg">
+      <section className="bg-black text-white py-20 md:py-28 px-4">
+        <div className="mx-auto max-w-3xl text-center">
+          {/* Logo */}
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-[0.25em] mb-4">
             FLÂNEUR
           </h1>
-          <p className="mt-2 text-sm text-white/70 tracking-wide">
-            Stories from neighborhoods you love
-          </p>
-        </div>
 
-        {/* Editorial Hero */}
-        <EditorialHero stories={featuredStories} rotationInterval={7000} />
+          {/* Tagline */}
+          <p className="text-lg md:text-xl text-neutral-300 mb-8 font-light">
+            Stories from neighborhoods you love.
+          </p>
+
+          {/* Stats line */}
+          <div className="flex items-center justify-center gap-3 text-sm text-neutral-400 mb-10">
+            <span>{neighborhoods.length} neighborhoods</span>
+            <span className="w-1 h-1 rounded-full bg-neutral-600" />
+            <span>{cityCount} cities</span>
+            {todayCount && todayCount > 0 && (
+              <>
+                <span className="w-1 h-1 rounded-full bg-neutral-600" />
+                <span>{todayCount} stories today</span>
+              </>
+            )}
+          </div>
+
+          {/* Decorative line */}
+          <div className="w-16 h-px bg-neutral-700 mx-auto" />
+        </div>
       </section>
 
       {/* Neighborhood Selection */}
-      <section className="bg-white py-10 px-4">
+      <section className="bg-white py-12 px-4">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm text-neutral-500 mb-6">
-            Choose your neighborhoods and get stories in your inbox
+          <h2 className="text-xl font-light mb-2 text-neutral-800">
+            Choose Your Neighborhoods
+          </h2>
+          <p className="text-sm text-neutral-500 mb-8">
+            Select the places you care about and get personalized stories
           </p>
           <HomeSignupEnhanced neighborhoods={neighborhoods} />
         </div>

@@ -10,8 +10,7 @@ import TipSubmitModal from '@/components/tips/TipSubmitModal';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import type { User } from '@supabase/supabase-js';
 import type { Section } from '@/types';
-
-const PREFS_KEY = 'flaneur-neighborhood-preferences';
+import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 
 export function Header() {
   const pathname = usePathname();
@@ -23,6 +22,7 @@ export function Header() {
   const [tipModalOpen, setTipModalOpen] = useState(false);
   const [sections, setSections] = useState<Section[]>([]);
   const { scrollDirection, scrollY } = useScrollDirection({ threshold: 10 });
+  const { openModal } = useNeighborhoodModal();
 
   // Determine if we're on a feed page where hiding should be enabled
   const isFeedPage = pathname === '/feed' || pathname.match(/^\/[^/]+\/[^/]+$/);
@@ -36,22 +36,7 @@ export function Header() {
 
   const handleNeighborhoodsClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    // Check for saved neighborhood preferences
-    const stored = localStorage.getItem(PREFS_KEY);
-    if (stored) {
-      try {
-        const selected = JSON.parse(stored);
-        if (Array.isArray(selected) && selected.length > 0) {
-          // Go directly to feed with selected neighborhoods
-          router.push(`/feed?neighborhoods=${selected.join(',')}`);
-          return;
-        }
-      } catch {
-        // Invalid stored data, fall through to neighborhoods page
-      }
-    }
-    // No selection, go to neighborhoods page
-    router.push('/neighborhoods');
+    openModal();
   };
 
   useEffect(() => {

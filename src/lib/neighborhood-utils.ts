@@ -67,3 +67,43 @@ export function formatCityName(slug: string): string {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
+
+// Short 3-letter city codes for display
+export const CITY_CODES: Record<string, string> = {
+  // North America
+  'New York': 'NYC',
+  'San Francisco': 'SF',
+  'Los Angeles': 'LA',
+  'Washington DC': 'DC',
+  'Chicago': 'CHI',
+  'Miami': 'MIA',
+  'Toronto': 'TOR',
+  // Europe
+  'London': 'LDN',
+  'Paris': 'PAR',
+  'Berlin': 'BER',
+  'Amsterdam': 'AMS',
+  'Barcelona': 'BCN',
+  'Milan': 'MIL',
+  'Lisbon': 'LIS',
+  'Copenhagen': 'CPH',
+  'Stockholm': 'STO',
+  // Asia-Pacific
+  'Tokyo': 'TYO',
+  'Hong Kong': 'HKG',
+  'Singapore': 'SIN',
+  'Sydney': 'SYD',
+  'Melbourne': 'MEL',
+  // Middle East
+  'Dubai': 'DXB',
+  'Tel Aviv': 'TLV',
+};
+
+/**
+ * Get short city code for display
+ * @param cityName - Full city name (e.g., 'New York')
+ * @returns Short code (e.g., 'NYC')
+ */
+export function getCityCode(cityName: string): string {
+  return CITY_CODES[cityName] || cityName.slice(0, 3).toUpperCase();
+}
