@@ -55,10 +55,10 @@ export function NeighborhoodMap({ neighborhoodId, className = '' }: Neighborhood
       // Load Leaflet JS dynamically to avoid SSR issues
       const L = (await import('leaflet')).default;
 
-      // Create map
+      // Create map - use zoom 13 for "zoomed out 2 clicks" view
       const map = L.map(mapRef.current!, {
         center: boundary.center,
-        zoom: boundary.zoom,
+        zoom: 13,
         scrollWheelZoom: false,
         attributionControl: false, // Disable default attribution
       });
@@ -142,10 +142,12 @@ export function NeighborhoodMap({ neighborhoodId, className = '' }: Neighborhood
             <span className="w-3 h-3 bg-red-100 border-2 border-red-600 rounded-sm" />
             {boundary.name}
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 bg-slate-100 border border-slate-400 border-dashed rounded-sm" />
-            Hinterlands
-          </span>
+          {boundary.adjacentNeighborhoods.length > 0 && (
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 bg-slate-100 border border-slate-400 border-dashed rounded-sm" />
+              Hinterlands
+            </span>
+          )}
         </div>
 
         <button
@@ -159,9 +161,11 @@ export function NeighborhoodMap({ neighborhoodId, className = '' }: Neighborhood
         </button>
       </div>
 
-      <p className="mt-1 text-xs text-neutral-400">
-        {adjacentNames}
-      </p>
+      {adjacentNames && (
+        <p className="mt-1 text-xs text-neutral-400">
+          {adjacentNames}
+        </p>
+      )}
     </div>
   );
 }
