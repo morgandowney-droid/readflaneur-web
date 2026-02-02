@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { MagicLinkReminder } from '@/components/feed/MagicLinkReminder';
 import { NeighborhoodFeed } from '@/components/feed/NeighborhoodFeed';
+import { NeighborhoodBrief, BriefArchive } from '@/components/feed/NeighborhoodBrief';
 import { MultiFeed } from '@/components/feed/MultiFeed';
 import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { MultiLoadMoreButton } from '@/components/feed/MultiLoadMoreButton';
@@ -153,6 +154,21 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   // Multiple neighborhoods - show combined header
   const multipleNeighborhoods = neighborhoodIds.length > 1 && neighborhoodsData;
 
+  // Fetch the latest neighborhood brief for single neighborhood
+  let brief = null;
+  if (singleNeighborhood) {
+    const now = new Date().toISOString();
+    const { data: briefData } = await supabase
+      .from('neighborhood_briefs')
+      .select('id, headline, content, generated_at, sources')
+      .eq('neighborhood_id', singleNeighborhood.id)
+      .gt('expires_at', now)
+      .order('generated_at', { ascending: false })
+      .limit(1)
+      .single();
+    brief = briefData;
+  }
+
   return (
     <div className="bg-white">
       <div className="mx-auto max-w-3xl px-4 py-6">
@@ -174,6 +190,26 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
         {singleNeighborhood ? (
           <>
+            {/* What's Happening brief */}
+            {brief && (
+              <NeighborhoodBrief
+                headline={brief.headline}
+                content={brief.content}
+                generatedAt={brief.generated_at}
+                neighborhoodName={singleNeighborhood.name}
+                city={singleNeighborhood.city}
+                sources={brief.sources || []}
+              />
+            )}
+
+            {/* Brief Archive */}
+            <BriefArchive
+              neighborhoodId={singleNeighborhood.id}
+              neighborhoodName={singleNeighborhood.name}
+              city={singleNeighborhood.city}
+              currentBriefId={brief?.id}
+            />
+
             <NeighborhoodFeed
               items={feedItems}
               city={singleNeighborhood.city}
