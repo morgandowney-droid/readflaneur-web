@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
 
 interface Neighborhood {
   id: string;
@@ -21,30 +20,32 @@ export default function RegenerateImagesPage() {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Load neighborhoods from database and cron secret from localStorage
+  // Load neighborhoods from API and cron secret from localStorage
   useEffect(() => {
     const loadData = async () => {
       try {
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .from('neighborhoods')
-          .select('id, name, city')
-          .order('city')
-          .order('name');
+        // Use the API endpoint instead of direct Supabase client
+        const response = await fetch('/api/neighborhoods');
+        const data = await response.json();
 
-        if (error) {
-          console.error('Error loading neighborhoods:', error);
-          setError(`Failed to load neighborhoods: ${error.message}`);
-        } else if (data && data.length > 0) {
-          setNeighborhoods(data);
-          setNeighborhood(data[0].id);
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch neighborhoods');
+        }
+
+        if (data.neighborhoods && data.neighborhoods.length > 0) {
+          // Sort by city then name
+          const sorted = data.neighborhoods.sort((a: Neighborhood, b: Neighborhood) => {
+            if (a.city !== b.city) return a.city.localeCompare(b.city);
+            return a.name.localeCompare(b.name);
+          });
+          setNeighborhoods(sorted);
+          setNeighborhood(sorted[0].id);
         } else {
-          console.log('No neighborhoods found');
-          setError('No neighborhoods found in database');
+          setError('No neighborhoods found');
         }
       } catch (err) {
-        console.error('Error in loadData:', err);
-        setError(`Error loading data: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        console.error('Error loading neighborhoods:', err);
+        setError(`Error loading neighborhoods: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
       setLoadingNeighborhoods(false);
     };
