@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { NeighborhoodFeed } from '@/components/feed/NeighborhoodFeed';
+import { NeighborhoodBrief } from '@/components/feed/NeighborhoodBrief';
 import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { injectAds } from '@/lib/ad-engine';
 import { Article, Ad } from '@/types';
@@ -84,6 +85,17 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
     .select('*')
     .or(`is_global.eq.true,neighborhood_id.eq.${neighborhoodId}`);
 
+  // Fetch the latest neighborhood brief (if not expired)
+  const now = new Date().toISOString();
+  const { data: brief } = await supabase
+    .from('neighborhood_briefs')
+    .select('headline, content, generated_at')
+    .eq('neighborhood_id', neighborhoodId)
+    .gt('expires_at', now)
+    .order('generated_at', { ascending: false })
+    .limit(1)
+    .single();
+
   // Inject ads into feed
   const feedItems = injectAds(
     (articles || []) as Article[],
@@ -94,6 +106,16 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
   return (
     <div className="py-6 px-4">
       <div className="mx-auto max-w-2xl">
+        {/* What's Happening Today brief */}
+        {brief && (
+          <NeighborhoodBrief
+            headline={brief.headline}
+            content={brief.content}
+            generatedAt={brief.generated_at}
+            neighborhoodName={neighborhoodData.name}
+          />
+        )}
+
         <NeighborhoodFeed
           items={feedItems}
           city={neighborhoodData.city}

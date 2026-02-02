@@ -7,9 +7,61 @@
 > **User Location:** Stockholm, Sweden (CET/CEST timezone) - use this for time-related references.
 
 ## Current Status
-**Last Updated:** 2026-02-02
+**Last Updated:** 2026-02-02 (night)
 
-### Recent Changes (2026-02-02)
+### Recent Changes (2026-02-02 night)
+
+**Grok Integration for Real-Time Local News:**
+- New lib: `src/lib/grok.ts` - Grok API with X Search for real-time posts
+- Model: `grok-4.1-fast` ($0.20/1M input, $0.50/1M output)
+- X Search tool: $5 per 1,000 calls
+- Two features implemented:
+  1. **Neighborhood Briefs** - "What's Happening Today" at top of feed
+  2. **Grok News Fallback** - Generate stories when RSS is dry
+
+**New Database Table: `neighborhood_briefs`**
+- Caches Grok-generated daily summaries per neighborhood
+- Fields: headline, content, sources, model, search_query, expires_at
+- Auto-expires after 6 hours
+
+**New Cron Job: `sync-neighborhood-briefs`**
+- Schedule: Every 4 hours (`0 */4 * * *`)
+- Cost: ~$0.51 per run for 91 neighborhoods (~$90/month)
+- Queries Grok X Search for each active neighborhood
+- Generates cached "What's Happening" brief
+
+**Enhanced `sync-news` Cron:**
+- Added Grok fallback when RSS yields < 5 articles per neighborhood
+- Generates up to 10 additional Grok stories per neighborhood
+- Tracks `grok_articles_created` and `grok_neighborhoods_filled` in results
+
+**New UI Component: `NeighborhoodBrief`**
+- Displays at top of neighborhood feed
+- Shows headline, content, timestamp
+- Expandable for longer briefs
+- Styled with amber gradient theme
+
+**Environment Variable Required:**
+- `GROK_API_KEY` or `XAI_API_KEY` - Get from https://x.ai/api
+
+### Earlier Changes (2026-02-02 evening)
+
+**Gemini Image Generation Fixed:**
+- Model: `gemini-2.5-flash-image` (correct production model)
+- Previous deprecated models (`gemini-2.0-flash-exp`, `gemini-2.5-flash-preview-04-17`) no longer work
+- Endpoint: `/api/internal/generate-image`
+- Admin UI: `/admin/regenerate-images` - working and tested
+
+**Supabase MCP Configured:**
+- File: `.mcp.json` in project root
+- Project ref: `ujpdhueytlfqkwzvqetd`
+- Restart Claude Code to activate (browser auth required)
+
+**Admin Dashboard:**
+- New index page at `/admin/page.tsx` with links to all admin sections
+- Fixed neighborhoods loading on regenerate-images page (uses `/api/neighborhoods` endpoint)
+
+### Earlier Changes (2026-02-02)
 
 **UI Consolidation on Neighborhood Pages:**
 - Removed Tonight, Spotted, Property buttons (no content yet)
@@ -157,7 +209,8 @@ FLANEUR_API_URL=https://flaneur-azure.vercel.app  # Image generation
 ### Optional
 ```
 OPENAI_API_KEY=                  # Fallback image generation
-GEMINI_API_KEY=                  # Primary image generation (on flaneur API)
+GEMINI_API_KEY=                  # Image generation (model: gemini-2.5-flash-image)
+GROK_API_KEY=                    # Grok X Search for real-time local news
 ```
 
 ## Automated Cron Jobs
@@ -165,7 +218,8 @@ GEMINI_API_KEY=                  # Primary image generation (on flaneur API)
 | Job | Schedule | Purpose |
 |-----|----------|---------|
 | sync-guides | Daily 3 AM UTC | Update Google Places data |
-| sync-news | Every 6 hours | Fetch RSS, create articles with AI images |
+| sync-news | Every 6 hours | Fetch RSS, create articles with AI images, Grok fallback |
+| sync-neighborhood-briefs | Every 4 hours | Generate "What's Happening" briefs via Grok X Search |
 | generate-guide-digests | Monday 10 AM UTC | Weekly "What's New" articles |
 | sync-tonight | Daily 2 PM UTC | Fetch & curate events |
 | sync-spotted | Every 30 min | Monitor social media |
@@ -205,6 +259,7 @@ npx vercel --prod
 ## Claude Code Setup
 
 **MCP Servers Configured:**
+- **Supabase MCP** - Direct database access (configured in `.mcp.json`)
 - **Playwright MCP** - Browser automation, screenshots, UI testing
 - **Supermemory** - Persistent context across sessions
 - **Frontend Design** - Polished UI code generation

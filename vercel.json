@@ -35,6 +35,10 @@
     {
       "path": "/api/cron/generate-guide-digests",
       "schedule": "0 10 * * 1"
+    },
+    {
+      "path": "/api/cron/sync-neighborhood-briefs",
+      "schedule": "0 */4 * * *"
     }
   ]
 }
