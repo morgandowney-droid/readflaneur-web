@@ -99,9 +99,14 @@ After searching, create a brief "What's Happening Today" summary.
 
 Format your response EXACTLY as:
 HEADLINE: [Catchy 5-10 word headline]
-CONTENT: [2-3 paragraph summary of what you found]
+CONTENT: [2-3 short paragraphs, each covering a different topic. Separate paragraphs with blank lines.]
 
-If you don't find much, acknowledge it charmingly. Be specific with venue names and locations.`
+Writing style rules:
+- NEVER use em dashes (—). Use periods or commas instead.
+- Keep paragraphs short and punchy (2-3 sentences each).
+- Each paragraph should cover one distinct topic or story.
+- Be specific with venue names and locations.
+- If you don't find much, acknowledge it charmingly.`
           },
           {
             role: 'user',
