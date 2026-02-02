@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Create client inside functions to avoid build-time env var issues
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 // GET - List all RSS sources
 export async function GET() {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from('rss_sources')
     .select('*')
@@ -23,6 +27,7 @@ export async function GET() {
 
 // POST - Add new RSS source
 export async function POST(request: Request) {
+  const supabase = getSupabase();
   const body = await request.json();
   const { city, name, feed_url } = body;
 
@@ -54,6 +59,7 @@ export async function POST(request: Request) {
 
 // PATCH - Update RSS source
 export async function PATCH(request: Request) {
+  const supabase = getSupabase();
   const body = await request.json();
   const { id, ...updates } = body;
 
@@ -77,6 +83,7 @@ export async function PATCH(request: Request) {
 
 // DELETE - Remove RSS source
 export async function DELETE(request: Request) {
+  const supabase = getSupabase();
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 
