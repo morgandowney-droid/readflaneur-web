@@ -24,16 +24,27 @@ export default function RegenerateImagesPage() {
   // Load neighborhoods from database and cron secret from localStorage
   useEffect(() => {
     const loadData = async () => {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('neighborhoods')
-        .select('id, name, city')
-        .order('city')
-        .order('name');
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('neighborhoods')
+          .select('id, name, city')
+          .order('city')
+          .order('name');
 
-      if (data && data.length > 0) {
-        setNeighborhoods(data);
-        setNeighborhood(data[0].id);
+        if (error) {
+          console.error('Error loading neighborhoods:', error);
+          setError(`Failed to load neighborhoods: ${error.message}`);
+        } else if (data && data.length > 0) {
+          setNeighborhoods(data);
+          setNeighborhood(data[0].id);
+        } else {
+          console.log('No neighborhoods found');
+          setError('No neighborhoods found in database');
+        }
+      } catch (err) {
+        console.error('Error in loadData:', err);
+        setError(`Error loading data: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
       setLoadingNeighborhoods(false);
     };
