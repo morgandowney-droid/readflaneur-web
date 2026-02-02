@@ -26,12 +26,21 @@ const SKIP_WORDS = new Set([
   'village', 'tragic', 'weigh', 'mark',
 ]);
 
-// Words that should NEVER be hyperlinked (months, days)
+// Words that should NEVER be hyperlinked (months, days, nationalities/cuisines, descriptive adjectives)
 const NEVER_LINK_WORDS = new Set([
+  // Days and months
   'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
   'january', 'february', 'march', 'april', 'may', 'june', 'july',
   'august', 'september', 'october', 'november', 'december',
   'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
+  // Nationalities and cuisines (descriptive adjectives)
+  'thai', 'chinese', 'japanese', 'korean', 'vietnamese', 'indian', 'mexican',
+  'italian', 'french', 'spanish', 'greek', 'turkish', 'lebanese', 'moroccan',
+  'american', 'british', 'german', 'polish', 'russian', 'brazilian', 'peruvian',
+  'ethiopian', 'egyptian', 'caribbean', 'cuban', 'jamaican', 'filipino', 'indonesian',
+  'malaysian', 'singaporean', 'australian', 'canadian', 'irish', 'scottish', 'swedish',
+  'norwegian', 'danish', 'dutch', 'belgian', 'swiss', 'austrian', 'portuguese',
+  'mediterranean', 'asian', 'european', 'latin', 'african', 'middle eastern',
 ]);
 
 // Connecting words that can appear in entity names
@@ -256,8 +265,20 @@ export function NeighborhoodBrief({
   const previewText = paragraphs[0] || cleanedContent;
   const hasMore = paragraphs.length > 1 || cleanedContent.length > 300;
 
-  // Render paragraph with tappable entities
-  const renderParagraph = (text: string) => {
+  // Check if a paragraph is a commentary line (short question or closing remark)
+  const isCommentaryLine = (text: string, isLast: boolean) => {
+    const trimmed = text.trim();
+    // Commentary lines are usually: last paragraph, short, often questions
+    const isQuestion = trimmed.endsWith('?');
+    const isShort = trimmed.length < 80;
+    return isLast && (isQuestion || isShort);
+  };
+
+  // Render paragraph with tappable entities (skip for commentary lines)
+  const renderParagraph = (text: string, isLast: boolean = false) => {
+    if (isCommentaryLine(text, isLast)) {
+      return text; // No links for commentary
+    }
     const { elements } = renderWithSearchableEntities(text, neighborhoodName, city, sources);
     return elements;
   };
@@ -287,11 +308,11 @@ export function NeighborhoodBrief({
         {isExpanded ? (
           <div className="space-y-4">
             {paragraphs.map((p, i) => (
-              <p key={i}>{renderParagraph(p)}</p>
+              <p key={i}>{renderParagraph(p, i === paragraphs.length - 1)}</p>
             ))}
           </div>
         ) : (
-          <p>{renderParagraph(previewText)}</p>
+          <p>{renderParagraph(previewText, paragraphs.length === 1)}</p>
         )}
       </div>
 
