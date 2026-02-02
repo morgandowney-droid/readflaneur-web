@@ -46,10 +46,36 @@ const NEVER_LINK_WORDS = new Set([
   // Street address suffixes (to avoid partial address linking)
   'ave', 'avenue', 'st', 'street', 'blvd', 'boulevard', 'rd', 'road', 'dr', 'drive',
   'ln', 'lane', 'way', 'pl', 'place', 'ct', 'court', 'cir', 'circle', 'pkwy', 'parkway',
+  // Time indicators
+  'am', 'pm', 'a.m.', 'p.m.',
 ]);
 
 // Connecting words that can appear in entity names
 const CONNECTING_WORDS = new Set(['du', 'de', 'von', 'van', 'the', 'at', 'of', 'und', 'och', 'i', 'på', 'and', "'s"]);
+
+/**
+ * Detect street addresses and return their positions
+ * Patterns: "123 7th Ave", "500 W 18th St", "132 Broadway"
+ */
+function detectAddresses(text: string): { start: number; end: number; address: string }[] {
+  const addresses: { start: number; end: number; address: string }[] = [];
+
+  // Pattern for street addresses:
+  // - Number + optional direction (N/S/E/W) + street name/number + optional suffix
+  // Examples: "132 7th Ave", "500 W 18th", "123 Broadway", "45 E 20th St"
+  const addressPattern = /\b(\d+\s+(?:[NSEW]\.?\s+)?(?:\d+(?:st|nd|rd|th)|[A-Z][a-z]+)(?:\s+(?:Ave|Avenue|St|Street|Blvd|Boulevard|Rd|Road|Dr|Drive|Ln|Lane|Way|Pl|Place|Ct|Court))?\.?)\b/gi;
+
+  let match;
+  while ((match = addressPattern.exec(text)) !== null) {
+    addresses.push({
+      start: match.index,
+      end: match.index + match[0].length,
+      address: match[0],
+    });
+  }
+
+  return addresses;
+}
 
 /**
  * Detect proper nouns and make them tappable for search
@@ -62,6 +88,9 @@ function renderWithSearchableEntities(
   sources?: BriefSource[]
 ): { elements: ReactNode[]; hasEntities: boolean } {
   const results: ReactNode[] = [];
+
+  // First, detect addresses
+  const addresses = detectAddresses(text);
 
   // Pattern matches:
   // 1. Quoted phrases: "Something Like This"
@@ -148,7 +177,14 @@ function renderWithSearchableEntities(
       (isFirstAtSentenceStart && isSingleWord && isSkipWord) ||
       isNeighborhoodName;
 
-    if (!shouldSkip && merged.length > 1) {
+    // Check if this token overlaps with any address
+    const overlapsAddress = addresses.some(addr =>
+      (startIndex >= addr.start && startIndex < addr.end) ||
+      (endIndex > addr.start && endIndex <= addr.end) ||
+      (startIndex <= addr.start && endIndex >= addr.end)
+    );
+
+    if (!shouldSkip && merged.length > 1 && !overlapsAddress) {
       mergedTokens.push({
         start: startIndex,
         end: endIndex,
@@ -157,36 +193,60 @@ function renderWithSearchableEntities(
     }
   }
 
-  // Third pass: build result with plain text and entity spans
+  // Combine addresses and entities into linkable items
+  type LinkItem = { start: number; end: number; text: string; type: 'entity' | 'address' };
+  const allLinks: LinkItem[] = [
+    ...mergedTokens.map(t => ({ ...t, type: 'entity' as const })),
+    ...addresses.map(a => ({ start: a.start, end: a.end, text: a.address, type: 'address' as const })),
+  ].sort((a, b) => a.start - b.start);
+
+  // Third pass: build result with plain text and linked spans
   let lastIndex = 0;
-  mergedTokens.forEach((token, idx) => {
-    if (token.start > lastIndex) {
-      results.push(text.slice(lastIndex, token.start));
+  allLinks.forEach((item, idx) => {
+    if (item.start > lastIndex) {
+      results.push(text.slice(lastIndex, item.start));
     }
 
-    // Put neighborhood name first in search query for better context
-    const searchQuery = encodeURIComponent(`${neighborhoodName} ${token.text}`);
-    results.push(
-      <a
-        key={`entity-${idx}`}
-        href={`https://www.google.com/search?q=${searchQuery}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-amber-800 underline decoration-amber-300 decoration-1 underline-offset-2 hover:decoration-amber-500 hover:text-amber-900 transition-colors"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {token.text}
-      </a>
-    );
+    if (item.type === 'address') {
+      // Link addresses to Google Maps
+      const mapsQuery = encodeURIComponent(`${item.text}, ${neighborhoodName}, ${city}`);
+      results.push(
+        <a
+          key={`addr-${idx}`}
+          href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-amber-800 underline decoration-amber-300 decoration-1 underline-offset-2 hover:decoration-amber-500 hover:text-amber-900 transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {item.text}
+        </a>
+      );
+    } else {
+      // Link entities to Google Search
+      const searchQuery = encodeURIComponent(`${neighborhoodName} ${item.text}`);
+      results.push(
+        <a
+          key={`entity-${idx}`}
+          href={`https://www.google.com/search?q=${searchQuery}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-amber-800 underline decoration-amber-300 decoration-1 underline-offset-2 hover:decoration-amber-500 hover:text-amber-900 transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {item.text}
+        </a>
+      );
+    }
 
-    lastIndex = token.end;
+    lastIndex = item.end;
   });
 
   if (lastIndex < text.length) {
     results.push(text.slice(lastIndex));
   }
 
-  const hasEntities = mergedTokens.length > 0;
+  const hasEntities = allLinks.length > 0;
 
   // If no entities found, add a "more" link (use source URL or search with paragraph content)
   if (!hasEntities) {
