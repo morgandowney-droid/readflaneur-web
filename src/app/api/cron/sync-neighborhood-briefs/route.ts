@@ -5,14 +5,18 @@ import { generateNeighborhoodBrief, isGrokConfigured } from '@/lib/grok';
 /**
  * Neighborhood Briefs Sync Cron Job
  *
- * Runs every 4 hours to generate "What's Happening Today" briefs for each neighborhood
+ * Runs every 4 hours to generate "What's Happening" briefs for each neighborhood
  * using Grok's X Search for real-time local news.
  *
  * Schedule: 0 0,4,8,12,16,20 * * * (every 4 hours)
+ * Batch size: 20 neighborhoods per run
+ * Brief expiration: 48 hours (refreshed when new brief generated)
+ * Archive: All briefs are kept for history
  *
- * Cost estimate: ~$0.51 per run for 91 neighborhoods
- * - X Search: 91 calls x $0.005 = $0.455
- * - Tokens: ~$0.05
+ * Cost estimate: ~$0.30 per run (20 neighborhoods)
+ * - X Search: 20 calls x $0.005 = $0.10
+ * - Tokens: ~$0.20
+ * Daily cost: ~$1.80 (6 runs x $0.30)
  */
 
 export const runtime = 'nodejs';
@@ -35,7 +39,7 @@ export async function GET(request: Request) {
   // Support ?test=neighborhood-id for testing single neighborhood
   const url = new URL(request.url);
   const testNeighborhoodId = url.searchParams.get('test');
-  const batchSize = parseInt(url.searchParams.get('batch') || '10'); // Process in batches
+  const batchSize = parseInt(url.searchParams.get('batch') || '20'); // Process in batches
 
   // Check if Grok is configured
   if (!isGrokConfigured()) {
@@ -123,9 +127,9 @@ export async function GET(request: Request) {
         continue;
       }
 
-      // Calculate expiration (6 hours from now)
+      // Calculate expiration (48 hours from now)
       const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 6);
+      expiresAt.setHours(expiresAt.getHours() + 48);
 
       // Insert the brief
       const { error: insertError } = await supabase
@@ -160,14 +164,8 @@ export async function GET(request: Request) {
     }
   }
 
-  // Clean up expired briefs (keep last 24 hours for history)
-  const cleanupTime = new Date();
-  cleanupTime.setHours(cleanupTime.getHours() - 24);
-
-  await supabase
-    .from('neighborhood_briefs')
-    .delete()
-    .lt('expires_at', cleanupTime.toISOString());
+  // Archive: Keep all briefs for history (no deletion)
+  // Old briefs can be queried for historical "What's Happening" data
 
   return NextResponse.json({
     success: results.briefs_failed === 0 || results.briefs_generated > 0,
