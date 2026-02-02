@@ -23,10 +23,15 @@ const SKIP_WORDS = new Set([
   'meanwhile', 'however', 'therefore', 'furthermore', 'moreover',
   'no', 'yes', 'not', 'also', 'just', 'even', 'still', 'already',
   'recent', 'quiet', 'folks', 'today', 'tomorrow', 'events', 'fresh',
+  'village', 'tragic', 'weigh', 'mark',
+]);
+
+// Words that should NEVER be hyperlinked (months, days)
+const NEVER_LINK_WORDS = new Set([
   'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
   'january', 'february', 'march', 'april', 'may', 'june', 'july',
   'august', 'september', 'october', 'november', 'december',
-  'village', 'tragic', 'weigh', 'mark',
+  'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
 ]);
 
 // Connecting words that can appear in entity names
@@ -114,11 +119,14 @@ function renderWithSearchableEntities(
     const lowerMerged = merged.toLowerCase();
     const isSingleWord = !merged.includes(' ') && !merged.includes("'");
     const isSkipWord = SKIP_WORDS.has(lowerMerged);
+    const isNeverLinkWord = NEVER_LINK_WORDS.has(lowerMerged);
     const isNeighborhoodName = lowerMerged === neighborhoodName.toLowerCase() ||
       lowerMerged === city.toLowerCase();
 
-    // Skip if: single common word at sentence start, or it's the neighborhood/city name
-    const shouldSkip = (isFirstAtSentenceStart && isSingleWord && isSkipWord) || isNeighborhoodName;
+    // Skip if: never-link word (months/days), single common word at sentence start, or neighborhood/city name
+    const shouldSkip = isNeverLinkWord ||
+      (isFirstAtSentenceStart && isSingleWord && isSkipWord) ||
+      isNeighborhoodName;
 
     if (!shouldSkip && merged.length > 1) {
       mergedTokens.push({
@@ -136,7 +144,8 @@ function renderWithSearchableEntities(
       results.push(text.slice(lastIndex, token.start));
     }
 
-    const searchQuery = encodeURIComponent(`${token.text} ${neighborhoodName} ${city}`);
+    // Put neighborhood name first in search query for better context
+    const searchQuery = encodeURIComponent(`${neighborhoodName} ${token.text}`);
     results.push(
       <a
         key={`entity-${idx}`}
@@ -159,11 +168,13 @@ function renderWithSearchableEntities(
 
   const hasEntities = mergedTokens.length > 0;
 
-  // If no entities found, add a "more" link (use source URL or Google search fallback)
+  // If no entities found, add a "more" link (use source URL or search with paragraph content)
   if (!hasEntities) {
     const sourceWithUrl = sources?.find(s => s.url);
+    // Use neighborhood name + paragraph content for search
+    const searchText = text.slice(0, 100).trim(); // Limit to first 100 chars
     const moreUrl = sourceWithUrl?.url ||
-      `https://www.google.com/search?q=${encodeURIComponent(`${neighborhoodName} ${city} news today`)}`;
+      `https://www.google.com/search?q=${encodeURIComponent(`${neighborhoodName} ${searchText}`)}`;
 
     results.push(
       <span key="more-link">
@@ -297,7 +308,7 @@ export function NeighborhoodBrief({
       {/* Source attribution */}
       <div className="mt-3 pt-2 border-t border-amber-200">
         <p className="text-[10px] text-amber-600">
-          Powered by Flaneur real-time local intel
+          Powered by Fl&acirc;neur real-time local intel
         </p>
       </div>
     </div>
