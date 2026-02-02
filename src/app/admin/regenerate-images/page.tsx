@@ -28,8 +28,8 @@ export default function RegenerateImagesPage() {
       const { data } = await supabase
         .from('neighborhoods')
         .select('id, name, city')
-        .eq('is_active', true)
-        .order('city');
+        .order('city')
+        .order('name');
 
       if (data && data.length > 0) {
         setNeighborhoods(data);
