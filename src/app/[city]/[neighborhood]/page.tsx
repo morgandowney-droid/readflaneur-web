@@ -89,7 +89,7 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
   const now = new Date().toISOString();
   const { data: brief } = await supabase
     .from('neighborhood_briefs')
-    .select('headline, content, generated_at')
+    .select('headline, content, generated_at, sources')
     .eq('neighborhood_id', neighborhoodId)
     .gt('expires_at', now)
     .order('generated_at', { ascending: false })
@@ -114,6 +114,7 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
             generatedAt={brief.generated_at}
             neighborhoodName={neighborhoodData.name}
             city={neighborhoodData.city}
+            sources={brief.sources || []}
           />
         )}
 

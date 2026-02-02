@@ -2,130 +2,144 @@
 
 import { useState, ReactNode } from 'react';
 
+interface BriefSource {
+  title?: string;
+  url?: string;
+}
+
 interface NeighborhoodBriefProps {
   headline: string;
   content: string;
   generatedAt: string;
   neighborhoodName: string;
   city?: string;
+  sources?: BriefSource[];
 }
 
-// Common words to skip even if capitalized
+// Common words to skip ONLY if they're alone at sentence start
 const SKIP_WORDS = new Set([
   'the', 'a', 'an', 'and', 'but', 'or', 'so', 'yet', 'for', 'nor',
   'in', 'on', 'at', 'to', 'from', 'with', 'by', 'about', 'into',
   'meanwhile', 'however', 'therefore', 'furthermore', 'moreover',
   'no', 'yes', 'not', 'also', 'just', 'even', 'still', 'already',
-  'recent', 'quiet', 'development', 'folks', 'today', 'tomorrow',
+  'recent', 'quiet', 'folks', 'today', 'tomorrow', 'events', 'fresh',
   'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
   'january', 'february', 'march', 'april', 'may', 'june', 'july',
   'august', 'september', 'october', 'november', 'december',
+  'village', 'tragic', 'weigh', 'mark',
 ]);
 
 // Connecting words that can appear in entity names
-const CONNECTING_WORDS = new Set(['du', 'de', 'von', 'van', 'the', 'at', 'of', 'und', 'och', 'i', 'på']);
+const CONNECTING_WORDS = new Set(['du', 'de', 'von', 'van', 'the', 'at', 'of', 'und', 'och', 'i', 'på', 'and', "'s"]);
 
 /**
  * Detect proper nouns and make them tappable for search
+ * Returns { elements: ReactNode[], hasEntities: boolean }
  */
 function renderWithSearchableEntities(
   text: string,
   neighborhoodName: string,
-  city: string
-): ReactNode[] {
+  city: string,
+  sources?: BriefSource[]
+): { elements: ReactNode[]; hasEntities: boolean } {
   const results: ReactNode[] = [];
 
   // Pattern matches:
   // 1. Quoted phrases: "Something Like This"
-  // 2. Capitalized words (including unicode like Ö, Å, Ä)
-  const entityPattern = /"([^"]+)"|([A-ZÄÖÅÆØÜÉ][a-zäöåæøüé']+)/g;
+  // 2. CamelCase words: PopUp, iPhone (has internal capitals)
+  // 3. Regular capitalized words (including unicode like Ö, Å, Ä, É)
+  const entityPattern = /"([^"]+)"|([A-ZÄÖÅÆØÜÉ][a-zäöåæøüé]*(?:[A-ZÄÖÅÆØÜÉ][a-zäöåæøüé']*)+)|([A-ZÄÖÅÆØÜÉ][a-zäöåæøüé']*)/g;
 
-  let lastIndex = 0;
-  let match;
-  let currentEntity: string[] = [];
-  let entityStartIndex = 0;
-
-  const tokens: { start: number; end: number; text: string; isEntity: boolean }[] = [];
-
-  // First pass: find all potential entity tokens
-  while ((match = entityPattern.exec(text)) !== null) {
-    const matchedText = match[1] || match[2]; // quoted content or capitalized word
-    const isQuoted = !!match[1];
-
-    if (isQuoted) {
-      // Quoted phrases are always entities
-      tokens.push({
-        start: match.index,
-        end: match.index + match[0].length,
-        text: matchedText,
-        isEntity: true,
-      });
-    } else {
-      // Check if this capitalized word should be an entity
-      const lowerText = matchedText.toLowerCase();
-      const isAtSentenceStart = match.index === 0 ||
-        /[.!?]\s*$/.test(text.slice(0, match.index));
-
-      if (!SKIP_WORDS.has(lowerText) && !isAtSentenceStart) {
-        tokens.push({
-          start: match.index,
-          end: match.index + match[0].length,
-          text: matchedText,
-          isEntity: true,
-        });
-      }
-    }
+  interface Token {
+    start: number;
+    end: number;
+    text: string;
+    isAtSentenceStart: boolean;
   }
 
-  // Second pass: merge consecutive entities with connecting words
-  const mergedTokens: { start: number; end: number; text: string; isEntity: boolean }[] = [];
+  const tokens: Token[] = [];
+
+  // First pass: find ALL capitalized words (don't skip yet)
+  let match;
+  while ((match = entityPattern.exec(text)) !== null) {
+    const matchedText = match[1] || match[2] || match[3];
+    const isQuoted = !!match[1];
+    const isCamelCase = !!match[2];
+
+    const isAtSentenceStart = match.index === 0 ||
+      /[.!?]\s*$/.test(text.slice(0, match.index));
+
+    tokens.push({
+      start: match.index,
+      end: match.index + match[0].length,
+      text: isQuoted ? matchedText : match[0], // For quoted, use inner text; otherwise full match
+      isAtSentenceStart: isAtSentenceStart && !isCamelCase && !isQuoted,
+    });
+  }
+
+  // Second pass: merge consecutive tokens and decide what to keep
+  const mergedTokens: { start: number; end: number; text: string }[] = [];
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
-    if (!token.isEntity) continue;
-
-    // Look ahead to merge with next token if connected
     let merged = token.text;
     let endIndex = token.end;
+    let startIndex = token.start;
+    let isFirstAtSentenceStart = token.isAtSentenceStart;
 
+    // Look ahead to merge with following tokens
     while (i + 1 < tokens.length) {
-      const gap = text.slice(endIndex, tokens[i + 1].start);
-      const gapWords = gap.trim().toLowerCase();
+      const nextToken = tokens[i + 1];
+      const gap = text.slice(endIndex, nextToken.start);
 
-      // Check if gap is a connecting word or just space
-      if (gap.length <= 4 && (gap.trim() === '' || CONNECTING_WORDS.has(gapWords))) {
-        merged += gap + tokens[i + 1].text;
-        endIndex = tokens[i + 1].end;
+      // Check if we should merge: gap is small and is space, apostrophe, or connecting word
+      const gapTrimmed = gap.trim().toLowerCase();
+      const shouldMerge = gap.length <= 5 && (
+        gap.trim() === '' ||
+        gap.trim() === "'" ||
+        gap.trim() === "'s" ||
+        CONNECTING_WORDS.has(gapTrimmed)
+      );
+
+      if (shouldMerge) {
+        merged += gap + nextToken.text;
+        endIndex = nextToken.end;
         i++;
       } else {
         break;
       }
     }
 
-    // Skip if it's just the neighborhood name
-    if (merged.toLowerCase() !== neighborhoodName.toLowerCase()) {
+    // Now decide if we should keep this entity
+    const lowerMerged = merged.toLowerCase();
+    const isSingleWord = !merged.includes(' ') && !merged.includes("'");
+    const isSkipWord = SKIP_WORDS.has(lowerMerged);
+    const isNeighborhoodName = lowerMerged === neighborhoodName.toLowerCase() ||
+      lowerMerged === city.toLowerCase();
+
+    // Skip if: single common word at sentence start, or it's the neighborhood/city name
+    const shouldSkip = (isFirstAtSentenceStart && isSingleWord && isSkipWord) || isNeighborhoodName;
+
+    if (!shouldSkip && merged.length > 1) {
       mergedTokens.push({
-        start: token.start,
+        start: startIndex,
         end: endIndex,
         text: merged,
-        isEntity: true,
       });
     }
   }
 
   // Third pass: build result with plain text and entity spans
-  lastIndex = 0;
+  let lastIndex = 0;
   mergedTokens.forEach((token, idx) => {
-    // Add plain text before this entity
     if (token.start > lastIndex) {
       results.push(text.slice(lastIndex, token.start));
     }
 
-    // Add tappable entity
     const searchQuery = encodeURIComponent(`${token.text} ${neighborhoodName} ${city}`);
     results.push(
       <a
-        key={idx}
+        key={`entity-${idx}`}
         href={`https://www.google.com/search?q=${searchQuery}`}
         target="_blank"
         rel="noopener noreferrer"
@@ -139,12 +153,34 @@ function renderWithSearchableEntities(
     lastIndex = token.end;
   });
 
-  // Add remaining text
   if (lastIndex < text.length) {
     results.push(text.slice(lastIndex));
   }
 
-  return results.length > 0 ? results : [text];
+  const hasEntities = mergedTokens.length > 0;
+
+  // If no entities found and we have sources, add a "more" link
+  if (!hasEntities && sources && sources.length > 0) {
+    const sourceWithUrl = sources.find(s => s.url);
+    if (sourceWithUrl?.url) {
+      results.push(
+        <span key="more-link">
+          {' '}
+          <a
+            href={sourceWithUrl.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-amber-600 hover:text-amber-800 text-xs"
+            onClick={(e) => e.stopPropagation()}
+          >
+            (more)
+          </a>
+        </span>
+      );
+    }
+  }
+
+  return { elements: results.length > 0 ? results : [text], hasEntities };
 }
 
 /**
@@ -198,6 +234,7 @@ export function NeighborhoodBrief({
   generatedAt,
   neighborhoodName,
   city = '',
+  sources = [],
 }: NeighborhoodBriefProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -208,7 +245,10 @@ export function NeighborhoodBrief({
   const hasMore = paragraphs.length > 1 || cleanedContent.length > 300;
 
   // Render paragraph with tappable entities
-  const renderParagraph = (text: string) => renderWithSearchableEntities(text, neighborhoodName, city);
+  const renderParagraph = (text: string) => {
+    const { elements } = renderWithSearchableEntities(text, neighborhoodName, city, sources);
+    return elements;
+  };
 
   return (
     <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4 mb-6">
