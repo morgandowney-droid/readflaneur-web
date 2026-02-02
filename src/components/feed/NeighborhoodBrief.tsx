@@ -297,7 +297,7 @@ export function NeighborhoodBrief({
       {/* Source attribution */}
       <div className="mt-3 pt-2 border-t border-amber-200">
         <p className="text-[10px] text-amber-600">
-          Powered by Grok &middot; Real-time local intel from X
+          Powered by Flaneur real-time local intel
         </p>
       </div>
     </div>
