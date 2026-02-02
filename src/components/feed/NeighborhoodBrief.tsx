@@ -27,6 +27,12 @@ const SKIP_WORDS = new Set([
   'check', 'head', 'hit', 'try', 'get', 'see', 'watch', 'find', 'meet',
   'art', 'new', 'big', 'old', 'hot', 'top', 'best', 'last', 'first',
   'next', 'free', 'open', 'live', 'local', 'more', 'most', 'many',
+  // Topic-starter words that often begin paragraphs
+  'soccer', 'football', 'sports', 'music', 'food', 'dining', 'wellness',
+  'health', 'fitness', 'culture', 'community', 'business', 'tech', 'fashion',
+  'style', 'beauty', 'home', 'real', 'estate', 'weather', 'traffic', 'transit',
+  'update', 'alert', 'warning', 'breaking', 'happening', 'looking', 'planning',
+  'thinking', 'feeling', 'want', 'need', 'love', 'like', 'hate', 'enjoy',
 ]);
 
 // Words that should NEVER be hyperlinked (months, days, nationalities/cuisines, street suffixes)
@@ -57,23 +63,46 @@ const CONNECTING_WORDS = new Set(['du', 'de', 'von', 'van', 'the', 'at', 'of', '
 
 /**
  * Detect street addresses and return their positions
- * Patterns: "123 7th Ave", "500 W 18th St", "132 Broadway", "185 East 80th"
+ * Patterns: "123 7th Ave", "500 W 18th St", "132 Broadway", "185 East 80th", "11 rue Jean de la Fontaine"
  */
 function detectAddresses(text: string): { start: number; end: number; address: string }[] {
   const addresses: { start: number; end: number; address: string }[] = [];
 
-  // Pattern for street addresses:
+  // Pattern 1: US-style addresses
   // - Number + optional direction (E/W/N/S or East/West/North/South) + street name/number + optional suffix
   // Examples: "132 7th Ave", "500 W 18th", "123 Broadway", "45 E 20th St", "185 East 80th"
-  const addressPattern = /\b(\d+\s+(?:(?:E|W|N|S|East|West|North|South)\.?\s+)?(?:\d+(?:st|nd|rd|th)|[A-Z][a-z]+)(?:\s+(?:Ave|Avenue|St|Street|Blvd|Boulevard|Rd|Road|Dr|Drive|Ln|Lane|Way|Pl|Place|Ct|Court))?\.?)\b/gi;
+  const usAddressPattern = /\b(\d+\s+(?:(?:E|W|N|S|East|West|North|South)\.?\s+)?(?:\d+(?:st|nd|rd|th)|[A-Z][a-z]+)(?:\s+(?:Ave|Avenue|St|Street|Blvd|Boulevard|Rd|Road|Dr|Drive|Ln|Lane|Way|Pl|Place|Ct|Court))?\.?)\b/gi;
+
+  // Pattern 2: European-style addresses (French, etc.)
+  // - Number + street type word + street name (multiple words allowed)
+  // Examples: "11 rue Jean de la Fontaine", "45 avenue des Champs-Élysées", "8 place de la Concorde"
+  const euroAddressPattern = /\b(\d+\s+(?:rue|avenue|boulevard|place|passage|allée|impasse|quai|chemin|via|calle|strasse|straße|gasse|platz|väg|gatan|vägen)\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'-]*(?:\s+(?:de|du|des|la|le|les|d'|l'|del|della|di|von|van|den|het|der|das|och|i|på|and|the|of)\s*)?(?:[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'-]*\s*)*)\b/gi;
 
   let match;
-  while ((match = addressPattern.exec(text)) !== null) {
+
+  // Find US-style addresses
+  while ((match = usAddressPattern.exec(text)) !== null) {
     addresses.push({
       start: match.index,
       end: match.index + match[0].length,
       address: match[0],
     });
+  }
+
+  // Find European-style addresses
+  while ((match = euroAddressPattern.exec(text)) !== null) {
+    // Check if this overlaps with an existing address
+    const overlaps = addresses.some(addr =>
+      (match!.index >= addr.start && match!.index < addr.end) ||
+      (match!.index + match![0].length > addr.start && match!.index + match![0].length <= addr.end)
+    );
+    if (!overlaps) {
+      addresses.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        address: match[0].trim(),
+      });
+    }
   }
 
   return addresses;
