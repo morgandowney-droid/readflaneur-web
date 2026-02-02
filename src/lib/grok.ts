@@ -304,7 +304,7 @@ Format each story clearly separated by "---"`
     for (const block of storyBlocks) {
       const headlineMatch = block.match(/HEADLINE:\s*(.+?)(?:\n|$)/i);
       const categoryMatch = block.match(/CATEGORY:\s*(.+?)(?:\n|$)/i);
-      const previewMatch = block.match(/PREVIEW:\s*(.+?)(?:\n|BODY:)/is);
+      const previewMatch = block.match(/PREVIEW:\s*([\s\S]+?)(?:\n|BODY:)/i);
       const bodyMatch = block.match(/BODY:\s*([\s\S]+?)(?:---|$)/i);
 
       if (headlineMatch && bodyMatch) {
