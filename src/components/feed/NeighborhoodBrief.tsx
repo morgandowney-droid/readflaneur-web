@@ -11,24 +11,31 @@ interface NeighborhoodBriefProps {
 
 /**
  * Clean content by removing citation markers and inline URLs
- * Handles formats like: [[1]](https://...) and (https://...)
+ * Uses citation positions to create natural paragraph breaks
+ * Removes em dashes (AI-generated content indicator)
  */
 function cleanContent(text: string): string {
   return text
-    // Remove markdown-style citations: [[1]](url) or [[1]](url)
-    .replace(/\[\[\d+\]\]\([^)]+\)/g, '')
-    // Remove standalone citation markers: [[1]]
-    .replace(/\[\[\d+\]\]/g, '')
-    // Remove parenthetical URLs: (https://...) or (http://...)
+    // Replace citations with paragraph breaks (citations often mark topic transitions)
+    .replace(/\[\[\d+\]\]\([^)]+\)\s*/g, '\n\n')
+    // Remove any remaining standalone citation markers
+    .replace(/\[\[\d+\]\]\s*/g, '\n\n')
+    // Remove parenthetical URLs
     .replace(/\(https?:\/\/[^)]+\)/g, '')
     // Remove bare URLs
     .replace(/https?:\/\/\S+/g, '')
+    // Replace em dashes with period and space (cleaner sentence break)
+    .replace(/\s*—\s*/g, '. ')
+    // Fix any double periods that may result
+    .replace(/\.\.\s*/g, '. ')
     // Clean up multiple spaces
     .replace(/\s{2,}/g, ' ')
     // Clean up spaces before punctuation
     .replace(/\s+([.,!?])/g, '$1')
-    // Clean up multiple newlines
+    // Clean up multiple newlines (but keep paragraph breaks)
     .replace(/\n{3,}/g, '\n\n')
+    // Trim whitespace from start of paragraphs
+    .replace(/\n\s+/g, '\n')
     .trim();
 }
 
