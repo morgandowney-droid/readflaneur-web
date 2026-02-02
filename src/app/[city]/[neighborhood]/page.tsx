@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { NeighborhoodFeed } from '@/components/feed/NeighborhoodFeed';
-import { NeighborhoodBrief } from '@/components/feed/NeighborhoodBrief';
+import { NeighborhoodBrief, BriefArchive } from '@/components/feed/NeighborhoodBrief';
 import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { injectAds } from '@/lib/ad-engine';
 import { Article, Ad } from '@/types';
@@ -89,7 +89,7 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
   const now = new Date().toISOString();
   const { data: brief } = await supabase
     .from('neighborhood_briefs')
-    .select('headline, content, generated_at, sources')
+    .select('id, headline, content, generated_at, sources')
     .eq('neighborhood_id', neighborhoodId)
     .gt('expires_at', now)
     .order('generated_at', { ascending: false })
@@ -117,6 +117,14 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
             sources={brief.sources || []}
           />
         )}
+
+        {/* Brief Archive - shows previous briefs */}
+        <BriefArchive
+          neighborhoodId={neighborhoodId}
+          neighborhoodName={neighborhoodData.name}
+          city={neighborhoodData.city}
+          currentBriefId={brief?.id}
+        />
 
         <NeighborhoodFeed
           items={feedItems}
