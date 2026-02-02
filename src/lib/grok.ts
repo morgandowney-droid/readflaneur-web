@@ -159,7 +159,7 @@ If you don't find much, acknowledge it charmingly. Be specific with venue names 
     const content = contentMatch?.[1]?.trim() || responseText;
 
     // Extract citations/sources
-    const sources: XSearchResult[] = (data.citations || []).map(c => ({
+    const sources: XSearchResult[] = (data.citations || []).map((c: { title?: string; url?: string }) => ({
       title: c.title,
       url: c.url,
     }));
