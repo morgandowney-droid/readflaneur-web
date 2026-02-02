@@ -25,6 +25,8 @@ const SKIP_WORDS = new Set([
   'recent', 'quiet', 'folks', 'today', 'tomorrow', 'events', 'fresh',
   'village', 'tragic', 'weigh', 'mark', 'stay', 'dev', 'catch', 'grab',
   'check', 'head', 'hit', 'try', 'get', 'see', 'watch', 'find', 'meet',
+  'art', 'new', 'big', 'old', 'hot', 'top', 'best', 'last', 'first',
+  'next', 'free', 'open', 'live', 'local', 'more', 'most', 'many',
 ]);
 
 // Words that should NEVER be hyperlinked (months, days, nationalities/cuisines, street suffixes)
@@ -55,15 +57,15 @@ const CONNECTING_WORDS = new Set(['du', 'de', 'von', 'van', 'the', 'at', 'of', '
 
 /**
  * Detect street addresses and return their positions
- * Patterns: "123 7th Ave", "500 W 18th St", "132 Broadway"
+ * Patterns: "123 7th Ave", "500 W 18th St", "132 Broadway", "185 East 80th"
  */
 function detectAddresses(text: string): { start: number; end: number; address: string }[] {
   const addresses: { start: number; end: number; address: string }[] = [];
 
   // Pattern for street addresses:
-  // - Number + optional direction (N/S/E/W) + street name/number + optional suffix
-  // Examples: "132 7th Ave", "500 W 18th", "123 Broadway", "45 E 20th St"
-  const addressPattern = /\b(\d+\s+(?:[NSEW]\.?\s+)?(?:\d+(?:st|nd|rd|th)|[A-Z][a-z]+)(?:\s+(?:Ave|Avenue|St|Street|Blvd|Boulevard|Rd|Road|Dr|Drive|Ln|Lane|Way|Pl|Place|Ct|Court))?\.?)\b/gi;
+  // - Number + optional direction (E/W/N/S or East/West/North/South) + street name/number + optional suffix
+  // Examples: "132 7th Ave", "500 W 18th", "123 Broadway", "45 E 20th St", "185 East 80th"
+  const addressPattern = /\b(\d+\s+(?:(?:E|W|N|S|East|West|North|South)\.?\s+)?(?:\d+(?:st|nd|rd|th)|[A-Z][a-z]+)(?:\s+(?:Ave|Avenue|St|Street|Blvd|Boulevard|Rd|Road|Dr|Drive|Ln|Lane|Way|Pl|Place|Ct|Court))?\.?)\b/gi;
 
   let match;
   while ((match = addressPattern.exec(text)) !== null) {
@@ -171,9 +173,12 @@ function renderWithSearchableEntities(
     const isNeverLinkWord = NEVER_LINK_WORDS.has(lowerMerged);
     const isNeighborhoodName = lowerMerged === neighborhoodName.toLowerCase() ||
       lowerMerged === city.toLowerCase();
+    // Explicit check for time indicators (AM/PM can match as CamelCase)
+    const isTimeIndicator = /^(am|pm|a\.m\.|p\.m\.)$/i.test(merged);
 
-    // Skip if: never-link word (months/days), single common word at sentence start, or neighborhood/city name
+    // Skip if: never-link word (months/days), single common word at sentence start, neighborhood/city name, or time indicator
     const shouldSkip = isNeverLinkWord ||
+      isTimeIndicator ||
       (isFirstAtSentenceStart && isSingleWord && isSkipWord) ||
       isNeighborhoodName;
 
