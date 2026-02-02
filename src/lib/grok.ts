@@ -8,7 +8,7 @@
  */
 
 const GROK_API_URL = 'https://api.x.ai/v1';
-const GROK_MODEL = 'grok-4.1-fast';
+const GROK_MODEL = 'grok-3-fast-latest'; // Using grok-3-fast for stability
 
 interface GrokMessage {
   role: 'system' | 'user' | 'assistant';
@@ -102,25 +102,9 @@ export async function generateNeighborhoodBrief(
           }
         ],
         tools: [
-          {
-            type: 'function',
-            function: {
-              name: 'x_search',
-              description: 'Search X (Twitter) for real-time posts',
-              parameters: {
-                type: 'object',
-                properties: {
-                  query: {
-                    type: 'string',
-                    description: 'The search query'
-                  }
-                },
-                required: ['query']
-              }
-            }
-          }
+          { type: 'x_search' },
+          { type: 'web_search' }
         ],
-        tool_choice: 'auto',
         temperature: 0.7,
         max_tokens: 2000,
       }),
@@ -267,22 +251,9 @@ Format each story clearly separated by "---"`
           }
         ],
         tools: [
-          {
-            type: 'function',
-            function: {
-              name: 'x_search',
-              description: 'Search X (Twitter) for real-time posts about the neighborhood',
-              parameters: {
-                type: 'object',
-                properties: {
-                  query: { type: 'string' }
-                },
-                required: ['query']
-              }
-            }
-          }
+          { type: 'x_search' },
+          { type: 'web_search' }
         ],
-        tool_choice: 'auto',
         temperature: 0.7,
         max_tokens: 4000,
       }),
