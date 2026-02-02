@@ -93,7 +93,7 @@ export async function GET(request: Request) {
     }, { status: 500 });
   }
 
-  if (neighborhoods.length === 0) {
+  if (!neighborhoods || neighborhoods.length === 0) {
     return NextResponse.json({
       success: true,
       message: 'All neighborhoods already have briefs',
