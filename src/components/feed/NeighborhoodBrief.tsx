@@ -441,9 +441,8 @@ export function NeighborhoodBrief({
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-lg">&#x1F4E1;</span>
           <span className="text-xs font-medium uppercase tracking-wider text-amber-700">
-            What&apos;s Happening
+            What&apos;s Happening Today Live
           </span>
         </div>
         <span className="text-xs text-amber-600">
