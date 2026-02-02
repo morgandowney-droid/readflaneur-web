@@ -33,6 +33,10 @@ const SKIP_WORDS = new Set([
   'style', 'beauty', 'home', 'real', 'estate', 'weather', 'traffic', 'transit',
   'update', 'alert', 'warning', 'breaking', 'happening', 'looking', 'planning',
   'thinking', 'feeling', 'want', 'need', 'love', 'like', 'hate', 'enjoy',
+  // More sentence starters
+  'over', 'sure', 'weekend', 'weekday', 'morning', 'evening', 'night', 'daily',
+  'weekly', 'monthly', 'annual', 'special', 'brunchers', 'foodies', 'locals',
+  "it's", "that's", "there's", "here's", "what's", "who's", "where's",
 ]);
 
 // Words that should NEVER be hyperlinked (months, days, nationalities/cuisines, street suffixes)
@@ -68,15 +72,17 @@ const CONNECTING_WORDS = new Set(['du', 'de', 'von', 'van', 'the', 'at', 'of', '
 function detectAddresses(text: string): { start: number; end: number; address: string }[] {
   const addresses: { start: number; end: number; address: string }[] = [];
 
-  // Pattern 1: US-style addresses
+  // Pattern 1: US-style addresses (NO case-insensitive flag - must have proper capitalization)
   // - Number + optional direction (E/W/N/S or East/West/North/South) + street name/number + optional suffix
   // Examples: "132 7th Ave", "500 W 18th", "123 Broadway", "45 E 20th St", "185 East 80th"
-  const usAddressPattern = /\b(\d+\s+(?:(?:E|W|N|S|East|West|North|South)\.?\s+)?(?:\d+(?:st|nd|rd|th)|[A-Z][a-z]+)(?:\s+(?:Ave|Avenue|St|Street|Blvd|Boulevard|Rd|Road|Dr|Drive|Ln|Lane|Way|Pl|Place|Ct|Court))?\.?)\b/gi;
+  // Note: ordinals use (?:st|nd|rd|th|ST|ND|RD|TH) to handle both cases without 'i' flag
+  const usAddressPattern = /\b(\d+\s+(?:(?:E|W|N|S|East|West|North|South)\.?\s+)?(?:\d+(?:st|nd|rd|th|ST|ND|RD|TH)|[A-Z][a-zA-Z]+)(?:\s+(?:Ave|Avenue|AVE|AVENUE|St|Street|ST|STREET|Blvd|Boulevard|BLVD|BOULEVARD|Rd|Road|RD|ROAD|Dr|Drive|DR|DRIVE|Ln|Lane|LN|LANE|Way|WAY|Pl|Place|PL|PLACE|Ct|Court|CT|COURT))?\.?)\b/g;
 
-  // Pattern 2: European-style addresses (French, etc.)
+  // Pattern 2: European-style addresses (French, German, etc.)
   // - Number + street type word + street name (multiple words allowed)
   // Examples: "11 rue Jean de la Fontaine", "45 avenue des Champs-Élysées", "8 place de la Concorde"
-  const euroAddressPattern = /\b(\d+\s+(?:rue|avenue|boulevard|place|passage|allée|impasse|quai|chemin|via|calle|strasse|straße|gasse|platz|väg|gatan|vägen)\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'-]*(?:\s+(?:de|du|des|la|le|les|d'|l'|del|della|di|von|van|den|het|der|das|och|i|på|and|the|of)\s*)?(?:[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'-]*\s*)*)\b/gi;
+  // Note: street type words in lowercase as they typically appear, street names can be mixed case
+  const euroAddressPattern = /\b(\d+\s+(?:rue|Rue|avenue|Avenue|boulevard|Boulevard|place|Place|passage|Passage|allée|Allée|impasse|Impasse|quai|Quai|chemin|Chemin|via|Via|calle|Calle|strasse|Strasse|straße|Straße|gasse|Gasse|platz|Platz|väg|Väg|gatan|Gatan|vägen|Vägen)\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'-]*(?:\s+(?:de|du|des|la|le|les|d'|l'|del|della|di|von|van|den|het|der|das|och|i|på|and|the|of)\s*)?(?:[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'-]*\s*)*)\b/g;
 
   let match;
 
