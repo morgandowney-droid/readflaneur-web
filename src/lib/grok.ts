@@ -122,14 +122,33 @@ If you don't find much, acknowledge it charmingly. Be specific with venue names 
       throw new Error(`Grok API ${response.status}: ${error.slice(0, 200)}`);
     }
 
-    const data: GrokResponsesResponse = await response.json();
+    const data = await response.json();
 
-    // Extract the assistant's response
-    const assistantOutput = data.output?.find(o => o.type === 'message' && o.role === 'assistant');
-    const responseText = assistantOutput?.content || '';
+    // Debug: Log the response structure
+    console.log('Grok response structure:', JSON.stringify(data, null, 2).slice(0, 500));
+
+    // Extract the assistant's response - handle different response formats
+    let responseText = '';
+
+    if (data.output && Array.isArray(data.output)) {
+      // Responses API format
+      const assistantOutput = data.output.find((o: { type?: string; role?: string; content?: unknown }) =>
+        o.type === 'message' && o.role === 'assistant'
+      );
+      const content = assistantOutput?.content;
+      responseText = typeof content === 'string' ? content :
+                     Array.isArray(content) ? content.map((c: { text?: string }) => c.text || '').join('') :
+                     JSON.stringify(content);
+    } else if (data.choices && Array.isArray(data.choices)) {
+      // Chat completions format fallback
+      const content = data.choices[0]?.message?.content;
+      responseText = typeof content === 'string' ? content : JSON.stringify(content);
+    } else if (typeof data === 'string') {
+      responseText = data;
+    }
 
     if (!responseText) {
-      throw new Error('No response content from Grok');
+      throw new Error(`No response content from Grok. Response keys: ${Object.keys(data || {}).join(', ')}`);
     }
 
     // Parse the response
