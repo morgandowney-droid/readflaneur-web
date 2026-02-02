@@ -364,6 +364,10 @@ function renderWithSearchableEntities(
  */
 function cleanContent(text: string): string {
   return text
+    // Elegant word replacements (avoid trying-too-hard language)
+    .replace(/\bclassy\b/gi, 'tasteful')
+    .replace(/\bfoodie\b/gi, 'gastronome')
+    .replace(/\bfoodies\b/gi, 'gastronomes')
     // Replace citations with paragraph breaks (citations often mark topic transitions)
     .replace(/\[\[\d+\]\]\([^)]+\)\s*/g, '\n\n')
     // Remove any remaining standalone citation markers
