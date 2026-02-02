@@ -1,12 +1,150 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 
 interface NeighborhoodBriefProps {
   headline: string;
   content: string;
   generatedAt: string;
   neighborhoodName: string;
+  city?: string;
+}
+
+// Common words to skip even if capitalized
+const SKIP_WORDS = new Set([
+  'the', 'a', 'an', 'and', 'but', 'or', 'so', 'yet', 'for', 'nor',
+  'in', 'on', 'at', 'to', 'from', 'with', 'by', 'about', 'into',
+  'meanwhile', 'however', 'therefore', 'furthermore', 'moreover',
+  'no', 'yes', 'not', 'also', 'just', 'even', 'still', 'already',
+  'recent', 'quiet', 'development', 'folks', 'today', 'tomorrow',
+  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+  'january', 'february', 'march', 'april', 'may', 'june', 'july',
+  'august', 'september', 'october', 'november', 'december',
+]);
+
+// Connecting words that can appear in entity names
+const CONNECTING_WORDS = new Set(['du', 'de', 'von', 'van', 'the', 'at', 'of', 'und', 'och', 'i', 'på']);
+
+/**
+ * Detect proper nouns and make them tappable for search
+ */
+function renderWithSearchableEntities(
+  text: string,
+  neighborhoodName: string,
+  city: string
+): ReactNode[] {
+  const results: ReactNode[] = [];
+
+  // Pattern matches:
+  // 1. Quoted phrases: "Something Like This"
+  // 2. Capitalized words (including unicode like Ö, Å, Ä)
+  const entityPattern = /"([^"]+)"|([A-ZÄÖÅÆØÜÉ][a-zäöåæøüé']+)/g;
+
+  let lastIndex = 0;
+  let match;
+  let currentEntity: string[] = [];
+  let entityStartIndex = 0;
+
+  const tokens: { start: number; end: number; text: string; isEntity: boolean }[] = [];
+
+  // First pass: find all potential entity tokens
+  while ((match = entityPattern.exec(text)) !== null) {
+    const matchedText = match[1] || match[2]; // quoted content or capitalized word
+    const isQuoted = !!match[1];
+
+    if (isQuoted) {
+      // Quoted phrases are always entities
+      tokens.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        text: matchedText,
+        isEntity: true,
+      });
+    } else {
+      // Check if this capitalized word should be an entity
+      const lowerText = matchedText.toLowerCase();
+      const isAtSentenceStart = match.index === 0 ||
+        /[.!?]\s*$/.test(text.slice(0, match.index));
+
+      if (!SKIP_WORDS.has(lowerText) && !isAtSentenceStart) {
+        tokens.push({
+          start: match.index,
+          end: match.index + match[0].length,
+          text: matchedText,
+          isEntity: true,
+        });
+      }
+    }
+  }
+
+  // Second pass: merge consecutive entities with connecting words
+  const mergedTokens: { start: number; end: number; text: string; isEntity: boolean }[] = [];
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    if (!token.isEntity) continue;
+
+    // Look ahead to merge with next token if connected
+    let merged = token.text;
+    let endIndex = token.end;
+
+    while (i + 1 < tokens.length) {
+      const gap = text.slice(endIndex, tokens[i + 1].start);
+      const gapWords = gap.trim().toLowerCase();
+
+      // Check if gap is a connecting word or just space
+      if (gap.length <= 4 && (gap.trim() === '' || CONNECTING_WORDS.has(gapWords))) {
+        merged += gap + tokens[i + 1].text;
+        endIndex = tokens[i + 1].end;
+        i++;
+      } else {
+        break;
+      }
+    }
+
+    // Skip if it's just the neighborhood name
+    if (merged.toLowerCase() !== neighborhoodName.toLowerCase()) {
+      mergedTokens.push({
+        start: token.start,
+        end: endIndex,
+        text: merged,
+        isEntity: true,
+      });
+    }
+  }
+
+  // Third pass: build result with plain text and entity spans
+  lastIndex = 0;
+  mergedTokens.forEach((token, idx) => {
+    // Add plain text before this entity
+    if (token.start > lastIndex) {
+      results.push(text.slice(lastIndex, token.start));
+    }
+
+    // Add tappable entity
+    const searchQuery = encodeURIComponent(`${token.text} ${neighborhoodName} ${city}`);
+    results.push(
+      <a
+        key={idx}
+        href={`https://www.google.com/search?q=${searchQuery}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-amber-800 underline decoration-amber-300 decoration-1 underline-offset-2 hover:decoration-amber-500 hover:text-amber-900 transition-colors"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {token.text}
+      </a>
+    );
+
+    lastIndex = token.end;
+  });
+
+  // Add remaining text
+  if (lastIndex < text.length) {
+    results.push(text.slice(lastIndex));
+  }
+
+  return results.length > 0 ? results : [text];
 }
 
 /**
@@ -59,6 +197,7 @@ export function NeighborhoodBrief({
   content,
   generatedAt,
   neighborhoodName,
+  city = '',
 }: NeighborhoodBriefProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -67,6 +206,9 @@ export function NeighborhoodBrief({
   const paragraphs = cleanedContent.split('\n\n').filter(p => p.trim());
   const previewText = paragraphs[0] || cleanedContent;
   const hasMore = paragraphs.length > 1 || cleanedContent.length > 300;
+
+  // Render paragraph with tappable entities
+  const renderParagraph = (text: string) => renderWithSearchableEntities(text, neighborhoodName, city);
 
   return (
     <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4 mb-6">
@@ -93,11 +235,11 @@ export function NeighborhoodBrief({
         {isExpanded ? (
           <div className="space-y-4">
             {paragraphs.map((p, i) => (
-              <p key={i}>{p}</p>
+              <p key={i}>{renderParagraph(p)}</p>
             ))}
           </div>
         ) : (
-          <p>{previewText}</p>
+          <p>{renderParagraph(previewText)}</p>
         )}
       </div>
 

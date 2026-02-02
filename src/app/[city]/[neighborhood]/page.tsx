@@ -113,6 +113,7 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
             content={brief.content}
             generatedAt={brief.generated_at}
             neighborhoodName={neighborhoodData.name}
+            city={neighborhoodData.city}
           />
         )}
 
