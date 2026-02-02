@@ -8,10 +8,10 @@ import { generateNeighborhoodBrief, isGrokConfigured } from '@/lib/grok';
  * Runs every 4 hours to generate "What's Happening Today" briefs for each neighborhood
  * using Grok's X Search for real-time local news.
  *
- * Schedule: 0 */4 * * * (every 4 hours)
+ * Schedule: 0 0,4,8,12,16,20 * * * (every 4 hours)
  *
  * Cost estimate: ~$0.51 per run for 91 neighborhoods
- * - X Search: 91 calls × $0.005 = $0.455
+ * - X Search: 91 calls x $0.005 = $0.455
  * - Tokens: ~$0.05
  */
 
