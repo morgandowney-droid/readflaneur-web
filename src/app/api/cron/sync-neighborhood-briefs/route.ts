@@ -32,6 +32,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Support ?test=neighborhood-id for testing single neighborhood
+  const url = new URL(request.url);
+  const testNeighborhoodId = url.searchParams.get('test');
+  const batchSize = parseInt(url.searchParams.get('batch') || '10'); // Process in batches
+
   // Check if Grok is configured
   if (!isGrokConfigured()) {
     return NextResponse.json({
@@ -54,11 +59,21 @@ export async function GET(request: Request) {
   };
 
   // Fetch active neighborhoods
-  const { data: neighborhoods, error: fetchError } = await supabase
+  let query = supabase
     .from('neighborhoods')
     .select('id, name, city, country')
     .eq('is_active', true)
     .order('name');
+
+  // If testing, filter to single neighborhood
+  if (testNeighborhoodId) {
+    query = query.eq('id', testNeighborhoodId);
+  } else {
+    // Limit batch size to avoid timeout
+    query = query.limit(batchSize);
+  }
+
+  const { data: neighborhoods, error: fetchError } = await query;
 
   if (fetchError || !neighborhoods) {
     return NextResponse.json({
