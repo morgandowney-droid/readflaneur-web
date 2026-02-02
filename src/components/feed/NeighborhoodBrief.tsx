@@ -23,24 +23,29 @@ const SKIP_WORDS = new Set([
   'meanwhile', 'however', 'therefore', 'furthermore', 'moreover',
   'no', 'yes', 'not', 'also', 'just', 'even', 'still', 'already',
   'recent', 'quiet', 'folks', 'today', 'tomorrow', 'events', 'fresh',
-  'village', 'tragic', 'weigh', 'mark',
+  'village', 'tragic', 'weigh', 'mark', 'stay', 'dev', 'catch', 'grab',
+  'check', 'head', 'hit', 'try', 'get', 'see', 'watch', 'find', 'meet',
 ]);
 
-// Words that should NEVER be hyperlinked (months, days, nationalities/cuisines, descriptive adjectives)
+// Words that should NEVER be hyperlinked (months, days, nationalities/cuisines, street suffixes)
 const NEVER_LINK_WORDS = new Set([
   // Days and months
   'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
   'january', 'february', 'march', 'april', 'may', 'june', 'july',
   'august', 'september', 'october', 'november', 'december',
   'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
-  // Nationalities and cuisines (descriptive adjectives)
+  // Nationalities, cuisines, regional descriptors
   'thai', 'chinese', 'japanese', 'korean', 'vietnamese', 'indian', 'mexican',
   'italian', 'french', 'spanish', 'greek', 'turkish', 'lebanese', 'moroccan',
   'american', 'british', 'german', 'polish', 'russian', 'brazilian', 'peruvian',
   'ethiopian', 'egyptian', 'caribbean', 'cuban', 'jamaican', 'filipino', 'indonesian',
   'malaysian', 'singaporean', 'australian', 'canadian', 'irish', 'scottish', 'swedish',
   'norwegian', 'danish', 'dutch', 'belgian', 'swiss', 'austrian', 'portuguese',
-  'mediterranean', 'asian', 'european', 'latin', 'african', 'middle eastern',
+  'mediterranean', 'asian', 'european', 'latin', 'african', 'iberian', 'nordic',
+  'middle eastern', 'southern', 'northern', 'eastern', 'western',
+  // Street address suffixes (to avoid partial address linking)
+  'ave', 'avenue', 'st', 'street', 'blvd', 'boulevard', 'rd', 'road', 'dr', 'drive',
+  'ln', 'lane', 'way', 'pl', 'place', 'ct', 'court', 'cir', 'circle', 'pkwy', 'parkway',
 ]);
 
 // Connecting words that can appear in entity names
@@ -61,8 +66,14 @@ function renderWithSearchableEntities(
   // Pattern matches:
   // 1. Quoted phrases: "Something Like This"
   // 2. CamelCase words: PopUp, iPhone (has internal capitals)
-  // 3. Regular capitalized words (including unicode like Ö, Å, Ä, É)
-  const entityPattern = /"([^"]+)"|([A-ZÄÖÅÆØÜÉ][a-zäöåæøüé]*(?:[A-ZÄÖÅÆØÜÉ][a-zäöåæøüé']*)+)|([A-ZÄÖÅÆØÜÉ][a-zäöåæøüé']*)/g;
+  // 3. Regular capitalized words (including unicode: Ö, Å, Ä, É, macrons ē, ō, etc.)
+  // Extended unicode: standard accents + macrons + other diacritics
+  const upperChars = 'A-ZÄÖÅÆØÜÉÈÊËÀÂÁÃĪŌŪĒĀÎÏÌÍÔÕÒÓÛÙÚÑÇ';
+  const lowerChars = 'a-zäöåæøüéèêëàâáãīōūēāîïìíôõòóûùúñçē';
+  const entityPattern = new RegExp(
+    `"([^"]+)"|([${upperChars}][${lowerChars}]*(?:[${upperChars}][${lowerChars}']*)+)|([${upperChars}][${lowerChars}']*)`,
+    'g'
+  );
 
   interface Token {
     start: number;
