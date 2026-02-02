@@ -93,9 +93,9 @@ Style: Documentary photography, natural lighting, editorial quality.
 
 IMPORTANT: Do NOT include any text, words, letters, signs, logos, or writing in the image.`;
 
-      // Generate with Gemini
+      // Generate with Gemini 2.5 Flash Image
       const response = await genai.models.generateContent({
-        model: 'gemini-2.0-flash-exp',
+        model: 'gemini-2.5-flash-preview-04-17',
         contents: [
           {
             role: 'user',
@@ -103,7 +103,7 @@ IMPORTANT: Do NOT include any text, words, letters, signs, logos, or writing in 
           },
         ],
         config: {
-          responseModalities: ['Image'],  // Capital I for image-only output
+          responseModalities: ['Image'],
         },
       });
 
