@@ -28,14 +28,14 @@ function cleanContent(text: string): string {
     .replace(/\s*—\s*/g, '. ')
     // Fix any double periods that may result
     .replace(/\.\.\s*/g, '. ')
-    // Clean up multiple spaces
-    .replace(/\s{2,}/g, ' ')
+    // Clean up multiple spaces (but not newlines)
+    .replace(/ {2,}/g, ' ')
     // Clean up spaces before punctuation
     .replace(/\s+([.,!?])/g, '$1')
     // Clean up multiple newlines (but keep paragraph breaks)
     .replace(/\n{3,}/g, '\n\n')
-    // Trim whitespace from start of paragraphs
-    .replace(/\n\s+/g, '\n')
+    // Trim spaces from start of lines (preserve newlines)
+    .replace(/\n +/g, '\n')
     .trim();
 }
 
