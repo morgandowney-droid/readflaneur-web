@@ -7,9 +7,39 @@
 > **User Location:** Stockholm, Sweden (CET/CEST timezone) - use this for time-related references.
 
 ## Current Status
-**Last Updated:** 2026-02-01
+**Last Updated:** 2026-02-02
 
-### Recent Changes (2026-02-01)
+### Recent Changes (2026-02-02)
+
+**UI Consolidation on Neighborhood Pages:**
+- Removed Tonight, Spotted, Property buttons (no content yet)
+- Removed Tip button from header (still available at /contact)
+- Renamed "Guide" button to "Places"
+- Map button now links to Google Maps externally
+- Consolidated layout: neighborhood name left, nav buttons (Places, Map, Wiki) right
+- File: `src/components/feed/NeighborhoodHeader.tsx`
+
+**Places Page Performance Fix:**
+- Converted from client-side to server-side data fetching
+- Initial data preloaded on server for instant page loads
+- New loading skeleton component
+- Files:
+  - `src/app/[city]/[neighborhood]/guides/page.tsx` (server component)
+  - `src/app/[city]/[neighborhood]/guides/GuidesClient.tsx` (client component)
+  - `src/app/[city]/[neighborhood]/guides/loading.tsx` (skeleton)
+
+**Local Image Generation API:**
+- New endpoint: `/api/internal/generate-image`
+- Uses Google Gemini directly when `GEMINI_API_KEY` is set
+- Fallback when flaneur-azure is unavailable
+- Fixed Gemini API: `responseModalities: ['Image']` (capital I)
+- sync-news cron automatically uses local API if GEMINI_API_KEY is configured
+
+**Neighborhood Boundary Fixes:**
+- Fixed 8 neighborhoods with incorrect coordinates
+- File: `src/lib/neighborhood-boundaries.ts`
+
+### Previous Changes (2026-02-01)
 
 **Playwright MCP for UI/UX Testing:**
 - Configured Playwright MCP server for browser automation

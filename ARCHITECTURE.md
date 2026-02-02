@@ -14,7 +14,7 @@ Flâneur is a luxury hyper-local news platform serving 91 neighborhoods across 2
 
 | Component | Technology |
 |-----------|------------|
-| Framework | Next.js 14+ (App Router) |
+| Framework | Next.js 16.1.4 (App Router) |
 | Styling | Tailwind CSS v4 |
 | Database | Supabase (PostgreSQL) |
 | Auth | Supabase Auth |
