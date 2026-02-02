@@ -186,7 +186,7 @@ CONTENT: [2-3 paragraph summary]`
     };
   } catch (error) {
     console.error('Grok API error:', error);
-    return null;
+    throw error; // Propagate error to caller for better debugging
   }
 }
 
