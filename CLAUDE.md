@@ -7,9 +7,48 @@
 > **User Location:** Stockholm, Sweden (CET/CEST timezone) - use this for time-related references.
 
 ## Current Status
-**Last Updated:** 2026-02-02 (night)
+**Last Updated:** 2026-02-02 (late night)
 
-### Recent Changes (2026-02-02 night)
+### Recent Changes (2026-02-02 late night)
+
+**Neighborhood Briefs - Major UI/UX Improvements:**
+- Header: "WHAT'S HAPPENING TODAY LIVE" (removed satellite dish emoji)
+- **Smart Entity Detection:** Proper nouns auto-link to Google Search
+- **Address Detection:** Street addresses link to Google Maps (US + European formats)
+- **Word Replacements:** classy→tasteful, foodie→gastronome (elegant tone)
+- **Brief Archive:** Previous briefs accessible via "Previous briefs" toggle
+- **Commentary Detection:** Last paragraph (if short/question) doesn't get hyperlinks
+
+**Entity Detection Logic (`NeighborhoodBrief.tsx`):**
+- Single words at sentence start: NOT linked by default (grammar capitalization)
+- Exception: CamelCase, all-caps, non-ASCII, or possessive words ARE linked
+- NEVER_LINK_WORDS: months, days, nationalities, cuisines, currencies
+- COMMON_CONTRACTIONS: it's, that's, there's, etc.
+- CURRENCY_CODES: AED, USD, EUR, etc.
+
+**Briefs Cron Job Updates:**
+- Batch size: 20 neighborhoods per run (was 10)
+- Expiration: 48 hours (was 6 hours)
+- Archive: All briefs kept for history (no deletion)
+- Status: 48/95 neighborhoods have briefs (~12 hours until all complete)
+
+**Apple Sign-In:**
+- Frontend code: READY (buttons in login.tsx and signup.tsx)
+- Backend: Needs Supabase configuration
+- See Apple Developer Console setup in session notes
+
+**Vercel Deployment Note:**
+- Commits deploy as "Preview" not "Production"
+- Must manually "Promote to Production" in Vercel dashboard
+- Or change Production Branch from `main` to `master` in Settings → Git
+
+**Vercel MCP Setup:**
+```bash
+claude mcp add --transport http vercel https://mcp.vercel.com
+```
+Then restart Claude Code and run `/mcp` to authenticate.
+
+### Earlier Changes (2026-02-02 night)
 
 **Grok Integration for Real-Time Local News:**
 - New lib: `src/lib/grok.ts` - Grok API with X Search for real-time posts
@@ -19,27 +58,28 @@
   1. **Neighborhood Briefs** - "What's Happening Today" at top of feed
   2. **Grok News Fallback** - Generate stories when RSS is dry
 
-**New Database Table: `neighborhood_briefs`**
-- Caches Grok-generated daily summaries per neighborhood
+**Database Table: `neighborhood_briefs`**
+- Caches Grok-generated summaries per neighborhood
 - Fields: headline, content, sources, model, search_query, expires_at
-- Auto-expires after 6 hours
+- Auto-expires after 48 hours (configurable)
 
-**New Cron Job: `sync-neighborhood-briefs`**
+**Cron Job: `sync-neighborhood-briefs`**
 - Schedule: Every 4 hours (`0 */4 * * *`)
-- Cost: ~$0.51 per run for 91 neighborhoods (~$90/month)
+- Batch size: 20 neighborhoods per run
+- Cost: ~$0.30 per run (~$45/month for 6 runs/day)
 - Queries Grok X Search for each active neighborhood
-- Generates cached "What's Happening" brief
 
 **Enhanced `sync-news` Cron:**
 - Added Grok fallback when RSS yields < 5 articles per neighborhood
 - Generates up to 10 additional Grok stories per neighborhood
 - Tracks `grok_articles_created` and `grok_neighborhoods_filled` in results
 
-**New UI Component: `NeighborhoodBrief`**
+**UI Component: `NeighborhoodBrief`**
 - Displays at top of neighborhood feed
 - Shows headline, content, timestamp
 - Expandable for longer briefs
 - Styled with amber gradient theme
+- Tappable entities for search
 
 **Environment Variable Required:**
 - `GROK_API_KEY` or `XAI_API_KEY` - Get from https://x.ai/api
@@ -260,9 +300,16 @@ npx vercel --prod
 
 **MCP Servers Configured:**
 - **Supabase MCP** - Direct database access (configured in `.mcp.json`)
+- **Vercel MCP** - Deployment management, logs, promotions
 - **Playwright MCP** - Browser automation, screenshots, UI testing
 - **Supermemory** - Persistent context across sessions
 - **Frontend Design** - Polished UI code generation
+
+**Add Vercel MCP:**
+```bash
+claude mcp add --transport http vercel https://mcp.vercel.com
+# Restart Claude Code, then run /mcp to authenticate
+```
 
 **Useful Commands:**
 ```bash
@@ -271,7 +318,7 @@ npx playwright screenshot --wait-for-timeout=5000 [url] [output.png]
 
 # Deploy to production
 git add . && git commit -m "message" && git push origin master
-npx vercel --prod
+# Then promote Preview to Production in Vercel dashboard
 
 # Check MCP status
 /mcp
