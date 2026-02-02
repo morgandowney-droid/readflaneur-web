@@ -58,6 +58,14 @@ export async function GET(request: Request) {
     errors: [] as string[],
   };
 
+  // Get neighborhoods that already have recent briefs (not expired)
+  const { data: existingBriefs } = await supabase
+    .from('neighborhood_briefs')
+    .select('neighborhood_id')
+    .gt('expires_at', new Date().toISOString());
+
+  const coveredIds = new Set((existingBriefs || []).map(b => b.neighborhood_id));
+
   // Fetch active neighborhoods
   let query = supabase
     .from('neighborhoods')
@@ -68,19 +76,33 @@ export async function GET(request: Request) {
   // If testing, filter to single neighborhood
   if (testNeighborhoodId) {
     query = query.eq('id', testNeighborhoodId);
-  } else {
-    // Limit batch size to avoid timeout
-    query = query.limit(batchSize);
   }
 
-  const { data: neighborhoods, error: fetchError } = await query;
+  const { data: allNeighborhoods, error: fetchError } = await query;
 
-  if (fetchError || !neighborhoods) {
+  // Filter out neighborhoods that already have briefs (unless testing specific one)
+  const neighborhoods = testNeighborhoodId
+    ? allNeighborhoods
+    : (allNeighborhoods || []).filter(n => !coveredIds.has(n.id)).slice(0, batchSize);
+
+  if (fetchError || !allNeighborhoods) {
     return NextResponse.json({
       success: false,
       error: fetchError?.message || 'Failed to fetch neighborhoods',
       timestamp: new Date().toISOString(),
     }, { status: 500 });
+  }
+
+  if (neighborhoods.length === 0) {
+    return NextResponse.json({
+      success: true,
+      message: 'All neighborhoods already have briefs',
+      neighborhoods_processed: 0,
+      briefs_generated: 0,
+      briefs_failed: 0,
+      errors: [],
+      timestamp: new Date().toISOString(),
+    });
   }
 
   // Process each neighborhood
