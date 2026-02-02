@@ -1,27 +1,45 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
-const NEIGHBORHOODS = [
-  { id: 'nyc-west-village', name: 'West Village, NYC' },
-  { id: 'london-notting-hill', name: 'Notting Hill, London' },
-  { id: 'sf-pacific-heights', name: 'Pacific Heights, SF' },
-  { id: 'stockholm-ostermalm', name: 'Östermalm, Stockholm' },
-  { id: 'sydney-paddington', name: 'Paddington, Sydney' },
-];
+interface Neighborhood {
+  id: string;
+  name: string;
+  city: string;
+}
 
 const CRON_SECRET_KEY = 'flaneur_cron_secret';
 
 export default function RegenerateImagesPage() {
-  const [neighborhood, setNeighborhood] = useState('nyc-west-village');
+  const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
+  const [neighborhood, setNeighborhood] = useState('');
   const [limit, setLimit] = useState(3);
   const [cronSecret, setCronSecret] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingNeighborhoods, setLoadingNeighborhoods] = useState(true);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Load cron secret from localStorage on mount
+  // Load neighborhoods from database and cron secret from localStorage
   useEffect(() => {
+    const loadData = async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('neighborhoods')
+        .select('id, name, city')
+        .eq('is_active', true)
+        .order('city');
+
+      if (data && data.length > 0) {
+        setNeighborhoods(data);
+        setNeighborhood(data[0].id);
+      }
+      setLoadingNeighborhoods(false);
+    };
+
+    loadData();
+
     const saved = localStorage.getItem(CRON_SECRET_KEY);
     if (saved) setCronSecret(saved);
   }, []);
@@ -43,7 +61,8 @@ export default function RegenerateImagesPage() {
     setResult(null);
 
     try {
-      const response = await fetch('https://flaneur-azure.vercel.app/api/regenerate-images', {
+      // Use local API for image generation
+      const response = await fetch('/api/internal/generate-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,7 +71,6 @@ export default function RegenerateImagesPage() {
         body: JSON.stringify({
           neighborhood_id: neighborhood,
           limit: limit,
-          provider: 'gemini',
         }),
       });
 
@@ -101,13 +119,18 @@ export default function RegenerateImagesPage() {
             <select
               value={neighborhood}
               onChange={(e) => setNeighborhood(e.target.value)}
+              disabled={loadingNeighborhoods}
               className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900"
             >
-              {NEIGHBORHOODS.map((n) => (
-                <option key={n.id} value={n.id}>
-                  {n.name}
-                </option>
-              ))}
+              {loadingNeighborhoods ? (
+                <option>Loading...</option>
+              ) : (
+                neighborhoods.map((n) => (
+                  <option key={n.id} value={n.id}>
+                    {n.name}, {n.city}
+                  </option>
+                ))
+              )}
             </select>
           </div>
 
