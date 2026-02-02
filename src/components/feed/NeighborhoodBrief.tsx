@@ -16,33 +16,54 @@ interface NeighborhoodBriefProps {
   sources?: BriefSource[];
 }
 
+// Common contractions that should NOT be linked even though they might look like proper nouns
+const COMMON_CONTRACTIONS = new Set([
+  "it's", "that's", "there's", "here's", "what's", "who's", "where's", "when's",
+  "he's", "she's", "let's", "how's", "why's",
+  // Curly apostrophe versions
+  "it's", "that's", "there's", "here's", "what's", "who's", "where's", "when's",
+  "he's", "she's", "let's", "how's", "why's",
+]);
+
+// Currency codes (all caps but not proper nouns)
+const CURRENCY_CODES = new Set([
+  'aed', 'usd', 'eur', 'gbp', 'jpy', 'cny', 'inr', 'aud', 'cad', 'chf',
+  'sgd', 'hkd', 'nzd', 'sek', 'nok', 'dkk', 'krw', 'thb', 'myr', 'php',
+]);
+
 /**
  * Check if a word looks like a proper noun (not just capitalized due to sentence start)
  * Returns true if the word has characteristics suggesting it's genuinely a proper noun
  */
 function looksLikeProperNoun(word: string): boolean {
+  const lowerWord = word.toLowerCase();
+
+  // Explicitly NOT proper nouns
+  if (COMMON_CONTRACTIONS.has(lowerWord)) return false;
+  if (CURRENCY_CODES.has(lowerWord)) return false;
+
   // CamelCase: has lowercase followed by uppercase like "iPhone", "PopUp"
   if (/[a-z][A-Z]/.test(word)) return true;
-  // All caps (2+ letters): "PSG", "NYC", "HIIT", "UES"
+  // All caps (2+ letters): "PSG", "NYC", "HIIT", "UES" - but not currency codes
   if (/^[A-Z]{2,}$/.test(word)) return true;
-  // Contains non-ASCII letters (likely foreign proper noun): "Kurfürstendamm", "Müller"
-  if (/[^\x00-\x7F]/.test(word)) return true;
+  // Contains non-ASCII LETTERS (not punctuation like curly quotes)
+  // Check for actual foreign letters, not curly apostrophes/quotes
+  if (/[À-ÖØ-öø-ÿĀ-ſ]/.test(word)) return true;
   // Contains numbers mixed with letters: "16e", "92Y", "3rd"
   if (/\d/.test(word) && /[a-zA-Z]/.test(word)) return true;
-  // Ends with 's (possessive) and base is short - likely proper noun: "Molitor's"
-  if (word.endsWith("'s") && word.length <= 10) return true;
   // Otherwise, a single capitalized word at sentence start is probably just grammar
   return false;
 }
 
 // Words that should NEVER be hyperlinked (months, days, nationalities/cuisines, street suffixes)
 const NEVER_LINK_WORDS = new Set([
-  // Days and months
+  // Days and months (full and abbreviated)
   'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+  'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun',
   'january', 'february', 'march', 'april', 'may', 'june', 'july',
   'august', 'september', 'october', 'november', 'december',
   'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
-  // Nationalities, cuisines, regional descriptors
+  // Nationalities, cuisines, languages, regional descriptors
   'thai', 'chinese', 'japanese', 'korean', 'vietnamese', 'indian', 'mexican',
   'italian', 'french', 'spanish', 'greek', 'turkish', 'lebanese', 'moroccan',
   'american', 'british', 'german', 'polish', 'russian', 'brazilian', 'peruvian',
@@ -51,6 +72,9 @@ const NEVER_LINK_WORDS = new Set([
   'norwegian', 'danish', 'dutch', 'belgian', 'swiss', 'austrian', 'portuguese',
   'mediterranean', 'asian', 'european', 'latin', 'african', 'iberian', 'nordic',
   'middle eastern', 'southern', 'northern', 'eastern', 'western',
+  // Middle Eastern / Arabic world
+  'arabic', 'emirati', 'saudi', 'qatari', 'kuwaiti', 'bahraini', 'omani', 'yemeni',
+  'iraqi', 'syrian', 'jordanian', 'palestinian', 'israeli', 'persian', 'iranian',
   // Street address suffixes (to avoid partial address linking)
   'ave', 'avenue', 'st', 'street', 'blvd', 'boulevard', 'rd', 'road', 'dr', 'drive',
   'ln', 'lane', 'way', 'pl', 'place', 'ct', 'court', 'cir', 'circle', 'pkwy', 'parkway',
@@ -199,8 +223,12 @@ function renderWithSearchableEntities(
 
     // Now decide if we should keep this entity
     const lowerMerged = merged.toLowerCase();
-    const isSingleWord = !merged.includes(' ') && !merged.includes("'s");
+    // Check for single word (no spaces, and not a possessive/contraction with apostrophe)
+    const hasApostrophe = merged.includes("'") || merged.includes("'"); // straight or curly
+    const isSingleWord = !merged.includes(' ') && !hasApostrophe;
     const isNeverLinkWord = NEVER_LINK_WORDS.has(lowerMerged);
+    // Also check if it's a common contraction
+    const isCommonContraction = COMMON_CONTRACTIONS.has(lowerMerged);
     const isNeighborhoodName = lowerMerged === neighborhoodName.toLowerCase() ||
       lowerMerged === city.toLowerCase();
     // Explicit check for time indicators (AM/PM can match as CamelCase)
@@ -214,9 +242,10 @@ function renderWithSearchableEntities(
       !looksLikeProperNoun(merged);
 
     // Skip if: never-link word (months/days/nationalities), time indicator,
-    // neighborhood/city name, or common word at sentence start
+    // common contraction, neighborhood/city name, or common word at sentence start
     const shouldSkip = isNeverLinkWord ||
       isTimeIndicator ||
+      isCommonContraction ||
       isNeighborhoodName ||
       isSentenceStartCommonWord;
 
