@@ -106,8 +106,18 @@ function detectAddresses(text: string): { start: number; end: number; address: s
 
   let match;
 
+  // Words that should NOT be treated as street names in addresses
+  const notStreetNames = /^(AM|PM|and|or|the|for|with|from|at|to|by|on|in)$/i;
+
   // Find US-style addresses
   while ((match = usAddressPattern.exec(text)) !== null) {
+    // Extract what would be the "street name" part and check if it's actually a time/common word
+    const addressText = match[0];
+    // Check if this looks like a time (e.g., "7 PM", "30 AM") rather than an address
+    if (/^\d+\s+(AM|PM)$/i.test(addressText)) continue;
+    // Check if it's just a number + common word
+    if (/^\d+\s+(and|or|the|for|with|from|at|to|by|on|in)$/i.test(addressText)) continue;
+
     addresses.push({
       start: match.index,
       end: match.index + match[0].length,
