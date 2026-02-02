@@ -95,7 +95,7 @@ IMPORTANT: Do NOT include any text, words, letters, signs, logos, or writing in 
 
       // Generate with Gemini 2.5 Flash Image
       const response = await genai.models.generateContent({
-        model: 'gemini-2.5-flash-preview-04-17',
+        model: 'gemini-2.5-flash-image',
         contents: [
           {
             role: 'user',
