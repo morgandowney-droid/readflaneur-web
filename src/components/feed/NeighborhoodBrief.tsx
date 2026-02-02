@@ -9,6 +9,29 @@ interface NeighborhoodBriefProps {
   neighborhoodName: string;
 }
 
+/**
+ * Clean content by removing citation markers and inline URLs
+ * Handles formats like: [[1]](https://...) and (https://...)
+ */
+function cleanContent(text: string): string {
+  return text
+    // Remove markdown-style citations: [[1]](url) or [[1]](url)
+    .replace(/\[\[\d+\]\]\([^)]+\)/g, '')
+    // Remove standalone citation markers: [[1]]
+    .replace(/\[\[\d+\]\]/g, '')
+    // Remove parenthetical URLs: (https://...) or (http://...)
+    .replace(/\(https?:\/\/[^)]+\)/g, '')
+    // Remove bare URLs
+    .replace(/https?:\/\/\S+/g, '')
+    // Clean up multiple spaces
+    .replace(/\s{2,}/g, ' ')
+    // Clean up spaces before punctuation
+    .replace(/\s+([.,!?])/g, '$1')
+    // Clean up multiple newlines
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function formatTime(dateString: string) {
   const date = new Date(dateString);
   const now = new Date();
@@ -32,10 +55,11 @@ export function NeighborhoodBrief({
 }: NeighborhoodBriefProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Show first paragraph by default
-  const paragraphs = content.split('\n\n').filter(p => p.trim());
-  const previewText = paragraphs[0] || content;
-  const hasMore = paragraphs.length > 1 || content.length > 300;
+  // Clean content and split into paragraphs
+  const cleanedContent = cleanContent(content);
+  const paragraphs = cleanedContent.split('\n\n').filter(p => p.trim());
+  const previewText = paragraphs[0] || cleanedContent;
+  const hasMore = paragraphs.length > 1 || cleanedContent.length > 300;
 
   return (
     <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4 mb-6">
@@ -60,7 +84,7 @@ export function NeighborhoodBrief({
       {/* Content */}
       <div className="text-sm text-neutral-700 leading-relaxed">
         {isExpanded ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {paragraphs.map((p, i) => (
               <p key={i}>{p}</p>
             ))}
