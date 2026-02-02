@@ -16,28 +16,24 @@ interface NeighborhoodBriefProps {
   sources?: BriefSource[];
 }
 
-// Common words to skip ONLY if they're alone at sentence start
-const SKIP_WORDS = new Set([
-  'the', 'a', 'an', 'and', 'but', 'or', 'so', 'yet', 'for', 'nor',
-  'in', 'on', 'at', 'to', 'from', 'with', 'by', 'about', 'into',
-  'meanwhile', 'however', 'therefore', 'furthermore', 'moreover',
-  'no', 'yes', 'not', 'also', 'just', 'even', 'still', 'already',
-  'recent', 'quiet', 'folks', 'today', 'tomorrow', 'events', 'fresh',
-  'village', 'tragic', 'weigh', 'mark', 'stay', 'dev', 'catch', 'grab',
-  'check', 'head', 'hit', 'try', 'get', 'see', 'watch', 'find', 'meet',
-  'art', 'new', 'big', 'old', 'hot', 'top', 'best', 'last', 'first',
-  'next', 'free', 'open', 'live', 'local', 'more', 'most', 'many',
-  // Topic-starter words that often begin paragraphs
-  'soccer', 'football', 'sports', 'music', 'food', 'dining', 'wellness',
-  'health', 'fitness', 'culture', 'community', 'business', 'tech', 'fashion',
-  'style', 'beauty', 'home', 'real', 'estate', 'weather', 'traffic', 'transit',
-  'update', 'alert', 'warning', 'breaking', 'happening', 'looking', 'planning',
-  'thinking', 'feeling', 'want', 'need', 'love', 'like', 'hate', 'enjoy',
-  // More sentence starters
-  'over', 'sure', 'weekend', 'weekday', 'morning', 'evening', 'night', 'daily',
-  'weekly', 'monthly', 'annual', 'special', 'brunchers', 'foodies', 'locals',
-  "it's", "that's", "there's", "here's", "what's", "who's", "where's",
-]);
+/**
+ * Check if a word looks like a proper noun (not just capitalized due to sentence start)
+ * Returns true if the word has characteristics suggesting it's genuinely a proper noun
+ */
+function looksLikeProperNoun(word: string): boolean {
+  // CamelCase: has lowercase followed by uppercase like "iPhone", "PopUp"
+  if (/[a-z][A-Z]/.test(word)) return true;
+  // All caps (2+ letters): "PSG", "NYC", "HIIT", "UES"
+  if (/^[A-Z]{2,}$/.test(word)) return true;
+  // Contains non-ASCII letters (likely foreign proper noun): "Kurfürstendamm", "Müller"
+  if (/[^\x00-\x7F]/.test(word)) return true;
+  // Contains numbers mixed with letters: "16e", "92Y", "3rd"
+  if (/\d/.test(word) && /[a-zA-Z]/.test(word)) return true;
+  // Ends with 's (possessive) and base is short - likely proper noun: "Molitor's"
+  if (word.endsWith("'s") && word.length <= 10) return true;
+  // Otherwise, a single capitalized word at sentence start is probably just grammar
+  return false;
+}
 
 // Words that should NEVER be hyperlinked (months, days, nationalities/cuisines, street suffixes)
 const NEVER_LINK_WORDS = new Set([
@@ -203,19 +199,26 @@ function renderWithSearchableEntities(
 
     // Now decide if we should keep this entity
     const lowerMerged = merged.toLowerCase();
-    const isSingleWord = !merged.includes(' ') && !merged.includes("'");
-    const isSkipWord = SKIP_WORDS.has(lowerMerged);
+    const isSingleWord = !merged.includes(' ') && !merged.includes("'s");
     const isNeverLinkWord = NEVER_LINK_WORDS.has(lowerMerged);
     const isNeighborhoodName = lowerMerged === neighborhoodName.toLowerCase() ||
       lowerMerged === city.toLowerCase();
     // Explicit check for time indicators (AM/PM can match as CamelCase)
     const isTimeIndicator = /^(am|pm|a\.m\.|p\.m\.)$/i.test(merged);
 
-    // Skip if: never-link word (months/days), single common word at sentence start, neighborhood/city name, or time indicator
+    // Smart sentence-start detection:
+    // Single words at sentence start are capitalized due to grammar, not because they're proper nouns
+    // Only link them if they have characteristics of actual proper nouns
+    const isSentenceStartCommonWord = isFirstAtSentenceStart &&
+      isSingleWord &&
+      !looksLikeProperNoun(merged);
+
+    // Skip if: never-link word (months/days/nationalities), time indicator,
+    // neighborhood/city name, or common word at sentence start
     const shouldSkip = isNeverLinkWord ||
       isTimeIndicator ||
-      (isFirstAtSentenceStart && isSingleWord && isSkipWord) ||
-      isNeighborhoodName;
+      isNeighborhoodName ||
+      isSentenceStartCommonWord;
 
     // Check if this token overlaps with any address
     const overlapsAddress = addresses.some(addr =>
