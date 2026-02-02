@@ -1,19 +1,15 @@
 /**
  * Grok API Integration
- * Uses xAI's Grok models with X Search for real-time local news
+ * Uses xAI's Responses API with X Search for real-time local news
  *
  * Pricing (as of 2026):
- * - grok-4.1-fast: $0.20/1M input, $0.50/1M output
+ * - grok-4-1-fast: $0.20/1M input, $0.50/1M output
  * - X Search tool: $5 per 1,000 calls ($0.005/call)
+ * - Web Search tool: $5 per 1,000 calls
  */
 
 const GROK_API_URL = 'https://api.x.ai/v1';
-const GROK_MODEL = 'grok-3-fast-latest'; // Using grok-3-fast for stability
-
-interface GrokMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
+const GROK_MODEL = 'grok-4-1-fast'; // Best for tool calling
 
 interface XSearchResult {
   title?: string;
@@ -23,26 +19,22 @@ interface XSearchResult {
   published_at?: string;
 }
 
-interface GrokResponse {
+interface GrokResponsesOutput {
+  type: 'message';
+  role: 'assistant';
+  content: string;
+}
+
+interface GrokResponsesResponse {
   id: string;
-  choices: {
-    message: {
-      content: string;
-      tool_calls?: {
-        id: string;
-        type: string;
-        function: {
-          name: string;
-          arguments: string;
-        };
-      }[];
-    };
-    finish_reason: string;
+  output: GrokResponsesOutput[];
+  citations?: {
+    title?: string;
+    url?: string;
   }[];
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
+  usage?: {
+    input_tokens: number;
+    output_tokens: number;
   };
 }
 
@@ -64,7 +56,7 @@ interface GrokNewsStory {
 }
 
 /**
- * Generate a neighborhood brief using Grok with X Search
+ * Generate a neighborhood brief using Grok Responses API with X Search
  */
 export async function generateNeighborhoodBrief(
   neighborhoodName: string,
@@ -79,11 +71,11 @@ export async function generateNeighborhoodBrief(
   }
 
   const location = country ? `${neighborhoodName}, ${city}, ${country}` : `${neighborhoodName}, ${city}`;
-  const searchQuery = `what is happening in ${location} today`;
+  const searchQuery = `What is happening in ${location} today? Local news, events, restaurant openings, community happenings.`;
 
   try {
-    // Step 1: Use X Search to get real-time posts about the neighborhood
-    const searchResponse = await fetch(`${GROK_API_URL}/chat/completions`, {
+    // Use the Responses API with built-in search tools
+    const response = await fetch(`${GROK_API_URL}/responses`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -91,10 +83,25 @@ export async function generateNeighborhoodBrief(
       },
       body: JSON.stringify({
         model: GROK_MODEL,
-        messages: [
+        input: [
           {
             role: 'system',
-            content: `You are a local news assistant. Search for recent posts and news about ${location}. Focus on: local events, restaurant/bar openings, community happenings, interesting sightings, and neighborhood news. Exclude national politics and generic content.`
+            content: `You are a witty local neighborhood reporter for Flaneur, covering hyperlocal news. Write in a conversational, engaging style.
+
+Search X and the web for recent posts and news about ${location}. Focus on:
+- Restaurant/bar/cafe openings or closings
+- Local events happening today or this week
+- Community news and developments
+- Interesting local sightings
+- Real estate and development news
+
+After searching, create a brief "What's Happening Today" summary.
+
+Format your response EXACTLY as:
+HEADLINE: [Catchy 5-10 word headline]
+CONTENT: [2-3 paragraph summary of what you found]
+
+If you don't find much, acknowledge it charmingly. Be specific with venue names and locations.`
           },
           {
             role: 'user',
@@ -106,68 +113,24 @@ export async function generateNeighborhoodBrief(
           { type: 'web_search' }
         ],
         temperature: 0.7,
-        max_tokens: 2000,
       }),
     });
 
-    if (!searchResponse.ok) {
-      const error = await searchResponse.text();
-      console.error('Grok X Search failed:', searchResponse.status, error);
-      throw new Error(`Grok API ${searchResponse.status}: ${error.slice(0, 200)}`);
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Grok Responses API failed:', response.status, error);
+      throw new Error(`Grok API ${response.status}: ${error.slice(0, 200)}`);
     }
 
-    const searchData: GrokResponse = await searchResponse.json();
+    const data: GrokResponsesResponse = await response.json();
 
-    // Step 2: Generate the brief summary
-    const summaryResponse = await fetch(`${GROK_API_URL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: GROK_MODEL,
-        messages: [
-          {
-            role: 'system',
-            content: `You are a witty local neighborhood reporter for Flaneur, an app that covers hyperlocal neighborhood news. Write in a conversational, engaging style - like a well-informed friend telling you what's happening.
+    // Extract the assistant's response
+    const assistantOutput = data.output?.find(o => o.type === 'message' && o.role === 'assistant');
+    const responseText = assistantOutput?.content || '';
 
-Your task: Create a brief "What's Happening Today" summary for ${location}.
-
-Guidelines:
-- Lead with the most interesting/timely item
-- Be specific about places, events, people
-- Keep it to 2-3 short paragraphs
-- Include specific venue names when mentioned
-- Add personality but stay informative
-- If there's not much happening, acknowledge it with charm
-
-Output format:
-HEADLINE: [Catchy 5-10 word headline]
-CONTENT: [2-3 paragraph summary]`
-          },
-          {
-            role: 'assistant',
-            content: searchData.choices[0]?.message?.content || 'No recent posts found.'
-          },
-          {
-            role: 'user',
-            content: `Based on what you found, write the neighborhood brief for ${location}. If you didn't find much, say so honestly but charmingly.`
-          }
-        ],
-        temperature: 0.8,
-        max_tokens: 1000,
-      }),
-    });
-
-    if (!summaryResponse.ok) {
-      const error = await summaryResponse.text();
-      console.error('Grok summary generation failed:', error);
-      return null;
+    if (!responseText) {
+      throw new Error('No response content from Grok');
     }
-
-    const summaryData: GrokResponse = await summaryResponse.json();
-    const responseText = summaryData.choices[0]?.message?.content || '';
 
     // Parse the response
     const headlineMatch = responseText.match(/HEADLINE:\s*(.+?)(?:\n|CONTENT:)/i);
@@ -176,22 +139,28 @@ CONTENT: [2-3 paragraph summary]`
     const headline = headlineMatch?.[1]?.trim() || `What's Happening in ${neighborhoodName}`;
     const content = contentMatch?.[1]?.trim() || responseText;
 
+    // Extract citations/sources
+    const sources: XSearchResult[] = (data.citations || []).map(c => ({
+      title: c.title,
+      url: c.url,
+    }));
+
     return {
       headline,
       content,
-      sources: [], // X Search results are embedded in the response
-      sourceCount: 0,
+      sources,
+      sourceCount: sources.length,
       model: GROK_MODEL,
       searchQuery,
     };
   } catch (error) {
     console.error('Grok API error:', error);
-    throw error; // Propagate error to caller for better debugging
+    throw error;
   }
 }
 
 /**
- * Generate news stories for a neighborhood using Grok X Search
+ * Generate news stories for a neighborhood using Grok Responses API
  * Used as fallback when RSS feeds don't have enough content
  */
 export async function generateGrokNewsStories(
@@ -210,7 +179,7 @@ export async function generateGrokNewsStories(
   const location = country ? `${neighborhoodName}, ${city}, ${country}` : `${neighborhoodName}, ${city}`;
 
   try {
-    const response = await fetch(`${GROK_API_URL}/chat/completions`, {
+    const response = await fetch(`${GROK_API_URL}/responses`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -218,10 +187,10 @@ export async function generateGrokNewsStories(
       },
       body: JSON.stringify({
         model: GROK_MODEL,
-        messages: [
+        input: [
           {
             role: 'system',
-            content: `You are a hyperlocal news reporter for Flaneur covering ${location}. Search X for recent posts about this neighborhood and identify newsworthy stories.
+            content: `You are a hyperlocal news reporter for Flaneur covering ${location}. Search X and the web for recent posts about this neighborhood and identify newsworthy stories.
 
 Focus on:
 - Restaurant/bar/cafe openings, closings, or changes
@@ -255,18 +224,19 @@ Format each story clearly separated by "---"`
           { type: 'web_search' }
         ],
         temperature: 0.7,
-        max_tokens: 4000,
       }),
     });
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('Grok news generation failed:', error);
+      console.error('Grok news generation failed:', response.status, error);
       return [];
     }
 
-    const data: GrokResponse = await response.json();
-    const content = data.choices[0]?.message?.content || '';
+    const data: GrokResponsesResponse = await response.json();
+
+    const assistantOutput = data.output?.find(o => o.type === 'message' && o.role === 'assistant');
+    const content = assistantOutput?.content || '';
 
     // Parse stories from response
     const stories: GrokNewsStory[] = [];
