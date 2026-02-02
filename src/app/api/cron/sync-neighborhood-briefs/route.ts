@@ -82,7 +82,7 @@ export async function GET(request: Request) {
 
       if (!brief) {
         results.briefs_failed++;
-        results.errors.push(`${hood.name}: Failed to generate brief`);
+        results.errors.push(`${hood.name}: Brief returned null`);
         continue;
       }
 

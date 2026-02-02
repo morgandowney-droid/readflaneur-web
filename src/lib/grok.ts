@@ -112,8 +112,8 @@ export async function generateNeighborhoodBrief(
 
     if (!searchResponse.ok) {
       const error = await searchResponse.text();
-      console.error('Grok X Search failed:', error);
-      return null;
+      console.error('Grok X Search failed:', searchResponse.status, error);
+      throw new Error(`Grok API ${searchResponse.status}: ${error.slice(0, 200)}`);
     }
 
     const searchData: GrokResponse = await searchResponse.json();
