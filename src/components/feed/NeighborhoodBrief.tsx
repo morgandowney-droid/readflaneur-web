@@ -159,25 +159,26 @@ function renderWithSearchableEntities(
 
   const hasEntities = mergedTokens.length > 0;
 
-  // If no entities found and we have sources, add a "more" link
-  if (!hasEntities && sources && sources.length > 0) {
-    const sourceWithUrl = sources.find(s => s.url);
-    if (sourceWithUrl?.url) {
-      results.push(
-        <span key="more-link">
-          {' '}
-          <a
-            href={sourceWithUrl.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-amber-600 hover:text-amber-800 text-xs"
-            onClick={(e) => e.stopPropagation()}
-          >
-            (more)
-          </a>
-        </span>
-      );
-    }
+  // If no entities found, add a "more" link (use source URL or Google search fallback)
+  if (!hasEntities) {
+    const sourceWithUrl = sources?.find(s => s.url);
+    const moreUrl = sourceWithUrl?.url ||
+      `https://www.google.com/search?q=${encodeURIComponent(`${neighborhoodName} ${city} news today`)}`;
+
+    results.push(
+      <span key="more-link">
+        {' '}
+        <a
+          href={moreUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-amber-600 hover:text-amber-800 text-xs"
+          onClick={(e) => e.stopPropagation()}
+        >
+          (more)
+        </a>
+      </span>
+    );
   }
 
   return { elements: results.length > 0 ? results : [text], hasEntities };
