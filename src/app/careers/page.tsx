@@ -26,7 +26,7 @@ export default function CareersPage() {
         <section className="mb-12">
           <p className="text-neutral-700 leading-relaxed mb-6">
             Flâneur is a new mobile news product launching simultaneously in various cities globally.
-            We are "Bloomberg meets Vogue" for the world's most vibrant neighborhoods.
+            We are "The Financial Times meets Vogue" for the world's most vibrant neighborhoods.
           </p>
           <p className="text-neutral-700 leading-relaxed">
             We are looking for a <strong>Neighborhood Editor</strong> to be our eyes and ears on the ground.
