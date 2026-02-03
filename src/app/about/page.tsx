@@ -58,8 +58,10 @@ export default function AboutPage() {
         <section className="mb-12">
           <h2 className="text-lg font-medium mb-4">Our Coverage</h2>
           <p className="text-sm text-neutral-700 leading-relaxed mb-4">
-            We currently cover 91 neighborhoods across 23 cities worldwide, from the West Village
-            in New York to Marais in Paris, Shoreditch in London to Shibuya in Tokyo.
+            We currently cover 99 neighborhoods across 23 cities worldwide, from the West Village
+            in New York to Marais in Paris, Shoreditch in London to Shibuya in Tokyo. We also cover
+            8 vacation destinations including Nantucket, Martha&apos;s Vineyard, The Hamptons, Aspen,
+            St. Barts, Saint-Tropez, Marbella, and Sylt.
           </p>
           <p className="text-sm text-neutral-700 leading-relaxed">
             Each neighborhood has its own dedicated feed, curated guide, and local events calendar.
