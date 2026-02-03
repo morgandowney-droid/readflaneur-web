@@ -18,6 +18,9 @@ const REGION_LABELS: Record<GlobalRegion, string> = {
   'europe': 'Europe',
   'asia-pacific': 'Asia Pacific',
   'middle-east': 'Middle East',
+  'us-vacation': 'US Vacation',
+  'caribbean-vacation': 'Caribbean Vacation',
+  'europe-vacation': 'European Vacation',
 };
 
 export function NeighborhoodSelector({

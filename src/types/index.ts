@@ -1,4 +1,4 @@
-export type GlobalRegion = 'north-america' | 'europe' | 'asia-pacific' | 'middle-east';
+export type GlobalRegion = 'north-america' | 'europe' | 'asia-pacific' | 'middle-east' | 'us-vacation' | 'caribbean-vacation' | 'europe-vacation';
 
 export interface Neighborhood {
   id: string;
@@ -35,6 +35,8 @@ export interface Article {
   updated_at: string;
   article_type?: string;
   category_label?: string;
+  author_type?: 'human' | 'ai';
+  sources?: ArticleSource[];
   // Joined data
   neighborhood?: Neighborhood;
   author?: Profile;
@@ -235,4 +237,14 @@ export interface AdSection {
   created_at: string;
   // Joined data
   section?: Section;
+}
+
+// Source attribution for AI-synthesized articles
+export interface ArticleSource {
+  id: string;
+  article_id: string;
+  source_name: string; // e.g., "Bloomberg", "TechCrunch", "@insider"
+  source_type: 'publication' | 'x_user' | 'platform' | 'other';
+  source_url?: string; // Only included if valid/resolvable
+  created_at: string;
 }
