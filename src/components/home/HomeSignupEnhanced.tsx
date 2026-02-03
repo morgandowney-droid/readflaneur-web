@@ -10,6 +10,17 @@ import { cityToSlug, neighborhoodToSlug } from '@/lib/utils';
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
 const SUBSCRIBED_KEY = 'flaneur-newsletter-subscribed';
 
+// Vacation region labels and styling
+const VACATION_REGIONS: Record<string, { label: string; color: string }> = {
+  'us-vacation': { label: 'US Vacation', color: '#00563F' },
+  'caribbean-vacation': { label: 'Caribbean Vacation', color: '#00563F' },
+  'europe-vacation': { label: 'European Vacation', color: '#00563F' },
+};
+
+// Check if a region is a vacation region
+function isVacationRegion(region?: string): boolean {
+  return region ? region.includes('vacation') : false;
+}
 
 interface HomeSignupEnhancedProps {
   neighborhoods: Neighborhood[];
@@ -28,17 +39,38 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
   const [activeCity, setActiveCity] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Group neighborhoods by city
+  // Group neighborhoods by city (or vacation region)
   const citiesWithNeighborhoods = useMemo(() => {
-    const map = new Map<string, Neighborhood[]>();
+    const map = new Map<string, { neighborhoods: Neighborhood[]; isVacation: boolean; color?: string }>();
     neighborhoods.forEach(n => {
-      if (!map.has(n.city)) map.set(n.city, []);
-      map.get(n.city)!.push(n);
+      // Check if this neighborhood belongs to a vacation region
+      if (isVacationRegion(n.region)) {
+        const vacationInfo = VACATION_REGIONS[n.region!];
+        const groupKey = vacationInfo?.label || n.region!;
+        if (!map.has(groupKey)) {
+          map.set(groupKey, {
+            neighborhoods: [],
+            isVacation: true,
+            color: vacationInfo?.color
+          });
+        }
+        map.get(groupKey)!.neighborhoods.push(n);
+      } else {
+        // Regular city grouping
+        if (!map.has(n.city)) {
+          map.set(n.city, { neighborhoods: [], isVacation: false });
+        }
+        map.get(n.city)!.neighborhoods.push(n);
+      }
     });
-    return Array.from(map.entries()).map(([city, hoods]) => ({
-      city,
-      neighborhoods: hoods,
-    }));
+    return Array.from(map.entries())
+      .map(([city, data]) => ({
+        city,
+        neighborhoods: data.neighborhoods,
+        isVacation: data.isVacation,
+        color: data.color,
+      }))
+      .sort((a, b) => a.city.localeCompare(b.city));
   }, [neighborhoods]);
 
   // Filter based on search
@@ -387,16 +419,17 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
             {/* Modal Body - Cities Grid */}
             <div className="flex-1 overflow-y-auto p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredCities.map(({ city, neighborhoods: cityHoods }) => {
+                {filteredCities.map(({ city, neighborhoods: cityHoods, isVacation, color }) => {
                   const selectedInCity = cityHoods.filter(n => selected.has(n.id)).length;
                   const isExpanded = activeCity === city || searchQuery.length > 0;
+                  const headerBgColor = isVacation && color ? color : undefined;
 
                   return (
                     <div
                       key={city}
                       className={`rounded-lg overflow-hidden border transition-all duration-200 ${
                         selectedInCity > 0
-                          ? 'border-neutral-900'
+                          ? isVacation ? 'border-[#00563F]' : 'border-neutral-900'
                           : 'border-neutral-200 hover:border-neutral-400'
                       }`}
                     >
@@ -405,12 +438,15 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
                         onClick={() => setActiveCity(activeCity === city ? null : city)}
                         className="w-full text-left"
                       >
-                        <div className="h-14 bg-neutral-900 flex items-center justify-between px-4">
+                        <div
+                          className="h-14 flex items-center justify-between px-4"
+                          style={{ backgroundColor: headerBgColor || '#171717' }}
+                        >
                           <div>
                             <h3 className="text-sm font-medium text-white">
                               {city}
                             </h3>
-                            <p className="text-[11px] text-neutral-400">
+                            <p className="text-[11px] text-white/60">
                               {cityHoods.length} area{cityHoods.length !== 1 ? 's' : ''}
                             </p>
                           </div>
