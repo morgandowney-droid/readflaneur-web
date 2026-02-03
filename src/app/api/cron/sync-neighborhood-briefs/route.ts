@@ -6,26 +6,26 @@ import { generateNeighborhoodBrief, isGrokConfigured } from '@/lib/grok';
  * Neighborhood Briefs Sync Cron Job
  *
  * Runs every hour and generates briefs ONLY for neighborhoods where it's
- * currently between 4-8am local time. This ensures briefs feel like fresh
+ * currently 6-7am local time. This ensures briefs feel like fresh
  * morning updates for each neighborhood globally.
  *
  * Schedule: 0 * * * * (every hour)
  * Brief expiration: 24 hours (one per day per neighborhood)
  * Archive: All briefs are kept for history
  *
- * Cost estimate: ~$0.05 per run (avg 5-10 neighborhoods in 4-8am window)
- * Daily cost: ~$1.20 (24 runs x ~$0.05)
+ * Cost estimate: ~$0.02 per run (avg 2-5 neighborhoods in 6-7am window)
+ * Daily cost: ~$0.50 (24 runs x ~$0.02)
  */
 
 /**
- * Check if it's currently between 4-8am in a given timezone
+ * Check if it's currently between 6-7am in a given timezone
  */
 function isMorningWindow(timezone: string): boolean {
   try {
     const now = new Date();
     const localTime = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
     const hour = localTime.getHours();
-    return hour >= 4 && hour < 8;
+    return hour >= 6 && hour < 7;
   } catch (e) {
     console.error(`Invalid timezone: ${timezone}`, e);
     return false;
@@ -114,7 +114,7 @@ export async function GET(request: Request) {
 
   // Filter neighborhoods:
   // 1. Don't already have a valid brief
-  // 2. It's currently 4-8am local time (unless force=true or testing)
+  // 2. It's currently 6-7am local time (unless force=true or testing)
   const neighborhoods = (allNeighborhoods || []).filter(n => {
     // Always process if testing specific neighborhood
     if (testNeighborhoodId) return true;
@@ -127,7 +127,7 @@ export async function GET(request: Request) {
       const inMorningWindow = isMorningWindow(n.timezone);
       if (!inMorningWindow) {
         // Log skipped neighborhoods at debug level
-        console.log(`Skipping ${n.name} - local time is ${getLocalHour(n.timezone)}:00 (not in 4-8am window)`);
+        console.log(`Skipping ${n.name} - local time is ${getLocalHour(n.timezone)}:00 (not in 6-7am window)`);
         return false;
       }
       console.log(`Processing ${n.name} - local time is ${getLocalHour(n.timezone)}:00 (in morning window)`);
@@ -153,7 +153,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       message: skippedCount > 0
-        ? `No neighborhoods in 4-8am window right now (${skippedCount} skipped, waiting for their morning)`
+        ? `No neighborhoods in 6-7am window right now (${skippedCount} skipped, waiting for their morning)`
         : 'All neighborhoods already have briefs',
       neighborhoods_processed: 0,
       briefs_generated: 0,
