@@ -125,6 +125,12 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             </span>
             <span>&middot;</span>
             <span>{formatRelativeTime(article.created_at)}</span>
+            {article.category_label && (
+              <>
+                <span>&middot;</span>
+                <span className="text-neutral-300 italic">{article.category_label}</span>
+              </>
+            )}
           </div>
           <h1 className="text-3xl font-light leading-tight mb-6">
             {article.headline}
