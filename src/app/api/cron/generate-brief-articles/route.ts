@@ -25,9 +25,11 @@ function generateSlug(headline: string, neighborhoodSlug: string): string {
 }
 
 function generatePreviewText(content: string): string {
-  // Remove [[headers]] and get first ~200 chars of actual content
+  // Remove [[headers]], **bold** markers, and markdown links, then get first ~200 chars
   const cleaned = content
     .replace(/\[\[[^\]]+\]\]/g, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove bold markers, keep text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove link markup, keep text
     .replace(/\n+/g, ' ')
     .trim();
   return cleaned.substring(0, 200) + (cleaned.length > 200 ? '...' : '');
@@ -155,6 +157,7 @@ export async function GET(request: Request) {
           author_type: 'ai',
           ai_model: 'grok-3-fast + gemini-3-pro',
           article_type: 'brief_summary',
+          category_label: `${neighborhood.name} Daily Brief`,
           brief_id: brief.id,
           image_url: '', // Required field, can be empty
         });
@@ -173,9 +176,45 @@ export async function GET(request: Request) {
     }
   }
 
+  // Generate images for newly created articles (if any were created)
+  let imagesGenerated = 0;
+  let imagesFailed = 0;
+
+  if (results.articles_created > 0) {
+    try {
+      // Call the internal image generation endpoint
+      const baseUrl = process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+      const imageResponse = await fetch(`${baseUrl}/api/internal/generate-image`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-cron-secret': cronSecret || '',
+        },
+        body: JSON.stringify({
+          limit: results.articles_created,
+        }),
+      });
+
+      if (imageResponse.ok) {
+        const imageResult = await imageResponse.json();
+        imagesGenerated = imageResult.successful || 0;
+        imagesFailed = imageResult.failed || 0;
+      } else {
+        results.errors.push(`Image generation failed: ${imageResponse.status}`);
+      }
+    } catch (imageErr) {
+      results.errors.push(`Image generation error: ${imageErr instanceof Error ? imageErr.message : String(imageErr)}`);
+    }
+  }
+
   return NextResponse.json({
     success: results.articles_failed === 0 || results.articles_created > 0,
     ...results,
+    images_generated: imagesGenerated,
+    images_failed: imagesFailed,
     timestamp: new Date().toISOString(),
   });
 }

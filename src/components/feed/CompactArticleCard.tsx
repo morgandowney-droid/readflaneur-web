@@ -107,6 +107,12 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
                 <span>{formatDate(article.published_at)}</span>
               </>
             )}
+            {article.category_label && (
+              <>
+                <span>&middot;</span>
+                <span className="text-neutral-300 italic">{article.category_label}</span>
+              </>
+            )}
           </div>
           <h2 className="font-semibold text-sm leading-tight mb-1 whitespace-nowrap overflow-hidden">
             {article.headline}

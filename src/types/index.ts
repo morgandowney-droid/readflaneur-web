@@ -33,6 +33,8 @@ export interface Article {
   published_at?: string;
   created_at: string;
   updated_at: string;
+  article_type?: string;
+  category_label?: string;
   // Joined data
   neighborhood?: Neighborhood;
   author?: Profile;

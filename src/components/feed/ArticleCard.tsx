@@ -87,14 +87,22 @@ export function ArticleCard({ article }: ArticleCardProps) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div className="relative aspect-video w-full">
-          <Image
-            src={article.image_url}
-            alt={article.headline}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 800px"
-          />
+        <div className="relative aspect-video w-full bg-neutral-100">
+          {article.image_url ? (
+            <Image
+              src={article.image_url}
+              alt={article.headline}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 800px"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <svg className="w-12 h-12 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+              </svg>
+            </div>
+          )}
           {!isHovered && (
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           )}
@@ -106,6 +114,12 @@ export function ArticleCard({ article }: ArticleCardProps) {
                 </span>
                 <span>&middot;</span>
                 <span>{formatRelativeTime(article.created_at)}</span>
+                {article.category_label && (
+                  <>
+                    <span>&middot;</span>
+                    <span className="text-white/50 italic">{article.category_label}</span>
+                  </>
+                )}
               </div>
               <h2 className="text-white text-lg font-semibold leading-tight whitespace-nowrap overflow-hidden">
                 {article.headline}
@@ -147,6 +161,12 @@ export function ArticleCard({ article }: ArticleCardProps) {
               </span>
               <span>&middot;</span>
               <span>{formatRelativeTime(article.created_at)}</span>
+              {article.category_label && (
+                <>
+                  <span>&middot;</span>
+                  <span className="text-neutral-300 italic">{article.category_label}</span>
+                </>
+              )}
             </div>
             <h2 className="text-lg font-semibold mb-3 whitespace-nowrap overflow-hidden">{article.headline}</h2>
             <p className="text-neutral-600 text-sm leading-relaxed mb-4">

@@ -13,6 +13,10 @@
       "schedule": "0 3 * * *"
     },
     {
+      "path": "/api/cron/generate-opening-closing-news",
+      "schedule": "0 4 * * *"
+    },
+    {
       "path": "/api/cron/sync-tonight",
       "schedule": "0 14 * * *"
     },
@@ -35,6 +39,10 @@
     {
       "path": "/api/cron/generate-guide-digests",
       "schedule": "0 10 * * 1"
+    },
+    {
+      "path": "/api/cron/generate-community-news",
+      "schedule": "0 11 * * 6"
     },
     {
       "path": "/api/cron/sync-neighborhood-briefs",
