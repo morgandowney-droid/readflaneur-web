@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Cormorant_Garamond } from 'next/font/google';
 import './globals.css';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -11,6 +11,12 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600'],
+  variable: '--font-cormorant',
+});
+
 export const metadata: Metadata = {
   title: 'Flâneur | Hyper-local stories',
   description:
@@ -19,6 +25,20 @@ export const metadata: Metadata = {
     title: 'Flâneur | Hyper-local stories',
     description: 'Discover hyper-local stories from the neighborhoods you love.',
     type: 'website',
+  },
+  // Prevent AI training on our content
+  robots: {
+    index: true,
+    follow: true,
+    nocache: false,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
+  other: {
+    // Additional AI scraper prevention
+    'X-Robots-Tag': 'noai, noimageai',
   },
 };
 
@@ -29,7 +49,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased bg-neutral-50`}>
+      <body className={`${inter.variable} ${cormorant.variable} font-sans antialiased bg-neutral-50`}>
         <NeighborhoodModalProvider>
           <Header />
           <main>{children}</main>
