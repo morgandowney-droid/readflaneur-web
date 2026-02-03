@@ -4,7 +4,7 @@ A luxury hyper-local news and neighborhood guide platform. Flâneur delivers cur
 
 ## Features
 
-- **Neighborhood Feeds** - Curated articles and stories for 91 neighborhoods across 23 cities globally
+- **Neighborhood Feeds** - Curated articles and stories for 99 neighborhoods across 23 cities globally (including 8 vacation destinations)
 - **Neighborhood Guides** - Curated listings with Google ratings (4.0+) and Michelin designations
 - **Tonight** - What's happening in your neighborhood today
 - **Spotted** - Local sightings and happenings
@@ -17,7 +17,7 @@ A luxury hyper-local news and neighborhood guide platform. Flâneur delivers cur
 
 | Component | Technology |
 |-----------|------------|
-| Framework | Next.js 14+ (App Router) |
+| Framework | Next.js 16+ (App Router) |
 | Styling | Tailwind CSS v4 |
 | Database | Supabase (PostgreSQL) |
 | Auth | Supabase Auth |

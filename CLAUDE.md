@@ -7,9 +7,37 @@
 > **User Location:** Stockholm, Sweden (CET/CEST timezone) - use this for time-related references.
 
 ## Current Status
-**Last Updated:** 2026-02-02 (late night)
+**Last Updated:** 2026-02-03
 
-### Recent Changes (2026-02-02 late night)
+### Recent Changes (2026-02-03)
+
+**Vacation Neighborhoods (8 New Destinations):**
+- Added 8 vacation neighborhoods grouped into 3 regions:
+  - **US Vacation** (○): Nantucket, Martha's Vineyard, The Hamptons, Aspen
+  - **Caribbean Vacation** (□): St. Barts
+  - **European Vacation** (△): Saint-Tropez, Marbella, Sylt
+- Vacation neighborhoods grouped under region headers (not individual city cards)
+- Dark green (#00563F) styling for vacation regions
+- Muted geometric icons (○, □, △) instead of colorful emojis
+- The Hamptons searches include Montauk, East Hampton, Southampton, Sag Harbor
+
+**RSS Feeds for Vacation Neighborhoods (11 new feeds):**
+- Aspen: Aspen Daily News, Aspen Times
+- Martha's Vineyard: Vineyard Gazette, MV Times
+- Nantucket: Inquirer and Mirror, Nantucket Current
+- The Hamptons: Dan's Papers
+- St. Barts: St Barth Weekly
+- Saint-Tropez: Riviera Radio
+- Marbella: Sur in English, Euro Weekly News
+
+**Key Files Changed:**
+- `src/lib/neighborhood-utils.ts` - Added `getSearchLocation()` for expanded search terms
+- `src/lib/grok.ts` - Uses getSearchLocation for vacation neighborhood searches
+- `src/components/home/HomeSignupEnhanced.tsx` - Groups vacation neighborhoods by region
+- `src/components/neighborhoods/EnhancedNeighborhoodSelector.tsx` - Vacation region icons
+- `src/types/index.ts` - Extended GlobalRegion type with vacation regions
+
+### Previous Changes (2026-02-02 late night)
 
 **Neighborhood Briefs - Major UI/UX Improvements:**
 - Header: "WHAT'S HAPPENING TODAY LIVE" (removed satellite dish emoji)
@@ -192,7 +220,7 @@ npx tsx scripts/seed-neighborhoods.ts nyc-tribeca la-beverly-hills
 - **Website:** https://readflaneur.com
 - **Backend API:** https://flaneur-azure.vercel.app
 - **GitHub:** https://github.com/morgandowney-droid/readflaneur-web
-- **Neighborhoods:** 91 total (7 seeded, 84 seeding)
+- **Neighborhoods:** 99 total (91 city neighborhoods + 8 vacation destinations)
 
 ## Project Structure
 
@@ -269,7 +297,9 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 ## Database Tables
 
 ### Neighborhood System
-- `neighborhoods` - All 91 neighborhoods with coordinates, region, country
+- `neighborhoods` - All 99 neighborhoods with coordinates, region, country
+  - Vacation neighborhoods have `region` set to: `us-vacation`, `caribbean-vacation`, `europe-vacation`
+- `neighborhood_briefs` - Daily "What's Happening" summaries from Grok X Search
 - `guide_listings` - Places from Google Places API
 - `guide_categories` - Restaurant, Coffee, Bars, etc.
 - `rss_sources` - RSS feed URLs by city (manageable via admin)

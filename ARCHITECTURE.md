@@ -2,7 +2,7 @@
 
 ## Overview
 
-Flâneur is a luxury hyper-local news platform serving 91 neighborhoods across 23 cities globally. The platform combines curated journalism with community-sourced content and local business advertising.
+Flâneur is a luxury hyper-local news platform serving 99 neighborhoods across 23 cities globally, including 8 vacation destinations (Nantucket, Martha's Vineyard, The Hamptons, Aspen, St. Barts, Saint-Tropez, Marbella, Sylt). The platform combines curated journalism with community-sourced content and local business advertising.
 
 ### User Types
 
