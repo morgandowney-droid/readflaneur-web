@@ -38,7 +38,8 @@ const NEIGHBORHOODS = [
 ];
 
 async function enrichNeighborhood(
-  supabase: ReturnType<typeof createClient>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
   briefId: string,
   name: string,
   slug: string,
@@ -50,17 +51,18 @@ async function enrichNeighborhood(
   console.log('='.repeat(60));
 
   // Get the brief content and generated_at timestamp
-  const { data: brief, error: fetchError } = await supabase
+  const { data: briefData, error: fetchError } = await supabase
     .from('neighborhood_briefs')
     .select('id, content, generated_at')
     .eq('id', briefId)
     .single();
 
-  if (fetchError || !brief) {
+  if (fetchError || !briefData) {
     console.error(`Failed to fetch brief for ${name}:`, fetchError);
     return;
   }
 
+  const brief = briefData as { id: string; content: string; generated_at: string };
   console.log('Brief content length:', brief.content.length);
   console.log('Brief generated at:', brief.generated_at);
   console.log('Calling Gemini...');
