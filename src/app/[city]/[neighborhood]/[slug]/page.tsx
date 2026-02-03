@@ -7,6 +7,7 @@ import { StoryOpenAd } from '@/components/feed/StoryOpenAd';
 import { FallbackAd } from '@/components/feed/FallbackAd';
 import { ArticleViewTracker } from '@/components/tracking/ArticleViewTracker';
 import { Comments } from '@/components/comments/Comments';
+import { ArticleBody } from '@/components/article/ArticleBody';
 import { Ad } from '@/types';
 import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
 
@@ -155,41 +156,11 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         </div>
 
         {/* Article Body */}
-        <article className="prose prose-neutral max-w-none">
-          {article.body_text.split('\n\n').map((paragraph: string, index: number) => {
-            // Check if this is a section header (wrapped in [[ ]])
-            const headerMatch = paragraph.match(/^\[\[([^\]]+)\]\]$/);
-            if (headerMatch) {
-              return (
-                <h3 key={index} className="text-lg font-semibold text-neutral-800 mt-8 mb-4">
-                  {headerMatch[1]}
-                </h3>
-              );
-            }
-
-            // Process inline markdown: **bold**, links, and citations
-            const processedHtml = paragraph
-              // Convert **bold** to <strong>
-              .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-              // Remove citation numbers like [[3]] or [[4]] (Gemini-style citations)
-              .replace(/\[\[\d+\]\]/g, '')
-              // Remove bare URLs in parentheses that follow citations
-              .replace(/\(https?:\/\/[^)]+\)/g, '')
-              // Convert markdown links [text](url) to clickable links
-              .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>')
-              // Clean up any leftover double spaces
-              .replace(/\s{2,}/g, ' ')
-              .trim();
-
-            return (
-              <p
-                key={index}
-                className="text-neutral-700 leading-relaxed mb-6"
-                dangerouslySetInnerHTML={{ __html: processedHtml }}
-              />
-            );
-          })}
-        </article>
+        <ArticleBody
+          content={article.body_text}
+          neighborhoodName={article.neighborhood?.name || ''}
+          city={article.neighborhood?.city || ''}
+        />
 
         {/* Additional Images */}
         {article.images && article.images.length > 1 && (
