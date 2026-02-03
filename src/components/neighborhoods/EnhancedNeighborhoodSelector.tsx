@@ -34,9 +34,20 @@ const CITY_GRADIENTS: Record<string, string> = {
   // Middle East
   'Dubai': 'from-stone-700 via-neutral-600 to-zinc-600',
   'Tel Aviv': 'from-slate-700 via-stone-600 to-neutral-600',
+  // US Vacation - dark green theme
+  'Nantucket': 'from-emerald-900 via-emerald-800 to-green-800',
+  "Martha's Vineyard": 'from-emerald-900 via-emerald-800 to-green-800',
+  'The Hamptons': 'from-emerald-900 via-emerald-800 to-green-800',
+  'Aspen': 'from-emerald-900 via-emerald-800 to-green-800',
+  // Caribbean Vacation - dark green theme
+  'St. Barts': 'from-emerald-900 via-emerald-800 to-green-800',
+  // European Vacation - dark green theme
+  'Saint-Tropez': 'from-emerald-900 via-emerald-800 to-green-800',
+  'Marbella': 'from-emerald-900 via-emerald-800 to-green-800',
+  'Sylt': 'from-emerald-900 via-emerald-800 to-green-800',
 };
 
-const REGION_DATA: Record<GlobalRegion, { label: string; icon: string; description: string }> = {
+const REGION_DATA: Record<GlobalRegion, { label: string; icon: string; description: string; color?: string }> = {
   'north-america': {
     label: 'North America',
     icon: '◉',
@@ -56,6 +67,24 @@ const REGION_DATA: Record<GlobalRegion, { label: string; icon: string; descripti
     label: 'Middle East',
     icon: '◆',
     description: 'Dubai to Tel Aviv'
+  },
+  'us-vacation': {
+    label: 'US Vacation',
+    icon: '○',
+    description: 'Nantucket to Aspen',
+    color: '#00563F'
+  },
+  'caribbean-vacation': {
+    label: 'Caribbean Vacation',
+    icon: '□',
+    description: 'St. Barts',
+    color: '#00563F'
+  },
+  'europe-vacation': {
+    label: 'European Vacation',
+    icon: '△',
+    description: 'Saint-Tropez to Sylt',
+    color: '#00563F'
   },
 };
 
@@ -155,6 +184,9 @@ export function EnhancedNeighborhoodSelector({
       'europe': [],
       'asia-pacific': [],
       'middle-east': [],
+      'us-vacation': [],
+      'caribbean-vacation': [],
+      'europe-vacation': [],
     };
 
     const cityMap = new Map<string, CityData>();
@@ -199,6 +231,9 @@ export function EnhancedNeighborhoodSelector({
       'europe': [],
       'asia-pacific': [],
       'middle-east': [],
+      'us-vacation': [],
+      'caribbean-vacation': [],
+      'europe-vacation': [],
     };
 
     Object.entries(organizedData).forEach(([region, cities]) => {
@@ -392,19 +427,27 @@ export function EnhancedNeighborhoodSelector({
             >
               All Regions
             </button>
-            {(Object.keys(REGION_DATA) as GlobalRegion[]).map(region => (
-              <button
-                key={region}
-                onClick={() => setActiveRegion(region)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
-                  activeRegion === region
-                    ? 'bg-neutral-900 text-white'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                }`}
-              >
-                {REGION_DATA[region].label}
-              </button>
-            ))}
+            {(Object.keys(REGION_DATA) as GlobalRegion[]).map(region => {
+              const isVacation = region.includes('vacation');
+              return (
+                <button
+                  key={region}
+                  onClick={() => setActiveRegion(region)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+                    activeRegion === region
+                      ? isVacation
+                        ? 'text-white'
+                        : 'bg-neutral-900 text-white'
+                      : isVacation
+                        ? 'text-[#00563F] border border-[#00563F] hover:bg-[#00563F] hover:text-white'
+                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                  }`}
+                  style={activeRegion === region && isVacation ? { backgroundColor: '#00563F' } : {}}
+                >
+                  {REGION_DATA[region].label}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

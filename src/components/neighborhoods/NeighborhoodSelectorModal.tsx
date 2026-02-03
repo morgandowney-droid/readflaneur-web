@@ -33,7 +33,23 @@ const CITY_COORDINATES: Record<string, [number, number]> = {
   'Melbourne': [-37.8136, 144.9631],
   'Dubai': [25.2048, 55.2708],
   'Tel Aviv': [32.0853, 34.7818],
+  // Vacation destinations
+  'US Vacation': [41.2835, -70.0995], // Nantucket coordinates
+  'Caribbean Vacation': [17.8967, -62.8500], // St. Barts
+  'European Vacation': [43.2727, 6.6406], // Saint-Tropez
 };
+
+// Vacation region labels and styling
+const VACATION_REGIONS: Record<string, { label: string; color: string }> = {
+  'us-vacation': { label: 'US Vacation', color: '#00563F' },
+  'caribbean-vacation': { label: 'Caribbean Vacation', color: '#00563F' },
+  'europe-vacation': { label: 'European Vacation', color: '#00563F' },
+};
+
+// Check if a region is a vacation region
+function isVacationRegion(region?: string): boolean {
+  return region ? region.includes('vacation') : false;
+}
 
 // Calculate distance between two points using Haversine formula
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -127,45 +143,53 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
 
     const loadData = async () => {
       setLoading(true);
-      const supabase = createClient();
+      try {
+        const supabase = createClient();
 
-      // Fetch neighborhoods
-      const { data: neighborhoodsData } = await supabase
-        .from('neighborhoods')
-        .select('*')
-        .eq('is_active', true)
-        .order('city')
-        .order('name');
+        // Fetch neighborhoods
+        const { data: neighborhoodsData, error: neighborhoodsError } = await supabase
+          .from('neighborhoods')
+          .select('*')
+          .eq('is_active', true)
+          .order('city')
+          .order('name');
 
-      if (neighborhoodsData) {
-        setNeighborhoods(neighborhoodsData as Neighborhood[]);
-      }
-
-      // Check auth and load preferences
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        setUserId(session.user.id);
-        const { data } = await supabase
-          .from('user_neighborhood_preferences')
-          .select('neighborhood_id')
-          .eq('user_id', session.user.id);
-
-        if (data && data.length > 0) {
-          setSelected(new Set(data.map(p => p.neighborhood_id)));
+        if (neighborhoodsError) {
+          console.error('Failed to load neighborhoods:', neighborhoodsError);
         }
-      } else {
-        const stored = localStorage.getItem(PREFS_KEY);
-        if (stored) {
-          try {
-            setSelected(new Set(JSON.parse(stored)));
-          } catch {
-            // Invalid stored data
+
+        if (neighborhoodsData) {
+          setNeighborhoods(neighborhoodsData as Neighborhood[]);
+        }
+
+        // Check auth and load preferences
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session?.user) {
+          setUserId(session.user.id);
+          const { data } = await supabase
+            .from('user_neighborhood_preferences')
+            .select('neighborhood_id')
+            .eq('user_id', session.user.id);
+
+          if (data && data.length > 0) {
+            setSelected(new Set(data.map(p => p.neighborhood_id)));
+          }
+        } else {
+          const stored = localStorage.getItem(PREFS_KEY);
+          if (stored) {
+            try {
+              setSelected(new Set(JSON.parse(stored)));
+            } catch {
+              // Invalid stored data
+            }
           }
         }
+      } catch (err) {
+        console.error('Error loading neighborhood data:', err);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     loadData();
@@ -190,26 +214,48 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
     };
   }, [isOpen, onClose]);
 
-  // Group neighborhoods by city and sort
+  // Group neighborhoods by city (or vacation region) and sort
   const citiesWithNeighborhoods = useMemo(() => {
-    const map = new Map<string, Neighborhood[]>();
+    const map = new Map<string, { neighborhoods: Neighborhood[]; isVacation: boolean; color?: string }>();
+
     neighborhoods.forEach(n => {
-      if (!map.has(n.city)) map.set(n.city, []);
-      map.get(n.city)!.push(n);
+      // Check if this neighborhood belongs to a vacation region
+      if (isVacationRegion(n.region)) {
+        const vacationInfo = VACATION_REGIONS[n.region!];
+        const groupKey = vacationInfo?.label || n.region!;
+        if (!map.has(groupKey)) {
+          map.set(groupKey, {
+            neighborhoods: [],
+            isVacation: true,
+            color: vacationInfo?.color
+          });
+        }
+        map.get(groupKey)!.neighborhoods.push(n);
+      } else {
+        // Regular city grouping
+        if (!map.has(n.city)) {
+          map.set(n.city, { neighborhoods: [], isVacation: false });
+        }
+        map.get(n.city)!.neighborhoods.push(n);
+      }
     });
 
-    let cities = Array.from(map.entries()).map(([city, hoods]) => ({
+    let cities = Array.from(map.entries()).map(([city, data]) => ({
       city,
-      code: getCityCode(city),
-      neighborhoods: hoods,
+      code: data.isVacation ? '◇' : getCityCode(city),
+      neighborhoods: data.neighborhoods,
+      isVacation: data.isVacation,
+      color: data.color,
       distance: userLocation && CITY_COORDINATES[city]
         ? getDistance(userLocation[0], userLocation[1], CITY_COORDINATES[city][0], CITY_COORDINATES[city][1])
         : Infinity,
     }));
 
-    // Sort by distance if sorting by nearest
+    // Sort by distance if sorting by nearest, otherwise alphabetically
     if (sortBy === 'nearest' && userLocation) {
       cities = cities.sort((a, b) => a.distance - b.distance);
+    } else {
+      cities = cities.sort((a, b) => a.city.localeCompare(b.city));
     }
 
     return cities;
@@ -381,16 +427,17 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredCities.map(({ city, code, neighborhoods: cityHoods, distance }) => {
+              {filteredCities.map(({ city, code, neighborhoods: cityHoods, distance, isVacation, color }) => {
                 const selectedInCity = cityHoods.filter(n => selected.has(n.id)).length;
                 const isExpanded = activeCity === city || searchQuery.length > 0;
+                const headerBgColor = isVacation && color ? color : undefined;
 
                 return (
                   <div
                     key={city}
                     className={`rounded-lg overflow-hidden border transition-all duration-200 ${
                       selectedInCity > 0
-                        ? 'border-neutral-900'
+                        ? isVacation ? 'border-[#00563F]' : 'border-neutral-900'
                         : 'border-neutral-200 hover:border-neutral-400'
                     }`}
                   >
@@ -399,12 +446,15 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
                       onClick={() => setActiveCity(activeCity === city ? null : city)}
                       className="w-full text-left"
                     >
-                      <div className="h-14 bg-neutral-900 flex items-center justify-between px-4">
+                      <div
+                        className="h-14 flex items-center justify-between px-4"
+                        style={{ backgroundColor: headerBgColor || '#171717' }}
+                      >
                         <div>
                           <h3 className="text-sm font-medium text-white">
                             {city}
                           </h3>
-                          <p className="text-[11px] text-neutral-400">
+                          <p className="text-[11px] text-white/60">
                             {code} · {cityHoods.length} area{cityHoods.length !== 1 ? 's' : ''}
                             {sortBy === 'nearest' && distance < Infinity && (
                               <span className="ml-1">· {Math.round(distance)} km</span>

@@ -8,6 +8,8 @@
  * - Web Search tool: $5 per 1,000 calls
  */
 
+import { getSearchLocation } from '@/lib/neighborhood-utils';
+
 const GROK_API_URL = 'https://api.x.ai/v1';
 const GROK_MODEL = 'grok-4-1-fast'; // Best for tool calling
 
@@ -70,7 +72,9 @@ export async function generateNeighborhoodBrief(
     return null;
   }
 
-  const location = country ? `${neighborhoodName}, ${city}, ${country}` : `${neighborhoodName}, ${city}`;
+  const location = country
+    ? getSearchLocation(neighborhoodName, city, country)
+    : `${neighborhoodName}, ${city}`;
   const searchQuery = `What is happening in ${location} today? Local news, events, restaurant openings, community happenings.`;
 
   try {
@@ -200,7 +204,9 @@ export async function generateGrokNewsStories(
     return [];
   }
 
-  const location = country ? `${neighborhoodName}, ${city}, ${country}` : `${neighborhoodName}, ${city}`;
+  const location = country
+    ? getSearchLocation(neighborhoodName, city, country)
+    : `${neighborhoodName}, ${city}`;
 
   try {
     const response = await fetch(`${GROK_API_URL}/responses`, {
@@ -295,4 +301,80 @@ Format each story clearly separated by "---"`
  */
 export function isGrokConfigured(): boolean {
   return !!(process.env.GROK_API_KEY || process.env.XAI_API_KEY);
+}
+
+/**
+ * Generic Grok generation with optional web/X search
+ * Used for flexible content generation tasks
+ */
+export async function generateWithGrok(
+  prompt: string,
+  options?: {
+    systemPrompt?: string;
+    enableSearch?: boolean;
+    temperature?: number;
+  }
+): Promise<string | null> {
+  const apiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
+
+  if (!apiKey) {
+    console.error('Grok API key not configured');
+    return null;
+  }
+
+  const { systemPrompt, enableSearch = true, temperature = 0.7 } = options || {};
+
+  try {
+    const tools = enableSearch ? [{ type: 'x_search' }, { type: 'web_search' }] : undefined;
+
+    const input = systemPrompt
+      ? [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt }
+        ]
+      : [{ role: 'user', content: prompt }];
+
+    const response = await fetch(`${GROK_API_URL}/responses`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: GROK_MODEL,
+        input,
+        tools,
+        temperature,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Grok API failed:', response.status, error);
+      return null;
+    }
+
+    const data = await response.json();
+
+    // Extract response text
+    let responseText = '';
+
+    if (data.output && Array.isArray(data.output)) {
+      const assistantOutput = data.output.find((o: { type?: string; role?: string; content?: unknown }) =>
+        o.type === 'message' && o.role === 'assistant'
+      );
+      const content = assistantOutput?.content;
+      responseText = typeof content === 'string' ? content :
+                     Array.isArray(content) ? content.map((c: { text?: string }) => c.text || '').join('') :
+                     JSON.stringify(content);
+    } else if (data.choices && Array.isArray(data.choices)) {
+      const content = data.choices[0]?.message?.content;
+      responseText = typeof content === 'string' ? content : JSON.stringify(content);
+    }
+
+    return responseText || null;
+  } catch (error) {
+    console.error('Grok generation error:', error);
+    return null;
+  }
 }
