@@ -7,6 +7,177 @@ interface BriefSource {
   url?: string;
 }
 
+interface EnrichedStory {
+  entity: string;
+  source: { name: string; url: string } | null;
+  context: string;
+  note?: string;
+  googleFallbackUrl: string;
+}
+
+interface EnrichedCategory {
+  name: string;
+  stories: EnrichedStory[];
+}
+
+/**
+ * Render text with [[section header]] markers as bold React elements
+ * Also handles legacy **bold** markers for backwards compatibility
+ */
+function renderWithBold(text: string): ReactNode[] {
+  const parts: ReactNode[] = [];
+  // Match both [[header]] and **bold** patterns
+  const headerPattern = /\[\[([^\]]+)\]\]|\*\*([^*]+)\*\*/g;
+  let lastIndex = 0;
+  let match;
+  let keyIndex = 0;
+
+  while ((match = headerPattern.exec(text)) !== null) {
+    // Add text before the match
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    // Add the bold text (match[1] for [[]], match[2] for **)
+    const boldText = match[1] || match[2];
+    parts.push(
+      <strong key={`bold-${keyIndex++}`} className="font-semibold">
+        {boldText}
+      </strong>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : [text];
+}
+
+/**
+ * Detect and extract section header from paragraph start
+ * Rule: Title-case words (with lowercase connectors like "is", "a", "the") form the header.
+ * Header ends when a capitalized word is followed by a lowercase word that is NOT a connector.
+ *
+ * Example: "N. Moore is Having a Moment If you haven't walked..."
+ * - "is", "a" are connectors, so they're part of the title
+ * - "Moment" (cap) followed by "If" (cap) = continue
+ * - "If" (cap) followed by "you" (lower, not connector) = header ends before "If"
+ * Result: header = "N. Moore is Having a Moment", rest = "If you haven't walked..."
+ */
+function extractSectionHeader(text: string): { header: string; rest: string } | null {
+  // Remove any existing ** or *** markers first
+  const cleanText = text.replace(/\*+/g, '');
+
+  // Split into words while preserving spacing
+  const wordPattern = /(\S+)(\s*)/g;
+  const words: { word: string; spacing: string }[] = [];
+  let match;
+
+  while ((match = wordPattern.exec(cleanText)) !== null) {
+    words.push({ word: match[1], spacing: match[2] });
+  }
+
+  if (words.length < 2) return null;
+
+  // Common lowercase words allowed in titles (articles, prepositions, conjunctions, auxiliary verbs)
+  // Also include & as a connector symbol
+  const titleConnectors = new Set([
+    'a', 'an', 'the', 'and', 'but', 'or', 'nor', 'for', 'yet', 'so',
+    'in', 'on', 'at', 'to', 'of', 'by', 'with', 'from', 'as', 'into',
+    'is', 'are', 'was', 'were', 'be', 'been', 'being',
+    'has', 'have', 'had', 'do', 'does', 'did',
+    'vs', 'vs.', 'via', 'per',
+    '&', // ampersand connector
+  ]);
+
+  // Check case of first letter, ignoring leading punctuation/quotes
+  const getFirstLetter = (word: string) => word.replace(/^["'"'«»\[\(]/, '');
+  const startsWithUpper = (word: string) => /^[A-ZÄÖÅÆØÜÉÈÊËÀÂÁÃĪŌŪĒĀ]/.test(getFirstLetter(word));
+  const startsWithLower = (word: string) => /^[a-zäöåæøüéèêëàâáãīōūēā]/.test(getFirstLetter(word));
+  // Check if word is a connector, stripping trailing punctuation
+  const isConnector = (word: string) => {
+    const cleaned = word.toLowerCase().replace(/[.,!?;:]$/, '');
+    return titleConnectors.has(cleaned) || cleaned === ':';
+  };
+
+  if (!startsWithUpper(words[0].word)) return null;
+
+  // Find where header ends
+  // Header includes: capitalized words + lowercase connectors
+  // Header ends when a capitalized word is followed by a lowercase non-connector
+  let headerEndIndex = -1;
+  let lastCapitalizedIndex = 0;
+  let allTitleWords = true;
+
+  for (let i = 0; i < words.length; i++) {
+    const current = words[i].word;
+    const next = i + 1 < words.length ? words[i + 1].word : null;
+
+    if (startsWithUpper(current)) {
+      lastCapitalizedIndex = i;
+    }
+
+    // Check if this is a valid title word
+    // A connector is only valid if followed by a capitalized word (or at end of text)
+    const isValidConnector = isConnector(current) && (!next || startsWithUpper(next));
+    const isValidTitleWord = startsWithUpper(current) || isValidConnector;
+
+    if (!isValidTitleWord) {
+      // Current word breaks the title pattern - header ends before it
+      headerEndIndex = i - 1;
+      allTitleWords = false;
+      break;
+    }
+
+    // If current is capitalized and next is lowercase non-connector, header ends BEFORE current
+    // Because "current" is the start of a new sentence, not part of the title
+    if (next && startsWithUpper(current) && startsWithLower(next) && !isConnector(next)) {
+      headerEndIndex = i - 1;
+      allTitleWords = false;
+      break;
+    }
+  }
+
+  // If all words are title words, the entire paragraph is a header (standalone title)
+  if (allTitleWords && words.length >= 2) {
+    // Check if we have at least 2 capitalized words
+    let capCount = 0;
+    for (const w of words) {
+      if (startsWithUpper(w.word)) capCount++;
+    }
+    if (capCount >= 2) {
+      // Return the whole text as header with empty rest
+      return { header: cleanText.trim(), rest: '' };
+    }
+  }
+
+  // If we went through all words without finding a clear split, no header detected
+  if (headerEndIndex === -1) return null;
+
+  // Need at least 2 words with at least 2 capitalized to be a header
+  let capCount = 0;
+  for (let i = 0; i <= headerEndIndex; i++) {
+    if (startsWithUpper(words[i].word)) capCount++;
+  }
+  if (headerEndIndex < 1 || capCount < 2) return null;
+
+  // Build header and rest strings
+  let header = '';
+  let rest = '';
+
+  for (let i = 0; i <= headerEndIndex; i++) {
+    header += words[i].word + words[i].spacing;
+  }
+
+  for (let i = headerEndIndex + 1; i < words.length; i++) {
+    rest += words[i].word + words[i].spacing;
+  }
+
+  return { header: header.trim(), rest: rest.trim() };
+}
+
 interface NeighborhoodBriefProps {
   headline: string;
   content: string;
@@ -14,6 +185,40 @@ interface NeighborhoodBriefProps {
   neighborhoodName: string;
   city?: string;
   sources?: BriefSource[];
+  // Gemini-enriched data (optional)
+  enrichedContent?: string;
+  enrichedCategories?: EnrichedCategory[];
+  enrichedAt?: string;
+}
+
+// Blocked domains per neighborhood - links to these sites get replaced with Google searches
+const BLOCKED_DOMAINS: Record<string, string[]> = {
+  'tribeca': ['tribecacitizen.com'],
+};
+
+/**
+ * Check if a URL should be blocked for a given neighborhood
+ * Returns a Google search URL if blocked, otherwise returns the original URL
+ */
+function getFilteredUrl(
+  url: string,
+  linkText: string,
+  neighborhoodName: string
+): string {
+  const neighborhoodKey = neighborhoodName.toLowerCase();
+  const blockedDomains = BLOCKED_DOMAINS[neighborhoodKey] || [];
+
+  const isBlocked = blockedDomains.some(domain =>
+    url.toLowerCase().includes(domain.toLowerCase())
+  );
+
+  if (isBlocked) {
+    // Replace with Google search: "[link text] [neighborhood]"
+    const searchQuery = encodeURIComponent(`${linkText} ${neighborhoodName}`);
+    return `https://www.google.com/search?q=${searchQuery}`;
+  }
+
+  return url;
 }
 
 // Common contractions that should NOT be linked even though they might look like proper nouns
@@ -145,15 +350,42 @@ function detectAddresses(text: string): { start: number; end: number; address: s
 }
 
 /**
+ * Find an enriched source for an entity by matching against enriched categories
+ */
+function findEnrichedSource(
+  entityText: string,
+  enrichedCategories?: EnrichedCategory[]
+): { name: string; url: string } | null {
+  if (!enrichedCategories) return null;
+
+  const lowerEntity = entityText.toLowerCase();
+
+  for (const category of enrichedCategories) {
+    for (const story of category.stories) {
+      // Match if entity text appears in the story's entity name
+      const storyEntityLower = story.entity.toLowerCase();
+      if (
+        storyEntityLower.includes(lowerEntity) ||
+        lowerEntity.includes(storyEntityLower.split('(')[0].trim())
+      ) {
+        return story.source;
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * Detect proper nouns and make them tappable for search
- * Returns { elements: ReactNode[], hasEntities: boolean }
+ * Returns { elements: ReactNode[], hasEntities: boolean, verifiedCount: number }
  */
 function renderWithSearchableEntities(
   text: string,
   neighborhoodName: string,
   city: string,
-  sources?: BriefSource[]
-): { elements: ReactNode[]; hasEntities: boolean } {
+  sources?: BriefSource[],
+  enrichedCategories?: EnrichedCategory[]
+): { elements: ReactNode[]; hasEntities: boolean; verifiedCount: number } {
   const results: ReactNode[] = [];
 
   // First, detect addresses
@@ -284,6 +516,8 @@ function renderWithSearchableEntities(
 
   // Third pass: build result with plain text and linked spans
   let lastIndex = 0;
+  let verifiedCount = 0;
+
   allLinks.forEach((item, idx) => {
     if (item.start > lastIndex) {
       results.push(text.slice(lastIndex, item.start));
@@ -305,20 +539,48 @@ function renderWithSearchableEntities(
         </a>
       );
     } else {
-      // Link entities to Google Search
-      const searchQuery = encodeURIComponent(`${neighborhoodName} ${item.text}`);
-      results.push(
-        <a
-          key={`entity-${idx}`}
-          href={`https://www.google.com/search?q=${searchQuery}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-amber-800 underline decoration-amber-300 decoration-1 underline-offset-2 hover:decoration-amber-500 hover:text-amber-900 transition-colors"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {item.text}
-        </a>
-      );
+      // Check for enriched source
+      const enrichedSource = findEnrichedSource(item.text, enrichedCategories);
+
+      // When we have enriched data, only link entities with verified sources
+      // When no enriched data, fall back to Google Search links
+      if (enrichedSource) {
+        verifiedCount++;
+        // Filter URL through blocked domains check
+        const filteredUrl = getFilteredUrl(enrichedSource.url, item.text, neighborhoodName);
+        const isFiltered = filteredUrl !== enrichedSource.url;
+        results.push(
+          <a
+            key={`entity-${idx}`}
+            href={filteredUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-amber-800 underline decoration-amber-500 decoration-1 underline-offset-2 hover:decoration-amber-700 hover:text-amber-900 transition-colors"
+            onClick={(e) => e.stopPropagation()}
+            title={isFiltered ? `Search: ${item.text} ${neighborhoodName}` : `Source: ${enrichedSource.name}`}
+          >
+            {item.text}
+          </a>
+        );
+      } else if (!enrichedCategories) {
+        // No enriched data available - fall back to Google Search
+        const searchQuery = encodeURIComponent(`${neighborhoodName} ${item.text}`);
+        results.push(
+          <a
+            key={`entity-${idx}`}
+            href={`https://www.google.com/search?q=${searchQuery}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-amber-800 underline decoration-amber-300 decoration-1 underline-offset-2 hover:decoration-amber-500 hover:text-amber-900 transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {item.text}
+          </a>
+        );
+      } else {
+        // Has enriched data but no match - just render as plain text
+        results.push(item.text);
+      }
     }
 
     lastIndex = item.end;
@@ -330,11 +592,11 @@ function renderWithSearchableEntities(
 
   const hasEntities = allLinks.length > 0;
 
-  // If no entities found, add a "more" link (use source URL or search with paragraph content)
-  if (!hasEntities) {
+  // If no entities found and no enriched data, add a "more" link
+  // Skip this when we have enriched data - we don't need fallback links
+  if (!hasEntities && !enrichedCategories) {
     const sourceWithUrl = sources?.find(s => s.url);
-    // Use neighborhood name + paragraph content for search
-    const searchText = text.slice(0, 100).trim(); // Limit to first 100 chars
+    const searchText = text.slice(0, 100).trim();
     const moreUrl = sourceWithUrl?.url ||
       `https://www.google.com/search?q=${encodeURIComponent(`${neighborhoodName} ${searchText}`)}`;
 
@@ -354,7 +616,7 @@ function renderWithSearchableEntities(
     );
   }
 
-  return { elements: results.length > 0 ? results : [text], hasEntities };
+  return { elements: results.length > 0 ? results : [text], hasEntities, verifiedCount };
 }
 
 /**
@@ -413,11 +675,25 @@ export function NeighborhoodBrief({
   neighborhoodName,
   city = '',
   sources = [],
+  enrichedContent,
+  enrichedCategories,
 }: NeighborhoodBriefProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Use enriched content if available, otherwise fall back to original
+  const displayContent = enrichedContent || content;
+  const hasEnrichedSources = enrichedCategories && enrichedCategories.length > 0;
+
+  // Count verified sources
+  const verifiedSourceCount = hasEnrichedSources
+    ? enrichedCategories.reduce(
+        (sum, cat) => sum + cat.stories.filter(s => s.source !== null).length,
+        0
+      )
+    : 0;
+
   // Clean content and split into paragraphs
-  const cleanedContent = cleanContent(content);
+  const cleanedContent = cleanContent(displayContent);
   const paragraphs = cleanedContent.split('\n\n').filter(p => p.trim());
   const previewText = paragraphs[0] || cleanedContent;
   const hasMore = paragraphs.length > 1 || cleanedContent.length > 300;
@@ -431,12 +707,101 @@ export function NeighborhoodBrief({
     return isLast && (isQuestion || isShort);
   };
 
-  // Render paragraph with tappable entities (skip for commentary lines)
+  // Render paragraph with tappable entities and bold formatting
+  // Strategy: Use explicit [[header]] or **bold** markers, then process for entities
   const renderParagraph = (text: string, isLast: boolean = false) => {
     if (isCommentaryLine(text, isLast)) {
-      return text; // No links for commentary
+      // Commentary lines: just render with bold, no entity links
+      return renderWithBold(text);
     }
-    const { elements } = renderWithSearchableEntities(text, neighborhoodName, city, sources);
+
+    // Check for explicit [[header]] or **bold** markers
+    const headerPattern = /\[\[([^\]]+)\]\]|\*\*([^*]+)\*\*/g;
+    const segments: { text: string; isBold: boolean }[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = headerPattern.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        segments.push({ text: text.slice(lastIndex, match.index), isBold: false });
+      }
+      // match[1] for [[]], match[2] for **
+      segments.push({ text: match[1] || match[2], isBold: true });
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) {
+      segments.push({ text: text.slice(lastIndex), isBold: false });
+    }
+
+    // If markers were found, process each segment
+    if (segments.length > 1 || (segments.length === 1 && segments[0].isBold)) {
+      const result: ReactNode[] = [];
+      segments.forEach((segment, segIdx) => {
+        if (segment.isBold) {
+          const { elements } = renderWithSearchableEntities(
+            segment.text,
+            neighborhoodName,
+            city,
+            sources,
+            enrichedCategories
+          );
+          result.push(
+            <strong key={`bold-seg-${segIdx}`} className="font-semibold">
+              {elements}
+            </strong>
+          );
+        } else if (segment.text.trim()) {
+          const { elements } = renderWithSearchableEntities(
+            segment.text,
+            neighborhoodName,
+            city,
+            sources,
+            enrichedCategories
+          );
+          result.push(...elements);
+        }
+      });
+      return result;
+    }
+
+    // Fallback: Try auto-detection for legacy content without markers
+    const headerResult = extractSectionHeader(text);
+    if (headerResult) {
+      const result: ReactNode[] = [];
+      const { elements: headerElements } = renderWithSearchableEntities(
+        headerResult.header,
+        neighborhoodName,
+        city,
+        sources,
+        enrichedCategories
+      );
+      result.push(
+        <strong key="header" className="font-semibold">
+          {headerElements}
+        </strong>
+      );
+      if (headerResult.rest) {
+        result.push(' ');
+        const { elements: restElements } = renderWithSearchableEntities(
+          headerResult.rest,
+          neighborhoodName,
+          city,
+          sources,
+          enrichedCategories
+        );
+        result.push(...restElements);
+      }
+      return result;
+    }
+
+    // No markers and no auto-detected header - just process for entities
+    const { elements } = renderWithSearchableEntities(
+      text,
+      neighborhoodName,
+      city,
+      sources,
+      enrichedCategories
+    );
     return elements;
   };
 
@@ -448,6 +813,11 @@ export function NeighborhoodBrief({
           <span className="text-xs font-medium uppercase tracking-wider text-amber-700">
             What&apos;s Happening Today Live
           </span>
+          {verifiedSourceCount > 0 && (
+            <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded-full">
+              {verifiedSourceCount} sources
+            </span>
+          )}
         </div>
         <span className="text-xs text-amber-600">
           {formatTime(generatedAt)}
@@ -486,6 +856,7 @@ export function NeighborhoodBrief({
       <div className="mt-3 pt-2 border-t border-amber-200">
         <p className="text-[10px] text-amber-600">
           Powered by Fl&acirc;neur real-time local intel
+          {verifiedSourceCount > 0 && ' • Sources verified by AI'}
         </p>
       </div>
     </div>

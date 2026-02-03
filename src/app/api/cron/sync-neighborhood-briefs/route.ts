@@ -5,19 +5,45 @@ import { generateNeighborhoodBrief, isGrokConfigured } from '@/lib/grok';
 /**
  * Neighborhood Briefs Sync Cron Job
  *
- * Runs every 4 hours to generate "What's Happening" briefs for each neighborhood
- * using Grok's X Search for real-time local news.
+ * Runs every hour and generates briefs ONLY for neighborhoods where it's
+ * currently between 4-8am local time. This ensures briefs feel like fresh
+ * morning updates for each neighborhood globally.
  *
- * Schedule: 0 0,4,8,12,16,20 * * * (every 4 hours)
- * Batch size: 20 neighborhoods per run
- * Brief expiration: 48 hours (refreshed when new brief generated)
+ * Schedule: 0 * * * * (every hour)
+ * Brief expiration: 24 hours (one per day per neighborhood)
  * Archive: All briefs are kept for history
  *
- * Cost estimate: ~$0.30 per run (20 neighborhoods)
- * - X Search: 20 calls x $0.005 = $0.10
- * - Tokens: ~$0.20
- * Daily cost: ~$1.80 (6 runs x $0.30)
+ * Cost estimate: ~$0.05 per run (avg 5-10 neighborhoods in 4-8am window)
+ * Daily cost: ~$1.20 (24 runs x ~$0.05)
  */
+
+/**
+ * Check if it's currently between 4-8am in a given timezone
+ */
+function isMorningWindow(timezone: string): boolean {
+  try {
+    const now = new Date();
+    const localTime = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+    const hour = localTime.getHours();
+    return hour >= 4 && hour < 8;
+  } catch (e) {
+    console.error(`Invalid timezone: ${timezone}`, e);
+    return false;
+  }
+}
+
+/**
+ * Get the current local hour for a timezone (for logging)
+ */
+function getLocalHour(timezone: string): number {
+  try {
+    const now = new Date();
+    const localTime = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+    return localTime.getHours();
+  } catch {
+    return -1;
+  }
+}
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -37,8 +63,10 @@ export async function GET(request: Request) {
   }
 
   // Support ?test=neighborhood-id for testing single neighborhood
+  // Support ?force=true to ignore morning window check
   const url = new URL(request.url);
   const testNeighborhoodId = url.searchParams.get('test');
+  const forceRun = url.searchParams.get('force') === 'true';
   const batchSize = parseInt(url.searchParams.get('batch') || '20'); // Process in batches
 
   // Check if Grok is configured
@@ -70,10 +98,10 @@ export async function GET(request: Request) {
 
   const coveredIds = new Set((existingBriefs || []).map(b => b.neighborhood_id));
 
-  // Fetch active neighborhoods
+  // Fetch active neighborhoods WITH timezone
   let query = supabase
     .from('neighborhoods')
-    .select('id, name, city, country')
+    .select('id, name, city, country, timezone')
     .eq('is_active', true)
     .order('name');
 
@@ -84,10 +112,29 @@ export async function GET(request: Request) {
 
   const { data: allNeighborhoods, error: fetchError } = await query;
 
-  // Filter out neighborhoods that already have briefs (unless testing specific one)
-  const neighborhoods = testNeighborhoodId
-    ? allNeighborhoods
-    : (allNeighborhoods || []).filter(n => !coveredIds.has(n.id)).slice(0, batchSize);
+  // Filter neighborhoods:
+  // 1. Don't already have a valid brief
+  // 2. It's currently 4-8am local time (unless force=true or testing)
+  const neighborhoods = (allNeighborhoods || []).filter(n => {
+    // Always process if testing specific neighborhood
+    if (testNeighborhoodId) return true;
+
+    // Skip if already has a brief
+    if (coveredIds.has(n.id)) return false;
+
+    // Check morning window (unless forced)
+    if (!forceRun && n.timezone) {
+      const inMorningWindow = isMorningWindow(n.timezone);
+      if (!inMorningWindow) {
+        // Log skipped neighborhoods at debug level
+        console.log(`Skipping ${n.name} - local time is ${getLocalHour(n.timezone)}:00 (not in 4-8am window)`);
+        return false;
+      }
+      console.log(`Processing ${n.name} - local time is ${getLocalHour(n.timezone)}:00 (in morning window)`);
+    }
+
+    return true;
+  }).slice(0, batchSize);
 
   if (fetchError || !allNeighborhoods) {
     return NextResponse.json({
@@ -98,12 +145,20 @@ export async function GET(request: Request) {
   }
 
   if (!neighborhoods || neighborhoods.length === 0) {
+    // Count how many were skipped due to time window
+    const skippedCount = (allNeighborhoods || []).filter(n =>
+      !coveredIds.has(n.id) && n.timezone && !isMorningWindow(n.timezone)
+    ).length;
+
     return NextResponse.json({
       success: true,
-      message: 'All neighborhoods already have briefs',
+      message: skippedCount > 0
+        ? `No neighborhoods in 4-8am window right now (${skippedCount} skipped, waiting for their morning)`
+        : 'All neighborhoods already have briefs',
       neighborhoods_processed: 0,
       briefs_generated: 0,
       briefs_failed: 0,
+      neighborhoods_skipped_time_window: skippedCount,
       errors: [],
       timestamp: new Date().toISOString(),
     });
@@ -127,9 +182,9 @@ export async function GET(request: Request) {
         continue;
       }
 
-      // Calculate expiration (48 hours from now)
+      // Calculate expiration (24 hours from now - one brief per day)
       const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 48);
+      expiresAt.setHours(expiresAt.getHours() + 24);
 
       // Insert the brief
       const { error: insertError } = await supabase
