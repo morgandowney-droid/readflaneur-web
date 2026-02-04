@@ -263,6 +263,7 @@ const WIKIPEDIA_ARTICLES: Record<string, string> = {
   'stockholm-ostermalm': 'Östermalm',
   'stockholm-gamla-stan': 'Gamla_stan',
   'stockholm-vasastan': 'Vasastan',
+  'stockholm-kungsholmen': 'Kungsholmen',
   // Tokyo
   'tokyo-shibuya': 'Shibuya',
   'tokyo-shinjuku': 'Shinjuku',
