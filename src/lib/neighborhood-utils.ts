@@ -346,6 +346,55 @@ const WIKIPEDIA_ARTICLES: Record<string, string> = {
   'stockholm-smedslatten': 'Smedslätten',
 };
 
+// Google Maps location names for enclave neighborhoods
+// Maps neighborhood ID to proper location string for Google Maps
+const MAP_LOCATIONS: Record<string, string> = {
+  // New York Enclaves - Westchester
+  'nyc-rye': 'Rye, New York',
+  'nyc-larchmont': 'Larchmont, New York',
+  'nyc-scarsdale': 'Scarsdale, New York',
+  'nyc-bronxville': 'Bronxville, New York',
+  // New York Enclaves - Gold Coast CT
+  'nyc-darien': 'Darien, Connecticut',
+  'nyc-greenwich': 'Greenwich, Connecticut',
+  'nyc-westport': 'Westport, Connecticut',
+  // New York Enclaves - Summit & The Hills NJ
+  'nyc-summit': 'Summit, New Jersey',
+  'nyc-short-hills': 'Short Hills, New Jersey',
+  'nyc-millburn': 'Millburn, New Jersey',
+  // New York Enclaves - Montclair & The Ridge NJ
+  'nyc-montclair': 'Montclair, New Jersey',
+  'nyc-glen-ridge': 'Glen Ridge, New Jersey',
+  // New York Enclaves - Bergen Gold NJ
+  'nyc-alpine': 'Alpine, New Jersey',
+  'nyc-saddle-river': 'Saddle River, New Jersey',
+  'nyc-englewood-cliffs': 'Englewood Cliffs, New Jersey',
+  // New York Enclaves - Old Westbury LI NY
+  'nyc-old-westbury': 'Old Westbury, New York',
+  'nyc-muttontown': 'Muttontown, New York',
+  'nyc-brookville': 'Brookville, New York',
+  // Stockholm Enclaves
+  'stockholm-djursholm': 'Djursholm, Stockholm, Sweden',
+  'stockholm-stocksund': 'Stocksund, Stockholm, Sweden',
+  'stockholm-lidingo-town': 'Lidingö, Stockholm, Sweden',
+  'stockholm-saltsjobaden': 'Saltsjöbaden, Stockholm, Sweden',
+  'stockholm-solsidan': 'Solsidan, Nacka, Sweden',
+  'stockholm-appelviken': 'Äppelviken, Stockholm, Sweden',
+  'stockholm-alsten': 'Ålsten, Stockholm, Sweden',
+  'stockholm-smedslatten': 'Smedslätten, Stockholm, Sweden',
+};
+
+/**
+ * Get Google Maps location string for a neighborhood
+ * @param neighborhoodId - Neighborhood ID
+ * @param neighborhoodName - Fallback neighborhood name
+ * @param city - City name (fallback)
+ * @returns Location string for Google Maps
+ */
+export function getMapLocation(neighborhoodId: string, neighborhoodName: string, city: string): string {
+  return MAP_LOCATIONS[neighborhoodId] || `${neighborhoodName}, ${city}`;
+}
+
 /**
  * Get Wikipedia URL for a neighborhood
  * @param neighborhoodId - Neighborhood ID (e.g., 'nyc-tribeca')
