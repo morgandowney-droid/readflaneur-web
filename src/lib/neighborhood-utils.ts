@@ -360,6 +360,7 @@ const WIKIPEDIA_ARTICLES: Record<string, string> = {
   'europe-st-tropez': 'Saint-Tropez',
   // New York combo components
   'nyc-soho-core': 'SoHo,_Manhattan',
+  'nyc-hudson-square': 'Hudson_Square',
 };
 
 // Google Maps location names for enclave neighborhoods
