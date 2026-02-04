@@ -766,7 +766,7 @@ function GlobalNeighborhoodModal({
             </div>
           )}
 
-          {/* Empty State */}
+          {/* Empty State with Suggestion */}
           {!loading && filteredCities.length === 0 && (
             <div className="py-12 text-center">
               <p className="text-neutral-500">No neighborhoods found for "{searchQuery}"</p>
@@ -776,6 +776,56 @@ function GlobalNeighborhoodModal({
               >
                 Clear search
               </button>
+
+              {/* Suggestion in empty state */}
+              <div className="mt-8 pt-6 border-t border-neutral-100">
+                {!showSuggestion ? (
+                  <button
+                    onClick={() => {
+                      setSuggestionText(searchQuery); // Pre-fill with search query
+                      setShowSuggestion(true);
+                      setTimeout(() => suggestionInputRef.current?.focus(), 50);
+                    }}
+                    className="text-sm text-neutral-400 hover:text-neutral-600 transition-colors"
+                  >
+                    Not seeing your neighborhood? <span className="underline">Suggest "{searchQuery}"</span>
+                  </button>
+                ) : suggestionStatus === 'success' ? (
+                  <p className="text-sm text-neutral-500">
+                    Thank you. We have added this to our radar.
+                  </p>
+                ) : (
+                  <div className="flex items-center justify-center gap-3 max-w-md mx-auto">
+                    <input
+                      ref={suggestionInputRef}
+                      type="text"
+                      value={suggestionText}
+                      onChange={(e) => setSuggestionText(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSuggestionSubmit()}
+                      placeholder="e.g., Notting Hill, London"
+                      className="flex-1 px-3 py-2 text-sm border border-neutral-200 focus:border-neutral-400 focus:outline-none transition-colors"
+                    />
+                    <button
+                      onClick={handleSuggestionSubmit}
+                      disabled={!suggestionText.trim()}
+                      className="px-4 py-2 text-sm bg-neutral-900 text-white hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Submit
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowSuggestion(false);
+                        setSuggestionText('');
+                      }}
+                      className="text-neutral-400 hover:text-neutral-600 transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
