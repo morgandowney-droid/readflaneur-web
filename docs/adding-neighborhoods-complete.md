@@ -376,4 +376,68 @@ npm run dev
 
 ---
 
-*Last updated: February 3, 2026*
+---
+
+## Combo Neighborhoods
+
+Combo neighborhoods aggregate multiple areas into a single feed (e.g., "SoHo" = SoHo + NoHo + NoLita + Hudson Square).
+
+### Database Structure
+
+```sql
+-- neighborhoods table has is_combo flag
+ALTER TABLE neighborhoods ADD COLUMN is_combo BOOLEAN DEFAULT false;
+
+-- Join table links combos to components
+CREATE TABLE combo_neighborhoods (
+  id UUID PRIMARY KEY,
+  combo_id TEXT REFERENCES neighborhoods(id),
+  component_id TEXT REFERENCES neighborhoods(id),
+  display_order INTEGER DEFAULT 0,
+  UNIQUE(combo_id, component_id)
+);
+```
+
+### Creating a Combo
+
+```sql
+-- 1. Create component neighborhoods (is_active = false)
+INSERT INTO neighborhoods (id, name, city, timezone, country, region, latitude, longitude, radius, is_active, is_combo)
+VALUES ('nyc-noho', 'NoHo', 'New York', 'America/New_York', 'USA', 'north-america', 40.7265, -73.9927, 400, false, false);
+
+-- 2. Update parent to be combo
+UPDATE neighborhoods SET is_combo = true WHERE id = 'nyc-soho';
+
+-- 3. Link components
+INSERT INTO combo_neighborhoods (combo_id, component_id, display_order)
+VALUES ('nyc-soho', 'nyc-noho', 2);
+```
+
+### Querying Combos
+
+Use utilities in `src/lib/combo-utils.ts`:
+
+```typescript
+import { getNeighborhoodIdsForQuery, getComboInfo } from '@/lib/combo-utils';
+
+// Get component IDs for queries (returns ['nyc-soho-core', 'nyc-noho', 'nyc-nolita'] for nyc-soho)
+const ids = await getNeighborhoodIdsForQuery(supabase, 'nyc-soho');
+
+// Get combo metadata for UI
+const info = await getComboInfo(supabase, 'nyc-soho');
+// { isCombo: true, componentNames: ['SoHo', 'NoHo', 'NoLita', 'Hudson Square'] }
+```
+
+### Current Combos (as of Feb 2026)
+
+| Combo | Components |
+|-------|------------|
+| SoHo | SoHo, NoHo, NoLita, Hudson Square |
+| Tribeca | Tribeca, FiDi |
+| Brooklyn West | Dumbo, Cobble Hill, Park Slope |
+| The Hamptons | The Hamptons, Montauk |
+| Östermalm & City | Östermalm, Norrmalm, Gamla Stan, Djurgården |
+
+---
+
+*Last updated: February 4, 2026*

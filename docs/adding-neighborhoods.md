@@ -165,3 +165,39 @@ Before committing:
 **Neighborhood not appearing:**
 - Check the ID matches in both database and boundaries file
 - Verify `is_active = true` in database
+
+---
+
+## Combo Neighborhoods
+
+Combo neighborhoods aggregate multiple areas into a single feed. For example, "SoHo" combines SoHo, NoHo, NoLita, and Hudson Square.
+
+### Creating a Combo Neighborhood
+
+1. **Create component neighborhoods** (set `is_active = false` so they don't appear in selector):
+```sql
+INSERT INTO neighborhoods (id, name, city, timezone, country, region, latitude, longitude, radius, is_active, is_combo)
+VALUES
+  ('nyc-noho', 'NoHo', 'New York', 'America/New_York', 'USA', 'north-america', 40.7265, -73.9927, 400, false, false),
+  ('nyc-nolita', 'NoLita', 'New York', 'America/New_York', 'USA', 'north-america', 40.7220, -73.9955, 400, false, false);
+```
+
+2. **Update existing neighborhood to be a combo**:
+```sql
+UPDATE neighborhoods SET is_combo = true WHERE id = 'nyc-soho';
+```
+
+3. **Link components in join table**:
+```sql
+INSERT INTO combo_neighborhoods (combo_id, component_id, display_order)
+VALUES
+  ('nyc-soho', 'nyc-soho-core', 1),
+  ('nyc-soho', 'nyc-noho', 2),
+  ('nyc-soho', 'nyc-nolita', 3);
+```
+
+### How Combos Work
+
+- **Feed queries**: Use `getNeighborhoodIdsForQuery()` from `src/lib/combo-utils.ts` to expand combo ID to component IDs
+- **Selector**: Combo neighborhoods show tooltip with component names on hover
+- **Search**: Searching component names (e.g., "NoHo") finds the parent combo ("SoHo")

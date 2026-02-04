@@ -4,7 +4,7 @@ A luxury hyper-local news and neighborhood guide platform. Flâneur delivers cur
 
 ## Features
 
-- **Neighborhood Feeds** - Curated articles and stories for 99 neighborhoods across 23 cities globally (including 8 vacation destinations)
+- **Neighborhood Feeds** - Curated articles and stories for 120 neighborhoods across 33 cities globally (including vacation destinations and combo neighborhoods)
 - **Neighborhood Guides** - Curated listings with Google ratings (4.0+) and Michelin designations
 - **Tonight** - What's happening in your neighborhood today
 - **Spotted** - Local sightings and happenings

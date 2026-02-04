@@ -7,9 +7,35 @@
 > **User Location:** Stockholm, Sweden (CET/CEST timezone) - use this for time-related references.
 
 ## Current Status
-**Last Updated:** 2026-02-03
+**Last Updated:** 2026-02-04
 
-### Recent Changes (2026-02-03)
+### Recent Changes (2026-02-04)
+
+**Combo Neighborhoods System:**
+- 15 combo neighborhoods that aggregate multiple areas into single feeds
+- Combo neighborhoods: SoHo (SoHo, NoHo, NoLita, Hudson Square), Tribeca (Tribeca, FiDi), Brooklyn West (Dumbo, Cobble Hill, Park Slope), The Hamptons (The Hamptons, Montauk), Östermalm & City (Östermalm, Norrmalm, Gamla Stan, Djurgården)
+- Coast & Country regions for NYC and Stockholm suburbs
+- Database: `is_combo` flag on neighborhoods, `combo_neighborhoods` join table
+- Utility: `src/lib/combo-utils.ts` for querying combo components
+- Search in neighborhood selector searches component names too
+
+**New Neighborhoods Added:**
+- Stockholm: Vasastan, Södermalm, Kungsholmen
+- New York: Upper West Side, Hudson Yards, Meatpacking District
+
+**UI/UX Improvements:**
+- Unified neighborhood modal - homepage and header buttons use same instant-loading modal
+- Pre-fetch strategy loads neighborhood data on mount for instant modal opening
+- Combo neighborhoods show tooltip with component names on hover
+- Renamed "Enclaves" to "Coast & Country" throughout UI
+- 3-phase design audit: feed cards, AI badges, ad frequency, search empty state
+
+**Key Files for Combos:**
+- `src/lib/combo-utils.ts` - `getNeighborhoodIdsForQuery()`, `getComboInfo()`
+- `src/components/neighborhoods/NeighborhoodSelectorModal.tsx` - Combo tooltip, pre-fetch
+- Database tables: `neighborhoods.is_combo`, `combo_neighborhoods`
+
+### Previous Changes (2026-02-03)
 
 **Vacation Neighborhoods (8 New Destinations):**
 - Added 8 vacation neighborhoods grouped into 3 regions:
@@ -220,7 +246,7 @@ npx tsx scripts/seed-neighborhoods.ts nyc-tribeca la-beverly-hills
 - **Website:** https://readflaneur.com
 - **Backend API:** https://flaneur-azure.vercel.app
 - **GitHub:** https://github.com/morgandowney-droid/readflaneur-web
-- **Neighborhoods:** 99 total (91 city neighborhoods + 8 vacation destinations)
+- **Neighborhoods:** 120 active (including 15 combo neighborhoods across 33 cities)
 
 ## Project Structure
 

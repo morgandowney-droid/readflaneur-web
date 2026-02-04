@@ -2,7 +2,7 @@
 
 ## Overview
 
-Flâneur is a luxury hyper-local news platform serving 99 neighborhoods across 23 cities globally, including 8 vacation destinations (Nantucket, Martha's Vineyard, The Hamptons, Aspen, St. Barts, Saint-Tropez, Marbella, Sylt). The platform combines curated journalism with community-sourced content and local business advertising.
+Flâneur is a luxury hyper-local news platform serving 120 neighborhoods across 33 cities globally, including vacation destinations and 15 combo neighborhoods that aggregate multiple areas (e.g., SoHo = SoHo + NoHo + NoLita + Hudson Square). The platform combines curated journalism with community-sourced content and local business advertising.
 
 ### User Types
 
@@ -37,12 +37,24 @@ neighborhoods (
   city_slug TEXT NOT NULL,       -- e.g., 'new-york'
   slug TEXT NOT NULL,            -- e.g., 'west-village'
   country TEXT,
-  region TEXT,                   -- e.g., 'North America', 'Europe'
+  region TEXT,                   -- e.g., 'north-america', 'us-vacation', 'nyc-enclaves'
   timezone TEXT NOT NULL,
   latitude DECIMAL,
   longitude DECIMAL,
+  radius INTEGER,                -- Search radius in meters
+  is_active BOOLEAN DEFAULT TRUE,
+  is_combo BOOLEAN DEFAULT FALSE, -- True for combo neighborhoods
   article_count INTEGER DEFAULT 0,
   is_trending BOOLEAN DEFAULT FALSE
+)
+
+-- Combo Neighborhoods (join table for aggregating multiple areas)
+combo_neighborhoods (
+  id UUID PRIMARY KEY,
+  combo_id TEXT REFERENCES neighborhoods(id),  -- Parent combo (e.g., 'nyc-soho')
+  component_id TEXT REFERENCES neighborhoods(id), -- Child area (e.g., 'nyc-noho')
+  display_order INTEGER DEFAULT 0,
+  UNIQUE(combo_id, component_id)
 )
 
 -- User Profiles (extends Supabase Auth)
