@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// Extend timeout for Grok API calls
+export const maxDuration = 120;
+
 const GROK_API_URL = 'https://api.x.ai/v1';
 const GROK_MODEL = 'grok-4-1-fast';
 
