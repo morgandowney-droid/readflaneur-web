@@ -110,8 +110,98 @@ export function useNeighborhoodModal() {
   return context;
 }
 
+// Pre-fetch neighborhoods data for instant modal opening
+async function prefetchNeighborhoodsData(): Promise<{
+  neighborhoods: NeighborhoodWithCombo[];
+  selected: Set<string>;
+  userId: string | null;
+}> {
+  const supabase = createClient();
+
+  // Fetch neighborhoods
+  const { data: neighborhoodsData } = await supabase
+    .from('neighborhoods')
+    .select('*')
+    .eq('is_active', true)
+    .order('city')
+    .order('name');
+
+  let neighborhoods: NeighborhoodWithCombo[] = [];
+
+  if (neighborhoodsData) {
+    // Fetch combo component names for combo neighborhoods
+    const comboNeighborhoods = neighborhoodsData.filter((n: any) => n.is_combo);
+    const comboComponentNames: Record<string, string[]> = {};
+
+    if (comboNeighborhoods.length > 0) {
+      const { data: comboLinks } = await supabase
+        .from('combo_neighborhoods')
+        .select(`
+          combo_id,
+          display_order,
+          component:neighborhoods!combo_neighborhoods_component_id_fkey (name)
+        `)
+        .in('combo_id', comboNeighborhoods.map((n: any) => n.id))
+        .order('display_order');
+
+      if (comboLinks) {
+        comboLinks.forEach((link: any) => {
+          if (!comboComponentNames[link.combo_id]) {
+            comboComponentNames[link.combo_id] = [];
+          }
+          comboComponentNames[link.combo_id].push(link.component.name);
+        });
+      }
+    }
+
+    neighborhoods = neighborhoodsData.map((n: any) => ({
+      ...n,
+      combo_component_names: comboComponentNames[n.id] || undefined,
+    }));
+  }
+
+  // Check auth and load preferences
+  let selected = new Set<string>();
+  let userId: string | null = null;
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (session?.user) {
+    userId = session.user.id;
+    const { data } = await supabase
+      .from('user_neighborhood_preferences')
+      .select('neighborhood_id')
+      .eq('user_id', session.user.id);
+
+    if (data && data.length > 0) {
+      selected = new Set(data.map(p => p.neighborhood_id));
+    }
+  } else {
+    const stored = localStorage.getItem(PREFS_KEY);
+    if (stored) {
+      try {
+        selected = new Set(JSON.parse(stored));
+      } catch {
+        // Invalid stored data
+      }
+    }
+  }
+
+  return { neighborhoods, selected, userId };
+}
+
 export function NeighborhoodModalProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [prefetchedData, setPrefetchedData] = useState<{
+    neighborhoods: NeighborhoodWithCombo[];
+    selected: Set<string>;
+    userId: string | null;
+  } | null>(null);
+
+  // Pre-fetch data on mount so modal opens instantly
+  useEffect(() => {
+    prefetchNeighborhoodsData().then(setPrefetchedData).catch(console.error);
+  }, []);
 
   return (
     <NeighborhoodModalContext.Provider
@@ -122,12 +212,28 @@ export function NeighborhoodModalProvider({ children }: { children: React.ReactN
       }}
     >
       {children}
-      <GlobalNeighborhoodModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <GlobalNeighborhoodModal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        prefetchedData={prefetchedData}
+      />
     </NeighborhoodModalContext.Provider>
   );
 }
 
-function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+function GlobalNeighborhoodModal({
+  isOpen,
+  onClose,
+  prefetchedData,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  prefetchedData: {
+    neighborhoods: NeighborhoodWithCombo[];
+    selected: Set<string>;
+    userId: string | null;
+  } | null;
+}) {
   const router = useRouter();
   const [neighborhoods, setNeighborhoods] = useState<NeighborhoodWithCombo[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -139,6 +245,7 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Get user location when sorting by nearest
   const handleSortByNearest = () => {
@@ -167,94 +274,39 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
     );
   };
 
-  // Load neighborhoods and preferences
+  // Use prefetched data if available, otherwise fetch on open
   useEffect(() => {
     if (!isOpen) return;
+    if (hasInitialized) return;
 
+    // If we have prefetched data, use it immediately
+    if (prefetchedData) {
+      setNeighborhoods(prefetchedData.neighborhoods);
+      setSelected(prefetchedData.selected);
+      setUserId(prefetchedData.userId);
+      setLoading(false);
+      setHasInitialized(true);
+      return;
+    }
+
+    // Fallback: fetch data if not prefetched
     const loadData = async () => {
       setLoading(true);
       try {
-        const supabase = createClient();
-
-        // Fetch neighborhoods
-        const { data: neighborhoodsData, error: neighborhoodsError } = await supabase
-          .from('neighborhoods')
-          .select('*')
-          .eq('is_active', true)
-          .order('city')
-          .order('name');
-
-        if (neighborhoodsError) {
-          console.error('Failed to load neighborhoods:', neighborhoodsError);
-        }
-
-        if (neighborhoodsData) {
-          // Fetch combo component names for combo neighborhoods
-          const comboNeighborhoods = neighborhoodsData.filter((n: any) => n.is_combo);
-          const comboComponentNames: Record<string, string[]> = {};
-
-          if (comboNeighborhoods.length > 0) {
-            const { data: comboLinks } = await supabase
-              .from('combo_neighborhoods')
-              .select(`
-                combo_id,
-                display_order,
-                component:neighborhoods!combo_neighborhoods_component_id_fkey (name)
-              `)
-              .in('combo_id', comboNeighborhoods.map((n: any) => n.id))
-              .order('display_order');
-
-            if (comboLinks) {
-              comboLinks.forEach((link: any) => {
-                if (!comboComponentNames[link.combo_id]) {
-                  comboComponentNames[link.combo_id] = [];
-                }
-                comboComponentNames[link.combo_id].push(link.component.name);
-              });
-            }
-          }
-
-          // Attach component names to neighborhoods
-          const neighborhoodsWithCombo: NeighborhoodWithCombo[] = neighborhoodsData.map((n: any) => ({
-            ...n,
-            combo_component_names: comboComponentNames[n.id] || undefined,
-          }));
-
-          setNeighborhoods(neighborhoodsWithCombo);
-        }
-
-        // Check auth and load preferences
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (session?.user) {
-          setUserId(session.user.id);
-          const { data } = await supabase
-            .from('user_neighborhood_preferences')
-            .select('neighborhood_id')
-            .eq('user_id', session.user.id);
-
-          if (data && data.length > 0) {
-            setSelected(new Set(data.map(p => p.neighborhood_id)));
-          }
-        } else {
-          const stored = localStorage.getItem(PREFS_KEY);
-          if (stored) {
-            try {
-              setSelected(new Set(JSON.parse(stored)));
-            } catch {
-              // Invalid stored data
-            }
-          }
-        }
+        const data = await prefetchNeighborhoodsData();
+        setNeighborhoods(data.neighborhoods);
+        setSelected(data.selected);
+        setUserId(data.userId);
       } catch (err) {
         console.error('Error loading neighborhood data:', err);
       } finally {
         setLoading(false);
+        setHasInitialized(true);
       }
     };
 
     loadData();
-  }, [isOpen]);
+  }, [isOpen, prefetchedData, hasInitialized]);
 
   // Close on escape
   useEffect(() => {
