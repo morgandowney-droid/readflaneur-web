@@ -579,7 +579,6 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
 
                             // Determine button styling based on region type
                             let buttonClasses = 'relative px-2.5 py-1 text-xs rounded-md transition-all';
-                            if (hasComboComponents) buttonClasses += ' flex flex-col items-start';
 
                             let buttonStyle: React.CSSProperties = {};
 
@@ -607,16 +606,9 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
                                 disabled={hood.is_coming_soon}
                                 className={buttonClasses}
                                 style={buttonStyle}
+                                title={hasComboComponents ? `Includes: ${hood.combo_component_names!.join(', ')}` : undefined}
                               >
                                 <span>{hood.name}</span>
-                                {hasComboComponents && (
-                                  <span
-                                    className="text-[9px] leading-tight"
-                                    style={isEnclave ? { color: isSelected ? '#C4A66B' : '#8B7355' } : undefined}
-                                  >
-                                    {hood.combo_component_names!.join(', ')}
-                                  </span>
-                                )}
                                 {hood.is_coming_soon && <span className="ml-1 text-[10px]">(Soon)</span>}
                                 {isSelected && (
                                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full flex items-center justify-center">
