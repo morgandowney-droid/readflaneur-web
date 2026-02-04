@@ -401,7 +401,7 @@ function GlobalNeighborhoodModal({
     return cities;
   }, [neighborhoods, sortBy, userLocation]);
 
-  // Filter based on search
+  // Filter based on search (includes combo component names)
   const filteredCities = useMemo(() => {
     if (!searchQuery.trim()) return citiesWithNeighborhoods;
     const query = searchQuery.toLowerCase();
@@ -410,7 +410,11 @@ function GlobalNeighborhoodModal({
         ...c,
         neighborhoods: c.neighborhoods.filter(n =>
           n.name.toLowerCase().includes(query) ||
-          n.city.toLowerCase().includes(query)
+          n.city.toLowerCase().includes(query) ||
+          // Search within combo component names (e.g., "Westport" finds "Gold Coast CT")
+          (n.combo_component_names && n.combo_component_names.some(
+            comp => comp.toLowerCase().includes(query)
+          ))
         ),
       }))
       .filter(c => c.neighborhoods.length > 0);
