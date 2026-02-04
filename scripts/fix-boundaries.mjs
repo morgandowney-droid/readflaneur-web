@@ -38,6 +38,26 @@ const fixes = {
       [40.7400, -74.0100]
     ]
   },
+  // Upper East Side - 96th St (N), 59th St (S), 5th Ave (W), East River (E)
+  // Traced from actual neighborhood boundaries
+  'nyc-upper-east-side': {
+    center: [40.7736, -73.9566],
+    polygon: [
+      // Start at 59th & 5th Ave (SW corner), go clockwise
+      [40.7649, -73.9725],   // 59th & 5th Ave (Central Park South)
+      [40.7699, -73.9690],   // 66th & 5th Ave
+      [40.7749, -73.9650],   // 72nd & 5th Ave
+      [40.7799, -73.9610],   // 79th & 5th Ave
+      [40.7858, -73.9575],   // 96th & 5th Ave (NW corner)
+      [40.7838, -73.9505],   // 96th & Lexington
+      [40.7820, -73.9435],   // 96th & York Ave (NE corner)
+      [40.7780, -73.9445],   // 86th & East End Ave
+      [40.7720, -73.9485],   // 76th & East End Ave
+      [40.7660, -73.9540],   // 66th & York Ave
+      [40.7610, -73.9580],   // 60th & York Ave
+      [40.7590, -73.9600],   // 59th & Sutton Place (SE corner)
+    ]
+  },
   'chicago-gold-coast': {
     center: [41.9050, -87.6280],
     polygon: [

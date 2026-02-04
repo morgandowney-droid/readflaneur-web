@@ -1,0 +1,94 @@
+{
+  "nyc-tribeca": {
+    "article": "Tribeca",
+    "city": "New York, NY",
+    "name": "Tribeca",
+    "boundaries": {
+      "north": "Canal Street",
+      "south": "Chambers Street",
+      "east": "Broadway",
+      "west": "West Street",
+      "corners": [
+        "Canal Street and West Street",
+        "Canal Street and Broadway",
+        "Broadway and Chambers Street",
+        "Chambers Street and West Street"
+      ]
+    },
+    "polygon": [
+      [
+        40.719527,
+        -74.001775
+      ],
+      [
+        40.7139622,
+        -74.0066029
+      ],
+      [
+        40.7175484,
+        -74.0125533
+      ]
+    ]
+  },
+  "nyc-west-village": {
+    "article": "West_Village",
+    "city": "New York, NY",
+    "name": "West Village",
+    "boundaries": {
+      "north": "14th Street",
+      "south": "Houston Street or Christopher Street",
+      "east": "Greenwich Avenue, Seventh Avenue, or Sixth Avenue",
+      "west": "Hudson River",
+      "corners": null
+    },
+    "polygon": [
+      [
+        40.7380466,
+        -74.0123696
+      ],
+      [
+        40.7380466,
+        -74.0003481
+      ],
+      [
+        40.7285993,
+        -74.0003481
+      ],
+      [
+        40.7285993,
+        -74.0123696
+      ]
+    ]
+  },
+  "nyc-chelsea": {
+    "article": "Chelsea,_Manhattan",
+    "city": "New York, NY",
+    "name": "Chelsea",
+    "boundaries": {
+      "north": "34th Street",
+      "south": "14th Street",
+      "east": "Sixth Avenue",
+      "west": "Hudson River and West Street",
+      "corners": [
+        "14th Street and Sixth Avenue",
+        "14th Street and West Street",
+        "34th Street and West Street",
+        "34th Street and Sixth Avenue"
+      ]
+    },
+    "polygon": [
+      [
+        40.7383143,
+        -73.9993285
+      ],
+      [
+        40.7380466,
+        -73.9963408
+      ],
+      [
+        40.7491539,
+        -73.9866612
+      ]
+    ]
+  }
+}

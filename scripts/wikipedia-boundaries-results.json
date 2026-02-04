@@ -1,0 +1,82 @@
+{
+  "nyc-tribeca": {
+    "article": "Tribeca",
+    "city": "New York",
+    "boundaries": {
+      "north": null,
+      "south": "boundary to either Vesey or Murray Street",
+      "east": null,
+      "west": null,
+      "streets": [
+        "Canal Street",
+        "West Street",
+        "Chambers Street"
+      ],
+      "rawText": "bounded by Canal Street, West Street, Broadway, and Chambers Street."
+    },
+    "excerpt": "Tribeca ( try-BEK-ə), originally written as TriBeCa, is a neighborhood in Lower Manhattan in New York City.  Its name is a syllabic abbreviation of \"Triangle Below Canal Street\". The \"triangle\" (more accurately a quadrilateral) is bounded by Canal Street, West Street, Broadway, and Chambers Street.  By the 2010s, a common marketing tactic was to extend Tribeca's southern boundary to either Vesey or Murray Streets to increase the appeal of property listings.\nThe neighborhood began as farmland, th",
+    "geocoded": {}
+  },
+  "nyc-west-village": {
+    "article": "West_Village",
+    "city": "New York",
+    "boundaries": {
+      "north": null,
+      "south": "boundary is either Houston Street or Christopher Street",
+      "east": "boundary is variously cited as Greenwich Avenue",
+      "west": "Village is bounded by the Hudson River",
+      "streets": [
+        "Hudson River"
+      ],
+      "rawText": "bounded by the Hudson River to the west and 14th Street to the north."
+    },
+    "excerpt": "The West Village is a neighborhood in the western section of the larger Greenwich Village neighborhood of Lower Manhattan, New York City. The West Village is bounded by the Hudson River to the west and 14th Street to the north. The eastern boundary is variously cited as Greenwich Avenue, Seventh Avenue, or Sixth Avenue, while the southern boundary is either Houston Street or Christopher Street.\nThe West Village is part of Manhattan Community District 2, and is patrolled by the 6th Precinct of th",
+    "geocoded": {}
+  },
+  "nyc-soho": {
+    "article": "SoHo,_Manhattan",
+    "city": "New York",
+    "boundaries": {
+      "north": null,
+      "south": "of Houston Street",
+      "east": null,
+      "west": null,
+      "streets": [],
+      "rawText": null
+    },
+    "excerpt": "SoHo, short for \"South of Houston Street\", is a neighborhood in Lower Manhattan, New York City. Since the 1970s, the neighborhood has been the location of many artists' lofts and art galleries, art installations such as the Wall, and has also been known for its variety of shops ranging from trendy upscale boutiques to national and international chain store locations. The area's history is an archetypal example of inner-city regeneration and gentrification, encompassing socioeconomic, cultural, p",
+    "geocoded": {
+      "south": {
+        "lat": 40.7292053,
+        "lon": -73.9950148,
+        "displayName": "New York University, West Houston Street, University Village, Manhattan, New York County, New York, 10014, United States"
+      }
+    }
+  },
+  "london-soho": {
+    "article": "Soho",
+    "city": "London",
+    "boundaries": {
+      "north": null,
+      "south": null,
+      "east": null,
+      "west": null,
+      "streets": [],
+      "rawText": null
+    },
+    "excerpt": "Soho is a district of Westminster, in the City of Westminster in the West End of London. Originally a fashionable district for the aristocracy, it has been one of the main entertainment districts in the capital since the 19th century.\nThe area was developed from farmland by Henry VIII in 1536, when it became a royal park. It became a parish in its own right in the late 17th century, when buildings started to be developed for the upper class, including the laying out of Soho Square in the 1680s. "
+  },
+  "sf-mission": {
+    "article": "Mission_District,_San_Francisco",
+    "city": "San Francisco",
+    "boundaries": {
+      "north": null,
+      "south": null,
+      "east": null,
+      "west": null,
+      "streets": [],
+      "rawText": null
+    },
+    "excerpt": "The Mission District (Spanish: Distrito de la Misión), commonly known as the Mission (Spanish: La Misión), is a neighborhood in San Francisco, California. One of the oldest neighborhoods in San Francisco, the Mission District's name is derived from Mission San Francisco de Asís, built in 1776 by the Spanish. The Mission is historically one of the most notable centers of the city's Chicano/Mexican-American community."
+  }
+}

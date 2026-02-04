@@ -1,0 +1,210 @@
+{
+  "osm": [],
+  "llm": [
+    {
+      "id": "nyc-tribeca",
+      "qid": "Q766014",
+      "article": "Tribeca",
+      "city": "New York, NY",
+      "name": "Tribeca",
+      "source": "llm",
+      "polygon": [
+        [
+          40.7184961,
+          -74.0154481
+        ],
+        [
+          40.7184961,
+          -73.9974229
+        ],
+        [
+          40.7129921,
+          -73.9974229
+        ],
+        [
+          40.7129921,
+          -74.0154481
+        ]
+      ]
+    },
+    {
+      "id": "nyc-west-village",
+      "qid": "Q837941",
+      "article": "West_Village",
+      "city": "New York, NY",
+      "name": "West Village",
+      "source": "llm",
+      "polygon": [
+        [
+          40.7380466,
+          -74.0123696
+        ],
+        [
+          40.7380466,
+          -74.0003481
+        ],
+        [
+          40.7285993,
+          -74.0003481
+        ],
+        [
+          40.7285993,
+          -74.0123696
+        ]
+      ]
+    },
+    {
+      "id": "nyc-chelsea",
+      "qid": "Q837857",
+      "article": "Chelsea,_Manhattan",
+      "city": "New York, NY",
+      "name": "Chelsea",
+      "source": "llm",
+      "polygon": [
+        [
+          40.775479,
+          -73.9550233
+        ],
+        [
+          40.775479,
+          -73.9820682
+        ],
+        [
+          40.7380466,
+          -73.9820682
+        ],
+        [
+          40.7380466,
+          -73.9550233
+        ]
+      ]
+    },
+    {
+      "id": "nyc-greenwich-village",
+      "qid": "Q277862",
+      "article": "Greenwich_Village",
+      "city": "New York, NY",
+      "name": "Greenwich Village",
+      "source": "llm",
+      "polygon": [
+        [
+          40.7380466,
+          -74.0123696
+        ],
+        [
+          40.7380466,
+          -73.9974229
+        ],
+        [
+          40.7285993,
+          -73.9974229
+        ],
+        [
+          40.7285993,
+          -74.0123696
+        ]
+      ]
+    },
+    {
+      "id": "nyc-lower-east-side",
+      "qid": "Q837858",
+      "article": "Lower_East_Side",
+      "city": "New York, NY",
+      "name": "Lower East Side",
+      "source": "llm",
+      "polygon": [
+        [
+          40.7285993,
+          -73.9951055
+        ],
+        [
+          40.7285993,
+          -73.9377691
+        ],
+        [
+          40.7184961,
+          -73.9377691
+        ],
+        [
+          40.7184961,
+          -73.9951055
+        ]
+      ]
+    },
+    {
+      "id": "nyc-upper-east-side",
+      "qid": "Q830937",
+      "article": "Upper_East_Side",
+      "city": "New York, NY",
+      "name": "Upper East Side",
+      "source": "llm",
+      "polygon": [
+        [
+          40.7943793,
+          -73.9719996
+        ],
+        [
+          40.7943793,
+          -73.9377691
+        ],
+        [
+          40.7627065,
+          -73.9377691
+        ],
+        [
+          40.7627065,
+          -73.9719996
+        ]
+      ]
+    },
+    {
+      "id": "nyc-upper-west-side",
+      "qid": "Q827446",
+      "article": "Upper_West_Side",
+      "city": "New York, NY",
+      "name": "Upper West Side",
+      "source": "llm",
+      "polygon": [
+        [
+          40.7976596,
+          -74.0123696
+        ],
+        [
+          40.7976596,
+          -73.9653627
+        ],
+        [
+          40.7722979,
+          -73.9653627
+        ],
+        [
+          40.7722979,
+          -74.0123696
+        ]
+      ]
+    }
+  ],
+  "failed": [
+    {
+      "id": "nyc-soho",
+      "qid": "Q836418",
+      "article": "SoHo,_Manhattan",
+      "city": "New York, NY",
+      "name": "SoHo"
+    },
+    {
+      "id": "nyc-east-village",
+      "qid": "Q756542",
+      "article": "East_Village,_Manhattan",
+      "city": "New York, NY",
+      "name": "East Village"
+    },
+    {
+      "id": "nyc-williamsburg",
+      "qid": "Q1429678",
+      "article": "Williamsburg,_Brooklyn",
+      "city": "New York, NY",
+      "name": "Williamsburg"
+    }
+  ]
+}
