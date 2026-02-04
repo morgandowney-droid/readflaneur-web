@@ -532,6 +532,24 @@ NYC neighborhoods automatically receive "Al Fresco Alert" stories for new outdoo
 - Prioritizes: Sidewalk > Both > Roadway
 - Alcohol-serving venues prioritized
 
+### 7.7 Heritage Watch (Preservation Alerts)
+
+NYC neighborhoods receive heritage alerts for demolitions, landmark alterations, and tree removal. The `sync-heritage-filings` cron fetches from NYC DOB Job Application Filings.
+
+**Data Source:** `https://data.cityofnewyork.us/resource/w9ak-ipjd.json`
+
+**Three Triggers:**
+
+| Trigger | Condition | Category | Tone |
+|---------|-----------|----------|------|
+| Demolition | `job_type = 'DM'` | Teardown Alert | Eulogy |
+| Landmark | `landmark = 'Y'` + keywords | Facade Watch | Curator |
+| Tree | Tree keywords in description | Green Loss | Concerned |
+
+**Landmark Keywords:** facade, restoration, cornice, stoop, brownstone, limestone, terra cotta, windows, historic, ornamental, masonry, parapet, ironwork
+
+**Tree Keywords:** tree removal, tree protection, tree work, specimen tree, mature tree
+
 ---
 
 ---

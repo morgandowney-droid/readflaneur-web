@@ -11,6 +11,18 @@
 
 ### Recent Changes (2026-02-05)
 
+**Heritage Watch (Preservation Alerts):**
+- New service monitoring NYC DOB Job Application Filings for preservation issues
+- Three triggers:
+  - Trigger A: Demolition (`job_type = 'DM'`) - "Teardown Alert" with eulogy tone
+  - Trigger B: Landmark alterations (`landmark = 'Y'` + facade keywords) - "Facade Watch" with curator tone
+  - Trigger C: Tree removal (keywords in description) - "Green Loss" with concerned neighbor tone
+- 20+ landmark keywords: facade, restoration, cornice, brownstone, terra cotta, etc.
+- 9+ tree keywords: tree removal, tree protection, specimen tree, etc.
+- LPC approval requirement mentioned for landmark properties
+- Files: `src/lib/nyc-heritage.ts`, `src/app/api/cron/sync-heritage-filings/route.ts`
+- Cron: Daily at 8 AM UTC
+
 **Alfresco Watch ("Al Fresco Alert"):**
 - New service fetching NYC Open Restaurants Applications from NYC Open Data
 - Generates "Al Fresco Alert" stories for new outdoor dining setups
@@ -378,6 +390,7 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | generate-digests | Weekly Mon 8 AM UTC | Property watch summaries |
 | sync-filming-permits | Every 6 hours (:30) | Fetch NYC film permits, generate Set Life stories |
 | sync-alfresco-permits | Daily 9 AM UTC | Fetch NYC outdoor dining permits, generate Al Fresco alerts |
+| sync-heritage-filings | Daily 8 AM UTC | Fetch NYC DOB filings, generate heritage alerts (demolition, landmark, tree) |
 | sync-nyc-permits | Daily 6 AM UTC | Fetch NYC DOB permit filings |
 | sync-nyc-liquor | Monday 7 AM UTC | Fetch NY State liquor licenses |
 | sync-nyc-crime | Saturday 8 AM UTC | Aggregate NYPD crime stats by neighborhood |

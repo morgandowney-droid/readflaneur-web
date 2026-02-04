@@ -254,6 +254,15 @@ NYC neighborhoods also receive "Set Life" alerts for film/TV shoots. Film permit
 
 NYC neighborhoods receive "Al Fresco Alert" stories for new outdoor dining approvals. Open Restaurants applications are fetched from NYC Open Data, filtered by zip code, and chain restaurants are automatically excluded. Uses the same `zips` array from `FLANEUR_NYC_CONFIG`.
 
+### Heritage Watch (Preservation Alerts)
+
+NYC neighborhoods receive heritage alerts for demolitions, landmark alterations, and tree removal. DOB Job Application Filings are fetched and filtered by three triggers:
+- **Demolition**: `job_type = 'DM'`
+- **Landmark**: `landmark = 'Y'` + facade/restoration keywords
+- **Tree**: Tree removal keywords in job description
+
+Uses the same `zips` array from `FLANEUR_NYC_CONFIG`.
+
 ---
 
 ## Global Locations Configuration (International)
