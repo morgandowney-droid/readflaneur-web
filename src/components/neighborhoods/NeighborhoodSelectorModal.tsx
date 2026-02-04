@@ -247,6 +247,36 @@ function GlobalNeighborhoodModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
 
+  // Suggestion feature state
+  const [showSuggestion, setShowSuggestion] = useState(false);
+  const [suggestionText, setSuggestionText] = useState('');
+  const [suggestionStatus, setSuggestionStatus] = useState<'idle' | 'success'>('idle');
+  const suggestionInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle suggestion submission
+  const handleSuggestionSubmit = async () => {
+    if (!suggestionText.trim()) return;
+
+    try {
+      const supabase = createClient();
+      await supabase.from('neighborhood_suggestions').insert({
+        suggestion: suggestionText.trim(),
+        created_at: new Date().toISOString()
+      });
+    } catch {
+      // Silently fail - still show success to user
+    }
+
+    setSuggestionStatus('success');
+
+    // Auto-close after 2 seconds
+    setTimeout(() => {
+      setShowSuggestion(false);
+      setSuggestionText('');
+      setSuggestionStatus('idle');
+    }, 2000);
+  };
+
   // Get user location when sorting by nearest
   const handleSortByNearest = () => {
     if (sortBy === 'nearest') {
@@ -682,6 +712,57 @@ function GlobalNeighborhoodModal({
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Suggest a Destination */}
+          {!loading && !searchQuery && (
+            <div className="mt-6 pt-6 border-t border-neutral-100">
+              {!showSuggestion ? (
+                <button
+                  onClick={() => {
+                    setShowSuggestion(true);
+                    setTimeout(() => suggestionInputRef.current?.focus(), 50);
+                  }}
+                  className="text-sm text-neutral-400 hover:text-neutral-600 transition-colors"
+                >
+                  Not seeing your neighborhood? <span className="underline">Suggest a Destination.</span>
+                </button>
+              ) : suggestionStatus === 'success' ? (
+                <p className="text-sm text-neutral-500">
+                  Thank you. We have added this to our radar.
+                </p>
+              ) : (
+                <div className="flex items-center gap-3 max-w-md">
+                  <input
+                    ref={suggestionInputRef}
+                    type="text"
+                    value={suggestionText}
+                    onChange={(e) => setSuggestionText(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSuggestionSubmit()}
+                    placeholder="e.g., Notting Hill, London"
+                    className="flex-1 px-3 py-2 text-sm border border-neutral-200 focus:border-neutral-400 focus:outline-none transition-colors"
+                  />
+                  <button
+                    onClick={handleSuggestionSubmit}
+                    disabled={!suggestionText.trim()}
+                    className="px-4 py-2 text-sm bg-neutral-900 text-white hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Submit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowSuggestion(false);
+                      setSuggestionText('');
+                    }}
+                    className="text-neutral-400 hover:text-neutral-600 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
