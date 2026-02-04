@@ -11,6 +11,18 @@
 
 ### Recent Changes (2026-02-05)
 
+**Filming Location Watch ("Set Life"):**
+- New service fetching NYC Film Permits from NYC Open Data
+- Generates "Set Life" stories alerting residents about nearby film shoots
+- Geofenced to 11 NYC neighborhoods via zip codes
+- Filters for premium productions: Television, Feature Film, Commercial (excludes Student, Still Photography)
+- Prioritizes known productions (Law & Order, Succession, And Just Like That, etc.)
+- Extracts street-level impact from `parking_held` field
+- Impact levels: High (major footprint), Medium, Low
+- Gemini generates insider-tone alerts with traffic/parking warnings
+- Files: `src/lib/nyc-filming.ts`, `src/app/api/cron/sync-filming-permits/route.ts`
+- Cron: Every 6 hours (fetches next 48 hours of permits)
+
 **Global Data Engine (International Markets):**
 - New City Adapter pattern for standardized civic data fetching across 5 international markets
 - Supported cities: London (UK), Sydney (AU), Chicago (US), Los Angeles (US), Washington DC (US)
@@ -352,6 +364,7 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | sync-spotted | Every 30 min | Monitor social media |
 | process-property-watch | Daily 7 AM UTC | Process user submissions |
 | generate-digests | Weekly Mon 8 AM UTC | Property watch summaries |
+| sync-filming-permits | Every 6 hours (:30) | Fetch NYC film permits, generate Set Life stories |
 | sync-nyc-permits | Daily 6 AM UTC | Fetch NYC DOB permit filings |
 | sync-nyc-liquor | Monday 7 AM UTC | Fetch NY State liquor licenses |
 | sync-nyc-crime | Saturday 8 AM UTC | Aggregate NYPD crime stats by neighborhood |

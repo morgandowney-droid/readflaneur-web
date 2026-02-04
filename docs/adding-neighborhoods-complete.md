@@ -505,6 +505,20 @@ For combo neighborhoods, aggregate zip codes and precincts from all components:
 | Williamsburg | 11211, 11249 | 90th, 94th |
 | Brooklyn West | 11201, 11231, 11215, 11217 | 84th, 76th, 78th |
 
+### 7.5 Film Permits ("Set Life")
+
+NYC neighborhoods automatically receive "Set Life" alerts for upcoming film/TV shoots. The `sync-filming-permits` cron fetches from NYC Open Data Film Permits API and filters by the same zip codes in `FLANEUR_NYC_CONFIG`.
+
+No additional configuration needed - if a neighborhood has zips configured, it will receive film permit alerts.
+
+**Data Source:** `https://data.cityofnewyork.us/resource/tg4x-b46p.json`
+
+**Filters:**
+- Premium categories only: Television, Feature Film, Commercial
+- Excludes: Student, Still Photography
+- Next 48 hours of shoots
+- Known productions prioritized (Law & Order, Succession, etc.)
+
 ---
 
 ---

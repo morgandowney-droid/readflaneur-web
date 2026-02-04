@@ -143,6 +143,12 @@ tips (
 
 ### NYC Open Data Tables
 
+NYC Open Data integration includes:
+- **DOB Permits** - Building permit filings
+- **Liquor Licenses** - NY State SLA licenses
+- **Crime Stats** - NYPD incident statistics
+- **Film Permits** - "Set Life" alerts for TV/film shoots (stored as articles, not separate table)
+
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)
 nyc_permits (

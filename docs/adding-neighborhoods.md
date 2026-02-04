@@ -246,6 +246,10 @@ export const NEIGHBORHOOD_ID_TO_CONFIG: Record<string, string> = {
 - FiDi, Upper East Side, Upper West Side, Williamsburg
 - Brooklyn West (combo), SoHo Combo, Tribeca Combo
 
+### Film Permits ("Set Life")
+
+NYC neighborhoods also receive "Set Life" alerts for film/TV shoots. Film permits are automatically fetched from NYC Open Data and filtered by zip code. No additional configuration needed - uses the same `zips` array from `FLANEUR_NYC_CONFIG`.
+
 ---
 
 ## Global Locations Configuration (International)
