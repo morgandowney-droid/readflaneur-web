@@ -830,11 +830,6 @@ export function NeighborhoodBrief({
             <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
               AI-Synthesized
             </span>
-            {verifiedSourceCount > 0 && (
-              <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded-full">
-                {verifiedSourceCount} sources
-              </span>
-            )}
           </div>
           <span className="text-xs text-amber-600">
             {formatTime(generatedAt)}
