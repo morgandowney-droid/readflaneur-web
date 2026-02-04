@@ -28,16 +28,16 @@ const NEIGHBORHOOD_CENTERS: Record<string, { lat: number; lng: number; radius: n
   'nyc-park-slope': { lat: 40.6710, lng: -73.9814, radius: 1200 },
   'nyc-brooklyn-west': { lat: 40.6870, lng: -73.9887, radius: 2500 }, // Combo center
   // New York Enclaves - Westchester NY components
-  'nyc-enclaves-rye': { lat: 40.9805, lng: -73.6851, radius: 1500 },
-  'nyc-enclaves-larchmont': { lat: 40.9282, lng: -73.7518, radius: 1200 },
-  'nyc-enclaves-scarsdale': { lat: 40.9888, lng: -73.7846, radius: 1500 },
-  'nyc-enclaves-bronxville': { lat: 40.9382, lng: -73.8320, radius: 1000 },
-  'nyc-enclaves-westchester': { lat: 40.9590, lng: -73.7634, radius: 8000 }, // Combo center
+  'nyc-rye': { lat: 40.9805, lng: -73.6851, radius: 1500 },
+  'nyc-larchmont': { lat: 40.9282, lng: -73.7518, radius: 1200 },
+  'nyc-scarsdale': { lat: 40.9888, lng: -73.7846, radius: 1500 },
+  'nyc-bronxville': { lat: 40.9382, lng: -73.8320, radius: 1000 },
+  'nyc-westchester': { lat: 40.9590, lng: -73.7634, radius: 8000 }, // Combo center
   // New York Enclaves - Gold Coast CT components
-  'nyc-enclaves-darien': { lat: 41.0785, lng: -73.4693, radius: 2000 },
-  'nyc-enclaves-greenwich': { lat: 41.0263, lng: -73.6285, radius: 3000 },
-  'nyc-enclaves-westport': { lat: 41.1415, lng: -73.3579, radius: 2500 },
-  'nyc-enclaves-gold-coast': { lat: 41.0820, lng: -73.4852, radius: 12000 }, // Combo center
+  'nyc-darien': { lat: 41.0785, lng: -73.4693, radius: 2000 },
+  'nyc-greenwich': { lat: 41.0263, lng: -73.6285, radius: 3000 },
+  'nyc-westport': { lat: 41.1415, lng: -73.3579, radius: 2500 },
+  'nyc-gold-coast': { lat: 41.0820, lng: -73.4852, radius: 12000 }, // Combo center
 };
 
 interface GooglePlaceNew {

@@ -43,8 +43,8 @@ export const CITY_PREFIX_MAP: Record<string, string> = {
   'marbella': 'europe',
   'sylt': 'europe',
   // Enclaves (wealthy suburbs)
-  'new-york-enclaves': 'nyc-enclaves',
-  'stockholm-enclaves': 'stockholm-enclaves',
+  'new-york-enclaves': 'nyc',
+  'stockholm-enclaves': 'stockholm',
 };
 
 /**
@@ -312,14 +312,14 @@ const WIKIPEDIA_ARTICLES: Record<string, string> = {
   'tel-aviv-rothschild': 'Rothschild_Boulevard',
   'telaviv-jaffa': 'Jaffa',
   // New York Enclaves - Westchester
-  'nyc-enclaves-rye': 'Rye,_New_York',
-  'nyc-enclaves-larchmont': 'Larchmont,_New_York',
-  'nyc-enclaves-scarsdale': 'Scarsdale,_New_York',
-  'nyc-enclaves-bronxville': 'Bronxville,_New_York',
+  'nyc-rye': 'Rye,_New_York',
+  'nyc-larchmont': 'Larchmont,_New_York',
+  'nyc-scarsdale': 'Scarsdale,_New_York',
+  'nyc-bronxville': 'Bronxville,_New_York',
   // New York Enclaves - Gold Coast CT
-  'nyc-enclaves-darien': 'Darien,_Connecticut',
-  'nyc-enclaves-greenwich': 'Greenwich,_Connecticut',
-  'nyc-enclaves-westport': 'Westport,_Connecticut',
+  'nyc-darien': 'Darien,_Connecticut',
+  'nyc-greenwich': 'Greenwich,_Connecticut',
+  'nyc-westport': 'Westport,_Connecticut',
 };
 
 /**
@@ -372,3 +372,4 @@ export function getSearchLocation(neighborhoodName: string, city: string, countr
 export function getSearchTerms(neighborhoodName: string): string[] {
   return NEIGHBORHOOD_SEARCH_EXPANSIONS[neighborhoodName] || [neighborhoodName];
 }
+
