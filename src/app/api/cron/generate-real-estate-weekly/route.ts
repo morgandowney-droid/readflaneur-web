@@ -150,14 +150,15 @@ export async function GET(request: Request) {
           slug,
           body_text: articleBody,
           preview_text: previewText,
+          image_url: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80', // Real estate placeholder
           category_label: 'Real Estate Weekly',
           status: 'published',
           published_at: new Date().toISOString(),
-          source_urls: sources,
           metadata: {
             type: 'real-estate-weekly',
             generated_by: 'gemini-2.0-flash',
             sections: ['listings', 'sales', 'trends'],
+            sources,
           },
         });
 
