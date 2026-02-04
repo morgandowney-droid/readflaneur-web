@@ -558,7 +558,7 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
                     </button>
 
                     {/* Neighborhoods */}
-                    <div className={`bg-white transition-all duration-200 ${isExpanded ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+                    <div className={`bg-white transition-all duration-200 ${isExpanded ? 'max-h-96 overflow-y-auto opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
                       <div className="p-3">
                         <div className="flex items-center justify-between mb-2 pb-2 border-b border-neutral-100">
                           <span className="text-xs text-neutral-400">Neighborhoods</span>
