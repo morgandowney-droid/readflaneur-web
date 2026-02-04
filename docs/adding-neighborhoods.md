@@ -245,3 +245,62 @@ export const NEIGHBORHOOD_ID_TO_CONFIG: Record<string, string> = {
 - Chelsea, Greenwich Village, West Village, Hudson Yards, Meatpacking District
 - FiDi, Upper East Side, Upper West Side, Williamsburg
 - Brooklyn West (combo), SoHo Combo, Tribeca Combo
+
+---
+
+## Global Locations Configuration (International)
+
+International neighborhoods (London, Sydney, Chicago, LA, DC) have their own civic data integration using the City Adapter pattern.
+
+### Adding International Neighborhoods
+
+Edit `src/config/global-locations.ts`:
+
+```typescript
+export const GLOBAL_CITY_CONFIG: Record<string, CityConfig> = {
+  London: {
+    city: 'London',
+    country: 'UK',
+    adapter: 'LondonAdapter',
+    currency: 'GBP',
+    zones: [
+      {
+        name: 'Mayfair',
+        neighborhoodId: 'mayfair',
+        tone: 'Old money, hedge funds, Savile Row tailoring',
+        zoneCode: 'Westminster',
+        postalCodes: ['W1J', 'W1K', 'W1S'],
+      },
+      // Add more zones...
+    ],
+  },
+  // Other cities: Sydney, Chicago, 'Los Angeles', 'Washington DC'
+};
+```
+
+### City Vocabulary
+
+Each city has localized vocabulary for AI content generation:
+
+```typescript
+export const CITY_VOCABULARIES: Record<string, CityVocabulary> = {
+  London: {
+    permitTerms: ['Planning Permission', 'Listed Building Consent', 'Change of Use'],
+    liquorTerms: ['Premises Licence', 'Personal Licence', 'TEN'],
+    realEstateTerms: ['Freehold', 'Leasehold', 'Mews House', 'Mansion Block'],
+    localPhrases: ['in the borough', 'on the high street'],
+    currencySymbol: '£',
+    currencyName: 'British Pounds',
+  },
+};
+```
+
+### Current International Coverage
+
+| City | Zones | Data Sources |
+|------|-------|--------------|
+| London | Mayfair, Chelsea, Notting Hill, Kensington, Hampstead | UK Police API, Westminster Planning |
+| Sydney | Double Bay, Mosman, Paddington, Woollahra, Balmoral | NSW Planning Portal, BOCSAR |
+| Chicago | Gold Coast, Lincoln Park, River North, Streeterville | Chicago Data Portal (Socrata) |
+| Los Angeles | Bel Air, Beverly Hills, Pacific Palisades, Brentwood, Santa Monica | LA Open Data |
+| Washington DC | Georgetown, Dupont Circle, Kalorama, Capitol Hill | DC Open Data (ArcGIS) |

@@ -14,7 +14,9 @@ This document provides a comprehensive, step-by-step process for adding new neig
 6. [Step 4: Content Generation](#step-4-content-generation)
 7. [Step 5: RSS Feeds Configuration](#step-5-rss-feeds-configuration)
 8. [Step 6: Testing & Validation](#step-6-testing--validation)
-9. [Appendix: Scripts Reference](#appendix-scripts-reference)
+9. [Step 7: NYC Open Data Configuration](#step-7-nyc-open-data-configuration-nyc-only)
+10. [Step 8: Global/International Neighborhoods](#step-8-globalinternational-neighborhoods)
+11. [Appendix: Scripts Reference](#appendix-scripts-reference)
 
 ---
 
@@ -505,4 +507,112 @@ For combo neighborhoods, aggregate zip codes and precincts from all components:
 
 ---
 
-*Last updated: February 4, 2026*
+---
+
+## Step 8: Global/International Neighborhoods
+
+For international neighborhoods (London, Sydney, Chicago, LA, DC), configure the City Adapter system for civic data integration.
+
+### 8.1 Add to Global Locations Config
+
+Edit `src/config/global-locations.ts`:
+
+```typescript
+export const GLOBAL_CITY_CONFIG: Record<string, CityConfig> = {
+  London: {
+    city: 'London',
+    country: 'UK',
+    adapter: 'LondonAdapter',
+    currency: 'GBP',
+    zones: [
+      {
+        name: 'Your Neighborhood',
+        neighborhoodId: 'your-neighborhood',  // URL slug
+        tone: 'Editorial tone for AI content',
+        zoneCode: 'Borough Name',             // Local authority
+        postalCodes: ['SW1', 'SW3'],          // UK postcode prefixes
+      },
+    ],
+  },
+};
+```
+
+### 8.2 Zone Configuration Fields
+
+| Field | Purpose | Example |
+|-------|---------|---------|
+| `name` | Display name | `'Mayfair'` |
+| `neighborhoodId` | URL slug | `'mayfair'` |
+| `tone` | AI editorial context | `'Old money, hedge funds'` |
+| `zoneCode` | Local authority/borough | `'Westminster'` |
+| `altCodes` | Alternative zone codes | `['City of Westminster']` |
+| `postalCodes` | Postal/zip codes | `['W1J', 'W1K']` |
+
+### 8.3 City Vocabulary
+
+Add localized terminology for AI content:
+
+```typescript
+export const CITY_VOCABULARIES: Record<string, CityVocabulary> = {
+  London: {
+    permitTerms: ['Planning Permission', 'Listed Building Consent'],
+    liquorTerms: ['Premises Licence', 'Personal Licence'],
+    realEstateTerms: ['Freehold', 'Leasehold', 'Mews House'],
+    localPhrases: ['in the borough', 'on the high street'],
+    currencySymbol: '£',
+    currencyName: 'British Pounds',
+  },
+};
+```
+
+### 8.4 Creating a New City Adapter
+
+For cities not yet supported, create a new adapter in `src/lib/adapters/`:
+
+```typescript
+export class NewCityAdapter extends BaseCityAdapter {
+  readonly city = 'New City';
+  readonly country = 'Country';
+  readonly currency = 'USD';
+  readonly vocabulary: CityVocabulary;
+
+  async getPermits(since?: Date): Promise<StoryData[]> {
+    // Fetch from city's Open Data API
+  }
+
+  async getLiquor(since?: Date): Promise<StoryData[]> {
+    // Fetch liquor licenses
+  }
+
+  async getSafety(period?: 'week' | 'month'): Promise<SafetyStats[]> {
+    // Fetch crime/safety statistics
+  }
+}
+```
+
+Then register in `src/lib/adapters/index.ts`:
+
+```typescript
+const ADAPTER_REGISTRY: Record<string, new () => ICityAdapter> = {
+  NewCityAdapter,
+  // ...existing adapters
+};
+
+const CITY_TO_ADAPTER: Record<string, string> = {
+  'New City': 'NewCityAdapter',
+};
+```
+
+### 8.5 Current International Coverage
+
+| City | Adapter | Data Sources |
+|------|---------|--------------|
+| London | `LondonAdapter` | UK Police API, Westminster Planning |
+| Sydney | `SydneyAdapter` | NSW Planning Portal, BOCSAR |
+| Chicago | `ChicagoAdapter` | Chicago Data Portal (Socrata) |
+| Los Angeles | `LosAngelesAdapter` | LA Open Data (Socrata) |
+| Washington DC | `WashingtonDCAdapter` | DC Open Data (ArcGIS) |
+
+---
+
+*Last updated: February 5, 2026*

@@ -188,6 +188,60 @@ nyc_crime_stats (
 )
 ```
 
+### Global Civic Data Tables (International Markets)
+
+```sql
+-- Global Permits cache (London, Sydney, Chicago, LA, DC)
+global_permits (
+  id UUID PRIMARY KEY,
+  source_id TEXT NOT NULL,
+  city TEXT NOT NULL,
+  country TEXT NOT NULL,
+  neighborhood_id TEXT REFERENCES neighborhoods(id),
+  permit_type TEXT,
+  filing_date DATE,
+  description TEXT,
+  address TEXT,
+  estimated_value DECIMAL,
+  currency TEXT DEFAULT 'USD',
+  raw_data JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(source_id, city)
+)
+
+-- Global Licenses cache (liquor/premises licenses)
+global_licenses (
+  id UUID PRIMARY KEY,
+  source_id TEXT NOT NULL,
+  city TEXT NOT NULL,
+  country TEXT NOT NULL,
+  neighborhood_id TEXT REFERENCES neighborhoods(id),
+  license_type TEXT,
+  premises_name TEXT,
+  effective_date DATE,
+  address TEXT,
+  raw_data JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(source_id, city)
+)
+
+-- Global Safety Stats (crime/incident statistics)
+global_safety_stats (
+  id UUID PRIMARY KEY,
+  city TEXT NOT NULL,
+  country TEXT NOT NULL,
+  neighborhood_id TEXT REFERENCES neighborhoods(id),
+  period_start DATE NOT NULL,
+  period_end DATE NOT NULL,
+  total_incidents INTEGER DEFAULT 0,
+  stats_by_category JSONB,
+  trend TEXT CHECK (trend IN ('up', 'down', 'stable')),
+  trend_percentage DECIMAL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(city, neighborhood_id, period_start)
+)
+```
+
 ### Advertising Tables
 
 ```sql
@@ -384,4 +438,11 @@ STRIPE_WEBHOOK_SECRET=
 
 # App
 NEXT_PUBLIC_APP_URL=https://readflaneur.com
+
+# AI Content Generation
+GEMINI_API_KEY=                   # Gemini 3 Pro for civic data stories
+GROK_API_KEY=                     # Grok X Search for real-time news
+
+# Optional: External APIs
+SOCRATA_APP_TOKEN=                # Higher rate limits for US city data (Chicago, LA, DC)
 ```

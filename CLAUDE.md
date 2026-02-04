@@ -7,9 +7,31 @@
 > **User Location:** Stockholm, Sweden (CET/CEST timezone) - use this for time-related references.
 
 ## Current Status
-**Last Updated:** 2026-02-04
+**Last Updated:** 2026-02-05
 
-### Recent Changes (2026-02-04)
+### Recent Changes (2026-02-05)
+
+**Global Data Engine (International Markets):**
+- New City Adapter pattern for standardized civic data fetching across 5 international markets
+- Supported cities: London (UK), Sydney (AU), Chicago (US), Los Angeles (US), Washington DC (US)
+- Each adapter implements: `getPermits()`, `getLiquor()`, `getSafety()` with city-specific API integrations
+- City-specific vocabulary injection for AI content (currency symbols, local terminology)
+- Config: `src/config/global-locations.ts` with zones, postal codes, editorial tones
+- Adapters: `src/lib/adapters/` (london, sydney, chicago, los-angeles, washington-dc)
+- Content generator: `src/lib/global-content-generator.ts` with Gemini + cultural context
+- Database tables: `global_permits`, `global_licenses`, `global_safety_stats`
+- Four new cron jobs for international data sync and weekly digest generation
+
+**API Sources by City:**
+| City | Permits | Liquor | Safety |
+|------|---------|--------|--------|
+| London | Westminster Planning | UK Licensing | UK Police API |
+| Sydney | NSW Planning Portal | NSW Liquor | BOCSAR |
+| Chicago | Chicago Data Portal (Socrata) | Business Licenses | Crimes Dataset |
+| Los Angeles | LA Open Data (Socrata) | CA ABC | LAPD Data |
+| Washington DC | DC Open Data (ArcGIS) | ABRA | MPD Data |
+
+### Previous Changes (2026-02-04)
 
 **NYC Open Data Integration:**
 - New data fetching system for NYC permits, liquor licenses, and crime stats
@@ -334,6 +356,10 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | sync-nyc-liquor | Monday 7 AM UTC | Fetch NY State liquor licenses |
 | sync-nyc-crime | Saturday 8 AM UTC | Aggregate NYPD crime stats by neighborhood |
 | generate-nyc-weekly-digest | Saturday 10 AM UTC | Generate weekly civic data articles for NYC |
+| sync-global-permits | Daily 7 AM UTC | Fetch permits from London, Sydney, Chicago, LA, DC |
+| sync-global-liquor | Tuesday 7 AM UTC | Fetch liquor licenses from international cities |
+| sync-global-crime | Saturday 9 AM UTC | Aggregate crime stats from international cities |
+| generate-global-weekly-digest | Saturday 11 AM UTC | Generate weekly civic data articles for international neighborhoods |
 
 ## Database Tables
 
@@ -349,6 +375,11 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 - `nyc_permits` - DOB permit filings cached from NYC Open Data
 - `nyc_liquor_licenses` - SLA liquor licenses from NY State Open Data
 - `nyc_crime_stats` - Aggregated NYPD crime statistics by neighborhood
+
+### Global Civic Data (5 international markets)
+- `global_permits` - Building/planning permits from London, Sydney, Chicago, LA, DC
+- `global_licenses` - Liquor/premises licenses from international cities
+- `global_safety_stats` - Crime/safety statistics from international cities
 
 ### Content
 - `articles` - News articles with AI-generated images
