@@ -141,6 +141,7 @@ const WIKIPEDIA_ARTICLES: Record<string, string> = {
   'nyc-gramercy': 'Gramercy_Park',
   'nyc-upper-east-side': 'Upper_East_Side',
   'nyc-upper-west-side': 'Upper_West_Side',
+  'nyc-hudson-yards': 'Hudson_Yards',
   'nyc-williamsburg': 'Williamsburg,_Brooklyn',
   'nyc-dumbo': 'Dumbo,_Brooklyn',
   'nyc-cobble-hill': 'Cobble_Hill,_Brooklyn',
