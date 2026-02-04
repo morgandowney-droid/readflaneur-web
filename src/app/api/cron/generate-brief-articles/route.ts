@@ -1,6 +1,92 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+interface ArticleSourceInput {
+  source_name: string;
+  source_type: 'publication' | 'x_user' | 'platform' | 'other';
+  source_url?: string;
+}
+
+interface EnrichedCategory {
+  name: string;
+  stories: Array<{
+    entity: string;
+    source?: { name: string; url: string } | null;
+    secondarySource?: { name: string; url: string };
+    context: string;
+  }>;
+}
+
+/**
+ * Extract sources from enriched categories JSON
+ */
+function extractSourcesFromCategories(categories: EnrichedCategory[] | null): ArticleSourceInput[] {
+  if (!categories || !Array.isArray(categories)) {
+    return [
+      { source_name: 'X (Twitter)', source_type: 'platform' },
+      { source_name: 'Google News', source_type: 'platform' },
+    ];
+  }
+
+  const sources: ArticleSourceInput[] = [];
+  const seenSources = new Set<string>();
+
+  for (const category of categories) {
+    for (const story of category.stories || []) {
+      if (story.source?.name) {
+        const key = story.source.name.toLowerCase();
+        if (!seenSources.has(key)) {
+          seenSources.add(key);
+
+          let sourceType: ArticleSourceInput['source_type'] = 'publication';
+          if (story.source.name.startsWith('@') || story.source.url?.includes('x.com') || story.source.url?.includes('twitter.com')) {
+            sourceType = 'x_user';
+          }
+
+          const url = story.source.url;
+          const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
+
+          sources.push({
+            source_name: story.source.name,
+            source_type: sourceType,
+            source_url: isValidUrl ? url : undefined,
+          });
+        }
+      }
+
+      if (story.secondarySource?.name) {
+        const key = story.secondarySource.name.toLowerCase();
+        if (!seenSources.has(key)) {
+          seenSources.add(key);
+
+          let sourceType: ArticleSourceInput['source_type'] = 'publication';
+          if (story.secondarySource.name.startsWith('@') || story.secondarySource.url?.includes('x.com')) {
+            sourceType = 'x_user';
+          }
+
+          const url = story.secondarySource.url;
+          const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
+
+          sources.push({
+            source_name: story.secondarySource.name,
+            source_type: sourceType,
+            source_url: isValidUrl ? url : undefined,
+          });
+        }
+      }
+    }
+  }
+
+  if (sources.length === 0) {
+    return [
+      { source_name: 'X (Twitter)', source_type: 'platform' },
+      { source_name: 'Google News', source_type: 'platform' },
+    ];
+  }
+
+  return sources;
+}
+
 /**
  * Generate Articles from Neighborhood Briefs
  *
@@ -76,7 +162,7 @@ export async function GET(request: Request) {
       enriched_content,
       enriched_categories,
       generated_at,
-      neighborhoods!inner(name, slug, city)
+      neighborhoods!inner(id, name, city)
     `)
     .not('enriched_content', 'is', null)
     .order('generated_at', { ascending: false })
@@ -123,10 +209,11 @@ export async function GET(request: Request) {
     try {
       results.briefs_processed++;
 
-      const neighborhood = brief.neighborhoods as unknown as { name: string; slug: string; city: string };
+      const neighborhood = brief.neighborhoods as unknown as { id: string; name: string; city: string };
 
-      // Generate article headline
-      const articleHeadline = brief.headline || `What's Happening in ${neighborhood.name}`;
+      // Generate article headline with DAILY BRIEF prefix
+      const baseHeadline = brief.headline || `What's Happening in ${neighborhood.name}`;
+      const articleHeadline = `${neighborhood.name} DAILY BRIEF: ${baseHeadline}`;
 
       // Use enriched content as article body, with brief content as fallback
       const articleBody = brief.enriched_content || brief.content;
@@ -137,14 +224,17 @@ export async function GET(request: Request) {
         continue;
       }
 
-      // Generate slug
-      const slug = generateSlug(articleHeadline, neighborhood.slug);
+      // Generate slug using neighborhood id
+      const slug = generateSlug(articleHeadline, neighborhood.id);
 
       // Generate preview text
       const previewText = generatePreviewText(articleBody);
 
+      // Extract sources from enriched categories
+      const extractedSources = extractSourcesFromCategories(brief.enriched_categories as EnrichedCategory[] | null);
+
       // Create the article
-      const { error: insertError } = await supabase
+      const { data: insertedArticle, error: insertError } = await supabase
         .from('articles')
         .insert({
           neighborhood_id: brief.neighborhood_id,
@@ -160,7 +250,9 @@ export async function GET(request: Request) {
           category_label: `${neighborhood.name} Daily Brief`,
           brief_id: brief.id,
           image_url: '', // Required field, can be empty
-        });
+        })
+        .select('id')
+        .single();
 
       if (insertError) {
         results.articles_failed++;
@@ -169,6 +261,24 @@ export async function GET(request: Request) {
       }
 
       results.articles_created++;
+
+      // Store sources for attribution
+      if (extractedSources.length > 0 && insertedArticle?.id) {
+        const sourcesToInsert = extractedSources.map(s => ({
+          article_id: insertedArticle.id,
+          source_name: s.source_name,
+          source_type: s.source_type,
+          source_url: s.source_url,
+        }));
+
+        const { error: sourcesError } = await supabase
+          .from('article_sources')
+          .insert(sourcesToInsert);
+
+        if (sourcesError) {
+          console.error(`Failed to insert sources for article ${insertedArticle.id}:`, sourcesError.message);
+        }
+      }
 
     } catch (err) {
       results.articles_failed++;
