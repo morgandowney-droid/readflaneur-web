@@ -42,6 +42,9 @@ export const CITY_PREFIX_MAP: Record<string, string> = {
   'saint-tropez': 'europe',
   'marbella': 'europe',
   'sylt': 'europe',
+  // Enclaves (wealthy suburbs)
+  'new-york-enclaves': 'nyc-enclaves',
+  'stockholm-enclaves': 'stockholm-enclaves',
 };
 
 /**
@@ -308,6 +311,15 @@ const WIKIPEDIA_ARTICLES: Record<string, string> = {
   'telaviv-rothschild': 'Rothschild_Boulevard',
   'tel-aviv-rothschild': 'Rothschild_Boulevard',
   'telaviv-jaffa': 'Jaffa',
+  // New York Enclaves - Westchester
+  'nyc-enclaves-rye': 'Rye,_New_York',
+  'nyc-enclaves-larchmont': 'Larchmont,_New_York',
+  'nyc-enclaves-scarsdale': 'Scarsdale,_New_York',
+  'nyc-enclaves-bronxville': 'Bronxville,_New_York',
+  // New York Enclaves - Gold Coast CT
+  'nyc-enclaves-darien': 'Darien,_Connecticut',
+  'nyc-enclaves-greenwich': 'Greenwich,_Connecticut',
+  'nyc-enclaves-westport': 'Westport,_Connecticut',
 };
 
 /**

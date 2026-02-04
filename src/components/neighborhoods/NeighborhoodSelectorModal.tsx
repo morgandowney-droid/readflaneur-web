@@ -6,6 +6,12 @@ import { createClient } from '@/lib/supabase/client';
 import { Neighborhood, GlobalRegion } from '@/types';
 import { getCityCode } from '@/lib/neighborhood-utils';
 
+// Extend Neighborhood type to include combo info for display
+interface NeighborhoodWithCombo extends Neighborhood {
+  is_combo?: boolean;
+  combo_component_names?: string[];
+}
+
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
 
 // City coordinates for distance calculation
@@ -37,6 +43,9 @@ const CITY_COORDINATES: Record<string, [number, number]> = {
   'US Vacation': [41.2835, -70.0995], // Nantucket coordinates
   'Caribbean Vacation': [17.8967, -62.8500], // St. Barts
   'European Vacation': [43.2727, 6.6406], // Saint-Tropez
+  // Enclaves (wealthy suburbs)
+  'New York Enclaves': [41.0263, -73.6285], // Greenwich, CT area
+  'Stockholm Enclaves': [59.3293, 18.0686], // Stockholm area
 };
 
 // Vacation region labels and styling
@@ -46,9 +55,30 @@ const VACATION_REGIONS: Record<string, { label: string; color: string }> = {
   'europe-vacation': { label: 'European Vacation', color: '#00563F' },
 };
 
+// Enclave region labels and styling (wealthy suburbs around cities)
+const ENCLAVE_REGIONS: Record<string, { label: string; headerColor: string; buttonBgColor: string; buttonTextColor: string }> = {
+  'nyc-enclaves': {
+    label: 'New York Enclaves',
+    headerColor: '#3E2723',  // Espresso
+    buttonBgColor: '#3E2723',
+    buttonTextColor: '#E5C586'  // Gold/Brass
+  },
+  'stockholm-enclaves': {
+    label: 'Stockholm Enclaves',
+    headerColor: '#3E2723',
+    buttonBgColor: '#3E2723',
+    buttonTextColor: '#E5C586'
+  },
+};
+
 // Check if a region is a vacation region
 function isVacationRegion(region?: string): boolean {
   return region ? region.includes('vacation') : false;
+}
+
+// Check if a region is an enclave region
+function isEnclaveRegion(region?: string): boolean {
+  return region ? region.includes('enclaves') : false;
 }
 
 // Calculate distance between two points using Haversine formula
@@ -99,7 +129,7 @@ export function NeighborhoodModalProvider({ children }: { children: React.ReactN
 
 function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const router = useRouter();
-  const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
+  const [neighborhoods, setNeighborhoods] = useState<NeighborhoodWithCombo[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [userId, setUserId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -159,7 +189,38 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
         }
 
         if (neighborhoodsData) {
-          setNeighborhoods(neighborhoodsData as Neighborhood[]);
+          // Fetch combo component names for combo neighborhoods
+          const comboNeighborhoods = neighborhoodsData.filter((n: any) => n.is_combo);
+          const comboComponentNames: Record<string, string[]> = {};
+
+          if (comboNeighborhoods.length > 0) {
+            const { data: comboLinks } = await supabase
+              .from('combo_neighborhoods')
+              .select(`
+                combo_id,
+                display_order,
+                component:neighborhoods!combo_neighborhoods_component_id_fkey (name)
+              `)
+              .in('combo_id', comboNeighborhoods.map((n: any) => n.id))
+              .order('display_order');
+
+            if (comboLinks) {
+              comboLinks.forEach((link: any) => {
+                if (!comboComponentNames[link.combo_id]) {
+                  comboComponentNames[link.combo_id] = [];
+                }
+                comboComponentNames[link.combo_id].push(link.component.name);
+              });
+            }
+          }
+
+          // Attach component names to neighborhoods
+          const neighborhoodsWithCombo: NeighborhoodWithCombo[] = neighborhoodsData.map((n: any) => ({
+            ...n,
+            combo_component_names: comboComponentNames[n.id] || undefined,
+          }));
+
+          setNeighborhoods(neighborhoodsWithCombo);
         }
 
         // Check auth and load preferences
@@ -214,9 +275,17 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
     };
   }, [isOpen, onClose]);
 
-  // Group neighborhoods by city (or vacation region) and sort
+  // Group neighborhoods by city (or vacation/enclave region) and sort
   const citiesWithNeighborhoods = useMemo(() => {
-    const map = new Map<string, { neighborhoods: Neighborhood[]; isVacation: boolean; color?: string }>();
+    interface CityGroup {
+      neighborhoods: NeighborhoodWithCombo[];
+      isVacation: boolean;
+      isEnclave: boolean;
+      headerColor?: string;
+      buttonBgColor?: string;
+      buttonTextColor?: string;
+    }
+    const map = new Map<string, CityGroup>();
 
     neighborhoods.forEach(n => {
       // Check if this neighborhood belongs to a vacation region
@@ -227,14 +296,30 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
           map.set(groupKey, {
             neighborhoods: [],
             isVacation: true,
-            color: vacationInfo?.color
+            isEnclave: false,
+            headerColor: vacationInfo?.color
+          });
+        }
+        map.get(groupKey)!.neighborhoods.push(n);
+      } else if (isEnclaveRegion(n.region)) {
+        // Enclave region grouping
+        const enclaveInfo = ENCLAVE_REGIONS[n.region!];
+        const groupKey = enclaveInfo?.label || n.region!;
+        if (!map.has(groupKey)) {
+          map.set(groupKey, {
+            neighborhoods: [],
+            isVacation: false,
+            isEnclave: true,
+            headerColor: enclaveInfo?.headerColor,
+            buttonBgColor: enclaveInfo?.buttonBgColor,
+            buttonTextColor: enclaveInfo?.buttonTextColor
           });
         }
         map.get(groupKey)!.neighborhoods.push(n);
       } else {
         // Regular city grouping
         if (!map.has(n.city)) {
-          map.set(n.city, { neighborhoods: [], isVacation: false });
+          map.set(n.city, { neighborhoods: [], isVacation: false, isEnclave: false });
         }
         map.get(n.city)!.neighborhoods.push(n);
       }
@@ -242,10 +327,13 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
 
     let cities = Array.from(map.entries()).map(([city, data]) => ({
       city,
-      code: data.isVacation ? '◇' : getCityCode(city),
+      code: data.isVacation ? '◇' : data.isEnclave ? '✦' : getCityCode(city),
       neighborhoods: data.neighborhoods,
       isVacation: data.isVacation,
-      color: data.color,
+      isEnclave: data.isEnclave,
+      headerColor: data.headerColor,
+      buttonBgColor: data.buttonBgColor,
+      buttonTextColor: data.buttonTextColor,
       distance: userLocation && CITY_COORDINATES[city]
         ? getDistance(userLocation[0], userLocation[1], CITY_COORDINATES[city][0], CITY_COORDINATES[city][1])
         : Infinity,
@@ -427,17 +515,17 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredCities.map(({ city, code, neighborhoods: cityHoods, distance, isVacation, color }) => {
+              {filteredCities.map(({ city, code, neighborhoods: cityHoods, distance, isVacation, isEnclave, headerColor, buttonBgColor, buttonTextColor }) => {
                 const selectedInCity = cityHoods.filter(n => selected.has(n.id)).length;
                 const isExpanded = activeCity === city || searchQuery.length > 0;
-                const headerBgColor = isVacation && color ? color : undefined;
+                const headerBgColor = headerColor || undefined;
 
                 return (
                   <div
                     key={city}
                     className={`rounded-lg overflow-hidden border transition-all duration-200 ${
                       selectedInCity > 0
-                        ? isVacation ? 'border-[#00563F]' : 'border-neutral-900'
+                        ? isVacation ? 'border-[#00563F]' : isEnclave ? 'border-[#3E2723]' : 'border-neutral-900'
                         : 'border-neutral-200 hover:border-neutral-400'
                     }`}
                   >
@@ -487,20 +575,48 @@ function GlobalNeighborhoodModal({ isOpen, onClose }: { isOpen: boolean; onClose
                         <div className="flex flex-wrap gap-1.5">
                           {cityHoods.map(hood => {
                             const isSelected = selected.has(hood.id);
+                            const hasComboComponents = hood.combo_component_names && hood.combo_component_names.length > 0;
+
+                            // Determine button styling based on region type
+                            let buttonClasses = 'relative px-2.5 py-1 text-xs rounded-md transition-all';
+                            if (hasComboComponents) buttonClasses += ' flex flex-col items-start';
+
+                            let buttonStyle: React.CSSProperties = {};
+
+                            if (hood.is_coming_soon) {
+                              buttonClasses += ' bg-neutral-100 text-neutral-400 cursor-not-allowed';
+                            } else if (isSelected) {
+                              if (isEnclave && buttonBgColor) {
+                                buttonStyle = { backgroundColor: buttonBgColor, color: buttonTextColor };
+                              } else {
+                                buttonClasses += ' bg-neutral-900 text-white';
+                              }
+                            } else {
+                              if (isEnclave && buttonBgColor) {
+                                // Unselected enclave: light version of espresso
+                                buttonStyle = { backgroundColor: '#F5F0EB', color: '#3E2723' };
+                              } else {
+                                buttonClasses += ' bg-neutral-100 text-neutral-700 hover:bg-neutral-200';
+                              }
+                            }
+
                             return (
                               <button
                                 key={hood.id}
                                 onClick={() => toggleNeighborhood(hood.id)}
                                 disabled={hood.is_coming_soon}
-                                className={`relative px-2.5 py-1 text-xs rounded-md transition-all ${
-                                  hood.is_coming_soon
-                                    ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
-                                    : isSelected
-                                    ? 'bg-neutral-900 text-white'
-                                    : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                                }`}
+                                className={buttonClasses}
+                                style={buttonStyle}
                               >
-                                {hood.name}
+                                <span>{hood.name}</span>
+                                {hasComboComponents && (
+                                  <span
+                                    className="text-[9px] leading-tight"
+                                    style={isEnclave ? { color: isSelected ? '#C4A66B' : '#8B7355' } : undefined}
+                                  >
+                                    {hood.combo_component_names!.join(', ')}
+                                  </span>
+                                )}
                                 {hood.is_coming_soon && <span className="ml-1 text-[10px]">(Soon)</span>}
                                 {isSelected && (
                                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full flex items-center justify-center">
