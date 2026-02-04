@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateNeighborhoodBrief, isGrokConfigured } from '@/lib/grok';
+import { getComboInfo } from '@/lib/combo-utils';
 
 /**
  * Neighborhood Briefs Sync Cron Job
@@ -98,10 +99,10 @@ export async function GET(request: Request) {
 
   const coveredIds = new Set((existingBriefs || []).map(b => b.neighborhood_id));
 
-  // Fetch active neighborhoods WITH timezone
+  // Fetch active neighborhoods WITH timezone (includes combo neighborhoods)
   let query = supabase
     .from('neighborhoods')
-    .select('id, name, city, country, timezone')
+    .select('id, name, city, country, timezone, is_combo')
     .eq('is_active', true)
     .order('name');
 
@@ -169,9 +170,19 @@ export async function GET(request: Request) {
     try {
       results.neighborhoods_processed++;
 
+      // For combo neighborhoods, build search location from component names
+      let searchName = hood.name;
+      if (hood.is_combo) {
+        const comboInfo = await getComboInfo(supabase, hood.id);
+        if (comboInfo && comboInfo.components.length > 0) {
+          // Use component names in search: "Dumbo, Cobble Hill, Park Slope"
+          searchName = comboInfo.components.map(c => c.name).join(', ');
+        }
+      }
+
       // Generate brief using Grok
       const brief = await generateNeighborhoodBrief(
-        hood.name,
+        searchName,
         hood.city,
         hood.country
       );

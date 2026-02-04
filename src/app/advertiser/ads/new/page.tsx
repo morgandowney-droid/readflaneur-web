@@ -454,7 +454,7 @@ export default function CreateAdPage() {
             </p>
             <div className="bg-neutral-100 p-4 rounded sticky top-24">
               <p className="text-xs text-neutral-400 mb-3 text-center">
-                How your ad will appear in the feed
+                How your ad will appear
               </p>
               <div className="space-y-3 max-w-sm mx-auto">
                 <MockArticleCard {...mockArticles[0]} />

@@ -4,7 +4,7 @@ import { EnhancedNeighborhoodSelector } from '@/components/neighborhoods/Enhance
 
 export const metadata = {
   title: 'Neighborhoods | Flâneur',
-  description: 'Browse and select from 91 neighborhoods across 23 global cities. Personalize your Flâneur feed with local stories from the places you love.',
+  description: 'Browse and select from 91 neighborhoods across 23 global cities. Personalize your Flâneur stories from the places you love.',
 };
 
 export default async function NeighborhoodsPage() {

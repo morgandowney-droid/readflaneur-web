@@ -12,6 +12,7 @@ export interface Neighborhood {
   radius?: number; // meters
   is_active?: boolean;
   is_coming_soon?: boolean;
+  is_combo?: boolean; // True for combo neighborhoods (aggregate multiple neighborhoods)
   seeded_at?: string; // When first seeded - places discovered after this are "new"
 }
 

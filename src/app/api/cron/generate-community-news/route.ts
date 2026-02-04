@@ -1,7 +1,93 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { isGrokConfigured } from '@/lib/grok';
-import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
+import { enrichBriefWithGemini, EnrichedBriefOutput } from '@/lib/brief-enricher-gemini';
+import { getSearchLocation } from '@/lib/neighborhood-utils';
+import { getComboInfo } from '@/lib/combo-utils';
+
+interface ArticleSourceInput {
+  source_name: string;
+  source_type: 'publication' | 'x_user' | 'platform' | 'other';
+  source_url?: string;
+}
+
+/**
+ * Extract sources from Gemini enrichment response
+ * Only includes URLs that appear valid (no dead links)
+ */
+function extractSourcesFromEnrichment(enrichResult: EnrichedBriefOutput): ArticleSourceInput[] {
+  const sources: ArticleSourceInput[] = [];
+  const seenSources = new Set<string>();
+
+  for (const category of enrichResult.categories) {
+    for (const story of category.stories) {
+      if (story.source && story.source.name) {
+        const key = story.source.name.toLowerCase();
+        if (!seenSources.has(key)) {
+          seenSources.add(key);
+
+          // Determine source type based on name/url
+          let sourceType: ArticleSourceInput['source_type'] = 'publication';
+          if (story.source.name.startsWith('@') || story.source.url?.includes('x.com') || story.source.url?.includes('twitter.com')) {
+            sourceType = 'x_user';
+          }
+
+          // Only include URL if it looks valid (not a search URL or placeholder)
+          const url = story.source.url;
+          const isValidUrl = url &&
+            !url.includes('google.com/search') &&
+            !url.includes('example.com') &&
+            url.startsWith('http');
+
+          sources.push({
+            source_name: story.source.name,
+            source_type: sourceType,
+            source_url: isValidUrl ? url : undefined,
+          });
+        }
+      }
+
+      // Also check secondary source
+      if (story.secondarySource && story.secondarySource.name) {
+        const key = story.secondarySource.name.toLowerCase();
+        if (!seenSources.has(key)) {
+          seenSources.add(key);
+
+          let sourceType: ArticleSourceInput['source_type'] = 'publication';
+          if (story.secondarySource.name.startsWith('@') || story.secondarySource.url?.includes('x.com')) {
+            sourceType = 'x_user';
+          }
+
+          const url = story.secondarySource.url;
+          const isValidUrl = url &&
+            !url.includes('google.com/search') &&
+            !url.includes('example.com') &&
+            url.startsWith('http');
+
+          sources.push({
+            source_name: story.secondarySource.name,
+            source_type: sourceType,
+            source_url: isValidUrl ? url : undefined,
+          });
+        }
+      }
+    }
+  }
+
+  // If no specific sources found, add platform-level attribution
+  if (sources.length === 0) {
+    sources.push({
+      source_name: 'X (Twitter)',
+      source_type: 'platform',
+    });
+    sources.push({
+      source_name: 'Google News',
+      source_type: 'platform',
+    });
+  }
+
+  return sources;
+}
 
 /**
  * Community News Generator
@@ -28,7 +114,7 @@ const GROK_MODEL = 'grok-4-1-fast';
 interface CommunityBrief {
   headline: string;
   content: string;
-  category: 'politics' | 'schools' | 'parks' | 'police' | 'civic';
+  category: 'politics' | 'schools' | 'spaces' | 'parks' | 'police' | 'infrastructure' | 'civic';
 }
 
 async function generateCommunityNews(
@@ -42,7 +128,8 @@ async function generateCommunityNews(
     return null;
   }
 
-  const location = `${neighborhoodName}, ${city}, ${country}`;
+  // Get expanded search location (e.g., "The Hamptons" becomes "The Hamptons or Montauk...")
+  const location = getSearchLocation(neighborhoodName, city, country);
 
   try {
     const response = await fetch(`${GROK_API_URL}/responses`, {
@@ -60,10 +147,11 @@ async function generateCommunityNews(
 
 Focus on finding:
 1. LOCAL POLITICS: City council/community board meetings, elections, proposed ordinances, zoning changes, tax proposals, budget decisions
-2. SCHOOLS: School board meetings, district news, school events, educational policy changes
-3. PARKS & RECREATION: Park improvements, community events, recreation programs, environmental initiatives
+2. SCHOOLS: School board meetings, district news, school events, educational policy changes, PTA meetings, school construction or renovations
+3. PUBLIC SPACES: Park improvements, playground renovations, dog park updates, community gardens, public plazas, waterfront access, green space initiatives, recreation programs
 4. POLICE & SAFETY: Crime reports, community safety meetings, police initiatives, neighborhood watch updates
-5. CIVIC RESOURCES: Library programs, community center events, public services, infrastructure updates
+5. INFRASTRUCTURE: Road repairs, street resurfacing, pothole fixes, sidewalk construction, bike lane additions, water main work, sewer repairs, municipal construction projects, bridge work, traffic signal changes
+6. CIVIC RESOURCES: Library programs, community center events, public services, sanitation updates
 
 Only report on items with SPECIFIC details (names, dates, locations). Skip generic or national news.
 If you can't find recent news for a category, skip it entirely.`
@@ -73,9 +161,17 @@ If you can't find recent news for a category, skip it entirely.`
             content: `Search for community and civic news from ${location} in the past 7 days.
 
 For each newsworthy item found, provide:
-- CATEGORY: politics, schools, parks, police, or civic
+- CATEGORY: politics, schools, spaces, police, infrastructure, or civic
 - HEADLINE: Specific, informative headline (max 80 chars)
 - CONTENT: 2-3 paragraph summary with specific details, dates, names
+
+Categories explained:
+- politics: government meetings, elections, zoning, budgets
+- schools: school board, education news, school construction
+- spaces: parks, playgrounds, dog parks, public plazas, green spaces
+- police: crime, safety, neighborhood watch
+- infrastructure: road repairs, construction, sidewalks, bike lanes, utilities
+- civic: libraries, community centers, sanitation, other public services
 
 Format each item as:
 ---
@@ -85,7 +181,7 @@ CONTENT:
 [content paragraphs]
 ---
 
-Return up to 5 items total. If no relevant local news is found, return: NO_NEWS_FOUND`
+Return up to 7 items total. If no relevant local news is found, return: NO_NEWS_FOUND`
           }
         ],
         tools: [
@@ -125,7 +221,7 @@ Return up to 5 items total. If no relevant local news is found, return: NO_NEWS_
     const items = responseText.split('---').filter(item => item.trim());
 
     for (const item of items) {
-      const categoryMatch = item.match(/CATEGORY:\s*(politics|schools|parks|police|civic)/i);
+      const categoryMatch = item.match(/CATEGORY:\s*(politics|schools|spaces|parks|police|infrastructure|civic)/i);
       const headlineMatch = item.match(/HEADLINE:\s*(.+?)(?:\n|CONTENT:)/i);
       const contentMatch = item.match(/CONTENT:\s*([\s\S]+?)(?:---|$)/i);
 
@@ -156,15 +252,52 @@ function generateSlug(headline: string, neighborhoodSlug: string): string {
 }
 
 
-function getCategoryLabel(category: string): string {
+function getCategorySectionHeader(category: string): string {
   switch (category) {
-    case 'politics': return 'Weekly Civic Recap';
-    case 'schools': return 'Weekly Schools Recap';
-    case 'parks': return 'Weekly Parks Recap';
-    case 'police': return 'Weekly Police Recap';
-    case 'civic': return 'Weekly Community Recap';
-    default: return 'Weekly Recap';
+    case 'politics': return 'Civic & Politics';
+    case 'schools': return 'Schools & Education';
+    case 'spaces': return 'Parks & Public Spaces';
+    case 'parks': return 'Parks & Public Spaces'; // legacy category
+    case 'police': return 'Police & Safety';
+    case 'infrastructure': return 'Roads & Infrastructure';
+    case 'civic': return 'Community Updates';
+    default: return 'Local News';
   }
+}
+
+/**
+ * Combine multiple briefs into a single structured content block
+ * with section headers for each category
+ */
+function combineBriefsIntoContent(briefs: CommunityBrief[]): string {
+  // Group briefs by category
+  const byCategory = new Map<string, CommunityBrief[]>();
+  for (const brief of briefs) {
+    if (!byCategory.has(brief.category)) {
+      byCategory.set(brief.category, []);
+    }
+    byCategory.get(brief.category)!.push(brief);
+  }
+
+  // Build combined content with section headers
+  const sections: string[] = [];
+
+  // Order categories logically
+  const categoryOrder = ['police', 'politics', 'infrastructure', 'spaces', 'parks', 'schools', 'civic'];
+
+  for (const category of categoryOrder) {
+    const categoryBriefs = byCategory.get(category);
+    if (categoryBriefs && categoryBriefs.length > 0) {
+      const header = getCategorySectionHeader(category);
+      sections.push(`[[${header}]]`);
+
+      for (const brief of categoryBriefs) {
+        sections.push(`**${brief.headline}**\n${brief.content}`);
+      }
+    }
+  }
+
+  return sections.join('\n\n');
 }
 
 export async function GET(request: Request) {
@@ -210,7 +343,7 @@ export async function GET(request: Request) {
   // Get active neighborhoods (id is used as slug)
   let query = supabase
     .from('neighborhoods')
-    .select('id, name, city, country')
+    .select('id, name, city, country, is_combo')
     .eq('is_active', true)
     .order('name')
     .limit(batchSize);
@@ -251,8 +384,24 @@ export async function GET(request: Request) {
     try {
       results.neighborhoods_processed++;
 
+      // Skip if we already have a community recap this week for this neighborhood
+      const existingHeadlines = existingByNeighborhood.get(hood.id);
+      if (existingHeadlines?.has(`${hood.name} weekly community recap`.toLowerCase())) {
+        continue;
+      }
+
+      // For combo neighborhoods, use component names for search
+      let searchName = hood.name;
+      if (hood.is_combo) {
+        const comboInfo = await getComboInfo(supabase, hood.id);
+        if (comboInfo && comboInfo.components.length > 0) {
+          // Use component names: "Dumbo, Cobble Hill, Park Slope"
+          searchName = comboInfo.components.map(c => c.name).join(', ');
+        }
+      }
+
       // Generate community news with Grok
-      const briefs = await generateCommunityNews(hood.name, hood.city, hood.country);
+      const briefs = await generateCommunityNews(searchName, hood.city, hood.country);
 
       if (!briefs || briefs.length === 0) {
         results.no_news_found++;
@@ -261,102 +410,129 @@ export async function GET(request: Request) {
 
       results.briefs_generated += briefs.length;
 
-      // Process each brief
-      for (const brief of briefs) {
-        // Skip if we already have a similar article this week
-        const existingHeadlines = existingByNeighborhood.get(hood.id);
-        if (existingHeadlines?.has(brief.headline.toLowerCase())) {
+      try {
+        // Combine all briefs into one structured content block
+        const combinedContent = combineBriefsIntoContent(briefs);
+
+        // Optionally enrich with Gemini using weekly_recap style
+        let enrichedContent = combinedContent;
+        let enrichmentModel = null;
+        let extractedSources: ArticleSourceInput[] = [];
+
+        if (!skipEnrichment && process.env.GEMINI_API_KEY) {
+          try {
+            const enrichResult = await enrichBriefWithGemini(
+              combinedContent,
+              hood.name,
+              hood.id,
+              hood.city,
+              hood.country,
+              { articleType: 'weekly_recap' }
+            );
+            if (enrichResult.rawResponse) {
+              enrichedContent = enrichResult.rawResponse;
+              enrichmentModel = enrichResult.model;
+            }
+            // Extract sources from enrichment
+            extractedSources = extractSourcesFromEnrichment(enrichResult);
+          } catch (enrichErr) {
+            // Continue with unenriched content
+            console.error(`Enrichment failed for ${hood.name}:`, enrichErr);
+          }
+        }
+
+        // If no enrichment or no sources found, add default platform sources
+        if (extractedSources.length === 0) {
+          extractedSources = [
+            { source_name: 'X (Twitter)', source_type: 'platform' },
+            { source_name: 'Web Search', source_type: 'platform' },
+          ];
+        }
+
+        // Generate headline for the combined recap
+        const headline = `${hood.name} Weekly Community Recap`;
+
+        // Generate preview text from first brief
+        const previewText = briefs[0].content.substring(0, 200) + '...';
+
+        // Generate slug
+        const slug = generateSlug(headline, hood.id);
+
+        // Create the single combined article
+        const { data: insertedArticle, error: insertError } = await supabase
+          .from('articles')
+          .insert({
+            neighborhood_id: hood.id,
+            headline: headline,
+            body_text: enrichedContent,
+            preview_text: previewText,
+            slug,
+            status: 'published',
+            published_at: new Date().toISOString(),
+            author_type: 'ai',
+            ai_model: enrichmentModel ? `grok-4-1-fast + ${enrichmentModel}` : 'grok-4-1-fast',
+            article_type: 'community_news',
+            category_label: 'Weekly Community Recap',
+            image_url: '',
+          })
+          .select('id')
+          .single();
+
+        if (insertError) {
+          results.articles_failed++;
+          results.errors.push(`${hood.name}: ${insertError.message}`);
           continue;
         }
 
-        try {
-          // Optionally enrich with Gemini
-          let enrichedContent = brief.content;
-          let enrichmentModel = null;
+        results.articles_created++;
 
-          if (!skipEnrichment && process.env.GEMINI_API_KEY) {
-            try {
-              const enrichResult = await enrichBriefWithGemini(
-                brief.content,
-                hood.name,
-                hood.id,
-                hood.city,
-                hood.country
-              );
-              if (enrichResult.rawResponse) {
-                enrichedContent = enrichResult.rawResponse;
-                enrichmentModel = enrichResult.model;
-              }
-            } catch (enrichErr) {
-              // Continue with unenriched content
-              console.error(`Enrichment failed for ${hood.name}:`, enrichErr);
-            }
+        // Store sources for attribution
+        if (extractedSources.length > 0 && insertedArticle?.id) {
+          const sourcesToInsert = extractedSources.map(s => ({
+            article_id: insertedArticle.id,
+            source_name: s.source_name,
+            source_type: s.source_type,
+            source_url: s.source_url,
+          }));
+
+          const { error: sourcesError } = await supabase
+            .from('article_sources')
+            .insert(sourcesToInsert);
+
+          if (sourcesError) {
+            console.error(`Failed to insert sources for article ${insertedArticle.id}:`, sourcesError.message);
           }
-
-          // Get category label for UI
-          const categoryLabel = getCategoryLabel(brief.category);
-
-          // Generate slug
-          const slug = generateSlug(brief.headline, hood.id);
-
-          // Create the article
-          const { data: insertedArticle, error: insertError } = await supabase
-            .from('articles')
-            .insert({
-              neighborhood_id: hood.id,
-              headline: brief.headline,
-              body_text: enrichedContent,
-              preview_text: brief.content.substring(0, 200) + '...',
-              slug,
-              status: 'published',
-              published_at: new Date().toISOString(),
-              author_type: 'ai',
-              ai_model: enrichmentModel ? `grok-3-fast + ${enrichmentModel}` : 'grok-3-fast',
-              article_type: 'community_news',
-              category_label: categoryLabel,
-              image_url: '',
-            })
-            .select('id')
-            .single();
-
-          if (insertError) {
-            results.articles_failed++;
-            results.errors.push(`${hood.name} - ${brief.category}: ${insertError.message}`);
-            continue;
-          }
-
-          results.articles_created++;
-
-          // Generate image
-          try {
-            const baseUrl = process.env.VERCEL_URL
-              ? `https://${process.env.VERCEL_URL}`
-              : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-
-            await fetch(`${baseUrl}/api/internal/generate-image`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-cron-secret': cronSecret || '',
-              },
-              body: JSON.stringify({
-                article_id: insertedArticle.id,
-              }),
-            });
-          } catch {
-            // Image generation is best-effort
-          }
-
-          // Track this headline to avoid duplicates in same run
-          if (!existingByNeighborhood.has(hood.id)) {
-            existingByNeighborhood.set(hood.id, new Set());
-          }
-          existingByNeighborhood.get(hood.id)!.add(brief.headline.toLowerCase());
-
-        } catch (err) {
-          results.articles_failed++;
-          results.errors.push(`${hood.name} - ${brief.category}: ${err instanceof Error ? err.message : String(err)}`);
         }
+
+        // Generate image
+        try {
+          const baseUrl = process.env.VERCEL_URL
+            ? `https://${process.env.VERCEL_URL}`
+            : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+          await fetch(`${baseUrl}/api/internal/generate-image`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-cron-secret': cronSecret || '',
+            },
+            body: JSON.stringify({
+              article_id: insertedArticle.id,
+            }),
+          });
+        } catch {
+          // Image generation is best-effort
+        }
+
+        // Track this headline to avoid duplicates in same run
+        if (!existingByNeighborhood.has(hood.id)) {
+          existingByNeighborhood.set(hood.id, new Set());
+        }
+        existingByNeighborhood.get(hood.id)!.add(headline.toLowerCase());
+
+      } catch (err) {
+        results.articles_failed++;
+        results.errors.push(`${hood.name}: ${err instanceof Error ? err.message : String(err)}`);
       }
 
       // Rate limiting between neighborhoods

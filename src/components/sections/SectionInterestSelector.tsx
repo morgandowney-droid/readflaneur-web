@@ -152,7 +152,7 @@ export function SectionInterestSelector({ onSave, compact = false }: SectionInte
       <div>
         <h3 className="text-lg font-light mb-2">Your Interests</h3>
         <p className="text-sm text-neutral-500">
-          Select topics you're interested in to personalize your feed and see relevant ads.
+          Select topics you're interested in to personalize your stories.
         </p>
       </div>
 

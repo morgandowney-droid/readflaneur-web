@@ -171,6 +171,14 @@ export async function GET(request: Request) {
             // NEW PLACE: Get full details (only for genuinely new discoveries)
             const details = await getPlaceDetails(place.id);
 
+            // Use photo from searchNearby, or fall back to details if not available
+            let finalPhotoUrl = photoUrl;
+            let finalPhotoReference = photoReference;
+            if (!finalPhotoUrl && details?.photos?.[0]?.name) {
+              finalPhotoReference = details.photos[0].name;
+              finalPhotoUrl = getPhotoUrl(finalPhotoReference, 400);
+            }
+
             const listingData = {
               neighborhood_id: neighborhoodId,
               category_id: categoryId,
@@ -186,8 +194,8 @@ export async function GET(request: Request) {
               google_place_id: place.id,
               google_rating: place.rating || null,
               google_reviews_count: place.userRatingCount || null,
-              google_photo_url: photoUrl,
-              google_photo_reference: photoReference,
+              google_photo_url: finalPhotoUrl,
+              google_photo_reference: finalPhotoReference,
               latitude: place.location?.latitude || null,
               longitude: place.location?.longitude || null,
               updated_at: new Date().toISOString(),

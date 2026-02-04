@@ -16,13 +16,15 @@ interface LoadMoreButtonProps {
   initialOffset: number;
   pageSize?: number;
   sectionSlug?: string;
+  categoryFilter?: string;
 }
 
 export function LoadMoreButton({
   neighborhoodId,
   initialOffset,
   pageSize = 10,
-  sectionSlug
+  sectionSlug,
+  categoryFilter
 }: LoadMoreButtonProps) {
   const [items, setItems] = useState<FeedItem[]>([]);
   const [offset, setOffset] = useState(initialOffset);
@@ -113,6 +115,12 @@ export function LoadMoreButton({
         return;
       }
       query = query.in('id', sectionArticleIds);
+    }
+
+    // Apply category filter if specified
+    if (categoryFilter) {
+      const categoryPattern = categoryFilter.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      query = query.ilike('category_label', `%${categoryPattern}%`);
     }
 
     const { data: articles, error } = await query.range(offset, offset + pageSize - 1);

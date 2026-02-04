@@ -57,3 +57,8 @@ export function neighborhoodToSlug(id: string): string {
   const parts = id.split('-');
   return parts.slice(1).join('-');
 }
+
+export function categoryLabelToSlug(label: string): string {
+  // e.g., 'Weekly Civic Recap' -> 'weekly-civic-recap'
+  return label.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}

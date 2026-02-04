@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from('neighborhood_briefs')
-    .select('id, headline, content, generated_at, sources')
+    .select('id, headline, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
     .eq('neighborhood_id', neighborhoodId)
     .order('generated_at', { ascending: false })
     .range(offset, offset + limit);

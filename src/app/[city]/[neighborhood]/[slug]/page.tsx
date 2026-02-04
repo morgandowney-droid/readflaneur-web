@@ -2,12 +2,14 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { formatRelativeTime } from '@/lib/utils';
+import { formatRelativeTime, categoryLabelToSlug } from '@/lib/utils';
 import { StoryOpenAd } from '@/components/feed/StoryOpenAd';
 import { FallbackAd } from '@/components/feed/FallbackAd';
 import { ArticleViewTracker } from '@/components/tracking/ArticleViewTracker';
 import { Comments } from '@/components/comments/Comments';
 import { ArticleBody } from '@/components/article/ArticleBody';
+import { AIImageDisclaimer, AIImageBadge } from '@/components/article/AIImageDisclaimer';
+import { SourceAttribution } from '@/components/article/SourceAttribution';
 import { Ad } from '@/types';
 import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
 
@@ -64,7 +66,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     .select(`
       *,
       neighborhood:neighborhoods(*),
-      author:profiles(full_name, avatar_url)
+      author:profiles(full_name, avatar_url),
+      sources:article_sources(*)
     `);
 
   if (isUUID) {
@@ -129,7 +132,18 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             {article.category_label && (
               <>
                 <span>&middot;</span>
-                <span className="text-neutral-300 italic">{article.category_label}</span>
+                <Link
+                  href={`/${city}/${neighborhood}?category=${categoryLabelToSlug(article.category_label)}`}
+                  className="text-neutral-300 italic hover:text-neutral-500 hover:underline transition-colors"
+                >
+                  {article.category_label}
+                </Link>
+              </>
+            )}
+            {(article.article_type === 'community_news' || article.article_type === 'brief_summary' || article.author_type === 'ai') && (
+              <>
+                <span>&middot;</span>
+                <span className="text-neutral-300">AI-Synthesized Brief</span>
               </>
             )}
           </div>
@@ -144,16 +158,27 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         </header>
 
         {/* Featured Image */}
-        <div className="relative aspect-video w-full mb-8">
-          <Image
-            src={article.image_url}
-            alt={article.headline}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 800px"
-            priority
-          />
-        </div>
+        {(() => {
+          const isAIGenerated = article.article_type === 'community_news' ||
+                                article.article_type === 'brief_summary' ||
+                                article.author_type === 'ai';
+          return (
+            <>
+              <div className="relative aspect-video w-full mb-2">
+                <Image
+                  src={article.image_url}
+                  alt={article.headline}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 800px"
+                  priority
+                />
+                {isAIGenerated && <AIImageBadge position="bottom-left" />}
+              </div>
+              {isAIGenerated && <AIImageDisclaimer className="mb-6" />}
+            </>
+          );
+        })()}
 
         {/* Article Body */}
         <ArticleBody
@@ -162,20 +187,39 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           city={article.neighborhood?.city || ''}
         />
 
+        {/* Source Attribution for AI-generated content */}
+        <SourceAttribution
+          sources={article.sources}
+          isAIGenerated={
+            article.article_type === 'community_news' ||
+            article.article_type === 'brief_summary' ||
+            article.author_type === 'ai'
+          }
+        />
+
         {/* Additional Images */}
         {article.images && article.images.length > 1 && (
           <div className="mt-8 space-y-6">
-            {article.images.slice(1).map((imageUrl: string, index: number) => (
-              <div key={index} className="relative aspect-video w-full">
-                <Image
-                  src={imageUrl}
-                  alt={`${article.headline} - Photo ${index + 2}`}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 800px"
-                />
-              </div>
-            ))}
+            {article.images.slice(1).map((imageUrl: string, index: number) => {
+              const isAIGenerated = article.article_type === 'community_news' ||
+                                    article.article_type === 'brief_summary' ||
+                                    article.author_type === 'ai';
+              return (
+                <div key={index}>
+                  <div className="relative aspect-video w-full">
+                    <Image
+                      src={imageUrl}
+                      alt={`${article.headline} - Photo ${index + 2}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 800px"
+                    />
+                    {isAIGenerated && <AIImageBadge position="bottom-left" />}
+                  </div>
+                  {isAIGenerated && <AIImageDisclaimer className="mt-2" />}
+                </div>
+              );
+            })}
           </div>
         )}
 

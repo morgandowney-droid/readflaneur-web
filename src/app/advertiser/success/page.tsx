@@ -87,7 +87,7 @@ export default async function PaymentSuccessPage({ searchParams }: SuccessPagePr
           <p className="text-red-600 mb-6">{activationError}</p>
         ) : (
           <p className="text-neutral-600 mb-6">
-            Your ad is now active and will start appearing in feeds shortly.
+            Your ad is now active and will start appearing shortly.
           </p>
         )}
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { calculateDistance, NEIGHBORHOOD_CENTERS } from '@/lib/google-places';
+import { getNeighborhoodIdsForQuery } from '@/lib/combo-utils';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -23,14 +24,22 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
+  // Get neighborhood IDs for query (expands combo to components)
+  const queryIds = await getNeighborhoodIdsForQuery(supabase, neighborhoodId);
+
   // Get neighborhood's seeded_at timestamp (for determining "new" places)
-  const { data: neighborhood } = await supabase
+  // For combos, use the earliest seeded_at among components
+  const { data: neighborhoods } = await supabase
     .from('neighborhoods')
     .select('seeded_at')
-    .eq('id', neighborhoodId)
-    .single();
+    .in('id', queryIds);
 
-  const seededAt = neighborhood?.seeded_at ? new Date(neighborhood.seeded_at) : null;
+  const seededDates = (neighborhoods || [])
+    .map(n => n.seeded_at ? new Date(n.seeded_at) : null)
+    .filter((d): d is Date => d !== null);
+  const seededAt = seededDates.length > 0
+    ? new Date(Math.min(...seededDates.map(d => d.getTime())))
+    : null;
 
   // Get categories with listing counts for this neighborhood
   const { data: categories, error: catError } = await supabase
@@ -51,10 +60,11 @@ export async function GET(request: NextRequest) {
 
   // Build listings query - get listings first
   // Only show places with 4.0+ star rating
+  // For combo neighborhoods, query all component IDs
   let listingsQuery = supabase
     .from('guide_listings')
     .select('*')
-    .eq('neighborhood_id', neighborhoodId)
+    .in('neighborhood_id', queryIds)
     .gte('google_rating', 4.0);
 
   // Filter by active/closed status
@@ -227,7 +237,7 @@ export async function GET(request: NextRequest) {
     const { count } = await supabase
       .from('guide_listings')
       .select('*', { count: 'exact', head: true })
-      .eq('neighborhood_id', neighborhoodId)
+      .in('neighborhood_id', queryIds)
       .eq('is_active', true)
       .gte('google_rating', 4.0)
       .gt('discovered_at', seededAt.toISOString());
@@ -237,7 +247,7 @@ export async function GET(request: NextRequest) {
   const { count: closedCount } = await supabase
     .from('guide_listings')
     .select('*', { count: 'exact', head: true })
-    .eq('neighborhood_id', neighborhoodId)
+    .in('neighborhood_id', queryIds)
     .eq('is_active', false)
     .gte('google_rating', 4.0)
     .gte('closed_at', thirtyDaysAgo.toISOString());
@@ -246,7 +256,7 @@ export async function GET(request: NextRequest) {
   const { count: michelinCount } = await supabase
     .from('guide_listings')
     .select('*', { count: 'exact', head: true })
-    .eq('neighborhood_id', neighborhoodId)
+    .in('neighborhood_id', queryIds)
     .eq('is_active', true)
     .gte('google_rating', 4.0)
     .or('michelin_stars.not.is.null,michelin_designation.not.is.null');

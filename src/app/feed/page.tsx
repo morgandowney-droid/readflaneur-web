@@ -160,7 +160,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     const now = new Date().toISOString();
     const { data: briefData } = await supabase
       .from('neighborhood_briefs')
-      .select('id, headline, content, generated_at, sources')
+      .select('id, headline, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
       .eq('neighborhood_id', singleNeighborhood.id)
       .gt('expires_at', now)
       .order('generated_at', { ascending: false })
@@ -199,6 +199,9 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
                 neighborhoodName={singleNeighborhood.name}
                 city={singleNeighborhood.city}
                 sources={brief.sources || []}
+                enrichedContent={brief.enriched_content || undefined}
+                enrichedCategories={brief.enriched_categories || undefined}
+                enrichedAt={brief.enriched_at || undefined}
               />
             )}
 

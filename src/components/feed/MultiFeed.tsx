@@ -89,7 +89,7 @@ export function MultiFeed({
       <header className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <div>
-            <h1 className="text-xl font-light tracking-wide">Your Feed</h1>
+            <h1 className="text-xl font-light tracking-wide">Your Stories</h1>
             {isEmpty && (
               <p className="text-sm text-neutral-500">
                 Select neighborhoods to see local stories
