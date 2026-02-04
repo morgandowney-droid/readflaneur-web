@@ -9,11 +9,6 @@ import {
 // Extended timeout for multiple Gemini calls
 export const maxDuration = 300;
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 // Neighborhoods to generate real estate reports for
 // Start with key markets, can expand later
 const REAL_ESTATE_NEIGHBORHOODS = [
@@ -61,6 +56,12 @@ export async function GET(request: Request) {
   if (secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  // Create Supabase client inside the handler to avoid build-time issues
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
   const results: {
     success: string[];
