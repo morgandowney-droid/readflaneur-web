@@ -344,6 +344,18 @@ const WIKIPEDIA_ARTICLES: Record<string, string> = {
   'stockholm-appelviken': 'Äppelviken',
   'stockholm-alsten': 'Ålsten',
   'stockholm-smedslatten': 'Smedslätten',
+  // US Vacation
+  'us-hamptons': 'The_Hamptons',
+  'us-hamptons-core': 'The_Hamptons',
+  'us-montauk': 'Montauk,_New_York',
+  'us-nantucket': 'Nantucket',
+  'us-martha-vineyard': 'Martha%27s_Vineyard',
+  // Caribbean Vacation
+  'caribbean-stbarts': 'Saint_Barthélemy',
+  // European Vacation
+  'europe-st-tropez': 'Saint-Tropez',
+  // New York combo components
+  'nyc-soho-core': 'SoHo,_Manhattan',
 };
 
 // Google Maps location names for enclave neighborhoods
