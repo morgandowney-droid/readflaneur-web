@@ -137,6 +137,7 @@ const WIKIPEDIA_ARTICLES: Record<string, string> = {
   'nyc-east-village': 'East_Village,_Manhattan',
   'nyc-greenwich-village': 'Greenwich_Village',
   'nyc-chelsea': 'Chelsea,_Manhattan',
+  'nyc-meatpacking': 'Meatpacking_District,_Manhattan',
   'nyc-flatiron': 'Flatiron_District',
   'nyc-gramercy': 'Gramercy_Park',
   'nyc-upper-east-side': 'Upper_East_Side',
