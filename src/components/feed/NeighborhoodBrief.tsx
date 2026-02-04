@@ -813,6 +813,9 @@ export function NeighborhoodBrief({
           <span className="text-xs font-medium uppercase tracking-wider text-amber-700">
             What&apos;s Happening Today Live
           </span>
+          <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+            AI-Synthesized Brief
+          </span>
           {verifiedSourceCount > 0 && (
             <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded-full">
               {verifiedSourceCount} sources
@@ -852,12 +855,48 @@ export function NeighborhoodBrief({
         </button>
       )}
 
-      {/* Source attribution */}
+      {/* Source attribution - per editorial standards at /standards */}
       <div className="mt-3 pt-2 border-t border-amber-200">
-        <p className="text-[10px] text-amber-600">
-          Powered by Fl&acirc;neur real-time local intel
-          {verifiedSourceCount > 0 && ' • Sources verified by AI'}
-        </p>
+        {hasEnrichedSources ? (
+          <p className="text-[10px] text-amber-600 leading-relaxed">
+            <span className="italic">Synthesized from reporting by </span>
+            {(() => {
+              // Collect unique sources with URLs from enriched categories
+              const uniqueSources = new Map<string, { name: string; url: string }>();
+              enrichedCategories.forEach(cat => {
+                cat.stories.forEach(story => {
+                  if (story.source && story.source.url && !uniqueSources.has(story.source.name)) {
+                    uniqueSources.set(story.source.name, story.source);
+                  }
+                });
+              });
+              const sourceList = Array.from(uniqueSources.values());
+
+              return sourceList.map((source, index) => {
+                const isLast = index === sourceList.length - 1;
+                const prefix = index === 0 ? '' : isLast ? ' and ' : ', ';
+                return (
+                  <span key={source.name}>
+                    {prefix}
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-amber-700 hover:text-amber-900 underline decoration-amber-300 hover:decoration-amber-500"
+                    >
+                      {source.name}
+                    </a>
+                  </span>
+                );
+              });
+            })()}
+            <span className="italic">.</span>
+          </p>
+        ) : (
+          <p className="text-[10px] text-amber-600 italic">
+            Synthesized from public news sources and social media via AI-powered search and analysis.
+          </p>
+        )}
       </div>
     </div>
   );
@@ -886,6 +925,21 @@ interface ArchivedBrief {
   content: string;
   generated_at: string;
   sources?: BriefSource[];
+  enriched_content?: string;
+  enriched_categories?: EnrichedCategory[];
+  enriched_at?: string;
+}
+
+/**
+ * Format date as "Monday, Feb 3"
+ */
+function formatArchiveDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 interface BriefArchiveProps {
@@ -896,7 +950,7 @@ interface BriefArchiveProps {
 }
 
 /**
- * Compact archived brief card
+ * Compact archived brief card with enriched content support
  */
 function ArchivedBriefCard({
   brief,
@@ -908,42 +962,134 @@ function ArchivedBriefCard({
   city: string;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const cleanedContent = cleanContent(brief.content);
+
+  // Use enriched content if available, otherwise fall back to original
+  const displayContent = brief.enriched_content || brief.content;
+  const cleanedContent = cleanContent(displayContent);
   const paragraphs = cleanedContent.split('\n\n').filter(p => p.trim());
   const previewText = paragraphs[0]?.slice(0, 150) + (paragraphs[0]?.length > 150 ? '...' : '');
 
-  const renderParagraph = (text: string) => {
-    const { elements } = renderWithSearchableEntities(text, neighborhoodName, city, brief.sources);
+  // Render paragraph with bold headers and entity linking
+  const renderParagraph = (text: string, isLast: boolean = false) => {
+    // Check for [[header]] or **bold** markers
+    const headerPattern = /\[\[([^\]]+)\]\]|\*\*([^*]+)\*\*/g;
+    const segments: { text: string; isBold: boolean }[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = headerPattern.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        segments.push({ text: text.slice(lastIndex, match.index), isBold: false });
+      }
+      segments.push({ text: match[1] || match[2], isBold: true });
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) {
+      segments.push({ text: text.slice(lastIndex), isBold: false });
+    }
+
+    if (segments.length > 1 || (segments.length === 1 && segments[0].isBold)) {
+      const result: ReactNode[] = [];
+      segments.forEach((segment, segIdx) => {
+        if (segment.isBold) {
+          const { elements } = renderWithSearchableEntities(
+            segment.text, neighborhoodName, city, brief.sources, brief.enriched_categories
+          );
+          result.push(<strong key={`b-${segIdx}`} className="font-semibold">{elements}</strong>);
+        } else if (segment.text.trim()) {
+          const { elements } = renderWithSearchableEntities(
+            segment.text, neighborhoodName, city, brief.sources, brief.enriched_categories
+          );
+          result.push(...elements);
+        }
+      });
+      return result;
+    }
+
+    const { elements } = renderWithSearchableEntities(
+      text, neighborhoodName, city, brief.sources, brief.enriched_categories
+    );
     return elements;
   };
 
   return (
-    <div className="border-l-2 border-amber-200 pl-3 py-2">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-amber-600">
-          {formatTime(brief.generated_at)}
-        </span>
+    <div className="border-l-2 border-amber-200 pl-3 py-3">
+      {/* Date header */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-amber-700">
+            {formatArchiveDate(brief.generated_at)}
+          </span>
+          <span className="text-[9px] bg-amber-100 text-amber-600 px-1 py-0.5 rounded">
+            AI-Synthesized
+          </span>
+        </div>
+        {brief.enriched_at && (
+          <span className="text-[10px] text-amber-500">verified</span>
+        )}
       </div>
+
+      {/* Headline */}
       <h4 className="font-medium text-sm text-neutral-800 mb-1">
         {brief.headline}
       </h4>
+
+      {/* Content */}
       <div className="text-xs text-neutral-600 leading-relaxed">
         {isExpanded ? (
           <div className="space-y-2">
             {paragraphs.map((p, i) => (
-              <p key={i}>{renderParagraph(p)}</p>
+              <p key={i}>{renderParagraph(p, i === paragraphs.length - 1)}</p>
             ))}
           </div>
         ) : (
           <p>{previewText}</p>
         )}
       </div>
+
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="mt-1 text-xs text-amber-600 hover:text-amber-800"
+        className="mt-2 text-xs text-amber-600 hover:text-amber-800"
       >
         {isExpanded ? 'Show less' : 'Read more'}
       </button>
+
+      {/* Source attribution - per editorial standards */}
+      {isExpanded && brief.enriched_categories && brief.enriched_categories.length > 0 && (
+        <div className="mt-2 pt-2 border-t border-amber-100">
+          <p className="text-[9px] text-amber-500 leading-relaxed">
+            <span className="italic">Sources: </span>
+            {(() => {
+              const uniqueSources = new Map<string, { name: string; url: string }>();
+              brief.enriched_categories.forEach(cat => {
+                cat.stories.forEach(story => {
+                  if (story.source && story.source.url && !uniqueSources.has(story.source.name)) {
+                    uniqueSources.set(story.source.name, story.source);
+                  }
+                });
+              });
+              const sourceList = Array.from(uniqueSources.values());
+              return sourceList.map((source, index) => {
+                const isLast = index === sourceList.length - 1;
+                const prefix = index === 0 ? '' : isLast ? ' and ' : ', ';
+                return (
+                  <span key={source.name}>
+                    {prefix}
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-amber-600 hover:text-amber-700 underline"
+                    >
+                      {source.name}
+                    </a>
+                  </span>
+                );
+              });
+            })()}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -998,7 +1144,7 @@ export function BriefArchive({
         className="flex items-center gap-2 text-xs text-amber-700 hover:text-amber-900 transition-colors"
       >
         <span>{isVisible ? '▼' : '▶'}</span>
-        <span>Previous briefs</span>
+        <span>Previous days</span>
       </button>
 
       {isVisible && (
