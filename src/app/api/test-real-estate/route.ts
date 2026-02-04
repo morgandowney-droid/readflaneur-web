@@ -65,58 +65,44 @@ async function queryGrok(query: string): Promise<{ content: string; citations: s
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const secret = searchParams.get('secret');
+  const neighborhood = searchParams.get('neighborhood') || 'tribeca';
+  const queryType = searchParams.get('query') || 'listings'; // listings, sales, trends
 
   // Simple auth check
   if (secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const neighborhoods = [
-    { name: 'Tribeca', searchName: 'Tribeca, New York City' },
-    { name: 'Östermalm', searchName: 'Östermalm, Stockholm, Sweden' },
-    { name: 'The Hamptons', searchName: 'The Hamptons and Montauk, New York' },
-  ];
+  const neighborhoodMap: Record<string, string> = {
+    'tribeca': 'Tribeca, New York City',
+    'ostermalm': 'Östermalm, Stockholm, Sweden',
+    'hamptons': 'The Hamptons and Montauk, New York',
+  };
 
-  const results: Record<string, {
-    newListings: { content: string; citations: string[] } | { error: string };
-    recentSales: { content: string; citations: string[] } | { error: string };
-    marketTrends: { content: string; citations: string[] } | { error: string };
-  }> = {};
+  const searchName = neighborhoodMap[neighborhood.toLowerCase()] || neighborhood;
 
-  for (const neighborhood of neighborhoods) {
-    results[neighborhood.name] = {
-      newListings: { content: '', citations: [] },
-      recentSales: { content: '', citations: [] },
-      marketTrends: { content: '', citations: [] },
-    };
+  const queries: Record<string, string> = {
+    'listings': `What are the top most expensive apartments in ${searchName} that became available for sale over the past week? Include specific prices and addresses if available.`,
+    'sales': `What are the top most expensive apartments in ${searchName} that closed or sold over the past week? Include sale prices and addresses if available.`,
+    'trends': `What are the most recent ${searchName} residential real estate market trends? Include any relevant statistics or insights from the past week.`,
+  };
 
-    // Query 1: New Listings
-    try {
-      results[neighborhood.name].newListings = await queryGrok(
-        `What are the top most expensive apartments in ${neighborhood.searchName} that became available for sale over the past week? Include specific prices and addresses if available.`
-      );
-    } catch (e) {
-      results[neighborhood.name].newListings = { error: String(e) };
-    }
+  const query = queries[queryType] || queries['listings'];
 
-    // Query 2: Recent Sales
-    try {
-      results[neighborhood.name].recentSales = await queryGrok(
-        `What are the top most expensive apartments in ${neighborhood.searchName} that closed or sold over the past week? Include sale prices and addresses if available.`
-      );
-    } catch (e) {
-      results[neighborhood.name].recentSales = { error: String(e) };
-    }
-
-    // Query 3: Market Trends
-    try {
-      results[neighborhood.name].marketTrends = await queryGrok(
-        `What are the most recent ${neighborhood.searchName} residential real estate market trends? Include any relevant statistics or insights from the past week.`
-      );
-    } catch (e) {
-      results[neighborhood.name].marketTrends = { error: String(e) };
-    }
+  try {
+    const result = await queryGrok(query);
+    return NextResponse.json({
+      neighborhood: searchName,
+      queryType,
+      query,
+      ...result
+    }, { status: 200 });
+  } catch (e) {
+    return NextResponse.json({
+      neighborhood: searchName,
+      queryType,
+      query,
+      error: String(e)
+    }, { status: 500 });
   }
-
-  return NextResponse.json(results, { status: 200 });
 }
