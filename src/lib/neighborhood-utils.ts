@@ -31,6 +31,17 @@ export const CITY_PREFIX_MAP: Record<string, string> = {
   // Middle East
   'dubai': 'dubai',
   'tel-aviv': 'telaviv',
+  // US Vacation Destinations
+  'the-hamptons': 'us',
+  'nantucket': 'us',
+  'marthas-vineyard': 'us',
+  'aspen': 'us',
+  // Caribbean Vacation
+  'st-barts': 'caribbean',
+  // European Vacation Destinations
+  'saint-tropez': 'europe',
+  'marbella': 'europe',
+  'sylt': 'europe',
 };
 
 /**
@@ -126,6 +137,10 @@ const WIKIPEDIA_ARTICLES: Record<string, string> = {
   'nyc-upper-east-side': 'Upper_East_Side',
   'nyc-upper-west-side': 'Upper_West_Side',
   'nyc-williamsburg': 'Williamsburg,_Brooklyn',
+  'nyc-dumbo': 'Dumbo,_Brooklyn',
+  'nyc-cobble-hill': 'Cobble_Hill,_Brooklyn',
+  'nyc-park-slope': 'Park_Slope',
+  'nyc-brooklyn-west': 'Brooklyn', // Combo - links to general Brooklyn article
   // San Francisco
   'sf-mission': 'Mission_District,_San_Francisco',
   'sf-the-mission': 'Mission_District,_San_Francisco',
