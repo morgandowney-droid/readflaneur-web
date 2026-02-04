@@ -43,9 +43,9 @@ const CITY_COORDINATES: Record<string, [number, number]> = {
   'US Vacation': [41.2835, -70.0995], // Nantucket coordinates
   'Caribbean Vacation': [17.8967, -62.8500], // St. Barts
   'European Vacation': [43.2727, 6.6406], // Saint-Tropez
-  // Enclaves (wealthy suburbs)
-  'New York Enclaves': [41.0263, -73.6285], // Greenwich, CT area
-  'Stockholm Enclaves': [59.3293, 18.0686], // Stockholm area
+  // Coast & Country (wealthy suburbs)
+  'New York Coast & Country': [41.0263, -73.6285], // Greenwich, CT area
+  'Stockholm Coast & Country': [59.3293, 18.0686], // Stockholm area
 };
 
 // Vacation region labels and styling
@@ -55,16 +55,16 @@ const VACATION_REGIONS: Record<string, { label: string; color: string }> = {
   'europe-vacation': { label: 'European Vacation', color: '#00563F' },
 };
 
-// Enclave region labels and styling (wealthy suburbs around cities)
+// Coast & Country region labels and styling (wealthy suburbs around cities)
 const ENCLAVE_REGIONS: Record<string, { label: string; headerColor: string; buttonBgColor: string; buttonTextColor: string }> = {
   'nyc-enclaves': {
-    label: 'New York Enclaves',
+    label: 'New York Coast & Country',
     headerColor: '#3E2723',  // Espresso
     buttonBgColor: '#3E2723',
     buttonTextColor: '#E5C586'  // Gold/Brass
   },
   'stockholm-enclaves': {
-    label: 'Stockholm Enclaves',
+    label: 'Stockholm Coast & Country',
     headerColor: '#3E2723',
     buttonBgColor: '#3E2723',
     buttonTextColor: '#E5C586'
