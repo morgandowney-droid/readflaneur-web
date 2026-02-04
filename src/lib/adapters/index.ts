@@ -1,0 +1,103 @@
+/**
+ * City Adapters Index
+ *
+ * Factory for creating city-specific data adapters.
+ * Each adapter implements the ICityAdapter interface for standardized data access.
+ */
+
+export * from './types';
+
+import { ICityAdapter } from './types';
+import { LondonAdapter } from './london-adapter';
+import { SydneyAdapter } from './sydney-adapter';
+import { ChicagoAdapter } from './chicago-adapter';
+import { LosAngelesAdapter } from './los-angeles-adapter';
+import { WashingtonDCAdapter } from './washington-dc-adapter';
+
+/**
+ * Registry of available city adapters
+ */
+const ADAPTER_REGISTRY: Record<string, new () => ICityAdapter> = {
+  LondonAdapter,
+  SydneyAdapter,
+  ChicagoAdapter,
+  LosAngelesAdapter,
+  WashingtonDCAdapter,
+};
+
+/**
+ * City name to adapter mapping
+ */
+const CITY_TO_ADAPTER: Record<string, string> = {
+  London: 'LondonAdapter',
+  Sydney: 'SydneyAdapter',
+  Chicago: 'ChicagoAdapter',
+  'Los Angeles': 'LosAngelesAdapter',
+  'Washington DC': 'WashingtonDCAdapter',
+};
+
+/**
+ * Get adapter instance for a city
+ *
+ * @param city - City name (e.g., "London", "Sydney")
+ * @returns ICityAdapter instance or null if not found
+ */
+export function getAdapter(city: string): ICityAdapter | null {
+  const adapterName = CITY_TO_ADAPTER[city];
+  if (!adapterName) {
+    console.warn(`No adapter found for city: ${city}`);
+    return null;
+  }
+
+  const AdapterClass = ADAPTER_REGISTRY[adapterName];
+  if (!AdapterClass) {
+    console.warn(`Adapter class not found: ${adapterName}`);
+    return null;
+  }
+
+  return new AdapterClass();
+}
+
+/**
+ * Get adapter instance by adapter name
+ *
+ * @param adapterName - Adapter class name (e.g., "LondonAdapter")
+ * @returns ICityAdapter instance or null if not found
+ */
+export function getAdapterByName(adapterName: string): ICityAdapter | null {
+  const AdapterClass = ADAPTER_REGISTRY[adapterName];
+  if (!AdapterClass) {
+    console.warn(`Adapter class not found: ${adapterName}`);
+    return null;
+  }
+
+  return new AdapterClass();
+}
+
+/**
+ * Get all available city names
+ */
+export function getAvailableCities(): string[] {
+  return Object.keys(CITY_TO_ADAPTER);
+}
+
+/**
+ * Get all available adapter names
+ */
+export function getAvailableAdapters(): string[] {
+  return Object.keys(ADAPTER_REGISTRY);
+}
+
+/**
+ * Check if a city has an adapter
+ */
+export function hasAdapter(city: string): boolean {
+  return city in CITY_TO_ADAPTER;
+}
+
+// Export adapter classes for direct use
+export { LondonAdapter } from './london-adapter';
+export { SydneyAdapter } from './sydney-adapter';
+export { ChicagoAdapter } from './chicago-adapter';
+export { LosAngelesAdapter } from './los-angeles-adapter';
+export { WashingtonDCAdapter } from './washington-dc-adapter';
