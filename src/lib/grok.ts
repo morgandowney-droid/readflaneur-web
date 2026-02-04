@@ -59,11 +59,17 @@ interface GrokNewsStory {
 
 /**
  * Generate a neighborhood brief using Grok Responses API with X Search
+ *
+ * @param neighborhoodName - Display name of the neighborhood
+ * @param city - City name
+ * @param country - Country name (optional)
+ * @param nycDataContext - Optional NYC Open Data context to inject (permits, licenses, etc.)
  */
 export async function generateNeighborhoodBrief(
   neighborhoodName: string,
   city: string,
-  country?: string
+  country?: string,
+  nycDataContext?: string
 ): Promise<NeighborhoodBrief | null> {
   const apiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
 
@@ -97,7 +103,11 @@ Search X and the web for recent posts and news about ${location}. Focus on:
 - Local events happening today or this week
 - Community news and developments
 - Interesting local sightings
-- Real estate and development news
+- Real estate and development news${nycDataContext ? `
+
+ADDITIONAL CONTEXT FROM NYC PUBLIC DATA:
+${nycDataContext}
+You may weave this into your brief naturally, e.g., "Meanwhile, DOB records show..." or "In other news, a new liquor license was issued to..."` : ''}
 
 After searching, create a brief "What's Happening Today" summary.
 

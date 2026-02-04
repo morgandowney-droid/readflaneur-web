@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateNeighborhoodBrief, isGrokConfigured } from '@/lib/grok';
 import { getComboInfo } from '@/lib/combo-utils';
+import { generateBriefContextSnippet } from '@/lib/nyc-content-generator';
+import { NYCPermit } from '@/lib/nyc-permits';
+import { LiquorLicense } from '@/lib/nyc-liquor';
 
 /**
  * Neighborhood Briefs Sync Cron Job
@@ -180,11 +183,52 @@ export async function GET(request: Request) {
         }
       }
 
+      // Fetch NYC Open Data context for NYC neighborhoods
+      let nycDataContext: string | undefined;
+      if (hood.city === 'New York') {
+        try {
+          // Get recent permits and licenses for this neighborhood
+          const weekAgo = new Date();
+          weekAgo.setDate(weekAgo.getDate() - 7);
+
+          const [permitsResult, licensesResult] = await Promise.all([
+            supabase
+              .from('nyc_permits')
+              .select('*')
+              .eq('neighborhood_id', hood.id)
+              .gte('filing_date', weekAgo.toISOString().split('T')[0])
+              .order('filing_date', { ascending: false })
+              .limit(10),
+            supabase
+              .from('nyc_liquor_licenses')
+              .select('*')
+              .eq('neighborhood_id', hood.id)
+              .gte('effective_date', weekAgo.toISOString().split('T')[0])
+              .order('effective_date', { ascending: false })
+              .limit(10),
+          ]);
+
+          const permits = (permitsResult.data || []) as NYCPermit[];
+          const licenses = (licensesResult.data || []) as LiquorLicense[];
+
+          if (permits.length > 0 || licenses.length > 0) {
+            nycDataContext = await generateBriefContextSnippet(hood.id, permits, licenses) || undefined;
+            if (nycDataContext) {
+              console.log(`NYC context for ${hood.name}: ${nycDataContext}`);
+            }
+          }
+        } catch (nycError) {
+          console.warn(`Failed to fetch NYC data for ${hood.name}:`, nycError);
+          // Continue without NYC context
+        }
+      }
+
       // Generate brief using Grok
       const brief = await generateNeighborhoodBrief(
         searchName,
         hood.city,
-        hood.country
+        hood.country,
+        nycDataContext
       );
 
       if (!brief) {

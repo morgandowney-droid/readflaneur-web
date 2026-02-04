@@ -59,6 +59,22 @@
     {
       "path": "/api/cron/generate-real-estate-weekly",
       "schedule": "0 5 * * 0"
+    },
+    {
+      "path": "/api/cron/sync-nyc-permits",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/sync-nyc-liquor",
+      "schedule": "0 7 * * 1"
+    },
+    {
+      "path": "/api/cron/sync-nyc-crime",
+      "schedule": "0 8 * * 6"
+    },
+    {
+      "path": "/api/cron/generate-nyc-weekly-digest",
+      "schedule": "0 10 * * 6"
     }
   ]
 }
