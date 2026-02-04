@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AD_FREQUENCY } from '@/lib/ad-engine';
 
 export const metadata = {
   title: 'Advertise | Flâneur',
@@ -105,9 +106,12 @@ export default function AdvertisePage() {
           <h1 className="text-3xl font-light tracking-wide mb-4">
             Advertise With Flâneur
           </h1>
-          <p className="text-neutral-600 max-w-2xl mx-auto">
+          <p className="text-neutral-600 max-w-2xl mx-auto mb-4">
             Connect with engaged readers in the neighborhoods that matter most to your
             business. Our native ad format blends seamlessly with editorial content.
+          </p>
+          <p className="text-sm text-neutral-400">
+            Premium placement: 1 ad per {AD_FREQUENCY} articles for optimal engagement
           </p>
         </div>
 

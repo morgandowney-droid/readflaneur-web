@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Article } from '@/types';
-import { formatRelativeTime, cityToSlug, neighborhoodToSlug } from '@/lib/utils';
+import { formatRelativeTime, cityToSlug, neighborhoodToSlug, categoryLabelToSlug } from '@/lib/utils';
 
 const ARTICLE_BOOKMARKS_KEY = 'flaneur-article-bookmarks';
 
@@ -117,13 +117,21 @@ export function ArticleCard({ article }: ArticleCardProps) {
                 {article.category_label && (
                   <>
                     <span>&middot;</span>
-                    <span className="text-white/50 italic">{article.category_label}</span>
+                    <span className="text-white/50 italic">
+                      {article.category_label}
+                    </span>
                   </>
                 )}
               </div>
               <h2 className="text-white text-lg font-semibold leading-tight whitespace-nowrap overflow-hidden">
                 {article.headline}
               </h2>
+            </div>
+          )}
+          {/* AI badge for AI-generated content */}
+          {(article.article_type === 'community_news' || article.article_type === 'brief_summary' || article.author_type === 'ai') && article.image_url && (
+            <div className="absolute bottom-2 left-2 bg-black/70 text-white text-[9px] px-1.5 py-0.5 rounded" title="AI-generated illustration">
+              AI
             </div>
           )}
           {/* Action buttons overlay */}
@@ -164,7 +172,13 @@ export function ArticleCard({ article }: ArticleCardProps) {
               {article.category_label && (
                 <>
                   <span>&middot;</span>
-                  <span className="text-neutral-300 italic">{article.category_label}</span>
+                  <a
+                    href={`/${citySlug}/${neighborhoodSlug}?category=${categoryLabelToSlug(article.category_label)}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-neutral-300 italic hover:text-neutral-500 hover:underline transition-colors"
+                  >
+                    {article.category_label}
+                  </a>
                 </>
               )}
             </div>

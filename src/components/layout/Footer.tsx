@@ -12,7 +12,7 @@ export function Footer() {
         </div>
 
         {/* Navigation */}
-        <div className="flex justify-center gap-8 mb-10">
+        <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 mb-10">
           <Link href="/about" className="text-sm text-neutral-600 hover:text-black transition-colors">
             About
           </Link>
@@ -27,6 +27,9 @@ export function Footer() {
           </Link>
           <Link href="/legal" className="text-sm text-neutral-600 hover:text-black transition-colors">
             Legal
+          </Link>
+          <Link href="/standards" className="text-sm text-neutral-600 hover:text-black transition-colors">
+            AI Standards & Ethics
           </Link>
         </div>
 

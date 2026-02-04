@@ -82,13 +82,13 @@ function SearchContent() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search articles..."
-              className="flex-1 px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none"
+              className="flex-1 px-4 py-3 border border-neutral-300 focus:border-black focus:outline-none"
               autoFocus
             />
             <button
               type="submit"
               disabled={loading || query.trim().length < 2}
-              className="px-6 py-3 bg-black text-white text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+              className="px-6 py-3 bg-neutral-900 text-white text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:bg-neutral-400 disabled:cursor-not-allowed"
             >
               {loading ? '...' : 'Search'}
             </button>
@@ -163,7 +163,12 @@ function SearchContent() {
             </div>
           )
         ) : (
-          <div className="text-center py-12 bg-neutral-50">
+          <div className="text-center py-16">
+            <div className="w-12 h-12 mx-auto mb-4 text-neutral-200">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-full h-full">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
             <p className="text-neutral-500">Enter a search term to find articles</p>
           </div>
         )}

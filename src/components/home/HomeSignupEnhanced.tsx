@@ -333,13 +333,13 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
-            className="px-5 py-3 border border-neutral-200 text-center sm:text-left text-sm focus:outline-none focus:border-neutral-900 w-full sm:w-72 transition-colors"
+            className="px-5 py-3 border border-neutral-300 text-center sm:text-left text-sm focus:outline-none focus:border-neutral-900 w-full sm:w-72 transition-colors"
             disabled={status === 'loading'}
           />
           <button
             type="submit"
             disabled={status === 'loading' || selected.size === 0}
-            className="px-8 py-3 bg-neutral-900 text-white text-[11px] tracking-[0.2em] uppercase font-medium hover:bg-neutral-800 transition-all duration-300 disabled:opacity-40 whitespace-nowrap"
+            className="px-8 py-3 bg-neutral-900 text-white text-[11px] tracking-[0.2em] uppercase font-medium hover:bg-neutral-800 transition-all duration-300 disabled:bg-neutral-400 disabled:cursor-not-allowed whitespace-nowrap"
           >
             {status === 'loading' ? '...' : 'Subscribe'}
           </button>

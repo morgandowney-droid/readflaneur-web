@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Article } from '@/types';
-import { cityToSlug, neighborhoodToSlug } from '@/lib/utils';
+import { cityToSlug, neighborhoodToSlug, categoryLabelToSlug } from '@/lib/utils';
 
 const ARTICLE_BOOKMARKS_KEY = 'flaneur-article-bookmarks';
 
@@ -96,6 +96,12 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
               className="object-cover"
               sizes="96px"
             />
+            {/* AI badge for AI-generated content */}
+            {(article.article_type === 'community_news' || article.article_type === 'brief_summary' || article.author_type === 'ai') && (
+              <div className="absolute bottom-1 left-1 bg-black/70 text-white text-[9px] px-1.5 py-0.5 rounded" title="AI-generated illustration">
+                AI
+              </div>
+            )}
           </div>
         )}
         <div className="flex-1 min-w-0">
@@ -110,7 +116,9 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
             {article.category_label && (
               <>
                 <span>&middot;</span>
-                <span className="text-neutral-300 italic">{article.category_label}</span>
+                <span className="text-neutral-300 italic">
+                  {article.category_label}
+                </span>
               </>
             )}
           </div>

@@ -6,6 +6,7 @@ import { FeedList } from './FeedList';
 import { ViewToggle, FeedView } from './ViewToggle';
 import { NeighborhoodHeader } from './NeighborhoodHeader';
 import { BackToTopButton } from './BackToTopButton';
+import { ComboInfo } from '@/lib/combo-utils';
 
 const VIEW_PREF_KEY = 'flaneur-feed-view';
 
@@ -17,6 +18,7 @@ interface NeighborhoodFeedProps {
   neighborhoodSlug: string;
   neighborhoodId: string;
   defaultView?: FeedView;
+  comboInfo?: ComboInfo | null;
 }
 
 export function NeighborhoodFeed({
@@ -27,6 +29,7 @@ export function NeighborhoodFeed({
   neighborhoodSlug,
   neighborhoodId,
   defaultView = 'compact',
+  comboInfo,
 }: NeighborhoodFeedProps) {
   const [view, setView] = useState<FeedView>(defaultView);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -45,13 +48,15 @@ export function NeighborhoodFeed({
   };
 
   const currentView = isHydrated ? view : defaultView;
+  const hasItems = items.length > 0;
 
-  const viewToggle = (
+  // Only show view toggle when there are items to display
+  const viewToggle = hasItems ? (
     <ViewToggle
       view={currentView}
       onChange={isHydrated ? handleViewChange : () => {}}
     />
-  );
+  ) : undefined;
 
   return (
     <div>
@@ -63,6 +68,7 @@ export function NeighborhoodFeed({
         neighborhoodSlug={neighborhoodSlug}
         neighborhoodId={neighborhoodId}
         viewToggle={viewToggle}
+        comboInfo={comboInfo}
       />
       <FeedList items={items} view={currentView} />
     </div>

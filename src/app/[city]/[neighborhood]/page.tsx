@@ -6,6 +6,7 @@ import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { injectAds } from '@/lib/ad-engine';
 import { Article, Ad } from '@/types';
 import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
+import { getNeighborhoodIdsForQuery, getComboInfo } from '@/lib/combo-utils';
 
 const INITIAL_PAGE_SIZE = 10;
 
@@ -13,6 +14,9 @@ interface NeighborhoodPageProps {
   params: Promise<{
     city: string;
     neighborhood: string;
+  }>;
+  searchParams: Promise<{
+    category?: string;
   }>;
 }
 
@@ -43,8 +47,9 @@ export async function generateMetadata({ params }: NeighborhoodPageProps) {
   };
 }
 
-export default async function NeighborhoodPage({ params }: NeighborhoodPageProps) {
+export default async function NeighborhoodPage({ params, searchParams }: NeighborhoodPageProps) {
   const { city, neighborhood } = await params;
+  const { category } = await searchParams;
   const supabase = await createClient();
 
   // Map city slug to neighborhood prefix
@@ -61,35 +66,60 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
     notFound();
   }
 
-  // Fetch initial articles for this neighborhood (limited for fast load)
-  const { data: articles } = await supabase
+  // Get combo info and query IDs for combo neighborhoods
+  const comboInfo = await getComboInfo(supabase, neighborhoodId);
+  const queryIds = await getNeighborhoodIdsForQuery(supabase, neighborhoodId);
+
+  // Build articles query with optional category filter
+  // For combo neighborhoods, query all component neighborhood IDs
+  let articlesQuery = supabase
     .from('articles')
     .select('*, neighborhood:neighborhoods(id, name, city)')
-    .eq('neighborhood_id', neighborhoodId)
-    .eq('status', 'published')
+    .in('neighborhood_id', queryIds)
+    .eq('status', 'published');
+
+  // Apply category filter if provided
+  // Category slug format: 'weekly-civic-recap' matches category_label like 'Weekly Civic Recap'
+  if (category) {
+    // Use ilike with pattern matching to find the category
+    const categoryPattern = category.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    articlesQuery = articlesQuery.ilike('category_label', `%${categoryPattern}%`);
+  }
+
+  // Fetch initial articles for this neighborhood (limited for fast load)
+  const { data: articles } = await articlesQuery
     .order('published_at', { ascending: false, nullsFirst: false })
     .limit(INITIAL_PAGE_SIZE);
 
-  // Check if there are more articles
-  const { count: totalCount } = await supabase
+  // Check if there are more articles (with same filter)
+  // For combo neighborhoods, count across all component IDs
+  let countQuery = supabase
     .from('articles')
     .select('*', { count: 'exact', head: true })
-    .eq('neighborhood_id', neighborhoodId)
+    .in('neighborhood_id', queryIds)
     .eq('status', 'published');
+
+  if (category) {
+    const categoryPattern = category.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    countQuery = countQuery.ilike('category_label', `%${categoryPattern}%`);
+  }
+
+  const { count: totalCount } = await countQuery;
 
   const hasMoreArticles = (totalCount || 0) > INITIAL_PAGE_SIZE;
 
-  // Fetch ads (global or for this neighborhood)
+  // Fetch ads (global or for this neighborhood or component neighborhoods)
+  const adsFilter = queryIds.map(id => `neighborhood_id.eq.${id}`).join(',');
   const { data: ads } = await supabase
     .from('ads')
     .select('*')
-    .or(`is_global.eq.true,neighborhood_id.eq.${neighborhoodId}`);
+    .or(`is_global.eq.true,${adsFilter}`);
 
   // Fetch the latest neighborhood brief (if not expired)
   const now = new Date().toISOString();
   const { data: brief } = await supabase
     .from('neighborhood_briefs')
-    .select('id, headline, content, generated_at, sources')
+    .select('id, headline, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
     .eq('neighborhood_id', neighborhoodId)
     .gt('expires_at', now)
     .order('generated_at', { ascending: false })
@@ -100,14 +130,35 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
   const feedItems = injectAds(
     (articles || []) as Article[],
     (ads || []) as Ad[],
-    [neighborhoodId]
+    queryIds
   );
+
+  // Convert category slug back to display name
+  const categoryDisplayName = category
+    ? category.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    : null;
 
   return (
     <div className="py-6 px-4">
       <div className="mx-auto max-w-2xl">
-        {/* What's Happening Today brief */}
-        {brief && (
+        {/* Category filter banner */}
+        {category && categoryDisplayName && (
+          <div className="mb-6 p-4 bg-neutral-100 rounded-lg flex items-center justify-between">
+            <div>
+              <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">Filtered by category</p>
+              <p className="font-medium text-neutral-800">{categoryDisplayName}</p>
+            </div>
+            <a
+              href={`/${city}/${neighborhood}`}
+              className="text-sm text-neutral-500 hover:text-black underline"
+            >
+              Clear filter
+            </a>
+          </div>
+        )}
+
+        {/* What's Happening Today brief - only show when not filtering */}
+        {!category && brief && (
           <NeighborhoodBrief
             headline={brief.headline}
             content={brief.content}
@@ -115,16 +166,21 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
             neighborhoodName={neighborhoodData.name}
             city={neighborhoodData.city}
             sources={brief.sources || []}
+            enrichedContent={brief.enriched_content || undefined}
+            enrichedCategories={brief.enriched_categories || undefined}
+            enrichedAt={brief.enriched_at || undefined}
           />
         )}
 
-        {/* Brief Archive - shows previous briefs */}
-        <BriefArchive
-          neighborhoodId={neighborhoodId}
-          neighborhoodName={neighborhoodData.name}
-          city={neighborhoodData.city}
-          currentBriefId={brief?.id}
-        />
+        {/* Brief Archive - shows previous briefs (only when brief exists and not filtering) */}
+        {!category && brief && (
+          <BriefArchive
+            neighborhoodId={neighborhoodId}
+            neighborhoodName={neighborhoodData.name}
+            city={neighborhoodData.city}
+            currentBriefId={brief?.id}
+          />
+        )}
 
         <NeighborhoodFeed
           items={feedItems}
@@ -134,6 +190,7 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
           neighborhoodSlug={neighborhood}
           neighborhoodId={neighborhoodId}
           defaultView="compact"
+          comboInfo={comboInfo}
         />
 
         {hasMoreArticles && (
@@ -141,6 +198,7 @@ export default async function NeighborhoodPage({ params }: NeighborhoodPageProps
             neighborhoodId={neighborhoodId}
             initialOffset={INITIAL_PAGE_SIZE}
             pageSize={INITIAL_PAGE_SIZE}
+            categoryFilter={category}
           />
         )}
       </div>

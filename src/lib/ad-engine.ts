@@ -1,5 +1,9 @@
 import { Article, Ad, FeedItem, AdPlacement } from '@/types';
 
+// Ad frequency: show one ad every N articles
+// This constant is also referenced in the advertise pricing page
+export const AD_FREQUENCY = 6;
+
 interface InjectAdsOptions {
   sectionIds?: string[];
   userInterestIds?: string[];
@@ -34,13 +38,13 @@ export function injectAds(
     });
   }
 
-  // Insert ad every 4th position
+  // Insert ad every AD_FREQUENCY articles
   const feed: FeedItem[] = [];
   let adIndex = 0;
 
   articles.forEach((article, i) => {
     feed.push({ type: 'article', data: article });
-    if ((i + 1) % 4 === 0 && relevantAds.length > 0) {
+    if ((i + 1) % AD_FREQUENCY === 0 && relevantAds.length > 0) {
       feed.push({ type: 'ad', data: relevantAds[adIndex % relevantAds.length] });
       adIndex++;
     }

@@ -1,21 +1,47 @@
-'use client';
-
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
 
-export default function AboutPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function AboutPage() {
+  const supabase = await createClient();
+
+  // Fetch neighborhood stats
+  const { data: neighborhoods } = await supabase
+    .from('neighborhoods')
+    .select('id, name, city, region, is_combo')
+    .eq('is_active', true);
+
+  // Calculate counts
+  // Exclude combo neighborhoods from the count (they aggregate other neighborhoods)
+  const regularNeighborhoods = (neighborhoods || []).filter(n => !n.is_combo);
+  const neighborhoodCount = regularNeighborhoods.length;
+
+  // Count unique cities (excluding vacation regions)
+  const cities = new Set(
+    regularNeighborhoods
+      .filter(n => !n.region?.includes('vacation'))
+      .map(n => n.city)
+  );
+  const cityCount = cities.size;
+
+  // Count vacation destinations
+  const vacationCount = regularNeighborhoods.filter(n => n.region?.includes('vacation')).length;
+
   return (
     <div className="py-12 px-4">
       <div className="mx-auto max-w-2xl">
-        <h1 className="text-2xl font-light tracking-wide mb-8">About</h1>
+        <h1 className="text-2xl font-light tracking-wide mb-2">About</h1>
+        <div className="w-8 h-px bg-neutral-300 mb-8" />
 
         <section className="mb-12">
           <p className="text-sm text-neutral-700 leading-relaxed mb-6">
-            Flâneur is a hyper-local news platform for the discerning reader. We believe that the
+            Flaneur is a hyper-local news platform for the discerning reader. We believe that the
             best stories are found in the neighborhoods where we live, work, and wander.
           </p>
           <p className="text-sm text-neutral-700 leading-relaxed mb-6">
-            The word <em>flâneur</em> comes from the French verb <em>flâner</em>, meaning to stroll
-            or to saunter. A flâneur is an urban explorer, someone who walks the city with no
+            The word <em>flaneur</em> comes from the French verb <em>flaner</em>, meaning to stroll
+            or to saunter. A flaneur is an urban explorer, someone who walks the city with no
             particular destination, absorbing the life of the streets and the stories they tell.
           </p>
           <p className="text-sm text-neutral-700 leading-relaxed">
@@ -25,7 +51,7 @@ export default function AboutPage() {
           </p>
         </section>
 
-        <section className="mb-12">
+        <section className="mb-12 pt-8 border-t border-neutral-100">
           <h2 className="text-lg font-medium mb-4">What We Cover</h2>
           <div className="grid grid-cols-2 gap-4 text-sm text-neutral-700">
             <div>
@@ -55,13 +81,15 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <section className="mb-12">
+        <section className="mb-12 pt-8 border-t border-neutral-100">
           <h2 className="text-lg font-medium mb-4">Our Coverage</h2>
           <p className="text-sm text-neutral-700 leading-relaxed mb-4">
-            We currently cover 99 neighborhoods across 23 cities worldwide, from the West Village
-            in New York to Marais in Paris, Shoreditch in London to Shibuya in Tokyo. We also cover
-            8 vacation destinations including Nantucket, Martha&apos;s Vineyard, The Hamptons, Aspen,
-            St. Barts, Saint-Tropez, Marbella, and Sylt.
+            We currently cover {neighborhoodCount} neighborhoods across {cityCount} cities worldwide, from the West Village
+            in New York to Marais in Paris, Shoreditch in London to Shibuya in Tokyo.
+            {vacationCount > 0 && (
+              <> We also cover {vacationCount} vacation destinations including Nantucket, Martha&apos;s Vineyard, The Hamptons, Aspen,
+              St. Barts, Saint-Tropez, Marbella, and Sylt.</>
+            )}
           </p>
           <p className="text-sm text-neutral-700 leading-relaxed">
             Each neighborhood has its own dedicated feed, curated guide, and local events calendar.
@@ -69,7 +97,7 @@ export default function AboutPage() {
           </p>
         </section>
 
-        <section className="mb-12">
+        <section className="mb-12 pt-8 border-t border-neutral-100">
           <h2 className="text-lg font-medium mb-4">Community-Sourced</h2>
           <p className="text-sm text-neutral-700 leading-relaxed mb-4">
             The best local news comes from the people who live it. We welcome tips and suggestions
@@ -84,7 +112,7 @@ export default function AboutPage() {
           </Link>
         </section>
 
-        <section className="mb-12">
+        <section className="mb-12 pt-8 border-t border-neutral-100">
           <h2 className="text-lg font-medium mb-4">Advertise With Us</h2>
           <p className="text-sm text-neutral-700 leading-relaxed mb-4">
             Reach engaged, local readers in the neighborhoods where they live and spend.

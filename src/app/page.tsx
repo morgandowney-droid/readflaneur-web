@@ -16,7 +16,9 @@ export default async function HomePage() {
     .order('name');
 
   const neighborhoods = (neighborhoodsData || []) as Neighborhood[];
-  const cityCount = new Set(neighborhoods.map(n => n.city)).size;
+  // Exclude combo neighborhoods from counts (they aggregate other neighborhoods)
+  const regularNeighborhoods = neighborhoods.filter(n => !n.is_combo);
+  const cityCount = new Set(regularNeighborhoods.map(n => n.city)).size;
 
   return (
     <div className="min-h-screen">
@@ -35,13 +37,13 @@ export default async function HomePage() {
 
           {/* Stats */}
           <div className="flex items-center justify-center gap-3 text-xs tracking-[0.2em] uppercase text-neutral-500 mb-12">
-            <span>{neighborhoods.length} neighborhoods</span>
+            <span>{regularNeighborhoods.length} neighborhoods</span>
             <span className="w-px h-3 bg-neutral-700" />
             <span>{cityCount} cities</span>
           </div>
 
           {/* Decorative element */}
-          <div className="w-12 h-px bg-neutral-800 mx-auto" />
+          <div className="w-8 h-px bg-neutral-600 mx-auto" />
         </div>
       </section>
 

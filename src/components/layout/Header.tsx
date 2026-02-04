@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
@@ -22,7 +22,7 @@ export function Header() {
   const [sections, setSections] = useState<Section[]>([]);
   const [selectedNeighborhoods, setSelectedNeighborhoods] = useState<Neighborhood[]>([]);
   const { scrollDirection, scrollY } = useScrollDirection({ threshold: 10 });
-  const { openModal } = useNeighborhoodModal();
+  const { openModal, isOpen: modalIsOpen } = useNeighborhoodModal();
 
   // Determine if we're on a feed page where hiding should be enabled
   const isFeedPage = pathname === '/feed' || pathname.match(/^\/[^/]+\/[^/]+$/);
@@ -182,6 +182,58 @@ export function Header() {
     };
   }, []);
 
+  // Track previous modal state to detect when it closes
+  const prevModalOpen = useRef(modalIsOpen);
+
+  // Refetch selected neighborhoods when modal closes
+  useEffect(() => {
+    // Only refetch when modal was open and is now closed
+    const wasOpen = prevModalOpen.current;
+    prevModalOpen.current = modalIsOpen;
+
+    if (!wasOpen || modalIsOpen) return;
+
+    const refetchSelectedNeighborhoods = async () => {
+      const supabase = createClient();
+
+      let selectedIds: string[] = [];
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data } = await supabase
+          .from('user_neighborhood_preferences')
+          .select('neighborhood_id')
+          .eq('user_id', session.user.id);
+        if (data) {
+          selectedIds = data.map(p => p.neighborhood_id);
+        }
+      } else {
+        const stored = localStorage.getItem(PREFS_KEY);
+        if (stored) {
+          try {
+            selectedIds = JSON.parse(stored);
+          } catch {
+            // Invalid stored data
+          }
+        }
+      }
+
+      if (selectedIds.length > 0) {
+        const { data: neighborhoods } = await supabase
+          .from('neighborhoods')
+          .select('*')
+          .in('id', selectedIds);
+        if (neighborhoods) {
+          setSelectedNeighborhoods(neighborhoods as Neighborhood[]);
+        }
+      } else {
+        setSelectedNeighborhoods([]);
+      }
+    };
+
+    refetchSelectedNeighborhoods();
+  }, [modalIsOpen]);
+
   const handleSignOut = async () => {
     console.log('Sign out clicked');
     try {
@@ -239,8 +291,10 @@ export function Header() {
           <button
             onClick={handleNeighborhoodsClick}
             className={cn(
-              'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
-              pathname === '/neighborhoods' || pathname === '/feed' ? 'text-black font-medium' : 'text-neutral-500'
+              'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center border-b-2',
+              pathname === '/neighborhoods' || pathname === '/feed'
+                ? 'text-black font-medium border-black'
+                : 'text-neutral-500 border-transparent'
             )}
           >
             Neighborhoods
@@ -252,8 +306,8 @@ export function Header() {
                 <Link
                   href="/admin/ads"
                   className={cn(
-                    'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
-                    pathname.startsWith('/admin') ? 'text-black font-medium' : 'text-neutral-500'
+                    'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center border-b-2',
+                    pathname.startsWith('/admin') ? 'text-black font-medium border-black' : 'text-neutral-500 border-transparent'
                   )}
                 >
                   Admin
@@ -262,8 +316,8 @@ export function Header() {
               <Link
                 href="/advertiser"
                 className={cn(
-                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
-                  pathname.startsWith('/advertiser') ? 'text-black font-medium' : 'text-neutral-500'
+                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center border-b-2',
+                  pathname.startsWith('/advertiser') ? 'text-black font-medium border-black' : 'text-neutral-500 border-transparent'
                 )}
               >
                 Dashboard
