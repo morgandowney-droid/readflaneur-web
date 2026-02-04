@@ -320,6 +320,30 @@ const WIKIPEDIA_ARTICLES: Record<string, string> = {
   'nyc-darien': 'Darien,_Connecticut',
   'nyc-greenwich': 'Greenwich,_Connecticut',
   'nyc-westport': 'Westport,_Connecticut',
+  // New York Enclaves - Summit & The Hills NJ
+  'nyc-summit': 'Summit,_New_Jersey',
+  'nyc-short-hills': 'Short_Hills,_New_Jersey',
+  'nyc-millburn': 'Millburn,_New_Jersey',
+  // New York Enclaves - Montclair & The Ridge NJ
+  'nyc-montclair': 'Montclair,_New_Jersey',
+  'nyc-glen-ridge': 'Glen_Ridge,_New_Jersey',
+  // New York Enclaves - Bergen Gold NJ
+  'nyc-alpine': 'Alpine,_New_Jersey',
+  'nyc-saddle-river': 'Saddle_River,_New_Jersey',
+  'nyc-englewood-cliffs': 'Englewood_Cliffs,_New_Jersey',
+  // New York Enclaves - Old Westbury LI NY
+  'nyc-old-westbury': 'Old_Westbury,_New_York',
+  'nyc-muttontown': 'Muttontown,_New_York',
+  'nyc-brookville': 'Brookville,_New_York',
+  // Stockholm Enclaves
+  'stockholm-djursholm': 'Djursholm',
+  'stockholm-stocksund': 'Stocksund',
+  'stockholm-lidingo-town': 'Lidingö',
+  'stockholm-saltsjobaden': 'Saltsjöbaden',
+  'stockholm-solsidan': 'Solsidan,_Nacka',
+  'stockholm-appelviken': 'Äppelviken',
+  'stockholm-alsten': 'Ålsten',
+  'stockholm-smedslatten': 'Smedslätten',
 };
 
 /**

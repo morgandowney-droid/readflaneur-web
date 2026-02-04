@@ -38,6 +38,41 @@ const NEIGHBORHOOD_CENTERS: Record<string, { lat: number; lng: number; radius: n
   'nyc-greenwich': { lat: 41.0263, lng: -73.6285, radius: 3000 },
   'nyc-westport': { lat: 41.1415, lng: -73.3579, radius: 2500 },
   'nyc-gold-coast': { lat: 41.0820, lng: -73.4852, radius: 12000 }, // Combo center
+  // New York Enclaves - Summit & The Hills NJ
+  'nyc-summit': { lat: 40.7157, lng: -74.3646, radius: 1500 },
+  'nyc-short-hills': { lat: 40.7479, lng: -74.3254, radius: 1500 },
+  'nyc-millburn': { lat: 40.7260, lng: -74.3043, radius: 1200 },
+  'nyc-summit-hills': { lat: 40.7299, lng: -74.3314, radius: 5000 }, // Combo center
+  // New York Enclaves - Montclair & The Ridge NJ
+  'nyc-montclair': { lat: 40.8259, lng: -74.2090, radius: 2000 },
+  'nyc-glen-ridge': { lat: 40.8043, lng: -74.2037, radius: 1000 },
+  'nyc-montclair-ridge': { lat: 40.8151, lng: -74.2064, radius: 4000 }, // Combo center
+  // New York Enclaves - Bergen Gold NJ
+  'nyc-alpine': { lat: 40.9557, lng: -73.9313, radius: 1500 },
+  'nyc-saddle-river': { lat: 41.0312, lng: -74.1024, radius: 1500 },
+  'nyc-englewood-cliffs': { lat: 40.8854, lng: -73.9524, radius: 1200 },
+  'nyc-bergen-gold': { lat: 40.9574, lng: -74.0287, radius: 8000 }, // Combo center
+  // New York Enclaves - Old Westbury LI NY
+  'nyc-old-westbury': { lat: 40.7887, lng: -73.5996, radius: 2000 },
+  'nyc-muttontown': { lat: 40.8232, lng: -73.5476, radius: 1500 },
+  'nyc-brookville': { lat: 40.8126, lng: -73.5665, radius: 1500 },
+  'nyc-old-westbury-li': { lat: 40.8082, lng: -73.5712, radius: 5000 }, // Combo center
+  // Stockholm Enclaves - Djursholm & Stocksund
+  'stockholm-djursholm': { lat: 59.3975, lng: 18.0875, radius: 2000 },
+  'stockholm-stocksund': { lat: 59.3858, lng: 18.0558, radius: 1500 },
+  'stockholm-djursholm-stocksund': { lat: 59.3917, lng: 18.0717, radius: 4000 }, // Combo center
+  // Stockholm Enclaves - Lidingö Island
+  'stockholm-lidingo-town': { lat: 59.3667, lng: 18.1500, radius: 3000 },
+  'stockholm-lidingo': { lat: 59.3667, lng: 18.1500, radius: 5000 }, // Combo center
+  // Stockholm Enclaves - Saltsjöbaden Coast
+  'stockholm-saltsjobaden': { lat: 59.2833, lng: 18.3000, radius: 2000 },
+  'stockholm-solsidan': { lat: 59.2917, lng: 18.2833, radius: 1500 },
+  'stockholm-saltsjobaden-coast': { lat: 59.2875, lng: 18.2917, radius: 4000 }, // Combo center
+  // Stockholm Enclaves - Bromma Trädgårdsstad
+  'stockholm-appelviken': { lat: 59.3333, lng: 17.9500, radius: 1200 },
+  'stockholm-alsten': { lat: 59.3250, lng: 17.9417, radius: 1000 },
+  'stockholm-smedslatten': { lat: 59.3292, lng: 17.9583, radius: 1000 },
+  'stockholm-bromma': { lat: 59.3292, lng: 17.9500, radius: 3000 }, // Combo center
 };
 
 interface GooglePlaceNew {
