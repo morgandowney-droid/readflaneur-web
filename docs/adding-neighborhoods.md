@@ -250,6 +250,10 @@ export const NEIGHBORHOOD_ID_TO_CONFIG: Record<string, string> = {
 
 NYC neighborhoods also receive "Set Life" alerts for film/TV shoots. Film permits are automatically fetched from NYC Open Data and filtered by zip code. No additional configuration needed - uses the same `zips` array from `FLANEUR_NYC_CONFIG`.
 
+### Outdoor Dining ("Al Fresco Alert")
+
+NYC neighborhoods receive "Al Fresco Alert" stories for new outdoor dining approvals. Open Restaurants applications are fetched from NYC Open Data, filtered by zip code, and chain restaurants are automatically excluded. Uses the same `zips` array from `FLANEUR_NYC_CONFIG`.
+
 ---
 
 ## Global Locations Configuration (International)

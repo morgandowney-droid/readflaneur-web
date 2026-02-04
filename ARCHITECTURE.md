@@ -148,6 +148,7 @@ NYC Open Data integration includes:
 - **Liquor Licenses** - NY State SLA licenses
 - **Crime Stats** - NYPD incident statistics
 - **Film Permits** - "Set Life" alerts for TV/film shoots (stored as articles, not separate table)
+- **Open Restaurants** - "Al Fresco Alert" for outdoor dining approvals (stored as articles)
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)

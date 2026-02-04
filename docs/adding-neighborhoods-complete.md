@@ -519,6 +519,19 @@ No additional configuration needed - if a neighborhood has zips configured, it w
 - Next 48 hours of shoots
 - Known productions prioritized (Law & Order, Succession, etc.)
 
+### 7.6 Outdoor Dining ("Al Fresco Alert")
+
+NYC neighborhoods automatically receive "Al Fresco Alert" stories for new outdoor dining approvals. The `sync-alfresco-permits` cron fetches from NYC Open Data Open Restaurants Applications API.
+
+**Data Source:** `https://data.cityofnewyork.us/resource/pitm-atqc.json`
+
+**Filters:**
+- Last 7 days of approved applications
+- Sidewalk OR roadway seating approved
+- Chain restaurants excluded (40+ patterns: Dunkin, Starbucks, Shake Shack, etc.)
+- Prioritizes: Sidewalk > Both > Roadway
+- Alcohol-serving venues prioritized
+
 ---
 
 ---

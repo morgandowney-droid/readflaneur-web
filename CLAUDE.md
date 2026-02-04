@@ -11,6 +11,18 @@
 
 ### Recent Changes (2026-02-05)
 
+**Alfresco Watch ("Al Fresco Alert"):**
+- New service fetching NYC Open Restaurants Applications from NYC Open Data
+- Generates "Al Fresco Alert" stories for new outdoor dining setups
+- Geofenced to 11 NYC neighborhoods via zip codes
+- Filters for approved sidewalk/roadway seating in last 7 days
+- Prioritizes: Sidewalk > Both > Roadway (cafe culture over shed culture)
+- `isChain()` helper excludes 40+ chain patterns (Dunkin, Starbucks, Shake Shack, etc.)
+- Alcohol-serving venues prioritized
+- Seasonal context in prompts (Spring/Summer vs Winter tone)
+- Files: `src/lib/nyc-alfresco.ts`, `src/app/api/cron/sync-alfresco-permits/route.ts`
+- Cron: Daily at 9 AM UTC
+
 **Filming Location Watch ("Set Life"):**
 - New service fetching NYC Film Permits from NYC Open Data
 - Generates "Set Life" stories alerting residents about nearby film shoots
@@ -365,6 +377,7 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | process-property-watch | Daily 7 AM UTC | Process user submissions |
 | generate-digests | Weekly Mon 8 AM UTC | Property watch summaries |
 | sync-filming-permits | Every 6 hours (:30) | Fetch NYC film permits, generate Set Life stories |
+| sync-alfresco-permits | Daily 9 AM UTC | Fetch NYC outdoor dining permits, generate Al Fresco alerts |
 | sync-nyc-permits | Daily 6 AM UTC | Fetch NYC DOB permit filings |
 | sync-nyc-liquor | Monday 7 AM UTC | Fetch NY State liquor licenses |
 | sync-nyc-crime | Saturday 8 AM UTC | Aggregate NYPD crime stats by neighborhood |

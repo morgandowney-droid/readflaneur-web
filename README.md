@@ -11,6 +11,7 @@ A luxury hyper-local news and neighborhood guide platform. Flâneur delivers cur
 - **Property Watch** - Real estate updates for your area
 - **NYC Civic Data** - Building permits, liquor licenses, and crime stats from NYC Open Data (11 NYC neighborhoods)
 - **Filming Location Watch** - "Set Life" alerts for upcoming TV/film shoots in NYC neighborhoods
+- **Alfresco Watch** - "Al Fresco Alert" for new outdoor dining setups in NYC neighborhoods
 - **Global Civic Data** - International permits, licenses, and safety stats from London, Sydney, Chicago, LA, and Washington DC
 - **Multi-Neighborhood Selection** - Follow multiple neighborhoods for a personalized feed
 - **Tip Submission** - Community-sourced news tips with optional anonymity
