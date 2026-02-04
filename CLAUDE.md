@@ -14,7 +14,7 @@
 **Combo Neighborhoods System:**
 - 15 combo neighborhoods that aggregate multiple areas into single feeds
 - Combo neighborhoods: SoHo (SoHo, NoHo, NoLita, Hudson Square), Tribeca (Tribeca, FiDi), Brooklyn West (Dumbo, Cobble Hill, Park Slope), The Hamptons (The Hamptons, Montauk), Östermalm & City (Östermalm, Norrmalm, Gamla Stan, Djurgården)
-- Coast & Country regions for NYC and Stockholm suburbs
+- Surroundings regions for NYC and Stockholm suburbs
 - Database: `is_combo` flag on neighborhoods, `combo_neighborhoods` join table
 - Utility: `src/lib/combo-utils.ts` for querying combo components
 - Search in neighborhood selector searches component names too
@@ -27,7 +27,7 @@
 - Unified neighborhood modal - homepage and header buttons use same instant-loading modal
 - Pre-fetch strategy loads neighborhood data on mount for instant modal opening
 - Combo neighborhoods show tooltip with component names on hover
-- Renamed "Enclaves" to "Coast & Country" throughout UI
+- Renamed "Enclaves" to "Surroundings" throughout UI
 - 3-phase design audit: feed cards, AI badges, ad frequency, search empty state
 
 **Key Files for Combos:**
