@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, ReactNode } from 'react';
+import Image from 'next/image';
 
 interface BriefSource {
   title?: string;
@@ -806,26 +807,39 @@ export function NeighborhoodBrief({
   };
 
   return (
-    <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4 mb-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-amber-700">
-            What&apos;s Happening Today Live
-          </span>
-          <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
-            AI-Synthesized Brief
-          </span>
-          {verifiedSourceCount > 0 && (
-            <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded-full">
-              {verifiedSourceCount} sources
-            </span>
-          )}
-        </div>
-        <span className="text-xs text-amber-600">
-          {formatTime(generatedAt)}
-        </span>
+    <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg overflow-hidden mb-6">
+      {/* Branded Banner */}
+      <div className="w-full">
+        <Image
+          src="/flaneur-brief-banner.svg"
+          alt="Flâneur"
+          width={400}
+          height={80}
+          className="w-full h-auto"
+          priority
+        />
       </div>
+
+      <div className="p-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium uppercase tracking-wider text-amber-700">
+              Today&apos;s Brief
+            </span>
+            <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+              AI-Synthesized
+            </span>
+            {verifiedSourceCount > 0 && (
+              <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded-full">
+                {verifiedSourceCount} sources
+              </span>
+            )}
+          </div>
+          <span className="text-xs text-amber-600">
+            {formatTime(generatedAt)}
+          </span>
+        </div>
 
       {/* Headline */}
       <h3 className="font-semibold text-base mb-2 text-neutral-900">
@@ -897,6 +911,7 @@ export function NeighborhoodBrief({
             Synthesized from public news sources and social media via AI-powered search and analysis.
           </p>
         )}
+        </div>
       </div>
     </div>
   );
@@ -904,16 +919,20 @@ export function NeighborhoodBrief({
 
 export function NeighborhoodBriefSkeleton() {
   return (
-    <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4 mb-6 animate-pulse">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="w-5 h-5 bg-amber-200 rounded" />
-        <div className="h-3 w-24 bg-amber-200 rounded" />
-      </div>
-      <div className="h-5 w-3/4 bg-amber-200 rounded mb-2" />
-      <div className="space-y-2">
-        <div className="h-3 w-full bg-amber-100 rounded" />
-        <div className="h-3 w-5/6 bg-amber-100 rounded" />
-        <div className="h-3 w-4/6 bg-amber-100 rounded" />
+    <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg overflow-hidden mb-6 animate-pulse">
+      {/* Banner placeholder */}
+      <div className="w-full h-20 bg-neutral-900" />
+      <div className="p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="h-3 w-20 bg-amber-200 rounded" />
+          <div className="h-3 w-24 bg-amber-100 rounded" />
+        </div>
+        <div className="h-5 w-3/4 bg-amber-200 rounded mb-2" />
+        <div className="space-y-2">
+          <div className="h-3 w-full bg-amber-100 rounded" />
+          <div className="h-3 w-5/6 bg-amber-100 rounded" />
+          <div className="h-3 w-4/6 bg-amber-100 rounded" />
+        </div>
       </div>
     </div>
   );
