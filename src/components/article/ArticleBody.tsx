@@ -25,6 +25,19 @@ const NEVER_LINK_WORDS = new Set([
   'ave', 'avenue', 'st', 'street', 'blvd', 'boulevard', 'rd', 'road',
   // Time indicators
   'am', 'pm', 'a.m.', 'p.m.',
+  // Real estate terms
+  'closed', 'sold', 'pending', 'listed', 'active', 'studio',
+  'market', 'data', 'market data', 'real estate market data',
+  'year', 'ago', 'year ago', 'change', 'now',
+  'median', 'sale', 'price', 'median sale price', 'price per sq ft',
+  'inventory', 'active inventory', 'days', 'avg', 'average', 'avg days on market',
+  'property', 'size', 'avg property size', 'top', 'listings', 'top listings',
+  'recent', 'sales', 'top recent sales', 'sq', 'ft', 'sq ft',
+  // Common section header words
+  'real', 'estate', 'real estate',
+  // Market data labels (all caps versions get lowercased)
+  'median sale price now', 'price per sq ft now', 'avg property size',
+  'active inventory now', 'avg days on market',
 ]);
 
 // Connecting words in entity names
@@ -148,7 +161,11 @@ function renderWithSearchableEntities(
     const isTimeIndicator = /^(am|pm|a\.m\.|p\.m\.)$/i.test(merged);
     const isSentenceStartCommonWord = isFirstAtSentenceStart && isSingleWord && !looksLikeProperNoun(merged);
 
-    const shouldSkip = isNeverLinkWord || isTimeIndicator || isCommonContraction ||
+    // Check if any word in the merged phrase is in the never-link list
+    const words = lowerMerged.split(/\s+/);
+    const containsNeverLinkWord = words.some(word => NEVER_LINK_WORDS.has(word));
+
+    const shouldSkip = isNeverLinkWord || containsNeverLinkWord || isTimeIndicator || isCommonContraction ||
                        isNeighborhoodName || isSentenceStartCommonWord;
 
     const overlapsAddress = addresses.some(addr =>
@@ -222,16 +239,49 @@ interface ArticleBodyProps {
 }
 
 export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProps) {
-  // Clean content: remove citation markers and URLs
-  const cleanedContent = content
+  // Preserve markdown links by converting them to a placeholder format
+  // [text](url) -> {{LINK:url}}text{{/LINK}}
+  let cleanedContent = content
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '{{LINK:$2}}$1{{/LINK}}')
+    // Clean content: remove citation markers and bare URLs (not in markdown format)
     .replace(/\[\[\d+\]\]/g, '')
-    .replace(/\(https?:\/\/[^)]+\)/g, '')
-    .replace(/https?:\/\/\S+/g, '')
-    .replace(/\s{2,}/g, ' ')
+    .replace(/(?<!\{\{LINK:)https?:\/\/\S+/g, '')
     .trim();
 
-  // Split into paragraphs
-  const paragraphs = cleanedContent.split('\n\n').filter(p => p.trim());
+  // Insert paragraph breaks before section headers [[...]]
+  // This ensures headers get their own line/block
+  cleanedContent = cleanedContent.replace(/\s*(\[\[[^\]]+\]\])\s*/g, '\n\n$1\n\n');
+
+  // Also insert paragraph breaks after sentences that end with ]] (header followed by content)
+  cleanedContent = cleanedContent.replace(/\]\]\s+([A-Z])/g, ']]\n\n$1');
+
+  // Split into paragraphs - handle both \n\n and single \n
+  let paragraphs = cleanedContent
+    .split(/\n\n+/)
+    .map(p => p.trim())
+    .filter(p => p.length > 0);
+
+  // If still only one paragraph and it's long, try to split on sentence boundaries
+  if (paragraphs.length === 1 && paragraphs[0].length > 500) {
+    const longParagraph = paragraphs[0];
+    // Split on sentence endings followed by space and capital letter, creating ~3-4 sentence paragraphs
+    const sentences = longParagraph.split(/(?<=[.!?])\s+(?=[A-Z])/);
+    const newParagraphs: string[] = [];
+    let currentPara = '';
+
+    for (const sentence of sentences) {
+      if (currentPara.length + sentence.length > 400 && currentPara.length > 0) {
+        newParagraphs.push(currentPara.trim());
+        currentPara = sentence;
+      } else {
+        currentPara += (currentPara ? ' ' : '') + sentence;
+      }
+    }
+    if (currentPara.trim()) {
+      newParagraphs.push(currentPara.trim());
+    }
+    paragraphs = newParagraphs;
+  }
 
   return (
     <article className="prose prose-neutral max-w-none">
@@ -246,22 +296,74 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
           );
         }
 
-        // Process bold markers
-        const processedParagraph = paragraph.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        // Process bold markers and links
+        // First, extract links and replace with numbered placeholders
+        const links: { url: string; text: string }[] = [];
+        let processedParagraph = paragraph.replace(/\{\{LINK:(https?:\/\/[^}]+)\}\}([^{]+)\{\{\/LINK\}\}/g,
+          (_, url, text) => {
+            links.push({ url, text: text.replace(/\*\*/g, '') }); // Remove ** from link text
+            return `{{LINKREF:${links.length - 1}}}`;
+          }
+        );
 
-        // If there's bold text, we need to handle it specially
-        if (processedParagraph.includes('<strong>')) {
-          // Split by strong tags and render
-          const parts = processedParagraph.split(/(<strong>[^<]+<\/strong>)/);
+        // Process bold markers
+        processedParagraph = processedParagraph.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+        // Render function that handles strong tags and link refs
+        const renderParts = (text: string): ReactNode[] => {
+          const result: ReactNode[] = [];
+          // Split by both strong tags and link references
+          const parts = text.split(/(<strong>[^<]+<\/strong>|\{\{LINKREF:\d+\}\})/);
+
+          parts.forEach((part, partIdx) => {
+            const strongMatch = part.match(/<strong>([^<]+)<\/strong>/);
+            const linkMatch = part.match(/\{\{LINKREF:(\d+)\}\}/);
+
+            if (strongMatch) {
+              result.push(<strong key={`strong-${partIdx}`}>{strongMatch[1]}</strong>);
+            } else if (linkMatch) {
+              const linkIdx = parseInt(linkMatch[1]);
+              const link = links[linkIdx];
+              if (link) {
+                result.push(
+                  <a
+                    key={`link-${partIdx}`}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    {link.text}
+                  </a>
+                );
+              }
+            } else if (part) {
+              result.push(...renderWithSearchableEntities(part, neighborhoodName, city));
+            }
+          });
+
+          return result;
+        };
+
+        // Helper to render content with line breaks preserved
+        const renderWithLineBreaks = (content: string, renderer: (text: string) => ReactNode[]): ReactNode[] => {
+          // Split on newlines (handle both \n and markdown line breaks with trailing spaces)
+          const lines = content.split(/  \n|\n/);
+          const result: ReactNode[] = [];
+          lines.forEach((line, lineIdx) => {
+            if (lineIdx > 0) {
+              result.push(<br key={`br-${lineIdx}`} />);
+            }
+            result.push(...renderer(line));
+          });
+          return result;
+        };
+
+        // If there are links or bold text, use the custom renderer
+        if (links.length > 0 || processedParagraph.includes('<strong>')) {
           return (
             <p key={index} className="text-neutral-700 leading-relaxed mb-6">
-              {parts.map((part, partIdx) => {
-                const strongMatch = part.match(/<strong>([^<]+)<\/strong>/);
-                if (strongMatch) {
-                  return <strong key={partIdx}>{strongMatch[1]}</strong>;
-                }
-                return renderWithSearchableEntities(part, neighborhoodName, city);
-              })}
+              {renderWithLineBreaks(processedParagraph, renderParts)}
             </p>
           );
         }
@@ -269,7 +371,7 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
         // Regular paragraph with entity linking
         return (
           <p key={index} className="text-neutral-700 leading-relaxed mb-6">
-            {renderWithSearchableEntities(paragraph, neighborhoodName, city)}
+            {renderWithLineBreaks(paragraph, (text) => renderWithSearchableEntities(text, neighborhoodName, city))}
           </p>
         );
       })}
