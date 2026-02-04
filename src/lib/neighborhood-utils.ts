@@ -127,6 +127,8 @@ export function getCityCode(cityName: string): string {
 const WIKIPEDIA_ARTICLES: Record<string, string> = {
   // New York
   'nyc-tribeca': 'Tribeca',
+  'nyc-tribeca-core': 'Tribeca',
+  'nyc-fidi': 'Financial_District,_Manhattan',
   'nyc-west-village': 'West_Village',
   'nyc-soho': 'SoHo,_Manhattan',
   'nyc-noho': 'NoHo,_Manhattan',
