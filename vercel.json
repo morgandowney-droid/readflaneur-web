@@ -41,6 +41,10 @@
       "schedule": "30 */6 * * *"
     },
     {
+      "path": "/api/cron/sync-alfresco-permits",
+      "schedule": "0 9 * * *"
+    },
+    {
       "path": "/api/cron/generate-guide-digests",
       "schedule": "0 10 * * 1"
     },
