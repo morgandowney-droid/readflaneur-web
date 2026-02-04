@@ -102,33 +102,6 @@ export async function GET(request: Request) {
       });
     }
 
-    // Get the "real-estate" section ID (or create if doesn't exist)
-    let { data: section } = await supabase
-      .from('sections')
-      .select('id')
-      .eq('slug', 'real-estate')
-      .single();
-
-    if (!section) {
-      // Create the section if it doesn't exist
-      const { data: newSection, error: sectionError } = await supabase
-        .from('sections')
-        .insert({
-          name: 'Real Estate',
-          slug: 'real-estate',
-          icon: '🏠',
-          display_order: 10,
-          is_active: true,
-        })
-        .select('id')
-        .single();
-
-      if (sectionError) {
-        throw new Error(`Failed to create section: ${sectionError.message}`);
-      }
-      section = newSection;
-    }
-
     // Process each neighborhood
     for (const neighborhood of neighborhoods as NeighborhoodData[]) {
       try {
@@ -140,7 +113,7 @@ export async function GET(request: Request) {
           .from('articles')
           .select('id')
           .eq('neighborhood_id', neighborhood.id)
-          .eq('section_id', section.id)
+          .eq('category_label', 'Real Estate Weekly')
           .gte('published_at', weekStart.toISOString())
           .single();
 
@@ -172,7 +145,6 @@ export async function GET(request: Request) {
         // Insert article
         const { error: insertError } = await supabase.from('articles').insert({
           neighborhood_id: neighborhood.id,
-          section_id: section.id,
           headline: report.headline,
           slug,
           body_text: articleBody,
