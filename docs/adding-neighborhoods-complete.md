@@ -440,4 +440,69 @@ const info = await getComboInfo(supabase, 'nyc-soho');
 
 ---
 
+## Step 7: NYC Open Data Configuration (NYC Only)
+
+NYC neighborhoods have additional civic data integration for permits, liquor licenses, and crime stats.
+
+### 7.1 Add to NYC Locations Config
+
+Edit `src/config/nyc-locations.ts`:
+
+```typescript
+export const FLANEUR_NYC_CONFIG: Record<string, NYCNeighborhoodConfig> = {
+  // Add your neighborhood
+  'Your Neighborhood': {
+    zips: ['10001', '10011'],           // Zip codes (DOB permits, liquor licenses)
+    precincts: ['10th Precinct'],       // Police precincts (crime stats)
+    tone: 'Editorial tone for AI',      // Guides AI content generation
+  },
+};
+
+// Map URL slug to config key
+export const NEIGHBORHOOD_ID_TO_CONFIG: Record<string, string> = {
+  'your-neighborhood': 'Your Neighborhood',
+};
+```
+
+### 7.2 Shared Zip Code Handling
+
+Some zip codes are shared between neighborhoods (e.g., 10001 = Chelsea + Hudson Yards). The system disambiguates using street addresses. Add special handling in `getNeighborhoodKeyFromZip()` if needed:
+
+```typescript
+if (zipCode === '10001' && address) {
+  if (address.includes('HUDSON YARDS')) return 'Hudson Yards';
+  return 'Chelsea';  // Default
+}
+```
+
+### 7.3 Combo Neighborhoods
+
+For combo neighborhoods, aggregate zip codes and precincts from all components:
+
+```typescript
+'Brooklyn West': {
+  components: ['Dumbo', 'Cobble Hill', 'Park Slope'],
+  zips: ['11201', '11231', '11215', '11217'],  // All component zips
+  precincts: ['84th Precinct', '76th Precinct', '78th Precinct'],
+  tone: 'Brownstone Families, Strollers & Eco-Luxury',
+},
+```
+
+### 7.4 Current NYC Coverage
+
+| Neighborhood | Zips | Precincts |
+|--------------|------|-----------|
+| Chelsea | 10001, 10011 | 10th |
+| Greenwich Village | 10003, 10012, 10014 | 6th |
+| West Village | 10014 | 6th |
+| Hudson Yards | 10001, 10018 | Midtown South |
+| Meatpacking | 10014 | 6th |
+| FiDi | 10004-10007, 10038 | 1st |
+| Upper East Side | 10021, 10028, 10065, 10075, 10128 | 19th |
+| Upper West Side | 10023-10025 | 20th, 24th |
+| Williamsburg | 11211, 11249 | 90th, 94th |
+| Brooklyn West | 11201, 11231, 11215, 11217 | 84th, 76th, 78th |
+
+---
+
 *Last updated: February 4, 2026*

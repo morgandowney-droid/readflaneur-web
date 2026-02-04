@@ -11,6 +11,17 @@
 
 ### Recent Changes (2026-02-04)
 
+**NYC Open Data Integration:**
+- New data fetching system for NYC permits, liquor licenses, and crime stats
+- Geofenced to 11 NYC coverage areas via zip codes and police precincts
+- Config file: `src/config/nyc-locations.ts` with neighborhood → zip/precinct mappings
+- Fetchers: `src/lib/nyc-permits.ts`, `src/lib/nyc-liquor.ts`, `src/lib/nyc-crime.ts`
+- Content generator: `src/lib/nyc-content-generator.ts` with Gemini + neighborhood tone injection
+- NYC data auto-injected into daily briefs for NYC neighborhoods
+- Weekly digest articles generated from aggregated civic data
+- Database tables: `nyc_permits`, `nyc_liquor_licenses`, `nyc_crime_stats`
+- Four new cron jobs for data sync and digest generation
+
 **Combo Neighborhoods System:**
 - 15 combo neighborhoods that aggregate multiple areas into single feeds
 - Combo neighborhoods: SoHo (SoHo, NoHo, NoLita, Hudson Square), Tribeca (Tribeca, FiDi), Brooklyn West (Dumbo, Cobble Hill, Park Slope), The Hamptons (The Hamptons, Montauk), Östermalm & City (Östermalm, Norrmalm, Gamla Stan, Djurgården)
@@ -313,22 +324,31 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 |-----|----------|---------|
 | sync-guides | Daily 3 AM UTC | Update Google Places data |
 | sync-news | Every 6 hours | Fetch RSS, create articles with AI images, Grok fallback |
-| sync-neighborhood-briefs | Every 4 hours | Generate "What's Happening" briefs via Grok X Search |
+| sync-neighborhood-briefs | Hourly | Generate "What's Happening" briefs via Grok X Search |
 | generate-guide-digests | Monday 10 AM UTC | Weekly "What's New" articles |
 | sync-tonight | Daily 2 PM UTC | Fetch & curate events |
 | sync-spotted | Every 30 min | Monitor social media |
 | process-property-watch | Daily 7 AM UTC | Process user submissions |
 | generate-digests | Weekly Mon 8 AM UTC | Property watch summaries |
+| sync-nyc-permits | Daily 6 AM UTC | Fetch NYC DOB permit filings |
+| sync-nyc-liquor | Monday 7 AM UTC | Fetch NY State liquor licenses |
+| sync-nyc-crime | Saturday 8 AM UTC | Aggregate NYPD crime stats by neighborhood |
+| generate-nyc-weekly-digest | Saturday 10 AM UTC | Generate weekly civic data articles for NYC |
 
 ## Database Tables
 
 ### Neighborhood System
-- `neighborhoods` - All 99 neighborhoods with coordinates, region, country
+- `neighborhoods` - All 120 neighborhoods with coordinates, region, country
   - Vacation neighborhoods have `region` set to: `us-vacation`, `caribbean-vacation`, `europe-vacation`
 - `neighborhood_briefs` - Daily "What's Happening" summaries from Grok X Search
 - `guide_listings` - Places from Google Places API
 - `guide_categories` - Restaurant, Coffee, Bars, etc.
 - `rss_sources` - RSS feed URLs by city (manageable via admin)
+
+### NYC Open Data (geofenced to 11 NYC coverage areas)
+- `nyc_permits` - DOB permit filings cached from NYC Open Data
+- `nyc_liquor_licenses` - SLA liquor licenses from NY State Open Data
+- `nyc_crime_stats` - Aggregated NYPD crime statistics by neighborhood
 
 ### Content
 - `articles` - News articles with AI-generated images

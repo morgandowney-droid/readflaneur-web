@@ -141,6 +141,53 @@ tips (
 )
 ```
 
+### NYC Open Data Tables
+
+```sql
+-- NYC DOB Permits cache (geofenced to Flâneur coverage areas)
+nyc_permits (
+  id UUID PRIMARY KEY,
+  job_number TEXT UNIQUE NOT NULL,
+  permit_type TEXT,
+  filing_date DATE,
+  job_description TEXT,
+  zip_code TEXT,
+  address TEXT,
+  neighborhood_id TEXT REFERENCES neighborhoods(id),
+  raw_data JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+)
+
+-- NY State Liquor Licenses cache
+nyc_liquor_licenses (
+  id UUID PRIMARY KEY,
+  serial_number TEXT UNIQUE NOT NULL,
+  license_type TEXT,
+  premises_name TEXT,
+  effective_date DATE,
+  expiration_date DATE,
+  zip_code TEXT,
+  address TEXT,
+  neighborhood_id TEXT REFERENCES neighborhoods(id),
+  raw_data JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+)
+
+-- NYPD Crime Stats (aggregated by neighborhood)
+nyc_crime_stats (
+  id UUID PRIMARY KEY,
+  neighborhood_id TEXT REFERENCES neighborhoods(id),
+  period_start DATE NOT NULL,
+  period_end DATE NOT NULL,
+  total_incidents INTEGER DEFAULT 0,
+  stats_by_category JSONB,
+  precincts_included TEXT[],
+  raw_data JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(neighborhood_id, period_start)
+)
+```
+
 ### Advertising Tables
 
 ```sql

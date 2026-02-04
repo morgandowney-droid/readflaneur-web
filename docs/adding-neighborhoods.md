@@ -201,3 +201,47 @@ VALUES
 - **Feed queries**: Use `getNeighborhoodIdsForQuery()` from `src/lib/combo-utils.ts` to expand combo ID to component IDs
 - **Selector**: Combo neighborhoods show tooltip with component names on hover
 - **Search**: Searching component names (e.g., "NoHo") finds the parent combo ("SoHo")
+
+---
+
+## NYC Open Data Configuration
+
+NYC neighborhoods have additional configuration for civic data integration (permits, liquor licenses, crime stats).
+
+### Adding NYC Neighborhoods to Open Data
+
+Edit `src/config/nyc-locations.ts`:
+
+```typescript
+export const FLANEUR_NYC_CONFIG: Record<string, NYCNeighborhoodConfig> = {
+  'Your Neighborhood': {
+    zips: ['10001', '10011'],           // Zip codes for permits & liquor licenses
+    precincts: ['10th Precinct'],       // Police precincts for crime stats
+    tone: 'Editorial tone description', // For AI content generation
+  },
+  // For combo neighborhoods:
+  'Brooklyn West': {
+    components: ['Dumbo', 'Cobble Hill', 'Park Slope'],
+    zips: ['11201', '11231', '11215', '11217'],
+    precincts: ['84th Precinct', '76th Precinct', '78th Precinct'],
+    tone: 'Brownstone Families, Strollers & Eco-Luxury',
+  },
+};
+```
+
+### URL Slug Mapping
+
+Add to `NEIGHBORHOOD_ID_TO_CONFIG`:
+
+```typescript
+export const NEIGHBORHOOD_ID_TO_CONFIG: Record<string, string> = {
+  'your-neighborhood': 'Your Neighborhood',  // URL slug → config key
+};
+```
+
+### Current NYC Coverage
+
+11 neighborhoods with civic data integration:
+- Chelsea, Greenwich Village, West Village, Hudson Yards, Meatpacking District
+- FiDi, Upper East Side, Upper West Side, Williamsburg
+- Brooklyn West (combo), SoHo Combo, Tribeca Combo

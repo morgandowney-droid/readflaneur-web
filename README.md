@@ -9,6 +9,7 @@ A luxury hyper-local news and neighborhood guide platform. Flâneur delivers cur
 - **Tonight** - What's happening in your neighborhood today
 - **Spotted** - Local sightings and happenings
 - **Property Watch** - Real estate updates for your area
+- **NYC Civic Data** - Building permits, liquor licenses, and crime stats from NYC Open Data (11 NYC neighborhoods)
 - **Multi-Neighborhood Selection** - Follow multiple neighborhoods for a personalized feed
 - **Tip Submission** - Community-sourced news tips with optional anonymity
 - **Advertiser Portal** - Self-service advertising with Stripe payments
