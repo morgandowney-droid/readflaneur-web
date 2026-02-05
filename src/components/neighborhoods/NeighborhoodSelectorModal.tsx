@@ -110,73 +110,32 @@ export function useNeighborhoodModal() {
   return context;
 }
 
-// Pre-fetch neighborhoods data for instant modal opening
-async function prefetchNeighborhoodsData(): Promise<{
+// Fetch neighborhoods data from API with timeout
+async function fetchNeighborhoodsData(timeoutMs: number = 8000): Promise<{
   neighborhoods: NeighborhoodWithCombo[];
   selected: Set<string>;
   userId: string | null;
 }> {
-  const supabase = createClient();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-  // Fetch neighborhoods
-  const { data: neighborhoodsData } = await supabase
-    .from('neighborhoods')
-    .select('*')
-    .eq('is_active', true)
-    .order('city')
-    .order('name');
+  try {
+    // Fetch neighborhoods from API
+    const response = await fetch('/api/neighborhoods', {
+      signal: controller.signal,
+    });
 
-  let neighborhoods: NeighborhoodWithCombo[] = [];
+    clearTimeout(timeoutId);
 
-  if (neighborhoodsData) {
-    // Fetch combo component names for combo neighborhoods
-    const comboNeighborhoods = neighborhoodsData.filter((n: any) => n.is_combo);
-    const comboComponentNames: Record<string, string[]> = {};
-
-    if (comboNeighborhoods.length > 0) {
-      const { data: comboLinks } = await supabase
-        .from('combo_neighborhoods')
-        .select(`
-          combo_id,
-          display_order,
-          component:neighborhoods!combo_neighborhoods_component_id_fkey (name)
-        `)
-        .in('combo_id', comboNeighborhoods.map((n: any) => n.id))
-        .order('display_order');
-
-      if (comboLinks) {
-        comboLinks.forEach((link: any) => {
-          if (!comboComponentNames[link.combo_id]) {
-            comboComponentNames[link.combo_id] = [];
-          }
-          comboComponentNames[link.combo_id].push(link.component.name);
-        });
-      }
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
     }
 
-    neighborhoods = neighborhoodsData.map((n: any) => ({
-      ...n,
-      combo_component_names: comboComponentNames[n.id] || undefined,
-    }));
-  }
+    const data = await response.json();
+    const neighborhoods: NeighborhoodWithCombo[] = data.neighborhoods || [];
 
-  // Check auth and load preferences
-  let selected = new Set<string>();
-  let userId: string | null = null;
-
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (session?.user) {
-    userId = session.user.id;
-    const { data } = await supabase
-      .from('user_neighborhood_preferences')
-      .select('neighborhood_id')
-      .eq('user_id', session.user.id);
-
-    if (data && data.length > 0) {
-      selected = new Set(data.map(p => p.neighborhood_id));
-    }
-  } else {
+    // Load preferences from localStorage (fast, no network)
+    let selected = new Set<string>();
     const stored = localStorage.getItem(PREFS_KEY);
     if (stored) {
       try {
@@ -185,9 +144,12 @@ async function prefetchNeighborhoodsData(): Promise<{
         // Invalid stored data
       }
     }
-  }
 
-  return { neighborhoods, selected, userId };
+    return { neighborhoods, selected, userId: null };
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
+  }
 }
 
 export function NeighborhoodModalProvider({ children }: { children: React.ReactNode }) {
@@ -198,13 +160,9 @@ export function NeighborhoodModalProvider({ children }: { children: React.ReactN
     userId: string | null;
   } | null>(null);
 
-  // Pre-fetch data on mount so modal opens instantly (with timeout)
+  // Pre-fetch data on mount so modal opens instantly
   useEffect(() => {
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Prefetch timeout')), 10000)
-    );
-
-    Promise.race([prefetchNeighborhoodsData(), timeoutPromise])
+    fetchNeighborhoodsData(8000)
       .then(setPrefetchedData)
       .catch((err) => {
         console.error('Prefetch failed:', err);
@@ -334,7 +292,7 @@ function GlobalNeighborhoodModal({
     const loadData = async () => {
       setLoading(true);
       try {
-        const data = await prefetchNeighborhoodsData();
+        const data = await fetchNeighborhoodsData(10000);
         setNeighborhoods(data.neighborhoods);
         setSelected(data.selected);
         setUserId(data.userId);
