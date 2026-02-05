@@ -721,6 +721,63 @@ Live coverage is marked with `is_pinned: true` in the database, causing it to fl
 
 **Files:** `src/config/art-fairs.ts`, `src/lib/art-fairs.ts`, `src/app/api/cron/sync-art-fairs/route.ts`
 
+### 7.11 Retail Watch (Luxury Store Openings)
+
+Retail Watch monitors signage and advertisement permits to detect upcoming luxury retail openings. Unlike construction permits (which are about structure), signage permits reveal IDENTITY - who is moving in.
+
+**The Strategy: "The Brand Reveal"**
+
+Signage permits typically precede store openings by 3-4 months. We filter for:
+1. Permits in our target zip codes (commercial corridors)
+2. Luxury brand keywords in the job description or owner name
+
+**The Luxury List (80+ brands):**
+
+```typescript
+const LUXURY_BRANDS = [
+  // Fashion - Ultra Tier
+  { name: 'Hermès', pattern: /herm[eè]s/i, tier: 'Ultra' },
+  { name: 'Chanel', pattern: /chanel/i, tier: 'Ultra' },
+  { name: 'Louis Vuitton', pattern: /louis\s*vuitton|vuitton/i, tier: 'Ultra' },
+  // ... 70+ more brands across categories
+
+  // Fashion - Aspirational Tier
+  { name: 'Kith', pattern: /\bkith\b/i, tier: 'Aspirational' },
+  { name: 'Aimé Leon Dore', pattern: /aim[eé]\s*leon\s*dore/i, tier: 'Aspirational' },
+];
+```
+
+**Brand Categories:**
+
+| Category | Ultra Examples | Aspirational Examples |
+|----------|---------------|----------------------|
+| Fashion | Hermès, Chanel, Prada, The Row | Kith, ALD, Fear of God |
+| Watches & Jewelry | Patek, Cartier, Van Cleef | Omega, IWC |
+| Beauty & Fragrance | Creed, Kurkdjian | Aesop, Le Labo, Byredo |
+| Fitness & Wellness | - | Equinox, SoulCycle, Barry's |
+| Private Clubs | Zero Bond, Casa Cipriani | Soho House, The Ned |
+| Hospitality | Aman, Cipriani, Carbone | Nobu, Edition |
+| Home & Design | Ligne Roset, B&B Italia | RH |
+
+**Data Sources:**
+
+| City | Source | Filter |
+|------|--------|--------|
+| NYC | DOB NOW / BIS | `job_type = 'SG'` (Sign) |
+| London | Planning Portal | `application_type = 'Advertisement Consent'` |
+
+**Story Generation:**
+
+The Gemini prompt includes:
+- Brand tier (Ultra vs Aspirational) for tone calibration
+- Category-specific angles (fashion impact vs investment value)
+- Estimated opening date (3-4 months from permit)
+- Street context for "luxury corridor" narrative
+
+**Cron Schedule:** Daily at 10 AM UTC
+
+**Files:** `src/lib/retail-watch.ts`, `src/app/api/cron/sync-retail-watch/route.ts`
+
 ---
 
 ---

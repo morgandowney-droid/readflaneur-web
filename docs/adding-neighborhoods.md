@@ -307,6 +307,25 @@ Static calendar-based coverage for the "Big 5" global art fairs. Overrides stand
 
 Schedule: Daily at 7 AM UTC (checks calendar for active fairs).
 
+### Retail Watch (Luxury Store Openings)
+
+Monitors signage/advertisement permits to detect upcoming luxury retail openings. Signage permits reveal WHO is moving in, typically 3-4 months before opening.
+
+**Luxury Brand Categories:**
+- **Fashion**: Hermès, Chanel, Gucci, Prada, Vuitton, Kith, Aimé Leon Dore...
+- **Watches & Jewelry**: Rolex, Patek, Cartier, Van Cleef, Tiffany...
+- **Beauty & Fragrance**: Aesop, Le Labo, Diptyque, Byredo...
+- **Fitness & Wellness**: Equinox, SoulCycle, Barry's...
+- **Private Clubs**: Soho House, Zero Bond, Casa Cipriani...
+- **Hospitality**: Nobu, Carbone, Aman, Four Seasons...
+- **Home & Design**: RH, Ligne Roset, B&B Italia...
+
+**Tier Classification:**
+- **Ultra**: Heritage luxury (Hermès, Patek, Van Cleef)
+- **Aspirational**: Modern luxury (Kith, Aesop, Equinox)
+
+Schedule: Daily at 10 AM UTC.
+
 ---
 
 ## Global Locations Configuration (International)

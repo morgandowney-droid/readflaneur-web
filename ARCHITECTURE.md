@@ -153,6 +153,7 @@ NYC Open Data integration includes:
 - **Auction Calendar** - Blue Chip auction syndication to Northeast Luxury Corridor (stored as articles)
 - **Global Auction Calendar** - International art hub syndication (London, Paris, Hong Kong, LA, Geneva)
 - **Art Fair Coverage** - Special event engine for Big 5 fairs with Hero priority during live weeks
+- **Retail Watch** - Luxury retail opening detection via signage permits (80+ brand patterns)
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)
