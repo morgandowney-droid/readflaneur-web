@@ -13,7 +13,7 @@ A luxury hyper-local news and neighborhood guide platform. Flâneur delivers cur
 - **Filming Location Watch** - "Set Life" alerts for upcoming TV/film shoots in NYC neighborhoods
 - **Alfresco Watch** - "Al Fresco Alert" for new outdoor dining setups in NYC neighborhoods
 - **Heritage Watch** - Preservation alerts for demolitions, landmark changes, and tree removal in NYC
-- **Global Civic Data** - International permits, licenses, and safety stats from London, Sydney, Chicago, LA, and Washington DC
+- **Global Civic Data** - International permits, licenses, and safety stats from London, Sydney, Chicago, LA, Washington DC, and Dublin
 - **Auction Watch** - Blue Chip auction calendar syndication to the Northeast Luxury Corridor (25+ neighborhoods)
 - **Global Auction Watch** - Hub & Spoke model for international art hubs (London, Paris, Hong Kong, LA, Geneva)
 - **Art Fair Coverage** - Calendar-based coverage for Big 5 global fairs with Preview/Live/Wrap states

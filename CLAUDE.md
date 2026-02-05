@@ -11,6 +11,30 @@
 
 ### Recent Changes (2026-02-05)
 
+**Dublin Integration (3 New Neighborhoods):**
+- Added Dublin, Ireland to the Flâneur ecosystem with 3 premium neighborhoods:
+  - **Ballsbridge (D4)** - Old money embassy belt, RDS grounds, Shrewsbury Road billionaires
+  - **Ranelagh (D6)** - Cosmopolitan village, Dartmouth Square elegance, creative professionals
+  - **Dalkey** - Coastal luxury, Vico Road views, celebrity retreats, literary heritage
+- New adapter: `src/lib/adapters/dublin-adapter.ts`
+  - Planning permits from Dublin City Council + Dún Laoghaire-Rathdown
+  - Liquor licences from Courts Service (Intoxicating Liquor Licences)
+  - Crime stats from Garda Síochána / CSO
+  - Premium street detection (Shrewsbury, Ailesbury, Vico Road, etc.)
+  - Protected structure/heritage keyword filtering
+  - Dublin postcode mapping (D04, D06, A96)
+- Dublin vocabulary added to `src/config/global-locations.ts`:
+  - Permit terms: Planning Application, Protected Structure, Conservation Area, etc.
+  - Liquor terms: Intoxicating Liquor Licence, Publican's Licence, Special Exemption Order
+  - Real estate terms: Georgian, Victorian, Period property, Mews, Embassy, Red brick
+  - Local phrases: the Southside, D4, D6, the village, embassy belt, DART line
+  - Currency: EUR (€)
+- Auction houses added to `src/lib/specialty-auctions.ts`:
+  - **Adam's** - Classic Irish Art, Jack B. Yeats, Period Furniture (all 3 neighborhoods)
+  - **Whyte's** - History, Irish Republic Memorabilia, Fine Art (Ballsbridge only)
+  - New `uk-ireland` region type for auction house targeting
+- Files changed: `global-locations.ts`, `dublin-adapter.ts` (new), `adapters/index.ts`, `specialty-auctions.ts`
+
 **RSS Article Metadata Compliance:**
 - RSS-sourced articles now have proper metadata:
   - `author_type: 'ai'`
@@ -207,8 +231,8 @@
 - Cron: Every 6 hours (fetches next 48 hours of permits)
 
 **Global Data Engine (International Markets):**
-- New City Adapter pattern for standardized civic data fetching across 5 international markets
-- Supported cities: London (UK), Sydney (AU), Chicago (US), Los Angeles (US), Washington DC (US)
+- New City Adapter pattern for standardized civic data fetching across 6 international markets
+- Supported cities: London (UK), Sydney (AU), Chicago (US), Los Angeles (US), Washington DC (US), Dublin (IE)
 - Each adapter implements: `getPermits()`, `getLiquor()`, `getSafety()` with city-specific API integrations
 - City-specific vocabulary injection for AI content (currency symbols, local terminology)
 - Config: `src/config/global-locations.ts` with zones, postal codes, editorial tones
@@ -225,6 +249,7 @@
 | Chicago | Chicago Data Portal (Socrata) | Business Licenses | Crimes Dataset |
 | Los Angeles | LA Open Data (Socrata) | CA ABC | LAPD Data |
 | Washington DC | DC Open Data (ArcGIS) | ABRA | MPD Data |
+| Dublin | Dublin City Council + DLR | Courts Service | Garda Síochána / CSO |
 
 ### Previous Changes (2026-02-04)
 

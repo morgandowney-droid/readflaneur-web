@@ -218,7 +218,7 @@ nyc_crime_stats (
 ### Global Civic Data Tables (International Markets)
 
 ```sql
--- Global Permits cache (London, Sydney, Chicago, LA, DC)
+-- Global Permits cache (London, Sydney, Chicago, LA, DC, Dublin)
 global_permits (
   id UUID PRIMARY KEY,
   source_id TEXT NOT NULL,
