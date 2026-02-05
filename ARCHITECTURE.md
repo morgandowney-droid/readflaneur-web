@@ -166,6 +166,9 @@ NYC Open Data integration includes:
 - **Archive Hunter** - Luxury resale inventory monitoring (TheRealReal, WGACA, Rebag, Fashionphile)
 - **Residency Radar** - Seasonal luxury brand pop-ups via hospitality news (15 hotspots, 30+ brands)
 - **Route Alerts** - Premium airline route monitoring via aviation news (8 hubs, 22+ carriers, 45+ destinations)
+- **Museum Watch** - Tier 1 museum blockbuster exhibition alerts (17 museums: Met, MoMA, Tate, Louvre, etc.)
+- **Overture Alerts** - Opera/Ballet/Symphony Opening Nights and Premieres (10 venues: Met Opera, ROH, La Scala, etc.)
+- **Design Week Coverage** - Global Design Week calendar engine (6 events: Salone del Mobile, LDF, Design Miami, etc.)
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)

@@ -14,11 +14,40 @@
 **Cached Cron Image System:**
 - New system for reusing AI-generated images across recurring cron stories
 - Saves Gemini token costs by caching category-specific images in Supabase
-- 19 image categories: route-alert, residency-radar, fashion-week, archive-hunter, sample-sale, nimby-alert, political-wallet, review-watch, gala-watch, retail-watch, escape-index, nuisance-watch, art-fair, auction, heritage-watch, alfresco-watch, filming-permit, civic-data, real-estate
+- 22 image categories: route-alert, residency-radar, fashion-week, archive-hunter, sample-sale, nimby-alert, political-wallet, review-watch, gala-watch, retail-watch, escape-index, nuisance-watch, art-fair, auction, heritage-watch, alfresco-watch, filming-permit, civic-data, real-estate, museum-watch, overture-alert, design-week
 - Library: `src/lib/cron-images.ts` with `getCronImage(category, supabase)`
 - Admin API: `/api/admin/pregenerate-cron-images` (GET=list, POST=generate)
-- Updated crons: sync-route-alerts, sync-residency-radar now use cached images
+- All cron jobs now use cached images for consistent visuals and cost savings
 - First request generates image, subsequent requests reuse cached URL
+
+**Museum Watch Service ("The Blockbuster Filter"):**
+- New service monitoring Tier 1 global museums for blockbuster exhibitions
+- 17 museums across 5 hub cities: NYC (Met, MoMA, Guggenheim, Whitney), London (Tate Modern, V&A, British Museum, National Gallery), Paris (Louvre, Musée d'Orsay, Pompidou, Fondation Louis Vuitton), Tokyo (Mori, teamLab, National Museum), LA (LACMA, Getty, Broad)
+- Blockbuster filter: Must have keywords (Picasso, Van Gogh, Monet, etc.) OR 2+ month duration
+- Dual trigger: Member Preview (48h window) with "Insider" tone, Public Opening with "Critic" tone
+- Hub-to-spoke syndication targets relevant neighborhoods per museum
+- Files: `src/lib/museum-watch.ts`, `src/app/api/cron/sync-museum-watch/route.ts`
+- Cron: Weekly on Mondays at 7 AM UTC
+
+**Overture Alert Service ("The Premiere Filter"):**
+- New service monitoring Opera, Ballet, and Symphony for Opening Nights and Premieres
+- 10 Tier 1 venues: Met Opera, Royal Opera House, La Scala, Opéra Garnier, Sydney Opera House, Berlin Staatsoper, Vienna State Opera, San Francisco Opera, Chicago Lyric, Paris National Opera Ballet
+- Premiere filter: Opening Night, New Production, Premiere, Gala keywords
+- Star Power whitelists: 10 conductors (Dudamel, Nézet-Séguin), 15 singers (Netrebko, Kaufmann), 8 dancers (Copeland, Cojocaru)
+- 48-hour trigger window before performances
+- "Glittering" editorial tone with cultural prestige focus
+- Files: `src/lib/overture-alert.ts`, `src/app/api/cron/sync-overture-alerts/route.ts`
+- Cron: Daily at 10 AM UTC
+
+**Design Week Service ("The Calendar Override"):**
+- Special Event engine for Global Design Weeks
+- 6 major events: Salone del Mobile (Milan), London Design Festival, Design Miami, 3 Days of Design (Copenhagen), Stockholm Design Week, NYCxDESIGN
+- Event states: Preview (teaser), Live (daily coverage), Wrap (recap), Dormant (off-season)
+- Daily Focus rotation highlighting different neighborhoods/hubs during events
+- Hero priority for Live coverage (articles pinned to top)
+- Hub-to-spoke syndication targets design district neighborhoods
+- Files: `src/lib/design-week.ts`, `src/app/api/cron/sync-design-week/route.ts`
+- Cron: Daily at 6 AM UTC (only generates during active/preview periods)
 
 **Route Alert Service ("The Hub Map"):**
 - New service monitoring airline schedules for new "Direct Premium Routes"
@@ -504,6 +533,9 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | sync-archive-hunter | 9 AM, 5 PM UTC | Luxury resale inventory alerts (TheRealReal, WGACA, Rebag, Fashionphile) |
 | sync-residency-radar | Wednesday 8 AM UTC | Seasonal luxury brand pop-ups in vacation hotspots (Nobu, Carbone, Dior, etc.) |
 | sync-route-alerts | Thursday 7 AM UTC | Premium airline route announcements (JFK-Nice, LHR-Phuket, etc.) |
+| sync-museum-watch | Monday 7 AM UTC | Tier 1 museum blockbuster exhibition alerts (Met, MoMA, Tate, Louvre, etc.) |
+| sync-overture-alerts | Daily 10 AM UTC | Opera/Ballet/Symphony Opening Nights and Premieres (Met Opera, ROH, La Scala, etc.) |
+| sync-design-week | Daily 6 AM UTC | Global Design Week coverage (Salone del Mobile, LDF, Design Miami, etc.) |
 
 ## Database Tables
 

@@ -1594,6 +1594,283 @@ Body: "Just processed into inventory. A Togo leather Birkin 25 with gold hardwar
 
 **Files:** `src/lib/archive-hunter.ts`, `src/app/api/cron/sync-archive-hunter/route.ts`
 
+### 7.22 Museum Watch Service (Blockbuster Exhibitions)
+
+Museum Watch Service monitors Tier 1 global museums for blockbuster exhibitions, alerting residents about Member Previews and Public Openings. Strategy: "The Blockbuster Filter" - only major exhibitions worth clearing your calendar for.
+
+**Target Museums (17 Tier 1 Institutions):**
+
+```typescript
+const MUSEUM_TARGETS = {
+  New_York: [
+    { id: 'met', name: 'The Metropolitan Museum of Art', neighborhoods: ['nyc-upper-east-side'] },
+    { id: 'moma', name: 'Museum of Modern Art', neighborhoods: ['nyc-midtown'] },
+    { id: 'guggenheim', name: 'Solomon R. Guggenheim Museum', neighborhoods: ['nyc-upper-east-side'] },
+    { id: 'whitney', name: 'Whitney Museum of American Art', neighborhoods: ['nyc-meatpacking'] },
+  ],
+  London: [
+    { id: 'tate-modern', name: 'Tate Modern', neighborhoods: ['london-southbank'] },
+    { id: 'va', name: 'Victoria and Albert Museum', neighborhoods: ['london-south-kensington'] },
+    { id: 'british-museum', name: 'British Museum', neighborhoods: ['london-bloomsbury'] },
+    { id: 'national-gallery', name: 'National Gallery', neighborhoods: ['london-west-end'] },
+  ],
+  Paris: [
+    { id: 'louvre', name: 'Musée du Louvre', neighborhoods: ['paris-1st'] },
+    { id: 'orsay', name: "Musée d'Orsay", neighborhoods: ['paris-7th'] },
+    { id: 'pompidou', name: 'Centre Pompidou', neighborhoods: ['paris-le-marais'] },
+    { id: 'louis-vuitton', name: 'Fondation Louis Vuitton', neighborhoods: ['paris-16th'] },
+  ],
+  Tokyo: [
+    { id: 'mori', name: 'Mori Art Museum', neighborhoods: ['tokyo-roppongi'] },
+    { id: 'teamlab', name: 'teamLab Borderless', neighborhoods: ['tokyo-odaiba'] },
+    { id: 'national-tokyo', name: 'Tokyo National Museum', neighborhoods: ['tokyo-ueno'] },
+  ],
+  Los_Angeles: [
+    { id: 'lacma', name: 'Los Angeles County Museum of Art', neighborhoods: ['la-mid-wilshire'] },
+    { id: 'getty', name: 'The Getty Center', neighborhoods: ['la-brentwood'] },
+    { id: 'broad', name: 'The Broad', neighborhoods: ['la-downtown'] },
+  ],
+};
+```
+
+**The Blockbuster Filter:**
+
+Only exhibitions meeting these criteria trigger stories:
+
+| Criterion | Threshold | Examples |
+|-----------|-----------|----------|
+| Artist Keywords | Must match | Picasso, Van Gogh, Monet, Warhol, Basquiat, Kusama, Vermeer, Michelangelo |
+| Duration | 2+ months | Indicates major investment |
+| Featured | Museum-highlighted | "Major Exhibition" designation |
+
+**Dual Trigger System:**
+
+| Trigger | Timing | Category | Tone |
+|---------|--------|----------|------|
+| Member Preview | 48h before members-only opening | `CULTURE WATCH` | "Insider" - first access |
+| Public Opening | Day of/before public opening | `CULTURE WATCH` | "Critic" - must-see validation |
+
+**Gemini Story Generation:**
+
+```
+// Member Preview
+Headline: "First Look: Picasso at the Met Opens to Members Thursday"
+Body: "Members get first access to 'Picasso: A Retrospective' starting Thursday evening.
+       General admission opens Saturday. The show runs through August - don't rush."
+
+// Public Opening
+Headline: "Must-See: Kusama's Infinity Rooms Open at The Broad"
+Body: "The wait is over. Yayoi Kusama's immersive installation opens to the public today.
+       Timed tickets are required - book now or wait months."
+```
+
+**Cron Schedule:** Weekly on Mondays at 7 AM UTC
+
+**Files:** `src/lib/museum-watch.ts`, `src/app/api/cron/sync-museum-watch/route.ts`
+
+### 7.23 Overture Alert Service (Opera/Ballet/Symphony Premieres)
+
+Overture Alert Service monitors premiere opera houses, ballet companies, and symphony orchestras for Opening Nights and new productions. Strategy: "The Premiere Filter" - only the performances that matter to the cultural elite.
+
+**Performance Venues (10 Tier 1 Institutions):**
+
+```typescript
+const PERFORMANCE_HUBS = {
+  New_York: [
+    { id: 'met-opera', name: 'Metropolitan Opera', type: 'Opera', neighborhoods: ['nyc-upper-west-side'] },
+    { id: 'nyc-ballet', name: 'New York City Ballet', type: 'Ballet', neighborhoods: ['nyc-upper-west-side'] },
+  ],
+  London: [
+    { id: 'royal-opera', name: 'Royal Opera House', type: 'Opera', neighborhoods: ['london-covent-garden'] },
+    { id: 'royal-ballet', name: 'Royal Ballet', type: 'Ballet', neighborhoods: ['london-covent-garden'] },
+  ],
+  Paris: [
+    { id: 'opera-garnier', name: 'Opéra Garnier', type: 'Opera', neighborhoods: ['paris-9th'] },
+    { id: 'paris-ballet', name: 'Paris Opera Ballet', type: 'Ballet', neighborhoods: ['paris-9th'] },
+  ],
+  Milan: [
+    { id: 'la-scala', name: 'Teatro alla Scala', type: 'Opera', neighborhoods: ['milan-brera'] },
+  ],
+  Sydney: [
+    { id: 'sydney-opera', name: 'Sydney Opera House', type: 'Opera', neighborhoods: ['sydney-circular-quay'] },
+  ],
+  Vienna: [
+    { id: 'vienna-state', name: 'Vienna State Opera', type: 'Opera', neighborhoods: ['vienna-innere-stadt'] },
+  ],
+  Berlin: [
+    { id: 'berlin-staatsoper', name: 'Staatsoper Berlin', type: 'Opera', neighborhoods: ['berlin-mitte'] },
+  ],
+};
+```
+
+**The Premiere Filter:**
+
+| Keyword | Type | Priority |
+|---------|------|----------|
+| Opening Night | Performance | High |
+| New Production | Performance | High |
+| Premiere | Performance | High |
+| Season Opening | Event | High |
+| Gala | Event | Medium |
+| World Premiere | Performance | Highest |
+
+**Star Power Whitelists:**
+
+```typescript
+// Conductors (10)
+const STAR_CONDUCTORS = [
+  'Gustavo Dudamel', 'Yannick Nézet-Séguin', 'Antonio Pappano',
+  'Riccardo Muti', 'Simon Rattle', 'Andris Nelsons', 'Esa-Pekka Salonen',
+  'Kirill Petrenko', 'Franz Welser-Möst', 'Valery Gergiev'
+];
+
+// Singers (15)
+const STAR_SINGERS = [
+  'Anna Netrebko', 'Jonas Kaufmann', 'Plácido Domingo', 'Renée Fleming',
+  'Diana Damrau', 'Sonya Yoncheva', 'Lisette Oropesa', 'Pretty Yende',
+  'Juan Diego Flórez', 'Javier Camarena', 'Bryn Terfel', 'Gerald Finley',
+  'Joyce DiDonato', 'Elīna Garanča', 'Sondra Radvanovsky'
+];
+
+// Dancers (8)
+const STAR_DANCERS = [
+  'Misty Copeland', 'Isabella Boylston', 'Marianela Nuñez', 'Sarah Lamb',
+  'Francesca Hayward', 'Tiler Peck', 'Alena Kovaleva', 'Vadim Muntagirov'
+];
+```
+
+**48-Hour Trigger Window:**
+
+Stories generate 48 hours before the performance to give residents time to secure tickets.
+
+**Gemini Story Generation:**
+
+Tone: "Glittering" - cultural prestige and social calendar.
+
+```
+Headline: "Opening Night: La Traviata Returns to the Met with Netrebko"
+Body: "The Met's new production of La Traviata opens Saturday with Anna Netrebko
+       in the title role. Yannick Nézet-Séguin conducts. Dress code: Black tie optional.
+       This is THE ticket of the season."
+```
+
+**Cron Schedule:** Daily at 10 AM UTC
+
+**Files:** `src/lib/overture-alert.ts`, `src/app/api/cron/sync-overture-alerts/route.ts`
+
+### 7.24 Design Week Service (Global Design Events)
+
+Design Week Service provides calendar-driven coverage for major global design weeks. Architecture: "The Calendar Override" with daily focus rotation highlighting different neighborhoods and design hubs.
+
+**Global Design Events (6 Major Weeks):**
+
+```typescript
+const DESIGN_EVENTS = [
+  {
+    id: 'salone-del-mobile',
+    name: 'Salone del Mobile',
+    city: 'Milan',
+    month: 4, // April
+    duration: 6,
+    neighborhoods: ['milan-brera', 'milan-tortona', 'milan-porta-nuova'],
+    dailyFocus: [
+      { day: 1, focus: 'Brera Design District', neighborhood: 'milan-brera' },
+      { day: 2, focus: 'Tortona Design Week', neighborhood: 'milan-tortona' },
+      { day: 3, focus: '5Vie Art + Design', neighborhood: 'milan-centro' },
+      { day: 4, focus: 'Isola Design Festival', neighborhood: 'milan-isola' },
+      { day: 5, focus: 'Fuorisalone Highlights', neighborhood: 'milan-brera' },
+      { day: 6, focus: 'Salone Wrap-Up', neighborhood: 'milan-brera' },
+    ],
+  },
+  {
+    id: 'london-design-festival',
+    name: 'London Design Festival',
+    city: 'London',
+    month: 9, // September
+    duration: 9,
+    neighborhoods: ['london-south-kensington', 'london-shoreditch', 'london-kings-cross'],
+  },
+  {
+    id: 'design-miami',
+    name: 'Design Miami',
+    city: 'Miami',
+    month: 12, // December (during Art Basel Miami)
+    duration: 5,
+    neighborhoods: ['miami-design-district', 'miami-south-beach'],
+  },
+  {
+    id: '3-days-of-design',
+    name: '3 Days of Design',
+    city: 'Copenhagen',
+    month: 6, // June
+    duration: 3,
+    neighborhoods: ['copenhagen-frederiksberg', 'copenhagen-norrebro'],
+  },
+  {
+    id: 'stockholm-design-week',
+    name: 'Stockholm Design Week',
+    city: 'Stockholm',
+    month: 2, // February
+    duration: 5,
+    neighborhoods: ['stockholm-ostermalm', 'stockholm-sodermalm'],
+  },
+  {
+    id: 'nycxdesign',
+    name: 'NYCxDESIGN',
+    city: 'New_York',
+    month: 5, // May
+    duration: 10,
+    neighborhoods: ['nyc-soho', 'nyc-tribeca', 'nyc-chelsea'],
+  },
+];
+```
+
+**Event State Detection:**
+
+| State | Condition | Coverage |
+|-------|-----------|----------|
+| Preview | 7 days before start | Teaser content, schedules |
+| Live | During event dates | **Hero priority** (pinned) |
+| Wrap | 3 days after end | Highlights, trends, recap |
+| Dormant | Off-season | No coverage |
+
+**Daily Focus Rotation:**
+
+Each event has a daily focus that rotates through different neighborhoods/districts:
+
+```typescript
+function getDailyFocus(event: DesignEvent, dayOfEvent: number): DailyFocus {
+  return event.dailyFocus?.[dayOfEvent - 1] || null;
+}
+
+// Day 1 of Salone: "Brera Design District"
+// Day 2 of Salone: "Tortona Design Week"
+// etc.
+```
+
+**Hero Priority (Live State):**
+
+During "Live" state, articles are created with `is_pinned: true`, floating them to the top of neighborhood feeds. This overrides standard local news during design weeks.
+
+**Gemini Story Generation:**
+
+Tone varies by state:
+- **Preview**: Anticipation, schedule highlights, what to see
+- **Live**: Energy, must-see installations, where to be today
+- **Wrap**: Trends spotted, standout pieces, market sentiment
+
+```
+// Live Coverage
+Headline: "Salone Day 3: 5Vie Art + Design Takes Center Stage"
+Body: "Day three of Salone del Mobile shifts focus to the 5Vie district.
+       Don't miss the Alcova showcase in the former military hospital.
+       Evening drinks at Botanical Club on Via Tortona."
+```
+
+**Cron Schedule:** Daily at 6 AM UTC
+
+**Files:** `src/lib/design-week.ts`, `src/app/api/cron/sync-design-week/route.ts`
+
 ---
 
 ---

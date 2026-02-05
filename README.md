@@ -30,6 +30,9 @@ A luxury hyper-local news and neighborhood guide platform. Flâneur delivers cur
 - **Archive Hunter** - Luxury resale inventory alerts from TheRealReal, WGACA, Rebag, Fashionphile ($3k+ items)
 - **Residency Radar** - "Scene Watch" alerts for luxury brand seasonal pop-ups (Nobu/Carbone in Hamptons, Dior in Mykonos)
 - **Route Alerts** - "Flight Check" alerts for new direct premium routes from local hubs (JFK-Nice, LHR-Phuket, etc.)
+- **Museum Watch** - "Culture Watch" alerts for blockbuster exhibitions at Tier 1 museums (Met, MoMA, Tate, Louvre, etc.)
+- **Overture Alerts** - "Curtain Up" alerts for Opening Nights at premiere opera houses (Met Opera, ROH, La Scala, etc.)
+- **Design Week Coverage** - Calendar-driven coverage for global design weeks (Salone del Mobile, LDF, Design Miami, etc.)
 - **Multi-Neighborhood Selection** - Follow multiple neighborhoods for a personalized feed
 - **Tip Submission** - Community-sourced news tips with optional anonymity
 - **Advertiser Portal** - Self-service advertising with Stripe payments
