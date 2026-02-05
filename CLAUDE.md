@@ -11,6 +11,22 @@
 
 ### Recent Changes (2026-02-05)
 
+**Residency Radar Service ("Brand Migration"):**
+- New service tracking seasonal pop-ups of luxury brands in vacation hotspots
+- Strategy: City brands migrate with the seasons - Winter: Alps, St. Barts; Summer: Med, Hamptons
+- 15 seasonal hotspots: St. Moritz, Aspen, Courchevel, Gstaad, Verbier (Winter); Mykonos, St. Tropez, Hamptons, Capri, Ibiza, Marbella, Amalfi, Sardinia (Summer); St. Barts (Winter Caribbean)
+- 30+ migrating luxury brands across 4 categories:
+  - Hospitality: Nobu, Carbone, Cipriani, Casa Tua, Zuma, Bagatelle, Nammos, Scorpios
+  - Fashion: Dior, Louis Vuitton, Chanel, Gucci, Jacquemus, Loro Piana, The Row, Bottega Veneta
+  - Jewelry: Cartier, Bulgari, Van Cleef & Arpels, Rolex
+  - Lifestyle: Aman, Six Senses, Soho House
+- News sources: Eater, Robb Report, WWD, Wallpaper*, Departures, Bloomberg Pursuits
+- Feeder city targeting: NYC residents see Hamptons pop-ups, London sees St. Tropez
+- Residency types: Restaurant, Beach_Club, Pop_Up_Shop, Spa, Hotel_Takeover
+- Gemini story generation with "Scene Watch" editorial tone
+- Files: `src/lib/residency-radar.ts`, `src/app/api/cron/sync-residency-radar/route.ts`
+- Cron: Weekly on Wednesdays at 8 AM UTC
+
 **Archive Hunter Service ("Digital to Physical"):**
 - New service monitoring luxury resale boutique inventory for "Investment Grade" pieces
 - Store locations: TheRealReal, WGACA, Rebag, Fashionphile (15 locations)
@@ -463,6 +479,7 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | sync-political-wallet | Tuesday 7 AM UTC | Political donation trends from FEC/UK Electoral Commission ($1k+ donors) |
 | sync-fashion-week | Daily 5 AM UTC | Big Four fashion week coverage (NYFW, LFW, MFW, PFW) with traffic alerts |
 | sync-archive-hunter | 9 AM, 5 PM UTC | Luxury resale inventory alerts (TheRealReal, WGACA, Rebag, Fashionphile) |
+| sync-residency-radar | Wednesday 8 AM UTC | Seasonal luxury brand pop-ups in vacation hotspots (Nobu, Carbone, Dior, etc.) |
 
 ## Database Tables
 

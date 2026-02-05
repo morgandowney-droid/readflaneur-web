@@ -164,6 +164,7 @@ NYC Open Data integration includes:
 - **Political Wallet** - Donation trend monitoring via FEC API and UK Electoral Commission
 - **Fashion Week Coverage** - Big Four fashion week alerts (NYFW, LFW, MFW, PFW) with venue mapping
 - **Archive Hunter** - Luxury resale inventory monitoring (TheRealReal, WGACA, Rebag, Fashionphile)
+- **Residency Radar** - Seasonal luxury brand pop-ups via hospitality news (15 hotspots, 30+ brands)
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)

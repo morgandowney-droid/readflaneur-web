@@ -28,6 +28,7 @@ A luxury hyper-local news and neighborhood guide platform. Flâneur delivers cur
 - **Political Wallet** - Donation trend monitoring showing "where the neighborhood is betting" (FEC/UK Electoral data)
 - **Fashion Week Coverage** - Big Four fashion week alerts (NYFW, LFW, MFW, PFW) with traffic warnings and show schedules
 - **Archive Hunter** - Luxury resale inventory alerts from TheRealReal, WGACA, Rebag, Fashionphile ($3k+ items)
+- **Residency Radar** - "Scene Watch" alerts for luxury brand seasonal pop-ups (Nobu/Carbone in Hamptons, Dior in Mykonos)
 - **Multi-Neighborhood Selection** - Follow multiple neighborhoods for a personalized feed
 - **Tip Submission** - Community-sourced news tips with optional anonymity
 - **Advertiser Portal** - Self-service advertising with Stripe payments
