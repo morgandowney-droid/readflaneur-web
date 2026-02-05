@@ -199,10 +199,12 @@ export async function POST(request: Request) {
       console.log(`Generating image for: ${article.headline}`);
 
       // Create prompt with strong safety restrictions
+      // Per readflaneur.com/standards: "All AI visuals must be stylized artistic renderings"
       const prompt = `${article.headline}
 
-Create a peaceful, positive editorial photograph that illustrates this news headline.
-Style: Documentary photography, natural lighting, editorial quality.
+Create a stylized artistic illustration that evokes this news headline.
+Style: Editorial illustration, watercolor or gouache painting style, soft artistic rendering.
+NOT a photograph - this must be clearly an artistic interpretation.
 
 CRITICAL SAFETY RULES - NEVER include ANY of the following:
 - Weapons of any kind (guns, knives, batons, etc.)
@@ -215,17 +217,20 @@ CRITICAL SAFETY RULES - NEVER include ANY of the following:
 - Nudity or sexualized content
 - Revealing clothing or suggestive poses
 - Anything disturbing, graphic, or inappropriate
+- Photorealistic human faces or identifiable individuals
 
 IMPORTANT: Do NOT include any text, words, letters, signs, logos, or writing in the image.
-Focus on neutral, safe imagery like buildings, streets, community spaces, or people in calm situations.`;
+Focus on atmospheric, stylized imagery of buildings, streets, community spaces, or abstract representations of the story theme.
+The image should be beautiful and evocative, not literal or photographic.`;
 
       // Generate with Gemini 2.5 Flash Image
+      // Per readflaneur.com/standards: stylized artistic renderings, not photorealistic
       const response = await genai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: [
           {
             role: 'user',
-            parts: [{ text: `Generate a photorealistic editorial photograph: ${prompt}` }],
+            parts: [{ text: `Generate a stylized artistic illustration (NOT a photograph): ${prompt}` }],
           },
         ],
         config: {

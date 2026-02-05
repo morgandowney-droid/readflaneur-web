@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const days = parseInt(searchParams.get('days') || '1', 10);
     const category = searchParams.get('category') || null;
     const neighborhoodId = searchParams.get('neighborhood') || null;
+    const sourceFilter = searchParams.get('source') || null; // 'rss', 'grok', 'gemini', or null
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -116,6 +117,8 @@ export async function GET(request: NextRequest) {
         slug,
         category_label,
         published_at,
+        ai_model,
+        author_type,
         neighborhood:neighborhoods!articles_neighborhood_id_fkey(id, name, city, region)
       `)
       .eq('status', 'published')
@@ -128,6 +131,15 @@ export async function GET(request: NextRequest) {
     }
     if (neighborhoodId) {
       articlesQuery = articlesQuery.eq('neighborhood_id', neighborhoodId);
+    }
+    // Source filter: rss (Claude-processed RSS feeds), grok, gemini
+    if (sourceFilter === 'rss') {
+      // RSS articles are processed by Claude Sonnet and have 'News Brief' category
+      articlesQuery = articlesQuery.eq('category_label', 'News Brief');
+    } else if (sourceFilter === 'grok') {
+      articlesQuery = articlesQuery.ilike('ai_model', 'grok%');
+    } else if (sourceFilter === 'gemini') {
+      articlesQuery = articlesQuery.ilike('ai_model', 'gemini%');
     }
 
     const { data: articles } = await articlesQuery;

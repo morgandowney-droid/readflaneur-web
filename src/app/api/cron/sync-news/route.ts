@@ -205,6 +205,9 @@ export async function GET(request: Request) {
               published_at: new Date().toISOString(),
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
+              author_type: 'ai',
+              ai_model: 'claude-sonnet-4',
+              category_label: 'News Brief',
               editor_notes: `Source: ${item.source} - ${item.link}`,
             })
             .select('id')

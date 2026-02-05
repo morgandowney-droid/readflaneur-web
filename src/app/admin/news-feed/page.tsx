@@ -18,6 +18,8 @@ interface Article {
   slug: string;
   category_label: string | null;
   published_at: string;
+  ai_model: string | null;
+  author_type: string | null;
   neighborhood: {
     id: string;
     name: string;
@@ -71,7 +73,7 @@ function truncate(str: string, maxLen: number): string {
 export default function NewsFeedAdmin() {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState({ days: 1, category: '', neighborhood: '', storyType: '' });
+  const [filter, setFilter] = useState({ days: 1, category: '', neighborhood: '', storyType: '', source: '' });
   const [showNoContent, setShowNoContent] = useState(false);
   const [showOverwhelmed, setShowOverwhelmed] = useState(false);
   const [showFailed, setShowFailed] = useState(true);
@@ -87,7 +89,14 @@ export default function NewsFeedAdmin() {
       const params = new URLSearchParams();
       params.set('days', filter.days.toString());
       // storyType overrides category if set (both filter by category_label)
-      if (filter.storyType) {
+      // source filter also uses category_label for RSS
+      if (filter.source === 'rss') {
+        params.set('source', 'rss');
+      } else if (filter.source === 'grok') {
+        params.set('source', 'grok');
+      } else if (filter.source === 'gemini') {
+        params.set('source', 'gemini');
+      } else if (filter.storyType) {
         params.set('category', filter.storyType);
       } else if (filter.category) {
         params.set('category', filter.category);
@@ -293,8 +302,9 @@ export default function NewsFeedAdmin() {
             <span className="text-xs text-neutral-500">Story Type:</span>
             <select
               value={filter.storyType}
-              onChange={(e) => setFilter({ ...filter, storyType: e.target.value, category: '' })}
+              onChange={(e) => setFilter({ ...filter, storyType: e.target.value, category: '', source: '' })}
               className="text-sm border border-neutral-200 px-2 py-1 bg-white max-w-[200px]"
+              disabled={!!filter.source}
             >
               <option value="">All Story Types</option>
               {GEMINI_STORY_GENERATORS.map(g => (
@@ -302,6 +312,20 @@ export default function NewsFeedAdmin() {
                   {g.name}
                 </option>
               ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-neutral-500">Source:</span>
+            <select
+              value={filter.source}
+              onChange={(e) => setFilter({ ...filter, source: e.target.value, storyType: '', category: '' })}
+              className="text-sm border border-neutral-200 px-2 py-1 bg-white"
+            >
+              <option value="">All Sources</option>
+              <option value="rss">RSS Feeds (News Brief)</option>
+              <option value="grok">Grok AI</option>
+              <option value="gemini">Gemini AI</option>
             </select>
           </div>
 
@@ -321,6 +345,7 @@ export default function NewsFeedAdmin() {
                 <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase w-36">Neighborhood</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase w-20">Region</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase w-28">Category</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase w-20">Source</th>
                 <th className="text-right px-4 py-3 text-xs font-medium text-neutral-500 uppercase w-16">Time</th>
               </tr>
             </thead>
@@ -349,6 +374,19 @@ export default function NewsFeedAdmin() {
                       </span>
                     )}
                   </td>
+                  <td className="px-4 py-2">
+                    {article.category_label === 'News Brief' ? (
+                      <span className="text-xs bg-blue-100 px-2 py-0.5 text-blue-700">RSS</span>
+                    ) : article.ai_model?.toLowerCase().includes('grok') ? (
+                      <span className="text-xs bg-purple-100 px-2 py-0.5 text-purple-700">Grok</span>
+                    ) : article.ai_model?.toLowerCase().includes('gemini') ? (
+                      <span className="text-xs bg-green-100 px-2 py-0.5 text-green-700">Gemini</span>
+                    ) : article.author_type === 'ai' ? (
+                      <span className="text-xs bg-neutral-100 px-2 py-0.5 text-neutral-600">AI</span>
+                    ) : (
+                      <span className="text-xs text-neutral-400">-</span>
+                    )}
+                  </td>
                   <td className="px-4 py-2 text-right text-neutral-400 text-xs">
                     {formatRelativeTime(article.published_at)}
                   </td>
@@ -356,7 +394,7 @@ export default function NewsFeedAdmin() {
               ))}
               {articles.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-neutral-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-neutral-400">
                     No articles found for selected filters
                   </td>
                 </tr>
