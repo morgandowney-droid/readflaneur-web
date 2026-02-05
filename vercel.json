@@ -135,6 +135,10 @@
     {
       "path": "/api/cron/sync-escape-index",
       "schedule": "45 */6 * * *"
+    },
+    {
+      "path": "/api/cron/sync-review-watch",
+      "schedule": "0 2,6,10,14,18,22 * * *"
     }
   ]
 }
