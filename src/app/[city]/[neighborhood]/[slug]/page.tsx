@@ -157,8 +157,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           )}
         </header>
 
-        {/* Featured Image */}
-        {(() => {
+        {/* Featured Image - only show if image exists */}
+        {article.image_url && (() => {
           const isAIGenerated = article.article_type === 'community_news' ||
                                 article.article_type === 'brief_summary' ||
                                 article.author_type === 'ai';
