@@ -28,6 +28,7 @@ import {
   LEGACY_AIRLINES,
   LEISURE_DESTINATIONS,
 } from '@/lib/route-alert';
+import { getCronImage } from '@/lib/cron-images';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for scraping
@@ -143,6 +144,9 @@ export async function GET(request: Request) {
       });
     }
 
+    // Get cached image for route alerts (reused across all stories)
+    const cachedImageUrl = await getCronImage('route-alert', supabase);
+
     // Create articles for each story
     for (const story of stories) {
       for (const neighborhoodId of story.targetNeighborhoods) {
@@ -196,12 +200,13 @@ export async function GET(request: Request) {
             }
           }
 
-          // Create article
+          // Create article with cached image
           const { error: insertError } = await supabase.from('articles').insert({
             neighborhood_id: finalNeighborhoodId,
             headline: story.headline,
             body_text: story.body,
             preview_text: story.previewText,
+            image_url: cachedImageUrl, // Reuse cached category image
             slug,
             status: 'published',
             published_at: new Date().toISOString(),
