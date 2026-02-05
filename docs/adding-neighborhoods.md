@@ -274,6 +274,20 @@ Blue Chip auction calendar scraping from Sotheby's, Christie's, and Phillips. St
 
 Schedule: Weekly on Sundays at 11 PM UTC.
 
+### Global Auction Watch (International Art Hubs)
+
+Hub & Spoke model syndicates auction news from major art market cities to local spoke neighborhoods.
+
+| Hub | Spoke Neighborhoods | Regional Keywords |
+|-----|---------------------|-------------------|
+| London | Mayfair, Chelsea, Kensington, Notting Hill, Hampstead | Old Master, British Art, Impressionist |
+| Paris | 7th Arr, 16th Arr, Le Marais, Saint-Germain | Design, Surrealist, Art d'Asie |
+| Hong Kong | Central, SoHo HK, The Peak | 20th Century, Contemporary, Watches, Chinese Works |
+| Los Angeles | Beverly Hills, West Hollywood, Santa Monica | California Art, Contemporary, Pop Art |
+| Geneva | European Vacation, Zurich | Luxury, Watches, Jewels, Gemstones |
+
+Schedule: Weekly on Sundays at 10 PM UTC (before NYC sync).
+
 ---
 
 ## Global Locations Configuration (International)

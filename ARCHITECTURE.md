@@ -151,6 +151,7 @@ NYC Open Data integration includes:
 - **Open Restaurants** - "Al Fresco Alert" for outdoor dining approvals (stored as articles)
 - **Heritage Filings** - Demolition, landmark alteration, and tree removal alerts (stored as articles)
 - **Auction Calendar** - Blue Chip auction syndication to Northeast Luxury Corridor (stored as articles)
+- **Global Auction Calendar** - International art hub syndication (London, Paris, Hong Kong, LA, Geneva)
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)

@@ -595,6 +595,75 @@ The auction syndication targets 25+ neighborhoods across the region:
 
 **File:** `src/lib/nyc-auctions.ts`, `src/app/api/cron/sync-auction-calendar/route.ts`
 
+### 7.9 Global Auction Watch (International Art Hubs)
+
+Global Auction Watch extends the auction service to international art market cities using a "Hub & Spoke" model. Each hub city scrapes local auctions and syndicates stories to nearby spoke neighborhoods.
+
+**Hub Configuration:**
+
+```typescript
+const ART_HUBS = {
+  London: {
+    houses: ['Sothebys_LDN', 'Christies_LDN', 'Phillips_LDN'],
+    currency: 'GBP',
+    targetFeeds: ['Mayfair', 'Chelsea', 'Kensington', 'Notting Hill', 'Hampstead'],
+    tone: 'Traditional & Sharp',
+    landmarks: ['Bond Street', 'King Street'],
+  },
+  Paris: {
+    houses: ['Sothebys_PAR', 'Christies_PAR'],
+    currency: 'EUR',
+    targetFeeds: ['7th Arr', '16th Arr', 'Le Marais', 'Saint-Germain'],
+    tone: 'Chic & Intellectual',
+    landmarks: ['Drouot', 'Avenue Matignon'],
+  },
+  Hong_Kong: {
+    houses: ['Sothebys_HK', 'Christies_HK', 'Phillips_HK'],
+    currency: 'HKD',
+    targetFeeds: ['Central', 'SoHo HK', 'The Peak'],
+    tone: 'Fast-Paced & Investment Heavy',
+  },
+  Los_Angeles: {
+    houses: ['Sothebys_LA', 'Christies_LA'],
+    currency: 'USD',
+    targetFeeds: ['Beverly Hills', 'West Hollywood', 'Santa Monica'],
+    tone: 'Hollywood Glamour & Contemporary Edge',
+  },
+  Geneva: {
+    houses: ['Sothebys_GVA', 'Christies_GVA'],
+    currency: 'CHF',
+    targetFeeds: ['European Vacation', 'Global Watch'],
+    tone: 'Stealth Wealth',
+  },
+};
+```
+
+**Regional Blue Chip Keywords:**
+
+Each hub has region-specific keywords that enhance the base Blue Chip filter:
+
+| Hub | Regional Keywords |
+|-----|-------------------|
+| London | Old Master, British Art, Impressionist, English Furniture |
+| Paris | Design, Surrealist, Art d'Asie, Mobilier, Art Nouveau |
+| Hong Kong | 20th Century, Contemporary Asian, Watches, Chinese Works of Art |
+| Los Angeles | California Art, Contemporary, Photography, Pop Art |
+| Geneva | Luxury, Watches, Jewels, Gemstones, Patek Philippe |
+
+**Localized Tone for AI Generation:**
+
+Each hub has distinct editorial tone:
+
+- **London**: Traditional & Sharp. Reference Bond Street or King Street. Emphasize heritage and provenance.
+- **Paris**: Chic & Intellectual. Reference Drouot or Matignon. Emphasize artistic significance.
+- **Hong Kong**: Fast-Paced & Investment Heavy. Emphasize market momentum and record prices.
+- **Los Angeles**: Hollywood Glamour. Emphasize celebrity provenance and contemporary relevance.
+- **Geneva**: Stealth Wealth. Focus on rarity and investment-grade luxury (Patek, rare diamonds).
+
+**Cron Schedule:** Weekly on Sundays at 10 PM UTC (before NYC sync at 11 PM)
+
+**Files:** `src/lib/global-auctions.ts`, `src/app/api/cron/sync-global-auction-calendar/route.ts`
+
 ---
 
 ---
