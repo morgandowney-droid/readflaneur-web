@@ -26,6 +26,7 @@ A luxury hyper-local news and neighborhood guide platform. Flâneur delivers cur
 - **Sample Sale Alerts** - Luxury sample sales from fashion aggregators (Chicmi, 260, Arlettie) with 70+ brand whitelist
 - **NIMBY Alerts** - Community board agenda monitoring for controversial votes (liquor licenses, zoning changes)
 - **Political Wallet** - Donation trend monitoring showing "where the neighborhood is betting" (FEC/UK Electoral data)
+- **Fashion Week Coverage** - Big Four fashion week alerts (NYFW, LFW, MFW, PFW) with traffic warnings and show schedules
 - **Multi-Neighborhood Selection** - Follow multiple neighborhoods for a personalized feed
 - **Tip Submission** - Community-sourced news tips with optional anonymity
 - **Advertiser Portal** - Self-service advertising with Stripe payments

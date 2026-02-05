@@ -11,6 +11,16 @@
 
 ### Recent Changes (2026-02-05)
 
+**Fashion Week Service ("Calendar Override"):**
+- Special Event engine for Big Four fashion weeks (NYFW, LFW, MFW, PFW)
+- Calendar window detection for Feb/Sept (and Jan/June for Paris Mens)
+- Show schedule scrapers for official sources (CFDA, BFC, Camera Moda, FHCM)
+- 50+ high-profile designer tracking (Marc Jacobs, Chanel, Prada, etc.)
+- Venue-to-neighborhood mapping with traffic alert triggers
+- Gemini story generation with "Chaotic Chic" tone
+- Files: `src/config/fashion-weeks.ts`, `src/lib/fashion-week.ts`, `src/app/api/cron/sync-fashion-week/route.ts`
+- Cron: Daily at 5 AM UTC (only generates during active weeks)
+
 **Political Wallet Service ("Follow the Money"):**
 - New service aggregating political contribution data to show neighborhood donation trends
 - Data sources: US FEC API, UK Electoral Commission API
@@ -441,6 +451,7 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | sync-sample-sales | Daily 8 AM UTC | Luxury sample sale alerts from fashion aggregators (Chicmi, 260, Arlettie) |
 | sync-nimby-alerts | Monday 6 AM UTC | Community board agenda monitoring for controversial votes (liquor, zoning, social) |
 | sync-political-wallet | Tuesday 7 AM UTC | Political donation trends from FEC/UK Electoral Commission ($1k+ donors) |
+| sync-fashion-week | Daily 5 AM UTC | Big Four fashion week coverage (NYFW, LFW, MFW, PFW) with traffic alerts |
 
 ## Database Tables
 

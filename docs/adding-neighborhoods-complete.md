@@ -1411,6 +1411,99 @@ Body: "The smart money on the Upper East Side is moving toward Jane Smith's Sena
 
 **Files:** `src/lib/political-wallet.ts`, `src/app/api/cron/sync-political-wallet/route.ts`
 
+### 7.20 Fashion Week Service (Special Event Engine)
+
+Fashion Week Service provides high-alert coverage during the Big Four global fashion weeks. Architecture: "Calendar Override" that switches neighborhood feeds into "Fashion Mode" during active weeks.
+
+**Fashion Calendar Configuration:**
+
+```typescript
+// src/config/fashion-weeks.ts
+const FASHION_CALENDAR = [
+  {
+    city: 'New_York',
+    name: 'NYFW',
+    shortName: 'NYFW',
+    months: [2, 9], // February & September
+    typicalWeek: 2,
+    durationDays: 7,
+    targetFeeds: ['nyc-soho', 'nyc-tribeca', 'nyc-chelsea', 'nyc-meatpacking'],
+    vibe: 'Gridlock, Models, Paparazzi. Spring Studios chaos.',
+    venues: [
+      { name: 'Spring Studios', address: '50 Varick St', neighborhoodId: 'nyc-tribeca' },
+      { name: 'Skylight Clarkson', address: '550 Washington St', neighborhoodId: 'nyc-west-village' },
+      // ...
+    ],
+  },
+  // London, Milan, Paris...
+];
+```
+
+**Calendar Window Detection:**
+
+```typescript
+function detectFashionWeekWindow(date: Date): FashionWeekWindow[] {
+  // Returns windows with states: 'upcoming' | 'active' | 'ended' | 'off_season'
+  // 'upcoming' = within 14 days of start
+  // 'active' = currently during fashion week
+  // 'ended' = within 3 days after end
+}
+```
+
+**Show Schedule Scraping:**
+
+| City | Source | URL |
+|------|--------|-----|
+| New York | CFDA | cfda.com/fashion-calendar |
+| London | British Fashion Council | londonfashionweek.co.uk/schedule |
+| Milan | Camera Moda | cameramoda.it/en/calendar/ |
+| Paris | FHCM | fhcm.paris/en/calendars |
+
+**High-Profile Designer Tracking (50+):**
+
+```typescript
+const HIGH_PROFILE_DESIGNERS = [
+  // NYFW
+  'Marc Jacobs', 'Michael Kors', 'Ralph Lauren', 'Tom Ford',
+  // LFW
+  'Burberry', 'JW Anderson', 'Victoria Beckham',
+  // MFW
+  'Prada', 'Gucci', 'Versace', 'Dolce & Gabbana', 'Armani',
+  // PFW
+  'Chanel', 'Dior', 'Louis Vuitton', 'Saint Laurent', 'Balenciaga',
+];
+```
+
+**Traffic Alert Triggers:**
+
+| Condition | Alert |
+|-----------|-------|
+| 3+ shows in neighborhood | "Heavy fashion traffic expected" |
+| High-profile show | "Major shows will draw large crowds" |
+| Tuileries/Grand Palais/Spring Studios | "Expect gridlock" |
+
+**Gemini Story Generation:**
+
+Tone: "Chaotic Chic" - excitement balanced with practical warnings.
+
+```
+Headline: "Runway Watch: NYFW Day 3 takes over Tribeca"
+Body: "Spring Studios is ground zero today with Marc Jacobs at 10am and Coach at 2pm.
+       Expect heavy gridlock on Varick Street. Street style photographers are out in force."
+```
+
+**Story Priority:**
+
+| Priority | Condition |
+|----------|-----------|
+| Hero | 2+ high-profile designers in neighborhood |
+| High | 3+ shows or 1 high-profile designer |
+| Normal | Standard show activity |
+
+**Cron Schedule:** Daily at 5 AM UTC (runs year-round, only generates during active weeks)
+
+**Files:** `src/config/fashion-weeks.ts`, `src/lib/fashion-week.ts`, `src/app/api/cron/sync-fashion-week/route.ts`
+
 ---
 
 ---

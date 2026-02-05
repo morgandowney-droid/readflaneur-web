@@ -587,6 +587,39 @@ Aggregates political contribution data to show residents "Who the neighborhood i
 
 Schedule: Weekly on Tuesdays at 7 AM UTC.
 
+### Fashion Week Service (Special Event Engine)
+
+Triggers high-alert coverage during Global Fashion Weeks (NYFW, LFW, MFW, PFW). Architecture: "Calendar Override" mode that switches neighborhood feeds during active weeks.
+
+**Fashion Calendar:**
+
+| City | Name | Months | Target Feeds |
+|------|------|--------|--------------|
+| New York | NYFW | Feb, Sept | SoHo, Tribeca, Chelsea, Meatpacking |
+| London | LFW | Feb, Sept | Soho, Mayfair, Shoreditch |
+| Milan | MFW | Feb, Sept | Brera, Quadrilatero, Porta Nuova |
+| Paris | PFW | Jan, Feb, June, Sept | Le Marais, Saint-Germain, 1st/8th Arr |
+
+**Show Schedule Scraping:**
+- Daily during active weeks
+- Sources: CFDA, British Fashion Council, Camera Moda, FHCM
+- Extract venue addresses, map to neighborhoods
+- Trigger "Traffic Alert" if 3+ shows in one neighborhood
+
+**High-Profile Designers (50+):**
+- NYFW: Marc Jacobs, Michael Kors, Ralph Lauren, Tom Ford
+- LFW: Burberry, JW Anderson, Victoria Beckham
+- MFW: Prada, Gucci, Versace, Dolce & Gabbana, Armani
+- PFW: Chanel, Dior, Louis Vuitton, Saint Laurent, Balenciaga
+
+**Gemini Story Tone:** "Chaotic Chic" - excitement balanced with practical traffic warnings.
+
+**Headlines:**
+- `Runway Watch: NYFW takes over Spring Studios`
+- `Fashion Week Alert: Expect gridlock near Tuileries`
+
+Schedule: Daily at 5 AM UTC (only generates during active fashion weeks).
+
 ---
 
 ## Global Locations Configuration (International)

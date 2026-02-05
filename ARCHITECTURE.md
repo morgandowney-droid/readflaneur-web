@@ -162,6 +162,7 @@ NYC Open Data integration includes:
 - **Sample Sale Alerts** - Luxury sample sales from fashion aggregators (Chicmi, 260 Sample Sale, Arlettie)
 - **NIMBY Alerts** - Community board agenda monitoring for controversial votes (liquor, zoning, social)
 - **Political Wallet** - Donation trend monitoring via FEC API and UK Electoral Commission
+- **Fashion Week Coverage** - Big Four fashion week alerts (NYFW, LFW, MFW, PFW) with venue mapping
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)
