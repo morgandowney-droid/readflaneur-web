@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { GEMINI_STORY_GENERATORS } from '@/lib/gemini-story-registry';
 
 interface Neighborhood {
   id: string;
@@ -70,7 +71,7 @@ function truncate(str: string, maxLen: number): string {
 export default function NewsFeedAdmin() {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState({ days: 1, category: '', neighborhood: '' });
+  const [filter, setFilter] = useState({ days: 1, category: '', neighborhood: '', storyType: '' });
   const [showNoContent, setShowNoContent] = useState(false);
   const [showOverwhelmed, setShowOverwhelmed] = useState(false);
   const [showFailed, setShowFailed] = useState(true);
@@ -85,7 +86,12 @@ export default function NewsFeedAdmin() {
     try {
       const params = new URLSearchParams();
       params.set('days', filter.days.toString());
-      if (filter.category) params.set('category', filter.category);
+      // storyType overrides category if set (both filter by category_label)
+      if (filter.storyType) {
+        params.set('category', filter.storyType);
+      } else if (filter.category) {
+        params.set('category', filter.category);
+      }
       if (filter.neighborhood) params.set('neighborhood', filter.neighborhood);
 
       const res = await fetch(`/api/admin/news-feed?${params}`);
@@ -206,7 +212,7 @@ export default function NewsFeedAdmin() {
         </div>
 
         {/* Expanded Lists */}
-        {showNoContent && stats?.neighborhoodsWithNoContent.length > 0 && (
+        {showNoContent && stats && stats.neighborhoodsWithNoContent && stats.neighborhoodsWithNoContent.length > 0 && (
           <div className="bg-red-50 border border-red-200 p-4 mb-6">
             <h3 className="text-sm font-medium text-red-800 mb-2">
               Neighborhoods with No Content (24h)
@@ -221,7 +227,7 @@ export default function NewsFeedAdmin() {
           </div>
         )}
 
-        {showOverwhelmed && stats?.neighborhoodsOverwhelmed.length > 0 && (
+        {showOverwhelmed && stats && stats.neighborhoodsOverwhelmed && stats.neighborhoodsOverwhelmed.length > 0 && (
           <div className="bg-yellow-50 border border-yellow-200 p-4 mb-6">
             <h3 className="text-sm font-medium text-yellow-800 mb-2">
               Overwhelmed Neighborhoods (&gt;5 articles/day)
@@ -254,8 +260,9 @@ export default function NewsFeedAdmin() {
             <span className="text-xs text-neutral-500">Category:</span>
             <select
               value={filter.category}
-              onChange={(e) => setFilter({ ...filter, category: e.target.value })}
+              onChange={(e) => setFilter({ ...filter, category: e.target.value, storyType: '' })}
               className="text-sm border border-neutral-200 px-2 py-1 bg-white"
+              disabled={!!filter.storyType}
             >
               <option value="">All Categories</option>
               {stats?.categories.map(c => (
@@ -277,6 +284,22 @@ export default function NewsFeedAdmin() {
               {neighborhoods.map(n => (
                 <option key={n.id} value={n.id}>
                   {n.name}, {n.city}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-neutral-500">Story Type:</span>
+            <select
+              value={filter.storyType}
+              onChange={(e) => setFilter({ ...filter, storyType: e.target.value, category: '' })}
+              className="text-sm border border-neutral-200 px-2 py-1 bg-white max-w-[200px]"
+            >
+              <option value="">All Story Types</option>
+              {GEMINI_STORY_GENERATORS.map(g => (
+                <option key={g.id} value={g.categoryLabel}>
+                  {g.name}
                 </option>
               ))}
             </select>
