@@ -152,6 +152,7 @@ NYC Open Data integration includes:
 - **Heritage Filings** - Demolition, landmark alteration, and tree removal alerts (stored as articles)
 - **Auction Calendar** - Blue Chip auction syndication to Northeast Luxury Corridor (stored as articles)
 - **Global Auction Calendar** - International art hub syndication (London, Paris, Hong Kong, LA, Geneva)
+- **Art Fair Coverage** - Special event engine for Big 5 fairs with Hero priority during live weeks
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)

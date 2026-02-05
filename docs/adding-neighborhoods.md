@@ -288,6 +288,25 @@ Hub & Spoke model syndicates auction news from major art market cities to local 
 
 Schedule: Weekly on Sundays at 10 PM UTC (before NYC sync).
 
+### Art Fair Coverage (Special Events)
+
+Static calendar-based coverage for the "Big 5" global art fairs. Overrides standard local news during fair weeks.
+
+| Fair | Month | Target Feeds |
+|------|-------|--------------|
+| Frieze London | October | Mayfair, Chelsea, Kensington, Notting Hill |
+| Art Basel Miami | December | South Beach, Brickell, Design District + NYC Core |
+| Frieze LA | February | Santa Monica, Beverly Hills, West Hollywood |
+| Art Basel HK | March | Central, SoHo HK, The Peak |
+| Art Basel Paris | October | 7th Arr, Le Marais, Saint-Germain |
+
+**Coverage States:**
+- **Preview** (7 days before): VIP passes, dinner circuit, anticipation
+- **Live** (during fair): Hero priority, pinned to top of feeds
+- **Wrap** (3 days after): Sales tallies, highlights
+
+Schedule: Daily at 7 AM UTC (checks calendar for active fairs).
+
 ---
 
 ## Global Locations Configuration (International)

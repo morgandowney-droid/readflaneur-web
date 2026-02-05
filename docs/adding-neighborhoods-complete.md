@@ -664,6 +664,63 @@ Each hub has distinct editorial tone:
 
 **Files:** `src/lib/global-auctions.ts`, `src/app/api/cron/sync-global-auction-calendar/route.ts`
 
+### 7.10 Art Fair Coverage (Special Events)
+
+Art Fair Service provides high-priority coverage during major global art fair weeks. Unlike scraping-based services, this uses a static calendar since fair dates are fixed months in advance.
+
+**The Big 5 Fairs:**
+
+```typescript
+const ART_FAIRS = [
+  {
+    id: 'frieze-london',
+    name: 'Frieze London',
+    month: 10, // October
+    approxWeek: 2,
+    targetFeeds: ['london-mayfair', 'london-chelsea', 'london-kensington'],
+    vibe: "Regent's Park tents, heavy rain, celebrity spotting, VIP preview passes."
+  },
+  {
+    id: 'art-basel-miami',
+    name: 'Art Basel Miami Beach',
+    month: 12, // December
+    approxWeek: 1,
+    targetFeeds: ['miami-south-beach', 'miami-design-district', ...NYC_CORE],
+    vibe: "Convention Center chaos, afterparties at The W, mega-yacht scene."
+  },
+  // + Frieze LA (Feb), Art Basel HK (March), Art Basel Paris (Oct)
+];
+```
+
+**Coverage States:**
+
+| State | Trigger | Priority | Focus |
+|-------|---------|----------|-------|
+| Preview | 7 days before | Standard | VIP passes, dinner circuit, who's going |
+| Live | During fair week | **Hero** (pinned) | Sold-out booths, sales, energy, scene |
+| Wrap | 3 days after | Standard | Final tallies, highlights, market sentiment |
+
+**State Detection Logic:**
+
+```typescript
+function getFairState(fair: ArtFair, currentDate: Date): FairState {
+  const { start, end, previewStart } = getFairDatesForYear(fair, year);
+
+  if (currentDate >= start && currentDate <= end) return 'Live';
+  if (currentDate >= previewStart && currentDate < start) return 'Preview';
+  if (currentDate > end && currentDate <= wrapEnd) return 'Wrap';
+  return 'Dormant';
+}
+```
+
+**Hero Priority:**
+
+Live coverage is marked with `is_pinned: true` in the database, causing it to float to the top of neighborhood feeds. This overrides standard local news during fair weeks.
+
+**Cron Schedule:** Daily at 7 AM UTC
+
+**Files:** `src/config/art-fairs.ts`, `src/lib/art-fairs.ts`, `src/app/api/cron/sync-art-fairs/route.ts`
+
 ---
 
 ---
