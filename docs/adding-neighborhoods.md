@@ -484,6 +484,43 @@ Monitors major food publications for new reviews of restaurants in Flâneur neig
 
 Schedule: Every 4 hours (2 AM, 6 AM, 10 AM, 2 PM, 6 PM, 10 PM UTC).
 
+### Sample Sale Service (Fashion Events)
+
+Scrapes fashion event aggregators to alert residents about high-end sample sales and trunk shows. Uses a "Secret Intel" strategy - time-sensitive insider information about luxury deals.
+
+**Data Sources:**
+
+| Source | Coverage | Focus |
+|--------|----------|-------|
+| Chicmi | Global (NYC/London/LA/Paris) | Multi-brand events |
+| 260 Sample Sale | NYC | Single-brand luxury |
+| Arlettie | Paris/London | "Invite Only" sales |
+
+**Brand Whitelist (70+ brands):**
+
+Organized by tier:
+- **Ultra Tier:** Hermès, The Row, Brunello Cucinelli, Loro Piana, CHANEL, Dior, Louis Vuitton
+- **Aspirational Tier:** Kith, APC, Isabel Marant, Sandro, Maje, Jacquemus
+
+Categories: Fashion, Handbags, Jewelry, Shoes, Home, Active
+
+**City-to-Neighborhood Mapping:**
+
+| City | Flâneur Neighborhoods |
+|------|----------------------|
+| New York | SoHo, Upper East Side, Tribeca, West Village, Chelsea, Meatpacking |
+| London | Mayfair, Chelsea, Notting Hill, Marylebone |
+| Los Angeles | Beverly Hills, West Hollywood, Malibu |
+| Paris | Le Marais, Saint-Germain-des-Prés |
+
+**Gemini Story Tone:** "Secret Intel" - FOMO-inducing urgency about insider access.
+
+**Headline Templates:**
+- Single brand: "Sample Sale Alert: [Brand] at [Venue] This [Dates]"
+- Multi-brand: "Fashion Insider: [Source] Sample Sale This [Dates]"
+
+Schedule: Daily at 8 AM UTC.
+
 ---
 
 ## Global Locations Configuration (International)

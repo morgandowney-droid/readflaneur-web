@@ -11,6 +11,16 @@
 
 ### Recent Changes (2026-02-05)
 
+**Sample Sale Service ("Insider Access"):**
+- New service scraping fashion aggregators for luxury sample sales
+- Data sources: Chicmi (Global), 260 Sample Sale (NYC), Arlettie (Paris/London)
+- Brand whitelist: 70+ luxury brands with regex patterns (Hermès, The Row, Kith, etc.)
+- Brand tier classification: Ultra (top tier) vs Aspirational (accessible luxury)
+- City-to-neighborhood mapping for NYC, London, LA, Paris
+- Gemini story generation with "Secret Intel" tone
+- Files: `src/lib/sample-sale.ts`, `src/app/api/cron/sync-sample-sales/route.ts`
+- Cron: Daily at 8 AM UTC
+
 **Heritage Watch (Preservation Alerts):**
 - New service monitoring NYC DOB Job Application Filings for preservation issues
 - Three triggers:
@@ -408,6 +418,7 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | sync-gala-watch | Daily 6 AM UTC | High-society charity events via Hub Broadcast model |
 | sync-escape-index | Every 6 hours (:45) | Vacation conditions (Snow/Surf/Sun) via Feeder Map |
 | sync-review-watch | Every 4 hours | Restaurant reviews from major publications (NYT, Infatuation, Eater) |
+| sync-sample-sales | Daily 8 AM UTC | Luxury sample sale alerts from fashion aggregators (Chicmi, 260, Arlettie) |
 
 ## Database Tables
 

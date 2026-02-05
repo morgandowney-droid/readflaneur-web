@@ -1161,6 +1161,79 @@ Body: "Mother Wolf scored an 8.7 from The Infatuation. The Roman pasta spot is n
 
 **Files:** `src/lib/review-watch.ts`, `src/app/api/cron/sync-review-watch/route.ts`
 
+### 7.17 Sample Sale Service (Fashion Events)
+
+Sample Sale Service scrapes fashion event aggregators to alert residents about high-end sample sales and trunk shows. Strategy: "Insider Access" with time-sensitive luxury deal alerts.
+
+**Data Sources:**
+
+```typescript
+const SAMPLE_SALE_SOURCES = [
+  { source: 'Chicmi', baseUrl: 'https://www.chicmi.com', coverage: ['New_York', 'London', 'Los_Angeles', 'Paris'] },
+  { source: '260_Sample_Sale', baseUrl: 'https://www.260samplesale.com', coverage: ['New_York'] },
+  { source: 'Arlettie', baseUrl: 'https://www.arlettie.com', coverage: ['Paris', 'London'] },
+];
+```
+
+**Brand Whitelist (70+ luxury brands):**
+
+```typescript
+const LUXURY_BRANDS = [
+  // Ultra Tier - Top tier luxury, always newsworthy
+  { name: 'Hermès', pattern: /herm[eè]s/i, category: 'Fashion', tier: 'Ultra' },
+  { name: 'The Row', pattern: /the\s*row/i, category: 'Fashion', tier: 'Ultra' },
+  { name: 'Brunello Cucinelli', pattern: /brunello\s*cucinelli/i, category: 'Fashion', tier: 'Ultra' },
+  { name: 'CHANEL', pattern: /\bchanel\b/i, category: 'Fashion', tier: 'Ultra' },
+  { name: 'Dior', pattern: /\bdior\b/i, category: 'Fashion', tier: 'Ultra' },
+  { name: 'Louis Vuitton', pattern: /louis\s*vuitton|lv/i, category: 'Fashion', tier: 'Ultra' },
+
+  // Aspirational Tier - Accessible luxury, relevant for style-conscious
+  { name: 'Kith', pattern: /\bkith\b/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'APC', pattern: /\ba\.?p\.?c\.?\b/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Isabel Marant', pattern: /isabel\s*marant/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Sandro', pattern: /\bsandro\b/i, category: 'Fashion', tier: 'Aspirational' },
+  // ... 60+ more brands
+];
+```
+
+**City-to-Neighborhood Mapping:**
+
+```typescript
+const CITY_NEIGHBORHOODS: Record<SampleSaleCity, string[]> = {
+  New_York: ['nyc-soho', 'nyc-upper-east-side', 'nyc-tribeca', 'nyc-west-village', 'nyc-chelsea', 'nyc-meatpacking'],
+  London: ['london-mayfair', 'london-chelsea', 'london-notting-hill', 'london-marylebone'],
+  Los_Angeles: ['la-beverly-hills', 'la-west-hollywood', 'la-malibu'],
+  Paris: ['paris-le-marais', 'paris-saint-germain-des-pres'],
+};
+```
+
+**Scraper Logic:**
+
+1. **Fetch Event Listings**: Parse source calendar pages for upcoming sales
+2. **Brand Matching**: Match event titles/descriptions against LUXURY_BRANDS patterns
+3. **Time Filtering**: Only sales starting within 7 days
+4. **Location Assignment**: Map city to target Flâneur neighborhoods
+
+**Gemini Story Generation:**
+
+Tone: "Secret Intel" - FOMO-inducing urgency about insider access to luxury deals.
+
+```
+// Single Brand Sale
+Headline: "Sample Sale Alert: The Row at 260SampleSale This Weekend"
+Body: "The Row is doing a rare sample sale this Thursday through Sunday at 260 Fifth Avenue.
+       Expect 60-70% off. Lines form early - insiders arrive before doors open at 10am."
+
+// Multi-Brand Event
+Headline: "Fashion Insider: Chicmi Sample Sale This Weekend"
+Body: "Chicmi's curated sale features Hermès accessories, The Row knitwear, and APC basics.
+       The best pieces go early - true insiders hit the preview on Thursday evening."
+```
+
+**Cron Schedule:** Daily at 8 AM UTC
+
+**Files:** `src/lib/sample-sale.ts`, `src/app/api/cron/sync-sample-sales/route.ts`
+
 ---
 
 ---

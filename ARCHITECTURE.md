@@ -159,6 +159,7 @@ NYC Open Data integration includes:
 - **Gala Watch** - High-society charity events via Hub Broadcast model (10 global hubs)
 - **Escape Index** - Vacation conditions (Snow/Surf/Sun) injected into feeder city feeds
 - **Review Watch** - Restaurant reviews from major publications (NYT, Infatuation, Eater, Guardian)
+- **Sample Sale Alerts** - Luxury sample sales from fashion aggregators (Chicmi, 260 Sample Sale, Arlettie)
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)
