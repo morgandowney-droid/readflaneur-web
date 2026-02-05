@@ -107,6 +107,10 @@
     {
       "path": "/api/cron/sync-auction-calendar",
       "schedule": "0 23 * * 0"
+    },
+    {
+      "path": "/api/cron/sync-global-auction-calendar",
+      "schedule": "0 22 * * 0"
     }
   ]
 }
