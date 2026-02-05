@@ -354,7 +354,7 @@ export default function NewsFeedAdmin() {
                 <tr key={article.id} className="hover:bg-neutral-50">
                   <td className="px-4 py-2">
                     <Link
-                      href={`/${article.neighborhood?.city?.toLowerCase().replace(/\s+/g, '-') || 'unknown'}/${article.slug}`}
+                      href={`/${article.neighborhood?.city?.toLowerCase().replace(/\s+/g, '-') || 'unknown'}/${article.neighborhood?.name?.toLowerCase().replace(/\s+/g, '-') || 'unknown'}/${article.slug}`}
                       target="_blank"
                       className="text-neutral-800 hover:text-black hover:underline"
                     >
