@@ -11,6 +11,16 @@
 
 ### Recent Changes (2026-02-05)
 
+**Political Wallet Service ("Follow the Money"):**
+- New service aggregating political contribution data to show neighborhood donation trends
+- Data sources: US FEC API, UK Electoral Commission API
+- Power Donor filter: $1,000+ minimum, $10k threshold triggers story
+- Neighborhood zip mappings for 25+ US/UK neighborhoods
+- Privacy-focused: aggregate trends only, never individual names
+- Gemini story generation with "Insider" tone
+- Files: `src/lib/political-wallet.ts`, `src/app/api/cron/sync-political-wallet/route.ts`
+- Cron: Weekly on Tuesdays at 7 AM UTC
+
 **NIMBY Alert Service ("Early Warning System"):**
 - New service scraping Community Board / Council Meeting agendas for controversial votes
 - Data sources: NYC Community Boards (CB 1-8 Manhattan, CB 1-6 Brooklyn), London Borough Councils, Sydney Councils
@@ -430,6 +440,7 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | sync-review-watch | Every 4 hours | Restaurant reviews from major publications (NYT, Infatuation, Eater) |
 | sync-sample-sales | Daily 8 AM UTC | Luxury sample sale alerts from fashion aggregators (Chicmi, 260, Arlettie) |
 | sync-nimby-alerts | Monday 6 AM UTC | Community board agenda monitoring for controversial votes (liquor, zoning, social) |
+| sync-political-wallet | Tuesday 7 AM UTC | Political donation trends from FEC/UK Electoral Commission ($1k+ donors) |
 
 ## Database Tables
 

@@ -1338,6 +1338,79 @@ Body: "A developer is seeking a zoning variance to build a 45-story tower at 10t
 
 **Files:** `src/lib/nimby-alert.ts`, `src/app/api/cron/sync-nimby-alerts/route.ts`
 
+### 7.19 Political Wallet Service (Donation Trends)
+
+Political Wallet Service aggregates political contribution data to show residents "Who the neighborhood is betting on." Strategy: "Follow the Money" without revealing individual donors.
+
+**Data Sources:**
+
+```typescript
+// US: FEC API
+const FEC_BASE_URL = 'https://api.open.fec.gov/v1';
+// Endpoint: /schedules/schedule_a/
+// Filters: contributor_zip, min_amount ($1,000), two_year_transaction_period
+
+// UK: Electoral Commission API
+const UK_EC_BASE_URL = 'http://search.electoralcommission.org.uk/api/search/Donations';
+// Filter: Postcode prefix
+```
+
+**Neighborhood Zip Mappings:**
+
+```typescript
+const NEIGHBORHOOD_ZIPS = {
+  // NYC
+  'nyc-upper-east-side': { zips: ['10021', '10028', '10065', '10075'], region: 'US' },
+  'nyc-tribeca': { zips: ['10007', '10013', '10282'], region: 'US' },
+
+  // Los Angeles
+  'la-beverly-hills': { zips: ['90210', '90211', '90212'], region: 'US' },
+
+  // London
+  'london-mayfair': { zips: ['W1J', 'W1K', 'W1S'], region: 'UK' },
+  // ... 25+ neighborhoods
+};
+```
+
+**Power Trend Logic:**
+
+1. **Fetch Donations**: Query APIs for last 7 days
+2. **Filter Power Donors**: $1,000+ contributions only
+3. **Aggregate by Recipient**: Group by Candidate/PAC/Party
+4. **Calculate Trends**: Total volume, donor count, average donation
+5. **Trigger Story**: If recipient receives $10k+ from single neighborhood
+
+**Privacy Rules:**
+
+| Rule | Implementation |
+|------|----------------|
+| No Individual Names | Never store or display contributor names |
+| Aggregate Only | Show totals, counts, averages |
+| Focus on Recipients | Story is about who received, not who gave |
+
+**Gemini Story Generation:**
+
+Tone: "Insider" - informative about where the smart money is going.
+
+```
+Headline: "Donor Watch: Smith for Senate raises $125K in Upper East Side"
+Body: "The smart money on the Upper East Side is moving toward Jane Smith's Senate campaign.
+       42 power donors have contributed $125,000 this week, with an average gift of $6,944.
+       Democrat fundraising in the neighborhood is outpacing Republican 2-to-1."
+```
+
+**Thresholds:**
+
+| Threshold | Value | Purpose |
+|-----------|-------|---------|
+| POWER_DONOR_THRESHOLD | $1,000 | Filter out small grassroots donations |
+| STORY_TRIGGER_THRESHOLD | $10,000 | Minimum to generate a story |
+| LOOKBACK_DAYS | 7 | Rolling weekly window |
+
+**Cron Schedule:** Weekly on Tuesdays at 7 AM UTC (after Monday FEC updates)
+
+**Files:** `src/lib/political-wallet.ts`, `src/app/api/cron/sync-political-wallet/route.ts`
+
 ---
 
 ---

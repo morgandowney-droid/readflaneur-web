@@ -161,6 +161,7 @@ NYC Open Data integration includes:
 - **Review Watch** - Restaurant reviews from major publications (NYT, Infatuation, Eater, Guardian)
 - **Sample Sale Alerts** - Luxury sample sales from fashion aggregators (Chicmi, 260 Sample Sale, Arlettie)
 - **NIMBY Alerts** - Community board agenda monitoring for controversial votes (liquor, zoning, social)
+- **Political Wallet** - Donation trend monitoring via FEC API and UK Electoral Commission
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)

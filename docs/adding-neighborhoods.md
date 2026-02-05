@@ -556,6 +556,37 @@ Scrapes Community Board / Council Meeting agendas to alert residents about contr
 
 Schedule: Weekly on Mondays at 6 AM UTC.
 
+### Political Wallet Service (Donation Trends)
+
+Aggregates political contribution data to show residents "Who the neighborhood is betting on." Strategy: "Follow the Money" - showing donation trends without revealing individual donors.
+
+**Data Sources:**
+
+| Adapter | Source | Filter |
+|---------|--------|--------|
+| US | FEC API (`/schedules/schedule_a/`) | Zip code, $1k+ donations, current cycle |
+| UK | Electoral Commission API | Postcode prefix |
+
+**Power Trend Logic:**
+1. Fetch donations from last 7 days
+2. Filter to $1,000+ ("Power Donors")
+3. Group by recipient (Candidate/PAC/Party)
+4. Calculate total volume per neighborhood
+5. Generate story if recipient receives $10k+ from single neighborhood
+
+**Privacy Rules:**
+- NEVER reveal individual donor names
+- Aggregate trends only (total volume, donor count, average)
+- Focus on recipients, not contributors
+
+**Gemini Story Tone:** "Insider" - "The smart money in [Neighborhood] is moving toward [Candidate]."
+
+**Headlines:**
+- `Donor Watch: [Candidate] raises $125K in Upper East Side`
+- `Follow the Money: Beverly Hills backs [PAC]`
+
+Schedule: Weekly on Tuesdays at 7 AM UTC.
+
 ---
 
 ## Global Locations Configuration (International)
