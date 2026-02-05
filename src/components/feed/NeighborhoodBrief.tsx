@@ -971,28 +971,26 @@ export function NeighborhoodBrief({
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2">
-            <div className="flex-1">
-              <p className="text-[11px] text-amber-800 mb-1.5 font-medium">
-                Get this brief in your inbox each morning
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  className="flex-1 px-3 py-1.5 text-xs border border-amber-300 rounded-md focus:outline-none focus:border-amber-500 bg-white/80"
-                  disabled={subscribeStatus === 'loading'}
-                />
-                <button
-                  type="submit"
-                  disabled={subscribeStatus === 'loading' || !email}
-                  className="px-4 py-1.5 text-[10px] tracking-wider uppercase font-medium bg-amber-700 text-white rounded-md hover:bg-amber-800 disabled:bg-amber-400 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-                >
-                  {subscribeStatus === 'loading' ? '...' : 'Subscribe'}
-                </button>
-              </div>
+          <form onSubmit={handleSubscribe}>
+            <p className="text-[11px] text-amber-800 mb-1.5 font-medium">
+              Get this brief in your inbox each morning
+            </p>
+            <div className="flex gap-2 max-w-sm">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                className="w-48 px-3 py-1.5 text-xs border border-amber-300 rounded-md focus:outline-none focus:border-amber-500 bg-white/80"
+                disabled={subscribeStatus === 'loading'}
+              />
+              <button
+                type="submit"
+                disabled={subscribeStatus === 'loading' || !email}
+                className="px-4 py-1.5 text-[10px] tracking-wider uppercase font-medium bg-amber-700 text-white rounded-md hover:bg-amber-800 disabled:bg-amber-400 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+              >
+                {subscribeStatus === 'loading' ? '...' : 'Subscribe'}
+              </button>
             </div>
           </form>
         )}
