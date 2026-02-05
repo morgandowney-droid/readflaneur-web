@@ -1,0 +1,218 @@
+/**
+ * Cron Monitoring System - Auto Fixer
+ *
+ * Attempts to automatically fix recoverable issues.
+ */
+
+import { SupabaseClient } from '@supabase/supabase-js';
+import { CronIssue, FixResult, FIX_CONFIG } from './types';
+
+/**
+ * Calculate the next retry time based on retry count
+ */
+function getNextRetryTime(retryCount: number): Date {
+  const backoffIndex = Math.min(retryCount, FIX_CONFIG.RETRY_BACKOFF.length - 1);
+  const delayMinutes = FIX_CONFIG.RETRY_BACKOFF[backoffIndex];
+  const nextRetry = new Date();
+  nextRetry.setMinutes(nextRetry.getMinutes() + delayMinutes);
+  return nextRetry;
+}
+
+/**
+ * Check if an issue can be retried
+ */
+export function canRetry(issue: CronIssue): boolean {
+  // Check retry count
+  if (issue.retry_count >= issue.max_retries) {
+    return false;
+  }
+
+  // Check if auto-fixable
+  if (!issue.auto_fixable) {
+    return false;
+  }
+
+  // Check if enough time has passed since last retry
+  if (issue.next_retry_at) {
+    const nextRetry = new Date(issue.next_retry_at);
+    if (nextRetry > new Date()) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Fix a missing or placeholder image by regenerating it
+ */
+export async function fixImageIssue(
+  articleId: string,
+  baseUrl: string,
+  cronSecret: string
+): Promise<FixResult> {
+  try {
+    const response = await fetch(`${baseUrl}/api/internal/generate-image`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-cron-secret': cronSecret,
+      },
+      body: JSON.stringify({ article_id: articleId }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data.error || `HTTP ${response.status}`,
+      };
+    }
+
+    // Check if the image was successfully generated
+    const result = data.results?.[0];
+    if (result?.success) {
+      return {
+        success: true,
+        message: 'Image regenerated successfully',
+        imageUrl: result.imageUrl,
+      };
+    }
+
+    return {
+      success: false,
+      message: result?.error || 'No image generated',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Attempt to fix an issue
+ */
+export async function attemptFix(
+  supabase: SupabaseClient,
+  issue: CronIssue,
+  baseUrl: string,
+  cronSecret: string
+): Promise<FixResult> {
+  let result: FixResult;
+
+  // Update status to retrying
+  await supabase
+    .from('cron_issues')
+    .update({
+      status: 'retrying',
+      fix_attempted_at: new Date().toISOString(),
+    })
+    .eq('id', issue.id);
+
+  // Attempt fix based on issue type
+  switch (issue.issue_type) {
+    case 'missing_image':
+    case 'placeholder_image':
+      if (!issue.article_id) {
+        result = { success: false, message: 'No article ID provided' };
+      } else {
+        result = await fixImageIssue(issue.article_id, baseUrl, cronSecret);
+      }
+      break;
+
+    case 'job_failure':
+      // Job failures are not auto-fixable
+      result = { success: false, message: 'Job failures require manual review' };
+      break;
+
+    case 'api_rate_limit':
+    case 'external_service_down':
+      result = { success: false, message: 'External issues cannot be auto-fixed' };
+      break;
+
+    default:
+      result = { success: false, message: `Unknown issue type: ${issue.issue_type}` };
+  }
+
+  // Update issue based on result
+  const newRetryCount = issue.retry_count + 1;
+  const isExhausted = newRetryCount >= issue.max_retries;
+
+  if (result.success) {
+    // Mark as resolved
+    await supabase
+      .from('cron_issues')
+      .update({
+        status: 'resolved',
+        fix_result: result.message,
+        resolved_at: new Date().toISOString(),
+        retry_count: newRetryCount,
+      })
+      .eq('id', issue.id);
+  } else if (isExhausted) {
+    // Mark as needs manual intervention
+    await supabase
+      .from('cron_issues')
+      .update({
+        status: 'needs_manual',
+        fix_result: result.message,
+        retry_count: newRetryCount,
+      })
+      .eq('id', issue.id);
+  } else {
+    // Schedule next retry
+    const nextRetryTime = getNextRetryTime(newRetryCount);
+    await supabase
+      .from('cron_issues')
+      .update({
+        status: 'open',
+        fix_result: result.message,
+        retry_count: newRetryCount,
+        next_retry_at: nextRetryTime.toISOString(),
+      })
+      .eq('id', issue.id);
+  }
+
+  return result;
+}
+
+/**
+ * Manually mark an issue as resolved
+ */
+export async function markResolved(
+  supabase: SupabaseClient,
+  issueId: string,
+  resolution: string = 'Manually resolved'
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('cron_issues')
+    .update({
+      status: 'resolved',
+      fix_result: resolution,
+      resolved_at: new Date().toISOString(),
+    })
+    .eq('id', issueId);
+
+  return !error;
+}
+
+/**
+ * Force retry an issue immediately
+ */
+export async function forceRetry(
+  supabase: SupabaseClient,
+  issueId: string
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('cron_issues')
+    .update({
+      status: 'open',
+      next_retry_at: new Date().toISOString(),
+    })
+    .eq('id', issueId);
+
+  return !error;
+}

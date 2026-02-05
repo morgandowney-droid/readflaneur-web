@@ -3,6 +3,7 @@ import Link from 'next/link';
 const adminPages = [
   { href: '/admin/articles', title: 'Articles', description: 'Review and manage articles' },
   { href: '/admin/news-feed', title: 'News Feed QC', description: 'Quality control for all content' },
+  { href: '/admin/cron-monitor', title: 'Cron Monitor', description: 'Self-healing cron job system' },
   { href: '/admin/regenerate-images', title: 'Regenerate Images', description: 'Generate AI images for articles' },
   { href: '/admin/news-coverage', title: 'News Coverage', description: 'Monitor RSS feeds and coverage' },
   { href: '/admin/guides/michelin', title: 'Michelin Ratings', description: 'Manage Michelin designations' },
