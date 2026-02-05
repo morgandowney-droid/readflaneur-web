@@ -469,15 +469,35 @@ export class NewZealandAdapter extends BaseCityAdapter {
 }
 
 /**
+ * Auckland Adapter
+ * Parameterless constructor for ADAPTER_REGISTRY compatibility
+ */
+export class AucklandAdapter extends NewZealandAdapter {
+  constructor() {
+    super(GLOBAL_CITY_CONFIG['Auckland']);
+  }
+}
+
+/**
+ * Queenstown Adapter
+ * Parameterless constructor for ADAPTER_REGISTRY compatibility
+ */
+export class QueenstownAdapter extends NewZealandAdapter {
+  constructor() {
+    super(GLOBAL_CITY_CONFIG['Queenstown']);
+  }
+}
+
+/**
  * Create Auckland adapter instance
  */
 export function createAucklandAdapter(): NewZealandAdapter {
-  return new NewZealandAdapter(GLOBAL_CITY_CONFIG['Auckland']);
+  return new AucklandAdapter();
 }
 
 /**
  * Create Queenstown adapter instance
  */
 export function createQueenstownAdapter(): NewZealandAdapter {
-  return new NewZealandAdapter(GLOBAL_CITY_CONFIG['Queenstown']);
+  return new QueenstownAdapter();
 }
