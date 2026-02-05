@@ -375,6 +375,39 @@ Maps Tier 1 global events to vacation feeds based on keywords:
 
 Schedule: Weekly on Sundays at 9 PM UTC.
 
+### Gala Watch (High-Society Charity Events)
+
+Aggregates high-society charity events and broadcasts them to wealthy residential neighborhoods using the "Hub Broadcast" model.
+
+**Hub Configuration (10 Global Hubs):**
+
+| Hub | Sources | Target Feeds | Key Venues |
+|-----|---------|--------------|------------|
+| New York | NY Social Diary, Eventbrite | UES, UWS, Tribeca, West Village, SoHo, Hamptons | The Met, Lincoln Center, Cipriani |
+| London | Tatler, Eventbrite | Mayfair, Chelsea, Kensington, Notting Hill | V&A, The Dorchester, Claridge's |
+| Paris | Paris Diary, Eventbrite | 7th Arr, 16th Arr, Le Marais | Palais Garnier, Grand Palais, Ritz |
+| Los Angeles | Eventbrite | Beverly Hills, Bel Air, Malibu | Academy Museum, LACMA, The Getty |
+| Sydney | Eventbrite | Double Bay, Mosman, Vaucluse | Sydney Opera House, MCA |
+| Miami | Eventbrite | South Beach, Brickell, Design District | PAMM, Faena Forum |
+| Hong Kong | Eventbrite | Central, The Peak, SoHo HK | HKCEC, M+ Museum |
+| Milan | Eventbrite | Brera, Quadrilatero | La Scala, Fondazione Prada |
+| Toronto | Eventbrite | Yorkville, Rosedale, Forest Hill | ROM, AGO |
+
+**High Ticket Filter:**
+- Ticket price > $500 USD (or local equivalent) → IT IS A GALA
+- Ticket price < $100 → IGNORE (It's a mixer)
+- Currency normalization: £400, €450, A$770, C$675
+
+**Society Page Scrapers:**
+- NY Social Diary (calendar section) - Benefit Events
+- Tatler UK (parties topic) - Save the Date announcements
+
+**Gemini Story Tone:** "Insider & Exclusive" FOMO engine
+- "The city's philanthropists descend on [Venue] tonight."
+- "Expect heavy black cars and high fashion."
+
+Schedule: Daily at 6 AM UTC.
+
 ---
 
 ## Global Locations Configuration (International)

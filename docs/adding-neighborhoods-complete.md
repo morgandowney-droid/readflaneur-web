@@ -899,6 +899,101 @@ Each engine generates distinct content:
 
 **Files:** `src/lib/specialty-auctions.ts`, `src/app/api/cron/sync-specialty-auctions/route.ts`
 
+### 7.14 Gala Watch (High-Society Charity Events)
+
+Gala Watch aggregates high-society charity events and distributes them to wealthy residential neighborhoods using the "Hub Broadcast" model.
+
+**Architecture: Hub Broadcast Model**
+
+Galas happen in City Centers (hubs), not suburbs. We scrape city hubs and broadcast events to associated wealthy neighborhoods (spokes).
+
+**Hub Configuration:**
+
+```typescript
+const GALA_HUBS = {
+  New_York: {
+    sources: ['NY_Social_Diary', 'Eventbrite_NYC'],
+    targetFeeds: ['UES', 'UWS', 'Tribeca', 'West Village', 'SoHo', 'Hamptons'],
+    venues: ['The Met', 'Lincoln Center', 'Cipriani', 'The Plaza', 'NYPL'],
+    currency: 'USD'
+  },
+  London: {
+    sources: ['Tatler_Bystander', 'Eventbrite_LDN'],
+    targetFeeds: ['Mayfair', 'Chelsea', 'Kensington', 'Notting Hill'],
+    venues: ['V&A', 'The Dorchester', "Claridge's", 'Royal Albert Hall'],
+    currency: 'GBP'
+  },
+  Paris: {
+    sources: ['Paris_Diary', 'Eventbrite_PAR'],
+    targetFeeds: ['7th Arr', '16th Arr', 'Le Marais'],
+    venues: ['Palais Garnier', 'Grand Palais', 'Ritz Paris'],
+    currency: 'EUR'
+  },
+  // + Los_Angeles, Sydney, Miami, Hong_Kong, Milan, Toronto
+};
+```
+
+**Data Source A: High Ticket Filter (Eventbrite/Luma)**
+
+The scalable engine for global coverage:
+
+1. Search keywords: "Gala", "Ball", "Benefit", "Black Tie", "Charity Dinner"
+2. **The Status Filter**: Check ticket price
+   - IF price > $500 USD (or local equivalent) → IT IS A GALA
+   - IF price < $100 → IGNORE (It's a mixer)
+3. Location check: Venue must be within hub's search radius
+
+**Currency Normalization:**
+
+```typescript
+// Convert local prices to USD equivalent
+function normalizeCurrency(price: number, currency: GalaCurrency): number {
+  const rates = { USD: 1.0, GBP: 1.27, EUR: 1.08, AUD: 0.65, CAD: 0.74, HKD: 0.13 };
+  return Math.round(price * rates[currency]);
+}
+
+// Local thresholds equivalent to $500 USD
+// GBP: £400, EUR: €450, AUD: A$770, CAD: C$675
+```
+
+**Data Source B: Society Pages (Targeted)**
+
+| Source | URL | Focus |
+|--------|-----|-------|
+| NY Social Diary | newyorksocialdiary.com/calendar/ | Benefit Events |
+| Tatler UK | tatler.com/topic/parties | "Save the Date" announcements |
+
+**Gemini Story Generation (FOMO Engine):**
+
+Tone: "Insider & Exclusive" - Even if readers aren't attending, they need to know it's happening.
+
+```
+Headline: "Social Calendar: [Event Name] at [Venue]"
+Body: "The city's philanthropists descend on [Venue] tonight.
+       Expect heavy black cars and high fashion. Tickets started at [Price]."
+```
+
+**Event Detection:**
+
+| Detection | Keywords/Triggers |
+|-----------|-------------------|
+| Gala Keywords | gala, ball, benefit, black tie, charity dinner, fundraiser |
+| Exclude Keywords | happy hour, mixer, networking, meetup, workshop |
+| Black Tie | "black tie", "formal attire", "evening dress" |
+| Benefit | "benefit", "charity", "fundraiser", "foundation" |
+
+**Venue Prestige Matching:**
+
+Each hub has a list of prestigious venues. Events at these venues get priority:
+
+- **NYC**: The Met, Lincoln Center, Cipriani, The Plaza, MoMA, Guggenheim
+- **London**: V&A, The Dorchester, Claridge's, Royal Albert Hall, Kensington Palace
+- **Paris**: Palais Garnier, Grand Palais, Ritz Paris, Four Seasons George V
+
+**Cron Schedule:** Daily at 6 AM UTC
+
+**Files:** `src/lib/gala-watch.ts`, `src/app/api/cron/sync-gala-watch/route.ts`
+
 ---
 
 ---

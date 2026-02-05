@@ -20,6 +20,7 @@ A luxury hyper-local news and neighborhood guide platform. Flâneur delivers cur
 - **Retail Watch** - Luxury store opening detection via signage permits (80+ brand patterns)
 - **Nuisance Watch** - 311 complaint hotspot detection with cluster/spike analysis
 - **Specialty Auctions** - Regional auction houses (20+) and vacation market mappings (10+)
+- **Gala Watch** - High-society charity events via Hub Broadcast model (10 global hubs)
 - **Multi-Neighborhood Selection** - Follow multiple neighborhoods for a personalized feed
 - **Tip Submission** - Community-sourced news tips with optional anonymity
 - **Advertiser Portal** - Self-service advertising with Stripe payments
