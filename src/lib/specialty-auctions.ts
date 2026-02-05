@@ -47,7 +47,10 @@ export type RegionalCurrency =
   | 'USD'
   | 'GBP'
   | 'CHF'
-  | 'HKD';
+  | 'HKD'
+  | 'NZD'
+  | 'ZAR'
+  | 'SGD';
 
 /**
  * Currency symbols
@@ -63,6 +66,9 @@ const CURRENCY_SYMBOLS: Record<RegionalCurrency, string> = {
   GBP: '£',
   CHF: 'CHF ',
   HKD: 'HK$',
+  NZD: 'NZ$',
+  ZAR: 'R',
+  SGD: 'S$',
 };
 
 /**
@@ -294,7 +300,7 @@ export const REGIONAL_TARGETS: RegionalTarget[] = [
     selector: '.auction-item',
     currency: 'USD',
     vibe: 'Southeast Asian Art, Chinese Ceramics, Singapore School.',
-    neighborhoods: ['singapore-orchard', 'singapore-tanglin'],
+    neighborhoods: ['singapore-nassim', 'singapore-sentosa'],
     region: 'apac',
   },
 
@@ -418,6 +424,77 @@ export const REGIONAL_TARGETS: RegionalTarget[] = [
     vibe: 'Contemporary NZ Art, Modernism, Ralph Hotere. Auckland art market authority.',
     neighborhoods: ['auckland-herne-bay', 'auckland-remuera', 'auckland-waiheke'],
     region: 'oceania',
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // VANCOUVER (added to North America)
+  // ─────────────────────────────────────────────────────────────
+  {
+    city: 'Vancouver',
+    country: 'Canada',
+    house: "Waddington's",
+    url: 'https://www.waddingtons.ca/auctions/',
+    selector: '.auction-card',
+    currency: 'CAD',
+    vibe: 'Canadian Art, Asian Antiques, Pacific Rim collecting. Vancouver auction authority.',
+    neighborhoods: ['vancouver-west-vancouver', 'vancouver-point-grey'],
+    region: 'north-america',
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // SOUTH AFRICA (Cape Town)
+  // ─────────────────────────────────────────────────────────────
+  {
+    city: 'Cape Town',
+    country: 'South Africa',
+    house: 'Strauss & Co',
+    url: 'https://www.straussart.co.za/',
+    selector: '.auction-item',
+    currency: 'ZAR',
+    vibe: 'South African Art, Irma Stern, William Kentridge. The leading African auction house.',
+    neighborhoods: ['capetown-atlantic-seaboard', 'capetown-constantia'],
+    region: 'apac',
+  },
+  {
+    city: 'Johannesburg',
+    country: 'South Africa',
+    house: 'Aspire Art',
+    url: 'https://www.aspireart.net/',
+    selector: '.sale-row',
+    currency: 'ZAR',
+    vibe: 'Contemporary African Art, Emerging Artists. Pan-African focus.',
+    neighborhoods: ['capetown-atlantic-seaboard', 'capetown-constantia'],
+    region: 'apac',
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // SINGAPORE (update existing)
+  // ─────────────────────────────────────────────────────────────
+  {
+    city: 'Singapore',
+    country: 'Singapore',
+    house: 'Larasati',
+    url: 'https://larasati.com/auctions/',
+    selector: '.auction-list',
+    currency: 'SGD',
+    vibe: 'Southeast Asian Masters, Indonesian Art, Regional Heritage.',
+    neighborhoods: ['singapore-nassim', 'singapore-sentosa'],
+    region: 'apac',
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // USA SATELLITES (Palm Beach, Greenwich served by NYC houses)
+  // ─────────────────────────────────────────────────────────────
+  {
+    city: 'Palm Beach',
+    country: 'USA',
+    house: 'Palm Beach Modern Auctions',
+    url: 'https://www.pbmauctions.com/',
+    selector: '.auction-grid',
+    currency: 'USD',
+    vibe: 'Mid-Century Modern, Florida Design, Decorative Arts. Palm Beach lifestyle.',
+    neighborhoods: ['palm-beach-island'],
+    region: 'north-america',
   },
 ];
 

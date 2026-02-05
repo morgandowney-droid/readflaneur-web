@@ -21,6 +21,11 @@ import {
   createAucklandAdapter,
   createQueenstownAdapter,
 } from './nz-adapter';
+import { VancouverAdapter } from './vancouver-adapter';
+import { CapeTownAdapter } from './capetown-adapter';
+import { SingaporeAdapter } from './singapore-adapter';
+import { PalmBeachAdapter } from './palm-beach-adapter';
+import { GreenwichAdapter } from './greenwich-adapter';
 
 /**
  * Registry of available city adapters
@@ -34,6 +39,11 @@ const ADAPTER_REGISTRY: Record<string, new () => ICityAdapter> = {
   DublinAdapter,
   AucklandAdapter,
   QueenstownAdapter,
+  VancouverAdapter,
+  CapeTownAdapter,
+  SingaporeAdapter,
+  PalmBeachAdapter,
+  GreenwichAdapter,
 };
 
 /**
@@ -48,6 +58,11 @@ const CITY_TO_ADAPTER: Record<string, string> = {
   Dublin: 'DublinAdapter',
   Auckland: 'AucklandAdapter',
   Queenstown: 'QueenstownAdapter',
+  Vancouver: 'VancouverAdapter',
+  'Cape Town': 'CapeTownAdapter',
+  Singapore: 'SingaporeAdapter',
+  'Palm Beach': 'PalmBeachAdapter',
+  Greenwich: 'GreenwichAdapter',
 };
 
 /**
@@ -123,3 +138,8 @@ export {
   createAucklandAdapter,
   createQueenstownAdapter,
 } from './nz-adapter';
+export { VancouverAdapter } from './vancouver-adapter';
+export { CapeTownAdapter } from './capetown-adapter';
+export { SingaporeAdapter } from './singapore-adapter';
+export { PalmBeachAdapter } from './palm-beach-adapter';
+export { GreenwichAdapter } from './greenwich-adapter';
