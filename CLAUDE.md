@@ -7,7 +7,30 @@
 > **User Location:** Stockholm, Sweden (CET/CEST timezone) - use this for time-related references.
 
 ## Current Status
-**Last Updated:** 2026-02-05 (Evening)
+**Last Updated:** 2026-02-05 (Night)
+
+### Recent Changes (2026-02-05 Night)
+
+**Cron Job Monitoring & Auto-Fix System:**
+- New self-healing system that monitors cron job execution and auto-fixes recoverable issues
+- Database tables: `cron_executions` (tracks all cron runs), `cron_issues` (tracks issues needing attention)
+- Library: `src/lib/cron-monitor/` with types, issue detector, auto-fixer, image validator
+- Cron endpoint: `/api/cron/monitor-and-fix` (runs every 30 minutes)
+- Admin dashboard: `/admin/cron-monitor` with overview, issues list, execution history
+- Auto-detects:
+  - Missing article images (image_url is null or empty)
+  - Placeholder SVG images (*.svg files)
+  - Failed cron job executions
+- Auto-fixes:
+  - Regenerates missing/placeholder images via `/api/internal/generate-image`
+  - Max 3 retries with exponential backoff (0, 15min, 1hr)
+  - Rate limits to 5 image regenerations per run with 3-second delays
+- Manual actions via admin dashboard:
+  - Force retry any issue
+  - Mark issues as resolved
+  - Run monitor immediately
+- Files: `src/lib/cron-monitor/`, `src/app/api/cron/monitor-and-fix/route.ts`, `src/app/admin/cron-monitor/page.tsx`
+- Migration: `supabase/migrations/027_cron_monitoring_system.sql`
 
 ### Recent Changes (2026-02-05 Evening)
 
@@ -726,6 +749,7 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | sync-design-week | Daily 6 AM UTC | Global Design Week coverage (Salone del Mobile, LDF, Design Miami, etc.) |
 | sync-anglosphere-features | Daily 8 AM UTC | Anglosphere city features (Vancouver View Watch, Cape Town Conditions, Singapore Market, Palm Beach ARCOM) |
 | sync-global-fallback | Daily 11 AM UTC | Fallback content for neighborhoods without custom adapters |
+| monitor-and-fix | Every 30 min | Self-healing: detect missing images, auto-regenerate, track cron failures |
 
 ## Database Tables
 
@@ -751,10 +775,15 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 - `articles` - News articles with AI-generated images
 - `article_sections` - Article-to-section mapping
 
+### Cron Monitoring
+- `cron_executions` - Tracks all cron job runs with timing, success status, errors
+- `cron_issues` - Tracks issues detected by monitor (missing images, failures) with retry status
+
 ## Admin Pages
 
 | Page | URL | Purpose |
 |------|-----|---------|
+| Cron Monitor | `/admin/cron-monitor` | Self-healing cron system, issue tracking, auto-fix |
 | News Coverage | `/admin/news-coverage` | Monitor coverage, manage RSS feeds |
 | Regenerate Images | `/admin/regenerate-images` | Regenerate article images |
 | Add Place | `/admin/guides/add-place` | Manually add guide listings |
