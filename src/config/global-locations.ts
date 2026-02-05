@@ -916,8 +916,7 @@ export const GLOBAL_CITY_CONFIG: Record<string, CityConfig> = {
       permits: 'https://www.ura.gov.sg/Corporate/',
       liquor: 'https://www.police.gov.sg/e-Services/Apply/Licences-and-Permits',
       safety: 'https://www.police.gov.sg/Statistics/',
-      coe: 'https://www.lta.gov.sg/content/ltagov/en/industry_innovations/industry_matters/coe.html',
-      ura: 'https://www.ura.gov.sg/realEstateIIWeb/',
+      // Note: COE data from LTA and URA transactions used by SingaporeAdapter directly
     },
   },
 
@@ -942,7 +941,7 @@ export const GLOBAL_CITY_CONFIG: Record<string, CityConfig> = {
       permits: 'https://www.townofpalmbeach.com/161/Building-Division',
       liquor: 'https://www.myfloridalicense.com/dbpr/',
       safety: 'https://www.palmbeachpolice.com/',
-      arcom: 'https://www.townofpalmbeach.com/165/Architectural-Commission',
+      // Note: ARCOM agenda monitoring handled by PalmBeachAdapter directly
     },
   },
 
