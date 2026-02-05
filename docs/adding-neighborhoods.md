@@ -347,6 +347,34 @@ Aggregates 311/Council complaints to detect quality of life hotspots. Only repor
 
 Schedule: Daily at 12 PM UTC.
 
+### Specialty Auctions (Regional & Vacation Markets)
+
+Dual-engine service completing global art coverage:
+
+**Tier 2 - National Champions (Direct Scraping):**
+
+| Region | Houses | Cities |
+|--------|--------|--------|
+| Nordic | Bukowskis, Bruun Rasmussen | Stockholm, Copenhagen |
+| DACH | Dorotheum, Grisebach, Ketterer, Koller | Vienna, Berlin, Munich, Zurich |
+| Southern Europe | Finarte, Cambi, Balclis, Veritas | Milan, Rome, Barcelona, Lisbon |
+| APAC | SBI Art, Smith & Singer, Leonard Joel | Tokyo, Sydney, Melbourne |
+| North America | Heffel, Hindman, Bonhams SF, Skinner | Toronto, Chicago, San Francisco, Boston |
+
+**Tier 3 - Vacation Mappings (Hub Filtering):**
+
+Maps Tier 1 global events to vacation feeds based on keywords:
+
+| Vacation | Source Hubs | Keywords |
+|----------|-------------|----------|
+| St. Barts | NYC, Paris | Resort, Jewels, Hermès, Handbags |
+| Aspen | NYC, LA | Western Art, Photography, Design |
+| Hamptons | NYC | Contemporary, Prints, Editions |
+| Sylt | London | Photography, Modern |
+| Marbella | London | Contemporary, Luxury |
+
+Schedule: Weekly on Sundays at 9 PM UTC.
+
 ---
 
 ## Global Locations Configuration (International)
