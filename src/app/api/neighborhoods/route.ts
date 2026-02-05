@@ -51,12 +51,45 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Fetch combo component names for combo neighborhoods
+  const comboNeighborhoods = (neighborhoods || []).filter((n: any) => n.is_combo);
+  const comboComponentNames: Record<string, string[]> = {};
+
+  if (comboNeighborhoods.length > 0) {
+    const { data: comboLinks } = await supabase
+      .from('combo_neighborhoods')
+      .select(`
+        combo_id,
+        display_order,
+        component:neighborhoods!combo_neighborhoods_component_id_fkey (name)
+      `)
+      .in('combo_id', comboNeighborhoods.map((n: any) => n.id))
+      .order('display_order');
+
+    if (comboLinks) {
+      comboLinks.forEach((link: any) => {
+        if (!comboComponentNames[link.combo_id]) {
+          comboComponentNames[link.combo_id] = [];
+        }
+        if (link.component?.name) {
+          comboComponentNames[link.combo_id].push(link.component.name);
+        }
+      });
+    }
+  }
+
+  // Add combo_component_names to each neighborhood
+  const neighborhoodsWithCombo = (neighborhoods || []).map((n: any) => ({
+    ...n,
+    combo_component_names: comboComponentNames[n.id] || undefined,
+  }));
+
   // Group neighborhoods hierarchically: region > country > city
   const grouped: NeighborhoodsByRegion = {};
   const byCountry: NeighborhoodsByCountry = {};
   const byCity: NeighborhoodsByCity = {};
 
-  for (const hood of neighborhoods || []) {
+  for (const hood of neighborhoodsWithCombo) {
     const r = hood.region || 'other';
     const c = hood.country || 'Unknown';
     const ct = hood.city || 'Unknown';
@@ -78,12 +111,12 @@ export async function GET(request: NextRequest) {
   }
 
   // Get unique regions, countries, and cities for filter options
-  const regions = [...new Set((neighborhoods || []).map(n => n.region).filter(Boolean))] as GlobalRegion[];
-  const countries = [...new Set((neighborhoods || []).map(n => n.country).filter(Boolean))] as string[];
-  const cities = [...new Set((neighborhoods || []).map(n => n.city).filter(Boolean))] as string[];
+  const regions = [...new Set(neighborhoodsWithCombo.map(n => n.region).filter(Boolean))] as GlobalRegion[];
+  const countries = [...new Set(neighborhoodsWithCombo.map(n => n.country).filter(Boolean))] as string[];
+  const cities = [...new Set(neighborhoodsWithCombo.map(n => n.city).filter(Boolean))] as string[];
 
   return NextResponse.json({
-    neighborhoods: neighborhoods || [],
+    neighborhoods: neighborhoodsWithCombo,
     grouped,
     byCountry,
     byCity,
