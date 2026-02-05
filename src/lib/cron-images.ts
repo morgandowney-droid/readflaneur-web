@@ -43,7 +43,8 @@ export type CronImageCategory =
   | 'civic-data'
   | 'real-estate'
   | 'museum-watch'
-  | 'overture-alert';
+  | 'overture-alert'
+  | 'design-week';
 
 interface CategoryConfig {
   prompt: string;
@@ -181,6 +182,12 @@ export const CRON_IMAGE_CATEGORIES: Record<CronImageCategory, CategoryConfig> = 
       'Grand opera house interior before performance, red velvet seats, ornate gold balconies, crystal chandelier, dramatic stage curtain closed. Empty venue, warm lighting, editorial architectural photography. No text or people.',
     fallbackColor: '#7f1d1d',
     label: 'CURTAIN UP',
+  },
+  'design-week': {
+    prompt:
+      'Modern furniture showroom with designer chairs and sculptural lighting installations. Minimalist white space, dramatic spotlighting on iconic design pieces. Editorial interior photography. No text, logos, or people.',
+    fallbackColor: '#1e293b',
+    label: 'DESIGN WEEK',
   },
 };
 

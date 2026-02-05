@@ -175,6 +175,10 @@
     {
       "path": "/api/cron/sync-overture-alerts",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/sync-design-week",
+      "schedule": "0 6 * * *"
     }
   ]
 }
