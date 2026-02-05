@@ -11,6 +11,45 @@
 
 ### Recent Changes (2026-02-05)
 
+**Global Rollout (8 New Neighborhoods across 5 Cities):**
+- Added 5 new cities with city-specific special features:
+
+**Vancouver, Canada (2 neighborhoods):**
+- **West Vancouver** - British Properties grandeur, waterfront mansions, Dundarave village
+- **Point Grey** - UBC endowment lands, Marine Drive estates, old money discretion
+- New adapter: `src/lib/adapters/vancouver-adapter.ts`
+- **"View Watch"**: Height variance permit monitoring for protected view cones (North Shore mountains, English Bay)
+- Auction house: Waddington's (Canadian art, Lawren Harris, Emily Carr)
+
+**Cape Town, South Africa (2 neighborhoods):**
+- **Atlantic Seaboard** - Clifton, Camps Bay, Sea Point promenade
+- **Constantia** - Vineyard estates, old Cape Dutch money, wine country elegance
+- New adapter: `src/lib/adapters/capetown-adapter.ts`
+- **"Beach Alert"**: Wind condition monitoring (perfect beach days when wind <15km/h on weekends)
+- **"Grid Watch"**: Load shedding schedule monitoring (Eskom power cuts)
+- Auction houses: Strauss & Co (Irma Stern, Pierneef, Cape Dutch furniture), Aspire Art (contemporary African)
+
+**Singapore (2 neighborhoods):**
+- **Nassim** - Embassy row, Good Class Bungalows, diplomatic elegance, Botanic Gardens
+- **Sentosa** - Billionaire island, Cove estates, casino adjacency
+- New adapter: `src/lib/adapters/singapore-adapter.ts`
+- **"Motor Watch"**: COE (Certificate of Entitlement) results monitoring for premium car licenses
+- **"GCB Alert"**: Good Class Bungalow transactions over $20M SGD
+- Auction house: Larasati (Southeast Asian art, Indonesian masters)
+
+**Palm Beach, Florida (1 neighborhood):**
+- **Palm Beach Island** - Old money resort, Worth Avenue, oceanfront estates
+- New adapter: `src/lib/adapters/palm-beach-adapter.ts`
+- **"Design Watch"**: ARCOM (Architectural Commission) agenda monitoring for aesthetic battles
+- Auction house: Palm Beach Modern Auctions (20th century design, Florida estates)
+
+**Greenwich, Connecticut (1 neighborhood):**
+- **Backcountry** - Hedge fund estates, Round Hill Road, Conyers Farm, equestrian properties
+- New adapter: `src/lib/adapters/greenwich-adapter.ts`
+- Premium street detection: Round Hill Road, North Street, Conyers Farm, Stanwich Road
+
+**Files changed:** `global-locations.ts`, `vancouver-adapter.ts` (new), `capetown-adapter.ts` (new), `singapore-adapter.ts` (new), `palm-beach-adapter.ts` (new), `greenwich-adapter.ts` (new), `adapters/index.ts`, `specialty-auctions.ts`
+
 **New Zealand Integration (5 New Neighborhoods - "Bunker Watch"):**
 - Added New Zealand as Tier 1 market for ultra-wealthy survivalists (Thiel, Page, Cameron)
 - **Auckland (The City)** - 3 neighborhoods:
@@ -257,12 +296,12 @@
 - Cron: Every 6 hours (fetches next 48 hours of permits)
 
 **Global Data Engine (International Markets):**
-- New City Adapter pattern for standardized civic data fetching across 8 international markets
-- Supported cities: London (UK), Sydney (AU), Chicago (US), Los Angeles (US), Washington DC (US), Dublin (IE), Auckland (NZ), Queenstown (NZ)
+- New City Adapter pattern for standardized civic data fetching across 13 international markets
+- Supported cities: London (UK), Sydney (AU), Chicago (US), Los Angeles (US), Washington DC (US), Dublin (IE), Auckland (NZ), Queenstown (NZ), Vancouver (CA), Cape Town (ZA), Singapore (SG), Palm Beach (US), Greenwich (US)
 - Each adapter implements: `getPermits()`, `getLiquor()`, `getSafety()` with city-specific API integrations
 - City-specific vocabulary injection for AI content (currency symbols, local terminology)
 - Config: `src/config/global-locations.ts` with zones, postal codes, editorial tones
-- Adapters: `src/lib/adapters/` (london, sydney, chicago, los-angeles, washington-dc)
+- Adapters: `src/lib/adapters/` (london, sydney, chicago, los-angeles, washington-dc, dublin, nz, vancouver, capetown, singapore, palm-beach, greenwich)
 - Content generator: `src/lib/global-content-generator.ts` with Gemini + cultural context
 - Database tables: `global_permits`, `global_licenses`, `global_safety_stats`
 - Four new cron jobs for international data sync and weekly digest generation
@@ -278,11 +317,22 @@
 | Dublin | Dublin City Council + DLR | Courts Service | Garda Síochána / CSO |
 | Auckland | Auckland Council | DLC | NZ Police |
 | Queenstown | QLDC | DLC | NZ Police |
+| Vancouver | City of Vancouver DevApps | BCLCLB | VPD Open Data |
+| Cape Town | City of Cape Town ePlan | WCLB | SAPS |
+| Singapore | URA IRAS | SLA | SPF |
+| Palm Beach | Town Building Division | FL DBPR | PBPD |
+| Greenwich | Town Building Division | CT DCP | GPD |
 
-**Special: OIO Bunker Watch (New Zealand):**
-| Source | Data | Filter |
-|--------|------|--------|
-| LINZ OIO Decisions | Foreign land acquisitions | $10M+ NZD, Queenstown/Auckland/Wanaka |
+**Special Features by City:**
+| City | Feature | Source |
+|------|---------|--------|
+| New Zealand | OIO Bunker Watch | LINZ OIO Decisions ($10M+ NZD foreign land) |
+| Vancouver | View Watch | Height variance permits (protected view cones) |
+| Cape Town | Beach Alert | Wind conditions (<15km/h = perfect day) |
+| Cape Town | Grid Watch | Eskom load shedding schedules |
+| Singapore | Motor Watch | LTA COE bidding results |
+| Singapore | GCB Alert | URA Good Class Bungalow sales ($20M+ SGD) |
+| Palm Beach | Design Watch | ARCOM agenda (architectural review battles) |
 
 ### Previous Changes (2026-02-04)
 
@@ -532,7 +582,7 @@ npx tsx scripts/seed-neighborhoods.ts nyc-tribeca la-beverly-hills
 - **Website:** https://readflaneur.com
 - **Backend API:** https://flaneur-azure.vercel.app
 - **GitHub:** https://github.com/morgandowney-droid/readflaneur-web
-- **Neighborhoods:** 120 active (including 15 combo neighborhoods across 33 cities)
+- **Neighborhoods:** 128 active (including 15 combo neighborhoods across 38 cities)
 
 ## Project Structure
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Flâneur is a luxury hyper-local news platform serving 120 neighborhoods across 33 cities globally, including vacation destinations and 15 combo neighborhoods that aggregate multiple areas (e.g., SoHo = SoHo + NoHo + NoLita + Hudson Square). The platform combines curated journalism with community-sourced content and local business advertising.
+Flâneur is a luxury hyper-local news platform serving 128 neighborhoods across 38 cities globally, including vacation destinations and 15 combo neighborhoods that aggregate multiple areas (e.g., SoHo = SoHo + NoHo + NoLita + Hudson Square). The platform combines curated journalism with community-sourced content and local business advertising.
 
 ### User Types
 
@@ -170,6 +170,12 @@ NYC Open Data integration includes:
 - **Overture Alerts** - Opera/Ballet/Symphony Opening Nights and Premieres (10 venues: Met Opera, ROH, La Scala, etc.)
 - **Design Week Coverage** - Global Design Week calendar engine (6 events: Salone del Mobile, LDF, Design Miami, etc.)
 - **OIO Bunker Watch** - New Zealand Overseas Investment Office monitoring for foreign land acquisitions ($10M+ NZD)
+- **View Watch** - Vancouver height variance permit monitoring for protected view cones
+- **Beach Alert** - Cape Town wind condition monitoring (perfect beach days when wind <15km/h)
+- **Grid Watch** - Cape Town Eskom load shedding schedule monitoring
+- **Motor Watch** - Singapore COE (Certificate of Entitlement) bidding results for premium car licenses
+- **GCB Alert** - Singapore Good Class Bungalow transactions over $20M SGD
+- **Design Watch** - Palm Beach ARCOM (Architectural Commission) agenda monitoring
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)
@@ -219,7 +225,7 @@ nyc_crime_stats (
 ### Global Civic Data Tables (International Markets)
 
 ```sql
--- Global Permits cache (London, Sydney, Chicago, LA, DC, Dublin, Auckland, Queenstown)
+-- Global Permits cache (London, Sydney, Chicago, LA, DC, Dublin, Auckland, Queenstown, Vancouver, Cape Town, Singapore, Palm Beach, Greenwich)
 global_permits (
   id UUID PRIMARY KEY,
   source_id TEXT NOT NULL,

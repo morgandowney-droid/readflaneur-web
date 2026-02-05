@@ -4,7 +4,7 @@ A luxury hyper-local news and neighborhood guide platform. Flâneur delivers cur
 
 ## Features
 
-- **Neighborhood Feeds** - Curated articles and stories for 120 neighborhoods across 33 cities globally (including vacation destinations and combo neighborhoods)
+- **Neighborhood Feeds** - Curated articles and stories for 128 neighborhoods across 38 cities globally (including vacation destinations and combo neighborhoods)
 - **Neighborhood Guides** - Curated listings with Google ratings (4.0+) and Michelin designations
 - **Tonight** - What's happening in your neighborhood today
 - **Spotted** - Local sightings and happenings
@@ -13,8 +13,14 @@ A luxury hyper-local news and neighborhood guide platform. Flâneur delivers cur
 - **Filming Location Watch** - "Set Life" alerts for upcoming TV/film shoots in NYC neighborhoods
 - **Alfresco Watch** - "Al Fresco Alert" for new outdoor dining setups in NYC neighborhoods
 - **Heritage Watch** - Preservation alerts for demolitions, landmark changes, and tree removal in NYC
-- **Global Civic Data** - International permits, licenses, and safety stats from London, Sydney, Chicago, LA, Washington DC, Dublin, Auckland, and Queenstown
+- **Global Civic Data** - International permits, licenses, and safety stats from London, Sydney, Chicago, LA, Washington DC, Dublin, Auckland, Queenstown, Vancouver, Cape Town, Singapore, Palm Beach, and Greenwich
 - **OIO Bunker Watch** - New Zealand Overseas Investment Office monitoring for foreign billionaire land acquisitions
+- **View Watch** - Vancouver height variance permit monitoring for protected view cones (North Shore mountains, English Bay)
+- **Beach Alert** - Cape Town wind condition monitoring for perfect beach days (<15km/h on weekends)
+- **Grid Watch** - Cape Town Eskom load shedding schedule monitoring
+- **Motor Watch** - Singapore COE bidding results for premium car licenses
+- **GCB Alert** - Singapore Good Class Bungalow transactions over $20M SGD
+- **Design Watch** - Palm Beach ARCOM agenda monitoring for aesthetic battles over estate changes
 - **Auction Watch** - Blue Chip auction calendar syndication to the Northeast Luxury Corridor (25+ neighborhoods)
 - **Global Auction Watch** - Hub & Spoke model for international art hubs (London, Paris, Hong Kong, LA, Geneva)
 - **Art Fair Coverage** - Calendar-based coverage for Big 5 global fairs with Preview/Live/Wrap states
