@@ -163,6 +163,10 @@
     {
       "path": "/api/cron/sync-residency-radar",
       "schedule": "0 8 * * 3"
+    },
+    {
+      "path": "/api/cron/sync-route-alerts",
+      "schedule": "0 7 * * 4"
     }
   ]
 }
