@@ -56,6 +56,19 @@ const categoryIcons: Record<string, string> = {
   'Local News': '📰',
 };
 
+/**
+ * Clean content by stripping HTML tags
+ */
+function cleanContent(text: string): string {
+  return text
+    // Strip HTML <a> tags but keep the link text
+    .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/gi, '$2')
+    // Strip other common HTML tags
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/?(p|div|span|strong|em|b|i)[^>]*>/gi, '')
+    .trim();
+}
+
 export function EnrichedNeighborhoodBrief({
   headline,
   originalContent,
@@ -65,6 +78,9 @@ export function EnrichedNeighborhoodBrief({
 }: EnrichedNeighborhoodBriefProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showSources, setShowSources] = useState(false);
+
+  // Clean HTML from content
+  const cleanedContent = cleanContent(originalContent);
 
   // Count total stories and sources
   const totalStories = categories.reduce((sum, cat) => sum + cat.stories.length, 0);
@@ -102,11 +118,11 @@ export function EnrichedNeighborhoodBrief({
         <div className="text-sm text-neutral-700 leading-relaxed mb-3">
           <p>
             {isExpanded
-              ? originalContent
-              : originalContent.slice(0, 200) + (originalContent.length > 200 ? '...' : '')
+              ? cleanedContent
+              : cleanedContent.slice(0, 200) + (cleanedContent.length > 200 ? '...' : '')
             }
           </p>
-          {originalContent.length > 200 && (
+          {cleanedContent.length > 200 && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="mt-2 text-xs font-medium text-amber-700 hover:text-amber-900 transition-colors"

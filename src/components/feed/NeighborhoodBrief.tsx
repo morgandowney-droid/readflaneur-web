@@ -620,12 +620,17 @@ function renderWithSearchableEntities(
 }
 
 /**
- * Clean content by removing citation markers and inline URLs
+ * Clean content by removing citation markers, inline URLs, and HTML tags
  * Uses citation positions to create natural paragraph breaks
  * Removes em dashes (AI-generated content indicator)
  */
 function cleanContent(text: string): string {
   return text
+    // Strip HTML <a> tags but keep the link text
+    .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/gi, '$2')
+    // Strip other common HTML tags
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/?(p|div|span|strong|em|b|i)[^>]*>/gi, '')
     // Elegant word replacements (avoid trying-too-hard language)
     .replace(/\bclassy\b/gi, 'tasteful')
     .replace(/\bfoodie\b/gi, 'gastronome')
