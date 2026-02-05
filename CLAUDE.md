@@ -11,6 +11,15 @@
 
 ### Recent Changes (2026-02-05)
 
+**Cached Cron Image System:**
+- New system for reusing AI-generated images across recurring cron stories
+- Saves Gemini token costs by caching category-specific images in Supabase
+- 19 image categories: route-alert, residency-radar, fashion-week, archive-hunter, sample-sale, nimby-alert, political-wallet, review-watch, gala-watch, retail-watch, escape-index, nuisance-watch, art-fair, auction, heritage-watch, alfresco-watch, filming-permit, civic-data, real-estate
+- Library: `src/lib/cron-images.ts` with `getCronImage(category, supabase)`
+- Admin API: `/api/admin/pregenerate-cron-images` (GET=list, POST=generate)
+- Updated crons: sync-route-alerts, sync-residency-radar now use cached images
+- First request generates image, subsequent requests reuse cached URL
+
 **Route Alert Service ("The Hub Map"):**
 - New service monitoring airline schedules for new "Direct Premium Routes"
 - 8 hub markets: NYC (JFK/EWR), London (LHR/LGW), LA (LAX), Sydney (SYD), Paris (CDG), Miami, SF, Chicago
