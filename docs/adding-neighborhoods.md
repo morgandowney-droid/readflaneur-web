@@ -408,6 +408,42 @@ Aggregates high-society charity events and broadcasts them to wealthy residentia
 
 Schedule: Daily at 6 AM UTC.
 
+### Escape Index (Vacation Conditions)
+
+Injects vacation conditions (Snow, Surf, Weather) into feeder city feeds to trigger travel decisions.
+
+**Architecture: "The Feeder Map"**
+
+We don't show snow reports in Aspen. We show them in *New York* (where the skiers are).
+
+| Feeder City | Target Destinations |
+|-------------|---------------------|
+| New York | Aspen, Deer Valley, Vail, The Hamptons, St. Barts, Turks & Caicos |
+| London | Courchevel, Verbier, St. Moritz, Ibiza, Cornwall, Mykonos |
+| Paris | Courchevel, Verbier, Zermatt, St. Barts, Ibiza, Biarritz |
+| Los Angeles | Aspen, Deer Valley, Park City, Cabo, Hawaii, Malibu |
+| San Francisco | Tahoe, Park City, Hawaii, Cabo, Costa Rica |
+| Sydney | Byron Bay, Noosa, Niseko, Queenstown, Bali |
+| Hong Kong | Niseko, Bali, Phuket, Maldives |
+| + Chicago, Miami, Tokyo | ... |
+
+**Data Sources (Open-Meteo API - Free):**
+
+| Adapter | Metric | Threshold |
+|---------|--------|-----------|
+| Snow | 24h Snowfall | >6 inches = Powder Day |
+| Surf | Swell Height + Period | >4ft + >10s = Firing |
+| Sun | Temp + UV + Forecast | >70°F + UV 5+ + 2 days = Perfect Weekend |
+
+**Gemini Story Tone:** "Urgent Leisure" - "Pack your bags."
+
+**Headline Templates:**
+- Snow: "Powder Alert: [Destination] gets [Amount] overnight."
+- Surf: "Swell Watch: [Destination] is firing this weekend."
+- Sun: "Escape Plan: Perfect forecast for [Destination] this weekend."
+
+Schedule: Every 6 hours at :45 (7:45, 13:45, 19:45, 1:45 UTC).
+
 ---
 
 ## Global Locations Configuration (International)

@@ -994,6 +994,92 @@ Each hub has a list of prestigious venues. Events at these venues get priority:
 
 **Files:** `src/lib/gala-watch.ts`, `src/app/api/cron/sync-gala-watch/route.ts`
 
+### 7.15 Escape Index (Vacation Conditions)
+
+Escape Index injects vacation conditions (Snow, Surf, Weather) into feeder city feeds to trigger travel decisions.
+
+**Architecture: "The Feeder Map"**
+
+We don't show snow reports in Aspen. We show them in *New York* (where the skiers are).
+
+```typescript
+const ESCAPE_ROUTES = {
+  New_York: {
+    targets: ['Aspen', 'Deer_Valley', 'The_Hamptons', 'St_Barts', 'Turks_and_Caicos'],
+    neighborhoodIds: ['nyc-upper-east-side', 'nyc-tribeca', 'nyc-west-village', ...]
+  },
+  London: {
+    targets: ['Courchevel', 'Verbier', 'St_Moritz', 'Ibiza', 'Cornwall', 'Mykonos'],
+    neighborhoodIds: ['london-mayfair', 'london-chelsea', 'london-kensington', ...]
+  },
+  // + Paris, Los_Angeles, San_Francisco, Chicago, Sydney, Hong_Kong, Tokyo, Miami
+};
+```
+
+**Feeder City Coverage:**
+
+| Feeder City | Snow Targets | Surf Targets | Sun Targets |
+|-------------|--------------|--------------|-------------|
+| New York | Aspen, Deer Valley, Vail | The Hamptons | St. Barts, Turks & Caicos |
+| London | Courchevel, Verbier, St. Moritz | Cornwall | Ibiza, Mykonos, Amalfi |
+| Paris | Courchevel, Verbier, Zermatt | Biarritz | St. Barts, Ibiza, Mykonos |
+| Los Angeles | Aspen, Deer Valley, Park City | Malibu | Cabo, Hawaii, Tulum |
+| San Francisco | Tahoe, Park City | - | Hawaii, Cabo, Costa Rica |
+| Sydney | Niseko | Byron Bay, Noosa | Queenstown, Bali, Fiji |
+
+**Data Sources (Open-Meteo API - Free, No Key Required):**
+
+| Adapter | API | Metrics |
+|---------|-----|---------|
+| Snow | Open-Meteo Forecast | snowfall_sum, temperature, weathercode |
+| Surf | Open-Meteo Marine | wave_height, wave_period, swell_wave_height |
+| Sun | Open-Meteo Forecast | temperature_2m, uv_index, cloudcover |
+
+**Condition Thresholds:**
+
+| Type | Threshold | Alert Name |
+|------|-----------|------------|
+| Snow | >6 inches in 24h | **Powder Day** |
+| Surf | >4ft swell + >10s period + <15mph wind | **Firing** |
+| Sun | >70°F + UV 5+ + 2+ good days ahead | **Perfect Weekend** |
+
+**Gemini Story Generation:**
+
+Tone: "Urgent Leisure" - "Pack your bags."
+
+```
+// Snow
+Headline: "Powder Alert: Aspen gets 12" overnight."
+Body: "Fresh snow is piling up in the Rockies. Aspen woke up to a foot of new powder.
+       Conditions: Heavy Snow, 22°F. Book now or miss the dump."
+
+// Surf
+Headline: "Swell Watch: Byron Bay is firing this weekend."
+Body: "A 6ft swell from the SE with 14-second period is hitting the coast.
+       Light offshore winds. Conditions are perfect. Wheels up."
+
+// Sun
+Headline: "Escape Plan: Perfect forecast for St. Barts this weekend."
+Body: "84°F, clear skies, UV 9. Five days of perfect weather ahead.
+       The villa is calling. Pack light."
+```
+
+**Urgency Levels:**
+
+| Level | Trigger | Action |
+|-------|---------|--------|
+| High | Powder Day / Firing / Perfect Weekend | Article pinned to top |
+| Medium | Good but not exceptional | Standard placement |
+| Low | Marginal conditions | Lower priority |
+
+**Seasonality:**
+
+Each destination has a season (e.g., Aspen: Nov-Apr, St. Barts: Dec-Apr). Out-of-season destinations are skipped.
+
+**Cron Schedule:** Every 6 hours at :45 (7:45, 13:45, 19:45, 1:45 UTC)
+
+**Files:** `src/lib/escape-index.ts`, `src/app/api/cron/sync-escape-index/route.ts`
+
 ---
 
 ---

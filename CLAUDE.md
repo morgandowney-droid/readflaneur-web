@@ -406,6 +406,7 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | sync-nuisance-watch | Daily 12 PM UTC | 311 complaint clustering with spike detection |
 | sync-specialty-auctions | Sunday 9 PM UTC | Tier 2 National Champions + Tier 3 Vacation Mappings |
 | sync-gala-watch | Daily 6 AM UTC | High-society charity events via Hub Broadcast model |
+| sync-escape-index | Every 6 hours (:45) | Vacation conditions (Snow/Surf/Sun) via Feeder Map |
 
 ## Database Tables
 
