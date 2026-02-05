@@ -260,6 +260,78 @@ export const GEMINI_STORY_GENERATORS: GeminiStoryGenerator[] = [
     categoryLabel: 'Donor Watch',
     description: 'Neighborhood political donation trends',
   },
+
+  // ============================================================================
+  // ANGLOSPHERE FEATURES (City-Specific)
+  // ============================================================================
+  {
+    id: 'view-cone-watch',
+    name: 'View Watch (Vancouver)',
+    file: 'vancouver-views.ts',
+    generatorFunction: 'generateViewConeStory',
+    categoryLabel: 'View Watch',
+    description: 'Vancouver height variance permits affecting view cones',
+  },
+  {
+    id: 'calm-alert',
+    name: 'Calm Alert (Cape Town)',
+    file: 'capetown-conditions.ts',
+    generatorFunction: 'generateCalmAlertStory',
+    categoryLabel: 'Beach Alert',
+    description: 'Cape Town wind conditions for perfect beach days',
+  },
+  {
+    id: 'grid-watch',
+    name: 'Grid Watch (Cape Town)',
+    file: 'capetown-conditions.ts',
+    generatorFunction: 'generateGridWatchStory',
+    categoryLabel: 'Grid Watch',
+    description: 'Cape Town Eskom load shedding alerts',
+  },
+  {
+    id: 'motor-watch',
+    name: 'Motor Watch (Singapore)',
+    file: 'singapore-market.ts',
+    generatorFunction: 'generateMotorWatchAlert',
+    categoryLabel: 'Motor Watch',
+    description: 'Singapore COE bidding results for luxury cars',
+  },
+  {
+    id: 'gcb-alert',
+    name: 'GCB Alert (Singapore)',
+    file: 'singapore-market.ts',
+    generatorFunction: 'generateGCBAlert',
+    categoryLabel: 'GCB Alert',
+    description: 'Singapore Good Class Bungalow transactions >$20M',
+  },
+  {
+    id: 'arcom-watch',
+    name: 'Design Watch (Palm Beach)',
+    file: 'palm-beach-arcom.ts',
+    generatorFunction: 'generateARCOMAlert',
+    categoryLabel: 'Design Watch',
+    description: 'Palm Beach ARCOM architectural review alerts',
+  },
+
+  // ============================================================================
+  // GLOBAL FALLBACK
+  // ============================================================================
+  {
+    id: 'development-watch-fallback',
+    name: 'Development Watch (Fallback)',
+    file: 'global-fallback.ts',
+    generatorFunction: 'generateDevelopmentWatchStory',
+    categoryLabel: 'Neighborhood Watch',
+    description: 'Fallback coverage for neighborhoods without custom adapters',
+  },
+  {
+    id: 'lifestyle-watch-fallback',
+    name: 'Lifestyle Watch (Fallback)',
+    file: 'global-fallback.ts',
+    generatorFunction: 'generateLifestyleWatchStory',
+    categoryLabel: 'Local Life',
+    description: 'Lifestyle fallback for dining, shopping, culture',
+  },
 ];
 
 /**

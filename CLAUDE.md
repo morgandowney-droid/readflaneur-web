@@ -324,15 +324,23 @@
 | Greenwich | Town Building Division | CT DCP | GPD |
 
 **Special Features by City:**
-| City | Feature | Source |
-|------|---------|--------|
-| New Zealand | OIO Bunker Watch | LINZ OIO Decisions ($10M+ NZD foreign land) |
-| Vancouver | View Watch | Height variance permits (protected view cones) |
-| Cape Town | Beach Alert | Wind conditions (<15km/h = perfect day) |
-| Cape Town | Grid Watch | Eskom load shedding schedules |
-| Singapore | Motor Watch | LTA COE bidding results |
-| Singapore | GCB Alert | URA Good Class Bungalow sales ($20M+ SGD) |
-| Palm Beach | Design Watch | ARCOM agenda (architectural review battles) |
+| City | Feature | Source | File |
+|------|---------|--------|------|
+| New Zealand | OIO Bunker Watch | LINZ OIO Decisions ($10M+ NZD foreign land) | `oio-service.ts` |
+| Vancouver | View Watch | Height variance permits (protected view cones) | `vancouver-views.ts` |
+| Cape Town | Calm Alert | Wind conditions (<15km/h = perfect day) | `capetown-conditions.ts` |
+| Cape Town | Grid Watch | Eskom load shedding schedules | `capetown-conditions.ts` |
+| Singapore | Motor Watch | LTA COE bidding results (Cat B drop >$5k) | `singapore-market.ts` |
+| Singapore | GCB Alert | URA Good Class Bungalow sales ($20M+ SGD) | `singapore-market.ts` |
+| Palm Beach | Design Watch | ARCOM agenda (architectural review battles) | `palm-beach-arcom.ts` |
+
+**Global Fallback Service:**
+- File: `src/lib/global-fallback.ts`
+- Ensures no neighborhood is ever empty
+- Fallback A: Development Watch (real estate, openings, zoning)
+- Fallback B: Lifestyle Watch (dining, shopping, culture)
+- Fallback C: Weather conditions (last resort via Open-Meteo)
+- Cron: Daily at 11 AM UTC (`sync-global-fallback`)
 
 ### Previous Changes (2026-02-04)
 
@@ -685,6 +693,8 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | sync-museum-watch | Monday 7 AM UTC | Tier 1 museum blockbuster exhibition alerts (Met, MoMA, Tate, Louvre, etc.) |
 | sync-overture-alerts | Daily 10 AM UTC | Opera/Ballet/Symphony Opening Nights and Premieres (Met Opera, ROH, La Scala, etc.) |
 | sync-design-week | Daily 6 AM UTC | Global Design Week coverage (Salone del Mobile, LDF, Design Miami, etc.) |
+| sync-anglosphere-features | Daily 8 AM UTC | Anglosphere city features (Vancouver View Watch, Cape Town Conditions, Singapore Market, Palm Beach ARCOM) |
+| sync-global-fallback | Daily 11 AM UTC | Fallback content for neighborhoods without custom adapters |
 
 ## Database Tables
 

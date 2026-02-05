@@ -179,6 +179,14 @@
     {
       "path": "/api/cron/sync-design-week",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/sync-anglosphere-features",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/sync-global-fallback",
+      "schedule": "0 11 * * *"
     }
   ]
 }
