@@ -11,6 +11,28 @@
 
 ### Recent Changes (2026-02-05)
 
+**RSS Article Metadata Compliance:**
+- RSS-sourced articles now have proper metadata:
+  - `author_type: 'ai'`
+  - `ai_model: 'claude-sonnet-4'`
+  - `category_label: 'News Brief'`
+- File: `src/app/api/cron/sync-news/route.ts`
+- Backfill endpoint: `/api/admin/backfill-rss-metadata` (GET=preview, POST=apply)
+- 147 existing RSS articles backfilled with correct metadata
+
+**AI Image Standards Compliance:**
+- Image generation now follows `/standards` requirements
+- Changed from "photorealistic editorial photograph" to "stylized artistic illustration"
+- Uses watercolor/gouache painting style, NOT photographs
+- Added rule against photorealistic human faces
+- File: `src/app/api/internal/generate-image/route.ts`
+
+**Admin News Feed - Source Filter:**
+- New "Source" filter dropdown on `/admin/news-feed` page
+- Options: RSS Feeds (News Brief), Grok AI, Gemini AI
+- New "Source" column showing color-coded badges (Blue=RSS, Purple=Grok, Green=Gemini)
+- Files: `src/app/admin/news-feed/page.tsx`, `src/app/api/admin/news-feed/route.ts`
+
 **Simplified Hyperlink System:**
 - Removed `entity_type` from link candidates - Gemini now just returns `{text: "exact phrase"}`
 - Simplified `buildGoogleSearchUrl()` to use `{text} {neighborhood.name} {neighborhood.city}` for all links

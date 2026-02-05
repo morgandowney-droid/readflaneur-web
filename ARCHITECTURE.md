@@ -466,6 +466,35 @@ Cost: ~$0 additional (just URL construction, no API calls)
 
 ---
 
+## RSS News System
+
+### Article Metadata
+
+RSS-sourced articles (via `sync-news` cron) have these metadata fields:
+
+| Field | Value | Description |
+|-------|-------|-------------|
+| `author_type` | `ai` | Content is AI-processed |
+| `ai_model` | `claude-sonnet-4` | Claude filters and rewrites RSS content |
+| `category_label` | `News Brief` | Identifies RSS-sourced content |
+| `editor_notes` | `Source: {outlet} - {url}` | Original source attribution |
+
+### Standards Compliance
+
+Per `/standards` (AI Ethics Policy):
+- All AI-generated articles labeled appropriately
+- Source attribution in `editor_notes`
+- Images use stylized artistic renderings (not photorealistic)
+- AI Illustration badge displayed on images
+
+### Admin Backfill
+
+Endpoint to fix existing RSS articles missing metadata:
+- `GET /api/admin/backfill-rss-metadata` - Preview articles needing update
+- `POST /api/admin/backfill-rss-metadata` - Apply metadata fixes
+
+---
+
 ## Migrations
 
 Located in `supabase/migrations/`:

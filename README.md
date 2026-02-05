@@ -149,6 +149,21 @@ Users can select multiple neighborhoods to follow. Preferences are:
 
 Curated places filtered to 4.0+ Google ratings with optional Michelin filter. Categories include dining, cafes, bars, shopping, and more.
 
+### RSS News Aggregation
+
+Local news from RSS feeds is aggregated, filtered, and rewritten by Claude AI:
+- Articles labeled with `category_label: 'News Brief'`
+- Source attribution preserved in `editor_notes`
+- Filtered by Source type in `/admin/news-feed`
+
+### AI Standards Compliance
+
+Per `/standards` (AI Ethics Policy):
+- AI-generated content clearly labeled
+- Images use stylized artistic renderings (not photorealistic)
+- Source attribution for all RSS-sourced content
+- C2PA metadata for content provenance
+
 ## Documentation
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed technical documentation.
