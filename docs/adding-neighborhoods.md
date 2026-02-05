@@ -124,6 +124,21 @@ node scripts/fix-my-neighborhood.mjs
 npm run dev
 ```
 
+## Content Monitoring
+
+After adding a neighborhood, monitor its content health using the News Feed QC dashboard:
+
+**URL:** `/admin/news-feed`
+
+The dashboard shows:
+- **No Content (24h)** - Neighborhoods with zero published articles
+- **Overwhelmed (>5/day)** - Neighborhoods with too many articles
+- **Failed Content** - Missed schedules, stale drafts
+
+Use this to verify your new neighborhood is receiving content from cron jobs.
+
+---
+
 ## Validation Checklist
 
 Before committing:

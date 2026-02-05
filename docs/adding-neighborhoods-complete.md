@@ -293,7 +293,37 @@ Vacation neighborhoods have specialized local sources:
 
 ## Step 6: Testing & Validation
 
-### 6.1 Checklist
+### 6.1 News Feed Quality Control Dashboard
+
+Use the admin QC dashboard at `/admin/news-feed` to monitor content health across all neighborhoods.
+
+**Stats Cards:**
+- **No Content (24h)** - Neighborhoods with zero published articles in the past 24 hours. Click to see the list.
+- **Overwhelmed (>5/day)** - Neighborhoods with more than 5 articles in 24 hours. May indicate duplicate content or over-syndication.
+- **Total Articles (24h)** - Total published articles across all active neighborhoods.
+
+**Filters:**
+- **Time Range**: Last 24 hours or Last 7 days
+- **Category**: Filter by `category_label` (Daily Brief, Set Life, CULTURE WATCH, etc.)
+- **Neighborhood**: Filter to a specific neighborhood
+
+**Article Feed:**
+Compact table showing all published articles with:
+- Headline (truncated, links to article)
+- Neighborhood name
+- Region (NYC, Europe, etc.)
+- Category label
+- Relative time
+
+**Failed/Stuck Content Section:**
+Shows articles that need attention:
+- **Missed Schedule**: Status = 'scheduled' but `scheduled_for` is in the past
+- **Stale Draft/Pending**: Status = 'draft' or 'pending' for more than 24 hours
+- Includes `editor_notes` if available
+
+**URL:** `/admin/news-feed`
+
+### 6.2 Checklist
 
 Run through this checklist before going live:
 
