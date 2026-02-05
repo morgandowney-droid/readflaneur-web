@@ -263,6 +263,17 @@ NYC neighborhoods receive heritage alerts for demolitions, landmark alterations,
 
 Uses the same `zips` array from `FLANEUR_NYC_CONFIG`.
 
+### Auction Watch (Northeast Luxury Corridor)
+
+Blue Chip auction calendar scraping from Sotheby's, Christie's, and Phillips. Stories are syndicated to the entire Northeast Luxury Corridor (25+ neighborhoods):
+- **NYC Core**: Tribeca, SoHo, West Village, Greenwich Village, Chelsea, Meatpacking, UES, UWS, FiDi, Hudson Yards, Williamsburg, Brooklyn West
+- **NYC Surroundings**: Westchester, Old Westbury, The Hamptons
+- **Connecticut**: Greenwich, New Canaan, Darien, Westport
+- **New Jersey**: Bergen Gold, Montclair, Summit, The Hills
+- **Massachusetts**: Martha's Vineyard, Nantucket
+
+Schedule: Weekly on Sundays at 11 PM UTC.
+
 ---
 
 ## Global Locations Configuration (International)

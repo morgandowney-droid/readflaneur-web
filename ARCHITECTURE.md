@@ -150,6 +150,7 @@ NYC Open Data integration includes:
 - **Film Permits** - "Set Life" alerts for TV/film shoots (stored as articles, not separate table)
 - **Open Restaurants** - "Al Fresco Alert" for outdoor dining approvals (stored as articles)
 - **Heritage Filings** - Demolition, landmark alteration, and tree removal alerts (stored as articles)
+- **Auction Calendar** - Blue Chip auction syndication to Northeast Luxury Corridor (stored as articles)
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)

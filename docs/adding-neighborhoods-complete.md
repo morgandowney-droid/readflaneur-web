@@ -550,6 +550,51 @@ NYC neighborhoods receive heritage alerts for demolitions, landmark alterations,
 
 **Tree Keywords:** tree removal, tree protection, tree work, specimen tree, mature tree
 
+### 7.8 Auction Watch (Northeast Luxury Corridor)
+
+Auction Watch scrapes the "Big Three" auction house calendars (Sotheby's, Christie's, Phillips) and syndicates stories to the entire Northeast Luxury Corridor. This is a regional syndication feature, not neighborhood-specific.
+
+**Data Sources:**
+- Sotheby's Calendar: `https://www.sothebys.com/en/calendar`
+- Christie's Calendar: `https://www.christies.com/calendar`
+- Phillips Calendar: `https://www.phillips.com/auctions/past-and-upcoming`
+
+**Blue Chip Filtering:**
+
+Only prestigious, newsworthy auctions are included via whitelist/blacklist keywords:
+
+| Whitelist (Include) | Blacklist (Exclude) |
+|---------------------|---------------------|
+| Impressionist, Modern, Contemporary | Prints, Wine, Watches |
+| Post-War, Fine Art, Masterworks | Luxury, Jewelry, Fashion |
+| Evening Sale, Marquee, Flagship | Automobiles, Online Only |
+| Blue Chip, Museum Quality | Charity, Benefit, Collector |
+| Old Masters, American Art | Ceramics, Decorative, Furniture |
+| 20th Century, Surrealism, Abstract | Photographs, Rugs, Silver |
+
+**Tier Classification:**
+
+| Tier | Criteria | Category Label |
+|------|----------|----------------|
+| Mega | Headline sales, Evening Sales, record-breaking lots | "Auction: Marquee Sale" |
+| Standard | Regular Blue Chip auctions | "Auction Watch" |
+
+**Northeast Luxury Corridor Coverage:**
+
+The auction syndication targets 25+ neighborhoods across the region:
+
+| Region | Neighborhoods |
+|--------|---------------|
+| NYC Core | Tribeca, SoHo, West Village, Greenwich Village, Chelsea, Meatpacking, UES, UWS, FiDi, Hudson Yards, Williamsburg, Brooklyn West |
+| NYC Surroundings | Westchester, Old Westbury, The Hamptons |
+| Connecticut | Greenwich, New Canaan, Darien, Westport |
+| New Jersey | Bergen Gold, Montclair, Summit, The Hills |
+| Massachusetts | Martha's Vineyard, Nantucket |
+
+**Cron Schedule:** Weekly on Sundays at 11 PM UTC (6 PM EST)
+
+**File:** `src/lib/nyc-auctions.ts`, `src/app/api/cron/sync-auction-calendar/route.ts`
+
 ---
 
 ---
