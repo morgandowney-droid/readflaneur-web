@@ -80,7 +80,7 @@ export interface RegionalTarget {
   currency: RegionalCurrency;
   vibe: string;
   neighborhoods: string[];
-  region: 'nordic' | 'dach' | 'southern-europe' | 'apac' | 'north-america';
+  region: 'nordic' | 'dach' | 'southern-europe' | 'apac' | 'north-america' | 'uk-ireland';
 }
 
 /**
@@ -366,6 +366,32 @@ export const REGIONAL_TARGETS: RegionalTarget[] = [
     vibe: 'American Antiques, Maritime Art, New England Heritage.',
     neighborhoods: ['boston-back-bay', 'boston-beacon-hill'],
     region: 'north-america',
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // UK & IRELAND
+  // ─────────────────────────────────────────────────────────────
+  {
+    city: 'Dublin',
+    country: 'Ireland',
+    house: "Adam's",
+    url: 'https://www.adams.ie/upcoming-auctions',
+    selector: '.auction-list-item',
+    currency: 'EUR',
+    vibe: 'Classic Irish Art, Jack B. Yeats, Period Furniture. The leading Irish auction house since 1887.',
+    neighborhoods: ['dublin-ballsbridge', 'dublin-ranelagh', 'dublin-dalkey'],
+    region: 'uk-ireland',
+  },
+  {
+    city: 'Dublin',
+    country: 'Ireland',
+    house: "Whyte's",
+    url: 'https://whytes.ie/',
+    selector: '.auction_row',
+    currency: 'EUR',
+    vibe: 'History, Irish Republic Memorabilia, Fine Art. Specialists in Irish heritage and collectibles.',
+    neighborhoods: ['dublin-ballsbridge'],
+    region: 'uk-ireland',
   },
 ];
 

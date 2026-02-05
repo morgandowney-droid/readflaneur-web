@@ -186,6 +186,50 @@ export const CITY_VOCABULARIES: Record<string, CityVocabulary> = {
     currencySymbol: '$',
     currencyName: 'dollars',
   },
+
+  Dublin: {
+    permitTerms: [
+      'Planning Application',
+      'Planning Permission',
+      'Protected Structure',
+      'Conservation Area',
+      'Change of Use',
+      'Extension',
+      'Demolition',
+      'Retention Permission',
+    ],
+    liquorTerms: [
+      'Intoxicating Liquor Licence',
+      'Publican\'s Licence',
+      'Restaurant Licence',
+      'Off-Licence',
+      'Special Exemption Order',
+      'Entertainment Licence',
+    ],
+    realEstateTerms: [
+      'Georgian',
+      'Victorian',
+      'Edwardian',
+      'Period property',
+      'Mews',
+      'Ambassador residence',
+      'Embassy',
+      'Red brick',
+      'Detached',
+      'Semi-detached',
+    ],
+    localPhrases: [
+      'the Southside',
+      'D4',
+      'D6',
+      'the village',
+      'embassy belt',
+      'the coast',
+      'DART line',
+    ],
+    currencySymbol: '€',
+    currencyName: 'euros',
+  },
 };
 
 /**
@@ -422,6 +466,45 @@ export const GLOBAL_CITY_CONFIG: Record<string, CityConfig> = {
       permits: 'https://opendata.dc.gov/api/',
       liquor: 'https://abra.dc.gov/',
       safety: 'https://opendata.dc.gov/api/',
+    },
+  },
+
+  // --- DUBLIN (Eircode/District Based) ---
+  Dublin: {
+    city: 'Dublin',
+    country: 'Ireland',
+    adapter: 'DublinAdapter',
+    currency: 'EUR',
+    zones: [
+      {
+        name: 'Ballsbridge',
+        neighborhoodId: 'dublin-ballsbridge',
+        tone: 'Old money, embassy belt, RDS grounds, and Shrewsbury Road billionaires',
+        zoneCode: 'D04',
+        altCodes: ['Dublin 4'],
+        postalCodes: ['D04'],
+      },
+      {
+        name: 'Ranelagh',
+        neighborhoodId: 'dublin-ranelagh',
+        tone: 'Cosmopolitan village, Dartmouth Square elegance, and creative professionals',
+        zoneCode: 'D06',
+        altCodes: ['Dublin 6'],
+        postalCodes: ['D06'],
+      },
+      {
+        name: 'Dalkey',
+        neighborhoodId: 'dublin-dalkey',
+        tone: 'Coastal luxury, Vico Road views, celebrity retreats, and literary heritage',
+        zoneCode: 'A96',
+        altCodes: ['Dalkey', 'Killiney'],
+        postalCodes: ['A96'],
+      },
+    ],
+    endpoints: {
+      permits: 'https://www.dublincity.ie/residential/planning',
+      liquor: 'https://www.courts.ie/intoxicating-liquor',
+      safety: 'https://www.garda.ie/en/crime-prevention/',
     },
   },
 };
