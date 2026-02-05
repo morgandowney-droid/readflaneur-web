@@ -2,7 +2,7 @@
 
 ## Overview
 
-Flâneur is a luxury hyper-local news platform serving 128 neighborhoods across 38 cities globally, including vacation destinations and 15 combo neighborhoods that aggregate multiple areas (e.g., SoHo = SoHo + NoHo + NoLita + Hudson Square). The platform combines curated journalism with community-sourced content and local business advertising.
+Flâneur is a luxury hyper-local news platform serving 128+ neighborhoods across 40+ cities globally, including vacation destinations and 15 combo neighborhoods that aggregate multiple areas (e.g., SoHo = SoHo + NoHo + NoLita + Hudson Square). The platform combines curated journalism with community-sourced content and local business advertising.
 
 ### User Types
 
@@ -176,6 +176,7 @@ NYC Open Data integration includes:
 - **Motor Watch** - Singapore COE (Certificate of Entitlement) bidding results for premium car licenses
 - **GCB Alert** - Singapore Good Class Bungalow transactions over $20M SGD
 - **Design Watch** - Palm Beach ARCOM (Architectural Commission) agenda monitoring
+- **Global Fallback Service** - Ensures no neighborhood is ever empty with Development Watch, Lifestyle Watch, or Weather fallbacks
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)

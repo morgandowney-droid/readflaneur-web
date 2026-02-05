@@ -7,7 +7,38 @@
 > **User Location:** Stockholm, Sweden (CET/CEST timezone) - use this for time-related references.
 
 ## Current Status
-**Last Updated:** 2026-02-05
+**Last Updated:** 2026-02-05 (Evening)
+
+### Recent Changes (2026-02-05 Evening)
+
+**Cron Jobs Bug Fixes:**
+- Fixed `is_pinned` column bug in 3 cron jobs (column doesn't exist in articles table):
+  - `sync-escape-index` - Was failing on all article inserts
+  - `sync-art-fairs` - Would fail during active fairs
+  - `sync-design-week` - Would fail during active events
+- Files changed: All three route.ts files in `src/app/api/cron/`
+
+**Combo Neighborhoods Fixes:**
+- Force-generated briefs for 10 combo neighborhoods that were missing daily briefs
+- Manually triggered Gemini enrichment for 15 combo briefs (all now enriched)
+- Issue: Enrichment cron has 2-hour window; older briefs need `?test=<brief-id>` to bypass
+
+**Cron Jobs Verified Working:**
+| Cron | Status | Notes |
+|------|--------|-------|
+| sync-anglosphere-features | ✅ | Generated 6 articles (Singapore + Palm Beach) |
+| sync-global-fallback | ✅ | No fallback needed (all neighborhoods covered) |
+| sync-review-watch | ✅ | Generated 2 Dining Watch articles |
+| sync-nuisance-watch | ✅ | Generated 10 Block Watch articles |
+| sync-filming-permits | ✅ | No film permits in coverage areas |
+| sync-retail-watch | ✅ | No luxury brand signage permits |
+| sync-gala-watch | ✅ | No gala events this period |
+| sync-museum-watch | ✅ | No blockbuster exhibitions opening |
+| sync-sample-sales | ✅ | No luxury sample sales detected |
+| sync-archive-hunter | ✅ | No investment-grade vintage items |
+| sync-overture-alerts | ✅ | No opera/ballet premieres in 48h |
+| sync-art-fairs | ✅ | No active art fairs (off-season) |
+| sync-escape-index | ✅ (fixed) | Found surf alerts, was failing before fix |
 
 ### Recent Changes (2026-02-05)
 
