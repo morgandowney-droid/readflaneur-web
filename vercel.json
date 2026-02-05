@@ -147,6 +147,10 @@
     {
       "path": "/api/cron/sync-nimby-alerts",
       "schedule": "0 6 * * 1"
+    },
+    {
+      "path": "/api/cron/sync-political-wallet",
+      "schedule": "0 7 * * 2"
     }
   ]
 }
