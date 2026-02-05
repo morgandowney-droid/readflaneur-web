@@ -131,6 +131,10 @@
     {
       "path": "/api/cron/sync-gala-watch",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/sync-escape-index",
+      "schedule": "45 */6 * * *"
     }
   ]
 }
