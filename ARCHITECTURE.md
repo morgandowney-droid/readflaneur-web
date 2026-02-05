@@ -434,6 +434,38 @@ ad_orders (
 
 ---
 
+## Gemini Story System
+
+### Story Registry
+
+All Gemini-enriched story generators are tracked in `src/lib/gemini-story-registry.ts`:
+
+| Category | Stories |
+|----------|---------|
+| Core | Daily Brief |
+| NYC | Set Life, Al Fresco Alert, Heritage Watch, Nuisance Watch |
+| Auctions | NYC Auctions, Global Auctions, Specialty Auctions (National + Vacation) |
+| Culture | Museum Watch, Art Fairs, Overture Alert |
+| Retail | Retail Watch, Sample Scout, Archive Hunter |
+| Dining | Review Watch |
+| Fashion | Runway Protocol, Design Circuit |
+| Social | Gala Watch |
+| Travel | Escape Index, Residency Radar, Direct Connect |
+| Civic | NIMBY Alert, Political Wallet |
+
+### Hyperlink Injection
+
+All Gemini stories use a unified hyperlink system (`src/lib/hyperlink-injector.ts`):
+
+1. Gemini returns `link_candidates` with `{text: "exact phrase from prose"}`
+2. `validateLinkCandidates()` filters and normalizes candidates
+3. `buildGoogleSearchUrl()` creates: `{text} {neighborhood.name} {neighborhood.city}`
+4. `injectHyperlinks()` inserts `<a>` tags into the prose
+
+Cost: ~$0 additional (just URL construction, no API calls)
+
+---
+
 ## Migrations
 
 Located in `supabase/migrations/`:

@@ -119,6 +119,8 @@ src/
 │   └── tips/               # Tip submission
 ├── lib/
 │   ├── supabase/           # Database clients
+│   ├── gemini-story-registry.ts  # Registry of 24 Gemini story generators
+│   ├── hyperlink-injector.ts     # Hyperlink injection for Gemini stories
 │   └── utils.ts            # Utility functions
 └── types/                  # TypeScript definitions
 

@@ -11,6 +11,25 @@
 
 ### Recent Changes (2026-02-05)
 
+**Simplified Hyperlink System:**
+- Removed `entity_type` from link candidates - Gemini now just returns `{text: "exact phrase"}`
+- Simplified `buildGoogleSearchUrl()` to use `{text} {neighborhood.name} {neighborhood.city}` for all links
+- Updated all 23 Gemini story generators to use the new simplified format
+- File: `src/lib/hyperlink-injector.ts` - Core hyperlink injection utility
+
+**Gemini Story Registry:**
+- New central registry of all 24 Gemini-enriched story generators
+- File: `src/lib/gemini-story-registry.ts`
+- Exports `GEMINI_STORY_GENERATORS` array with id, name, file, categoryLabel, description
+- Helper functions: `getGeneratorById()`, `getGeneratorsByCategory()`, `getGeneratorCount()`
+- Used by admin news-feed page for Story Type filter
+
+**Admin News Feed QC - Story Type Filter:**
+- New "Story Type" filter dropdown on `/admin/news-feed` page
+- Shows all 24 Gemini story generators by name (Daily Brief, Set Life, Al Fresco Alert, etc.)
+- Filters articles by category_label matching the selected story type
+- Fixed pre-existing TypeScript null-check errors in the page
+
 **Cached Cron Image System:**
 - New system for reusing AI-generated images across recurring cron stories
 - Saves Gemini token costs by caching category-specific images in Supabase
