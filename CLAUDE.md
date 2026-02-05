@@ -399,6 +399,12 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | sync-global-liquor | Tuesday 7 AM UTC | Fetch liquor licenses from international cities |
 | sync-global-crime | Saturday 9 AM UTC | Aggregate crime stats from international cities |
 | generate-global-weekly-digest | Saturday 11 AM UTC | Generate weekly civic data articles for international neighborhoods |
+| sync-auction-calendar | Sunday 11 PM UTC | Scrape Blue Chip auction calendars, syndicate to Northeast Luxury Corridor |
+| sync-global-auction-calendar | Sunday 10 PM UTC | Hub & Spoke auction syndication for London, Paris, HK, LA, Geneva |
+| sync-art-fairs | Daily 7 AM UTC | Calendar-based coverage for Big 5 fairs (Preview/Live/Wrap states) |
+| sync-retail-watch | Daily 10 AM UTC | Detect luxury retail openings via signage permits (80+ brands) |
+| sync-nuisance-watch | Daily 12 PM UTC | 311 complaint clustering with spike detection |
+| sync-specialty-auctions | Sunday 9 PM UTC | Tier 2 National Champions + Tier 3 Vacation Mappings |
 
 ## Database Tables
 

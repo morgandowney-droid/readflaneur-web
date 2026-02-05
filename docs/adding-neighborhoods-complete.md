@@ -838,6 +838,67 @@ else {
 
 **Files:** `src/lib/nuisance-watch.ts`, `src/app/api/cron/sync-nuisance-watch/route.ts`
 
+### 7.13 Specialty Auctions (Regional & Vacation Markets)
+
+Specialty Auctions is a dual-engine service that completes global art market coverage by targeting:
+1. **Tier 2 - National Champions**: Direct scraping of 20+ regional auction houses
+2. **Tier 3 - Vacation Mappings**: Keyword filtering of Tier 1 events for vacation feeds
+
+**Tier 2: National Champions (Direct Scraping)**
+
+Regional auction houses with significant local market presence:
+
+| Region | Houses | Cities |
+|--------|--------|--------|
+| Nordic | Bukowskis, Bruun Rasmussen | Stockholm, Copenhagen |
+| DACH | Dorotheum, Grisebach, Ketterer, Koller | Vienna, Berlin, Munich, Zurich |
+| Southern Europe | Finarte, Cambi, Balclis, Veritas | Milan, Rome, Barcelona, Lisbon |
+| APAC | SBI Art, Smith & Singer, Leonard Joel | Tokyo, Sydney, Melbourne |
+| North America | Heffel, Hindman, Bonhams SF, Skinner | Toronto, Chicago, San Francisco, Boston |
+
+**Tier 3: Vacation Mappings (Hub Filtering)**
+
+Maps Tier 1 global events to vacation feeds using keyword matching:
+
+| Vacation | Source Hubs | Keywords | Tone |
+|----------|-------------|----------|------|
+| St. Barts | NYC, Paris | Resort, Jewels, Hermès, Handbags | Villa Lifestyle |
+| Aspen | NYC, LA | Western Art, Photography, Design | Mountain Chic |
+| The Hamptons | NYC | Contemporary, Prints, Editions | Beach House Art |
+| Sylt | London | Photography, Modern | German Coastal Elite |
+| Marbella | London | Contemporary, Luxury | Riviera Glamour |
+| Martha's Vineyard | NYC | American, Maritime, Prints | New England Heritage |
+| Nantucket | NYC | Americana, Maritime, Folk Art | Island Tradition |
+| Cap Ferrat | Paris, Geneva | Jewels, Impressionist | Côte d'Azur Prestige |
+| Lake Como | Milan | Design, Modern Italian | Lakeside Elegance |
+| Mustique | NYC, London | Contemporary, Jewels | Island Exclusivity |
+
+**Tier Classification:**
+
+| Tier | Target | Category Label |
+|------|--------|----------------|
+| Mega | Major regional sales (Dorotheum evening, Bukowskis signature) | "Auction: Local Gavel" |
+| Standard | Regular regional auctions | "Auction Watch" |
+| Vacation | Filtered Tier 1 events | "Market Watch" |
+
+**Story Generation:**
+
+Each engine generates distinct content:
+
+- **National Champions**: Local market focus with regional vocabulary
+  - Currency-aware (SEK, DKK, EUR, AUD, CAD, etc.)
+  - Regional tone injection (Scandi-Luxury, Habsburg Elegance, etc.)
+  - Local landmark references
+
+- **Vacation Mappings**: Lifestyle angle for vacation readers
+  - "What's worth noting for collectors visiting [destination]"
+  - Filtered by interests typical of each vacation market
+  - Lighter tone than investment-focused hub content
+
+**Cron Schedule:** Weekly on Sundays at 9 PM UTC (before global auction sync)
+
+**Files:** `src/lib/specialty-auctions.ts`, `src/app/api/cron/sync-specialty-auctions/route.ts`
+
 ---
 
 ---
@@ -948,4 +1009,4 @@ const CITY_TO_ADAPTER: Record<string, string> = {
 
 ---
 
-*Last updated: February 5, 2026*
+*Last updated: February 6, 2026*
