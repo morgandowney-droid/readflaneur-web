@@ -620,6 +620,46 @@ Triggers high-alert coverage during Global Fashion Weeks (NYFW, LFW, MFW, PFW). 
 
 Schedule: Daily at 5 AM UTC (only generates during active fashion weeks).
 
+### Archive Hunter Service (Luxury Resale)
+
+Monitors in-store inventory of high-end resale boutiques to alert residents when "Investment Grade" pieces arrive. Strategy: "Digital to Physical" - focus on specific neighborhood stores.
+
+**Target Resellers:**
+
+| Store | Locations |
+|-------|-----------|
+| The RealReal | SoHo, Madison Ave, Melrose, Westbourne Grove, SF |
+| What Goes Around Comes Around | SoHo, Beverly Hills |
+| Rebag | SoHo, Madison, Miami, West Hollywood |
+| Fashionphile | Hudson Yards, Beverly Hills |
+
+**Brand Whitelist (Tiered):**
+
+| Tier | Brands | Threshold |
+|------|--------|-----------|
+| Grail | Hermès, Chanel, Rolex, Patek Philippe, Audemars Piguet | $3k+ |
+| Investment | Louis Vuitton, Cartier, Van Cleef, Goyard, The Row | $5k+ |
+| Collectible | Celine, Prada, Gucci, Fendi, Bulgari | $10k+ |
+
+**Filter Logic:**
+1. Location: Must match Flâneur neighborhood store
+2. Brand: Whitelist only (25+ brands)
+3. Price: $3,000+ ("Trophy" items)
+
+**Grail Items (Always Alert):**
+- Birkin, Kelly, Constance (Hermès)
+- Submariner, Daytona (Rolex)
+- Classic Flap, Boy Bag (Chanel)
+- Alhambra, Love Bracelet (VCA/Cartier)
+
+**Gemini Story Tone:** "Urgent" - alerting collectors before items sell online.
+
+**Headlines:**
+- `Archive Alert: Hermès Birkin 25 lands at The RealReal SoHo`
+- `Archive Alert: Rolex Submariner at Fashionphile Hudson Yards`
+
+Schedule: Twice daily at 9 AM and 5 PM UTC.
+
 ---
 
 ## Global Locations Configuration (International)

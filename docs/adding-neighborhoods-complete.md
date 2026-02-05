@@ -1504,6 +1504,96 @@ Body: "Spring Studios is ground zero today with Marc Jacobs at 10am and Coach at
 
 **Files:** `src/config/fashion-weeks.ts`, `src/lib/fashion-week.ts`, `src/app/api/cron/sync-fashion-week/route.ts`
 
+### 7.21 Archive Hunter Service (Luxury Resale Inventory)
+
+Archive Hunter Service monitors in-store inventory of high-end resale boutiques to alert residents when "Investment Grade" pieces arrive. Strategy: "Digital to Physical" - focus on specific neighborhood stores, not the entire internet.
+
+**Store Locations Configuration:**
+
+```typescript
+const STORE_LOCATIONS = [
+  // The RealReal
+  { id: 'trr-soho', store: 'TheRealReal', name: 'The RealReal SoHo',
+    address: '80 Wooster St', neighborhoodId: 'nyc-soho' },
+  { id: 'trr-madison', store: 'TheRealReal', name: 'The RealReal Madison Avenue',
+    address: '1128 Madison Ave', neighborhoodId: 'nyc-upper-east-side' },
+  { id: 'trr-melrose', store: 'TheRealReal', name: 'The RealReal Melrose',
+    address: '8500 Melrose Ave', neighborhoodId: 'la-west-hollywood' },
+
+  // What Goes Around Comes Around
+  { id: 'wgaca-soho', store: 'WhatGoesAroundComesAround',
+    address: '351 West Broadway', neighborhoodId: 'nyc-soho' },
+  { id: 'wgaca-beverly', store: 'WhatGoesAroundComesAround',
+    address: '320 N Beverly Dr', neighborhoodId: 'la-beverly-hills' },
+
+  // Rebag, Fashionphile, Vestiaire... (15 total locations)
+];
+```
+
+**Investment Brand Whitelist:**
+
+```typescript
+const INVESTMENT_BRANDS = {
+  // Grail Tier - Always newsworthy
+  'Hermès': { pattern: /herm[eè]s/i, tier: 'Grail' },
+  'Chanel': { pattern: /\bchanel\b/i, tier: 'Grail' },
+  'Rolex': { pattern: /\brolex\b/i, tier: 'Grail' },
+  'Patek Philippe': { pattern: /patek\s*philippe/i, tier: 'Grail' },
+
+  // Investment Tier - High value
+  'Louis Vuitton': { pattern: /louis\s*vuitton/i, tier: 'Investment' },
+  'Cartier': { pattern: /\bcartier\b/i, tier: 'Investment' },
+  'Van Cleef & Arpels': { pattern: /van\s*cleef/i, tier: 'Investment' },
+
+  // Collectible Tier - Vintage value
+  'Celine': { pattern: /\bc[eé]line\b/i, tier: 'Collectible' },
+  'Prada': { pattern: /\bprada\b/i, tier: 'Collectible' },
+  // ... 25+ brands total
+};
+```
+
+**Grail Items (Always Trigger Alert):**
+
+```typescript
+const GRAIL_ITEMS = [
+  /birkin/i, /kelly\s*\d+/i, /constance/i,  // Hermès bags
+  /daytona/i, /submariner/i, /nautilus/i,   // Watches
+  /classic\s*flap/i, /2\.55/i, /boy\s*bag/i, // Chanel
+  /alhambra/i, /love\s*bracelet/i,          // Jewelry
+];
+```
+
+**Filter Logic:**
+
+| Filter | Requirement |
+|--------|-------------|
+| Location | Must match Flâneur neighborhood store |
+| Brand | Must be on whitelist (25+ brands) |
+| Price | $3,000+ minimum ("Trophy" items) |
+| Category | Handbags, Watches, Jewelry, RTW |
+
+**Gemini Story Generation:**
+
+Tone: "Urgent" - alerting collectors before items sell online.
+
+```
+Headline: "Archive Alert: Hermès Birkin 25 lands at The RealReal SoHo"
+Body: "Just processed into inventory. A Togo leather Birkin 25 with gold hardware
+       in excellent condition. Currently on the floor at 80 Wooster Street. Go now."
+```
+
+**Priority Classification:**
+
+| Priority | Condition |
+|----------|-----------|
+| Urgent | Grail tier brand OR rare item + $10k+ |
+| High | Investment grade item |
+| Normal | Collectible tier item |
+
+**Cron Schedule:** Twice daily at 9 AM and 5 PM UTC
+
+**Files:** `src/lib/archive-hunter.ts`, `src/app/api/cron/sync-archive-hunter/route.ts`
+
 ---
 
 ---

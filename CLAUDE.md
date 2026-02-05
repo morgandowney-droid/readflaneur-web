@@ -11,6 +11,16 @@
 
 ### Recent Changes (2026-02-05)
 
+**Archive Hunter Service ("Digital to Physical"):**
+- New service monitoring luxury resale boutique inventory for "Investment Grade" pieces
+- Store locations: TheRealReal, WGACA, Rebag, Fashionphile (15 locations)
+- Brand whitelist: 25+ brands with tier classification (Grail/Investment/Collectible)
+- Trophy item filter: $3,000+ threshold, $10k+ for grail tier
+- Grail items: Birkin, Kelly, Submariner, Daytona, Classic Flap, Alhambra, etc.
+- Gemini story generation with "Urgent" tone for collectors
+- Files: `src/lib/archive-hunter.ts`, `src/app/api/cron/sync-archive-hunter/route.ts`
+- Cron: Twice daily at 9 AM and 5 PM UTC
+
 **Fashion Week Service ("Calendar Override"):**
 - Special Event engine for Big Four fashion weeks (NYFW, LFW, MFW, PFW)
 - Calendar window detection for Feb/Sept (and Jan/June for Paris Mens)
@@ -452,6 +462,7 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | sync-nimby-alerts | Monday 6 AM UTC | Community board agenda monitoring for controversial votes (liquor, zoning, social) |
 | sync-political-wallet | Tuesday 7 AM UTC | Political donation trends from FEC/UK Electoral Commission ($1k+ donors) |
 | sync-fashion-week | Daily 5 AM UTC | Big Four fashion week coverage (NYFW, LFW, MFW, PFW) with traffic alerts |
+| sync-archive-hunter | 9 AM, 5 PM UTC | Luxury resale inventory alerts (TheRealReal, WGACA, Rebag, Fashionphile) |
 
 ## Database Tables
 
