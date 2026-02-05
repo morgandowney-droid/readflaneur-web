@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: add missing neighborhood segment to admin news-feed article links\n\nLinks were missing the neighborhood part of the URL path, causing 404s.\nChanged from /[city]/[slug] to /[city]/[neighborhood]/[slug].\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git restore:*)",
+      "Bash(git commit:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx vercel:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "powershell",
+    "puppeteer",
+    "supabase"
+  ]
+}

@@ -239,9 +239,15 @@ interface ArticleBodyProps {
 }
 
 export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProps) {
-  // Preserve markdown links by converting them to a placeholder format
-  // [text](url) -> {{LINK:url}}text{{/LINK}}
+  // First, convert any HTML <a> tags to markdown format for consistent handling
+  // <a href="url" ...>text</a> -> [text](url)
   let cleanedContent = content
+    .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/gi, '[$2]($1)')
+    // Strip any other HTML tags that may have been generated
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/?(p|div|span|strong|em|b|i)[^>]*>/gi, '')
+    // Preserve markdown links by converting them to a placeholder format
+    // [text](url) -> {{LINK:url}}text{{/LINK}}
     .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '{{LINK:$2}}$1{{/LINK}}')
     // Clean content: remove citation markers and bare URLs (not in markdown format)
     .replace(/\[\[\d+\]\]/g, '')

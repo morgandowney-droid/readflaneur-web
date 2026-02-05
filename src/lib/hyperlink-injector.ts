@@ -49,7 +49,7 @@ export function buildGoogleSearchUrl(
  * @param text - The prose text to inject links into
  * @param candidates - Array of link candidates from Gemini
  * @param neighborhood - The neighborhood context for building URLs
- * @returns The text with <a> tags injected
+ * @returns The text with markdown links [text](url) injected
  */
 export function injectHyperlinks(
   text: string,
@@ -76,29 +76,28 @@ export function injectHyperlinks(
 
     // Build regex that:
     // 1. Uses word boundaries to avoid partial matches
-    // 2. Uses negative lookbehind to avoid text already inside an <a> tag
-    // 3. Uses negative lookahead to avoid text followed by </a>
-    // 4. Case-insensitive matching to handle variations
+    // 2. Uses negative lookbehind to avoid text already inside a markdown link
+    // 3. Case-insensitive matching to handle variations
     //
     // Note: We only replace the first occurrence to avoid over-linking
     try {
       const escapedText = escapeRegex(candidate.text);
 
       // Pattern explanation:
-      // (?<!<a[^>]*>) - Negative lookbehind: not preceded by opening <a> tag
+      // (?<!\[) - Negative lookbehind: not preceded by [ (markdown link start)
       // \b - Word boundary
       // (escapedText) - The text to match (captured for replacement)
       // \b - Word boundary
-      // (?![^<]*</a>) - Negative lookahead: not followed by </a> (within the same tag)
+      // (?!\]) - Negative lookahead: not followed by ] (markdown link text end)
       const regex = new RegExp(
-        `(?<!<a[^>]*>)\\b(${escapedText})\\b(?![^<]*</a>)`,
+        `(?<!\\[)\\b(${escapedText})\\b(?!\\])`,
         'i'
       );
 
-      // Replace first occurrence only
+      // Replace first occurrence only - use markdown format [text](url)
       result = result.replace(
         regex,
-        `<a href="${url}" target="_blank" rel="noopener">$1</a>`
+        `[$1](${url})`
       );
     } catch (e) {
       // If regex fails (e.g., invalid pattern), skip this candidate
