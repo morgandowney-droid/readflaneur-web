@@ -326,6 +326,27 @@ Monitors signage/advertisement permits to detect upcoming luxury retail openings
 
 Schedule: Daily at 10 AM UTC.
 
+### Nuisance Watch (311 Complaint Hotspots)
+
+Aggregates 311/Council complaints to detect quality of life hotspots. Only reports CLUSTERS, not individual complaints.
+
+**Threshold:** 5+ complaints in 7 days at one location
+
+**Categories Tracked:**
+- **High Severity**: Noise (Commercial), Rodent, Homeless Encampment
+- **Medium Severity**: Noise (Residential), Pest, Trash, Illegal Dumping
+- **Low Severity**: Sidewalk Condition, Graffiti
+
+**Privacy Rules:**
+- Commercial venues: Full address (name and shame)
+- Residential: Rounded to "100 Block" (e.g., "100 Block of Perry St")
+
+**Trend Detection:**
+- **Spike**: 2x baseline = high priority story
+- **Elevated**: Above threshold but expected
+
+Schedule: Daily at 12 PM UTC.
+
 ---
 
 ## Global Locations Configuration (International)

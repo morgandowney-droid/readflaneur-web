@@ -778,6 +778,66 @@ The Gemini prompt includes:
 
 **Files:** `src/lib/retail-watch.ts`, `src/app/api/cron/sync-retail-watch/route.ts`
 
+### 7.12 Nuisance Watch (311 Complaint Hotspots)
+
+Nuisance Watch aggregates 311/Council complaints to detect quality of life hotspots. Raw 311 data is too noisy - we only report CLUSTERS and SPIKES.
+
+**The Strategy: "The Cluster Detector"**
+
+```typescript
+const NUISANCE_THRESHOLD = 5;  // Min complaints to trigger story
+const SPIKE_MULTIPLIER = 2;    // 2x baseline = spike
+
+// Only generate story if:
+// cluster.count >= NUISANCE_THRESHOLD
+```
+
+**Complaint Categories:**
+
+| Category | NYC 311 Types | Severity | Signal |
+|----------|---------------|----------|--------|
+| Noise - Commercial | Noise - Commercial, Helicopter, Vehicle | High | Nightlife friction |
+| Noise - Residential | Noise - Residential, Street/Sidewalk | Medium | Neighbor friction |
+| Rodent | Rodent, Rat Sighting, Mouse Sighting | High | Sanitation decline |
+| Homeless Encampment | Homeless Encampment, Assistance | High | Safety concern |
+| Trash | Dirty Conditions, Missed Collection | Medium | Sanitation service |
+| Sidewalk Condition | Sidewalk, Damaged Tree | Low | Infrastructure |
+| Graffiti | Graffiti, Illegal Posting | Low | Vandalism |
+
+**Privacy Rules:**
+
+```typescript
+// Commercial venues: Full address (name and shame)
+if (categoryConfig.isCommercial) {
+  displayLocation = permit.address;  // "123 Bleecker Street"
+}
+
+// Residential: Round to "100 Block" for privacy
+else {
+  const block = Math.floor(houseNumber / 100) * 100;
+  displayLocation = `${block} Block of ${street}`;  // "100 Block of Perry St"
+}
+```
+
+**Trend Detection:**
+
+| Trend | Condition | Priority |
+|-------|-----------|----------|
+| Spike | count >= baseline * 2 | Community Alert |
+| Elevated | count > baseline | Nuisance Watch |
+| Normal | count <= baseline | Block Watch |
+
+**Story Generation:**
+
+- High severity spikes get priority coverage
+- Category-specific headlines (Noise Watch, Sanitation Alert, Community Alert)
+- Context includes complaint count and percent change
+- Factual but engaged tone - "Neighbors are active this week"
+
+**Cron Schedule:** Daily at 12 PM UTC
+
+**Files:** `src/lib/nuisance-watch.ts`, `src/app/api/cron/sync-nuisance-watch/route.ts`
+
 ---
 
 ---

@@ -154,6 +154,7 @@ NYC Open Data integration includes:
 - **Global Auction Calendar** - International art hub syndication (London, Paris, Hong Kong, LA, Geneva)
 - **Art Fair Coverage** - Special event engine for Big 5 fairs with Hero priority during live weeks
 - **Retail Watch** - Luxury retail opening detection via signage permits (80+ brand patterns)
+- **Nuisance Watch** - 311 complaint hotspot detection with cluster/spike analysis
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)
