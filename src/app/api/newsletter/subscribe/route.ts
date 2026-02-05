@@ -31,95 +31,55 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    // Admin client for user creation and bypassing RLS
+    // Admin client for bypassing RLS
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Check if already subscribed to newsletter
+    // Check if already subscribed (and verified) to newsletter
     const { data: existingSubscriber } = await supabaseAdmin
       .from('newsletter_subscribers')
-      .select('id')
+      .select('id, email_verified')
       .eq('email', normalizedEmail)
       .single();
 
-    // Subscribe to newsletter or update preferences
-    if (!existingSubscriber) {
-      const { error: subscribeError } = await supabaseAdmin
-        .from('newsletter_subscribers')
-        .insert({
-          email: normalizedEmail,
-          subscribed_at: new Date().toISOString(),
-          neighborhood_ids: neighborhoodIds,
-        });
-
-      if (subscribeError) {
-        console.error('Newsletter subscribe error:', subscribeError);
-        return NextResponse.json({ error: 'Failed to subscribe' }, { status: 500 });
-      }
-    } else {
-      // Update neighborhood preferences for existing subscriber
+    // If already verified, just update preferences
+    if (existingSubscriber?.email_verified) {
       await supabaseAdmin
         .from('newsletter_subscribers')
         .update({ neighborhood_ids: neighborhoodIds })
         .eq('id', existingSubscriber.id);
-    }
-
-    // Check if user account already exists
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(u => u.email === normalizedEmail);
-
-    if (!existingUser) {
-      // Send magic link to create account and log in
-      // This uses signInWithOtp which creates user if they don't exist
-      // Store neighborhood preferences in user metadata so we can save them after account creation
-      const { error: magicLinkError } = await supabase.auth.signInWithOtp({
-        email: normalizedEmail,
-        options: {
-          emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?neighborhoods=${encodeURIComponent(JSON.stringify(neighborhoodIds))}`,
-        },
-      });
-
-      if (magicLinkError) {
-        console.error('Magic link error:', magicLinkError);
-        // Don't fail the whole request - newsletter subscription succeeded
-        return NextResponse.json({
-          success: true,
-          accountCreated: false,
-          message: 'Subscribed! Account creation failed - try logging in later.'
-        });
-      }
 
       return NextResponse.json({
         success: true,
-        accountCreated: true,
-        message: 'Check your email for a magic link to complete signup!'
+        message: 'Preferences updated!'
       });
     }
 
-    // User already has account - save their neighborhood preferences
-    if (neighborhoodIds.length > 0) {
-      // Clear existing preferences and add new ones
-      await supabaseAdmin
-        .from('user_neighborhood_preferences')
-        .delete()
-        .eq('user_id', existingUser.id);
+    // Build callback URL with newsletter flag and neighborhood IDs
+    const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?newsletter=true&neighborhoods=${encodeURIComponent(JSON.stringify(neighborhoodIds))}`;
 
-      const prefsToInsert = neighborhoodIds.map((nId: string) => ({
-        user_id: existingUser.id,
-        neighborhood_id: nId,
-      }));
+    // Send magic link for email verification
+    // This both verifies email AND creates/logs in user account
+    const { error: magicLinkError } = await supabase.auth.signInWithOtp({
+      email: normalizedEmail,
+      options: {
+        emailRedirectTo: callbackUrl,
+      },
+    });
 
-      await supabaseAdmin
-        .from('user_neighborhood_preferences')
-        .insert(prefsToInsert);
+    if (magicLinkError) {
+      console.error('Magic link error:', magicLinkError);
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to send verification email. Please try again.'
+      }, { status: 500 });
     }
 
     return NextResponse.json({
       success: true,
-      accountCreated: false,
-      message: existingSubscriber ? 'Preferences updated!' : 'Subscribed!'
+      message: 'Check your email for a verification link!'
     });
   } catch (err) {
     console.error('Newsletter API error:', err);

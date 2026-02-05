@@ -230,6 +230,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
                 content={brief.content}
                 generatedAt={brief.generated_at}
                 neighborhoodName={singleNeighborhood.name}
+                neighborhoodId={singleNeighborhood.id}
                 city={singleNeighborhood.city}
                 sources={brief.sources || []}
                 enrichedContent={brief.enriched_content || undefined}

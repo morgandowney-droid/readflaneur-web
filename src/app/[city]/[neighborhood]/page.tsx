@@ -164,6 +164,7 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
             content={brief.content}
             generatedAt={brief.generated_at}
             neighborhoodName={neighborhoodData.name}
+            neighborhoodId={neighborhoodData.id}
             city={neighborhoodData.city}
             sources={brief.sources || []}
             enrichedContent={brief.enriched_content || undefined}

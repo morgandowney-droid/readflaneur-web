@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, ReactNode } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
+
+const SUBSCRIBED_KEY = 'flaneur-newsletter-subscribed';
 
 interface BriefSource {
   title?: string;
@@ -183,6 +185,7 @@ interface NeighborhoodBriefProps {
   content: string;
   generatedAt: string;
   neighborhoodName: string;
+  neighborhoodId?: string;
   city?: string;
   sources?: BriefSource[];
   // Gemini-enriched data (optional)
@@ -678,12 +681,52 @@ export function NeighborhoodBrief({
   content,
   generatedAt,
   neighborhoodName,
+  neighborhoodId,
   city = '',
   sources = [],
   enrichedContent,
   enrichedCategories,
 }: NeighborhoodBriefProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [email, setEmail] = useState('');
+  const [subscribeStatus, setSubscribeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  // Check if already subscribed on mount
+  useEffect(() => {
+    const subscribed = localStorage.getItem(SUBSCRIBED_KEY);
+    if (subscribed === 'true') {
+      setIsSubscribed(true);
+    }
+  }, []);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) return;
+
+    setSubscribeStatus('loading');
+    try {
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          neighborhoodIds: neighborhoodId ? [neighborhoodId] : [],
+        }),
+      });
+
+      if (response.ok) {
+        setSubscribeStatus('success');
+        setEmail('');
+        localStorage.setItem(SUBSCRIBED_KEY, 'true');
+        setIsSubscribed(true);
+      } else {
+        setSubscribeStatus('error');
+      }
+    } catch {
+      setSubscribeStatus('error');
+    }
+  };
 
   // Use enriched content if available, otherwise fall back to original
   const displayContent = enrichedContent || content;
@@ -898,6 +941,62 @@ export function NeighborhoodBrief({
           </p>
         )}
         </div>
+
+      {/* Newsletter signup CTA */}
+      <div className="mt-3 pt-3 border-t border-amber-200">
+        {isSubscribed ? (
+          <p className="text-[10px] text-amber-600 flex items-center gap-1.5">
+            <svg className="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span>You&apos;re subscribed to daily briefs</span>
+          </p>
+        ) : subscribeStatus === 'success' ? (
+          <p className="text-[10px] text-emerald-700 flex items-center gap-1.5">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <span>Check your email for a verification link to complete signup.</span>
+          </p>
+        ) : subscribeStatus === 'error' ? (
+          <div className="flex flex-col gap-1.5">
+            <p className="text-[10px] text-red-600">
+              Something went wrong. Please try again.
+            </p>
+            <button
+              onClick={() => setSubscribeStatus('idle')}
+              className="text-[10px] text-amber-700 underline hover:text-amber-900"
+            >
+              Try again
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2">
+            <div className="flex-1">
+              <p className="text-[11px] text-amber-800 mb-1.5 font-medium">
+                Get this brief in your inbox each morning
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="flex-1 px-3 py-1.5 text-xs border border-amber-300 rounded-md focus:outline-none focus:border-amber-500 bg-white/80"
+                  disabled={subscribeStatus === 'loading'}
+                />
+                <button
+                  type="submit"
+                  disabled={subscribeStatus === 'loading' || !email}
+                  className="px-4 py-1.5 text-[10px] tracking-wider uppercase font-medium bg-amber-700 text-white rounded-md hover:bg-amber-800 disabled:bg-amber-400 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                >
+                  {subscribeStatus === 'loading' ? '...' : 'Subscribe'}
+                </button>
+              </div>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
 }
