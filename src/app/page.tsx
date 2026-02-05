@@ -36,7 +36,7 @@ export default async function HomePage() {
           </p>
 
           {/* Stats */}
-          <div className="flex items-center justify-center gap-3 text-xs tracking-[0.2em] uppercase text-neutral-500 mb-12">
+          <div className="flex items-center justify-center gap-3 text-xs tracking-[0.2em] uppercase text-neutral-500 mb-10">
             <span>{regularNeighborhoods.length} neighborhoods</span>
             <span className="w-px h-3 bg-neutral-700" />
             <span>{cityCount} cities</span>

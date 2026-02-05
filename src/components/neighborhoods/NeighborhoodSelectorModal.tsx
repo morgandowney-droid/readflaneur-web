@@ -198,9 +198,18 @@ export function NeighborhoodModalProvider({ children }: { children: React.ReactN
     userId: string | null;
   } | null>(null);
 
-  // Pre-fetch data on mount so modal opens instantly
+  // Pre-fetch data on mount so modal opens instantly (with timeout)
   useEffect(() => {
-    prefetchNeighborhoodsData().then(setPrefetchedData).catch(console.error);
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Prefetch timeout')), 10000)
+    );
+
+    Promise.race([prefetchNeighborhoodsData(), timeoutPromise])
+      .then(setPrefetchedData)
+      .catch((err) => {
+        console.error('Prefetch failed:', err);
+        // Don't set prefetchedData - modal will fallback to fetching on open
+      });
   }, []);
 
   return (
@@ -307,10 +316,9 @@ function GlobalNeighborhoodModal({
   // Use prefetched data if available, otherwise fetch on open
   useEffect(() => {
     if (!isOpen) return;
-    if (hasInitialized) return;
 
-    // If we have prefetched data, use it immediately
-    if (prefetchedData) {
+    // If we have prefetched data and haven't initialized yet, use it
+    if (prefetchedData && !hasInitialized) {
       setNeighborhoods(prefetchedData.neighborhoods);
       setSelected(prefetchedData.selected);
       setUserId(prefetchedData.userId);
@@ -319,7 +327,10 @@ function GlobalNeighborhoodModal({
       return;
     }
 
-    // Fallback: fetch data if not prefetched
+    // If already initialized with data, don't refetch
+    if (hasInitialized && neighborhoods.length > 0) return;
+
+    // Fallback: fetch data if not prefetched or prefetch failed
     const loadData = async () => {
       setLoading(true);
       try {
@@ -327,16 +338,18 @@ function GlobalNeighborhoodModal({
         setNeighborhoods(data.neighborhoods);
         setSelected(data.selected);
         setUserId(data.userId);
+        setHasInitialized(true);
       } catch (err) {
         console.error('Error loading neighborhood data:', err);
+        // Still mark as initialized to prevent infinite retry
+        setHasInitialized(true);
       } finally {
         setLoading(false);
-        setHasInitialized(true);
       }
     };
 
     loadData();
-  }, [isOpen, prefetchedData, hasInitialized]);
+  }, [isOpen, prefetchedData, hasInitialized, neighborhoods.length]);
 
   // Close on escape
   useEffect(() => {
@@ -842,7 +855,7 @@ function GlobalNeighborhoodModal({
           <button
             onClick={handleExplore}
             disabled={selected.size === 0}
-            className="px-8 py-2.5 text-[11px] tracking-[0.15em] uppercase font-medium bg-neutral-900 text-white hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300"
+            className="px-8 py-2.5 text-[11px] tracking-[0.15em] uppercase font-medium bg-neutral-900 text-white hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 rounded-lg"
           >
             {selected.size > 0 ? 'Read Stories' : 'Browse All'}
           </button>

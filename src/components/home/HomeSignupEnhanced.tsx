@@ -191,7 +191,7 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
           return (
             <span
               key={hood.id}
-              className="inline-flex items-center bg-black text-white text-sm leading-none"
+              className="inline-flex items-center bg-black text-white text-sm leading-none rounded-lg overflow-hidden"
             >
               <Link
                 href={feedUrl}
@@ -224,7 +224,7 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
         {/* Add Neighborhoods Button - uses global modal */}
         <button
           onClick={openModal}
-          className="inline-flex items-center gap-2.5 px-5 py-2.5 border border-dashed border-neutral-300 text-neutral-600 text-sm tracking-wide hover:border-neutral-900 hover:text-neutral-900 transition-all duration-200"
+          className="inline-flex items-center gap-2.5 px-5 py-2.5 border border-dashed border-neutral-300 text-neutral-600 text-sm tracking-wide hover:border-neutral-900 hover:text-neutral-900 transition-all duration-200 rounded-lg"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
@@ -237,7 +237,7 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
       <div className="pt-4">
         <button
           onClick={handleExplore}
-          className="inline-block border border-neutral-900 px-10 py-3.5 text-[11px] tracking-[0.2em] uppercase font-medium hover:bg-neutral-900 hover:text-white transition-all duration-300"
+          className="inline-block border border-neutral-900 px-10 py-3.5 text-[11px] tracking-[0.2em] uppercase font-medium hover:bg-neutral-900 hover:text-white transition-all duration-300 rounded-lg"
         >
           {selected.size > 0 ? 'Read Stories' : 'Browse All'}
         </button>
@@ -250,13 +250,13 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Enter your email"
-          className="px-5 py-3 border border-neutral-300 text-center sm:text-left text-sm focus:outline-none focus:border-neutral-900 w-full sm:w-72 transition-colors"
+          className="px-5 py-3 border border-neutral-300 text-center sm:text-left text-sm focus:outline-none focus:border-neutral-900 w-full sm:w-72 transition-colors rounded-lg"
           disabled={status === 'loading'}
         />
         <button
           type="submit"
           disabled={status === 'loading' || selected.size === 0}
-          className="px-8 py-3 bg-neutral-900 text-white text-[11px] tracking-[0.2em] uppercase font-medium hover:bg-neutral-800 transition-all duration-300 disabled:bg-neutral-400 disabled:cursor-not-allowed whitespace-nowrap"
+          className="px-8 py-3 bg-neutral-900 text-white text-[11px] tracking-[0.2em] uppercase font-medium hover:bg-neutral-800 transition-all duration-300 disabled:bg-neutral-400 disabled:cursor-not-allowed whitespace-nowrap rounded-lg"
         >
           {status === 'loading' ? '...' : 'Subscribe'}
         </button>
