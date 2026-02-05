@@ -165,6 +165,7 @@ NYC Open Data integration includes:
 - **Fashion Week Coverage** - Big Four fashion week alerts (NYFW, LFW, MFW, PFW) with venue mapping
 - **Archive Hunter** - Luxury resale inventory monitoring (TheRealReal, WGACA, Rebag, Fashionphile)
 - **Residency Radar** - Seasonal luxury brand pop-ups via hospitality news (15 hotspots, 30+ brands)
+- **Route Alerts** - Premium airline route monitoring via aviation news (8 hubs, 22+ carriers, 45+ destinations)
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)

@@ -11,6 +11,20 @@
 
 ### Recent Changes (2026-02-05)
 
+**Route Alert Service ("The Hub Map"):**
+- New service monitoring airline schedules for new "Direct Premium Routes"
+- 8 hub markets: NYC (JFK/EWR), London (LHR/LGW), LA (LAX), Sydney (SYD), Paris (CDG), Miami, SF, Chicago
+- 22+ legacy/premium carriers: Delta, United, BA, Air France, Emirates, Qantas, Singapore Airlines, etc.
+- 45+ leisure destinations across 4 types:
+  - Leisure Capital: Nice, Naples, Mykonos, Maldives, Aspen, Phuket, St. Barths
+  - Financial Hub: Geneva, Zurich, Singapore, Hong Kong, Dubai
+  - Cultural Center: Tokyo, Rome, Edinburgh, Tel Aviv
+- Premium Leisure Filter: Only legacy carriers + premium destinations (excludes Spirit to Cleveland)
+- News sources: Points Guy, Routes Online, Simple Flying, One Mile at a Time, View from the Wing
+- Gemini story generation with "Flight Check" / "Utility" tone
+- Files: `src/lib/route-alert.ts`, `src/app/api/cron/sync-route-alerts/route.ts`
+- Cron: Weekly on Thursdays at 7 AM UTC
+
 **Residency Radar Service ("Brand Migration"):**
 - New service tracking seasonal pop-ups of luxury brands in vacation hotspots
 - Strategy: City brands migrate with the seasons - Winter: Alps, St. Barts; Summer: Med, Hamptons
@@ -480,6 +494,7 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | sync-fashion-week | Daily 5 AM UTC | Big Four fashion week coverage (NYFW, LFW, MFW, PFW) with traffic alerts |
 | sync-archive-hunter | 9 AM, 5 PM UTC | Luxury resale inventory alerts (TheRealReal, WGACA, Rebag, Fashionphile) |
 | sync-residency-radar | Wednesday 8 AM UTC | Seasonal luxury brand pop-ups in vacation hotspots (Nobu, Carbone, Dior, etc.) |
+| sync-route-alerts | Thursday 7 AM UTC | Premium airline route announcements (JFK-Nice, LHR-Phuket, etc.) |
 
 ## Database Tables
 
