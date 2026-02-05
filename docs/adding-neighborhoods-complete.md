@@ -1080,6 +1080,87 @@ Each destination has a season (e.g., Aspen: Nov-Apr, St. Barts: Dec-Apr). Out-of
 
 **Files:** `src/lib/escape-index.ts`, `src/app/api/cron/sync-escape-index/route.ts`
 
+### 7.16 Review Watch (Restaurant Reviews)
+
+Review Watch monitors major food publications for new reviews of restaurants within Flâneur neighborhoods. We are curators - only positive/notable reviews are surfaced.
+
+**Data Sources (RSS Feeds):**
+
+```typescript
+const REVIEW_SOURCES = [
+  // New York Times
+  { source: 'NYT_Pete_Wells', feedUrl: 'https://rss.nytimes.com/.../DiningandWine.xml', city: 'New_York' },
+
+  // The Infatuation (Multiple Cities)
+  { source: 'The_Infatuation', feedUrl: 'https://theinfatuation.com/new-york/feeds/reviews.rss', city: 'New_York' },
+  { source: 'The_Infatuation', feedUrl: 'https://theinfatuation.com/los-angeles/feeds/reviews.rss', city: 'Los_Angeles' },
+  { source: 'The_Infatuation', feedUrl: 'https://theinfatuation.com/london/feeds/reviews.rss', city: 'London' },
+
+  // Eater (City-specific)
+  { source: 'Eater', feedUrl: 'https://ny.eater.com/rss/index.xml', city: 'New_York' },
+  { source: 'Eater', feedUrl: 'https://la.eater.com/rss/index.xml', city: 'Los_Angeles' },
+  { source: 'Eater', feedUrl: 'https://london.eater.com/rss/index.xml', city: 'London' },
+
+  // The Guardian
+  { source: 'Guardian', feedUrl: 'https://theguardian.com/.../jayraynerrestaurantreview/rss', city: 'London' },
+
+  // Time Out
+  { source: 'Timeout', feedUrl: 'https://timeout.com/london/restaurants/rss', city: 'London' },
+  { source: 'Timeout', feedUrl: 'https://timeout.com/newyork/restaurants/rss', city: 'New_York' },
+];
+```
+
+**Matching Logic:**
+
+1. **Detect New Reviews**: Parse RSS feeds for items from last 24 hours
+2. **Extract Restaurant Name**: Pattern matching on titles ("Review: X", "At X,", etc.)
+3. **Match to Neighborhood**: Address/content patterns for each Flâneur neighborhood
+4. **Sentiment Filter**: Only positive reviews (no closings, no negative)
+
+**Neighborhood Patterns:**
+
+```typescript
+const NEIGHBORHOOD_PATTERNS = {
+  'nyc-tribeca': [/tribeca/i, /tri-?beca/i],
+  'nyc-west-village': [/west village/i, /bleecker/i, /christopher st/i],
+  'nyc-soho': [/\bsoho\b/i, /spring st/i, /prince st/i],
+  'london-mayfair': [/mayfair/i, /bond st/i, /grosvenor/i],
+  'london-chelsea': [/\bchelsea\b/i, /kings? road/i, /sloane/i],
+  // ...
+};
+```
+
+**Tier Classification:**
+
+| Tier | Indicator | Example |
+|------|-----------|---------|
+| `starred` | Michelin Star mention | "awarded its first Michelin star" |
+| `bib_gourmand` | Bib Gourmand mention | "earned Bib Gourmand recognition" |
+| `critic_pick` | NYT Critic's Pick | "Critic's Pick" badge |
+| `high_score` | Infatuation 8.0+ | "8.5/10" in content |
+| `essential` | Eater Heatmap/Essential | "added to the heatmap" |
+| `featured` | Default positive | Any positive review |
+
+**Gemini Story Generation:**
+
+Tone: "Validation" - "We knew it was good, now the world knows."
+
+```
+// NYT Review
+Headline: "Critic's Pick: The Times Reviews Torrisi"
+Body: "Torrisi just earned a Critic's Pick from The New York Times. The secret is out.
+       Expect reservations to be impossible this weekend."
+
+// Infatuation High Score
+Headline: "Top Rated: The Infatuation Reviews Mother Wolf"
+Body: "Mother Wolf scored an 8.7 from The Infatuation. The Roman pasta spot is now
+       officially on everyone's radar. Good luck getting a table."
+```
+
+**Cron Schedule:** Every 4 hours (2 AM, 6 AM, 10 AM, 2 PM, 6 PM, 10 PM UTC)
+
+**Files:** `src/lib/review-watch.ts`, `src/app/api/cron/sync-review-watch/route.ts`
+
 ---
 
 ---

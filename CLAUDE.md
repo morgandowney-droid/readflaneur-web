@@ -407,6 +407,7 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | sync-specialty-auctions | Sunday 9 PM UTC | Tier 2 National Champions + Tier 3 Vacation Mappings |
 | sync-gala-watch | Daily 6 AM UTC | High-society charity events via Hub Broadcast model |
 | sync-escape-index | Every 6 hours (:45) | Vacation conditions (Snow/Surf/Sun) via Feeder Map |
+| sync-review-watch | Every 4 hours | Restaurant reviews from major publications (NYT, Infatuation, Eater) |
 
 ## Database Tables
 

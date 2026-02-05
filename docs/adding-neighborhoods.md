@@ -444,6 +444,46 @@ We don't show snow reports in Aspen. We show them in *New York* (where the skier
 
 Schedule: Every 6 hours at :45 (7:45, 13:45, 19:45, 1:45 UTC).
 
+### Review Watch (Restaurant Reviews)
+
+Monitors major food publications for new reviews of restaurants in Flâneur neighborhoods. We are curators - only positive/notable reviews are surfaced.
+
+**Data Sources (RSS Feeds):**
+
+| Source | Coverage | Positive Indicators |
+|--------|----------|---------------------|
+| NYT Pete Wells | NYC | Critic's Pick badge |
+| The Infatuation | Global | Score > 8.0 |
+| Eater | City-specific | Heatmap, Essential list |
+| The Guardian | London | Featured review |
+| Time Out | NYC, London | Must-visit, Best |
+| Bon Appétit | National | Worth the trip |
+
+**Matching Logic:**
+1. Parse RSS feeds for new reviews (last 24 hours)
+2. Extract restaurant name from title
+3. Match content to Flâneur neighborhood via address patterns
+4. Filter for positive reviews only (no closings, no negative)
+
+**Tier Classification:**
+
+| Tier | Indicator | Priority |
+|------|-----------|----------|
+| Michelin Star | "Michelin star" mention | 1 |
+| Bib Gourmand | "Bib Gourmand" mention | 2 |
+| Critic's Pick | NYT "Critic's Pick" | 3 |
+| High Score | Infatuation 8.0+ | 4 |
+| Essential | Eater Heatmap/Essential | 5 |
+
+**Gemini Story Tone:** "Validation" - "We knew it was good, now the world knows."
+
+**Headlines:**
+- `Critic's Pick: The Times Reviews [Restaurant]`
+- `Top Rated: The Infatuation Reviews [Restaurant]`
+- `Essential: [Restaurant] Makes the List`
+
+Schedule: Every 4 hours (2 AM, 6 AM, 10 AM, 2 PM, 6 PM, 10 PM UTC).
+
 ---
 
 ## Global Locations Configuration (International)
