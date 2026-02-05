@@ -42,7 +42,8 @@ export type CronImageCategory =
   | 'filming-permit'
   | 'civic-data'
   | 'real-estate'
-  | 'museum-watch';
+  | 'museum-watch'
+  | 'overture-alert';
 
 interface CategoryConfig {
   prompt: string;
@@ -174,6 +175,12 @@ export const CRON_IMAGE_CATEGORIES: Record<CronImageCategory, CategoryConfig> = 
       'Grand museum gallery interior with high ceilings, natural light from skylights, empty white walls ready for exhibition. Marble floors, architectural columns, editorial museum photography. No text, people, or artworks.',
     fallbackColor: '#312e81',
     label: 'CULTURE WATCH',
+  },
+  'overture-alert': {
+    prompt:
+      'Grand opera house interior before performance, red velvet seats, ornate gold balconies, crystal chandelier, dramatic stage curtain closed. Empty venue, warm lighting, editorial architectural photography. No text or people.',
+    fallbackColor: '#7f1d1d',
+    label: 'CURTAIN UP',
   },
 };
 
