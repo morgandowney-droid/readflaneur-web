@@ -14,6 +14,7 @@ import { ChicagoAdapter } from './chicago-adapter';
 import { LosAngelesAdapter } from './los-angeles-adapter';
 import { WashingtonDCAdapter } from './washington-dc-adapter';
 import { DublinAdapter } from './dublin-adapter';
+import { NewZealandAdapter, createAucklandAdapter, createQueenstownAdapter } from './nz-adapter';
 
 /**
  * Registry of available city adapters
@@ -25,6 +26,7 @@ const ADAPTER_REGISTRY: Record<string, new () => ICityAdapter> = {
   LosAngelesAdapter,
   WashingtonDCAdapter,
   DublinAdapter,
+  NewZealandAdapter,
 };
 
 /**
@@ -37,6 +39,8 @@ const CITY_TO_ADAPTER: Record<string, string> = {
   'Los Angeles': 'LosAngelesAdapter',
   'Washington DC': 'WashingtonDCAdapter',
   Dublin: 'DublinAdapter',
+  Auckland: 'NewZealandAdapter',
+  Queenstown: 'NewZealandAdapter',
 };
 
 /**
@@ -105,3 +109,4 @@ export { ChicagoAdapter } from './chicago-adapter';
 export { LosAngelesAdapter } from './los-angeles-adapter';
 export { WashingtonDCAdapter } from './washington-dc-adapter';
 export { DublinAdapter } from './dublin-adapter';
+export { NewZealandAdapter, createAucklandAdapter, createQueenstownAdapter } from './nz-adapter';

@@ -230,6 +230,52 @@ export const CITY_VOCABULARIES: Record<string, CityVocabulary> = {
     currencySymbol: '€',
     currencyName: 'euros',
   },
+
+  'New Zealand': {
+    permitTerms: [
+      'Resource Consent',
+      'Building Consent',
+      'Land Use Consent',
+      'Subdivision Consent',
+      'Coastal Permit',
+      'Earthworks',
+      'Heritage',
+      'Character Overlay',
+    ],
+    liquorTerms: [
+      'On-Licence',
+      'Off-Licence',
+      'Club Licence',
+      'Special Licence',
+      'Liquor Licence',
+      'DLC Application',
+    ],
+    realEstateTerms: [
+      'Lifestyle Block',
+      'Waterfront',
+      'Harbour Views',
+      'North-Facing',
+      'Character Home',
+      'Villa',
+      'Bungalow',
+      'Homestead',
+      'Rural Retreat',
+      'Vineyard',
+      'Coastal Estate',
+    ],
+    localPhrases: [
+      'the Shore',
+      'Eastern Suburbs',
+      'Waitemata',
+      'Hauraki Gulf',
+      'the Basin',
+      'Wakatipu',
+      'Central Otago',
+      'lifestyle property',
+    ],
+    currencySymbol: '$',
+    currencyName: 'NZD',
+  },
 };
 
 /**
@@ -505,6 +551,76 @@ export const GLOBAL_CITY_CONFIG: Record<string, CityConfig> = {
       permits: 'https://www.dublincity.ie/residential/planning',
       liquor: 'https://www.courts.ie/intoxicating-liquor',
       safety: 'https://www.garda.ie/en/crime-prevention/',
+    },
+  },
+
+  // --- NEW ZEALAND (Tier 1 - Survivalist Billionaires: Thiel, Page, Cameron) ---
+  // Auckland (The City) + Queenstown (The Retreat/Bunker)
+  Auckland: {
+    city: 'Auckland',
+    country: 'New Zealand',
+    adapter: 'NewZealandAdapter',
+    currency: 'NZD',
+    zones: [
+      {
+        name: 'Herne Bay',
+        neighborhoodId: 'auckland-herne-bay',
+        tone: 'Old money waterfront, Marine Parade elegance, yacht club proximity, and discreet wealth',
+        zoneCode: 'Waitemata',
+        altCodes: ['St Marys Bay'],
+        postalCodes: ['1011'],
+      },
+      {
+        name: 'Remuera',
+        neighborhoodId: 'auckland-remuera',
+        tone: 'Aristocratic northern slopes, Arney Road grandeur, established families, and grammar zone prestige',
+        zoneCode: 'Orakei',
+        altCodes: ['Northern Slopes'],
+        postalCodes: ['1050', '1051'],
+      },
+      {
+        name: 'Waiheke Island',
+        neighborhoodId: 'auckland-waiheke',
+        tone: 'Vineyard luxury, Oneroa sophistication, celebrity hideaways, and Hauraki Gulf serenity',
+        zoneCode: 'Waiheke',
+        altCodes: ['Oneroa', 'Palm Beach', 'Church Bay'],
+        postalCodes: ['1081'],
+      },
+    ],
+    endpoints: {
+      permits: 'https://www.aucklandcouncil.govt.nz/building-and-consents/',
+      liquor: 'https://www.aucklandcouncil.govt.nz/licences-regulations/alcohol/',
+      safety: 'https://www.police.govt.nz/about-us/statistics-and-publications/',
+    },
+  },
+
+  Queenstown: {
+    city: 'Queenstown',
+    country: 'New Zealand',
+    adapter: 'NewZealandAdapter',
+    currency: 'NZD',
+    zones: [
+      {
+        name: 'Dalefield',
+        neighborhoodId: 'queenstown-dalefield',
+        tone: 'Billionaire rural retreats, Malaghans Road compounds, Millbrook exclusivity, and survivalist wealth',
+        zoneCode: 'Wakatipu',
+        altCodes: ['Millbrook', 'Speargrass Flat'],
+        postalCodes: ['9371'],
+      },
+      {
+        name: 'Kelvin Heights',
+        neighborhoodId: 'queenstown-kelvin-heights',
+        tone: 'Lakeside privacy, Peninsula Road estates, Jardines discretion, and alpine luxury',
+        zoneCode: 'Wakatipu',
+        altCodes: ['Peninsula Road'],
+        postalCodes: ['9300'],
+      },
+    ],
+    endpoints: {
+      permits: 'https://www.qldc.govt.nz/services/building-and-resource-consents/',
+      liquor: 'https://www.qldc.govt.nz/services/food-alcohol-and-bylaw-licences/',
+      safety: 'https://www.police.govt.nz/about-us/statistics-and-publications/',
     },
   },
 };

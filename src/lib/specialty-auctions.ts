@@ -80,7 +80,7 @@ export interface RegionalTarget {
   currency: RegionalCurrency;
   vibe: string;
   neighborhoods: string[];
-  region: 'nordic' | 'dach' | 'southern-europe' | 'apac' | 'north-america' | 'uk-ireland';
+  region: 'nordic' | 'dach' | 'southern-europe' | 'apac' | 'north-america' | 'uk-ireland' | 'oceania';
 }
 
 /**
@@ -392,6 +392,32 @@ export const REGIONAL_TARGETS: RegionalTarget[] = [
     vibe: 'History, Irish Republic Memorabilia, Fine Art. Specialists in Irish heritage and collectibles.',
     neighborhoods: ['dublin-ballsbridge'],
     region: 'uk-ireland',
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // OCEANIA (New Zealand - Kiwi Champions)
+  // ─────────────────────────────────────────────────────────────
+  {
+    city: 'Auckland',
+    country: 'New Zealand',
+    house: "Webb's",
+    url: 'https://www.webbs.co.nz/auction-calendar/',
+    selector: '.auction-item',
+    currency: 'NZD',
+    vibe: 'Colin McCahon, Goldie, Vintage Cars. The leading NZ auction house since 1976.',
+    neighborhoods: ['auckland-herne-bay', 'auckland-remuera'],
+    region: 'oceania',
+  },
+  {
+    city: 'Auckland',
+    country: 'New Zealand',
+    house: 'Art+Object',
+    url: 'https://www.artandobject.co.nz/auctions',
+    selector: '.auction-list',
+    currency: 'NZD',
+    vibe: 'Contemporary NZ Art, Modernism, Ralph Hotere. Auckland art market authority.',
+    neighborhoods: ['auckland-herne-bay', 'auckland-remuera', 'auckland-waiheke'],
+    region: 'oceania',
   },
 ];
 
