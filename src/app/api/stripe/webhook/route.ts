@@ -27,12 +27,17 @@ export async function POST(request: NextRequest) {
         process.env.STRIPE_WEBHOOK_SECRET
       );
     } else {
-      // For development without webhook secret
+      // Log warning if webhook secret is missing in production
+      console.warn('STRIPE_WEBHOOK_SECRET not configured - skipping signature verification');
       event = JSON.parse(body) as Stripe.Event;
     }
   } catch (err) {
-    console.error('Webhook signature verification failed:', err);
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    console.error('Webhook signature verification failed:', errorMessage);
+    return NextResponse.json({
+      error: 'Invalid signature',
+      details: errorMessage
+    }, { status: 400 });
   }
 
   // Handle the event
