@@ -34,6 +34,8 @@ interface Neighborhood {
   id: string;
   name: string;
   city: string;
+  is_combo?: boolean;
+  combo_component_names?: string[];
 }
 
 interface MultiFeedProps {
@@ -100,15 +102,19 @@ export function MultiFeed({
         </div>
         {isMultiple && (
           <div className="flex items-center gap-2 flex-wrap mt-2">
-            {visibleNeighborhoods.map((hood) => (
-              <Link
-                key={hood.id}
-                href={`/${getCitySlug(hood.id)}/${getNeighborhoodSlug(hood.id)}`}
-                className="text-xs tracking-widest uppercase border border-neutral-200 px-3 py-1.5 hover:border-black transition-colors"
-              >
-                {hood.name}
-              </Link>
-            ))}
+            {visibleNeighborhoods.map((hood) => {
+              const hasComboComponents = hood.combo_component_names && hood.combo_component_names.length > 0;
+              return (
+                <Link
+                  key={hood.id}
+                  href={`/${getCitySlug(hood.id)}/${getNeighborhoodSlug(hood.id)}`}
+                  className="text-xs tracking-widest uppercase border border-neutral-200 px-3 py-1.5 hover:border-black transition-colors"
+                  title={hasComboComponents ? `Includes: ${hood.combo_component_names!.join(', ')}` : undefined}
+                >
+                  {hood.name}
+                </Link>
+              );
+            })}
             {hasOverflow && !showAllNeighborhoods && (
               <button
                 onClick={() => setShowAllNeighborhoods(true)}

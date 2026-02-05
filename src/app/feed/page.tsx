@@ -112,11 +112,44 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   const { count: totalCount } = await countQuery;
   const hasMoreArticles = (totalCount || 0) > INITIAL_PAGE_SIZE;
 
-  // Get full neighborhood data for display
-  const { data: neighborhoodsData } = await supabase
+  // Get full neighborhood data for display (including combo info)
+  const { data: neighborhoodsRaw } = await supabase
     .from('neighborhoods')
-    .select('id, name, city')
+    .select('id, name, city, is_combo')
     .in('id', neighborhoodIds);
+
+  // Fetch combo component names for combo neighborhoods
+  const comboNeighborhoods = (neighborhoodsRaw || []).filter((n: any) => n.is_combo);
+  const comboComponentNames: Record<string, string[]> = {};
+
+  if (comboNeighborhoods.length > 0) {
+    const { data: comboLinks } = await supabase
+      .from('combo_neighborhoods')
+      .select(`
+        combo_id,
+        display_order,
+        component:neighborhoods!combo_neighborhoods_component_id_fkey (name)
+      `)
+      .in('combo_id', comboNeighborhoods.map((n: any) => n.id))
+      .order('display_order');
+
+    if (comboLinks) {
+      comboLinks.forEach((link: any) => {
+        if (!comboComponentNames[link.combo_id]) {
+          comboComponentNames[link.combo_id] = [];
+        }
+        if (link.component?.name) {
+          comboComponentNames[link.combo_id].push(link.component.name);
+        }
+      });
+    }
+  }
+
+  // Add combo_component_names to neighborhoods
+  const neighborhoodsWithCombo = (neighborhoodsRaw || []).map((n: any) => ({
+    ...n,
+    combo_component_names: comboComponentNames[n.id] || undefined,
+  }));
 
   // Fetch ads (global or for selected neighborhoods)
   const { data: ads } = neighborhoodIds.length > 0
@@ -149,10 +182,10 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   };
 
   // Single neighborhood selected - show full header
-  const singleNeighborhood = neighborhoodIds.length === 1 && neighborhoodsData?.[0];
+  const singleNeighborhood = neighborhoodIds.length === 1 && neighborhoodsWithCombo?.[0];
 
   // Multiple neighborhoods - show combined header
-  const multipleNeighborhoods = neighborhoodIds.length > 1 && neighborhoodsData;
+  const multipleNeighborhoods = neighborhoodIds.length > 1 && neighborhoodsWithCombo;
 
   // Fetch the latest neighborhood brief for single neighborhood
   let brief = null;
@@ -243,7 +276,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
           <>
             <MultiFeed
               items={feedItems}
-              neighborhoods={neighborhoodsData || []}
+              neighborhoods={neighborhoodsWithCombo || []}
               defaultView="compact"
               reminder={<MagicLinkReminder />}
             />
