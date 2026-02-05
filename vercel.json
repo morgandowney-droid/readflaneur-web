@@ -159,6 +159,10 @@
     {
       "path": "/api/cron/sync-archive-hunter",
       "schedule": "0 9,17 * * *"
+    },
+    {
+      "path": "/api/cron/sync-residency-radar",
+      "schedule": "0 8 * * 3"
     }
   ]
 }
