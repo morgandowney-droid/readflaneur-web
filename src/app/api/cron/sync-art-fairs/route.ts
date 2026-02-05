@@ -19,6 +19,7 @@ import {
   FairStory,
 } from '@/lib/art-fairs';
 import { FairState, getActiveFairs } from '@/config/art-fairs';
+import { getCronImage } from '@/lib/cron-images';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120; // 2 minutes should be plenty
@@ -134,6 +135,9 @@ export async function GET(request: Request) {
       });
     }
 
+    // Get cached image for art fairs (reused across all stories)
+    const cachedImageUrl = await getCronImage('art-fair', supabase);
+
     // Distribute stories to target feeds
     for (const story of stories) {
       try {
@@ -212,12 +216,13 @@ export async function GET(request: Request) {
                 categoryLabel = 'Art Fair';
             }
 
-            // Create article
+            // Create article with cached image
             const { error: insertError } = await supabase.from('articles').insert({
               neighborhood_id: finalNeighborhoodId,
               headline: story.headline,
               body_text: story.body,
               preview_text: story.previewText,
+              image_url: cachedImageUrl, // Reuse cached category image
               slug,
               status: 'published',
               published_at: new Date().toISOString(),

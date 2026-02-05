@@ -17,6 +17,7 @@ import { NEIGHBORHOOD_ID_TO_CONFIG } from '@/config/nyc-locations';
 import { NYCPermit } from '@/lib/nyc-permits';
 import { LiquorLicense } from '@/lib/nyc-liquor';
 import { CrimeStats } from '@/lib/nyc-crime';
+import { getCronImage } from '@/lib/cron-images';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // Allow up to 5 minutes for all neighborhoods
@@ -72,6 +73,9 @@ export async function GET(request: Request) {
     console.log(
       `Generating weekly digests for ${neighborhoodIds.length} neighborhoods (${weekStartStr} to now)`
     );
+
+    // Get cached image for civic data (reused across all digests)
+    const cachedImageUrl = await getCronImage('civic-data', supabase);
 
     for (const neighborhoodId of neighborhoodIds) {
       try {
@@ -158,12 +162,13 @@ export async function GET(request: Request) {
           continue;
         }
 
-        // Create the article
+        // Create the article with cached image
         const { error: insertError } = await supabase.from('articles').insert({
           neighborhood_id: neighborhoodId,
           headline: digest.headline,
           body_text: digest.body,
           preview_text: digest.previewText,
+          image_url: cachedImageUrl, // Reuse cached category image
           slug,
           status: 'published',
           published_at: new Date().toISOString(),

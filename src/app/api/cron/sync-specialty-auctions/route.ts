@@ -24,6 +24,7 @@ import {
   REGIONAL_TARGETS,
   VACATION_MAPPINGS,
 } from '@/lib/specialty-auctions';
+import { getCronImage } from '@/lib/cron-images';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for multiple house scraping
@@ -153,6 +154,9 @@ export async function GET(request: Request) {
       });
     }
 
+    // Get cached image for auctions (reused across all stories)
+    const cachedImageUrl = await getCronImage('auction', supabase);
+
     // Create articles for each story
     for (const story of stories) {
       for (const neighborhoodId of story.targetNeighborhoods) {
@@ -241,12 +245,13 @@ export async function GET(request: Request) {
             day: 'numeric',
           });
 
-          // Create article
+          // Create article with cached image
           const { error: insertError } = await supabase.from('articles').insert({
             neighborhood_id: finalNeighborhoodId,
             headline: story.headline,
             body_text: story.body,
             preview_text: story.previewText,
+            image_url: cachedImageUrl, // Reuse cached category image
             slug,
             status: 'published',
             published_at: new Date().toISOString(),

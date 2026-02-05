@@ -23,6 +23,7 @@ import {
   getZoneByNeighborhoodId,
 } from '@/config/global-locations';
 import { StoryData, SafetyStats } from '@/lib/adapters/types';
+import { getCronImage } from '@/lib/cron-images';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // Allow up to 5 minutes for all neighborhoods
@@ -88,6 +89,9 @@ export async function GET(request: Request) {
     console.log(
       `Generating global weekly digests for ${citiesToProcess.length} cities (${weekStartStr} to now)`
     );
+
+    // Get cached image for civic data (reused across all digests)
+    const cachedImageUrl = await getCronImage('civic-data', supabase);
 
     for (const city of citiesToProcess) {
       const config = GLOBAL_CITY_CONFIG[city];
@@ -253,12 +257,13 @@ export async function GET(request: Request) {
             continue;
           }
 
-          // Create the article
+          // Create the article with cached image
           const { error: insertError } = await supabase.from('articles').insert({
             neighborhood_id: neighborhoodId,
             headline: digest.headline,
             body_text: digest.body,
             preview_text: digest.previewText,
+            image_url: cachedImageUrl, // Reuse cached category image
             slug,
             status: 'published',
             published_at: new Date().toISOString(),

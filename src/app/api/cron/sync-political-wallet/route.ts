@@ -28,6 +28,7 @@ import {
   POWER_DONOR_THRESHOLD,
   STORY_TRIGGER_THRESHOLD,
 } from '@/lib/political-wallet';
+import { getCronImage } from '@/lib/cron-images';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for API calls
@@ -134,6 +135,9 @@ export async function GET(request: Request) {
       });
     }
 
+    // Get cached image for political wallet (reused across all stories)
+    const cachedImageUrl = await getCronImage('political-wallet', supabase);
+
     // Create articles for each story
     for (const story of stories) {
       for (const neighborhoodId of story.targetNeighborhoods) {
@@ -188,12 +192,13 @@ export async function GET(request: Request) {
             }
           }
 
-          // Create article
+          // Create article with cached image
           const { error: insertError } = await supabase.from('articles').insert({
             neighborhood_id: finalNeighborhoodId,
             headline: story.headline,
             body_text: story.body,
             preview_text: story.previewText,
+            image_url: cachedImageUrl, // Reuse cached category image
             slug,
             status: 'published',
             published_at: new Date().toISOString(),

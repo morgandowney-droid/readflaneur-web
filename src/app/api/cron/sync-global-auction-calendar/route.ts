@@ -21,6 +21,7 @@ import {
   GlobalAuctionEvent,
 } from '@/lib/global-auctions';
 import { AuctionHouse, AuctionTier } from '@/lib/nyc-auctions';
+import { getCronImage } from '@/lib/cron-images';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for scraping + generation
@@ -118,6 +119,9 @@ export async function GET(request: Request) {
       });
     }
 
+    // Get cached image for auctions (reused across all stories)
+    const cachedImageUrl = await getCronImage('auction', supabase);
+
     // Process events by hub
     for (const hub of targetHubs) {
       const hubEvents = events.filter((e) => e.hub === hub);
@@ -207,12 +211,13 @@ export async function GET(request: Request) {
                 day: 'numeric',
               });
 
-              // Create article
+              // Create article with cached image
               const { error: insertError } = await supabase.from('articles').insert({
                 neighborhood_id: finalNeighborhoodId,
                 headline: story.headline,
                 body_text: story.body,
                 preview_text: story.previewText,
+                image_url: cachedImageUrl, // Reuse cached category image
                 slug,
                 status: 'published',
                 published_at: new Date().toISOString(),
