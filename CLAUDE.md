@@ -11,6 +11,32 @@
 
 ### Recent Changes (2026-02-05)
 
+**New Zealand Integration (5 New Neighborhoods - "Bunker Watch"):**
+- Added New Zealand as Tier 1 market for ultra-wealthy survivalists (Thiel, Page, Cameron)
+- **Auckland (The City)** - 3 neighborhoods:
+  - **Herne Bay** - Old money waterfront, Marine Parade elegance, yacht club proximity
+  - **Remuera** - Aristocratic northern slopes, Arney Road grandeur, grammar zone prestige
+  - **Waiheke Island** - Vineyard luxury, Oneroa sophistication, celebrity hideaways
+- **Queenstown (The Retreat/Bunker)** - 2 neighborhoods:
+  - **Dalefield/Millbrook** - Billionaire rural retreats, survivalist compounds
+  - **Kelvin Heights** - Lakeside privacy, Peninsula Road estates, alpine luxury
+- New adapter: `src/lib/adapters/nz-adapter.ts`
+  - Resource/Building consents from Auckland Council and QLDC
+  - Liquor licenses from District Licensing Committees
+  - Crime stats from NZ Police
+  - OIO (Overseas Investment Office) decision monitoring
+- **OIO Service "Bunker Watch"**: `src/lib/oio-service.ts`
+  - Monitors LINZ Decision Summaries for foreign land acquisitions
+  - Filter: $10M+ NZD sensitive land in Auckland/Queenstown/Wanaka
+  - Detects obscured ownership (Trusts/LLCs hiding billionaire names)
+  - Gemini story generation with "Bunker Alert" tone
+- Auction houses in `src/lib/specialty-auctions.ts`:
+  - **Webb's** - Colin McCahon, Goldie, Vintage Cars (Herne Bay, Remuera)
+  - **Art+Object** - Contemporary NZ Art, Ralph Hotere (all Auckland neighborhoods)
+  - New `oceania` region type
+- NZ vocabulary: Resource Consent, Lifestyle Block, Harbour Views, Homestead, etc.
+- Files changed: `global-locations.ts`, `nz-adapter.ts` (new), `oio-service.ts` (new), `adapters/index.ts`, `specialty-auctions.ts`
+
 **Dublin Integration (3 New Neighborhoods):**
 - Added Dublin, Ireland to the Flâneur ecosystem with 3 premium neighborhoods:
   - **Ballsbridge (D4)** - Old money embassy belt, RDS grounds, Shrewsbury Road billionaires
@@ -231,8 +257,8 @@
 - Cron: Every 6 hours (fetches next 48 hours of permits)
 
 **Global Data Engine (International Markets):**
-- New City Adapter pattern for standardized civic data fetching across 6 international markets
-- Supported cities: London (UK), Sydney (AU), Chicago (US), Los Angeles (US), Washington DC (US), Dublin (IE)
+- New City Adapter pattern for standardized civic data fetching across 8 international markets
+- Supported cities: London (UK), Sydney (AU), Chicago (US), Los Angeles (US), Washington DC (US), Dublin (IE), Auckland (NZ), Queenstown (NZ)
 - Each adapter implements: `getPermits()`, `getLiquor()`, `getSafety()` with city-specific API integrations
 - City-specific vocabulary injection for AI content (currency symbols, local terminology)
 - Config: `src/config/global-locations.ts` with zones, postal codes, editorial tones
@@ -250,6 +276,13 @@
 | Los Angeles | LA Open Data (Socrata) | CA ABC | LAPD Data |
 | Washington DC | DC Open Data (ArcGIS) | ABRA | MPD Data |
 | Dublin | Dublin City Council + DLR | Courts Service | Garda Síochána / CSO |
+| Auckland | Auckland Council | DLC | NZ Police |
+| Queenstown | QLDC | DLC | NZ Police |
+
+**Special: OIO Bunker Watch (New Zealand):**
+| Source | Data | Filter |
+|--------|------|--------|
+| LINZ OIO Decisions | Foreign land acquisitions | $10M+ NZD, Queenstown/Auckland/Wanaka |
 
 ### Previous Changes (2026-02-04)
 

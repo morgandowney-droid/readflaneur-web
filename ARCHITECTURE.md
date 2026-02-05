@@ -169,6 +169,7 @@ NYC Open Data integration includes:
 - **Museum Watch** - Tier 1 museum blockbuster exhibition alerts (17 museums: Met, MoMA, Tate, Louvre, etc.)
 - **Overture Alerts** - Opera/Ballet/Symphony Opening Nights and Premieres (10 venues: Met Opera, ROH, La Scala, etc.)
 - **Design Week Coverage** - Global Design Week calendar engine (6 events: Salone del Mobile, LDF, Design Miami, etc.)
+- **OIO Bunker Watch** - New Zealand Overseas Investment Office monitoring for foreign land acquisitions ($10M+ NZD)
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)
@@ -218,7 +219,7 @@ nyc_crime_stats (
 ### Global Civic Data Tables (International Markets)
 
 ```sql
--- Global Permits cache (London, Sydney, Chicago, LA, DC, Dublin)
+-- Global Permits cache (London, Sydney, Chicago, LA, DC, Dublin, Auckland, Queenstown)
 global_permits (
   id UUID PRIMARY KEY,
   source_id TEXT NOT NULL,
