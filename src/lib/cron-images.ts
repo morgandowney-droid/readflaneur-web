@@ -41,7 +41,8 @@ export type CronImageCategory =
   | 'alfresco-watch'
   | 'filming-permit'
   | 'civic-data'
-  | 'real-estate';
+  | 'real-estate'
+  | 'museum-watch';
 
 interface CategoryConfig {
   prompt: string;
@@ -167,6 +168,12 @@ export const CRON_IMAGE_CATEGORIES: Record<CronImageCategory, CategoryConfig> = 
       'Elegant townhouse exterior with classic architecture, tree-lined street, iron gate. Golden hour light, editorial real estate photography. No text, logos, or people.',
     fallbackColor: '#0d9488',
     label: 'PROPERTY WATCH',
+  },
+  'museum-watch': {
+    prompt:
+      'Grand museum gallery interior with high ceilings, natural light from skylights, empty white walls ready for exhibition. Marble floors, architectural columns, editorial museum photography. No text, people, or artworks.',
+    fallbackColor: '#312e81',
+    label: 'CULTURE WATCH',
   },
 };
 
