@@ -218,8 +218,6 @@ export async function GET(request: Request) {
             ai_model: 'gemini-2.0-flash',
             ai_prompt: `Design Week: ${story.eventName} (${story.state})${story.dailyFocus ? ` - ${story.dailyFocus}` : ''}`,
             category_label: story.categoryLabel,
-            // Mark Hero priority for Live coverage
-            ...(story.priority === 'Hero' && { is_pinned: true }),
           });
 
           if (insertError) {

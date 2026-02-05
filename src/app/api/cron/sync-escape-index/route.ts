@@ -195,9 +195,6 @@ export async function GET(request: Request) {
             }
           }
 
-          // Determine priority based on urgency
-          const isPinned = story.urgencyLevel === 'high';
-
           // Create article with cached image
           const { error: insertError } = await supabase.from('articles').insert({
             neighborhood_id: finalNeighborhoodId,
@@ -212,7 +209,6 @@ export async function GET(request: Request) {
             ai_model: 'gemini-2.0-flash',
             ai_prompt: `Escape Index (${story.conditionType}): ${story.destination} for ${story.originCity}`,
             category_label: story.categoryLabel,
-            is_pinned: isPinned,
           });
 
           if (insertError) {
