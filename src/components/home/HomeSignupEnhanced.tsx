@@ -9,7 +9,6 @@ import { cityToSlug, neighborhoodToSlug } from '@/lib/utils';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
-const SUBSCRIBED_KEY = 'flaneur-newsletter-subscribed';
 
 interface HomeSignupEnhancedProps {
   neighborhoods: Neighborhood[];
@@ -19,10 +18,6 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
   const router = useRouter();
   const { openModal, isOpen: modalIsOpen } = useNeighborhoodModal();
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isSubscribed, setIsSubscribed] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const prevModalOpen = useRef(modalIsOpen);
 
@@ -34,11 +29,6 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
   // Load preferences on mount
   useEffect(() => {
     const loadData = async () => {
-      const subscribed = localStorage.getItem(SUBSCRIBED_KEY);
-      if (subscribed === 'true') {
-        setIsSubscribed(true);
-      }
-
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
 
@@ -119,52 +109,6 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!email || !email.includes('@')) {
-      setErrorMessage('Please enter a valid email address');
-      setStatus('error');
-      return;
-    }
-
-    if (selected.size === 0) {
-      setErrorMessage('Please select at least one neighborhood');
-      setStatus('error');
-      return;
-    }
-
-    setStatus('loading');
-    setErrorMessage('');
-
-    try {
-      const response = await fetch('/api/newsletter/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          neighborhoodIds: Array.from(selected)
-        }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        setStatus('success');
-        setEmail('');
-        localStorage.setItem(SUBSCRIBED_KEY, 'true');
-        setIsSubscribed(true);
-        const feedUrl = `/feed?neighborhoods=${Array.from(selected).join(',')}`;
-        router.push(feedUrl);
-      } else {
-        setErrorMessage(data.error || 'Failed to subscribe');
-        setStatus('error');
-      }
-    } catch {
-      setErrorMessage('Something went wrong. Please try again.');
-      setStatus('error');
-    }
-  };
-
   const handleExplore = () => {
     if (selected.size > 0) {
       router.push(`/feed?neighborhoods=${Array.from(selected).join(',')}`);
@@ -173,11 +117,6 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
       openModal();
     }
   };
-
-  // Don't show if already subscribed
-  if (isSubscribed && status !== 'success') {
-    return null;
-  }
 
   return (
     <div className="space-y-4">
@@ -233,37 +172,16 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
         </button>
       </div>
 
-      {/* Explore Button */}
-      <div className="pt-4">
-        <button
-          onClick={handleExplore}
-          className="inline-block border border-neutral-900 px-10 py-3.5 text-[11px] tracking-[0.2em] uppercase font-medium hover:bg-neutral-900 hover:text-white transition-all duration-300 rounded-lg"
-        >
-          {selected.size > 0 ? 'Read Stories' : 'Browse All'}
-        </button>
-      </div>
-
-      {/* Email Input */}
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-4">
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter your email"
-          className="px-5 py-3 border border-neutral-300 text-center sm:text-left text-sm focus:outline-none focus:border-neutral-900 w-full sm:w-72 transition-colors rounded-lg"
-          disabled={status === 'loading'}
-        />
-        <button
-          type="submit"
-          disabled={status === 'loading' || selected.size === 0}
-          className="px-8 py-3 bg-neutral-900 text-white text-[11px] tracking-[0.2em] uppercase font-medium hover:bg-neutral-800 transition-all duration-300 disabled:bg-neutral-400 disabled:cursor-not-allowed whitespace-nowrap rounded-lg"
-        >
-          {status === 'loading' ? '...' : 'Subscribe'}
-        </button>
-      </form>
-
-      {status === 'error' && (
-        <p className="text-red-600 text-xs text-center">{errorMessage}</p>
+      {/* Read Stories Button - only show when neighborhoods are selected */}
+      {selected.size > 0 && (
+        <div className="pt-4">
+          <button
+            onClick={handleExplore}
+            className="inline-block border border-neutral-900 px-10 py-3.5 text-[11px] tracking-[0.2em] uppercase font-medium hover:bg-neutral-900 hover:text-white transition-all duration-300 rounded-lg"
+          >
+            Read Stories
+          </button>
+        </div>
       )}
     </div>
   );
