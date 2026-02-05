@@ -861,9 +861,11 @@ export function NeighborhoodBrief({
             <span className="text-xs font-medium uppercase tracking-wider text-amber-700">
               Today&apos;s Brief
             </span>
-            <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
-              AI-Synthesized
-            </span>
+            {isExpanded && (
+              <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+                AI-Synthesized
+              </span>
+            )}
           </div>
           <span className="text-xs text-amber-600">
             {formatTime(generatedAt)}
@@ -898,49 +900,51 @@ export function NeighborhoodBrief({
         </button>
       )}
 
-      {/* Source attribution - per editorial standards at /standards */}
-      <div className="mt-2 pt-2 border-t border-amber-200">
-        {hasEnrichedSources ? (
-          <p className="text-[10px] text-amber-600 leading-relaxed">
-            <span className="italic">Synthesized from reporting by </span>
-            {(() => {
-              // Collect unique sources with URLs from enriched categories
-              const uniqueSources = new Map<string, { name: string; url: string }>();
-              enrichedCategories.forEach(cat => {
-                cat.stories.forEach(story => {
-                  if (story.source && story.source.url && !uniqueSources.has(story.source.name)) {
-                    uniqueSources.set(story.source.name, story.source);
-                  }
+      {/* Source attribution - only show when expanded */}
+      {isExpanded && (
+        <div className="mt-2 pt-2 border-t border-amber-200">
+          {hasEnrichedSources ? (
+            <p className="text-[10px] text-amber-600 leading-relaxed">
+              <span className="italic">Synthesized from reporting by </span>
+              {(() => {
+                // Collect unique sources with URLs from enriched categories
+                const uniqueSources = new Map<string, { name: string; url: string }>();
+                enrichedCategories.forEach(cat => {
+                  cat.stories.forEach(story => {
+                    if (story.source && story.source.url && !uniqueSources.has(story.source.name)) {
+                      uniqueSources.set(story.source.name, story.source);
+                    }
+                  });
                 });
-              });
-              const sourceList = Array.from(uniqueSources.values());
+                const sourceList = Array.from(uniqueSources.values());
 
-              return sourceList.map((source, index) => {
-                const isLast = index === sourceList.length - 1;
-                const prefix = index === 0 ? '' : isLast ? ' and ' : ', ';
-                return (
-                  <span key={source.name}>
-                    {prefix}
-                    <a
-                      href={source.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-amber-700 hover:text-amber-900 underline decoration-amber-300 hover:decoration-amber-500"
-                    >
-                      {source.name}
-                    </a>
-                  </span>
-                );
-              });
-            })()}
-            <span className="italic">.</span>
-          </p>
-        ) : (
-          <p className="text-[10px] text-amber-600 italic">
-            Synthesized from public news sources and social media via AI-powered search and analysis.
-          </p>
-        )}
+                return sourceList.map((source, index) => {
+                  const isLast = index === sourceList.length - 1;
+                  const prefix = index === 0 ? '' : isLast ? ' and ' : ', ';
+                  return (
+                    <span key={source.name}>
+                      {prefix}
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-amber-700 hover:text-amber-900 underline decoration-amber-300 hover:decoration-amber-500"
+                      >
+                        {source.name}
+                      </a>
+                    </span>
+                  );
+                });
+              })()}
+              <span className="italic">.</span>
+            </p>
+          ) : (
+            <p className="text-[10px] text-amber-600 italic">
+              Synthesized from public news sources and social media via AI-powered search and analysis.
+            </p>
+          )}
         </div>
+      )}
 
       {/* Newsletter signup CTA */}
       <div className="mt-3 pt-3 border-t border-amber-200">
