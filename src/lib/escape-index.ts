@@ -17,6 +17,11 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // =============================================================================
 // TYPES
@@ -1010,8 +1015,13 @@ Format your response as JSON:
 {
   "headline": "${headlineHint}",
   "body": "[30-35 word blurb that creates FOMO and urgency. Mention specific conditions (inches of snow, swell height, temperature). End with an action like 'Book now' or 'Wheels up'.]",
-  "previewText": "[12-15 word teaser for feed cards]"
+  "previewText": "[12-15 word teaser for feed cards]",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
 }
+
+Include 1-3 link candidates for key destinations mentioned in the body.
 
 Headline Options by Type:
 - Snow: "Powder Alert: [Destination] gets [Amount] overnight."
@@ -1037,6 +1047,16 @@ Constraints:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || `Perfect conditions in ${destName}. Pack your bags.`;
+    if (linkCandidates.length > 0) {
+      // Use origin city for context
+      body = injectHyperlinks(body, linkCandidates, { name: cityName, city: cityName });
+    }
+
     // Determine category label
     const categoryLabels: Record<ConditionType, string> = {
       snow: 'Powder Alert',
@@ -1050,7 +1070,7 @@ Constraints:
       conditionType: condition.type,
       condition,
       headline: parsed.headline || headlineHint,
-      body: parsed.body || `Perfect conditions in ${destName}. Pack your bags.`,
+      body,
       previewText: parsed.previewText || `${destName} is calling`,
       targetNeighborhoods: config.neighborhoodIds,
       categoryLabel: categoryLabels[condition.type],

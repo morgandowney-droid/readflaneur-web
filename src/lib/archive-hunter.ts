@@ -19,6 +19,11 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // ============================================================================
 // TYPES
@@ -674,7 +679,9 @@ Context:
 Task: Write a 30-word blurb for ${neighborhoodName} residents.
 Headline format: 'Archive Alert: ${item.brand} [ItemName] lands at ${item.storeLocation.name}'
 
-Return JSON: { "headline": "...", "body": "..." }`;
+Return JSON: { "headline": "...", "body": "...", "link_candidates": [{"text": "exact text from body"}] }
+
+Include 1-2 link candidates for key entities mentioned in the body (brand, store, item name).`;
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -695,6 +702,16 @@ Return JSON: { "headline": "...", "body": "..." }`;
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || '';
+    if (linkCandidates.length > 0 && body) {
+      const cityName = item.storeLocation.city.replace(/_/g, ' ');
+      body = injectHyperlinks(body, linkCandidates, { name: neighborhoodName, city: cityName });
+    }
+
     // Determine priority
     let priority: 'urgent' | 'high' | 'normal' = 'normal';
     if (brandTier === 'Grail' || (item.isRare && item.price >= GRAIL_PRICE_THRESHOLD)) {
@@ -706,7 +723,7 @@ Return JSON: { "headline": "...", "body": "..." }`;
     return {
       item,
       headline: parsed.headline,
-      body: parsed.body,
+      body,
       previewText: parsed.body.substring(0, 100) + '...',
       categoryLabel: `Archive Alert • ${item.category}`,
       targetNeighborhoods: [item.storeLocation.neighborhoodId],

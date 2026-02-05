@@ -23,6 +23,11 @@ import {
   getFairDatesForYear,
   ALL_FAIRS,
 } from '@/config/art-fairs';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // Gemini model for story generation
 const GEMINI_MODEL = 'gemini-2.0-flash';
@@ -173,8 +178,13 @@ Return JSON:
 {
   "headline": "Attention-grabbing headline under 70 chars",
   "body": "40-word blurb capturing the moment and creating urgency",
-  "previewText": "One sentence teaser for the feed"
-}`;
+  "previewText": "One sentence teaser for the feed",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
+}
+
+Include 2-4 link candidates for key entities mentioned in the body (fair name, galleries, artists, venues).`;
 
   try {
     const response = await genAI.models.generateContent({
@@ -196,6 +206,15 @@ Return JSON:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || `${fair.name} is the talk of ${fair.city}.`;
+    if (linkCandidates.length > 0) {
+      body = injectHyperlinks(body, linkCandidates, { name: fair.city, city: fair.city });
+    }
+
     // Determine priority
     const priority: 'Hero' | 'Standard' = state === 'Live' ? 'Hero' : 'Standard';
 
@@ -204,7 +223,7 @@ Return JSON:
       fairName: fair.name,
       state,
       headline: parsed.headline || headlineHint,
-      body: parsed.body || `${fair.name} is the talk of ${fair.city}.`,
+      body,
       previewText: parsed.previewText || `Special coverage: ${fair.name}.`,
       city: fair.city,
       priority,

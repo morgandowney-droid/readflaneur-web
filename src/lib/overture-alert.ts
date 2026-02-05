@@ -18,6 +18,11 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // Gemini model for story generation
 const GEMINI_MODEL = 'gemini-2.0-flash';
@@ -450,8 +455,13 @@ Return JSON:
 {
   "headline": "Curtain Up: [Show Name] premieres at [Venue] tonight - under 70 chars",
   "body": "30-word blurb capturing the glittering occasion and why this premiere matters",
-  "previewText": "One sentence teaser for the feed"
-}`;
+  "previewText": "One sentence teaser for the feed",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
+}
+
+Include 2-4 link candidates for key entities mentioned in the body (venue, performance title, notable performers).`;
 
   try {
     const response = await genAI.models.generateContent({
@@ -472,6 +482,18 @@ Return JSON:
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
+
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || `Opening night at ${venue.name}. Black tie expected.`;
+    if (linkCandidates.length > 0) {
+      // Use venue's primary neighborhood for context
+      const neighborhoodName = venue.neighborhoodId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const cityName = venue.city.replace(/_/g, ' ');
+      body = injectHyperlinks(body, linkCandidates, { name: neighborhoodName, city: cityName });
+    }
 
     // Determine category label based on premiere type
     let categoryLabel: string;
@@ -501,7 +523,7 @@ Return JSON:
       city: venue.city,
       performanceType: performance.performanceType,
       headline: parsed.headline || `Curtain Up: ${performance.title} premieres at ${venue.shortName}`,
-      body: parsed.body || `Opening night at ${venue.name}. Black tie expected.`,
+      body,
       previewText: parsed.previewText || `${venue.shortName} presents ${performance.title}.`,
       targetNeighborhoods: venue.targetFeeds,
       premiereType: performance.premiereType || 'opening_night',

@@ -21,6 +21,11 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // ============================================================================
 // TYPES
@@ -583,7 +588,9 @@ Context:
 Task: Write a 35-word blurb.
 Format headline as: 'Scene Watch: ${announcement.brand.name} lands in ${announcement.location.name} for the ${season}'
 
-Return JSON: { "headline": "...", "body": "..." }`;
+Return JSON: { "headline": "...", "body": "...", "link_candidates": [{"text": "exact text from body"}] }
+
+Include 1-2 link candidates for key entities mentioned in the body (brand, destination).`;
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -604,10 +611,19 @@ Return JSON: { "headline": "...", "body": "..." }`;
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || '';
+    if (linkCandidates.length > 0 && body) {
+      body = injectHyperlinks(body, linkCandidates, { name: announcement.location.name, city: announcement.location.name });
+    }
+
     return {
       announcement,
       headline: parsed.headline,
-      body: parsed.body,
+      body,
       previewText: parsed.body.substring(0, 120) + '...',
       categoryLabel: `Scene Watch • ${season}`,
       targetNeighborhoods,

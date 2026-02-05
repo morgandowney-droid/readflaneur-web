@@ -18,6 +18,11 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // ============================================================================
 // TYPES
@@ -615,7 +620,9 @@ Context:
 Task: Write a 35-word blurb about the donation trends.
 Headline: 'Donor Watch: [Recipient] raises $[Amount] in ${trend.neighborhoodName}'
 
-Return JSON: { "headline": "...", "body": "..." }`;
+Return JSON: { "headline": "...", "body": "...", "link_candidates": [{"text": "exact text from body"}] }
+
+Include 1-2 link candidates for key entities mentioned in the body (candidates, PACs, committees).`;
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -636,11 +643,30 @@ Return JSON: { "headline": "...", "body": "..." }`;
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || '';
+    if (linkCandidates.length > 0 && body) {
+      // Extract city from neighborhoodId (e.g., "nyc-tribeca" -> "New York")
+      const cityPrefix = trend.neighborhoodId.split('-')[0];
+      const cityMap: Record<string, string> = {
+        nyc: 'New York',
+        london: 'London',
+        la: 'Los Angeles',
+        paris: 'Paris',
+        sydney: 'Sydney',
+      };
+      const cityName = cityMap[cityPrefix] || trend.neighborhoodName;
+      body = injectHyperlinks(body, linkCandidates, { name: trend.neighborhoodName, city: cityName });
+    }
+
     return {
       trend,
       topRecipient,
       headline: parsed.headline,
-      body: parsed.body,
+      body,
       previewText: parsed.body.substring(0, 120) + '...',
       categoryLabel: 'Donor Watch',
       targetNeighborhoods: [trend.neighborhoodId],

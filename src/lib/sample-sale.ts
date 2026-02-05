@@ -20,6 +20,11 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // =============================================================================
 // TYPES
@@ -708,8 +713,13 @@ Format your response as JSON:
 {
   "headline": "Style Alert: ${sale.brand} sample sale starts ${startDay}",
   "body": "[30-35 word blurb. Mention the discount, venue, and a pro tip about timing. Don't use exclamation points. Tone is knowing, not excited.]",
-  "previewText": "[12-15 word teaser for feed cards]"
+  "previewText": "[12-15 word teaser for feed cards]",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
 }
+
+Include 1-3 link candidates for key entities mentioned in the body (brand name, venue).
 
 Constraints:
 - Headline under 55 characters
@@ -731,6 +741,16 @@ Constraints:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || `${sale.discount} at ${sale.venue}. Pro tip: Go early on the first day for the best selection.`;
+    if (linkCandidates.length > 0) {
+      const cityName = sale.city.replace(/_/g, ' ');
+      body = injectHyperlinks(body, linkCandidates, { name: neighborhoodName, city: cityName });
+    }
+
     // Get target neighborhoods for the city
     const targetNeighborhoods = sale.neighborhoodId
       ? [sale.neighborhoodId]
@@ -748,7 +768,7 @@ Constraints:
     return {
       sale,
       headline: parsed.headline || `Style Alert: ${sale.brand} sample sale starts ${startDay}`,
-      body: parsed.body || `${sale.discount} at ${sale.venue}. Pro tip: Go early on the first day for the best selection.`,
+      body,
       previewText: parsed.previewText || `${sale.brand} sample sale this week`,
       targetNeighborhoods,
       categoryLabel: sale.isInviteOnly ? 'Private Sale' : categoryLabels[sale.saleType],

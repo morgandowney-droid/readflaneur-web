@@ -18,6 +18,11 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // ============================================================================
 // TYPES
@@ -822,7 +827,9 @@ Write a concise alert for ${neighborhoodName} residents. Include:
 2. Why it matters to the neighborhood
 3. When the meeting is and how to participate
 
-Return JSON: { "headline": "...", "body": "..." }`;
+Return JSON: { "headline": "...", "body": "...", "link_candidates": [{"text": "exact text from body"}] }
+
+Include 1-2 link candidates for key entities mentioned in the body (streets, venues, organizations).`;
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -843,10 +850,20 @@ Return JSON: { "headline": "...", "body": "..." }`;
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || '';
+    if (linkCandidates.length > 0 && body) {
+      const cityName = alert.board.city.replace(/_/g, ' ');
+      body = injectHyperlinks(body, linkCandidates, { name: neighborhoodName, city: cityName });
+    }
+
     return {
       alert,
       headline: parsed.headline,
-      body: parsed.body,
+      body,
       previewText: parsed.body.substring(0, 150) + '...',
       categoryLabel: categoryLabels[primaryCategory] || 'Civic Alert',
       targetNeighborhoods: [alert.neighborhoodId],

@@ -19,6 +19,11 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // Gemini model for story generation
 const GEMINI_MODEL = 'gemini-2.0-flash';
@@ -474,8 +479,13 @@ Return JSON:
 {
   "headline": "Culture Watch: [Exhibit Name] opens at [Museum] - under 70 chars",
   "body": "35-word blurb emphasizing exclusivity and cultural significance",
-  "previewText": "One sentence teaser for the feed"
-}`;
+  "previewText": "One sentence teaser for the feed",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
+}
+
+Include 2-4 link candidates for key entities mentioned in the body (museum name, artist name, exhibition title).`;
 
   try {
     const response = await genAI.models.generateContent({
@@ -497,6 +507,18 @@ Return JSON:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || `A major exhibition opens at ${museum.name}.`;
+    if (linkCandidates.length > 0) {
+      // Use museum's primary neighborhood for context
+      const neighborhoodName = museum.neighborhoodId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const cityName = museum.city.replace(/_/g, ' ');
+      body = injectHyperlinks(body, linkCandidates, { name: neighborhoodName, city: cityName });
+    }
+
     // Determine category label
     const categoryLabel =
       triggerType === 'member_preview'
@@ -511,7 +533,7 @@ Return JSON:
       artist: exhibition.artist,
       city: museum.city,
       headline: parsed.headline || `Culture Watch: ${exhibition.title} opens at ${museum.shortName}`,
-      body: parsed.body || `A major exhibition opens at ${museum.name}.`,
+      body,
       previewText: parsed.previewText || `${museum.shortName} presents ${exhibition.title}.`,
       targetNeighborhoods: museum.targetFeeds,
       triggerType,

@@ -15,6 +15,11 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // =============================================================================
 // TYPES
@@ -864,8 +869,13 @@ Format your response as JSON:
 {
   "headline": "Social Calendar: [Event Name] at [Venue]",
   "body": "[35-40 word blurb mentioning the venue, expected crowd, and ticket price]",
-  "previewText": "[15-word teaser for feed cards]"
+  "previewText": "[15-word teaser for feed cards]",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
 }
+
+Include 2-3 link candidates for key entities mentioned in the body (venue, organization, event name).
 
 Constraints:
 - Headline MUST start with "Social Calendar:"
@@ -887,11 +897,20 @@ Constraints:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || `High society gathers at ${event.venue}. Tickets from ${priceDisplay}.`;
+    if (linkCandidates.length > 0) {
+      body = injectHyperlinks(body, linkCandidates, { name: cityName, city: cityName });
+    }
+
     return {
       hub: event.hub,
       event,
       headline: parsed.headline || `Social Calendar: ${event.name}`,
-      body: parsed.body || `High society gathers at ${event.venue}. Tickets from ${priceDisplay}.`,
+      body,
       previewText: parsed.previewText || `${event.name} at ${event.venue}`,
       targetNeighborhoods: config.targetFeeds,
       categoryLabel: 'Social Calendar',

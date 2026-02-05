@@ -17,6 +17,11 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // ============================================================================
 // TYPES
@@ -592,7 +597,9 @@ Task: Write a 35-word blurb.
 Format headline as: 'Flight Check: Direct service to ${announcement.destination.city} launches [Date/Soon].'
 Body: Focus on convenience and destination appeal.
 
-Return JSON: { "headline": "...", "body": "..." }`;
+Return JSON: { "headline": "...", "body": "...", "link_candidates": [{"text": "exact text from body"}] }
+
+Include 1-2 link candidates for key entities mentioned in the body (airline, destination).`;
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -613,10 +620,19 @@ Return JSON: { "headline": "...", "body": "..." }`;
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || '';
+    if (linkCandidates.length > 0 && body) {
+      body = injectHyperlinks(body, linkCandidates, { name: originCity, city: originCity });
+    }
+
     return {
       announcement,
       headline: parsed.headline,
-      body: parsed.body,
+      body,
       previewText: parsed.body.substring(0, 120) + '...',
       categoryLabel: `Flight Check • ${announcement.destination.type.replace(/_/g, ' ')}`,
       targetNeighborhoods,

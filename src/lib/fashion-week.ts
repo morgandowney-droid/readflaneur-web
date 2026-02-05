@@ -21,6 +21,11 @@ import {
   FashionWeekCity,
   getFashionWeekConfig,
 } from '@/config/fashion-weeks';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // ============================================================================
 // TYPES
@@ -558,7 +563,9 @@ Context:
 Task: Write a 35-word blurb for ${neighborhoodName} residents.
 Headline format: 'Runway Watch: ${summary.fashionWeek.shortName} takes over [Location]'
 
-Return JSON: { "headline": "...", "body": "..." }`;
+Return JSON: { "headline": "...", "body": "...", "link_candidates": [{"text": "exact text from body"}] }
+
+Include 1-3 link candidates for key entities mentioned in the body (designers, venues, fashion week name).`;
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -579,6 +586,16 @@ Return JSON: { "headline": "...", "body": "..." }`;
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || '';
+    if (linkCandidates.length > 0 && body) {
+      const cityName = summary.fashionWeek.city.replace(/_/g, ' ');
+      body = injectHyperlinks(body, linkCandidates, { name: neighborhoodName, city: cityName });
+    }
+
     // Determine priority
     let priority: 'hero' | 'high' | 'normal' = 'normal';
     if (highProfileDesigners.length >= 2) {
@@ -592,7 +609,7 @@ Return JSON: { "headline": "...", "body": "..." }`;
       summary,
       neighborhoodId,
       headline: parsed.headline,
-      body: parsed.body,
+      body,
       previewText: parsed.body.substring(0, 120) + '...',
       categoryLabel: `${summary.fashionWeek.shortName} Day ${summary.dayNumber}`,
       priority,

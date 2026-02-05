@@ -14,6 +14,11 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // Gemini model for story generation
 const GEMINI_MODEL = 'gemini-2.0-flash';
@@ -576,8 +581,13 @@ Return JSON:
 {
   "headline": "Headline mentioning house and key category (under 70 chars)",
   "body": "45-word description emphasizing prestige and collector appeal",
-  "previewText": "One sentence teaser for feed"
-}`;
+  "previewText": "One sentence teaser for feed",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
+}
+
+Include 2-4 link candidates for key entities mentioned in the body (auction house, notable artists, categories).`;
 
   try {
     const response = await genAI.models.generateContent({
@@ -599,10 +609,20 @@ Return JSON:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || `${event.title} at ${event.house} on ${dateStr}.`;
+    if (linkCandidates.length > 0) {
+      // NYC context for auction house searches
+      body = injectHyperlinks(body, linkCandidates, { name: 'Manhattan', city: 'New York' });
+    }
+
     return {
       eventId: event.eventId,
       headline: parsed.headline || `${event.house}: ${event.title}`,
-      body: parsed.body || `${event.title} at ${event.house} on ${dateStr}.`,
+      body,
       previewText: parsed.previewText || `Major auction at ${event.house}.`,
       house: event.house,
       tier: event.tier,

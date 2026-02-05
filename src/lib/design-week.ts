@@ -16,6 +16,11 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // Gemini model for story generation
 const GEMINI_MODEL = 'gemini-2.0-flash';
@@ -554,8 +559,13 @@ Return JSON:
 {
   "headline": "Attention-grabbing headline under 70 chars",
   "body": "35-word blurb capturing the design week moment",
-  "previewText": "One sentence teaser for the feed"
-}`;
+  "previewText": "One sentence teaser for the feed",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
+}
+
+Include 2-4 link candidates for key entities mentioned in the body (event name, venues, designers, brands).`;
 
   try {
     const response = await genAI.models.generateContent({
@@ -576,6 +586,16 @@ Return JSON:
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
+
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || `${event.name} is the talk of ${event.city}.`;
+    if (linkCandidates.length > 0) {
+      const cityName = event.city.replace(/_/g, ' ');
+      body = injectHyperlinks(body, linkCandidates, { name: cityName, city: cityName });
+    }
 
     // Determine category label and priority
     let categoryLabel: string;
@@ -607,7 +627,7 @@ Return JSON:
       city: event.city,
       state,
       headline: parsed.headline || headlineHint,
-      body: parsed.body || `${event.name} is the talk of ${event.city}.`,
+      body,
       previewText: parsed.previewText || `Design Week: ${event.name}.`,
       targetNeighborhoods: event.targetFeeds,
       dayOfEvent,

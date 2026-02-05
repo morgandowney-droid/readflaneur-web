@@ -16,6 +16,11 @@
 
 import { GoogleGenAI } from '@google/genai';
 import { FLANEUR_NYC_CONFIG, ALL_TARGET_ZIPS } from '@/config/nyc-locations';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // Gemini model for story generation
 const GEMINI_MODEL = 'gemini-2.0-flash';
@@ -456,8 +461,13 @@ Return JSON:
 {
   "headline": "Headline under 70 chars",
   "body": "35-word description creating anticipation",
-  "previewText": "One sentence teaser for feed"
-}`;
+  "previewText": "One sentence teaser for feed",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
+}
+
+Include 1-3 link candidates for key entities mentioned in the body (brand name, street/location).`;
 
   try {
     const response = await genAI.models.generateContent({
@@ -479,13 +489,22 @@ Return JSON:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || `Signage permits filed for ${brand.name} at ${permit.address}.`;
+    if (linkCandidates.length > 0) {
+      body = injectHyperlinks(body, linkCandidates, { name: permit.neighborhood, city: permit.city });
+    }
+
     return {
       permitId: permit.permitId,
       brandName: brand.name,
       brandCategory: brand.category,
       brandTier: brand.tier,
       headline: parsed.headline || `Retail Watch: ${brand.name} confirms location at ${permit.address}`,
-      body: parsed.body || `Signage permits filed for ${brand.name} at ${permit.address}.`,
+      body,
       previewText: parsed.previewText || `${brand.name} is coming to ${permit.neighborhood}.`,
       address: permit.address,
       street: permit.street,

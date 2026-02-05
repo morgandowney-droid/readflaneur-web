@@ -15,6 +15,11 @@
 
 import { GoogleGenAI } from '@google/genai';
 import { FLANEUR_NYC_CONFIG, ALL_TARGET_ZIPS } from '@/config/nyc-locations';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // Gemini model for story generation
 const GEMINI_MODEL = 'gemini-2.0-flash';
@@ -509,8 +514,13 @@ Return JSON:
 {
   "headline": "Headline under 70 chars using the template",
   "body": "40-word description contextualizing the complaints",
-  "previewText": "One sentence teaser for feed"
-}`;
+  "previewText": "One sentence teaser for feed",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
+}
+
+Include 1-2 link candidates for key locations mentioned in the body (streets, blocks, venues).`;
 
   try {
     const response = await genAI.models.generateContent({
@@ -532,6 +542,15 @@ Return JSON:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || `${cluster.count} complaints filed near ${cluster.displayLocation} this week.`;
+    if (linkCandidates.length > 0) {
+      body = injectHyperlinks(body, linkCandidates, { name: cluster.neighborhood, city: 'New York' });
+    }
+
     // Build fallback headline from template
     const fallbackHeadline = categoryConfig.headlineTemplate
       .replace('{count}', cluster.count.toString())
@@ -541,7 +560,7 @@ Return JSON:
       clusterId: cluster.id,
       category: cluster.category,
       headline: parsed.headline || fallbackHeadline,
-      body: parsed.body || `${cluster.count} complaints filed near ${cluster.displayLocation} this week.`,
+      body,
       previewText: parsed.previewText || `Community Watch: ${cluster.category} concerns.`,
       location: cluster.location,
       displayLocation: cluster.displayLocation,

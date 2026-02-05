@@ -23,6 +23,11 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import Parser from 'rss-parser';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // =============================================================================
 // TYPES
@@ -649,8 +654,13 @@ Format your response as JSON:
 {
   "headline": "${headlineTemplate}",
   "body": "[35-40 word blurb. Mention the restaurant, the source, and the recognition. End with something about reservations being harder to get. Tone: knowing, not gushing.]",
-  "previewText": "[12-15 word teaser for feed cards]"
+  "previewText": "[12-15 word teaser for feed cards]",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
 }
+
+Include 2-3 link candidates for key entities mentioned in the body (restaurant name, publication name).
 
 Constraints:
 - Headline should be under 60 characters
@@ -671,6 +681,16 @@ Constraints:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || `${review.restaurantName} just earned recognition from ${review.sourceDisplayName}. Reservations may be harder to come by.`;
+    if (linkCandidates.length > 0) {
+      const cityName = review.city.replace(/_/g, ' ');
+      body = injectHyperlinks(body, linkCandidates, { name: neighborhoodName, city: cityName });
+    }
+
     // Get all neighborhoods in the city for syndication
     const targetNeighborhoods = review.neighborhoodId
       ? [review.neighborhoodId]
@@ -679,7 +699,7 @@ Constraints:
     return {
       review,
       headline: parsed.headline || headlineTemplate,
-      body: parsed.body || `${review.restaurantName} just earned recognition from ${review.sourceDisplayName}. Reservations may be harder to come by.`,
+      body,
       previewText: parsed.previewText || `${review.sourceDisplayName} reviews ${review.restaurantName}`,
       targetNeighborhoods,
       categoryLabel: 'Dining Watch',

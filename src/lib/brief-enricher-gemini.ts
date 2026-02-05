@@ -6,6 +6,11 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 export interface EnrichedStoryItem {
   entity: string;
@@ -35,6 +40,7 @@ export interface EnrichedBriefOutput {
   model: string;
   blockedDomains: string[];
   rawResponse?: string;
+  linkCandidates?: LinkCandidate[];
 }
 
 // Blocked domains per neighborhood
@@ -209,9 +215,18 @@ After your prose, include this JSON with ONLY the verified stories:
         }
       ]
     }
+  ],
+  "link_candidates": [
+    {"text": "Exact phrase from your prose"}
   ]
 }
-\`\`\``;
+\`\`\`
+
+LINK CANDIDATES RULES:
+- Include 3-6 key entities worth hyperlinking from your prose
+- Use the EXACT text as it appears in your prose (case-sensitive matching)
+- Prioritize: business names, venue names, notable people, referenced articles
+- Only include entities that readers would want to learn more about`;
 
   try {
     // Use gemini-3-pro with Google Search grounding
@@ -244,7 +259,8 @@ After your prose, include this JSON with ONLY the verified stories:
     console.log('Gemini response length:', text.length);
 
     // Extract JSON from original response (before markdown stripping)
-    let enrichedData: { categories: EnrichedCategory[] } = { categories: [] };
+    let enrichedData: { categories: EnrichedCategory[]; link_candidates?: unknown[] } = { categories: [] };
+    let linkCandidates: LinkCandidate[] = [];
 
     const jsonMatch = rawText.match(/```json\s*([\s\S]*?)```/);
     if (jsonMatch) {
@@ -254,6 +270,11 @@ After your prose, include this JSON with ONLY the verified stories:
           enrichedData = parsed;
           console.log('Parsed JSON from Gemini response');
         }
+        // Extract and validate link candidates
+        if (parsed.link_candidates) {
+          linkCandidates = validateLinkCandidates(parsed.link_candidates);
+          console.log(`Found ${linkCandidates.length} valid link candidates`);
+        }
       } catch (e) {
         console.error('Failed to parse Gemini JSON:', e);
       }
@@ -262,6 +283,12 @@ After your prose, include this JSON with ONLY the verified stories:
     // If no JSON found, try to extract structured data from the natural response
     if (enrichedData.categories.length === 0) {
       console.log('No JSON found, returning raw response for manual review');
+
+      // Still inject hyperlinks if we have candidates
+      if (linkCandidates.length > 0 && text) {
+        text = injectHyperlinks(text, linkCandidates, { name: neighborhoodName, city });
+      }
+
       // Return raw response for debugging
       return {
         date: dateStr,
@@ -271,6 +298,7 @@ After your prose, include this JSON with ONLY the verified stories:
         model: modelId,
         blockedDomains,
         rawResponse: text,
+        linkCandidates,
       };
     }
 
@@ -289,6 +317,11 @@ After your prose, include this JSON with ONLY the verified stories:
       }
     }
 
+    // Inject hyperlinks into prose before returning
+    if (linkCandidates.length > 0 && text) {
+      text = injectHyperlinks(text, linkCandidates, { name: neighborhoodName, city });
+    }
+
     return {
       date: dateStr,
       neighborhood: neighborhoodName,
@@ -297,6 +330,7 @@ After your prose, include this JSON with ONLY the verified stories:
       model: modelId,
       blockedDomains,
       rawResponse: text,
+      linkCandidates,
     };
 
   } catch (error) {

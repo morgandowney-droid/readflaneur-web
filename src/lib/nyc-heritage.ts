@@ -18,6 +18,11 @@ import {
   getNeighborhoodKeyFromZip,
   NEIGHBORHOOD_ID_TO_CONFIG,
 } from '@/config/nyc-locations';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // NYC Open Data - DOB NOW: Build Job Application Filings
 const NYC_DOB_FILINGS_API = 'https://data.cityofnewyork.us/resource/w9ak-ipjd.json';
@@ -383,8 +388,13 @@ Return JSON:
 {
   "headline": "${headlinePrefix}: [specific detail about the filing] (under 70 chars)",
   "body": "40-word description of the filing and its significance",
-  "previewText": "One sentence teaser for feed"
-}`;
+  "previewText": "One sentence teaser for feed",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
+}
+
+Include 1-3 link candidates for key entities mentioned in the body (building name, address, landmark).`;
 
   try {
     const response = await genAI.models.generateContent({
@@ -406,11 +416,20 @@ Return JSON:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || `A ${event.type.toLowerCase()} filing has been submitted for ${event.address}.`;
+    if (linkCandidates.length > 0) {
+      body = injectHyperlinks(body, linkCandidates, { name: event.neighborhood, city: 'New York' });
+    }
+
     return {
       eventId: event.eventId,
       neighborhoodId: event.neighborhoodId,
       headline: parsed.headline || `${headlinePrefix}: Filing at ${event.address}`,
-      body: parsed.body || `A ${event.type.toLowerCase()} filing has been submitted for ${event.address}.`,
+      body,
       previewText: parsed.previewText || `Heritage alert for ${event.address}.`,
       eventType: event.type,
       address: event.address,

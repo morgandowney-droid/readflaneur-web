@@ -21,6 +21,11 @@ import {
   getNeighborhoodKeyFromZip,
   NEIGHBORHOOD_ID_TO_CONFIG,
 } from '@/config/nyc-locations';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // NYC Open Data - Open Restaurants Applications endpoint
 const NYC_OPEN_RESTAURANTS_API = 'https://data.cityofnewyork.us/resource/pitm-atqc.json';
@@ -395,8 +400,13 @@ Return JSON:
 {
   "headline": "Al Fresco Alert: [Restaurant Name] adds [seating type] seats (under 60 chars)",
   "body": "35-40 word description mentioning location and vibe",
-  "previewText": "One sentence teaser for feed"
-}`;
+  "previewText": "One sentence teaser for feed",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
+}
+
+Include 1-3 link candidates for key entities mentioned in the body (restaurant name, street/location).`;
 
   try {
     const response = await genAI.models.generateContent({
@@ -418,11 +428,20 @@ Return JSON:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || `${event.restaurantName} at ${event.address} now offers ${event.seatingType.toLowerCase()} seating.`;
+    if (linkCandidates.length > 0) {
+      body = injectHyperlinks(body, linkCandidates, { name: event.neighborhood, city: 'New York' });
+    }
+
     return {
       eventId: event.eventId,
       neighborhoodId: event.neighborhoodId,
       headline: parsed.headline || `Al Fresco Alert: ${event.restaurantName} adds outdoor seating`,
-      body: parsed.body || `${event.restaurantName} at ${event.address} now offers ${event.seatingType.toLowerCase()} seating.`,
+      body,
       previewText: parsed.previewText || `New outdoor dining at ${event.restaurantName}.`,
       restaurantName: event.restaurantName,
       seatingType: event.seatingType,

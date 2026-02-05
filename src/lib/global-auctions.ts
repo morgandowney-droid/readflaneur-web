@@ -27,6 +27,11 @@ import {
   isBlueChip as baseIsBlueChip,
   determineAuctionTier,
 } from './nyc-auctions';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // Gemini model for story generation
 const GEMINI_MODEL = 'gemini-2.0-flash';
@@ -675,8 +680,13 @@ Return JSON:
 {
   "headline": "Headline under 70 chars",
   "body": "35-word description for local collectors",
-  "previewText": "One sentence teaser for feed"
-}`;
+  "previewText": "One sentence teaser for feed",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
+}
+
+Include 1-3 link candidates for key entities mentioned in the body (auction house, artists, categories).`;
 
   try {
     const response = await genAI.models.generateContent({
@@ -698,10 +708,19 @@ Return JSON:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || `The collectors are circling ${event.location} for this key sale.`;
+    if (linkCandidates.length > 0) {
+      body = injectHyperlinks(body, linkCandidates, { name: event.location, city: event.location });
+    }
+
     return {
       eventId: event.eventId,
       headline: parsed.headline || `Auction Alert: ${event.house} brings ${event.title} to ${event.location}`,
-      body: parsed.body || `The collectors are circling ${event.location} for this key sale.`,
+      body,
       previewText: parsed.previewText || `${event.house} presents ${event.title}.`,
       house: event.house,
       tier: event.tier,

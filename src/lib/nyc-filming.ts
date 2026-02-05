@@ -18,6 +18,11 @@ import {
   getNeighborhoodKeyFromZip,
   NEIGHBORHOOD_ID_TO_CONFIG,
 } from '@/config/nyc-locations';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
 
 // NYC Open Data Film Permits endpoint
 const NYC_FILM_PERMITS_API = 'https://data.cityofnewyork.us/resource/tg4x-b46p.json';
@@ -409,8 +414,13 @@ Return JSON:
 {
   "headline": "Headline under 60 chars mentioning project and street",
   "body": "40-50 word alert with specific streets and timing",
-  "previewText": "One sentence teaser for feed"
-}`;
+  "previewText": "One sentence teaser for feed",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
+}
+
+Include 1-3 link candidates for key entities mentioned in the body (production name, streets, venues).`;
 
   try {
     const response = await genAI.models.generateContent({
@@ -432,11 +442,20 @@ Return JSON:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Extract and validate link candidates
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    // Get body and inject hyperlinks
+    let body = parsed.body || `Film crews for ${event.projectName} will be shooting on ${streetList}.`;
+    if (linkCandidates.length > 0) {
+      body = injectHyperlinks(body, linkCandidates, { name: event.neighborhood, city: 'New York' });
+    }
+
     return {
       eventId: event.eventId,
       neighborhoodId: event.neighborhoodId,
       headline: parsed.headline || `${event.projectName} filming in ${event.neighborhood}`,
-      body: parsed.body || `Film crews for ${event.projectName} will be shooting on ${streetList}.`,
+      body,
       previewText: parsed.previewText || `${event.projectName} is filming nearby.`,
       projectName: event.projectName,
       category: event.category,
