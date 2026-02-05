@@ -24,6 +24,7 @@ A luxury hyper-local news and neighborhood guide platform. Flâneur delivers cur
 - **Escape Index** - Vacation conditions (Snow/Surf/Sun) injected into feeder city feeds
 - **Review Watch** - Restaurant reviews from major publications (NYT, Infatuation, Eater, Guardian)
 - **Sample Sale Alerts** - Luxury sample sales from fashion aggregators (Chicmi, 260, Arlettie) with 70+ brand whitelist
+- **NIMBY Alerts** - Community board agenda monitoring for controversial votes (liquor licenses, zoning changes)
 - **Multi-Neighborhood Selection** - Follow multiple neighborhoods for a personalized feed
 - **Tip Submission** - Community-sourced news tips with optional anonymity
 - **Advertiser Portal** - Self-service advertising with Stripe payments

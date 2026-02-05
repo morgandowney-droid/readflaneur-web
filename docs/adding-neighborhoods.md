@@ -521,6 +521,41 @@ Categories: Fashion, Handbags, Jewelry, Shoes, Home, Active
 
 Schedule: Daily at 8 AM UTC.
 
+### NIMBY Alert Service (Community Board Monitoring)
+
+Scrapes Community Board / Council Meeting agendas to alert residents about controversial upcoming votes. Strategy: "Early Warning System" - empowering civic engagement.
+
+**Data Sources:**
+
+| Adapter | Source | Target |
+|---------|--------|--------|
+| NYC | Community Board websites | Full Board / Licensing Committee agendas (PDF) |
+| London | Borough Council calendars | Licensing Sub-Committee, Planning Applications |
+| Sydney | Council Business Papers | Council Meeting agendas |
+
+**Controversy Filters (Regex):**
+
+| Category | Keywords |
+|----------|----------|
+| Liquor | liquor license, 4am, nightclub, cabaret, rooftop bar |
+| Zoning | zoning variance, upzoning, height restriction, air rights, FAR increase |
+| Social | shelter, dispensary, cannabis, clinic, hotel conversion, supportive housing |
+| Development | demolition, new construction, tower, high-rise, parking variance |
+| Noise | noise variance, extended hours, live music, outdoor amplification |
+
+**Geofence Logic:**
+- Extract street name from text near keyword match
+- Match to specific Flâneur neighborhood via board's street patterns
+- Default to first neighborhood in board's coverage if no match
+
+**Gemini Story Tone:** "Early Warning" - informative, civic-engagement focused, non-sensational.
+
+**Headlines:**
+- `Licensing Alert: New 4am Nightclub Proposal on Spring Street`
+- `Zoning Watch: 45-Story Tower Proposed for Chelsea`
+
+Schedule: Weekly on Mondays at 6 AM UTC.
+
 ---
 
 ## Global Locations Configuration (International)

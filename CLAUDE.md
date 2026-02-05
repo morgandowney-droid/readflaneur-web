@@ -11,6 +11,16 @@
 
 ### Recent Changes (2026-02-05)
 
+**NIMBY Alert Service ("Early Warning System"):**
+- New service scraping Community Board / Council Meeting agendas for controversial votes
+- Data sources: NYC Community Boards (CB 1-8 Manhattan, CB 1-6 Brooklyn), London Borough Councils, Sydney Councils
+- Controversy filters: Liquor (4am, nightclub), Zoning (variance, upzoning), Social (shelter, dispensary), Development, Noise
+- PDF parsing via `pdf-parse` package to extract agenda text
+- Street name extraction for geofencing within board coverage areas
+- Gemini story generation with civic engagement tone
+- Files: `src/lib/nimby-alert.ts`, `src/app/api/cron/sync-nimby-alerts/route.ts`
+- Cron: Weekly on Mondays at 6 AM UTC
+
 **Sample Sale Service ("Insider Access"):**
 - New service scraping fashion aggregators for luxury sample sales
 - Data sources: Chicmi (Global), 260 Sample Sale (NYC), Arlettie (Paris/London)
@@ -419,6 +429,7 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | sync-escape-index | Every 6 hours (:45) | Vacation conditions (Snow/Surf/Sun) via Feeder Map |
 | sync-review-watch | Every 4 hours | Restaurant reviews from major publications (NYT, Infatuation, Eater) |
 | sync-sample-sales | Daily 8 AM UTC | Luxury sample sale alerts from fashion aggregators (Chicmi, 260, Arlettie) |
+| sync-nimby-alerts | Monday 6 AM UTC | Community board agenda monitoring for controversial votes (liquor, zoning, social) |
 
 ## Database Tables
 

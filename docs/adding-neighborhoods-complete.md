@@ -1234,6 +1234,110 @@ Body: "Chicmi's curated sale features Hermès accessories, The Row knitwear, and
 
 **Files:** `src/lib/sample-sale.ts`, `src/app/api/cron/sync-sample-sales/route.ts`
 
+### 7.18 NIMBY Alert Service (Community Board Monitoring)
+
+NIMBY Alert Service scrapes Community Board / Council Meeting agendas to alert residents about controversial upcoming votes. Strategy: "Early Warning System" for civic engagement.
+
+**Data Sources:**
+
+```typescript
+const COMMUNITY_BOARDS = [
+  // NYC Manhattan
+  { id: 'nyc-cb1', name: 'Manhattan CB 1', neighborhoodIds: ['nyc-tribeca', 'nyc-fidi'] },
+  { id: 'nyc-cb2', name: 'Manhattan CB 2', neighborhoodIds: ['nyc-soho', 'nyc-west-village', 'nyc-greenwich-village'] },
+  { id: 'nyc-cb4', name: 'Manhattan CB 4', neighborhoodIds: ['nyc-chelsea', 'nyc-hudson-yards', 'nyc-meatpacking'] },
+  // ... CB 5-8 for other Manhattan neighborhoods
+
+  // NYC Brooklyn
+  { id: 'nyc-bk-cb1', name: 'Brooklyn CB 1', neighborhoodIds: ['nyc-williamsburg', 'nyc-greenpoint'] },
+  { id: 'nyc-bk-cb2', name: 'Brooklyn CB 2', neighborhoodIds: ['nyc-dumbo', 'nyc-brooklyn-heights', 'nyc-cobble-hill'] },
+
+  // London
+  { id: 'london-westminster', name: 'Westminster City Council', neighborhoodIds: ['london-mayfair', 'london-soho'] },
+  { id: 'london-kensington', name: 'Kensington & Chelsea Council', neighborhoodIds: ['london-chelsea', 'london-notting-hill'] },
+
+  // Sydney
+  { id: 'sydney-woollahra', name: 'Woollahra Municipal Council', neighborhoodIds: ['sydney-paddington', 'sydney-double-bay'] },
+];
+```
+
+**Controversy Filters:**
+
+```typescript
+const CONTROVERSY_PATTERNS = {
+  liquor: [
+    /liquor\s*licen[sc]e/i,
+    /4\s*am|4am/i,
+    /nightclub/i,
+    /cabaret/i,
+    /rooftop\s*bar/i,
+  ],
+  zoning: [
+    /zoning\s*variance/i,
+    /upzoning/i,
+    /height\s*restriction/i,
+    /air\s*rights/i,
+    /FAR\s*increase/i,
+  ],
+  social: [
+    /homeless\s*shelter/i,
+    /dispensary/i,
+    /cannabis/i,
+    /hotel\s*conversion/i,
+    /supportive\s*housing/i,
+  ],
+  development: [
+    /demolition\s*permit/i,
+    /tower|high[\s-]*rise/i,
+    /parking\s*variance/i,
+  ],
+  noise: [
+    /noise\s*variance/i,
+    /extended\s*hours/i,
+    /live\s*music/i,
+  ],
+};
+```
+
+**Processing Pipeline:**
+
+1. **Scrape Agendas**: Fetch meeting calendar pages, extract PDF links
+2. **Parse PDFs**: Extract text using `pdf-parse` package
+3. **Detect Controversy**: Scan text for trigger keywords via regex patterns
+4. **Extract Location**: Find street names near keyword matches for geofencing
+5. **Assign Neighborhood**: Map to specific Flâneur neighborhood via board's street patterns
+6. **Generate Story**: Use Gemini with civic engagement tone
+
+**Gemini Story Generation:**
+
+Tone: "Early Warning" - informative, neutral, empowering civic participation.
+
+```
+// Liquor License
+Headline: "Licensing Alert: New 4am Nightclub Proposal on Spring Street"
+Body: "A new nightclub concept is seeking a 4am liquor license at 123 Spring Street.
+       The SLA Committee meets Tuesday at 6:30pm. Public comment period is open until Monday.
+       Community Board 2's full board vote follows on February 20th."
+
+// Zoning Variance
+Headline: "Zoning Watch: 45-Story Tower Proposed for Chelsea"
+Body: "A developer is seeking a zoning variance to build a 45-story tower at 10th Avenue
+       and 23rd Street. Current zoning permits 25 stories. The Land Use Committee meets
+       Thursday evening - public testimony is encouraged."
+```
+
+**Priority Classification:**
+
+| Priority | Triggers |
+|----------|----------|
+| High | 4am license, nightclub, demolition, shelter, dispensary, tower |
+| Medium | Multiple categories in same item |
+| Low | Single standard keyword |
+
+**Cron Schedule:** Weekly on Mondays at 6 AM UTC
+
+**Files:** `src/lib/nimby-alert.ts`, `src/app/api/cron/sync-nimby-alerts/route.ts`
+
 ---
 
 ---

@@ -160,6 +160,7 @@ NYC Open Data integration includes:
 - **Escape Index** - Vacation conditions (Snow/Surf/Sun) injected into feeder city feeds
 - **Review Watch** - Restaurant reviews from major publications (NYT, Infatuation, Eater, Guardian)
 - **Sample Sale Alerts** - Luxury sample sales from fashion aggregators (Chicmi, 260 Sample Sale, Arlettie)
+- **NIMBY Alerts** - Community board agenda monitoring for controversial votes (liquor, zoning, social)
 
 ```sql
 -- NYC DOB Permits cache (geofenced to Flâneur coverage areas)
