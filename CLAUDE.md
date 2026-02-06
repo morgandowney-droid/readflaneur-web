@@ -11,6 +11,35 @@
 
 ### Recent Changes (2026-02-07)
 
+**RSS Article Gemini Enrichment:**
+- RSS-sourced articles (ai_model = 'claude-sonnet-4') now auto-enriched through Gemini with Google Search grounding
+- Same pipeline as Grok brief enrichment: source verification, hyperlink injection, insider tone rewriting
+- Runs in Phase 2 of `enrich-briefs` cron (15 min past each hour), picks up articles from last 6 hours
+- Uses `weekly_recap` article type (no greeting/sign-off — straight news)
+- Database: `articles.enriched_at`, `articles.enrichment_model` columns (migration 035)
+- Test: `?test-article=<article-id>` on enrich-briefs endpoint
+- Cost: ~$0.003-0.01 per article (Gemini 3 Pro)
+
+**Escape Index Condition-Specific Images:**
+- Split single `escape-index` cached image into 3: `escape-index` (snow/mountains), `escape-surf` (beach/waves), `escape-sun` (pool/sunshine)
+- Surf stories now show warm beach scenes instead of snow-covered mountains
+- Gemini prompt updated: context-appropriate action phrases ("Pack the car." for driving distance, "Book the flight." for far destinations) instead of always "Wheels up."
+- Files: `src/lib/cron-images.ts`, `src/lib/escape-index.ts`, `src/app/api/cron/sync-escape-index/route.ts`
+
+**WeatherStoryService (Editorial Weather for Daily Brief):**
+- Transforms Open-Meteo forecast data into actionable editorial weather stories
+- 4-tier priority hierarchy: Safety/Extremes > Commute/Lunch Check > Weekend Lookahead > Temperature Anomaly
+- Priority 1: Blizzard (>10cm snow), Extreme Heat (>35°C) — red alert styling
+- Priority 2: Hourly rain probability for morning commute (8-10am >60%), lunch (12-2pm >50%), evening commute (5-7pm >60%) — weekdays only
+- Priority 3: Weekend forecast on Thu/Fri emails — good (warm+dry) or bad (>5mm rain)
+- Priority 4: Tomorrow's high vs climate normals — flags ±5°C anomalies
+- Date naming rule: NEVER "Tomorrow" alone, always "Tomorrow (Sat)" or full day name
+- Climate normals for 28 cities including southern hemisphere (reversed seasons)
+- WeatherStoryCard replaces WeatherWidget when story triggers, falls back to widget on calm days
+- Zero LLM cost — all pure logic, no AI generation
+- Files: `src/lib/email/weather-story.ts`, `src/lib/email/date-utils.ts`, `src/lib/email/climate-normals.ts`, `src/lib/email/templates/components/WeatherStoryCard.tsx`
+- Modified: `src/lib/email/types.ts` (WeatherStory interface), `src/lib/email/assembler.ts`, `src/lib/email/templates/DailyBriefTemplate.tsx`
+
 **Commercial Stack — Collections Page + Fallback Protocol:**
 - Dark "Night Flaneur" themed `/advertise` page with 3 Collection tiers
 - Passionfroot deep-link booking URLs for each tier (Super-Prime $500, Metropolitan $200, Discovery $100)
