@@ -22,51 +22,67 @@ export async function POST(request: NextRequest) {
     // ─── Read raw body for signature verification ───
     const rawBody = await request.text();
 
-    // ─── Verify webhook signature (Svix) ───
-    const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-      console.error('RESEND_WEBHOOK_SECRET not configured');
-      return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+    let email_id: string;
+    let subject: string;
+    let from: string;
+
+    // ─── Test mode: bypass signature, accept email_id directly ───
+    const testSecret = request.headers.get('x-test-secret');
+    if (testSecret && testSecret === process.env.CRON_SECRET) {
+      const body = JSON.parse(rawBody);
+      email_id = body.email_id;
+      subject = body.subject || '';
+      from = body.from || '';
+    } else {
+      // ─── Verify webhook signature (Svix) ───
+      const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
+      if (!webhookSecret) {
+        console.error('RESEND_WEBHOOK_SECRET not configured');
+        return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+      }
+
+      const svixId = request.headers.get('svix-id');
+      const svixTimestamp = request.headers.get('svix-timestamp');
+      const svixSignature = request.headers.get('svix-signature');
+
+      if (!svixId || !svixTimestamp || !svixSignature) {
+        return NextResponse.json({ error: 'Missing signature headers' }, { status: 400 });
+      }
+
+      let event;
+      try {
+        event = resend.webhooks.verify(
+          {
+            payload: rawBody,
+            headers: {
+              id: svixId,
+              timestamp: svixTimestamp,
+              signature: svixSignature,
+            },
+            webhookSecret,
+          }
+        );
+      } catch (err) {
+        console.error('Webhook signature verification failed:', err);
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+      }
+
+      // ─── Only process email.received events ───
+      if (event.type !== 'email.received') {
+        return NextResponse.json({ success: true, message: `Ignoring ${event.type}` });
+      }
+
+      const data = event.data as {
+        email_id: string;
+        subject: string;
+        from: string;
+        to: string[];
+        message_id: string;
+      };
+      email_id = data.email_id;
+      subject = data.subject;
+      from = data.from;
     }
-
-    const svixId = request.headers.get('svix-id');
-    const svixTimestamp = request.headers.get('svix-timestamp');
-    const svixSignature = request.headers.get('svix-signature');
-
-    if (!svixId || !svixTimestamp || !svixSignature) {
-      return NextResponse.json({ error: 'Missing signature headers' }, { status: 400 });
-    }
-
-    let event;
-    try {
-      event = resend.webhooks.verify(
-        {
-          payload: rawBody,
-          headers: {
-            id: svixId,
-            timestamp: svixTimestamp,
-            signature: svixSignature,
-          },
-          webhookSecret,
-        }
-      );
-    } catch (err) {
-      console.error('Webhook signature verification failed:', err);
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
-    }
-
-    // ─── Only process email.received events ───
-    if (event.type !== 'email.received') {
-      return NextResponse.json({ success: true, message: `Ignoring ${event.type}` });
-    }
-
-    const { email_id, subject, from } = event.data as {
-      email_id: string;
-      subject: string;
-      from: string;
-      to: string[];
-      message_id: string;
-    };
 
     // ─── Quick subject filter ───
     const subjectLower = subject.toLowerCase();
