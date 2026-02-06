@@ -11,6 +11,17 @@
 
 ### Recent Changes (2026-02-06)
 
+**Email Topic Preferences & Suggestions:**
+- Users can pause specific content categories from their Daily Brief email
+- 20 topics grouped into 6 themes: Dining & Lifestyle, Arts & Culture, Shopping & Fashion, Auctions, Travel, Civic & Community
+- Topic suggestions feature lets users request new content types
+- Paused topics are filtered out during email assembly (Daily Brief always included)
+- Database: `profiles.paused_topics`, `newsletter_subscribers.paused_topics` (TEXT[]), `topic_suggestions` table
+- API: `/api/email/preferences` — GET returns `paused_topics`, POST handles `update_topics` and `suggest_topic` actions
+- UI: `/email/preferences` page — topic toggles with save button, suggestion text input
+- Migration: `supabase/migrations/031_topic_preferences.sql`
+- Files modified: `src/lib/email/types.ts`, `src/lib/email/scheduler.ts`, `src/lib/email/assembler.ts`, `src/app/api/email/preferences/route.ts`, `src/app/email/preferences/page.tsx`, `src/app/api/cron/send-daily-brief/route.ts`
+
 **Primary Location & Timezone Feature:**
 - Detect user location on first visit via IP geolocation (ipinfo.io)
 - Toast prompt asks users to set detected city as their primary location
@@ -805,6 +816,10 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 ### Content
 - `articles` - News articles with AI-generated images
 - `article_sections` - Article-to-section mapping
+
+### Email Preferences
+- `topic_suggestions` - User-submitted topic suggestions from preferences page
+- `profiles.paused_topics` / `newsletter_subscribers.paused_topics` - TEXT[] of category_labels to exclude
 
 ### Cron Monitoring
 - `cron_executions` - Tracks all cron job runs with timing, success status, errors
