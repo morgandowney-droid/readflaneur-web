@@ -7,9 +7,47 @@
 > **User Location:** Stockholm, Sweden (CET/CEST timezone) - use this for time-related references.
 
 ## Current Status
-**Last Updated:** 2026-02-06
+**Last Updated:** 2026-02-07
 
-### Recent Changes (2026-02-06)
+### Recent Changes (2026-02-07)
+
+**Commercial Stack — Collections Page + Fallback Protocol:**
+- Dark "Night Flaneur" themed `/advertise` page with 3 Collection tiers
+- Passionfroot deep-link booking URLs for each tier (Super-Prime $500, Metropolitan $200, Discovery $100)
+- Neighborhood Tier Lookup widget (search-as-you-type, shows seasonal labels)
+- FallbackService for ad slots: Bonus ads (Tier 1 cross-sell) > House ads (weighted random from DB) > Default (80/20 newsletter/house-ad)
+- Database: `house_ads` table with 4 seed rows (waitlist, app_download, advertise, newsletter)
+- Files: `src/config/ad-config.ts`, `src/app/advertise/page.tsx`, `src/lib/FallbackService.ts`, `src/components/feed/FallbackAd.tsx`, `supabase/migrations/032_house_ads.sql`
+
+**Ad Approval Workflow + Passionfroot Webhook + Design Concierge:**
+- Passionfroot webhook endpoint creates `pending_review` ads from bookings
+- Admin page (`/admin/ads`) with inline headline editing, admin notes, design flag badges
+- Approve goes directly to `active` (one-click go-live)
+- Filter tabs: Pending | Needs Design | Active | All
+- Source badges distinguish Passionfroot vs Direct ads
+- Database: `ads.needs_design_service`, `ads.admin_notes`, `ads.passionfroot_order_id`, `ads.client_name`, `ads.client_email`
+- Fixed `ads_status_check` constraint to allow `pending_review` and `rejected`
+- Files: `src/app/api/webhooks/passionfroot/route.ts`, `src/app/admin/ads/page.tsx`, `src/app/api/admin/ads/route.ts`, `src/app/api/admin/ads/review/route.ts`
+- Migrations: `033_ad_approval_enhancements.sql`, `034_fix_ads_status_constraint.sql`
+
+**Email Parser Fallback (Passionfroot via Resend Inbound):**
+- When Passionfroot lacks webhook support, booking emails are parsed automatically
+- Pipeline: Passionfroot email > Gmail > Gmail filter > Resend inbound > webhook > ad created
+- Resend inbound address: `passionfroot@alitolaa.resend.app`
+- Adaptive HTML parser extracts client name, email, product, amount from email body
+- Svix signature verification + test mode via `x-test-secret` header
+- Idempotency via `passionfroot_order_id = 'email-{resend_email_id}'`
+- Files: `src/lib/passionfroot-email-parser.ts`, `src/app/api/webhooks/resend-inbound/route.ts`
+- Env vars: `RESEND_WEBHOOK_SECRET` (Vercel)
+- Gmail filter: from `passionfroot.me`, subject contains `booking` > forward to Resend inbound
+
+**Passionfroot Account Setup:**
+- Creator account: https://www.passionfroot.me/flaneur
+- 3 products: Super-Prime ($500), Metropolitan ($200), Discovery ($100)
+- Stripe + bank account connected
+- Passionfroot takes 15% cut on marketplace deals, 0% on direct `/advertise` bookings
+
+### Previous Changes (2026-02-06)
 
 **Ad Pricing Service (Wealth Density Model):**
 - Dynamic neighborhood-aware pricing with 3 tiers: Super-Prime ($45 CPM), Establishment ($25 CPM), Default ($15 CPM)
@@ -774,6 +812,9 @@ FLANEUR_API_URL=https://flaneur-azure.vercel.app  # Image generation
 OPENAI_API_KEY=                  # Fallback image generation
 GEMINI_API_KEY=                  # Image generation (model: gemini-2.5-flash-image)
 GROK_API_KEY=                    # Grok X Search for real-time local news
+RESEND_WEBHOOK_SECRET=           # Resend inbound email webhook (Svix signing secret)
+PASSIONFROOT_WEBHOOK_SECRET=     # Passionfroot webhook auth (if they add webhook support)
+STRIPE_WEBHOOK_SECRET=           # Stripe payment webhook
 ```
 
 ## Automated Cron Jobs
@@ -859,6 +900,7 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | Page | URL | Purpose |
 |------|-----|---------|
 | Cron Monitor | `/admin/cron-monitor` | Self-healing cron system, issue tracking, auto-fix |
+| Ad Review | `/admin/ads` | Approve/reject ads, inline editing, design flags, filter tabs |
 | News Coverage | `/admin/news-coverage` | Monitor coverage, manage RSS feeds |
 | Regenerate Images | `/admin/regenerate-images` | Regenerate article images |
 | Add Place | `/admin/guides/add-place` | Manually add guide listings |
@@ -870,6 +912,7 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | Page | URL | Purpose |
 |------|-----|---------|
 | Settings | `/settings` | Primary location, timezone preferences |
+| Advertise | `/advertise` | Ad Collections page with Passionfroot booking links |
 
 ## Deployment
 
