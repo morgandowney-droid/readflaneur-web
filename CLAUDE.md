@@ -11,6 +11,22 @@
 
 ### Recent Changes (2026-02-06)
 
+**Sentry Error Monitoring:**
+- Installed `@sentry/nextjs` with tracing, session replay, and logs
+- Source maps uploaded to Sentry on every Vercel build via `SENTRY_AUTH_TOKEN`
+- Browser requests tunneled through `/monitoring` to avoid ad blockers
+- Automatic Vercel Cron Monitor instrumentation
+- Config files: `sentry.server.config.ts`, `sentry.edge.config.ts`, `src/instrumentation-client.ts`, `src/instrumentation.ts`
+- Sentry org: `flaneur-vk`, project: `flaneur-web`
+- Dashboard: https://sentry.io/organizations/flaneur-vk/issues/
+
+**Email & Domain Setup:**
+- ImprovMX wildcard forwarding: `*@readflaneur.com` → `morgan.downey@gmail.com`
+- 7 email addresses in use: contact@, ads@, tips@, editors@, ethics@, legal@, noreply@, hello@
+- Resend MCP configured for sending emails from Claude Code
+- Stripe MCP configured for payment management
+- Sentry MCP configured for error debugging
+
 **Email Topic Preferences & Suggestions:**
 - Users can pause specific content categories from their Daily Brief email
 - 20 topics grouped into 6 themes: Dining & Lifestyle, Arts & Culture, Shopping & Fashion, Auctions, Travel, Civic & Community
