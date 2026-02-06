@@ -110,7 +110,8 @@ async function fetchStories(
 /**
  * Fetch the latest neighborhood brief and convert to an EmailStory.
  * First checks for a brief article in the articles table (links to full article page).
- * Falls back to neighborhood_briefs table (links to neighborhood page).
+ * Falls back to neighborhood_briefs table and creates an article on-the-fly so the
+ * email link always goes to a full article page (not the yellow brief card).
  */
 async function fetchBriefAsStory(
   supabase: SupabaseClient,
@@ -118,17 +119,15 @@ async function fetchBriefAsStory(
   neighborhoodName: string,
   cityName: string
 ): Promise<EmailStory | null> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://readflaneur.com';
-
   // First: check for a brief article in the articles table
-  const since24h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const since48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
   const { data: briefArticle } = await supabase
     .from('articles')
     .select('headline, preview_text, image_url, category_label, slug, neighborhood_id')
     .eq('status', 'published')
     .eq('neighborhood_id', neighborhoodId)
     .ilike('category_label', '%daily brief%')
-    .gte('published_at', since24h)
+    .gte('published_at', since48h)
     .order('published_at', { ascending: false })
     .limit(1)
     .single();
@@ -137,10 +136,10 @@ async function fetchBriefAsStory(
     return toEmailStory(briefArticle, neighborhoodName, cityName);
   }
 
-  // Fallback: use neighborhood_briefs table
+  // Fallback: use neighborhood_briefs table and create an article on-the-fly
   const { data: brief } = await supabase
     .from('neighborhood_briefs')
-    .select('headline, content')
+    .select('id, headline, content, enriched_content, generated_at')
     .eq('neighborhood_id', neighborhoodId)
     .gte('expires_at', new Date().toISOString())
     .order('created_at', { ascending: false })
@@ -149,26 +148,71 @@ async function fetchBriefAsStory(
 
   if (!brief) return null;
 
-  const parts = neighborhoodId.split('-');
-  const prefix = parts[0];
-  const neighborhoodSlug = parts.slice(1).join('-');
-  const citySlug = REVERSE_PREFIX_MAP[prefix] || cityName.toLowerCase().replace(/\s+/g, '-');
+  // Create an article from the brief so the email link goes to a full article page
+  const articleBody = brief.enriched_content || brief.content;
+  const articleHeadline = `${neighborhoodName} DAILY BRIEF: ${brief.headline}`;
+  const date = new Date().toISOString().split('T')[0];
+  const headlineSlug = brief.headline
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .substring(0, 50);
+  const slug = `${neighborhoodId}-brief-${date}-${headlineSlug}`;
 
-  // Strip markdown citations like [[1]](url) from content for preview
-  const plainContent = brief.content
-    .replace(/\[\[\d+\]\]\([^)]*\)/g, '')
+  // Generate preview text from content
+  const previewText = articleBody
+    .replace(/\[\[[^\]]+\]\]/g, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/\n+/g, ' ')
-    .trim();
-  const previewText = plainContent.length > 200 ? plainContent.slice(0, 200) + '...' : plainContent;
+    .trim()
+    .substring(0, 200) + (articleBody.length > 200 ? '...' : '');
 
-  return {
-    headline: cleanHeadline(brief.headline, neighborhoodName),
-    previewText,
-    imageUrl: null,
-    categoryLabel: 'Daily Brief',
-    articleUrl: `${appUrl}/${citySlug}/${neighborhoodSlug}?ref=email`,
-    location: `${neighborhoodName}, ${cityName}`,
-  };
+  // Check if an article with this slug already exists (from a previous email run)
+  const { data: existingArticle } = await supabase
+    .from('articles')
+    .select('headline, preview_text, image_url, category_label, slug, neighborhood_id')
+    .eq('slug', slug)
+    .single();
+
+  if (existingArticle) {
+    return toEmailStory(existingArticle, neighborhoodName, cityName);
+  }
+
+  // Create the article so the email link goes to a full article page
+  const { data: newArticle } = await supabase
+    .from('articles')
+    .insert({
+      neighborhood_id: neighborhoodId,
+      headline: articleHeadline,
+      body_text: articleBody,
+      preview_text: previewText,
+      slug,
+      status: 'published',
+      published_at: brief.generated_at || new Date().toISOString(),
+      author_type: 'ai',
+      ai_model: 'grok-3-fast',
+      article_type: 'brief_summary',
+      category_label: `${neighborhoodName} Daily Brief`,
+      brief_id: brief.id,
+      image_url: '',
+    })
+    .select('headline, preview_text, image_url, category_label, slug, neighborhood_id')
+    .single();
+
+  if (newArticle) {
+    return toEmailStory(newArticle, neighborhoodName, cityName);
+  }
+
+  // If insert failed for any reason, still build a valid link to the article slug
+  return toEmailStory({
+    headline: articleHeadline,
+    preview_text: previewText,
+    image_url: '',
+    category_label: `${neighborhoodName} Daily Brief`,
+    slug,
+    neighborhood_id: neighborhoodId,
+  }, neighborhoodName, cityName);
 }
 
 /**
