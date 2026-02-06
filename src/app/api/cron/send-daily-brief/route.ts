@@ -175,7 +175,7 @@ async function buildTestRecipient(
   // Try profiles first
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, email, primary_city, primary_timezone, email_unsubscribe_token')
+    .select('id, email, primary_city, primary_timezone, email_unsubscribe_token, paused_topics')
     .eq('email', email)
     .single();
 
@@ -205,13 +205,14 @@ async function buildTestRecipient(
       primaryNeighborhoodId: neighborhoodIds[0] || null,
       subscribedNeighborhoodIds: neighborhoodIds,
       unsubscribeToken: profile.email_unsubscribe_token || 'test-token',
+      pausedTopics: profile.paused_topics || [],
     };
   }
 
   // Try newsletter_subscribers
   const { data: sub } = await supabase
     .from('newsletter_subscribers')
-    .select('id, email, neighborhood_ids, timezone, unsubscribe_token')
+    .select('id, email, neighborhood_ids, timezone, unsubscribe_token, paused_topics')
     .eq('email', email)
     .single();
 
@@ -235,6 +236,7 @@ async function buildTestRecipient(
       primaryNeighborhoodId: neighborhoodIds[0] || null,
       subscribedNeighborhoodIds: neighborhoodIds,
       unsubscribeToken: sub.unsubscribe_token || 'test-token',
+      pausedTopics: sub.paused_topics || [],
     };
   }
 

@@ -19,7 +19,66 @@ interface PreferencesData {
   neighborhoods: Neighborhood[];
   primary_city: string | null;
   all_neighborhoods: Neighborhood[];
+  paused_topics: string[];
 }
+
+interface TopicDef {
+  label: string;
+  description: string;
+}
+
+const TOPIC_GROUPS: { group: string; topics: TopicDef[] }[] = [
+  {
+    group: 'Dining & Lifestyle',
+    topics: [
+      { label: 'Dining Watch', description: 'Restaurant reviews and openings' },
+      { label: 'Al Fresco Alert', description: 'New outdoor dining and sidewalk seating' },
+      { label: 'Scene Watch', description: 'Luxury brand pop-ups at seasonal hotspots' },
+    ],
+  },
+  {
+    group: 'Arts & Culture',
+    topics: [
+      { label: 'Culture Watch', description: 'Museum blockbuster exhibitions and previews' },
+      { label: 'Art Fair', description: 'Coverage of major art fairs worldwide' },
+      { label: 'Curtain Up', description: 'Opera, ballet, and symphony premieres' },
+    ],
+  },
+  {
+    group: 'Shopping & Fashion',
+    topics: [
+      { label: 'Retail Watch', description: 'New luxury retail openings' },
+      { label: 'Style Alert', description: 'Designer sample sales and flash sales' },
+      { label: 'Archive Alert', description: 'Vintage luxury finds at consignment stores' },
+      { label: 'Runway Watch', description: 'Fashion week coverage' },
+      { label: 'Design Week', description: 'Design week events (Salone, LDF, etc.)' },
+    ],
+  },
+  {
+    group: 'Auctions',
+    topics: [
+      { label: 'Auction Alert', description: 'Major auction house sales' },
+      { label: 'Local Gavel', description: 'Regional auction houses' },
+    ],
+  },
+  {
+    group: 'Travel',
+    topics: [
+      { label: 'Escape Index', description: 'Weekend getaway conditions' },
+      { label: 'Flight Check', description: 'New direct premium flight routes' },
+    ],
+  },
+  {
+    group: 'Civic & Community',
+    topics: [
+      { label: 'Heritage Watch', description: 'Landmark and preservation alerts' },
+      { label: 'Community Watch', description: 'Quality-of-life issue reports' },
+      { label: 'Social Calendar', description: 'Charity galas and society events' },
+      { label: 'Civic Alert', description: 'Community board meeting controversies' },
+      { label: 'Set Life', description: 'Film and TV production in your neighborhood' },
+    ],
+  },
+];
 
 function PreferencesContent() {
   const searchParams = useSearchParams();
@@ -35,6 +94,12 @@ function PreferencesContent() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [search, setSearch] = useState('');
   const [frequencySaved, setFrequencySaved] = useState(false);
+  const [pausedTopics, setPausedTopics] = useState<string[]>([]);
+  const [topicsSaving, setTopicsSaving] = useState(false);
+  const [topicsSaved, setTopicsSaved] = useState(false);
+  const [suggestion, setSuggestion] = useState('');
+  const [suggestionSending, setSuggestionSending] = useState(false);
+  const [suggestionSent, setSuggestionSent] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -51,6 +116,7 @@ function PreferencesContent() {
       .then((d: PreferencesData) => {
         setData(d);
         setSelectedIds(d.neighborhood_ids);
+        setPausedTopics(d.paused_topics || []);
         setLoading(false);
       })
       .catch(err => {
@@ -123,6 +189,73 @@ function PreferencesContent() {
       setSaving(false);
     }
   };
+
+  const toggleTopic = (label: string) => {
+    setPausedTopics(prev =>
+      prev.includes(label)
+        ? prev.filter(t => t !== label)
+        : [...prev, label]
+    );
+    setTopicsSaved(false);
+  };
+
+  const handleSaveTopics = async () => {
+    if (!token) return;
+    setTopicsSaving(true);
+    setTopicsSaved(false);
+
+    try {
+      const res = await fetch('/api/email/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          action: 'update_topics',
+          paused_topics: pausedTopics,
+        }),
+      });
+
+      if (res.ok) {
+        setTopicsSaved(true);
+        setData(prev => prev ? { ...prev, paused_topics: pausedTopics } : prev);
+      }
+    } catch {
+      // Error saving
+    } finally {
+      setTopicsSaving(false);
+    }
+  };
+
+  const handleSuggestTopic = async () => {
+    if (!token || !suggestion.trim()) return;
+    setSuggestionSending(true);
+
+    try {
+      const res = await fetch('/api/email/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          action: 'suggest_topic',
+          suggestion: suggestion.trim(),
+        }),
+      });
+
+      if (res.ok) {
+        setSuggestionSent(true);
+        setSuggestion('');
+        setTimeout(() => setSuggestionSent(false), 3000);
+      }
+    } catch {
+      // Error sending
+    } finally {
+      setSuggestionSending(false);
+    }
+  };
+
+  const hasTopicChanges = data
+    ? JSON.stringify([...pausedTopics].sort()) !== JSON.stringify([...(data.paused_topics || [])].sort())
+    : false;
 
   if (loading) {
     return (
@@ -282,6 +415,94 @@ function PreferencesContent() {
 
           {saved && !hasChanges && (
             <p className="text-xs text-green-600 mt-3">Preferences saved!</p>
+          )}
+        </section>
+
+        {/* Topic preferences */}
+        <section className="mb-8">
+          <h2 className="text-xs font-medium tracking-[0.1em] uppercase text-neutral-400 mb-1">
+            Topics
+          </h2>
+          <p className="text-xs text-neutral-400 mb-4">
+            Pause topics you don&apos;t want in your Daily Brief. Daily Brief is always included.
+          </p>
+
+          {TOPIC_GROUPS.map(({ group, topics }) => (
+            <div key={group} className="mb-4">
+              <h3 className="text-xs font-medium text-neutral-500 mb-2">{group}</h3>
+              <div className="space-y-1">
+                {topics.map(topic => {
+                  const isPaused = pausedTopics.includes(topic.label);
+                  return (
+                    <button
+                      key={topic.label}
+                      onClick={() => toggleTopic(topic.label)}
+                      className={`w-full flex items-center justify-between p-3 border transition-colors text-left ${
+                        isPaused
+                          ? 'border-neutral-200 bg-neutral-50 text-neutral-400'
+                          : 'border-neutral-200 hover:border-neutral-400'
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <div className={`text-sm font-medium ${isPaused ? 'text-neutral-400 line-through' : ''}`}>
+                          {topic.label}
+                        </div>
+                        <div className="text-xs text-neutral-400">{topic.description}</div>
+                      </div>
+                      <span className={`ml-3 text-sm flex-shrink-0 ${isPaused ? 'text-neutral-300' : 'text-green-600'}`}>
+                        {isPaused ? 'Paused' : '\u2713'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+
+          {hasTopicChanges && (
+            <div className="mt-4 flex items-center gap-3">
+              <button
+                onClick={handleSaveTopics}
+                disabled={topicsSaving}
+                className="bg-black text-white px-6 py-2 text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+              >
+                {topicsSaving ? 'Saving...' : 'Save Topics'}
+              </button>
+              {topicsSaved && (
+                <span className="text-xs text-green-600">Topics saved!</span>
+              )}
+            </div>
+          )}
+
+          {topicsSaved && !hasTopicChanges && (
+            <p className="text-xs text-green-600 mt-3">Topics saved!</p>
+          )}
+        </section>
+
+        {/* Suggest a topic */}
+        <section className="mb-8">
+          <h2 className="text-xs font-medium tracking-[0.1em] uppercase text-neutral-400 mb-3">
+            Suggest a Topic
+          </h2>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={suggestion}
+              onChange={e => setSuggestion(e.target.value)}
+              placeholder="What topic would you like to see?"
+              className="flex-1 px-3 py-2 border border-neutral-200 focus:border-black focus:outline-none text-sm"
+              maxLength={200}
+            />
+            <button
+              onClick={handleSuggestTopic}
+              disabled={suggestionSending || !suggestion.trim()}
+              className="bg-black text-white px-4 py-2 text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+            >
+              {suggestionSending ? '...' : 'Send'}
+            </button>
+          </div>
+          {suggestionSent && (
+            <p className="text-xs text-green-600 mt-2">Thanks! We&apos;ll consider your suggestion.</p>
           )}
         </section>
 

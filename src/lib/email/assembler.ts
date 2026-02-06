@@ -75,7 +75,8 @@ function buildArticleUrl(
 async function fetchStories(
   supabase: SupabaseClient,
   neighborhoodIds: string[],
-  limit: number
+  limit: number,
+  pausedTopics: string[] = []
 ): Promise<{ id: string; headline: string; preview_text: string; image_url: string; category_label: string; slug: string; neighborhood_id: string }[]> {
   const lookbacks = [24, 48, 168]; // hours
   // Fetch extra to ensure Daily Brief is included even if not in top N by recency
@@ -94,8 +95,17 @@ async function fetchStories(
       .limit(fetchLimit);
 
     if (data && data.length > 0) {
+      // Filter out paused topics (but never filter Daily Brief)
+      const filtered = pausedTopics.length > 0
+        ? data.filter(s => {
+            const label = (s.category_label || '').toLowerCase();
+            if (label.includes('daily brief')) return true; // Always keep Daily Brief
+            return !pausedTopics.some(pt => label.includes(pt.toLowerCase()));
+          })
+        : data;
+
       // Sort: Daily Brief articles first, then by recency
-      const sorted = data.sort((a, b) => {
+      const sorted = filtered.sort((a, b) => {
         const aIsBrief = (a.category_label || '').toLowerCase().includes('daily brief') ? 0 : 1;
         const bIsBrief = (b.category_label || '').toLowerCase().includes('daily brief') ? 0 : 1;
         return aIsBrief - bIsBrief;
@@ -245,7 +255,7 @@ export async function assembleDailyBrief(
   supabase: SupabaseClient,
   recipient: EmailRecipient
 ): Promise<DailyBriefContent> {
-  const { primaryNeighborhoodId, subscribedNeighborhoodIds } = recipient;
+  const { primaryNeighborhoodId, subscribedNeighborhoodIds, pausedTopics } = recipient;
 
   // Fetch all subscribed neighborhoods from DB
   const { data: neighborhoods } = await supabase
@@ -271,7 +281,7 @@ export async function assembleDailyBrief(
   if (primaryNeighborhood) {
     // Expand combo neighborhoods
     const queryIds = await getNeighborhoodIdsForQuery(supabase, primaryNeighborhood.id);
-    const stories = await fetchStories(supabase, queryIds, PRIMARY_STORY_COUNT);
+    const stories = await fetchStories(supabase, queryIds, PRIMARY_STORY_COUNT, pausedTopics);
 
     // Fetch weather
     let weather = null;
@@ -314,7 +324,7 @@ export async function assembleDailyBrief(
     if (!neighborhood) continue;
 
     const queryIds = await getNeighborhoodIdsForQuery(supabase, satId);
-    const stories = await fetchStories(supabase, queryIds, SATELLITE_STORY_COUNT);
+    const stories = await fetchStories(supabase, queryIds, SATELLITE_STORY_COUNT, pausedTopics);
     const emailStories = stories.map(s => toEmailStory(s, neighborhood.name, neighborhood.city));
 
     // If no Daily Brief article exists, pull from neighborhood_briefs table

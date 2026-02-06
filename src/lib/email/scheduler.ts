@@ -48,7 +48,8 @@ export async function resolveRecipients(
       primary_city,
       primary_timezone,
       email_unsubscribe_token,
-      daily_email_enabled
+      daily_email_enabled,
+      paused_topics
     `)
     .eq('daily_email_enabled', true)
     .not('primary_timezone', 'is', null)
@@ -94,6 +95,7 @@ export async function resolveRecipients(
         primaryNeighborhoodId: primaryId,
         subscribedNeighborhoodIds: neighborhoodIds,
         unsubscribeToken: profile.email_unsubscribe_token,
+        pausedTopics: profile.paused_topics || [],
       });
     }
   }
@@ -108,7 +110,8 @@ export async function resolveRecipients(
       timezone,
       unsubscribe_token,
       daily_email_enabled,
-      email_verified
+      email_verified,
+      paused_topics
     `)
     .eq('daily_email_enabled', true)
     .eq('email_verified', true)
@@ -130,6 +133,7 @@ export async function resolveRecipients(
         primaryNeighborhoodId: sub.neighborhood_ids[0],
         subscribedNeighborhoodIds: sub.neighborhood_ids,
         unsubscribeToken: sub.unsubscribe_token,
+        pausedTopics: sub.paused_topics || [],
       });
     }
   }

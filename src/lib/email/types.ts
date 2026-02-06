@@ -10,6 +10,7 @@ export interface EmailRecipient {
   primaryNeighborhoodId: string | null;
   subscribedNeighborhoodIds: string[];
   unsubscribeToken: string;
+  pausedTopics: string[]; // category_labels to exclude from email
 }
 
 export interface DailyBriefContent {

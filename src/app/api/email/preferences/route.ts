@@ -19,7 +19,7 @@ async function findSubscriber(supabase: ReturnType<typeof getSupabase>, token: s
   // Try newsletter_subscribers first
   const { data: subscriber } = await supabase
     .from('newsletter_subscribers')
-    .select('id, email, neighborhood_ids, daily_email_enabled, unsubscribe_token')
+    .select('id, email, neighborhood_ids, daily_email_enabled, unsubscribe_token, paused_topics')
     .eq('unsubscribe_token', token)
     .single();
 
@@ -30,7 +30,7 @@ async function findSubscriber(supabase: ReturnType<typeof getSupabase>, token: s
   // Try profiles
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, email, primary_city, daily_email_enabled, email_unsubscribe_token')
+    .select('id, email, primary_city, daily_email_enabled, email_unsubscribe_token, paused_topics')
     .eq('email_unsubscribe_token', token)
     .single();
 
@@ -128,12 +128,13 @@ export async function GET(request: Request) {
     neighborhoods,
     primary_city: subscriber.source === 'profile' ? (subscriber as { primary_city?: string }).primary_city : null,
     all_neighborhoods: allNeighborhoods || [],
+    paused_topics: subscriber.paused_topics || [],
   });
 }
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { token, action, neighborhood_ids, daily_email_enabled } = body;
+  const { token, action, neighborhood_ids, daily_email_enabled, paused_topics, suggestion } = body;
 
   if (!token) {
     return NextResponse.json({ error: 'Missing token' }, { status: 400 });
@@ -188,6 +189,42 @@ export async function POST(request: Request) {
         .update({ daily_email_enabled })
         .eq('email_unsubscribe_token', token);
     }
+
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'update_topics') {
+    if (!Array.isArray(paused_topics)) {
+      return NextResponse.json({ error: 'paused_topics must be an array' }, { status: 400 });
+    }
+
+    if (subscriber.source === 'newsletter') {
+      await supabase
+        .from('newsletter_subscribers')
+        .update({ paused_topics })
+        .eq('unsubscribe_token', token);
+    } else {
+      await supabase
+        .from('profiles')
+        .update({ paused_topics })
+        .eq('email_unsubscribe_token', token);
+    }
+
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'suggest_topic') {
+    if (!suggestion || typeof suggestion !== 'string' || suggestion.trim().length === 0) {
+      return NextResponse.json({ error: 'suggestion is required' }, { status: 400 });
+    }
+
+    await supabase
+      .from('topic_suggestions')
+      .insert({
+        email: subscriber.email,
+        suggestion: suggestion.trim(),
+        source: 'preferences',
+      });
 
     return NextResponse.json({ success: true });
   }
