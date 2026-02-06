@@ -41,10 +41,46 @@ async function findSubscriber(supabase: ReturnType<typeof getSupabase>, token: s
       .select('neighborhood_id')
       .eq('user_id', profile.id);
 
+    let neighborhoodIds = (prefs || []).map(p => p.neighborhood_id);
+
+    // Fallback: check daily_brief_sends for what neighborhoods were sent
+    if (neighborhoodIds.length === 0) {
+      const { data: sends } = await supabase
+        .from('daily_brief_sends')
+        .select('primary_neighborhood_id')
+        .eq('recipient_id', profile.id)
+        .order('sent_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (sends?.primary_neighborhood_id) {
+        // Get all neighborhoods from the most recent send
+        const { data: recentSend } = await supabase
+          .from('daily_brief_sends')
+          .select('primary_neighborhood_id')
+          .eq('recipient_id', profile.id)
+          .order('sent_at', { ascending: false })
+          .limit(5);
+
+        const ids = [...new Set((recentSend || []).map(s => s.primary_neighborhood_id).filter(Boolean))];
+        if (ids.length > 0) neighborhoodIds = ids;
+      }
+    }
+
+    // Fallback: check localStorage-synced defaults (3 active neighborhoods)
+    if (neighborhoodIds.length === 0) {
+      const { data: defaults } = await supabase
+        .from('neighborhoods')
+        .select('id')
+        .eq('is_active', true)
+        .limit(3);
+      neighborhoodIds = (defaults || []).map(n => n.id);
+    }
+
     return {
       ...profile,
       source: 'profile' as const,
-      neighborhood_ids: (prefs || []).map(p => p.neighborhood_id),
+      neighborhood_ids: neighborhoodIds,
     };
   }
 

@@ -6,12 +6,17 @@ interface SatelliteSectionProps {
 }
 
 export function SatelliteSection({ section }: SatelliteSectionProps) {
+  // Don't show redundant city name (e.g., "Nantucket · Nantucket")
+  const showCity = section.cityName.toLowerCase() !== section.neighborhoodName.toLowerCase();
+
   return (
     <Section style={container}>
       <Hr style={divider} />
       <Text style={sectionTitle}>
         {section.neighborhoodName}
-        <span style={cityLabel}> &middot; {section.cityName}</span>
+        {showCity && (
+          <span style={cityLabel}> &middot; {section.cityName}</span>
+        )}
       </Text>
       {section.stories.map((story, i) => (
         <Section key={i} style={storyRow}>
@@ -39,12 +44,12 @@ const divider = {
 };
 
 const sectionTitle = {
-  fontSize: '14px',
+  fontSize: '18px',
   fontWeight: '700' as const,
-  letterSpacing: '0.05em',
+  letterSpacing: '0.03em',
   textTransform: 'uppercase' as const,
   color: '#000000',
-  margin: '0 0 10px',
+  margin: '0 0 12px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
@@ -53,7 +58,7 @@ const cityLabel = {
   color: '#999999',
   textTransform: 'none' as const,
   letterSpacing: '0',
-  fontSize: '12px',
+  fontSize: '14px',
 };
 
 const storyRow = {

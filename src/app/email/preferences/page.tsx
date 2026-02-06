@@ -34,6 +34,7 @@ function PreferencesContent() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [search, setSearch] = useState('');
+  const [frequencySaved, setFrequencySaved] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -101,6 +102,7 @@ function PreferencesContent() {
   const handleToggleEmail = async (enabled: boolean) => {
     if (!token) return;
     setSaving(true);
+    setFrequencySaved(false);
 
     try {
       await fetch('/api/email/preferences', {
@@ -114,6 +116,7 @@ function PreferencesContent() {
       });
 
       setData(prev => prev ? { ...prev, daily_email_enabled: enabled } : prev);
+      setFrequencySaved(true);
     } catch {
       // Error saving
     } finally {
@@ -217,6 +220,9 @@ function PreferencesContent() {
               </div>
             </label>
           </div>
+          {frequencySaved && (
+            <p className="text-xs text-green-600 mt-2">Preference saved!</p>
+          )}
         </section>
 
         {/* Subscribed neighborhoods */}

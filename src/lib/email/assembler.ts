@@ -108,9 +108,9 @@ async function fetchStories(
 }
 
 /**
- * Fetch the latest neighborhood brief from the neighborhood_briefs table
- * and convert it to a synthetic article-like object for email inclusion.
- * This ensures every neighborhood gets a Daily Brief even if no article exists.
+ * Fetch the latest neighborhood brief and convert to an EmailStory.
+ * First checks for a brief article in the articles table (links to full article page).
+ * Falls back to neighborhood_briefs table (links to neighborhood page).
  */
 async function fetchBriefAsStory(
   supabase: SupabaseClient,
@@ -118,6 +118,26 @@ async function fetchBriefAsStory(
   neighborhoodName: string,
   cityName: string
 ): Promise<EmailStory | null> {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://readflaneur.com';
+
+  // First: check for a brief article in the articles table
+  const since24h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const { data: briefArticle } = await supabase
+    .from('articles')
+    .select('headline, preview_text, image_url, category_label, slug, neighborhood_id')
+    .eq('status', 'published')
+    .eq('neighborhood_id', neighborhoodId)
+    .ilike('category_label', '%daily brief%')
+    .gte('published_at', since24h)
+    .order('published_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (briefArticle) {
+    return toEmailStory(briefArticle, neighborhoodName, cityName);
+  }
+
+  // Fallback: use neighborhood_briefs table
   const { data: brief } = await supabase
     .from('neighborhood_briefs')
     .select('headline, content')
@@ -129,7 +149,6 @@ async function fetchBriefAsStory(
 
   if (!brief) return null;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://readflaneur.com';
   const parts = neighborhoodId.split('-');
   const prefix = parts[0];
   const neighborhoodSlug = parts.slice(1).join('-');
@@ -305,6 +324,7 @@ function cleanCategoryLabel(label: string | null, neighborhoodName: string): str
 /**
  * Strip redundant neighborhood/daily brief prefix from headline
  * e.g., "Beverly Hills DAILY BRIEF: Bev Hills Buzz: ..." → "Bev Hills Buzz: ..."
+ * Also strips bare neighborhood name prefix: "West Village Vibes: ..." → "Vibes: ..."
  */
 function cleanHeadline(headline: string, neighborhoodName: string): string {
   // Strip patterns like "Beverly Hills DAILY BRIEF:" or "Beverly Hills Daily Brief:"
@@ -315,6 +335,13 @@ function cleanHeadline(headline: string, neighborhoodName: string): string {
   // Also handle abbreviated neighborhood names (e.g., "Bev Hills DAILY BRIEF:")
   // by stripping any "... DAILY BRIEF:" prefix
   cleaned = cleaned.replace(/^[^:]*DAILY\s+BRIEF\s*:\s*/i, '');
+  // Strip bare neighborhood name prefix if headline starts with it
+  // e.g., "West Village Vibes: Thai Gems..." → "Vibes: Thai Gems..."
+  // e.g., "Nantucket Buzz: Reopenings..." → "Buzz: Reopenings..."
+  cleaned = cleaned.replace(
+    new RegExp(`^${escapeRegex(neighborhoodName)}\\s+`, 'i'),
+    ''
+  );
   return cleaned || headline;
 }
 
