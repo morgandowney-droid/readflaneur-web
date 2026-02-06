@@ -11,6 +11,16 @@
 
 ### Recent Changes (2026-02-06)
 
+**Ad Pricing Service (Wealth Density Model):**
+- Dynamic neighborhood-aware pricing with 3 tiers: Super-Prime ($45 CPM), Establishment ($25 CPM), Default ($15 CPM)
+- Seasonal market rules: resort neighborhoods shift between Tier 1 (peak season) and Tier 3 (off-peak)
+  - Winter Suns (Nov–Apr): Palm Beach, St. Barts, Cape Town Atlantic Seaboard
+  - Ski & Snow (Dec–Mar): Aspen
+  - Summer Socials (May–Sep): Hamptons, Nantucket
+- Holiday surge multiplier (1.5x) for Nov 15 – Dec 25 across all tiers
+- Pure functions — no DB calls, static config in code
+- Files: `src/config/ad-tiers.ts` (tier definitions, seasonal rules, base rates), `src/lib/PricingService.ts` (getTierForNeighborhood, calculateRate, getQuote)
+
 **Sentry Error Monitoring:**
 - Installed `@sentry/nextjs` with tracing, session replay, and logs
 - Source maps uploaded to Sentry on every Vercel build via `SENTRY_AUTH_TOKEN`
@@ -728,10 +738,13 @@ readflaneur-web/
 │   │       │   └── ...
 │   │       └── admin/
 │   │           └── rss-sources/      # RSS feed CRUD
+│   ├── config/
+│   │   └── ad-tiers.ts               # Tier definitions, seasonal rules, base rates
 │   └── lib/
 │       ├── neighborhood-utils.ts     # City prefix mapping
 │       ├── google-places.ts          # Places API
 │       ├── rss-sources.ts            # RSS fetching (DB + fallback)
+│       ├── PricingService.ts          # Ad pricing: tier resolution, surge, quotes
 │       └── location/                 # Location detection & timezone utilities
 │           ├── city-mapping.ts       # 31 supported cities with timezones
 │           ├── detect.ts             # IP geolocation via ipinfo.io
