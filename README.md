@@ -41,6 +41,8 @@ A luxury hyper-local news and neighborhood guide platform. Flâneur delivers cur
 - **Overture Alerts** - "Curtain Up" alerts for Opening Nights at premiere opera houses (Met Opera, ROH, La Scala, etc.)
 - **Design Week Coverage** - Calendar-driven coverage for global design weeks (Salone del Mobile, LDF, Design Miami, etc.)
 - **Multi-Neighborhood Selection** - Follow multiple neighborhoods for a personalized feed
+- **Primary Location Detection** - Automatic IP-based location detection with manual override via Settings page
+- **Timezone-Aware Newsletters** - Newsletter send times optimized based on user's primary timezone
 - **Tip Submission** - Community-sourced news tips with optional anonymity
 - **Advertiser Portal** - Self-service advertising with Stripe payments
 
@@ -117,7 +119,8 @@ src/
 │   ├── api/                # API routes
 │   ├── feed/               # Multi-neighborhood feed
 │   ├── legal/              # Privacy & Terms
-│   └── search/             # Global search
+│   ├── search/             # Global search
+│   └── settings/           # User settings (location preferences)
 ├── components/
 │   ├── feed/               # Feed components
 │   ├── home/               # Homepage components
@@ -126,6 +129,7 @@ src/
 │   └── tips/               # Tip submission
 ├── lib/
 │   ├── supabase/           # Database clients
+│   ├── location/           # Location detection & timezone utilities
 │   ├── gemini-story-registry.ts  # Registry of 24 Gemini story generators
 │   ├── hyperlink-injector.ts     # Hyperlink injection for Gemini stories
 │   └── utils.ts            # Utility functions
@@ -151,6 +155,14 @@ Managed via `/admin/guides/michelin`.
 Users can select multiple neighborhoods to follow. Preferences are:
 - Stored in `localStorage` for anonymous users
 - Synced to `user_neighborhood_preferences` table for logged-in users
+
+### Primary Location Detection
+
+On first visit, the app detects user location via IP geolocation:
+- Matched against 31 supported cities
+- Toast prompt asks to confirm as primary location
+- Settings page (`/settings`) for manual management
+- Timezone priority for newsletters: primary > browser > neighborhood > default
 
 ### Guide Listings
 

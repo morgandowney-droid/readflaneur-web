@@ -64,6 +64,9 @@ profiles (
   full_name TEXT,
   role TEXT NOT NULL CHECK (role IN ('reader', 'journalist', 'advertiser', 'admin')),
   avatar_url TEXT,
+  primary_city TEXT,                -- User's primary location (e.g., 'London')
+  primary_timezone TEXT,            -- IANA timezone (e.g., 'Europe/London')
+  location_prompt_dismissed_at TIMESTAMPTZ, -- 30-day dismiss cooldown
   created_at TIMESTAMPTZ DEFAULT NOW()
 )
 
@@ -369,6 +372,12 @@ ad_orders (
 /[city]/[neighborhood]/property-watch  # Real estate
 ```
 
+### User Pages
+
+```
+/settings                       # User settings (primary location, timezone)
+```
+
 ### Portals
 
 ```
@@ -394,6 +403,8 @@ ad_orders (
 /api/stripe/webhook             # Stripe webhooks
 /api/ads/[id]/impression        # Track impression
 /api/ads/[id]/click             # Track click
+/api/location/detect            # IP geolocation detection (GET)
+/api/location/set-primary       # Save/clear/dismiss primary location (POST/DELETE/PUT)
 ```
 
 ---
@@ -439,6 +450,17 @@ ad_orders (
 2. Filtered to 4.0+ Google rating by default
 3. Optional Michelin filter via `?michelinOnly=true`
 4. Grouped by category for display
+
+### Primary Location & Timezone
+
+1. First visit: IP geolocation via ipinfo.io detects city
+2. Matched to 31 supported cities with IANA timezones
+3. Toast prompt asks user to confirm as primary location
+4. Storage:
+   - Anonymous users: `localStorage` (`flaneur-primary-location`)
+   - Logged-in users: `profiles.primary_city` and `profiles.primary_timezone`
+5. Dismiss: 30-day cooldown before re-prompting
+6. Timezone priority for newsletters: primary > browser > neighborhood > default
 
 ---
 

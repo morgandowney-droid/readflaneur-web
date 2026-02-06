@@ -7,9 +7,34 @@
 > **User Location:** Stockholm, Sweden (CET/CEST timezone) - use this for time-related references.
 
 ## Current Status
-**Last Updated:** 2026-02-05 (Night)
+**Last Updated:** 2026-02-06
 
-### Recent Changes (2026-02-05 Night)
+### Recent Changes (2026-02-06)
+
+**Primary Location & Timezone Feature:**
+- Detect user location on first visit via IP geolocation (ipinfo.io)
+- Toast prompt asks users to set detected city as their primary location
+- Settings page (`/settings`) for manual location management
+- Timezone priority for newsletters: primary > browser > neighborhood > default
+- 31 supported cities with IANA timezone mappings
+- Database: `profiles.primary_city`, `profiles.primary_timezone`, `profiles.location_prompt_dismissed_at`
+- Newsletter subscribers now capture browser timezone
+- 30-day dismiss cooldown for location prompt
+- Files:
+  - `src/lib/location/` - Detection library (city-mapping, detect, timezone)
+  - `src/app/api/location/detect/route.ts` - IP geolocation endpoint
+  - `src/app/api/location/set-primary/route.ts` - Save/clear/dismiss endpoints
+  - `src/components/location/LocationPrompt.tsx` - Toast-style prompt component
+  - `src/app/settings/page.tsx` - User settings page
+- Migration: `supabase/migrations/029_user_primary_location.sql`
+
+### Previous Changes (2026-02-05 Night)
+
+**Daily Briefs Fix:**
+- Fixed brief generation to check for TODAY's briefs instead of unexpired briefs
+- Each neighborhood now gets a fresh brief every morning regardless of prior day's brief status
+- Increased default batch size from 20 to 50 to handle all neighborhoods in timezone window
+- File: `src/app/api/cron/sync-neighborhood-briefs/route.ts`
 
 **Cron Job Monitoring & Auto-Fix System:**
 - New self-healing system that monitors cron job execution and auto-fixes recoverable issues
@@ -666,6 +691,8 @@ readflaneur-web/
 │   │   │   ├── regenerate-images/
 │   │   │   ├── guides/add-place/     # Manual place entry
 │   │   │   └── ...
+│   │   ├── settings/
+│   │   │   └── page.tsx              # User settings (location preferences)
 │   │   └── api/
 │   │       ├── cron/
 │   │       │   ├── sync-guides/      # Daily Google Places sync
@@ -677,7 +704,11 @@ readflaneur-web/
 │   └── lib/
 │       ├── neighborhood-utils.ts     # City prefix mapping
 │       ├── google-places.ts          # Places API
-│       └── rss-sources.ts            # RSS fetching (DB + fallback)
+│       ├── rss-sources.ts            # RSS fetching (DB + fallback)
+│       └── location/                 # Location detection & timezone utilities
+│           ├── city-mapping.ts       # 31 supported cities with timezones
+│           ├── detect.ts             # IP geolocation via ipinfo.io
+│           └── timezone.ts           # Timezone resolution priority
 ├── scripts/
 │   ├── seed-neighborhoods.ts         # Single neighborhood seeder
 │   └── seed-all-neighborhoods.ts     # Batch seeder
@@ -789,6 +820,12 @@ GROK_API_KEY=                    # Grok X Search for real-time local news
 | Add Place | `/admin/guides/add-place` | Manually add guide listings |
 | Articles | `/admin/articles` | Manage articles |
 | Sections | `/admin/sections` | Manage content sections |
+
+## User Pages
+
+| Page | URL | Purpose |
+|------|-----|---------|
+| Settings | `/settings` | Primary location, timezone preferences |
 
 ## Deployment
 
