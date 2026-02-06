@@ -3,9 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 
 /**
- * Auto-enrich Neighborhood Briefs with Gemini
+ * Auto-enrich Neighborhood Briefs + RSS Articles with Gemini
  *
- * Runs 15 minutes after the hour to enrich briefs that were just generated.
+ * Runs 15 minutes after the hour to enrich briefs that were just generated
+ * and RSS-sourced articles that haven't been enriched yet.
  * Uses Gemini with Google Search grounding to verify and add sources.
  *
  * Schedule: 15 * * * * (15 minutes past each hour)
@@ -39,6 +40,7 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const testBriefId = url.searchParams.get('test');
+  const testArticleId = url.searchParams.get('test-article');
   const batchSize = parseInt(url.searchParams.get('batch') || '5');
 
   const supabase = createClient(
@@ -50,6 +52,9 @@ export async function GET(request: Request) {
     briefs_processed: 0,
     briefs_enriched: 0,
     briefs_failed: 0,
+    articles_processed: 0,
+    articles_enriched: 0,
+    articles_failed: 0,
     errors: [] as string[],
   };
 
@@ -108,17 +113,8 @@ export async function GET(request: Request) {
     }, { status: 500 });
   }
 
-  if (!briefs || briefs.length === 0) {
-    return NextResponse.json({
-      success: true,
-      message: 'No briefs to enrich',
-      ...results,
-      timestamp: new Date().toISOString(),
-    });
-  }
-
   // Process each brief
-  for (const brief of briefs) {
+  for (const brief of (briefs || [])) {
     try {
       results.briefs_processed++;
 
@@ -173,8 +169,126 @@ export async function GET(request: Request) {
     }
   }
 
+  // ─── Phase 2: Enrich RSS-sourced articles ───
+  // Find recent RSS articles (ai_model = 'claude-sonnet-4') that haven't been enriched
+  const sixHoursAgo = new Date();
+  sixHoursAgo.setHours(sixHoursAgo.getHours() - 6);
+
+  let articleQuery = supabase
+    .from('articles')
+    .select(`
+      id,
+      headline,
+      body_text,
+      neighborhood_id,
+      published_at,
+      editor_notes,
+      neighborhoods (
+        name,
+        id,
+        city,
+        country
+      )
+    `)
+    .eq('ai_model', 'claude-sonnet-4')
+    .eq('status', 'published')
+    .is('enriched_at', null)
+    .gt('published_at', sixHoursAgo.toISOString())
+    .order('published_at', { ascending: false })
+    .limit(batchSize);
+
+  if (testArticleId) {
+    articleQuery = supabase
+      .from('articles')
+      .select(`
+        id,
+        headline,
+        body_text,
+        neighborhood_id,
+        published_at,
+        editor_notes,
+        neighborhoods (
+          name,
+          id,
+          city,
+          country
+        )
+      `)
+      .eq('id', testArticleId);
+  }
+
+  const { data: articles, error: articleFetchError } = await articleQuery;
+
+  if (articleFetchError) {
+    results.errors.push(`Article fetch: ${articleFetchError.message}`);
+  }
+
+  for (const article of (articles || [])) {
+    try {
+      results.articles_processed++;
+
+      const hood = article.neighborhoods as unknown as {
+        name: string;
+        id: string;
+        city: string;
+        country: string;
+      };
+
+      if (!hood) {
+        results.articles_failed++;
+        results.errors.push(`Article ${article.id}: no neighborhood data`);
+        continue;
+      }
+
+      console.log(`Enriching RSS article "${article.headline?.slice(0, 50)}" for ${hood.name}...`);
+
+      // Pass article body through Gemini enrichment (weekly_recap style = no greeting/sign-off)
+      const result = await enrichBriefWithGemini(
+        article.body_text || '',
+        hood.name,
+        hood.id,
+        hood.city,
+        hood.country || 'USA',
+        {
+          briefGeneratedAt: article.published_at,
+          articleType: 'weekly_recap',
+        }
+      );
+
+      // Update article with enriched body text
+      const enrichedBody = result.rawResponse || article.body_text;
+      const { error: updateError } = await supabase
+        .from('articles')
+        .update({
+          body_text: enrichedBody,
+          enriched_at: new Date().toISOString(),
+          enrichment_model: result.model,
+        })
+        .eq('id', article.id);
+
+      if (updateError) {
+        results.articles_failed++;
+        results.errors.push(`Article ${article.id}: ${updateError.message}`);
+        continue;
+      }
+
+      results.articles_enriched++;
+      console.log(`Successfully enriched article for ${hood.name}`);
+
+      // Rate limiting
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+    } catch (err) {
+      results.articles_failed++;
+      results.errors.push(`Article ${article.id}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  const totalEnriched = results.briefs_enriched + results.articles_enriched;
+  const totalFailed = results.briefs_failed + results.articles_failed;
+
   return NextResponse.json({
-    success: results.briefs_failed === 0 || results.briefs_enriched > 0,
+    success: totalFailed === 0 || totalEnriched > 0,
     ...results,
     timestamp: new Date().toISOString(),
   });
