@@ -180,6 +180,11 @@ function renderSavePage(email: string, preferencesUrl: string, confirmUrl: strin
     <div class="option-desc">Too many emails? Get a single weekly recap every Saturday instead of daily.</div>
   </a>
 
+  <a href="${preferencesUrl}&action=pause" class="option">
+    <div class="option-title">Pause emails</div>
+    <div class="option-desc">Take a break. You can resume your Daily Brief anytime from your preferences.</div>
+  </a>
+
   <div class="divider">or</div>
 
   <p class="unsubscribe-link">

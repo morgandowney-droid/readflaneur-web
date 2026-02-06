@@ -16,10 +16,10 @@ export function SatelliteSection({ section }: SatelliteSectionProps) {
       {section.stories.map((story, i) => (
         <Section key={i} style={storyRow}>
           <Link href={story.articleUrl} style={headlineLink}>
+            {story.categoryLabel && (
+              <Text style={categoryLine}>{story.categoryLabel}</Text>
+            )}
             <Text style={headline}>
-              {story.categoryLabel && (
-                <span style={category}>{story.categoryLabel} </span>
-              )}
               {story.headline}
             </Text>
           </Link>
@@ -73,10 +73,12 @@ const headline = {
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
-const category = {
+const categoryLine = {
   fontSize: '10px',
   fontWeight: '600' as const,
   letterSpacing: '0.08em',
   textTransform: 'uppercase' as const,
   color: '#999999',
+  margin: '0 0 2px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
 };
