@@ -12,6 +12,8 @@ import { AIImageDisclaimer, AIImageBadge } from '@/components/article/AIImageDis
 import { SourceAttribution } from '@/components/article/SourceAttribution';
 import { Ad } from '@/types';
 import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
+import { getFallback } from '@/lib/FallbackService';
+import type { FallbackData } from '@/components/feed/FallbackAd';
 
 interface ArticlePageProps {
   params: Promise<{
@@ -95,6 +97,12 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const topAd = ads[0] || null;
   const bottomAd = ads[1] || ads[0] || null; // Reuse first ad if only one available
 
+  // Resolve fallback when no paid ads exist
+  let fallbackData: FallbackData | undefined;
+  if (ads.length === 0) {
+    fallbackData = await getFallback(supabase, neighborhoodId);
+  }
+
   const neighborhoodUrl = `/${city}/${neighborhood}`;
 
   return (
@@ -117,7 +125,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           {topAd ? (
             <StoryOpenAd ad={topAd} position="top" />
           ) : (
-            <FallbackAd variant="story_open" position="top" />
+            <FallbackAd variant="story_open" position="top" fallback={fallbackData} />
           )}
         </div>
 
@@ -228,7 +236,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           {bottomAd ? (
             <StoryOpenAd ad={bottomAd} position="bottom" />
           ) : (
-            <FallbackAd variant="story_open" position="bottom" />
+            <FallbackAd variant="story_open" position="bottom" fallback={fallbackData} />
           )}
         </div>
 
