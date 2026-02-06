@@ -10,6 +10,7 @@ import {
 import { DailyBriefContent } from '../types';
 import { Header } from './components/Header';
 import { WeatherWidget } from './components/WeatherWidget';
+import { WeatherStoryCard } from './components/WeatherStoryCard';
 import { HeroStory } from './components/HeroStory';
 import { StoryList } from './components/StoryList';
 import { NativeAd } from './components/NativeAd';
@@ -42,13 +43,15 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
                 <span style={citySubtitle}> &middot; {primary.cityName}</span>
               </Text>
 
-              {/* Weather bar */}
-              {primary.weather && (
+              {/* Weather: story card replaces widget when available */}
+              {primary.weatherStory ? (
+                <WeatherStoryCard story={primary.weatherStory} />
+              ) : primary.weather ? (
                 <WeatherWidget
                   weather={primary.weather}
                   neighborhoodName={primary.neighborhoodName}
                 />
-              )}
+              ) : null}
 
               {/* Hero story (first story with full image) */}
               {primary.stories.length > 0 && (

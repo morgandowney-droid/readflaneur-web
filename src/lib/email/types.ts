@@ -27,6 +27,7 @@ export interface PrimaryNeighborhoodSection {
   neighborhoodName: string;
   cityName: string;
   weather: WeatherData | null;
+  weatherStory: WeatherStory | null;
   stories: EmailStory[];
 }
 
@@ -52,6 +53,16 @@ export interface WeatherData {
   description: string;
   weatherCode: number;
   asOfTime: string; // e.g., "7:00 AM"
+}
+
+export interface WeatherStory {
+  priority: 1 | 2 | 3 | 4;
+  headline: string;
+  body: string;
+  icon: string; // 'snow' | 'rain' | 'sun' | 'thermometer-up' | 'thermometer-down'
+  temperatureC: number;
+  temperatureF: number;
+  forecastDay: string; // "Tomorrow (Sat)" or "Sunday"
 }
 
 export interface EmailAd {

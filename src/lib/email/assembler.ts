@@ -14,6 +14,7 @@ import {
   EmailStory,
 } from './types';
 import { fetchWeather } from './weather';
+import { generateWeatherStory } from './weather-story';
 import { getEmailAds } from './ads';
 
 const PRIMARY_STORY_COUNT = 5;
@@ -283,13 +284,24 @@ export async function assembleDailyBrief(
     const queryIds = await getNeighborhoodIdsForQuery(supabase, primaryNeighborhood.id);
     const stories = await fetchStories(supabase, queryIds, PRIMARY_STORY_COUNT, pausedTopics);
 
-    // Fetch weather
+    // Fetch weather (current conditions for widget fallback)
     let weather = null;
     if (primaryNeighborhood.latitude && primaryNeighborhood.longitude) {
       weather = await fetchWeather(
         primaryNeighborhood.latitude,
         primaryNeighborhood.longitude,
         recipient.timezone
+      );
+    }
+
+    // Generate editorial weather story (replaces widget when triggered)
+    let weatherStory = null;
+    if (primaryNeighborhood.latitude && primaryNeighborhood.longitude) {
+      weatherStory = await generateWeatherStory(
+        primaryNeighborhood.latitude,
+        primaryNeighborhood.longitude,
+        recipient.timezone,
+        primaryNeighborhood.city
       );
     }
 
@@ -313,6 +325,7 @@ export async function assembleDailyBrief(
       neighborhoodName: primaryNeighborhood.name,
       cityName: primaryNeighborhood.city,
       weather,
+      weatherStory,
       stories: emailStories,
     };
   }
