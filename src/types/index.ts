@@ -74,6 +74,9 @@ export interface Profile {
   full_name?: string;
   role: 'reader' | 'journalist' | 'advertiser' | 'admin';
   avatar_url?: string;
+  primary_city?: string;
+  primary_timezone?: string;
+  location_prompt_dismissed_at?: string;
   created_at: string;
   updated_at: string;
 }

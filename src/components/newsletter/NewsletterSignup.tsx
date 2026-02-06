@@ -40,10 +40,18 @@ export function NewsletterSignup({
     setErrorMessage('');
 
     try {
+      // Get browser timezone for newsletter send time optimization
+      let timezone: string | undefined;
+      try {
+        timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      } catch {
+        // Timezone detection not supported
+      }
+
       const response = await fetch('/api/newsletter/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, timezone }),
       });
 
       const data = await response.json();

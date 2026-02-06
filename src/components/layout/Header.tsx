@@ -322,6 +322,15 @@ export function Header() {
               >
                 Dashboard
               </Link>
+              <Link
+                href="/settings"
+                className={cn(
+                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center border-b-2',
+                  pathname === '/settings' ? 'text-black font-medium border-black' : 'text-neutral-500 border-transparent'
+                )}
+              >
+                Settings
+              </Link>
               <button
                 onClick={handleSignOut}
                 className="text-[11px] tracking-[0.2em] uppercase text-neutral-500 hover:text-black transition-colors min-h-[44px]"
@@ -330,15 +339,26 @@ export function Header() {
               </button>
             </div>
           ) : (
-            <Link
-              href="/login"
-              className={cn(
-                'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
-                pathname === '/login' ? 'text-black font-medium' : 'text-neutral-500'
-              )}
-            >
-              Login
-            </Link>
+            <>
+              <Link
+                href="/settings"
+                className={cn(
+                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center border-b-2',
+                  pathname === '/settings' ? 'text-black font-medium border-black' : 'text-neutral-500 border-transparent'
+                )}
+              >
+                Settings
+              </Link>
+              <Link
+                href="/login"
+                className={cn(
+                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
+                  pathname === '/login' ? 'text-black font-medium' : 'text-neutral-500'
+                )}
+              >
+                Login
+              </Link>
+            </>
           )}
         </nav>
 
@@ -475,6 +495,16 @@ export function Header() {
                 >
                   Dashboard
                 </Link>
+                <Link
+                  href="/settings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 border-b border-neutral-100 block text-right',
+                    pathname === '/settings' ? 'text-black font-medium' : 'text-neutral-600'
+                  )}
+                >
+                  Settings
+                </Link>
                 <button
                   onClick={() => {
                     handleSignOut();
@@ -486,16 +516,28 @@ export function Header() {
                 </button>
               </>
             ) : (
-              <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className={cn(
-                  'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 block text-right',
-                  pathname === '/login' ? 'text-black font-medium' : 'text-neutral-600'
-                )}
-              >
-                Login
-              </Link>
+              <>
+                <Link
+                  href="/settings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 border-b border-neutral-100 block text-right',
+                    pathname === '/settings' ? 'text-black font-medium' : 'text-neutral-600'
+                  )}
+                >
+                  Settings
+                </Link>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 block text-right',
+                    pathname === '/login' ? 'text-black font-medium' : 'text-neutral-600'
+                  )}
+                >
+                  Login
+                </Link>
+              </>
             )}
           </nav>
         </div>

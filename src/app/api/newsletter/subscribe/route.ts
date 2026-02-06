@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, neighborhoodIds = [] } = await request.json();
+    const { email, neighborhoodIds = [], timezone } = await request.json();
 
     if (!email || !email.includes('@')) {
       return NextResponse.json({ error: 'Valid email required' }, { status: 400 });
@@ -46,9 +46,16 @@ export async function POST(request: NextRequest) {
 
     // If already verified, just update preferences
     if (existingSubscriber?.email_verified) {
+      const updateData: { neighborhood_ids: string[]; timezone?: string } = {
+        neighborhood_ids: neighborhoodIds
+      };
+      // Also update timezone if provided
+      if (timezone) {
+        updateData.timezone = timezone;
+      }
       await supabaseAdmin
         .from('newsletter_subscribers')
-        .update({ neighborhood_ids: neighborhoodIds })
+        .update(updateData)
         .eq('id', existingSubscriber.id);
 
       return NextResponse.json({
