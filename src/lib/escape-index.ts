@@ -1014,7 +1014,7 @@ Task: Write a blurb for the Escape Index.
 Format your response as JSON:
 {
   "headline": "${headlineHint}",
-  "body": "[30-35 word blurb that creates FOMO and urgency. Mention specific conditions (inches of snow, swell height, temperature). End with an action like 'Book now' or 'Wheels up'.]",
+  "body": "[30-35 word blurb that creates FOMO and urgency. Mention specific conditions (inches of snow, swell height, temperature). End with a short action phrase appropriate to the destination — e.g. 'Pack the car.' for driving-distance spots, 'Book the flight.' for far destinations.]",
   "previewText": "[12-15 word teaser for feed cards]",
   "link_candidates": [
     {"text": "exact text from body"}

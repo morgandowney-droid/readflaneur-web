@@ -34,6 +34,8 @@ export type CronImageCategory =
   | 'gala-watch'
   | 'retail-watch'
   | 'escape-index'
+  | 'escape-surf'
+  | 'escape-sun'
   | 'nuisance-watch'
   | 'art-fair'
   | 'auction'
@@ -121,6 +123,18 @@ export const CRON_IMAGE_CATEGORIES: Record<CronImageCategory, CategoryConfig> = 
     prompt:
       'Panoramic mountain view at sunrise, fresh powder snow, clear blue sky, pine trees. Pristine alpine landscape, editorial travel photography style. No text, buildings, or people.',
     fallbackColor: '#0c4a6e',
+    label: 'POWDER ALERT',
+  },
+  'escape-surf': {
+    prompt:
+      'Warm tropical beach at golden hour with perfect turquoise ocean waves breaking on shore. Surfboards leaning against palm trees, sandy beach, bright sunshine, clear blue sky. Editorial surf and travel photography style. No text, logos, or people.',
+    fallbackColor: '#0369a1',
+    label: 'SWELL WATCH',
+  },
+  'escape-sun': {
+    prompt:
+      'Luxury poolside scene at a tropical resort, turquoise infinity pool overlooking the ocean, palm trees, bright warm sunshine, clear sky. Editorial travel photography style. No text, logos, or people.',
+    fallbackColor: '#ca8a04',
     label: 'ESCAPE INDEX',
   },
   'nuisance-watch': {
