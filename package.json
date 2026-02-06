@@ -17,6 +17,7 @@
     "@google/genai": "^1.39.0",
     "@google/generative-ai": "^0.24.1",
     "@react-email/components": "^1.0.7",
+    "@sentry/nextjs": "^10.38.0",
     "@stripe/stripe-js": "^8.6.4",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.91.1",
