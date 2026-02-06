@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Ad } from '@/types';
 
+type FilterType = 'pending_review' | 'needs_design' | 'active' | 'all';
+
 interface AdWithAdvertiser extends Ad {
   advertiser?: {
     email: string;
@@ -22,7 +24,9 @@ export default function AdminAdsPage() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'pending_review' | 'all'>('pending_review');
+  const [filter, setFilter] = useState<FilterType>('pending_review');
+  const [editedHeadlines, setEditedHeadlines] = useState<Record<string, string>>({});
+  const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadAds();
@@ -43,7 +47,18 @@ export default function AdminAdsPage() {
         return;
       }
 
-      setAds(data.ads || []);
+      const loaded: AdWithAdvertiser[] = data.ads || [];
+      setAds(loaded);
+
+      // Pre-populate editable fields
+      const headlines: Record<string, string> = {};
+      const notes: Record<string, string> = {};
+      loaded.forEach((ad) => {
+        headlines[ad.id] = ad.headline || '';
+        notes[ad.id] = ad.admin_notes || '';
+      });
+      setEditedHeadlines(headlines);
+      setAdminNotes(notes);
       setLoading(false);
     } catch (err) {
       console.error('Error loading ads:', err);
@@ -58,11 +73,21 @@ export default function AdminAdsPage() {
       const response = await fetch('/api/admin/ads/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adId, action: 'approve' }),
+        body: JSON.stringify({
+          adId,
+          action: 'approve',
+          headline: editedHeadlines[adId] || undefined,
+          adminNotes: adminNotes[adId] || undefined,
+        }),
       });
 
       if (response.ok) {
-        setAds(ads.filter(a => a.id !== adId));
+        // Remove from pending list, or reload if viewing all/active
+        if (filter === 'pending_review' || filter === 'needs_design') {
+          setAds(ads.filter(a => a.id !== adId));
+        } else {
+          loadAds();
+        }
       }
     } catch (error) {
       console.error('Approve error:', error);
@@ -86,6 +111,7 @@ export default function AdminAdsPage() {
           adId,
           action: 'reject',
           reason: rejectionReason,
+          adminNotes: adminNotes[adId] || undefined,
         }),
       });
 
@@ -113,6 +139,13 @@ export default function AdminAdsPage() {
 
   const pendingCount = ads.filter(a => a.status === 'pending_review').length;
 
+  const filters: { key: FilterType; label: string }[] = [
+    { key: 'pending_review', label: 'Pending' },
+    { key: 'needs_design', label: 'Needs Design' },
+    { key: 'active', label: 'Active' },
+    { key: 'all', label: 'All' },
+  ];
+
   return (
     <div className="py-12 px-4">
       <div className="mx-auto max-w-6xl">
@@ -120,16 +153,18 @@ export default function AdminAdsPage() {
           <div>
             <h1 className="text-2xl font-light">Ad Review</h1>
             <p className="text-neutral-500 mt-1">
-              {pendingCount} ad{pendingCount !== 1 ? 's' : ''} pending review
+              {filter === 'pending_review'
+                ? `${pendingCount} ad${pendingCount !== 1 ? 's' : ''} pending review`
+                : `${ads.length} ad${ads.length !== 1 ? 's' : ''}`}
             </p>
           </div>
 
           <div className="flex items-center gap-6">
             <Link
-              href="/admin/tips"
+              href="/admin"
               className="text-sm text-neutral-500 hover:text-black"
             >
-              Tips
+              Dashboard
             </Link>
             <Link
               href="/admin/articles"
@@ -137,45 +172,20 @@ export default function AdminAdsPage() {
             >
               Articles
             </Link>
-            <Link
-              href="/admin/journalists"
-              className="text-sm text-neutral-500 hover:text-black"
-            >
-              Journalists
-            </Link>
-            <Link
-              href="/admin/newsletter"
-              className="text-sm text-neutral-500 hover:text-black"
-            >
-              Newsletter
-            </Link>
-            <Link
-              href="/admin/analytics"
-              className="text-sm text-neutral-500 hover:text-black"
-            >
-              Analytics
-            </Link>
-            <div className="flex gap-2">
-            <button
-              onClick={() => setFilter('pending_review')}
-              className={`px-4 py-2 text-sm tracking-widest uppercase ${
-                filter === 'pending_review'
-                  ? 'bg-black text-white'
-                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-              }`}
-            >
-              Pending
-            </button>
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 text-sm tracking-widest uppercase ${
-                filter === 'all'
-                  ? 'bg-black text-white'
-                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-              }`}
-            >
-              All
-            </button>
+            <div className="flex gap-1">
+              {filters.map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={`px-3 py-2 text-xs tracking-widest uppercase ${
+                    filter === f.key
+                      ? 'bg-black text-white'
+                      : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -201,7 +211,11 @@ export default function AdminAdsPage() {
             <p className="text-neutral-600">
               {filter === 'pending_review'
                 ? 'No ads pending review.'
-                : 'No ads found.'}
+                : filter === 'needs_design'
+                  ? 'No ads needing design service.'
+                  : filter === 'active'
+                    ? 'No active ads.'
+                    : 'No ads found.'}
             </p>
           </div>
         ) : (
@@ -209,8 +223,44 @@ export default function AdminAdsPage() {
             {ads.map((ad) => (
               <div
                 key={ad.id}
-                className="bg-white border border-neutral-200 p-6"
+                className={`bg-white border p-6 ${
+                  ad.needs_design_service
+                    ? 'border-amber-300'
+                    : 'border-neutral-200'
+                }`}
               >
+                {/* Badges row */}
+                <div className="flex items-center gap-2 mb-4">
+                  {ad.passionfroot_order_id && (
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-purple-100 text-purple-800">
+                      Passionfroot
+                    </span>
+                  )}
+                  {!ad.passionfroot_order_id && (
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-neutral-100 text-neutral-600">
+                      Direct
+                    </span>
+                  )}
+                  {ad.needs_design_service && (
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-amber-100 text-amber-800 font-medium">
+                      Needs Design
+                    </span>
+                  )}
+                  <span
+                    className={`inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase ${
+                      ad.status === 'pending_review'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : ad.status === 'active'
+                          ? 'bg-green-100 text-green-800'
+                          : ad.status === 'rejected'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-neutral-100 text-neutral-600'
+                    }`}
+                  >
+                    {ad.status.replace('_', ' ')}
+                  </span>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Ad Preview */}
                   <div>
@@ -223,26 +273,44 @@ export default function AdminAdsPage() {
                           SPONSORED
                         </span>
                       </div>
-                      <img
-                        src={ad.image_url}
-                        alt={ad.headline}
-                        className="w-full aspect-video object-cover"
-                      />
+                      {ad.image_url ? (
+                        <img
+                          src={ad.image_url}
+                          alt={ad.headline}
+                          className="w-full aspect-video object-cover"
+                        />
+                      ) : (
+                        <div className="w-full aspect-video bg-neutral-100 flex items-center justify-center text-neutral-400 text-sm">
+                          No image yet
+                        </div>
+                      )}
                       <div className="p-3">
-                        <h3 className="font-semibold text-sm">{ad.headline}</h3>
+                        <h3 className="font-semibold text-sm">
+                          {editedHeadlines[ad.id] || ad.headline || '(no headline)'}
+                        </h3>
                       </div>
                     </div>
                   </div>
 
-                  {/* Ad Details */}
+                  {/* Ad Details + Inline Editing */}
                   <div>
                     <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
                       Details
                     </p>
                     <div className="space-y-3 text-sm">
+                      {/* Client info (Passionfroot) */}
+                      {ad.client_name && (
+                        <div>
+                          <span className="text-neutral-400">Client:</span>{' '}
+                          {ad.client_name}
+                          {ad.client_email && (
+                            <span className="text-neutral-400"> ({ad.client_email})</span>
+                          )}
+                        </div>
+                      )}
                       <div>
                         <span className="text-neutral-400">Advertiser:</span>{' '}
-                        {ad.advertiser?.email || 'Unknown'}
+                        {ad.advertiser?.email || ad.client_email || 'Unknown'}
                       </div>
                       <div>
                         <span className="text-neutral-400">Targeting:</span>{' '}
@@ -254,14 +322,18 @@ export default function AdminAdsPage() {
                       </div>
                       <div>
                         <span className="text-neutral-400">Click URL:</span>{' '}
-                        <a
-                          href={ad.click_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline break-all"
-                        >
-                          {ad.click_url}
-                        </a>
+                        {ad.click_url ? (
+                          <a
+                            href={ad.click_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline break-all"
+                          >
+                            {ad.click_url}
+                          </a>
+                        ) : (
+                          <span className="text-neutral-300 italic">Not provided</span>
+                        )}
                       </div>
                       <div>
                         <span className="text-neutral-400">Submitted:</span>{' '}
@@ -271,23 +343,6 @@ export default function AdminAdsPage() {
                         <span className="text-neutral-400">Placement:</span>{' '}
                         {ad.placement === 'story_open' ? 'Story Open' : 'Feed'}
                       </div>
-                      <div>
-                        <span
-                          className={`inline-block px-2 py-1 text-xs tracking-widest uppercase ${
-                            ad.status === 'pending_review'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : ad.status === 'approved'
-                                ? 'bg-blue-100 text-blue-800'
-                                : ad.status === 'active'
-                                  ? 'bg-green-100 text-green-800'
-                                  : ad.status === 'rejected'
-                                    ? 'bg-red-100 text-red-800'
-                                    : 'bg-neutral-100 text-neutral-600'
-                          }`}
-                        >
-                          {ad.status.replace('_', ' ')}
-                        </span>
-                      </div>
                       {(ad.status === 'active' || ad.status === 'paused') && (
                         <div className="pt-2 mt-2 border-t border-neutral-200">
                           <p className="text-neutral-400 mb-1">Performance:</p>
@@ -296,6 +351,55 @@ export default function AdminAdsPage() {
                           {ad.impressions > 0 && (
                             <p><span className="font-medium">{((ad.clicks / ad.impressions) * 100).toFixed(2)}%</span> CTR</p>
                           )}
+                        </div>
+                      )}
+
+                      {/* Inline headline edit (for pending ads) */}
+                      {ad.status === 'pending_review' && (
+                        <div className="pt-3 mt-3 border-t border-neutral-200">
+                          <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-1">
+                            Headline (editable)
+                          </label>
+                          <textarea
+                            value={editedHeadlines[ad.id] ?? ''}
+                            onChange={(e) =>
+                              setEditedHeadlines({
+                                ...editedHeadlines,
+                                [ad.id]: e.target.value,
+                              })
+                            }
+                            placeholder="Enter or edit the ad headline..."
+                            className="w-full px-3 py-2 border border-neutral-200 focus:border-black focus:outline-none text-sm"
+                            rows={2}
+                          />
+                        </div>
+                      )}
+
+                      {/* Admin notes */}
+                      {ad.status === 'pending_review' && (
+                        <div>
+                          <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-1">
+                            Admin Notes (internal)
+                          </label>
+                          <textarea
+                            value={adminNotes[ad.id] ?? ''}
+                            onChange={(e) =>
+                              setAdminNotes({
+                                ...adminNotes,
+                                [ad.id]: e.target.value,
+                              })
+                            }
+                            placeholder="Internal notes (not shown to advertiser)..."
+                            className="w-full px-3 py-2 border border-neutral-200 focus:border-black focus:outline-none text-sm"
+                            rows={2}
+                          />
+                        </div>
+                      )}
+                      {/* Show read-only notes for non-pending ads */}
+                      {ad.status !== 'pending_review' && ad.admin_notes && (
+                        <div className="pt-2 mt-2 border-t border-neutral-200">
+                          <p className="text-xs tracking-widest uppercase text-neutral-400 mb-1">Admin Notes</p>
+                          <p className="text-sm text-neutral-600 whitespace-pre-wrap">{ad.admin_notes}</p>
                         </div>
                       )}
                     </div>
@@ -313,7 +417,7 @@ export default function AdminAdsPage() {
                           disabled={processingId === ad.id}
                           className="w-full bg-green-600 text-white py-2 text-sm tracking-widest uppercase hover:bg-green-700 transition-colors disabled:opacity-50"
                         >
-                          {processingId === ad.id ? 'Processing...' : 'Approve'}
+                          {processingId === ad.id ? 'Processing...' : 'Approve & Go Live'}
                         </button>
                         <button
                           onClick={() => setShowRejectModal(ad.id)}
@@ -322,23 +426,30 @@ export default function AdminAdsPage() {
                         >
                           Reject
                         </button>
-                        <a
-                          href={ad.click_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block w-full border border-neutral-200 py-2 text-sm tracking-widest uppercase text-center hover:border-black transition-colors"
-                        >
-                          Visit Link
-                        </a>
+                        {ad.click_url && (
+                          <a
+                            href={ad.click_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full border border-neutral-200 py-2 text-sm tracking-widest uppercase text-center hover:border-black transition-colors"
+                          >
+                            Visit Link
+                          </a>
+                        )}
                       </div>
                     ) : (
-                      <p className="text-sm text-neutral-500">
+                      <div className="text-sm text-neutral-500">
                         {ad.status === 'rejected' && ad.rejection_reason && (
-                          <span className="block mt-2 text-red-600">
+                          <span className="block text-red-600">
                             Rejected: {ad.rejection_reason}
                           </span>
                         )}
-                      </p>
+                        {ad.status === 'active' && (
+                          <span className="block text-green-700">
+                            Live
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

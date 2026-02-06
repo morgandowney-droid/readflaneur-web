@@ -63,6 +63,12 @@ export interface Ad {
   impressions: number;
   clicks: number;
   created_at: string;
+  // Design concierge & Passionfroot integration
+  needs_design_service?: boolean;
+  admin_notes?: string;
+  passionfroot_order_id?: string;
+  client_name?: string;
+  client_email?: string;
   // Joined data for section targeting
   ad_sections?: AdSection[];
   section_ids?: string[];

@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { adId, action, reason } = body;
+    const { adId, action, reason, headline, adminNotes } = body;
 
     if (!adId || !action) {
       return NextResponse.json(
@@ -71,13 +71,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update ad status
-    const updateData: Record<string, string> = {
-      status: action === 'approve' ? 'approved' : 'rejected',
+    // Update ad status — approve goes directly to 'active' (one-click go-live)
+    const updateData: Record<string, string | undefined> = {
+      status: action === 'approve' ? 'active' : 'rejected',
     };
 
     if (action === 'reject') {
       updateData.rejection_reason = reason;
+    }
+
+    // Admin can fix headline typos before approving
+    if (headline && typeof headline === 'string' && headline.trim()) {
+      updateData.headline = headline.trim();
+    }
+
+    // Save internal admin notes
+    if (adminNotes !== undefined) {
+      updateData.admin_notes = adminNotes || undefined;
     }
 
     const { error: updateError } = await supabase
@@ -93,17 +103,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send notification to advertiser
-    const advertiserEmail = ad.advertiser?.email;
+    // Send notification to advertiser (or Passionfroot client)
+    const advertiserEmail = ad.advertiser?.email || ad.client_email;
+    const finalHeadline = (headline && headline.trim()) || ad.headline;
     if (advertiserEmail) {
       if (action === 'approve') {
         await notifyAdvertiserApproved({
-          headline: ad.headline,
+          headline: finalHeadline,
           advertiser_email: advertiserEmail,
         });
       } else {
         await notifyAdvertiserRejected({
-          headline: ad.headline,
+          headline: finalHeadline,
           advertiser_email: advertiserEmail,
           rejection_reason: reason,
         });
