@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 interface FallbackAdProps {
   variant?: 'card' | 'story_open';
@@ -25,14 +26,18 @@ function NewsletterSignup({ variant }: { variant: 'card' | 'story_open' }) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const searchParams = useSearchParams();
 
-  // Check if already subscribed on mount
+  // Check if already subscribed on mount or arrived from email
   useState(() => {
     if (typeof window !== 'undefined') {
       const subscribed = localStorage.getItem(SUBSCRIBED_KEY);
       if (subscribed === 'true') {
         setIsSubscribed(true);
       }
+    }
+    if (searchParams.get('ref') === 'email') {
+      setIsSubscribed(true);
     }
   });
 

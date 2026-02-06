@@ -123,7 +123,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
                   </>
                 )}
               </div>
-              <h2 className="text-white text-lg font-semibold leading-tight whitespace-nowrap overflow-hidden">
+              <h2 className="text-white text-lg font-semibold leading-tight line-clamp-3">
                 {article.headline}
               </h2>
             </div>
@@ -182,7 +182,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
                 </>
               )}
             </div>
-            <h2 className="text-lg font-semibold mb-3 whitespace-nowrap overflow-hidden">{article.headline}</h2>
+            <h2 className="text-lg font-semibold mb-3 line-clamp-3">{article.headline}</h2>
             <p className="text-neutral-600 text-sm leading-relaxed mb-4">
               {article.preview_text || article.body_text.substring(0, 200)}
             </p>

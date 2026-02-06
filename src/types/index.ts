@@ -77,6 +77,8 @@ export interface Profile {
   primary_city?: string;
   primary_timezone?: string;
   location_prompt_dismissed_at?: string;
+  email_unsubscribe_token?: string;
+  daily_email_enabled?: boolean;
   created_at: string;
   updated_at: string;
 }

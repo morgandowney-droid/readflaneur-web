@@ -1,0 +1,82 @@
+import { Section, Text, Link, Hr } from '@react-email/components';
+import { SatelliteNeighborhoodSection as SatelliteSectionData } from '../../types';
+
+interface SatelliteSectionProps {
+  section: SatelliteSectionData;
+}
+
+export function SatelliteSection({ section }: SatelliteSectionProps) {
+  return (
+    <Section style={container}>
+      <Hr style={divider} />
+      <Text style={sectionTitle}>
+        {section.neighborhoodName}
+        <span style={cityLabel}> &middot; {section.cityName}</span>
+      </Text>
+      {section.stories.map((story, i) => (
+        <Section key={i} style={storyRow}>
+          <Link href={story.articleUrl} style={headlineLink}>
+            <Text style={headline}>
+              {story.categoryLabel && (
+                <span style={category}>{story.categoryLabel} </span>
+              )}
+              {story.headline}
+            </Text>
+          </Link>
+        </Section>
+      ))}
+    </Section>
+  );
+}
+
+const container = {
+  marginBottom: '8px',
+};
+
+const divider = {
+  borderTop: '1px solid #eeeeee',
+  margin: '0 0 16px',
+};
+
+const sectionTitle = {
+  fontSize: '14px',
+  fontWeight: '700' as const,
+  letterSpacing: '0.05em',
+  textTransform: 'uppercase' as const,
+  color: '#000000',
+  margin: '0 0 10px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const cityLabel = {
+  fontWeight: '400' as const,
+  color: '#999999',
+  textTransform: 'none' as const,
+  letterSpacing: '0',
+  fontSize: '12px',
+};
+
+const storyRow = {
+  marginBottom: '8px',
+};
+
+const headlineLink = {
+  textDecoration: 'none',
+};
+
+const headline = {
+  fontSize: '14px',
+  fontWeight: '500' as const,
+  color: '#333333',
+  margin: '0 0 2px',
+  lineHeight: '1.4',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const category = {
+  fontSize: '10px',
+  fontWeight: '600' as const,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase' as const,
+  color: '#999999',
+};

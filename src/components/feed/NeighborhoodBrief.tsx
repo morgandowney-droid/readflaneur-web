@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, ReactNode } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 const SUBSCRIBED_KEY = 'flaneur-newsletter-subscribed';
 
@@ -691,14 +692,18 @@ export function NeighborhoodBrief({
   const [email, setEmail] = useState('');
   const [subscribeStatus, setSubscribeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const searchParams = useSearchParams();
 
-  // Check if already subscribed on mount
+  // Check if already subscribed on mount or arriving from email
   useEffect(() => {
     const subscribed = localStorage.getItem(SUBSCRIBED_KEY);
     if (subscribed === 'true') {
       setIsSubscribed(true);
     }
-  }, []);
+    if (searchParams.get('ref') === 'email') {
+      setIsSubscribed(true);
+    }
+  }, [searchParams]);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();

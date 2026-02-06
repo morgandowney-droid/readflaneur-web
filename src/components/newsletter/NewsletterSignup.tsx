@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 interface NewsletterSignupProps {
   variant?: 'hero' | 'inline' | 'inline-minimal' | 'sidebar' | 'footer';
@@ -17,14 +18,19 @@ export function NewsletterSignup({
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const searchParams = useSearchParams();
 
-  // Check if user has already subscribed
+  // Check if user has already subscribed or came from email
   useEffect(() => {
     const subscribed = localStorage.getItem(SUBSCRIBED_KEY);
     if (subscribed === 'true') {
       setIsSubscribed(true);
     }
-  }, []);
+    // Hide for visitors arriving from daily brief email
+    if (searchParams.get('ref') === 'email') {
+      setIsSubscribed(true);
+    }
+  }, [searchParams]);
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -16,6 +16,7 @@
     "@anthropic-ai/sdk": "^0.72.1",
     "@google/genai": "^1.39.0",
     "@google/generative-ai": "^0.24.1",
+    "@react-email/components": "^1.0.7",
     "@stripe/stripe-js": "^8.6.4",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.91.1",
@@ -29,6 +30,7 @@
     "pdf-parse": "^2.4.5",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "resend": "^6.9.1",
     "rss-parser": "^3.13.0",
     "stripe": "^20.2.0",
     "tailwind-merge": "^3.4.0"

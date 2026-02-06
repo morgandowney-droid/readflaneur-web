@@ -4,9 +4,10 @@ interface SendEmailParams {
   to: string;
   subject: string;
   html: string;
+  from?: string;
 }
 
-export async function sendEmail({ to, subject, html }: SendEmailParams): Promise<boolean> {
+export async function sendEmail({ to, subject, html, from }: SendEmailParams): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
@@ -22,7 +23,7 @@ export async function sendEmail({ to, subject, html }: SendEmailParams): Promise
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || 'Flâneur <noreply@readflaneur.com>',
+        from: from || process.env.EMAIL_FROM || 'Flâneur <noreply@readflaneur.com>',
         to,
         subject,
         html,
