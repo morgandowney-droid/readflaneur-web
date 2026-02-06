@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import {
   detectImageIssues,
   detectFailedJobs,
+  detectMissingBriefs,
   createIssues,
   getRetryableIssues,
   attemptFix,
@@ -80,7 +81,11 @@ export async function GET(request: Request) {
     const jobIssues = await detectFailedJobs(supabase);
     console.log(`[Monitor] Found ${jobIssues.length} failed job issues`);
 
-    const allNewIssues = [...imageIssues, ...jobIssues];
+    console.log('[Monitor] Detecting missing briefs...');
+    const briefIssues = await detectMissingBriefs(supabase);
+    console.log(`[Monitor] Found ${briefIssues.length} missing brief issues`);
+
+    const allNewIssues = [...imageIssues, ...jobIssues, ...briefIssues];
     result.details.new_issues = allNewIssues;
 
     // Step 2: Create new issues in database
@@ -93,50 +98,75 @@ export async function GET(request: Request) {
     console.log(`[Monitor] Found ${retryableIssues.length} retryable issues`);
 
     // Step 4: Attempt fixes (with rate limiting)
-    let fixCount = 0;
-    for (const issue of retryableIssues) {
-      // Check rate limit
-      if (fixCount >= FIX_CONFIG.MAX_IMAGES_PER_RUN) {
-        result.issues_skipped++;
-        console.log(`[Monitor] Rate limit reached, skipping remaining issues`);
-        break;
-      }
+    let imageFixCount = 0;
+    let briefFixCount = 0;
 
+    for (const issue of retryableIssues) {
       // Check if can retry
       if (!canRetry(issue)) {
         result.issues_skipped++;
         continue;
       }
 
-      // Only fix image issues automatically
-      if (issue.issue_type !== 'missing_image' && issue.issue_type !== 'placeholder_image') {
-        result.issues_skipped++;
-        continue;
-      }
+      // Handle image issues
+      if (issue.issue_type === 'missing_image' || issue.issue_type === 'placeholder_image') {
+        if (imageFixCount >= FIX_CONFIG.MAX_IMAGES_PER_RUN) {
+          result.issues_skipped++;
+          console.log(`[Monitor] Image rate limit reached`);
+          continue;
+        }
 
-      console.log(`[Monitor] Attempting fix for issue ${issue.id} (${issue.issue_type})`);
+        console.log(`[Monitor] Attempting image fix for issue ${issue.id}`);
+        const fixResult = await attemptFix(supabase, issue, baseUrl, cronSecret!);
 
-      const fixResult = await attemptFix(supabase, issue, baseUrl, cronSecret!);
+        result.details.fix_attempts.push({
+          issue_id: issue.id,
+          issue_type: issue.issue_type,
+          result: fixResult,
+        });
 
-      result.details.fix_attempts.push({
-        issue_id: issue.id,
-        issue_type: issue.issue_type,
-        result: fixResult,
-      });
+        if (fixResult.success) {
+          result.issues_fixed++;
+          console.log(`[Monitor] Fixed: ${fixResult.message}`);
+        } else {
+          result.issues_failed++;
+          console.log(`[Monitor] Failed: ${fixResult.message}`);
+        }
 
-      if (fixResult.success) {
-        result.issues_fixed++;
-        console.log(`[Monitor] Fixed issue ${issue.id}: ${fixResult.message}`);
-      } else {
-        result.issues_failed++;
-        console.log(`[Monitor] Failed to fix issue ${issue.id}: ${fixResult.message}`);
-      }
-
-      fixCount++;
-
-      // Rate limit delay between image generations
-      if (fixCount < FIX_CONFIG.MAX_IMAGES_PER_RUN) {
+        imageFixCount++;
         await delay(FIX_CONFIG.IMAGE_GEN_DELAY_MS);
+      }
+      // Handle brief issues
+      else if (issue.issue_type === 'missing_brief') {
+        if (briefFixCount >= FIX_CONFIG.MAX_BRIEFS_PER_RUN) {
+          result.issues_skipped++;
+          console.log(`[Monitor] Brief rate limit reached`);
+          continue;
+        }
+
+        console.log(`[Monitor] Attempting brief fix for issue ${issue.id}`);
+        const fixResult = await attemptFix(supabase, issue, baseUrl, cronSecret!);
+
+        result.details.fix_attempts.push({
+          issue_id: issue.id,
+          issue_type: issue.issue_type,
+          result: fixResult,
+        });
+
+        if (fixResult.success) {
+          result.issues_fixed++;
+          console.log(`[Monitor] Fixed: ${fixResult.message}`);
+        } else {
+          result.issues_failed++;
+          console.log(`[Monitor] Failed: ${fixResult.message}`);
+        }
+
+        briefFixCount++;
+        await delay(FIX_CONFIG.BRIEF_GEN_DELAY_MS);
+      }
+      // Skip non-auto-fixable issues
+      else {
+        result.issues_skipped++;
       }
     }
 

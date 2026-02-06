@@ -93,6 +93,55 @@ export async function fixImageIssue(
 }
 
 /**
+ * Fix a missing brief by triggering generation for the neighborhood
+ */
+export async function fixMissingBrief(
+  neighborhoodId: string,
+  baseUrl: string,
+  cronSecret: string
+): Promise<FixResult> {
+  try {
+    // Call the sync-neighborhood-briefs endpoint with test mode for specific neighborhood
+    const response = await fetch(
+      `${baseUrl}/api/cron/sync-neighborhood-briefs?test=${neighborhoodId}&force=true`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${cronSecret}`,
+        },
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data.error || `HTTP ${response.status}`,
+      };
+    }
+
+    // Check if the brief was successfully generated
+    if (data.briefs_generated > 0) {
+      return {
+        success: true,
+        message: `Brief generated successfully for neighborhood`,
+      };
+    }
+
+    return {
+      success: false,
+      message: data.errors?.[0] || 'No brief generated',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
  * Attempt to fix an issue
  */
 export async function attemptFix(
@@ -120,6 +169,14 @@ export async function attemptFix(
         result = { success: false, message: 'No article ID provided' };
       } else {
         result = await fixImageIssue(issue.article_id, baseUrl, cronSecret);
+      }
+      break;
+
+    case 'missing_brief':
+      if (!issue.neighborhood_id) {
+        result = { success: false, message: 'No neighborhood ID provided' };
+      } else {
+        result = await fixMissingBrief(issue.neighborhood_id, baseUrl, cronSecret);
       }
       break;
 

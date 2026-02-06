@@ -5,6 +5,7 @@
 export type IssueType =
   | 'missing_image'
   | 'placeholder_image'
+  | 'missing_brief'
   | 'job_failure'
   | 'api_rate_limit'
   | 'external_service_down';
@@ -27,6 +28,7 @@ export interface CronIssue {
   id: string;
   issue_type: IssueType;
   article_id: string | null;
+  neighborhood_id: string | null;
   job_name: string | null;
   description: string;
   status: IssueStatus;
@@ -43,6 +45,7 @@ export interface CronIssue {
 export interface DetectedIssue {
   issue_type: IssueType;
   article_id?: string;
+  neighborhood_id?: string;
   job_name?: string;
   description: string;
   auto_fixable: boolean;
@@ -79,8 +82,14 @@ export const FIX_CONFIG = {
   // Rate limit: max image regenerations per monitor run
   MAX_IMAGES_PER_RUN: 5,
 
+  // Rate limit: max brief regenerations per monitor run
+  MAX_BRIEFS_PER_RUN: 10,
+
   // Delay between image generation calls (ms)
   IMAGE_GEN_DELAY_MS: 3000,
+
+  // Delay between brief generation calls (ms)
+  BRIEF_GEN_DELAY_MS: 1000,
 
   // Look back window for detecting issues (hours)
   ISSUE_DETECTION_WINDOW_HOURS: 6,

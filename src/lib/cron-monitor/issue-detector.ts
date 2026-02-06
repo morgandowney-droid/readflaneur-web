@@ -72,6 +72,63 @@ export async function detectImageIssues(
 }
 
 /**
+ * Detect neighborhoods missing today's brief
+ */
+export async function detectMissingBriefs(
+  supabase: SupabaseClient
+): Promise<DetectedIssue[]> {
+  const issues: DetectedIssue[] = [];
+
+  // Get start of today (UTC)
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+
+  // Get all active neighborhoods
+  const { data: activeNeighborhoods, error: neighborhoodError } = await supabase
+    .from('neighborhoods')
+    .select('id, name, city')
+    .eq('is_active', true);
+
+  if (neighborhoodError) {
+    console.error('Error fetching neighborhoods:', neighborhoodError);
+    return issues;
+  }
+
+  // Get neighborhoods that already have today's brief
+  const { data: todaysBriefs, error: briefError } = await supabase
+    .from('neighborhood_briefs')
+    .select('neighborhood_id')
+    .gte('created_at', todayStart.toISOString());
+
+  if (briefError) {
+    console.error('Error fetching today\'s briefs:', briefError);
+    return issues;
+  }
+
+  const coveredIds = new Set((todaysBriefs || []).map(b => b.neighborhood_id));
+  const missingNeighborhoods = (activeNeighborhoods || []).filter(n => !coveredIds.has(n.id));
+
+  // Check current hour - only report missing briefs after 12:00 UTC
+  // This gives morning windows around the world time to complete
+  const currentHour = new Date().getUTCHours();
+  if (currentHour < 12) {
+    console.log(`[BriefDetector] Skipping detection - only ${currentHour}:00 UTC, waiting until 12:00 UTC`);
+    return issues;
+  }
+
+  for (const neighborhood of missingNeighborhoods) {
+    issues.push({
+      issue_type: 'missing_brief',
+      neighborhood_id: neighborhood.id,
+      description: `${neighborhood.name} (${neighborhood.city}) is missing today's brief`,
+      auto_fixable: true,
+    });
+  }
+
+  return issues;
+}
+
+/**
  * Detect failed cron job executions
  */
 export async function detectFailedJobs(
@@ -138,9 +195,14 @@ export async function getExistingOpenIssues(
   if (openIssues) {
     for (const issue of openIssues) {
       // Create unique key for deduplication
-      const key = issue.article_id
-        ? `${issue.issue_type}:${issue.article_id}`
-        : `${issue.issue_type}:${issue.job_name}`;
+      let key: string;
+      if (issue.article_id) {
+        key = `${issue.issue_type}:article:${issue.article_id}`;
+      } else if (issue.neighborhood_id) {
+        key = `${issue.issue_type}:neighborhood:${issue.neighborhood_id}`;
+      } else {
+        key = `${issue.issue_type}:job:${issue.job_name}`;
+      }
       issueMap.set(key, issue as CronIssue);
     }
   }
@@ -188,9 +250,14 @@ export async function createIssues(
   const newIssues: DetectedIssue[] = [];
 
   for (const issue of issues) {
-    const key = issue.article_id
-      ? `${issue.issue_type}:${issue.article_id}`
-      : `${issue.issue_type}:${issue.job_name}`;
+    let key: string;
+    if (issue.article_id) {
+      key = `${issue.issue_type}:article:${issue.article_id}`;
+    } else if (issue.neighborhood_id) {
+      key = `${issue.issue_type}:neighborhood:${issue.neighborhood_id}`;
+    } else {
+      key = `${issue.issue_type}:job:${issue.job_name}`;
+    }
 
     if (!existingIssues.has(key)) {
       newIssues.push(issue);
@@ -205,6 +272,7 @@ export async function createIssues(
       newIssues.map(issue => ({
         issue_type: issue.issue_type,
         article_id: issue.article_id || null,
+        neighborhood_id: issue.neighborhood_id || null,
         job_name: issue.job_name || null,
         description: issue.description,
         auto_fixable: issue.auto_fixable,
