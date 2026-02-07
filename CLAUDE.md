@@ -11,6 +11,20 @@
 
 ### Recent Changes (2026-02-07)
 
+**Test Lab Region (Experimental Geographic Scales):**
+- 4 test neighborhoods exploring non-standard geographic scales for content generation
+- County Limerick (Ireland) — rural county, Ireland (whole island), Stockholm (city-wide), Sweden (country-wide)
+- Purple "Test Lab" group in neighborhood selector with alchemist icon
+- Region type `test` added to `GlobalRegion` union type
+- IDs: `ie-county-limerick`, `ie-ireland`, `se-stockholm`, `se-sweden`
+- Will generate Grok briefs + news articles on normal cron schedules
+- Migration: `supabase/migrations/20260207_test_neighborhoods.sql`
+
+**Neighborhood Brief Window Widened:**
+- Changed morning window from 6-7am to 5-7am local time
+- Catches more timezone groups per hourly cron tick (was missing ~61 neighborhoods)
+- File: `src/app/api/cron/sync-neighborhood-briefs/route.ts`
+
 **RSS Article Gemini Enrichment:**
 - RSS-sourced articles (ai_model = 'claude-sonnet-4') now auto-enriched through Gemini with Google Search grounding
 - Same pipeline as Grok brief enrichment: source verification, hyperlink injection, insider tone rewriting
