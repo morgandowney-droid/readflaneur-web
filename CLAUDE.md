@@ -11,6 +11,24 @@
 
 ### Recent Changes (2026-02-07)
 
+**RSS Article Source Attribution:**
+- Gemini enrichment of RSS articles now extracts sources and saves to `article_sources` table
+- RSS articles display proper source attribution (same as daily brief articles)
+- Sources deduplicated by URL before insertion
+- File: `src/app/api/cron/enrich-briefs/route.ts`
+
+**Urban Context in Gemini Prompts:**
+- Dense urban cities (NYC, London, Paris, Stockholm, etc.) now get explicit instruction not to reference driving/parking
+- Prevents inappropriate car-centric language in neighborhood updates
+- Applies to both daily brief and RSS enrichment prompts
+- File: `src/lib/brief-enricher-gemini.ts`
+
+**Admin News Feed Neighborhood Dropdown Fix:**
+- Dropdown was built from article results only, missing most neighborhoods
+- Now fetches all active neighborhoods from the database via API
+- API returns full `neighborhoods` array; frontend uses it directly
+- Files: `src/app/api/admin/news-feed/route.ts`, `src/app/admin/news-feed/page.tsx`
+
 **Email Monitoring & Self-Healing System:**
 - New `missed_email` issue type in cron monitor with root cause diagnosis engine
 - 6-check diagnostic cascade: disabled_by_user > missing_timezone > no_neighborhoods > cron_not_run > send_failed > rate_limit_overflow
