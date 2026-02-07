@@ -25,14 +25,15 @@ import { LiquorLicense } from '@/lib/nyc-liquor';
  */
 
 /**
- * Check if it's currently between 6-7am in a given timezone
+ * Check if it's currently between 5-7am in a given timezone
+ * Widened from 6-7am to catch more timezone groups per hourly cron tick
  */
 function isMorningWindow(timezone: string): boolean {
   try {
     const now = new Date();
     const localTime = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
     const hour = localTime.getHours();
-    return hour >= 6 && hour < 7;
+    return hour >= 5 && hour < 7;
   } catch (e) {
     console.error(`Invalid timezone: ${timezone}`, e);
     return false;
