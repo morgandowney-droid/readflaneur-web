@@ -108,26 +108,14 @@ export default function NewsFeedAdmin() {
 
       if (res.ok) {
         setData(json);
-        // Build neighborhood list for filter
-        const uniqueNeighborhoods = new Map<string, Neighborhood>();
-        json.articles.forEach((a: Article) => {
-          if (a.neighborhood && !uniqueNeighborhoods.has(a.neighborhood.id)) {
-            uniqueNeighborhoods.set(a.neighborhood.id, {
-              id: a.neighborhood.id,
-              name: a.neighborhood.name,
-              city: a.neighborhood.city,
-            });
-          }
-        });
-        // Add neighborhoods from stats
-        [...json.stats.neighborhoodsWithNoContent, ...json.stats.neighborhoodsOverwhelmed].forEach((n: Neighborhood) => {
-          if (!uniqueNeighborhoods.has(n.id)) {
-            uniqueNeighborhoods.set(n.id, n);
-          }
-        });
-        setNeighborhoods(Array.from(uniqueNeighborhoods.values()).sort((a, b) =>
-          `${a.city} ${a.name}`.localeCompare(`${b.city} ${b.name}`)
-        ));
+        // Use full neighborhood list from API
+        if (json.neighborhoods) {
+          setNeighborhoods(
+            (json.neighborhoods as Neighborhood[]).sort((a, b) =>
+              `${a.city} ${a.name}`.localeCompare(`${b.city} ${b.name}`)
+            )
+          );
+        }
       }
     } catch (error) {
       console.error('Failed to load data:', error);

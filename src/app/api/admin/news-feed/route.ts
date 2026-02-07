@@ -170,6 +170,7 @@ export async function GET(request: NextRequest) {
       },
       articles: articles || [],
       failedContent: failedContent || [],
+      neighborhoods: allNeighborhoods.map(n => ({ id: n.id, name: n.name, city: n.city })),
     });
   } catch (err) {
     console.error('Admin news-feed API error:', err);
