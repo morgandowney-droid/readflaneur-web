@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
     }
     const categories = Object.entries(categoryCounts)
       .map(([label, count]) => ({ label, count }))
-      .sort((a, b) => b.count - a.count);
+      .sort((a, b) => a.label.localeCompare(b.label));
 
     // Build articles query
     let articlesQuery = supabase
@@ -127,7 +127,12 @@ export async function GET(request: NextRequest) {
       .limit(200);
 
     if (category) {
-      articlesQuery = articlesQuery.eq('category_label', category);
+      // Support partial matching for categories like "X Daily Brief"
+      if (category === 'Daily Brief') {
+        articlesQuery = articlesQuery.ilike('category_label', '%Daily Brief%');
+      } else {
+        articlesQuery = articlesQuery.eq('category_label', category);
+      }
     }
     if (neighborhoodId) {
       articlesQuery = articlesQuery.eq('neighborhood_id', neighborhoodId);

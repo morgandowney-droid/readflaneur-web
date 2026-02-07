@@ -257,9 +257,9 @@ export default function NewsFeedAdmin() {
             <span className="text-xs text-neutral-500">Category:</span>
             <select
               value={filter.category}
-              onChange={(e) => setFilter({ ...filter, category: e.target.value, storyType: '' })}
+              onChange={(e) => setFilter({ ...filter, category: e.target.value, storyType: '', source: '' })}
               className="text-sm border border-neutral-200 px-2 py-1 bg-white"
-              disabled={!!filter.storyType}
+              disabled={!!filter.storyType || !!filter.source}
             >
               <option value="">All Categories</option>
               {stats?.categories.map(c => (
@@ -295,7 +295,7 @@ export default function NewsFeedAdmin() {
               disabled={!!filter.source}
             >
               <option value="">All Story Types</option>
-              {GEMINI_STORY_GENERATORS.map(g => (
+              {[...GEMINI_STORY_GENERATORS].sort((a, b) => a.name.localeCompare(b.name)).map(g => (
                 <option key={g.id} value={g.categoryLabel}>
                   {g.name}
                 </option>
@@ -316,6 +316,15 @@ export default function NewsFeedAdmin() {
               <option value="gemini">Gemini AI</option>
             </select>
           </div>
+
+          {(filter.category || filter.storyType || filter.source || filter.neighborhood) && (
+            <button
+              onClick={() => setFilter({ ...filter, category: '', storyType: '', source: '', neighborhood: '' })}
+              className="text-xs text-neutral-500 hover:text-black underline"
+            >
+              Clear filters
+            </button>
+          )}
 
           {loading && (
             <div className="ml-auto">
