@@ -124,6 +124,13 @@ export async function enrichBriefWithGemini(
     ? `\n\nDo NOT include sources from: ${blockedDomains.join(', ')}`
     : '';
 
+  // Dense urban cities where most people walk, bike, or use transit
+  const denseUrbanCities = ['New York', 'London', 'Paris', 'Stockholm', 'Amsterdam', 'Chicago', 'Singapore', 'Tokyo', 'Sydney', 'Dublin', 'San Francisco', 'Washington DC', 'Cape Town'];
+  const isDenseUrban = denseUrbanCities.some(c => city.toLowerCase().includes(c.toLowerCase()));
+  const urbanContextNote = isDenseUrban
+    ? `\n\nURBAN CONTEXT: ${city} is a dense, walkable city. Most residents walk, bike, or use public transit. Do NOT reference driving, parking, or cars unless the story is specifically about traffic policy, road closures, or transit infrastructure. Never assume readers drive.`
+    : '';
+
   const articleType = options?.articleType || 'daily_brief';
 
   // System instruction varies by article type
@@ -179,7 +186,7 @@ This is a weekly community recap - straight news, no fluff.`;
   const prompt = `Here are some tips about what might be happening in ${neighborhoodName}, ${city}. Research each one and write a neighborhood update for our readers.
 
 ${briefContent}
-${blockedNote}
+${blockedNote}${urbanContextNote}
 
 ${languageHint}
 

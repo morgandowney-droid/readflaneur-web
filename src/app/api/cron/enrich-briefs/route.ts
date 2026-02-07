@@ -272,6 +272,57 @@ export async function GET(request: Request) {
         continue;
       }
 
+      // Extract and save sources from enriched categories
+      if (result.categories && result.categories.length > 0) {
+        const sourcesToInsert: Array<{
+          article_id: string;
+          source_name: string;
+          source_type: string;
+          source_url: string;
+        }> = [];
+
+        for (const category of result.categories) {
+          for (const story of category.stories) {
+            if (story.source?.url && story.source?.name) {
+              sourcesToInsert.push({
+                article_id: article.id,
+                source_name: story.source.name,
+                source_type: 'publication',
+                source_url: story.source.url,
+              });
+            }
+            if (story.secondarySource?.url && story.secondarySource?.name) {
+              sourcesToInsert.push({
+                article_id: article.id,
+                source_name: story.secondarySource.name,
+                source_type: 'publication',
+                source_url: story.secondarySource.url,
+              });
+            }
+          }
+        }
+
+        if (sourcesToInsert.length > 0) {
+          // Deduplicate by source URL
+          const seen = new Set<string>();
+          const uniqueSources = sourcesToInsert.filter(s => {
+            if (seen.has(s.source_url)) return false;
+            seen.add(s.source_url);
+            return true;
+          });
+
+          const { error: sourcesError } = await supabase
+            .from('article_sources')
+            .insert(uniqueSources);
+
+          if (sourcesError) {
+            console.error(`Failed to insert sources for article ${article.id}:`, sourcesError.message);
+          } else {
+            console.log(`Saved ${uniqueSources.length} sources for article ${article.id}`);
+          }
+        }
+      }
+
       results.articles_enriched++;
       console.log(`Successfully enriched article for ${hood.name}`);
 
