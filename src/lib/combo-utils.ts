@@ -70,7 +70,8 @@ export async function getNeighborhoodIdsForQuery(
     return [neighborhoodId];
   }
 
-  return components.map(c => c.component_id);
+  // Include the combo ID itself since articles may be stored under it directly
+  return [neighborhoodId, ...components.map(c => c.component_id)];
 }
 
 /**

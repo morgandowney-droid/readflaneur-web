@@ -9,6 +9,8 @@ interface Neighborhood {
   name: string;
   city: string;
   region?: string;
+  is_combo?: boolean;
+  combo_component_names?: string[];
 }
 
 interface PreferencesData {
@@ -370,7 +372,7 @@ function PreferencesContent() {
             Email Frequency
           </h2>
           <div className="space-y-2">
-            <label className="flex items-center gap-3 p-3 border border-neutral-200 cursor-pointer hover:border-neutral-400 transition-colors">
+            <label className="flex items-center gap-3 p-3 border border-neutral-200 rounded-lg cursor-pointer hover:border-neutral-400 transition-colors">
               <input
                 type="radio"
                 name="frequency"
@@ -383,7 +385,7 @@ function PreferencesContent() {
                 <div className="text-xs text-neutral-500">Every morning at 7 AM your time</div>
               </div>
             </label>
-            <label className="flex items-center gap-3 p-3 border border-neutral-200 cursor-pointer hover:border-neutral-400 transition-colors">
+            <label className="flex items-center gap-3 p-3 border border-neutral-200 rounded-lg cursor-pointer hover:border-neutral-400 transition-colors">
               <input
                 type="radio"
                 name="frequency"
@@ -451,14 +453,14 @@ function PreferencesContent() {
             </h2>
             <button
               onClick={() => setShowAddModal(true)}
-              className="text-xs bg-black text-white px-3 py-1.5 tracking-wider uppercase hover:bg-neutral-800 transition-colors"
+              className="text-xs bg-black text-white px-3 py-1.5 tracking-wider uppercase hover:bg-neutral-800 transition-colors rounded-lg"
             >
               + Add
             </button>
           </div>
 
           {selectedNeighborhoods.length === 0 ? (
-            <p className="text-sm text-neutral-400 py-4 text-center border border-dashed border-neutral-200">
+            <p className="text-sm text-neutral-400 py-4 text-center border border-dashed border-neutral-200 rounded-lg">
               No neighborhoods selected. Add some to get stories in your Daily Brief.
             </p>
           ) : (
@@ -466,11 +468,16 @@ function PreferencesContent() {
               {selectedNeighborhoods.map(n => (
                 <div
                   key={n.id}
-                  className="flex items-center justify-between p-3 border border-neutral-200"
+                  className="flex items-center justify-between p-3 border border-neutral-200 rounded-lg"
                 >
                   <div>
                     <span className="text-sm font-medium">{n.name}</span>
                     <span className="text-xs text-neutral-400 ml-2">{n.city}</span>
+                    {n.combo_component_names && n.combo_component_names.length > 0 && (
+                      <div className="text-xs text-neutral-300 mt-0.5">
+                        Includes: {n.combo_component_names.join(', ')}
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={() => handleRemove(n.id)}
@@ -488,7 +495,7 @@ function PreferencesContent() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-black text-white px-6 py-2 text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                className="bg-black text-white px-6 py-2 text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50 rounded-lg"
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
@@ -525,7 +532,7 @@ function PreferencesContent() {
                     <button
                       key={topic.label}
                       onClick={() => toggleTopic(topic.label)}
-                      className={`w-full flex items-center justify-between p-3 border transition-colors text-left ${
+                      className={`w-full flex items-center justify-between p-3 border rounded-lg transition-colors text-left ${
                         isPaused
                           ? 'border-neutral-200 bg-neutral-50 text-neutral-400'
                           : 'border-neutral-200 hover:border-neutral-400'
@@ -552,7 +559,7 @@ function PreferencesContent() {
               <button
                 onClick={handleSaveTopics}
                 disabled={topicsSaving}
-                className="bg-black text-white px-6 py-2 text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                className="bg-black text-white px-6 py-2 text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50 rounded-lg"
               >
                 {topicsSaving ? 'Saving...' : 'Save Topics'}
               </button>
@@ -581,13 +588,13 @@ function PreferencesContent() {
               value={suggestion}
               onChange={e => setSuggestion(e.target.value)}
               placeholder="What topic would you like to see?"
-              className="flex-1 px-3 py-2 border border-neutral-200 focus:border-black focus:outline-none text-sm"
+              className="flex-1 px-3 py-2 border border-neutral-200 rounded-lg focus:border-black focus:outline-none text-sm"
               maxLength={200}
             />
             <button
               onClick={handleSuggestTopic}
               disabled={suggestionSending || !suggestion.trim()}
-              className="bg-black text-white px-4 py-2 text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+              className="bg-black text-white px-4 py-2 text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50 rounded-lg"
             >
               {suggestionSending ? '...' : 'Send'}
             </button>
@@ -624,7 +631,7 @@ function PreferencesContent() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search neighborhoods..."
-                className="w-full px-3 py-2 border border-neutral-200 focus:border-black focus:outline-none text-sm"
+                className="w-full px-3 py-2 border border-neutral-200 rounded-lg focus:border-black focus:outline-none text-sm"
                 autoFocus
               />
             </div>
@@ -641,9 +648,14 @@ function PreferencesContent() {
                         <button
                           key={n.id}
                           onClick={() => handleAdd(n.id)}
-                          className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 border border-transparent hover:border-neutral-200 transition-colors"
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 border border-transparent hover:border-neutral-200 rounded-lg transition-colors"
                         >
                           {n.name}
+                          {n.combo_component_names && n.combo_component_names.length > 0 && (
+                            <span className="text-xs text-neutral-300 ml-1.5">
+                              ({n.combo_component_names.join(', ')})
+                            </span>
+                          )}
                         </button>
                       ))}
                     </div>

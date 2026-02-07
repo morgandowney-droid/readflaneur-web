@@ -473,14 +473,14 @@ Respond with ONLY this JSON:
 
 const DATA_POINT_PROMPTS: Record<DataPointType, (n: string, c: string, co: string) => string> = {
   real_estate: (n, c) =>
-    `What is the current average residential listing price in ${n}, ${c}? Compare to last month. Provide one number and one sentence of context. If exact data unavailable, give the best available indicator.`,
+    `What is the current average residential listing price in ${n}, ${c}? Compare to last month. Provide one number and one sentence of context. If exact data unavailable, give the best available indicator. IMPORTANT: In the context sentence, refer to the neighborhood by name ("${n} is..." not "Residents are..."). Write as a local insider, not a third party.`,
   safety: (n, c) =>
-    `What are the recent crime or safety statistics for ${n}, ${c}? Compare to last year same period. Provide one key metric and one sentence of context.`,
+    `What are the recent crime or safety statistics for ${n}, ${c}? Compare to last year same period. Provide one key metric and one sentence of context. IMPORTANT: In the context sentence, refer to the neighborhood by name ("${n} is..." not "Residents are..."). Write as a local insider, not a third party.`,
   environment: (n, c) =>
-    `What is the current air quality or notable environmental condition in ${n}, ${c}? Provide one measurement and one sentence of context.`,
+    `What is the current air quality or notable environmental condition in ${n}, ${c}? Provide one measurement and one sentence of context. IMPORTANT: In the context sentence, refer to the neighborhood by name ("${n} is..." not "Residents are..."). Write as a local insider, not a third party.`,
   flaneur_index: (n, c, co) => {
     const currency = co === 'USA' ? 'USD' : co === 'UK' ? 'GBP' : co === 'Sweden' ? 'SEK' : co === 'Australia' ? 'AUD' : 'local currency';
-    return `What is the average price of a latte at premium cafes in ${n}, ${c}? Give the price in ${currency} and compare to the city average. This is our "Flaneur Index" - a lighthearted cost-of-living indicator.`;
+    return `What is the average price of a latte at premium cafes in ${n}, ${c}? Give the price in ${currency} and compare to the city average. This is our "Flaneur Index" - a lighthearted cost-of-living indicator. IMPORTANT: In the context sentence, refer to the neighborhood by name ("${n} is..." not "Residents are..."). Write as a local insider, not a third party.`;
   },
 };
 
@@ -571,7 +571,7 @@ export function formatWeeklyBriefAsArticle(
   if (content.horizonEvents.length > 0) {
     body += '[[The Agenda]]\n\n';
     for (const event of content.horizonEvents) {
-      body += `${event.day}: ${event.name} \u2014 ${event.whyItMatters}\n\n`;
+      body += `${event.day}: ${event.name} - ${event.whyItMatters}\n\n`;
     }
   }
 

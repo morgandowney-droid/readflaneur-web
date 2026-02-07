@@ -153,9 +153,32 @@ export async function GET(request: Request) {
   // Fetch all available neighborhoods for adding
   const { data: allNeighborhoods } = await supabase
     .from('neighborhoods')
-    .select('id, name, city, region')
+    .select('id, name, city, region, is_combo')
     .order('city')
     .order('name');
+
+  // Fetch combo component names for any combo neighborhoods
+  const comboIds = (allNeighborhoods || []).filter(n => n.is_combo).map(n => n.id);
+  let comboComponentNames: Record<string, string[]> = {};
+  if (comboIds.length > 0) {
+    const { data: comboLinks } = await supabase
+      .from('combo_neighborhoods')
+      .select('combo_id, display_order, component:neighborhoods!combo_neighborhoods_component_id_fkey (name)')
+      .in('combo_id', comboIds)
+      .order('display_order');
+    if (comboLinks) {
+      for (const link of comboLinks) {
+        if (!comboComponentNames[link.combo_id]) comboComponentNames[link.combo_id] = [];
+        const comp = link.component as unknown as { name: string } | null;
+        if (comp?.name) comboComponentNames[link.combo_id].push(comp.name);
+      }
+    }
+  }
+
+  const neighborhoodsWithCombo = (allNeighborhoods || []).map(n => ({
+    ...n,
+    combo_component_names: comboComponentNames[n.id] || undefined,
+  }));
 
   return NextResponse.json({
     email: subscriber.email,
@@ -165,7 +188,7 @@ export async function GET(request: Request) {
     neighborhood_ids: neighborhoodIds,
     neighborhoods,
     primary_city: subscriber.source === 'profile' ? (subscriber as { primary_city?: string }).primary_city : null,
-    all_neighborhoods: allNeighborhoods || [],
+    all_neighborhoods: neighborhoodsWithCombo,
     paused_topics: subscriber.paused_topics || [],
   });
 }
