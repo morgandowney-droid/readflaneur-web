@@ -121,8 +121,8 @@ export const FIX_CONFIG = {
   // Hours after 7 AM local before flagging missed email
   EMAIL_DETECTION_GRACE_HOURS: 1,
 
-  // Max thin content fixes (news regeneration) per monitor run
-  MAX_THIN_CONTENT_PER_RUN: 5,
+  // Max thin content fixes (article generation) per monitor run
+  MAX_THIN_CONTENT_PER_RUN: 10,
 
   // Delay between news regeneration calls (ms)
   THIN_CONTENT_DELAY_MS: 2000,
