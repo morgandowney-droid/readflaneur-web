@@ -46,7 +46,8 @@ export type CronImageCategory =
   | 'real-estate'
   | 'museum-watch'
   | 'overture-alert'
-  | 'design-week';
+  | 'design-week'
+  | 'sunday-edition';
 
 interface CategoryConfig {
   prompt: string;
@@ -202,6 +203,12 @@ export const CRON_IMAGE_CATEGORIES: Record<CronImageCategory, CategoryConfig> = 
       'Modern furniture showroom with designer chairs and sculptural lighting installations. Minimalist white space, dramatic spotlighting on iconic design pieces. Editorial interior photography. No text, logos, or people.',
     fallbackColor: '#1e293b',
     label: 'DESIGN WEEK',
+  },
+  'sunday-edition': {
+    prompt:
+      'Elegant Sunday morning still life: broadsheet newspaper folded on marble cafe table, espresso cup and saucer, croissant on plate, morning light streaming through cafe window. Warm golden tones, editorial lifestyle photography. No text, logos, or people.',
+    fallbackColor: '#1a1a1a',
+    label: 'THE SUNDAY EDITION',
   },
 };
 
