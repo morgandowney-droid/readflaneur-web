@@ -356,9 +356,14 @@ export async function GET(request: Request) {
       started_at: startedAt,
       completed_at: new Date().toISOString(),
       success: isSuccess,
-      items_processed: results.briefs_processed + results.articles_processed,
-      items_created: totalEnriched,
-      errors: results.errors.length > 0 ? results.errors : null,
+      articles_created: totalEnriched,
+      errors: results.errors.length > 0 ? results.errors : [],
+      response_data: {
+        briefs_processed: results.briefs_processed,
+        briefs_enriched: results.briefs_enriched,
+        articles_processed: results.articles_processed,
+        articles_enriched: results.articles_enriched,
+      },
     }).then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
   }
 
