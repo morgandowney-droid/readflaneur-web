@@ -53,6 +53,7 @@ export interface WeatherData {
   description: string;
   weatherCode: number;
   asOfTime: string; // e.g., "7:00 AM"
+  useFahrenheit?: boolean;
 }
 
 export interface WeatherStory {
@@ -63,6 +64,7 @@ export interface WeatherStory {
   temperatureC: number;
   temperatureF: number;
   forecastDay: string; // "Tomorrow (Sat)" or "Sunday"
+  useFahrenheit?: boolean;
 }
 
 export interface EmailAd {

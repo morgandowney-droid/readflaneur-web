@@ -261,7 +261,7 @@ export async function assembleDailyBrief(
   // Fetch all subscribed neighborhoods from DB
   const { data: neighborhoods } = await supabase
     .from('neighborhoods')
-    .select('id, name, city, latitude, longitude, is_combo')
+    .select('id, name, city, country, latitude, longitude, is_combo')
     .in('id', subscribedNeighborhoodIds);
 
   const neighborhoodMap = new Map(
@@ -285,12 +285,14 @@ export async function assembleDailyBrief(
     const stories = await fetchStories(supabase, queryIds, PRIMARY_STORY_COUNT, pausedTopics);
 
     // Fetch weather (current conditions for widget fallback)
+    const neighborhoodCountry = primaryNeighborhood.country || 'USA';
     let weather = null;
     if (primaryNeighborhood.latitude && primaryNeighborhood.longitude) {
       weather = await fetchWeather(
         primaryNeighborhood.latitude,
         primaryNeighborhood.longitude,
-        recipient.timezone
+        recipient.timezone,
+        neighborhoodCountry
       );
     }
 
@@ -301,7 +303,8 @@ export async function assembleDailyBrief(
         primaryNeighborhood.latitude,
         primaryNeighborhood.longitude,
         recipient.timezone,
-        primaryNeighborhood.city
+        primaryNeighborhood.city,
+        neighborhoodCountry
       );
     }
 

@@ -25,6 +25,26 @@ import {
 
 const OPEN_METEO_API = 'https://api.open-meteo.com/v1/forecast';
 
+// Countries that use Fahrenheit
+const FAHRENHEIT_COUNTRIES = new Set([
+  'USA', 'US', 'United States',
+  'Liberia',
+  'Myanmar', 'Burma',
+]);
+
+/** Returns true if the country uses Fahrenheit */
+function shouldUseFahrenheit(country: string): boolean {
+  return FAHRENHEIT_COUNTRIES.has(country);
+}
+
+/** Format a temperature with the appropriate unit */
+function formatTemp(tempC: number, useF: boolean): string {
+  if (useF) {
+    return `${Math.round(tempC * 9 / 5 + 32)}°F`;
+  }
+  return `${Math.round(tempC)}°C`;
+}
+
 // ─── Raw Open-Meteo response shape ───
 
 interface ForecastData {
@@ -98,7 +118,8 @@ function averageForRange(
 function checkSafetyExtremes(
   forecast: ForecastData,
   timezone: string,
-  now: Date
+  now: Date,
+  useF: boolean
 ): WeatherStory | null {
   const { daily } = forecast;
   const currentTemp = Math.round(forecast.current?.temperature_2m ?? 0);
@@ -114,14 +135,16 @@ function checkSafetyExtremes(
 
     // Blizzard: >10cm snow
     if (snowfall > 10) {
+      const snowDisplay = useF ? `${Math.round(snowfall / 2.54)}"` : `${Math.round(snowfall)}cm`;
       return {
         priority: 1,
         headline: `Alert: Heavy Snow Expected ${dayLabel}.`,
-        body: `${Math.round(snowfall)}cm of snow forecast. Consider adjusting plans and checking transit updates.`,
+        body: `${snowDisplay} of snow forecast. Consider adjusting plans and checking transit updates.`,
         icon: 'snow',
         temperatureC: currentTemp,
         temperatureF: celsiusToFahrenheit(currentTemp),
         forecastDay: dayLabel,
+        useFahrenheit: useF,
       };
     }
 
@@ -129,12 +152,13 @@ function checkSafetyExtremes(
     if (maxTemp > 35) {
       return {
         priority: 1,
-        headline: `Heat Advisory: ${Math.round(maxTemp)}°C Expected ${dayLabel}.`,
-        body: `Temperatures reaching ${Math.round(maxTemp)}°C. Stay hydrated and avoid prolonged outdoor exposure midday.`,
+        headline: `Heat Advisory: ${formatTemp(maxTemp, useF)} Expected ${dayLabel}.`,
+        body: `Temperatures reaching ${formatTemp(maxTemp, useF)}. Stay hydrated and avoid prolonged outdoor exposure midday.`,
         icon: 'thermometer-up',
         temperatureC: currentTemp,
         temperatureF: celsiusToFahrenheit(currentTemp),
         forecastDay: dayLabel,
+        useFahrenheit: useF,
       };
     }
   }
@@ -147,7 +171,8 @@ function checkSafetyExtremes(
 function checkCommuteAlerts(
   forecast: ForecastData,
   timezone: string,
-  now: Date
+  now: Date,
+  useF: boolean
 ): WeatherStory | null {
   if (!isTomorrowWeekday(now, timezone)) return null;
   if (forecast.daily.time.length < 2) return null;
@@ -180,6 +205,7 @@ function checkCommuteAlerts(
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
       forecastDay: dayLabel,
+      useFahrenheit: useF,
     };
   }
 
@@ -194,6 +220,7 @@ function checkCommuteAlerts(
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
       forecastDay: dayLabel,
+      useFahrenheit: useF,
     };
   }
 
@@ -208,6 +235,7 @@ function checkCommuteAlerts(
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
       forecastDay: dayLabel,
+      useFahrenheit: useF,
     };
   }
 
@@ -220,7 +248,8 @@ function checkWeekendLookahead(
   forecast: ForecastData,
   timezone: string,
   now: Date,
-  cityName: string
+  cityName: string,
+  useF: boolean
 ): WeatherStory | null {
   if (!isThursdayOrFriday(now, timezone)) return null;
 
@@ -246,13 +275,15 @@ function checkWeekendLookahead(
 
   // Bad weekend: >5mm precipitation
   if (satPrecip > 5) {
-    let body = `Rain expected ${satLabel} with ${Math.round(satPrecip)}mm of precipitation.`;
+    const precipDisplay = useF ? `${(satPrecip / 25.4).toFixed(1)}"` : `${Math.round(satPrecip)}mm`;
+    let body = `Rain expected ${satLabel} with ${precipDisplay} of precipitation.`;
     if (sunIndex > 0 && sunIndex < daily.time.length) {
       const sunPrecip = daily.precipitation_sum[sunIndex] ?? 0;
       if (sunPrecip > 5) {
         const sunDate = new Date(daily.time[sunIndex] + 'T12:00:00');
         const sunLabel = formatForecastDay(sunDate, now, timezone);
-        body = `Wet weekend ahead: rain both days, ${Math.round(satPrecip)}mm ${satLabel} and ${Math.round(sunPrecip)}mm ${sunLabel}.`;
+        const sunPrecipDisplay = useF ? `${(sunPrecip / 25.4).toFixed(1)}"` : `${Math.round(sunPrecip)}mm`;
+        body = `Wet weekend ahead: rain both days, ${precipDisplay} ${satLabel} and ${sunPrecipDisplay} ${sunLabel}.`;
       }
     }
     return {
@@ -263,6 +294,7 @@ function checkWeekendLookahead(
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
       forecastDay: satLabel,
+      useFahrenheit: useF,
     };
   }
 
@@ -271,11 +303,12 @@ function checkWeekendLookahead(
     return {
       priority: 3,
       headline: 'Weekend Outlook: Perfect Conditions.',
-      body: `${satLabel} looking ideal: ${Math.round(satMax)}°C and dry. Warmer than usual for this time of year.`,
+      body: `${satLabel} looking ideal: ${formatTemp(satMax, useF)} and dry. Warmer than usual for this time of year.`,
       icon: 'sun',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
       forecastDay: satLabel,
+      useFahrenheit: useF,
     };
   }
 
@@ -288,7 +321,8 @@ function checkAnomaly(
   forecast: ForecastData,
   timezone: string,
   now: Date,
-  cityName: string
+  cityName: string,
+  useF: boolean
 ): WeatherStory | null {
   const { daily } = forecast;
   if (daily.time.length < 2) return null;
@@ -304,27 +338,34 @@ function checkAnomaly(
   const dayLabel = formatForecastDay(targetDate, now, timezone);
   const currentTemp = Math.round(forecast.current?.temperature_2m ?? 0);
 
+  // Format the delta for display
+  const deltaDisplay = useF
+    ? `${Math.round(Math.abs(delta) * 9 / 5)}°F`
+    : `${Math.round(Math.abs(delta))}°C`;
+
   if (delta > 5) {
     return {
       priority: 4,
-      headline: `Unseasonably Warm: ${Math.round(tomorrowMax)}°C ${dayLabel}.`,
-      body: `${Math.round(delta)}°C above the seasonal average. Enjoy it while it lasts.`,
+      headline: `Unseasonably Warm: ${formatTemp(tomorrowMax, useF)} ${dayLabel}.`,
+      body: `${deltaDisplay} above the seasonal average. Enjoy it while it lasts.`,
       icon: 'thermometer-up',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
       forecastDay: dayLabel,
+      useFahrenheit: useF,
     };
   }
 
   if (delta < -5) {
     return {
       priority: 4,
-      headline: `Sharp Drop: ${Math.round(tomorrowMax)}°C ${dayLabel}.`,
-      body: `${Math.round(Math.abs(delta))}°C below the seasonal average. Dress accordingly.`,
+      headline: `Sharp Drop: ${formatTemp(tomorrowMax, useF)} ${dayLabel}.`,
+      body: `${deltaDisplay} below the seasonal average. Dress accordingly.`,
       icon: 'thermometer-down',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
       forecastDay: dayLabel,
+      useFahrenheit: useF,
     };
   }
 
@@ -343,27 +384,29 @@ export async function generateWeatherStory(
   lat: number,
   lng: number,
   timezone: string,
-  cityName: string
+  cityName: string,
+  country: string = 'USA'
 ): Promise<WeatherStory | null> {
   const forecast = await fetchForecastWeather(lat, lng, timezone);
   if (!forecast) return null;
 
   const now = new Date();
+  const useF = shouldUseFahrenheit(country);
 
   // Priority 1: Safety & Extremes
-  const safety = checkSafetyExtremes(forecast, timezone, now);
+  const safety = checkSafetyExtremes(forecast, timezone, now, useF);
   if (safety) return safety;
 
   // Priority 2: Commute & Lunch (weekdays only)
-  const commute = checkCommuteAlerts(forecast, timezone, now);
+  const commute = checkCommuteAlerts(forecast, timezone, now, useF);
   if (commute) return commute;
 
   // Priority 3: Weekend Lookahead (Thu/Fri only)
-  const weekend = checkWeekendLookahead(forecast, timezone, now, cityName);
+  const weekend = checkWeekendLookahead(forecast, timezone, now, cityName, useF);
   if (weekend) return weekend;
 
   // Priority 4: General Anomaly
-  const anomaly = checkAnomaly(forecast, timezone, now, cityName);
+  const anomaly = checkAnomaly(forecast, timezone, now, cityName, useF);
   if (anomaly) return anomaly;
 
   return null;

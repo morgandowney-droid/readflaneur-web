@@ -7,13 +7,21 @@ import { WeatherData } from './types';
 
 const OPEN_METEO_API = 'https://api.open-meteo.com/v1/forecast';
 
+// Countries that use Fahrenheit
+const FAHRENHEIT_COUNTRIES = new Set([
+  'USA', 'US', 'United States',
+  'Liberia',
+  'Myanmar', 'Burma',
+]);
+
 /**
  * Fetch current weather for a location
  */
 export async function fetchWeather(
   lat: number,
   lng: number,
-  timezone: string
+  timezone: string,
+  country: string = 'USA'
 ): Promise<WeatherData | null> {
   try {
     const params = new URLSearchParams({
@@ -56,6 +64,7 @@ export async function fetchWeather(
       description: getWeatherDescription(weatherCode),
       weatherCode,
       asOfTime,
+      useFahrenheit: FAHRENHEIT_COUNTRIES.has(country),
     };
   } catch (error) {
     console.error('Weather fetch error:', error);

@@ -10,7 +10,9 @@ export function WeatherWidget({ weather }: WeatherWidgetProps) {
   return (
     <Section style={container}>
       <Text style={tempText}>
-        {weather.temperatureC}°C / {weather.temperatureF}°F
+        {weather.useFahrenheit
+          ? `${weather.temperatureF}°F / ${weather.temperatureC}°C`
+          : `${weather.temperatureC}°C / ${weather.temperatureF}°F`}
         <span style={descText}> - {weather.description}</span>
         <span style={timeText}> &middot; as of {weather.asOfTime}</span>
       </Text>

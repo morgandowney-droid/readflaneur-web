@@ -11,7 +11,9 @@ export function WeatherStoryCard({ story }: WeatherStoryCardProps) {
   return (
     <Section style={isAlert ? containerAlert : container}>
       <Text style={tempLine}>
-        {story.temperatureC}°C / {story.temperatureF}°F
+        {story.useFahrenheit
+          ? `${story.temperatureF}°F / ${story.temperatureC}°C`
+          : `${story.temperatureC}°C / ${story.temperatureF}°F`}
       </Text>
       <Text style={isAlert ? headlineAlert : headline}>
         {story.headline}
