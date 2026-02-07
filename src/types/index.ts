@@ -1,4 +1,4 @@
-export type GlobalRegion = 'north-america' | 'europe' | 'asia-pacific' | 'middle-east' | 'us-vacation' | 'caribbean-vacation' | 'europe-vacation';
+export type GlobalRegion = 'north-america' | 'europe' | 'asia-pacific' | 'middle-east' | 'us-vacation' | 'caribbean-vacation' | 'europe-vacation' | 'test';
 
 export interface Neighborhood {
   id: string;

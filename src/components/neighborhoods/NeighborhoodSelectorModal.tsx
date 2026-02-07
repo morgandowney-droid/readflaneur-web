@@ -46,6 +46,8 @@ const CITY_COORDINATES: Record<string, [number, number]> = {
   // Surroundings (wealthy suburbs)
   'New York Surroundings': [41.0263, -73.6285], // Greenwich, CT area
   'Stockholm Surroundings': [59.3293, 18.0686], // Stockholm area
+  // Test Lab
+  'Test Lab': [53.3498, -6.2603], // Dublin (midpoint-ish)
 };
 
 // Vacation region labels and styling
@@ -53,6 +55,7 @@ const VACATION_REGIONS: Record<string, { label: string; color: string }> = {
   'us-vacation': { label: 'US Vacation', color: '#00563F' },
   'caribbean-vacation': { label: 'Caribbean Vacation', color: '#00563F' },
   'europe-vacation': { label: 'European Vacation', color: '#00563F' },
+  'test': { label: 'Test Lab', color: '#6B21A8' },
 };
 
 // Surroundings region labels and styling (wealthy suburbs around cities)
@@ -71,9 +74,9 @@ const ENCLAVE_REGIONS: Record<string, { label: string; headerColor: string; butt
   },
 };
 
-// Check if a region is a vacation region
+// Check if a region is a vacation region (or test region — grouped the same way)
 function isVacationRegion(region?: string): boolean {
-  return region ? region.includes('vacation') : false;
+  return region ? (region.includes('vacation') || region === 'test') : false;
 }
 
 // Check if a region is an enclave region

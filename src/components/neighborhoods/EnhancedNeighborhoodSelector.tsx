@@ -86,6 +86,12 @@ const REGION_DATA: Record<GlobalRegion, { label: string; icon: string; descripti
     description: 'Saint-Tropez to Sylt',
     color: '#00563F'
   },
+  'test': {
+    label: 'Test Lab',
+    icon: '⚗',
+    description: 'Experimental feeds',
+    color: '#6B21A8'
+  },
 };
 
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
@@ -187,6 +193,7 @@ export function EnhancedNeighborhoodSelector({
       'us-vacation': [],
       'caribbean-vacation': [],
       'europe-vacation': [],
+      'test': [],
     };
 
     const cityMap = new Map<string, CityData>();
@@ -234,6 +241,7 @@ export function EnhancedNeighborhoodSelector({
       'us-vacation': [],
       'caribbean-vacation': [],
       'europe-vacation': [],
+      'test': [],
     };
 
     Object.entries(organizedData).forEach(([region, cities]) => {
