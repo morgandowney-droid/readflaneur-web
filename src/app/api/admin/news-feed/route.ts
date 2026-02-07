@@ -80,7 +80,8 @@ export async function GET(request: NextRequest) {
     // Find neighborhoods with 0 content (last 24h)
     const neighborhoodsWithNoContent = allNeighborhoods
       .filter(n => !countsByNeighborhood[n.id])
-      .map(n => ({ id: n.id, name: n.name, city: n.city }));
+      .map(n => ({ id: n.id, name: n.name, city: n.city }))
+      .sort((a, b) => `${a.city} ${a.name}`.localeCompare(`${b.city} ${b.name}`));
 
     // Find neighborhoods with >5 content (last 24h)
     const neighborhoodsOverwhelmed = allNeighborhoods
@@ -149,6 +150,25 @@ export async function GET(request: NextRequest) {
 
     const { data: articles } = await articlesQuery;
 
+    // Find neighborhoods without RSS stories in last 24h
+    const { data: rssArticlesLast24h } = await supabase
+      .from('articles')
+      .select('neighborhood_id')
+      .eq('status', 'published')
+      .eq('category_label', 'News Brief')
+      .gte('published_at', twentyFourHoursAgo.toISOString());
+
+    const neighborhoodsWithRss = new Set<string>();
+    if (rssArticlesLast24h) {
+      for (const a of rssArticlesLast24h) {
+        if (a.neighborhood_id) neighborhoodsWithRss.add(a.neighborhood_id);
+      }
+    }
+    const neighborhoodsWithoutRss = allNeighborhoods
+      .filter(n => !neighborhoodsWithRss.has(n.id))
+      .map(n => ({ id: n.id, name: n.name, city: n.city }))
+      .sort((a, b) => `${a.city} ${a.name}`.localeCompare(`${b.city} ${b.name}`));
+
     // Get stuck content (stale drafts/pending articles older than 24h)
     const { data: failedContent } = await supabase
       .from('articles')
@@ -170,6 +190,7 @@ export async function GET(request: NextRequest) {
         totalActiveNeighborhoods: allNeighborhoods.length,
         neighborhoodsWithNoContent,
         neighborhoodsOverwhelmed,
+        neighborhoodsWithoutRss,
         totalArticles24h: articlesLast24h?.length || 0,
         categories,
       },

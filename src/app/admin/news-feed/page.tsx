@@ -42,6 +42,7 @@ interface Stats {
   totalActiveNeighborhoods: number;
   neighborhoodsWithNoContent: Neighborhood[];
   neighborhoodsOverwhelmed: Neighborhood[];
+  neighborhoodsWithoutRss: Neighborhood[];
   totalArticles24h: number;
   categories: { label: string; count: number }[];
 }
@@ -154,77 +155,104 @@ export default function NewsFeedAdmin() {
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {/* No Content Card */}
-          <button
-            onClick={() => setShowNoContent(!showNoContent)}
-            className={`text-left p-4 border transition-all ${
-              showNoContent
-                ? 'bg-red-50 border-red-300'
-                : 'bg-white border-neutral-200 hover:border-neutral-400'
-            }`}
-          >
-            <div className="text-3xl font-light text-red-600">
-              {stats?.neighborhoodsWithNoContent.length || 0}
-            </div>
-            <div className="text-xs text-neutral-500 uppercase tracking-wide">
-              No Content (24h)
-            </div>
-            <div className="text-xs text-neutral-400 mt-1">
-              Click to {showNoContent ? 'hide' : 'see'} list
-            </div>
-          </button>
-
-          {/* Overwhelmed Card */}
-          <button
-            onClick={() => setShowOverwhelmed(!showOverwhelmed)}
-            className={`text-left p-4 border transition-all ${
-              showOverwhelmed
-                ? 'bg-yellow-50 border-yellow-300'
-                : 'bg-white border-neutral-200 hover:border-neutral-400'
-            }`}
-          >
-            <div className="text-3xl font-light text-yellow-600">
-              {stats?.neighborhoodsOverwhelmed.length || 0}
-            </div>
-            <div className="text-xs text-neutral-500 uppercase tracking-wide">
-              Overwhelmed (&gt;5/day)
-            </div>
-            <div className="text-xs text-neutral-400 mt-1">
-              Click to {showOverwhelmed ? 'hide' : 'see'} list
-            </div>
-          </button>
-
-          {/* Total Articles Card */}
+        {/* Summary Stats Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white border border-neutral-200 p-4">
             <div className="text-3xl font-light">{stats?.totalArticles24h || 0}</div>
-            <div className="text-xs text-neutral-500 uppercase tracking-wide">
-              Total Articles (24h)
-            </div>
+            <div className="text-xs text-neutral-500 uppercase tracking-wide">Total Articles (24h)</div>
             <div className="text-xs text-neutral-400 mt-1">
               Across {stats?.totalActiveNeighborhoods || 0} neighborhoods
             </div>
           </div>
+          <div className="bg-white border border-red-200 p-4">
+            <div className="text-3xl font-light text-red-600">{stats?.neighborhoodsWithNoContent.length || 0}</div>
+            <div className="text-xs text-neutral-500 uppercase tracking-wide">No Content (24h)</div>
+          </div>
+          <div className="bg-white border border-amber-200 p-4">
+            <div className="text-3xl font-light text-amber-600">{stats?.neighborhoodsWithoutRss?.length || 0}</div>
+            <div className="text-xs text-neutral-500 uppercase tracking-wide">No RSS Stories (24h)</div>
+          </div>
+          <button
+            onClick={() => setShowOverwhelmed(!showOverwhelmed)}
+            className="text-left bg-white border border-neutral-200 hover:border-neutral-400 p-4 transition-all"
+          >
+            <div className="text-3xl font-light text-yellow-600">{stats?.neighborhoodsOverwhelmed.length || 0}</div>
+            <div className="text-xs text-neutral-500 uppercase tracking-wide">Overwhelmed (&gt;5/day)</div>
+          </button>
         </div>
 
-        {/* Expanded Lists */}
-        {showNoContent && stats && stats.neighborhoodsWithNoContent && stats.neighborhoodsWithNoContent.length > 0 && (
-          <div className="bg-red-50 border border-red-200 p-4 mb-6">
-            <h3 className="text-sm font-medium text-red-800 mb-2">
-              Neighborhoods with No Content (24h)
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {stats.neighborhoodsWithNoContent.map(n => (
-                <span key={n.id} className="text-xs bg-white px-2 py-1 border border-red-200 text-red-700">
-                  {n.name}, {n.city}
-                </span>
-              ))}
+        {/* Thin Content Box */}
+        {stats && stats.neighborhoodsWithNoContent.length > 0 && (
+          <div className="bg-red-50 border-2 border-red-300 p-5 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-red-900 uppercase tracking-wide">
+                Thin Content — No Articles in 24h ({stats.neighborhoodsWithNoContent.length} neighborhoods)
+              </h3>
+              <button
+                onClick={() => setShowNoContent(!showNoContent)}
+                className="text-xs text-red-600 hover:text-red-800 underline"
+              >
+                {showNoContent ? 'Collapse' : 'Expand'}
+              </button>
             </div>
+            {showNoContent ? (
+              <div className="flex flex-wrap gap-1.5">
+                {stats.neighborhoodsWithNoContent.map(n => (
+                  <button
+                    key={n.id}
+                    onClick={() => setFilter({ ...filter, neighborhood: n.id, category: '', storyType: '', source: '' })}
+                    className="text-xs bg-white px-2 py-1 border border-red-200 text-red-700 hover:bg-red-100 transition-colors cursor-pointer"
+                  >
+                    {n.name}, {n.city}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-red-600">
+                {stats.neighborhoodsWithNoContent.slice(0, 8).map(n => n.name).join(', ')}
+                {stats.neighborhoodsWithNoContent.length > 8 && ` and ${stats.neighborhoodsWithNoContent.length - 8} more...`}
+              </div>
+            )}
           </div>
         )}
 
-        {showOverwhelmed && stats && stats.neighborhoodsOverwhelmed && stats.neighborhoodsOverwhelmed.length > 0 && (
+        {/* No RSS Stories Box */}
+        {stats && stats.neighborhoodsWithoutRss && stats.neighborhoodsWithoutRss.length > 0 && (
+          <div className="bg-amber-50 border-2 border-amber-300 p-5 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-amber-900 uppercase tracking-wide">
+                No RSS Feed Stories in 24h ({stats.neighborhoodsWithoutRss.length} neighborhoods)
+              </h3>
+              <button
+                onClick={() => setShowNoContent(!showNoContent)}
+                className="text-xs text-amber-600 hover:text-amber-800 underline"
+              >
+                {showNoContent ? 'Collapse' : 'Expand'}
+              </button>
+            </div>
+            {showNoContent ? (
+              <div className="flex flex-wrap gap-1.5">
+                {stats.neighborhoodsWithoutRss.map(n => (
+                  <button
+                    key={n.id}
+                    onClick={() => setFilter({ ...filter, neighborhood: n.id, category: '', storyType: '', source: 'rss' })}
+                    className="text-xs bg-white px-2 py-1 border border-amber-200 text-amber-700 hover:bg-amber-100 transition-colors cursor-pointer"
+                  >
+                    {n.name}, {n.city}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-amber-600">
+                {stats.neighborhoodsWithoutRss.slice(0, 8).map(n => n.name).join(', ')}
+                {stats.neighborhoodsWithoutRss.length > 8 && ` and ${stats.neighborhoodsWithoutRss.length - 8} more...`}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Overwhelmed Expanded */}
+        {showOverwhelmed && stats && stats.neighborhoodsOverwhelmed.length > 0 && (
           <div className="bg-yellow-50 border border-yellow-200 p-4 mb-6">
             <h3 className="text-sm font-medium text-yellow-800 mb-2">
               Overwhelmed Neighborhoods (&gt;5 articles/day)
