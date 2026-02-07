@@ -129,8 +129,21 @@ export async function detectMissingBriefs(
 }
 
 /**
- * Detect neighborhoods with thin/zero content in the last 24 hours
- * These neighborhoods would produce empty daily brief emails
+ * Regions that don't have regular RSS article flow.
+ * These neighborhoods get Grok briefs but no RSS-sourced articles,
+ * so 0 articles is the expected state — not an issue to flag.
+ */
+const THIN_CONTENT_EXEMPT_REGIONS = new Set([
+  'test',
+  'us-vacation',
+  'europe-vacation',
+  'caribbean-vacation',
+]);
+
+/**
+ * Detect neighborhoods with thin/zero content in the last 24 hours.
+ * Only flags neighborhoods that have RSS sources configured for their city,
+ * since neighborhoods without RSS feeds are expected to have 0 articles.
  */
 export async function detectThinContent(
   supabase: SupabaseClient
@@ -144,10 +157,10 @@ export async function detectThinContent(
     return issues;
   }
 
-  // Get all active non-combo neighborhoods
+  // Get all active non-combo neighborhoods (include region and city)
   const { data: activeNeighborhoods, error: neighborhoodError } = await supabase
     .from('neighborhoods')
-    .select('id, name, city')
+    .select('id, name, city, region')
     .eq('is_active', true)
     .eq('is_combo', false);
 
@@ -155,6 +168,27 @@ export async function detectThinContent(
     console.error('Error fetching neighborhoods for thin content check:', neighborhoodError);
     return issues;
   }
+
+  // Get cities that have active RSS sources
+  const { data: rssSources, error: rssError } = await supabase
+    .from('rss_sources')
+    .select('city')
+    .eq('is_active', true);
+
+  const citiesWithRss = new Set(
+    (rssError ? [] : rssSources || []).map((s: { city: string }) => s.city)
+  );
+
+  // Filter to neighborhoods that should have article flow:
+  // 1. Not in an exempt region (vacation, test)
+  // 2. Their city has at least one active RSS source
+  const monitoredNeighborhoods = activeNeighborhoods.filter(n => {
+    if (THIN_CONTENT_EXEMPT_REGIONS.has(n.region || '')) return false;
+    if (!citiesWithRss.has(n.city)) return false;
+    return true;
+  });
+
+  console.log(`[ThinContentDetector] Monitoring ${monitoredNeighborhoods.length}/${activeNeighborhoods.length} neighborhoods (${activeNeighborhoods.length - monitoredNeighborhoods.length} exempt)`);
 
   // Count published articles per neighborhood in the last 24 hours
   const twentyFourHoursAgo = new Date();
@@ -179,8 +213,8 @@ export async function detectThinContent(
     }
   }
 
-  // Flag neighborhoods below threshold
-  for (const neighborhood of activeNeighborhoods) {
+  // Flag monitored neighborhoods below threshold
+  for (const neighborhood of monitoredNeighborhoods) {
     const count = articleCounts[neighborhood.id] || 0;
     if (count < FIX_CONFIG.THIN_CONTENT_THRESHOLD) {
       issues.push({
