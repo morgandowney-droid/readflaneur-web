@@ -11,6 +11,50 @@
 
 ### Recent Changes (2026-02-07)
 
+**Email Monitoring & Self-Healing System:**
+- New `missed_email` issue type in cron monitor with root cause diagnosis engine
+- 6-check diagnostic cascade: disabled_by_user > missing_timezone > no_neighborhoods > cron_not_run > send_failed > rate_limit_overflow
+- Auto-fixes root causes (e.g., sets timezone from neighborhood) then resends via `?test={email}&force=true`
+- Files: `src/lib/cron-monitor/email-monitor.ts` (NEW), `src/lib/cron-monitor/types.ts`, `src/lib/cron-monitor/auto-fixer.ts`
+- Detection: Runs after recipient's 7 AM + 1 hour grace period; compares eligible recipients against `daily_brief_sends`
+- Admin UI: Orange "missed email" badge on `/admin/cron-monitor` with diagnosis details
+
+**Thin Content Detector & Auto-Fixer:**
+- New `thin_content` issue type detects neighborhoods with 0 articles in last 24h
+- Auto-fixes by generating fresh Grok brief via `sync-neighborhood-briefs?test={id}&force=true`
+- Detection only after 12:00 UTC to give morning crons time to run
+- Rate limited: max 5 per monitor run with 2s delay
+- Files: `src/lib/cron-monitor/issue-detector.ts`, `src/lib/cron-monitor/auto-fixer.ts`
+
+**Critical Bug Fix: Auto-Fixer baseUrl:**
+- Root cause: `VERCEL_URL` pointed to preview deployment URL, not production
+- ALL auto-fix HTTP calls were returning HTML 404 pages → `"Unexpected token '<'"` JSON parse error
+- Fix: Use `NEXT_PUBLIC_APP_URL` (production URL) first, fall back to `VERCEL_URL`
+- This unblocks ALL existing self-healing (missing images, missing briefs, etc.)
+- File: `src/app/api/cron/monitor-and-fix/route.ts`
+
+**Cron Execution Logging for Briefs:**
+- `sync-neighborhood-briefs` now logs to `cron_executions` table
+- Previously invisible to the monitoring system (no execution records at all)
+- File: `src/app/api/cron/sync-neighborhood-briefs/route.ts`
+
+**Auth Hang Fixes (getUser → getSession):**
+- `supabase.auth.getUser()` was hanging indefinitely (network call to verify JWT)
+- Switched to `getSession()` (reads from cookies, no network) in:
+  - Settings page (`src/app/settings/page.tsx`) — added 5s safety timeout
+  - Middleware (`src/lib/supabase/middleware.ts`) — non-blocking `getUser()` refresh
+  - Neighborhood selector (`src/components/neighborhoods/NeighborhoodSelectorModal.tsx`) — 3s Promise.race timeout
+- Neighborhood selector now loads DB preferences for logged-in users with auto-migration from localStorage
+
+**Admin News Feed Fix:**
+- Removed broken `scheduled_for` column and `scheduled` status references from failed articles query
+- These columns/statuses never existed in the database (schema mismatch)
+- File: `src/app/api/admin/news-feed/route.ts`
+
+**Resend Email Tracking:**
+- Enabled open_tracking and click_tracking on Resend domain via API
+- No code changes needed — Resend injects 1x1 pixel for opens, rewrites links for clicks
+
 **Test Lab Region (Experimental Geographic Scales):**
 - 4 test neighborhoods exploring non-standard geographic scales for content generation
 - County Limerick (Ireland) — rural county, Ireland (whole island), Stockholm (city-wide), Sweden (country-wide)
