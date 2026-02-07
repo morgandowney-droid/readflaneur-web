@@ -31,7 +31,7 @@ export interface RearviewStory {
 }
 
 export interface HorizonEvent {
-  day: string;       // e.g., "Tuesday"
+  day: string;       // e.g., "Saturday Feb 14 2pm" or "Saturday Feb 14 14:00"
   name: string;
   whyItMatters: string;
   category: string;  // High Culture, The Scene, Urban Nature, Real Estate
@@ -104,9 +104,9 @@ export async function generateWeeklyBrief(
   const articles = weekArticles || [];
   console.log(`[SundayEdition] ${neighborhoodName}: found ${articles.length} articles from past week`);
 
-  // Build headline list for Gemini
+  // Build headline list for Gemini (no category labels - clean headlines only)
   const headlineList = articles
-    .map((a, i) => `${i + 1}. [${a.category_label || 'News'}] ${a.headline}`)
+    .map((a, i) => `${i + 1}. ${a.headline}`)
     .join('\n');
 
   // Step B: Significance Filter via Gemini
@@ -126,7 +126,7 @@ export async function generateWeeklyBrief(
       articles
     );
   } else {
-    narrative = `A quiet week in ${neighborhoodName}. Sometimes the absence of news is itself a signal - the neighborhood hums along in its familiar rhythm, undisturbed by the kind of disruptions that make headlines elsewhere.`;
+    narrative = `Honestly? A quiet week around here. No drama, no surprises - just ${neighborhoodName} humming along the way we like it. Sometimes the best update is that there's nothing to report.`;
   }
 
   // ─── Section 2: The Horizon ───
@@ -134,16 +134,20 @@ export async function generateWeeklyBrief(
 
   let horizonEvents: HorizonEvent[] = [];
 
+  // Determine time format based on country (US uses 12h, most others 24h)
+  const uses12h = ['USA', 'US', 'Canada', 'Australia', 'Philippines'].includes(country);
+  const timeFormat = uses12h ? '12-hour (e.g., "Saturday Feb 14 2pm")' : '24-hour (e.g., "Saturday Feb 14 14:00")';
+
   if (grokKey) {
     const rawEvents = await huntUpcomingEvents(grokKey, neighborhoodName, city, country);
     if (rawEvents) {
-      horizonEvents = await curateEvents(genAI, rawEvents, neighborhoodName, city);
+      horizonEvents = await curateEvents(genAI, rawEvents, neighborhoodName, city, timeFormat);
     }
   }
 
   // Fallback: use Gemini search if Grok unavailable or returned nothing
   if (horizonEvents.length === 0) {
-    horizonEvents = await huntEventsWithGemini(genAI, neighborhoodName, city);
+    horizonEvents = await huntEventsWithGemini(genAI, neighborhoodName, city, timeFormat);
   }
 
   // ─── Section 3: The Weekly Data Point ───
@@ -181,26 +185,29 @@ async function significanceFilter(
   neighborhoodName: string,
   city: string
 ): Promise<{ stories: RearviewStory[] }> {
-  const prompt = `You are the Editor of a luxury neighborhood newsletter for ${neighborhoodName}, ${city}.
-Review these stories from the past week and select the Top 3 based on **Long-Term Impact** for a resident with $10M+ net worth.
+  const prompt = `You are a 35-year-old insider living in ${neighborhoodName}, ${city}. You own property here, you eat here, you know the neighbors.
+
+Pick the 3 stories from this past week that YOUR PEERS (other successful residents) would actually care about.
 
 STORIES:
 ${headlineList}
 
-SELECTION CRITERIA:
-1. **Asset Value:** Does this affect property prices? (Zoning changes, landmark sales, infrastructure projects)
-2. **Quality of Life:** Does this permanently change the neighborhood? (Michelin-star opening, new school, cultural institution)
-3. **Safety:** Significant patterns or incidents (not petty theft or minor nuisances)
+WHAT WE CARE ABOUT:
+1. Anything that affects our property values (zoning changes, landmark sales, new developments)
+2. Anything that changes our daily life here (new restaurant worth booking, school changes, cultural institution moves)
+3. Anything that affects our safety (real patterns, not petty stuff)
 
-IGNORE: Viral oddities, weather complaints, minor traffic, celebrity sightings, routine events.
+IGNORE: Tourist drama, weather complaints, celebrity sightings, routine city noise.
+
+IMPORTANT: Strip any category prefixes like "[Real Estate Weekly]" or "[News Brief]" from headlines. Return clean headlines only.
 
 Respond with ONLY this JSON (no other text):
 \`\`\`json
 {
   "stories": [
-    {"headline": "The exact headline from the list", "significance": "One sentence on why this matters long-term"},
-    {"headline": "The exact headline", "significance": "One sentence"},
-    {"headline": "The exact headline", "significance": "One sentence"}
+    {"headline": "Clean headline without category prefix", "significance": "One candid sentence - why this matters to us"},
+    {"headline": "Clean headline", "significance": "One sentence"},
+    {"headline": "Clean headline", "significance": "One sentence"}
   ]
 }
 \`\`\``;
@@ -245,26 +252,28 @@ async function editorialSynthesis(
     return `STORY: ${s.headline}\nSIGNIFICANCE: ${s.significance}\nCONTEXT: ${body}`;
   }).join('\n\n');
 
-  const prompt = `You are the Editor of a luxury weekly digest for ${neighborhoodName}, ${city}.
-Write a 200-word cohesive narrative weaving these 3 stories into a single editorial essay.
+  const prompt = `You are a 35-year-old insider living in ${neighborhoodName}, ${city}. You own property here. You eat here. Your audience is your peers - other successful residents.
+
+Write a 200-word weekly update weaving these 3 stories together for your neighbors.
 
 ${storyContext}
 
-STYLE GUIDE:
-- Voice: Sophisticated, "Vanity Fair" meets "Financial Times Weekend"
-- Weave the stories together thematically, don't list them separately
-- Open with a compelling observation that connects the stories
-- Include specific details (addresses, names, numbers) where available
-- Close with a forward-looking insight about what this means for the neighborhood
-- DO NOT use a greeting or sign-off
-- DO NOT use markdown headers, bold, or formatting
+THE PERSONA: "THE SMART NEIGHBOR"
+- First-Person Plural: Use "we," "our," "us." (e.g., "The construction on Hudson St is finally clearing up" NOT "Residents of Hudson St...")
+- Confidence, Not Hype: You don't need to sell the neighborhood. We already live here. Be candid.
+- The "Coffee Shop" Test: If you wouldn't say it to a friend while waiting for a latte, delete it.
+  BAD: "The locale boasts a myriad of culinary delights."
+  GOOD: "If you haven't tried the new spot on Duane yet, book it now - reservations are already gone for Friday."
+
+STRUCTURE:
+1. The Hook: Start with the thing everyone is talking about (or should be)
+2. The Connection: How does the big news actually affect our daily life?
+3. The Verdict: Is this good or bad for us?
+
+RULES:
+- NO greeting or sign-off. NO markdown, bold, or formatting.
 - NEVER use em dashes or en dashes. Use hyphens (-) instead.
-- Write in flowing prose paragraphs
-
-BAD: "Here are three things that happened this week."
-GOOD: "While the city focused on the subway delays, the real story in ${neighborhoodName} this week was..."
-
-Write exactly 200 words. No more, no less.`;
+- Write flowing prose. Exactly 200 words.`;
 
   try {
     const response = await genAI.models.generateContent({
@@ -307,7 +316,7 @@ Prioritize these 4 categories:
 
 Exclude: Generic tourist traps, comedy clubs, happy hours, lower-tier nightlife, chain restaurant promotions.
 
-For each event found, provide: the day of the week, event name, venue, and why it matters.
+For each event found, provide: the specific date and time (e.g., "Saturday Feb 14 2pm"), event name, venue, and why it matters.
 Return at least 5-8 events if available.`;
 
   try {
@@ -363,26 +372,32 @@ async function curateEvents(
   genAI: GoogleGenAI,
   rawEvents: string,
   neighborhoodName: string,
-  city: string
+  city: string,
+  timeFormat: string
 ): Promise<HorizonEvent[]> {
-  const prompt = `You are curating an event agenda for ultra-high-net-worth residents of ${neighborhoodName}, ${city}.
+  const prompt = `You are a 35-year-old insider living in ${neighborhoodName}, ${city}. Pick the 3 events your neighbors would actually want to know about.
 
-From these raw event listings, select the 3 most relevant and exclusive events:
+From these raw event listings, select the 3 most relevant:
 
 ${rawEvents}
 
 CRITERIA:
-- Relevance to wealthy, culturally sophisticated residents
-- Exclusivity (private views, limited access, opening nights preferred)
+- Would you actually tell a friend about this over coffee?
+- Exclusivity matters (private views, opening nights, limited access)
 - Variety across categories (don't pick 3 restaurant events)
+
+FORMAT:
+- "day" must include the date AND time in ${timeFormat} format
+- "whyItMatters" should sound like you're texting a friend, not writing a press release
+- NEVER use em dashes or en dashes. Use hyphens (-) instead.
 
 Respond with ONLY this JSON:
 \`\`\`json
 {
   "events": [
-    {"day": "Tuesday", "name": "Event Name at Venue", "whyItMatters": "One compelling sentence", "category": "High Culture"},
-    {"day": "Thursday", "name": "Event Name", "whyItMatters": "One sentence", "category": "The Scene"},
-    {"day": "Saturday", "name": "Event Name", "whyItMatters": "One sentence", "category": "Urban Nature"}
+    {"day": "Saturday Feb 14 2pm", "name": "Event Name at Venue", "whyItMatters": "One candid sentence", "category": "High Culture"},
+    {"day": "Thursday Feb 12 7pm", "name": "Event Name", "whyItMatters": "One sentence", "category": "The Scene"},
+    {"day": "Sunday Feb 15 11am", "name": "Event Name", "whyItMatters": "One sentence", "category": "Urban Nature"}
   ]
 }
 \`\`\``;
@@ -413,7 +428,8 @@ Respond with ONLY this JSON:
 async function huntEventsWithGemini(
   genAI: GoogleGenAI,
   neighborhoodName: string,
-  city: string
+  city: string,
+  timeFormat: string
 ): Promise<HorizonEvent[]> {
   const today = new Date();
   const nextWeek = new Date();
@@ -422,7 +438,7 @@ async function huntEventsWithGemini(
   const fromDate = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
   const toDate = nextWeek.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-  const prompt = `Search for the top 3 upcoming high-value events in ${neighborhoodName}, ${city} between ${fromDate} and ${toDate}.
+  const prompt = `Search for the top 3 upcoming events in ${neighborhoodName}, ${city} between ${fromDate} and ${toDate} that a well-connected local would actually care about.
 
 Categories to consider:
 1. High Culture & Arts (exhibitions, premieres, gallery openings)
@@ -432,13 +448,18 @@ Categories to consider:
 
 Exclude tourist traps, comedy clubs, happy hours.
 
+FORMAT:
+- "day" must include the date AND time in ${timeFormat} format
+- "whyItMatters" should sound like a friend recommending it, not a press release
+- NEVER use em dashes or en dashes. Use hyphens (-) instead.
+
 Respond with ONLY this JSON:
 \`\`\`json
 {
   "events": [
-    {"day": "Tuesday", "name": "Event Name at Venue", "whyItMatters": "One sentence", "category": "High Culture"},
-    {"day": "Thursday", "name": "Event Name", "whyItMatters": "One sentence", "category": "The Scene"},
-    {"day": "Saturday", "name": "Event Name", "whyItMatters": "One sentence", "category": "Urban Nature"}
+    {"day": "Saturday Feb 14 2pm", "name": "Event Name at Venue", "whyItMatters": "One candid sentence", "category": "High Culture"},
+    {"day": "Thursday Feb 12 7pm", "name": "Event Name", "whyItMatters": "One sentence", "category": "The Scene"},
+    {"day": "Sunday Feb 15 11am", "name": "Event Name", "whyItMatters": "One sentence", "category": "Urban Nature"}
   ]
 }
 \`\`\``;
@@ -473,14 +494,14 @@ Respond with ONLY this JSON:
 
 const DATA_POINT_PROMPTS: Record<DataPointType, (n: string, c: string, co: string) => string> = {
   real_estate: (n, c) =>
-    `What is the current average residential listing price in ${n}, ${c}? Compare to last month. Provide one number and one sentence of context. If exact data unavailable, give the best available indicator. IMPORTANT: In the context sentence, refer to the neighborhood by name ("${n} is..." not "Residents are..."). Write as a local insider, not a third party.`,
+    `What is the current average residential listing price in ${n}, ${c}? Compare to last month. Provide one number and one sentence of context. If exact data unavailable, give the best available indicator. VOICE: Write as a local insider using "we/our" - e.g., "Our median listing is holding at $4.2M" or "${n} is seeing steady demand." NEVER say "Residents are" - that sounds like a third party. NEVER use em dashes.`,
   safety: (n, c) =>
-    `What are the recent crime or safety statistics for ${n}, ${c}? Compare to last year same period. Provide one key metric and one sentence of context. IMPORTANT: In the context sentence, refer to the neighborhood by name ("${n} is..." not "Residents are..."). Write as a local insider, not a third party.`,
+    `What are the recent crime or safety statistics for ${n}, ${c}? Compare to last year same period. Provide one key metric and one sentence of context. VOICE: Write as a local insider using "we/our" - e.g., "We're seeing a 12% drop in incidents" or "${n} is holding steady." NEVER say "Residents are." NEVER use em dashes.`,
   environment: (n, c) =>
-    `What is the current air quality or notable environmental condition in ${n}, ${c}? Provide one measurement and one sentence of context. IMPORTANT: In the context sentence, refer to the neighborhood by name ("${n} is..." not "Residents are..."). Write as a local insider, not a third party.`,
+    `What is the current air quality or notable environmental condition in ${n}, ${c}? Provide one measurement and one sentence of context. VOICE: Write as a local insider using "we/our" - e.g., "We're breathing easy today" or "${n} is dealing with a cold snap." NEVER say "Residents are." NEVER use em dashes.`,
   flaneur_index: (n, c, co) => {
     const currency = co === 'USA' ? 'USD' : co === 'UK' ? 'GBP' : co === 'Sweden' ? 'SEK' : co === 'Australia' ? 'AUD' : 'local currency';
-    return `What is the average price of a latte at premium cafes in ${n}, ${c}? Give the price in ${currency} and compare to the city average. This is our "Flaneur Index" - a lighthearted cost-of-living indicator. IMPORTANT: In the context sentence, refer to the neighborhood by name ("${n} is..." not "Residents are..."). Write as a local insider, not a third party.`;
+    return `What is the average price of a latte at premium cafes in ${n}, ${c}? Give the price in ${currency} and compare to the city average. This is our "Flaneur Index" - a lighthearted cost-of-living indicator. VOICE: Write as a local insider - e.g., "Our morning latte runs about $6.50" or "We're paying a premium." NEVER say "Residents are." NEVER use em dashes.`;
   },
 };
 

@@ -68,7 +68,7 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
 
             {content.rearviewStories.length > 0 && (
               <Section style={storiesBox}>
-                <Text style={storiesBoxTitle}>THE THREE STORIES THAT MATTERED</Text>
+                <Text style={storiesBoxTitle}>THREE STORIES THAT MATTERED</Text>
                 {content.rearviewStories.map((story, i) => (
                   <Text key={i} style={storyItem}>
                     <span style={storyNumber}>{i + 1}.</span>{' '}
@@ -136,7 +136,8 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
           {/* Footer */}
           <Section style={footerSection}>
             <Text style={footerText}>
-              The Sunday Edition is published weekly by Flaneur.
+              The Sunday Edition is published weekly by{' '}
+              <Link href="https://readflaneur.com" style={footerLink}>Flaneur</Link>.
             </Text>
             <Text style={footerLinks}>
               <Link href={content.preferencesUrl} style={footerLink}>
@@ -146,6 +147,9 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
               <Link href={content.unsubscribeUrl} style={footerLink}>
                 Unsubscribe
               </Link>
+            </Text>
+            <Text style={copyrightText}>
+              Flaneur {new Date().getFullYear()}
             </Text>
           </Section>
         </Container>
@@ -407,4 +411,14 @@ const footerLinks = {
 const footerLink = {
   color: '#C9A96E',
   textDecoration: 'none' as const,
+};
+
+const copyrightText = {
+  fontSize: '11px',
+  color: '#cccccc',
+  textAlign: 'center' as const,
+  margin: '16px 0 0',
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase' as const,
+  fontFamily: 'system-ui, -apple-system, sans-serif',
 };
