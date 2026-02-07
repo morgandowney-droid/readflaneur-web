@@ -23,6 +23,19 @@ function stripDashes(text: string): string {
   return text.replace(/\u2014/g, '-').replace(/\u2013/g, '-').replace(/—/g, '-').replace(/–/g, '-');
 }
 
+/**
+ * Strip category label prefixes from headlines.
+ * e.g., "[Real Estate Weekly] Tribeca Real Estate..." → "Tribeca Real Estate..."
+ * Also strips "DAILY BRIEF:" and "News Brief:" prefixes.
+ */
+function stripCategoryPrefix(headline: string): string {
+  return headline
+    .replace(/^\[.*?\]\s*/i, '')           // [Category Label] prefix
+    .replace(/^[\w\s]+DAILY BRIEF:\s*/i, '') // "Tribeca DAILY BRIEF:" prefix
+    .replace(/^News Brief:\s*/i, '')        // "News Brief:" prefix
+    .trim();
+}
+
 // ─── Types ───
 
 export interface RearviewStory {
@@ -161,7 +174,7 @@ export async function generateWeeklyBrief(
     rearviewNarrative: stripDashes(narrative),
     rearviewStories: topStories.map(s => ({
       ...s,
-      headline: stripDashes(s.headline),
+      headline: stripCategoryPrefix(stripDashes(s.headline)),
       significance: s.significance ? stripDashes(s.significance) : s.significance,
     })),
     horizonEvents: horizonEvents.map(e => ({
