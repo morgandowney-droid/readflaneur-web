@@ -11,6 +11,36 @@
 
 ### Recent Changes (2026-02-07)
 
+**Fahrenheit for US Neighborhoods in Daily Emails:**
+- US neighborhoods now show °F as primary unit in weather stories and widgets (e.g., `10°F / -12°C`)
+- Headlines use °F too: `Sharp Drop: 14°F Tomorrow (Sun).` instead of `-10°C`
+- Snow shows inches for US (`4"` instead of `10cm`), precipitation in inches too
+- Determined by `country` field on neighborhoods table (`USA` → Fahrenheit, all others → Celsius)
+- Files: `src/lib/email/weather-story.ts`, `src/lib/email/weather.ts`, `src/lib/email/types.ts`, `src/lib/email/assembler.ts`, `WeatherStoryCard.tsx`, `WeatherWidget.tsx`
+
+**RSS Article Enrichment Pipeline Fix:**
+- Root cause: 48-hour time window meant articles older than 48h were **permanently skipped** by enrichment cron
+- 201 of 228 RSS articles had never been enriched (no sources shown on article pages)
+- Fix: Removed arbitrary time window — `enriched_at IS NULL` filter + batch size is sufficient
+- Added time budgeting: 280s total budget, 120s Phase 1 cap, so Phase 2 always gets time
+- Moved cron execution logging into `try/finally` block (was never logging due to timeout)
+- Backlog of 201 articles clearing automatically at ~10/hour via hourly cron
+- File: `src/app/api/cron/enrich-briefs/route.ts`
+
+**Instant Email Resend on Settings Change:**
+- Changing timezone, neighborhoods, or paused topics triggers immediate re-send of daily brief
+- Rate limited: max 3 resends per day per recipient via `instant_resend_log` table
+- Fire-and-forget pattern: settings endpoints call resend endpoint, user response is instant
+- UI notifications: "A fresh Daily Brief reflecting your changes is on its way." / "To save your inbox, your changes will be reflected in tomorrow morning's email."
+- Files: `src/lib/email/instant-resend.ts` (NEW), `src/app/api/internal/resend-daily-brief/route.ts` (NEW), `src/app/api/location/set-primary/route.ts`, `src/app/api/email/preferences/route.ts`, `src/app/settings/page.tsx`, `src/app/email/preferences/page.tsx`
+- Migration: `supabase/migrations/036_instant_resend_log.sql`
+
+**Thin Content Detector Fix:**
+- Now skips exempt regions: `test`, `us-vacation`, `europe-vacation`, `caribbean-vacation`
+- Only flags neighborhoods whose city has active RSS sources in `rss_sources` table
+- Reduced false positives from 52 to near zero
+- File: `src/lib/cron-monitor/issue-detector.ts`
+
 **RSS Article Source Attribution:**
 - Gemini enrichment of RSS articles now extracts sources and saves to `article_sources` table
 - RSS articles display proper source attribution (same as daily brief articles)
