@@ -116,7 +116,7 @@ export async function GET(request: Request) {
 
       const { data: brief } = await supabase
         .from('weekly_briefs')
-        .select('*, neighborhoods(name, city)')
+        .select('*, neighborhoods(name, city), articles(slug)')
         .eq('neighborhood_id', primaryId)
         .eq('week_date', weekDate)
         .single();
@@ -127,6 +127,7 @@ export async function GET(request: Request) {
       }
 
       const hood = brief.neighborhoods as unknown as { name: string; city: string };
+      const articleSlug = (brief.articles as unknown as { slug: string } | null)?.slug;
 
       // Format the date nicely
       const dateStr = today.toLocaleDateString('en-US', {
@@ -136,6 +137,14 @@ export async function GET(request: Request) {
         day: 'numeric',
         timeZone: recipient.timezone || 'America/New_York',
       });
+
+      // Build article URL for "Read the full edition" link
+      let articleUrl: string | null = null;
+      if (articleSlug) {
+        const neighborhoodSlug = primaryId.split('-').slice(1).join('-');
+        const citySlug = hood.city.toLowerCase().replace(/\s+/g, '-');
+        articleUrl = `${appUrl}/${citySlug}/${neighborhoodSlug}/${articleSlug}?ref=sunday-edition`;
+      }
 
       const emailContent: SundayEditionContent = {
         neighborhoodName: hood.name,
@@ -150,7 +159,8 @@ export async function GET(request: Request) {
           value: 'Data unavailable this week',
           context: '',
         }) as SundayEditionContent['dataPoint'],
-        imageUrl: null, // Could fetch from article if needed
+        imageUrl: null,
+        articleUrl,
         unsubscribeUrl: `${appUrl}/api/email/unsubscribe?token=${recipient.unsubscribeToken}`,
         preferencesUrl: `${appUrl}/email/preferences?token=${recipient.unsubscribeToken}`,
       };
@@ -224,7 +234,7 @@ async function buildTestRecipient(supabase: SupabaseClient, email: string) {
   // Try profile first
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, email, primary_timezone, primary_city')
+    .select('id, email, primary_timezone, primary_city, email_unsubscribe_token')
     .eq('email', email)
     .single();
 
@@ -242,7 +252,7 @@ async function buildTestRecipient(supabase: SupabaseClient, email: string) {
       timezone: profile.primary_timezone || 'America/New_York',
       primaryNeighborhoodId: neighborhoodIds[0] || null,
       subscribedNeighborhoodIds: neighborhoodIds,
-      unsubscribeToken: profile.id,
+      unsubscribeToken: profile.email_unsubscribe_token || profile.id,
       pausedTopics: [],
     }];
   }
@@ -250,7 +260,7 @@ async function buildTestRecipient(supabase: SupabaseClient, email: string) {
   // Try newsletter subscriber
   const { data: sub } = await supabase
     .from('newsletter_subscribers')
-    .select('id, email, timezone, neighborhood_ids')
+    .select('id, email, timezone, neighborhood_ids, unsubscribe_token')
     .eq('email', email)
     .single();
 
@@ -263,7 +273,7 @@ async function buildTestRecipient(supabase: SupabaseClient, email: string) {
       timezone: sub.timezone || 'America/New_York',
       primaryNeighborhoodId: ids[0] || null,
       subscribedNeighborhoodIds: ids,
-      unsubscribeToken: sub.id,
+      unsubscribeToken: sub.unsubscribe_token || sub.id,
       pausedTopics: [],
     }];
   }

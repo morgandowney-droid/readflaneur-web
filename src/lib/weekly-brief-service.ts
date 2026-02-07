@@ -15,6 +15,14 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { getNeighborhoodIdsForQuery } from './combo-utils';
 import { getSearchLocation } from './neighborhood-utils';
 
+/**
+ * Replace em dashes and en dashes with regular hyphens.
+ * Em/en dashes are a telltale sign of AI-generated content.
+ */
+function stripDashes(text: string): string {
+  return text.replace(/\u2014/g, '-').replace(/\u2013/g, '-').replace(/—/g, '-').replace(/–/g, '-');
+}
+
 // ─── Types ───
 
 export interface RearviewStory {
@@ -118,7 +126,7 @@ export async function generateWeeklyBrief(
       articles
     );
   } else {
-    narrative = `A quiet week in ${neighborhoodName}. Sometimes the absence of news is itself a signal\u2014the neighborhood hums along in its familiar rhythm, undisturbed by the kind of disruptions that make headlines elsewhere.`;
+    narrative = `A quiet week in ${neighborhoodName}. Sometimes the absence of news is itself a signal - the neighborhood hums along in its familiar rhythm, undisturbed by the kind of disruptions that make headlines elsewhere.`;
   }
 
   // ─── Section 2: The Horizon ───
@@ -146,10 +154,22 @@ export async function generateWeeklyBrief(
   const dataPoint = await generateDataPoint(genAI, dataPointType, neighborhoodName, city, country);
 
   return {
-    rearviewNarrative: narrative,
-    rearviewStories: topStories,
-    horizonEvents,
-    dataPoint,
+    rearviewNarrative: stripDashes(narrative),
+    rearviewStories: topStories.map(s => ({
+      ...s,
+      headline: stripDashes(s.headline),
+      significance: s.significance ? stripDashes(s.significance) : s.significance,
+    })),
+    horizonEvents: horizonEvents.map(e => ({
+      ...e,
+      name: stripDashes(e.name),
+      whyItMatters: stripDashes(e.whyItMatters),
+    })),
+    dataPoint: {
+      ...dataPoint,
+      value: stripDashes(dataPoint.value),
+      context: dataPoint.context ? stripDashes(dataPoint.context) : dataPoint.context,
+    },
   };
 }
 
@@ -238,6 +258,7 @@ STYLE GUIDE:
 - Close with a forward-looking insight about what this means for the neighborhood
 - DO NOT use a greeting or sign-off
 - DO NOT use markdown headers, bold, or formatting
+- NEVER use em dashes or en dashes. Use hyphens (-) instead.
 - Write in flowing prose paragraphs
 
 BAD: "Here are three things that happened this week."

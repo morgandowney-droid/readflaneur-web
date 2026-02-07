@@ -21,12 +21,13 @@ export interface SundayEditionContent {
   horizonEvents: HorizonEvent[];
   dataPoint: WeeklyDataPoint;
   imageUrl: string | null;
+  articleUrl: string | null;
   unsubscribeUrl: string;
   preferencesUrl: string;
 }
 
 export function SundayEditionTemplate(content: SundayEditionContent) {
-  const preview = `The Sunday Edition: ${content.neighborhoodName} — Your week in review and the week ahead.`;
+  const preview = `The Sunday Edition: ${content.neighborhoodName} - Your week in review and the week ahead.`;
 
   return (
     <Html>
@@ -73,11 +74,19 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
                     <span style={storyNumber}>{i + 1}.</span>{' '}
                     <span style={storyHeadline}>{story.headline}</span>
                     {story.significance && (
-                      <span style={storySignificance}> — {story.significance}</span>
+                      <span style={storySignificance}> - {story.significance}</span>
                     )}
                   </Text>
                 ))}
               </Section>
+            )}
+
+            {content.articleUrl && (
+              <Text style={readMoreText}>
+                <Link href={content.articleUrl} style={readMoreLink}>
+                  Read the full edition on Flaneur &rarr;
+                </Link>
+              </Text>
             )}
           </Section>
 
@@ -90,14 +99,19 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
                 <Text style={sectionLabel}>THE HORIZON</Text>
                 <Text style={sectionSubtitle}>Your week ahead, curated.</Text>
 
-                {content.horizonEvents.map((event, i) => (
-                  <Section key={i} style={eventItem}>
-                    <Text style={eventDay}>{event.day.toUpperCase()}</Text>
-                    <Text style={eventName}>{event.name}</Text>
-                    <Text style={eventWhy}>{event.whyItMatters}</Text>
-                    <Text style={eventCategory}>{event.category}</Text>
-                  </Section>
-                ))}
+                {content.horizonEvents.map((event, i) => {
+                  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(event.name + ' ' + content.neighborhoodName + ' ' + content.cityName)}`;
+                  return (
+                    <Section key={i} style={eventItem}>
+                      <Text style={eventDay}>{event.day.toUpperCase()}</Text>
+                      <Text style={eventName}>
+                        <Link href={searchUrl} style={eventNameLink}>{event.name}</Link>
+                      </Text>
+                      <Text style={eventWhy}>{event.whyItMatters}</Text>
+                      <Text style={eventCategory}>{event.category}</Text>
+                    </Section>
+                  );
+                })}
               </Section>
 
               <Hr style={divider} />
@@ -311,6 +325,13 @@ const eventName = {
   fontFamily: 'Georgia, "Times New Roman", serif',
 };
 
+const eventNameLink = {
+  color: '#1a1a1a',
+  textDecoration: 'underline' as const,
+  textDecorationColor: '#C9A96E',
+  textUnderlineOffset: '3px',
+};
+
 const eventWhy = {
   fontSize: '13px',
   color: '#555555',
@@ -349,6 +370,18 @@ const dataPointContext = {
   margin: '0',
   fontFamily: 'Georgia, "Times New Roman", serif',
   fontStyle: 'italic' as const,
+};
+
+const readMoreText = {
+  fontSize: '14px',
+  margin: '20px 0 0',
+  fontFamily: 'Georgia, "Times New Roman", serif',
+};
+
+const readMoreLink = {
+  color: '#C9A96E',
+  textDecoration: 'none' as const,
+  fontWeight: '600' as const,
 };
 
 const footerSection = {
