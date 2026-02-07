@@ -48,6 +48,8 @@ export async function GET(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  const startedAt = new Date().toISOString();
+
   const results = {
     briefs_processed: 0,
     briefs_enriched: 0,
@@ -170,9 +172,10 @@ export async function GET(request: Request) {
   }
 
   // ─── Phase 2: Enrich RSS-sourced articles ───
-  // Find recent RSS articles (ai_model = 'claude-sonnet-4') that haven't been enriched
-  const sixHoursAgo = new Date();
-  sixHoursAgo.setHours(sixHoursAgo.getHours() - 6);
+  // Find RSS articles (ai_model = 'claude-sonnet-4') that haven't been enriched
+  // Use 48-hour window by default, or no window for backfill mode
+  const isBackfill = url.searchParams.get('backfill') === 'true';
+  const articleBatchSize = parseInt(url.searchParams.get('article-batch') || '10');
 
   let articleQuery = supabase
     .from('articles')
@@ -192,10 +195,17 @@ export async function GET(request: Request) {
     `)
     .eq('ai_model', 'claude-sonnet-4')
     .eq('status', 'published')
-    .is('enriched_at', null)
-    .gt('published_at', sixHoursAgo.toISOString())
+    .is('enriched_at', null);
+
+  if (!isBackfill && !testArticleId) {
+    const fortyEightHoursAgo = new Date();
+    fortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);
+    articleQuery = articleQuery.gt('published_at', fortyEightHoursAgo.toISOString());
+  }
+
+  articleQuery = articleQuery
     .order('published_at', { ascending: false })
-    .limit(batchSize);
+    .limit(testArticleId ? 1 : articleBatchSize);
 
   if (testArticleId) {
     articleQuery = supabase
@@ -337,9 +347,23 @@ export async function GET(request: Request) {
 
   const totalEnriched = results.briefs_enriched + results.articles_enriched;
   const totalFailed = results.briefs_failed + results.articles_failed;
+  const isSuccess = totalFailed === 0 || totalEnriched > 0;
+
+  // Log execution to cron_executions table
+  if (!testBriefId && !testArticleId) {
+    await supabase.from('cron_executions').insert({
+      job_name: 'enrich-briefs',
+      started_at: startedAt,
+      completed_at: new Date().toISOString(),
+      success: isSuccess,
+      items_processed: results.briefs_processed + results.articles_processed,
+      items_created: totalEnriched,
+      errors: results.errors.length > 0 ? results.errors : null,
+    }).then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
+  }
 
   return NextResponse.json({
-    success: totalFailed === 0 || totalEnriched > 0,
+    success: isSuccess,
     ...results,
     timestamp: new Date().toISOString(),
   });
