@@ -27,6 +27,7 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [emailResendNote, setEmailResendNote] = useState<string | null>(null);
 
   const cities = getAllCityNames();
 
@@ -87,6 +88,7 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setIsSaving(true);
     setSaveMessage(null);
+    setEmailResendNote(null);
 
     try {
       if (primaryCity) {
@@ -114,6 +116,13 @@ export default function SettingsPage() {
         }
 
         setSaveMessage({ type: 'success', text: 'Location saved successfully' });
+
+        // Show email resend notification
+        if (data.emailResend === 'sending') {
+          setEmailResendNote('A fresh Daily Brief reflecting your changes is on its way.');
+        } else if (data.emailResend === 'rate_limited') {
+          setEmailResendNote('To save your inbox, your changes will be reflected in tomorrow morning\'s email.');
+        }
       } else {
         // Clear location
         await fetch('/api/location/set-primary', { method: 'DELETE' });
@@ -134,8 +143,11 @@ export default function SettingsPage() {
       setSaveMessage({ type: 'error', text: 'Failed to save location' });
     } finally {
       setIsSaving(false);
-      // Clear message after 3 seconds
-      setTimeout(() => setSaveMessage(null), 3000);
+      // Clear messages after 8 seconds (longer to give time to read email note)
+      setTimeout(() => {
+        setSaveMessage(null);
+        setEmailResendNote(null);
+      }, 8000);
     }
   };
 
@@ -248,6 +260,11 @@ export default function SettingsPage() {
           {saveMessage && (
             <p className={`text-sm ${saveMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
               {saveMessage.text}
+            </p>
+          )}
+          {emailResendNote && (
+            <p className="text-sm text-neutral-500 italic">
+              {emailResendNote}
             </p>
           )}
 

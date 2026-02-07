@@ -53,6 +53,8 @@ export async function POST(request: NextRequest) {
     // Check if user is logged in
     const { data: { user } } = await supabase.auth.getUser();
 
+    let emailResend: 'sending' | 'rate_limited' | null = null;
+
     if (user) {
       // Save to profile for logged-in users
       const { error } = await supabase
@@ -72,16 +74,37 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Fire-and-forget: resend today's Daily Brief with updated timezone
+      // Check rate limit and fire-and-forget resend of today's Daily Brief
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\n$/, '').replace(/\/$/, '')
         || 'https://readflaneur.com';
       const resendSecret = process.env.CRON_SECRET;
       if (resendSecret) {
-        fetch(`${baseUrl}/api/internal/resend-daily-brief`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-cron-secret': resendSecret },
-          body: JSON.stringify({ userId: user.id, source: 'profile', trigger: 'city_change' }),
-        }).catch(() => {});
+        try {
+          const { createClient: createServiceClient } = await import('@supabase/supabase-js');
+          const serviceSupabase = createServiceClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+          );
+          const today = new Date().toISOString().split('T')[0];
+          const { count } = await serviceSupabase
+            .from('instant_resend_log')
+            .select('*', { count: 'exact', head: true })
+            .eq('recipient_id', user.id)
+            .eq('send_date', today);
+
+          if ((count || 0) >= 3) {
+            emailResend = 'rate_limited';
+          } else {
+            emailResend = 'sending';
+            fetch(`${baseUrl}/api/internal/resend-daily-brief`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-cron-secret': resendSecret },
+              body: JSON.stringify({ userId: user.id, source: 'profile', trigger: 'city_change' }),
+            }).catch(() => {});
+          }
+        } catch {
+          // Non-critical — still return success for the location save
+        }
       }
     }
 
@@ -95,6 +118,7 @@ export async function POST(request: NextRequest) {
         country: matchedCity.country,
       },
       savedToProfile: !!user,
+      emailResend,
     });
   } catch (error) {
     console.error('Set primary location error:', error);

@@ -100,6 +100,7 @@ function PreferencesContent() {
   const [suggestion, setSuggestion] = useState('');
   const [suggestionSending, setSuggestionSending] = useState(false);
   const [suggestionSent, setSuggestionSent] = useState(false);
+  const [emailResendNote, setEmailResendNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) {
@@ -143,6 +144,7 @@ function PreferencesContent() {
     if (!token) return;
     setSaving(true);
     setSaved(false);
+    setEmailResendNote(null);
 
     try {
       const res = await fetch('/api/email/preferences', {
@@ -157,6 +159,13 @@ function PreferencesContent() {
 
       if (res.ok) {
         setSaved(true);
+        const result = await res.json();
+        if (result.emailResend === 'sending') {
+          setEmailResendNote('A fresh Daily Brief reflecting your changes is on its way.');
+        } else if (result.emailResend === 'rate_limited') {
+          setEmailResendNote('To save your inbox, your changes will be reflected in tomorrow morning\'s email.');
+        }
+        setTimeout(() => setEmailResendNote(null), 8000);
       }
     } catch {
       // Error saving
@@ -203,6 +212,7 @@ function PreferencesContent() {
     if (!token) return;
     setTopicsSaving(true);
     setTopicsSaved(false);
+    setEmailResendNote(null);
 
     try {
       const res = await fetch('/api/email/preferences', {
@@ -218,6 +228,13 @@ function PreferencesContent() {
       if (res.ok) {
         setTopicsSaved(true);
         setData(prev => prev ? { ...prev, paused_topics: pausedTopics } : prev);
+        const result = await res.json();
+        if (result.emailResend === 'sending') {
+          setEmailResendNote('A fresh Daily Brief reflecting your changes is on its way.');
+        } else if (result.emailResend === 'rate_limited') {
+          setEmailResendNote('To save your inbox, your changes will be reflected in tomorrow morning\'s email.');
+        }
+        setTimeout(() => setEmailResendNote(null), 8000);
       }
     } catch {
       // Error saving
@@ -416,6 +433,9 @@ function PreferencesContent() {
           {saved && !hasChanges && (
             <p className="text-xs text-green-600 mt-3">Preferences saved!</p>
           )}
+          {emailResendNote && (saved || topicsSaved) && (
+            <p className="text-xs text-neutral-500 italic mt-2">{emailResendNote}</p>
+          )}
         </section>
 
         {/* Topic preferences */}
@@ -476,6 +496,9 @@ function PreferencesContent() {
 
           {topicsSaved && !hasTopicChanges && (
             <p className="text-xs text-green-600 mt-3">Topics saved!</p>
+          )}
+          {emailResendNote && topicsSaved && (
+            <p className="text-xs text-neutral-500 italic mt-2">{emailResendNote}</p>
           )}
         </section>
 

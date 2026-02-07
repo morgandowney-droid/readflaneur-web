@@ -88,16 +88,39 @@ async function findSubscriber(supabase: ReturnType<typeof getSupabase>, token: s
   return null;
 }
 
-function triggerInstantResend(userId: string, source: 'profile' | 'newsletter', trigger: ResendTrigger) {
+async function triggerInstantResend(
+  supabase: ReturnType<typeof getSupabase>,
+  userId: string,
+  source: 'profile' | 'newsletter',
+  trigger: ResendTrigger
+): Promise<'sending' | 'rate_limited' | null> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\n$/, '').replace(/\/$/, '')
     || 'https://readflaneur.com';
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
+  if (!cronSecret) return null;
+
+  try {
+    // Quick rate limit check
+    const today = new Date().toISOString().split('T')[0];
+    const { count } = await supabase
+      .from('instant_resend_log')
+      .select('*', { count: 'exact', head: true })
+      .eq('recipient_id', userId)
+      .eq('send_date', today);
+
+    if ((count || 0) >= 3) {
+      return 'rate_limited';
+    }
+
     fetch(`${baseUrl}/api/internal/resend-daily-brief`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-cron-secret': cronSecret },
       body: JSON.stringify({ userId, source, trigger }),
     }).catch(() => {});
+
+    return 'sending';
+  } catch {
+    return null;
   }
 }
 
@@ -189,9 +212,9 @@ export async function POST(request: Request) {
     }
 
     // Fire-and-forget: resend today's Daily Brief with updated neighborhoods
-    triggerInstantResend(subscriber.id, subscriber.source, 'neighborhood_change');
+    const emailResend = await triggerInstantResend(supabase, subscriber.id, subscriber.source, 'neighborhood_change');
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, emailResend });
   }
 
   if (action === 'update_email_enabled') {
@@ -228,9 +251,9 @@ export async function POST(request: Request) {
     }
 
     // Fire-and-forget: resend today's Daily Brief with updated topics
-    triggerInstantResend(subscriber.id, subscriber.source, 'topic_change');
+    const emailResend = await triggerInstantResend(supabase, subscriber.id, subscriber.source, 'topic_change');
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, emailResend });
   }
 
   if (action === 'suggest_topic') {
