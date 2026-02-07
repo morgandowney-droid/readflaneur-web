@@ -139,7 +139,7 @@ export async function generateWeeklyBrief(
       articles
     );
   } else {
-    narrative = `Honestly? A quiet week around here. No drama, no surprises - just ${neighborhoodName} humming along the way we like it. Sometimes the best update is that there's nothing to report.`;
+    narrative = `A quiet week in ${neighborhoodName}. No drama, no surprises - just the neighborhood humming along in its familiar rhythm.\n\nSometimes the absence of news is itself a signal. The streets are calm, the cafes are full, and nothing has disrupted the daily routine worth reporting.`;
   }
 
   // ─── Section 2: The Horizon ───
@@ -198,27 +198,30 @@ async function significanceFilter(
   neighborhoodName: string,
   city: string
 ): Promise<{ stories: RearviewStory[] }> {
-  const prompt = `You are a 35-year-old insider living in ${neighborhoodName}, ${city}. You own property here, you eat here, you know the neighbors.
+  const prompt = `You are a well-travelled, successful 35-year-old who has lived in ${neighborhoodName}, ${city} for years. You know every corner of the neighborhood - the hidden gems, the local drama, the new openings before anyone else does.
 
-Pick the 3 stories from this past week that YOUR PEERS (other successful residents) would actually care about.
+Pick the 3 stories from this past week that matter most for residents who live here.
 
 STORIES:
 ${headlineList}
 
-WHAT WE CARE ABOUT:
-1. Anything that affects our property values (zoning changes, landmark sales, new developments)
-2. Anything that changes our daily life here (new restaurant worth booking, school changes, cultural institution moves)
-3. Anything that affects our safety (real patterns, not petty stuff)
+SELECTION CRITERIA:
+1. Anything that affects property values (zoning changes, landmark sales, new developments)
+2. Anything that permanently changes the neighborhood (restaurant openings, school changes, cultural institutions)
+3. Anything that affects safety (real patterns, not petty stuff)
 
 IGNORE: Tourist drama, weather complaints, celebrity sightings, routine city noise.
 
 IMPORTANT: Strip any category prefixes like "[Real Estate Weekly]" or "[News Brief]" from headlines. Return clean headlines only.
 
+TONE: Knowledgeable but not pretentious. You present information conversationally, like telling a friend what happened this week.
+Do NOT use lowbrow words like "ya", "folks", "eats", "grub", "spot". The reader is well-educated and prefers polished language.
+
 Respond with ONLY this JSON (no other text):
 \`\`\`json
 {
   "stories": [
-    {"headline": "Clean headline without category prefix", "significance": "One candid sentence - why this matters to us"},
+    {"headline": "Clean headline without category prefix", "significance": "One sentence on why this matters"},
     {"headline": "Clean headline", "significance": "One sentence"},
     {"headline": "Clean headline", "significance": "One sentence"}
   ]
@@ -265,28 +268,29 @@ async function editorialSynthesis(
     return `STORY: ${s.headline}\nSIGNIFICANCE: ${s.significance}\nCONTEXT: ${body}`;
   }).join('\n\n');
 
-  const prompt = `You are a 35-year-old insider living in ${neighborhoodName}, ${city}. You own property here. You eat here. Your audience is your peers - other successful residents.
+  const prompt = `You are a well-travelled, successful 35-year-old who has lived in ${neighborhoodName}, ${city} for years. You know every corner of the neighborhood - the hidden gems, the local drama, the new openings before anyone else does.
 
-Write a 200-word weekly update weaving these 3 stories together for your neighbors.
+Write a 200-word weekly synthesis weaving these 3 stories into a cohesive narrative for fellow residents.
 
 ${storyContext}
 
-THE PERSONA: "THE SMART NEIGHBOR"
-- First-Person Plural: Use "we," "our," "us." (e.g., "The construction on Hudson St is finally clearing up" NOT "Residents of Hudson St...")
-- Confidence, Not Hype: You don't need to sell the neighborhood. We already live here. Be candid.
-- The "Coffee Shop" Test: If you wouldn't say it to a friend while waiting for a latte, delete it.
-  BAD: "The locale boasts a myriad of culinary delights."
-  GOOD: "If you haven't tried the new spot on Duane yet, book it now - reservations are already gone for Friday."
+STYLE GUIDE:
+- Knowledgeable but not pretentious
+- Deadpan humor when appropriate
+- You drop specific details that only a local would know (exact addresses, which corner, who owns what)
+- You present information conversationally, like telling a friend what's happening in the neighborhood
+- Open with a compelling observation that connects the stories
+- Close with a forward-looking insight about what this means for the neighborhood
+
+TONE AND VOCABULARY:
+- Do NOT use lowbrow or overly casual words like "ya", "folks", "eats", "grub", "spot" (for restaurant)
+- The reader is well-educated and prefers polished language without slang
+- NEVER use em dashes or en dashes. Use hyphens (-) instead.
 
 STRUCTURE:
-1. The Hook: Start with the thing everyone is talking about (or should be)
-2. The Connection: How does the big news actually affect our daily life?
-3. The Verdict: Is this good or bad for us?
-
-RULES:
+- Write in 2-3 SHORT paragraphs separated by blank lines (not one dense wall of text)
 - NO greeting or sign-off. NO markdown, bold, or formatting.
-- NEVER use em dashes or en dashes. Use hyphens (-) instead.
-- Write flowing prose. Exactly 200 words.`;
+- Exactly 200 words.`;
 
   try {
     const response = await genAI.models.generateContent({

@@ -29,6 +29,27 @@ export interface SundayEditionContent {
 export function SundayEditionTemplate(content: SundayEditionContent) {
   const preview = `The Sunday Edition: ${content.neighborhoodName} - Your week in review and the week ahead.`;
 
+  // Split narrative into paragraphs and show first as teaser
+  const paragraphs = content.rearviewNarrative
+    .split(/\n\n+/)
+    .filter(p => p.trim().length > 0);
+
+  // If it's a single block, try splitting on sentences at ~150 chars
+  let teaserParagraph = paragraphs[0] || '';
+  let remainingParagraphs = paragraphs.slice(1);
+
+  if (paragraphs.length === 1 && teaserParagraph.length > 200) {
+    // Split single block into teaser + rest at first sentence boundary after 120 chars
+    const sentenceBreak = teaserParagraph.indexOf('. ', 120);
+    if (sentenceBreak > 0 && sentenceBreak < teaserParagraph.length - 50) {
+      remainingParagraphs = [teaserParagraph.slice(sentenceBreak + 2)];
+      teaserParagraph = teaserParagraph.slice(0, sentenceBreak + 1);
+    }
+  }
+
+  // Build Google search URL for weather
+  const weatherSearchUrl = `https://www.google.com/search?q=${encodeURIComponent('weather ' + content.neighborhoodName + ' ' + content.cityName)}`;
+
   return (
     <Html>
       <Head />
@@ -64,20 +85,34 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
           <Section style={sectionContainer}>
             <Text style={sectionLabel}>THE REARVIEW</Text>
             <Text style={sectionSubtitle}>The past seven days, distilled.</Text>
-            <Text style={narrativeText}>{content.rearviewNarrative}</Text>
+
+            {/* Teaser paragraph */}
+            <Text style={narrativeText}>{teaserParagraph}</Text>
+
+            {/* Continue reading link (shown when there's more content) */}
+            {(remainingParagraphs.length > 0 || content.articleUrl) && content.articleUrl && (
+              <Text style={continueReadingText}>
+                <Link href={content.articleUrl} style={continueReadingLink}>
+                  Continue reading &rarr;
+                </Link>
+              </Text>
+            )}
 
             {content.rearviewStories.length > 0 && (
               <Section style={storiesBox}>
                 <Text style={storiesBoxTitle}>THREE STORIES THAT MATTERED</Text>
-                {content.rearviewStories.map((story, i) => (
-                  <Text key={i} style={storyItem}>
-                    <span style={storyNumber}>{i + 1}.</span>{' '}
-                    <span style={storyHeadline}>{story.headline}</span>
-                    {story.significance && (
-                      <span style={storySignificance}> - {story.significance}</span>
-                    )}
-                  </Text>
-                ))}
+                {content.rearviewStories.map((story, i) => {
+                  const storySearchUrl = `https://www.google.com/search?q=${encodeURIComponent(story.headline + ' ' + content.neighborhoodName + ' ' + content.cityName)}`;
+                  return (
+                    <Text key={i} style={storyItem}>
+                      <span style={storyNumber}>{i + 1}.</span>{' '}
+                      <Link href={storySearchUrl} style={storyHeadlineLink}>{story.headline}</Link>
+                      {story.significance && (
+                        <span style={storySignificance}> - {story.significance}</span>
+                      )}
+                    </Text>
+                  );
+                })}
               </Section>
             )}
 
@@ -118,15 +153,17 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
             </>
           )}
 
-          {/* Section 3: The Data Point */}
+          {/* Section 3: The Data Point (clickable for weather) */}
           {content.dataPoint.value !== 'Data unavailable this week' && (
             <>
               <Section style={dataPointSection}>
-                <Text style={sectionLabel}>{content.dataPoint.label.toUpperCase()}</Text>
-                <Text style={dataPointValue}>{content.dataPoint.value}</Text>
-                {content.dataPoint.context && (
-                  <Text style={dataPointContext}>{content.dataPoint.context}</Text>
-                )}
+                <Link href={content.dataPoint.type === 'environment' ? weatherSearchUrl : '#'} style={dataPointLink}>
+                  <Text style={sectionLabel}>{content.dataPoint.label.toUpperCase()}</Text>
+                  <Text style={dataPointValue}>{content.dataPoint.value}</Text>
+                  {content.dataPoint.context && (
+                    <Text style={dataPointContext}>{content.dataPoint.context}</Text>
+                  )}
+                </Link>
               </Section>
 
               <Hr style={divider} />
@@ -242,8 +279,8 @@ const sectionContainer = {
 };
 
 const sectionLabel = {
-  fontSize: '11px',
-  fontWeight: '600' as const,
+  fontSize: '14px',
+  fontWeight: '700' as const,
   letterSpacing: '3px',
   color: '#C9A96E',
   margin: '0 0 6px',
@@ -252,7 +289,7 @@ const sectionLabel = {
 };
 
 const sectionSubtitle = {
-  fontSize: '13px',
+  fontSize: '14px',
   fontStyle: 'italic' as const,
   color: '#888888',
   margin: '0 0 20px',
@@ -260,11 +297,23 @@ const sectionSubtitle = {
 };
 
 const narrativeText = {
-  fontSize: '16px',
+  fontSize: '17px',
   lineHeight: '1.7',
   color: '#2a2a2a',
+  margin: '0 0 16px',
+  fontFamily: 'Georgia, "Times New Roman", serif',
+};
+
+const continueReadingText = {
+  fontSize: '15px',
   margin: '0 0 24px',
   fontFamily: 'Georgia, "Times New Roman", serif',
+};
+
+const continueReadingLink = {
+  color: '#C9A96E',
+  textDecoration: 'none' as const,
+  fontWeight: '600' as const,
 };
 
 const storiesBox = {
@@ -275,7 +324,7 @@ const storiesBox = {
 };
 
 const storiesBoxTitle = {
-  fontSize: '10px',
+  fontSize: '11px',
   fontWeight: '600' as const,
   letterSpacing: '2px',
   color: '#999999',
@@ -284,10 +333,10 @@ const storiesBoxTitle = {
 };
 
 const storyItem = {
-  fontSize: '14px',
+  fontSize: '15px',
   lineHeight: '1.5',
   color: '#333333',
-  margin: '0 0 10px',
+  margin: '0 0 12px',
   fontFamily: 'Georgia, "Times New Roman", serif',
 };
 
@@ -296,8 +345,12 @@ const storyNumber = {
   color: '#C9A96E',
 };
 
-const storyHeadline = {
+const storyHeadlineLink = {
   fontWeight: '600' as const,
+  color: '#1a1a1a',
+  textDecoration: 'underline' as const,
+  textDecorationColor: '#C9A96E',
+  textUnderlineOffset: '3px',
 };
 
 const storySignificance = {
@@ -313,7 +366,7 @@ const eventItem = {
 };
 
 const eventDay = {
-  fontSize: '10px',
+  fontSize: '11px',
   fontWeight: '700' as const,
   letterSpacing: '2px',
   color: '#C9A96E',
@@ -322,7 +375,7 @@ const eventDay = {
 };
 
 const eventName = {
-  fontSize: '15px',
+  fontSize: '16px',
   fontWeight: '600' as const,
   color: '#1a1a1a',
   margin: '0 0 4px',
@@ -337,7 +390,7 @@ const eventNameLink = {
 };
 
 const eventWhy = {
-  fontSize: '13px',
+  fontSize: '14px',
   color: '#555555',
   lineHeight: '1.5',
   margin: '0 0 2px',
@@ -345,7 +398,7 @@ const eventWhy = {
 };
 
 const eventCategory = {
-  fontSize: '10px',
+  fontSize: '11px',
   fontWeight: '500' as const,
   letterSpacing: '1px',
   color: '#999999',
@@ -359,8 +412,12 @@ const dataPointSection = {
   textAlign: 'center' as const,
 };
 
+const dataPointLink = {
+  textDecoration: 'none' as const,
+};
+
 const dataPointValue = {
-  fontSize: '32px',
+  fontSize: '36px',
   fontWeight: '700' as const,
   color: '#1a1a1a',
   margin: '8px 0',
@@ -368,7 +425,7 @@ const dataPointValue = {
 };
 
 const dataPointContext = {
-  fontSize: '14px',
+  fontSize: '15px',
   color: '#666666',
   lineHeight: '1.5',
   margin: '0',
@@ -377,7 +434,7 @@ const dataPointContext = {
 };
 
 const readMoreText = {
-  fontSize: '14px',
+  fontSize: '15px',
   margin: '20px 0 0',
   fontFamily: 'Georgia, "Times New Roman", serif',
 };
@@ -395,14 +452,14 @@ const footerSection = {
 };
 
 const footerText = {
-  fontSize: '11px',
+  fontSize: '12px',
   color: '#999999',
   margin: '0 0 8px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
 const footerLinks = {
-  fontSize: '11px',
+  fontSize: '12px',
   color: '#999999',
   margin: '0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
