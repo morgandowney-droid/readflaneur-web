@@ -119,6 +119,7 @@ function renderSavePage(email: string, preferencesUrl: string, confirmUrl: strin
     }
     .option {
       border: 1px solid #e5e5e5;
+      border-radius: 12px;
       padding: 20px;
       margin-bottom: 12px;
       cursor: pointer;
@@ -142,6 +143,7 @@ function renderSavePage(email: string, preferencesUrl: string, confirmUrl: strin
       background: #000;
       color: #fff;
       border-color: #000;
+      border-radius: 12px;
     }
     .option.primary .option-desc { color: #ccc; }
     .option.primary:hover { background: #222; }

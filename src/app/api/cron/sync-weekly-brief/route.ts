@@ -129,12 +129,14 @@ export async function GET(request: Request) {
         // Create feed article
         const bodyText = formatWeeklyBriefAsArticle(content, neighborhood.name);
         const headline = `The Sunday Edition: ${neighborhood.name}`;
+        const slug = `${neighborhood.id}-sunday-edition-${weekDate}`;
 
         const { data: article, error: articleError } = await supabase
           .from('articles')
           .insert({
             headline,
             body_text: bodyText,
+            slug,
             neighborhood_id: neighborhood.id,
             status: 'published',
             published_at: new Date().toISOString(),

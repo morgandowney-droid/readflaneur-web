@@ -20,7 +20,7 @@ async function findSubscriber(supabase: ReturnType<typeof getSupabase>, token: s
   // Try newsletter_subscribers first
   const { data: subscriber } = await supabase
     .from('newsletter_subscribers')
-    .select('id, email, neighborhood_ids, daily_email_enabled, unsubscribe_token, paused_topics')
+    .select('id, email, neighborhood_ids, daily_email_enabled, sunday_edition_enabled, unsubscribe_token, paused_topics')
     .eq('unsubscribe_token', token)
     .single();
 
@@ -31,7 +31,7 @@ async function findSubscriber(supabase: ReturnType<typeof getSupabase>, token: s
   // Try profiles
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, email, primary_city, daily_email_enabled, email_unsubscribe_token, paused_topics')
+    .select('id, email, primary_city, daily_email_enabled, sunday_edition_enabled, email_unsubscribe_token, paused_topics')
     .eq('email_unsubscribe_token', token)
     .single();
 
@@ -161,6 +161,7 @@ export async function GET(request: Request) {
     email: subscriber.email,
     source: subscriber.source,
     daily_email_enabled: subscriber.daily_email_enabled,
+    sunday_edition_enabled: (subscriber as { sunday_edition_enabled?: boolean }).sunday_edition_enabled !== false,
     neighborhood_ids: neighborhoodIds,
     neighborhoods,
     primary_city: subscriber.source === 'profile' ? (subscriber as { primary_city?: string }).primary_city : null,
@@ -171,7 +172,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { token, action, neighborhood_ids, daily_email_enabled, paused_topics, suggestion } = body;
+  const { token, action, neighborhood_ids, daily_email_enabled, sunday_edition_enabled, paused_topics, suggestion } = body;
 
   if (!token) {
     return NextResponse.json({ error: 'Missing token' }, { status: 400 });
@@ -227,6 +228,22 @@ export async function POST(request: Request) {
       await supabase
         .from('profiles')
         .update({ daily_email_enabled })
+        .eq('email_unsubscribe_token', token);
+    }
+
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'update_sunday_edition') {
+    if (subscriber.source === 'newsletter') {
+      await supabase
+        .from('newsletter_subscribers')
+        .update({ sunday_edition_enabled })
+        .eq('unsubscribe_token', token);
+    } else {
+      await supabase
+        .from('profiles')
+        .update({ sunday_edition_enabled })
         .eq('email_unsubscribe_token', token);
     }
 

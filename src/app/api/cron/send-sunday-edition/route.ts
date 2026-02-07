@@ -107,6 +107,20 @@ export async function GET(request: Request) {
         continue;
       }
 
+      // Check if recipient has opted out of Sunday Edition
+      if (!testEmail) {
+        const table = recipient.source === 'newsletter' ? 'newsletter_subscribers' : 'profiles';
+        const { data: pref } = await supabase
+          .from(table)
+          .select('sunday_edition_enabled')
+          .eq('id', recipient.id)
+          .single();
+        if (pref && pref.sunday_edition_enabled === false) {
+          results.emails_skipped++;
+          continue;
+        }
+      }
+
       // Get the primary neighborhood's weekly brief
       const primaryId = recipient.primaryNeighborhoodId || recipient.subscribedNeighborhoodIds[0];
       if (!primaryId) {

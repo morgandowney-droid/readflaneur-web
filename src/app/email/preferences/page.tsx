@@ -15,6 +15,7 @@ interface PreferencesData {
   email: string;
   source: string;
   daily_email_enabled: boolean;
+  sunday_edition_enabled: boolean;
   neighborhood_ids: string[];
   neighborhoods: Neighborhood[];
   primary_city: string | null;
@@ -101,6 +102,7 @@ function PreferencesContent() {
   const [suggestionSending, setSuggestionSending] = useState(false);
   const [suggestionSent, setSuggestionSent] = useState(false);
   const [emailResendNote, setEmailResendNote] = useState<string | null>(null);
+  const [sundayEditionSaved, setSundayEditionSaved] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -192,6 +194,31 @@ function PreferencesContent() {
 
       setData(prev => prev ? { ...prev, daily_email_enabled: enabled } : prev);
       setFrequencySaved(true);
+    } catch {
+      // Error saving
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleSundayEdition = async (enabled: boolean) => {
+    if (!token) return;
+    setSaving(true);
+    setSundayEditionSaved(false);
+
+    try {
+      await fetch('/api/email/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          action: 'update_sunday_edition',
+          sunday_edition_enabled: enabled,
+        }),
+      });
+
+      setData(prev => prev ? { ...prev, sunday_edition_enabled: enabled } : prev);
+      setSundayEditionSaved(true);
     } catch {
       // Error saving
     } finally {
@@ -371,6 +398,47 @@ function PreferencesContent() {
             </label>
           </div>
           {frequencySaved && (
+            <p className="text-xs text-green-600 mt-2">Preference saved!</p>
+          )}
+        </section>
+
+        {/* Sunday Edition */}
+        <section className="mb-8">
+          <h2 className="text-xs font-medium tracking-[0.1em] uppercase text-neutral-400 mb-3">
+            The Sunday Edition
+          </h2>
+          <p className="text-xs text-neutral-400 mb-3">
+            A weekly digest every Sunday at 7 AM with the past week in review and the week ahead.
+          </p>
+          <div className="space-y-2">
+            <label className="flex items-center gap-3 p-3 border border-neutral-200 rounded-lg cursor-pointer hover:border-neutral-400 transition-colors">
+              <input
+                type="radio"
+                name="sunday_edition"
+                checked={data.sunday_edition_enabled === true}
+                onChange={() => handleToggleSundayEdition(true)}
+                className="accent-black"
+              />
+              <div>
+                <div className="text-sm font-medium">Enabled</div>
+                <div className="text-xs text-neutral-500">Receive The Sunday Edition weekly</div>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 p-3 border border-neutral-200 rounded-lg cursor-pointer hover:border-neutral-400 transition-colors">
+              <input
+                type="radio"
+                name="sunday_edition"
+                checked={data.sunday_edition_enabled === false}
+                onChange={() => handleToggleSundayEdition(false)}
+                className="accent-black"
+              />
+              <div>
+                <div className="text-sm font-medium">Paused</div>
+                <div className="text-xs text-neutral-500">No Sunday Edition emails</div>
+              </div>
+            </label>
+          </div>
+          {sundayEditionSaved && (
             <p className="text-xs text-green-600 mt-2">Preference saved!</p>
           )}
         </section>
