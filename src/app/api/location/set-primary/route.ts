@@ -71,6 +71,18 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
+
+      // Fire-and-forget: resend today's Daily Brief with updated timezone
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\n$/, '').replace(/\/$/, '')
+        || 'https://readflaneur.com';
+      const resendSecret = process.env.CRON_SECRET;
+      if (resendSecret) {
+        fetch(`${baseUrl}/api/internal/resend-daily-brief`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-cron-secret': resendSecret },
+          body: JSON.stringify({ userId: user.id, source: 'profile', trigger: 'city_change' }),
+        }).catch(() => {});
+      }
     }
 
     // Return the location data (for both logged in and anonymous)

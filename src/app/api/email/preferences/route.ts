@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import type { ResendTrigger } from '@/lib/email/instant-resend';
 
 /**
  * Email preferences API (token-authenticated)
@@ -85,6 +86,19 @@ async function findSubscriber(supabase: ReturnType<typeof getSupabase>, token: s
   }
 
   return null;
+}
+
+function triggerInstantResend(userId: string, source: 'profile' | 'newsletter', trigger: ResendTrigger) {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\n$/, '').replace(/\/$/, '')
+    || 'https://readflaneur.com';
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret) {
+    fetch(`${baseUrl}/api/internal/resend-daily-brief`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-cron-secret': cronSecret },
+      body: JSON.stringify({ userId, source, trigger }),
+    }).catch(() => {});
+  }
 }
 
 export async function GET(request: Request) {
@@ -174,6 +188,9 @@ export async function POST(request: Request) {
       }
     }
 
+    // Fire-and-forget: resend today's Daily Brief with updated neighborhoods
+    triggerInstantResend(subscriber.id, subscriber.source, 'neighborhood_change');
+
     return NextResponse.json({ success: true });
   }
 
@@ -209,6 +226,9 @@ export async function POST(request: Request) {
         .update({ paused_topics })
         .eq('email_unsubscribe_token', token);
     }
+
+    // Fire-and-forget: resend today's Daily Brief with updated topics
+    triggerInstantResend(subscriber.id, subscriber.source, 'topic_change');
 
     return NextResponse.json({ success: true });
   }
