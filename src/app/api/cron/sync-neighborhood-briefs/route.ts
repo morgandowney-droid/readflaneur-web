@@ -288,6 +288,23 @@ export async function GET(request: Request) {
   // Archive: Keep all briefs for history (no deletion)
   // Old briefs can be queried for historical "What's Happening" data
 
+  // Log execution for monitoring
+  const completedAt = new Date();
+  await supabase.from('cron_executions').insert({
+    job_name: 'sync-neighborhood-briefs',
+    started_at: new Date(completedAt.getTime() - (results.neighborhoods_processed * 600)).toISOString(),
+    completed_at: completedAt.toISOString(),
+    success: results.briefs_failed === 0 || results.briefs_generated > 0,
+    articles_created: results.briefs_generated,
+    errors: results.errors.slice(0, 10),
+    response_data: {
+      neighborhoods_processed: results.neighborhoods_processed,
+      briefs_generated: results.briefs_generated,
+      briefs_failed: results.briefs_failed,
+    },
+    triggered_by: testNeighborhoodId ? 'manual' : 'vercel_cron',
+  }).then(null, (e: Error) => console.error('Failed to log cron execution:', e));
+
   return NextResponse.json({
     success: results.briefs_failed === 0 || results.briefs_generated > 0,
     ...results,

@@ -31,34 +31,57 @@ export default function SettingsPage() {
   const cities = getAllCityNames();
 
   useEffect(() => {
-    async function loadData() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (user) {
-        setIsLoggedIn(true);
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('id, email, full_name, primary_city, primary_timezone')
-          .eq('id', user.id)
-          .single();
-
-        if (profileData) {
-          setProfile(profileData);
-          setPrimaryCity(profileData.primary_city || '');
-        }
-      } else {
+    // Safety timeout — if auth hangs, show the page anyway
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn('Settings page: auth timed out after 5s');
         setIsLoggedIn(false);
-        // Load from localStorage for anonymous users
-        const stored = getStoredLocation();
-        if (stored?.city) {
-          setPrimaryCity(stored.city);
-        }
+        setIsLoading(false);
       }
-      setIsLoading(false);
+    }, 5000);
+
+    async function loadData() {
+      try {
+        const supabase = createClient();
+        const { data: { session }, error: authError } = await supabase.auth.getSession();
+        const user = session?.user ?? null;
+
+        if (authError) {
+          console.warn('Auth error on settings page:', authError.message);
+        }
+
+        if (user) {
+          setIsLoggedIn(true);
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id, email, full_name, primary_city, primary_timezone')
+            .eq('id', user.id)
+            .single();
+
+          if (profileData) {
+            setProfile(profileData);
+            setPrimaryCity(profileData.primary_city || '');
+          }
+        } else {
+          setIsLoggedIn(false);
+          // Load from localStorage for anonymous users
+          const stored = getStoredLocation();
+          if (stored?.city) {
+            setPrimaryCity(stored.city);
+          }
+        }
+      } catch (error) {
+        console.error('Settings page load error:', error);
+        setIsLoggedIn(false);
+      } finally {
+        clearTimeout(timeout);
+        setIsLoading(false);
+      }
     }
 
     loadData();
+
+    return () => clearTimeout(timeout);
   }, []);
 
   const handleSave = async () => {

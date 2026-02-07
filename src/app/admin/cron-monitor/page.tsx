@@ -177,11 +177,36 @@ export default function CronMonitorPage() {
     const colors: Record<string, string> = {
       missing_image: 'bg-orange-100 text-orange-800',
       placeholder_image: 'bg-purple-100 text-purple-800',
+      missed_email: 'bg-amber-100 text-amber-800',
+      thin_content: 'bg-rose-100 text-rose-800',
+      missing_brief: 'bg-cyan-100 text-cyan-800',
       job_failure: 'bg-red-100 text-red-800',
       api_rate_limit: 'bg-yellow-100 text-yellow-800',
       external_service_down: 'bg-gray-100 text-gray-800',
     };
     return colors[type] || 'bg-gray-100 text-gray-800';
+  };
+
+  const formatIssueTypeName = (type: string) => {
+    return type.replace(/_/g, ' ');
+  };
+
+  const parseEmailDiagnosis = (description: string): { email: string; cause: string; details: string } | null => {
+    try {
+      const d = JSON.parse(description);
+      if (d.email && d.cause) return d;
+    } catch { /* not JSON */ }
+    return null;
+  };
+
+  const emailCauseLabels: Record<string, string> = {
+    missing_timezone: 'Missing Timezone',
+    no_neighborhoods: 'No Neighborhoods',
+    cron_not_run: 'Cron Didn\'t Run',
+    send_failed: 'Send Failed',
+    rate_limit_overflow: 'Rate Limit',
+    disabled_by_user: 'Disabled by User',
+    unknown: 'Unknown',
   };
 
   const filteredIssues = issues.filter(issue => {
@@ -290,10 +315,18 @@ export default function CronMonitorPage() {
                           <div key={issue.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                             <div className="flex items-center gap-3">
                               <span className={`px-2 py-1 text-xs rounded ${getIssueTypeBadge(issue.issue_type)}`}>
-                                {issue.issue_type.replace('_', ' ')}
+                                {formatIssueTypeName(issue.issue_type)}
                               </span>
                               <span className="text-sm text-gray-700 truncate max-w-md">
-                                {issue.description}
+                                {issue.issue_type === 'missed_email'
+                                  ? (() => {
+                                      const diag = parseEmailDiagnosis(issue.description);
+                                      return diag
+                                        ? `${diag.email} — ${emailCauseLabels[diag.cause] || diag.cause}`
+                                        : issue.description;
+                                    })()
+                                  : issue.description
+                                }
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -379,13 +412,32 @@ export default function CronMonitorPage() {
                         <tr key={issue.id}>
                           <td className="px-4 py-3">
                             <span className={`px-2 py-1 text-xs rounded ${getIssueTypeBadge(issue.issue_type)}`}>
-                              {issue.issue_type.replace('_', ' ')}
+                              {formatIssueTypeName(issue.issue_type)}
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            <div className="text-sm text-gray-900 truncate max-w-xs" title={issue.description}>
-                              {issue.description}
-                            </div>
+                            {issue.issue_type === 'missed_email' && (() => {
+                              const diag = parseEmailDiagnosis(issue.description);
+                              if (diag) {
+                                return (
+                                  <div>
+                                    <div className="text-sm text-gray-900">{diag.email}</div>
+                                    <div className="text-xs text-amber-700">
+                                      Cause: {emailCauseLabels[diag.cause] || diag.cause}
+                                    </div>
+                                    <div className="text-xs text-gray-500 truncate max-w-xs" title={diag.details}>
+                                      {diag.details}
+                                    </div>
+                                  </div>
+                                );
+                              }
+                              return <div className="text-sm text-gray-900 truncate max-w-xs">{issue.description}</div>;
+                            })()}
+                            {issue.issue_type !== 'missed_email' && (
+                              <div className="text-sm text-gray-900 truncate max-w-xs" title={issue.description}>
+                                {issue.description}
+                              </div>
+                            )}
                             {issue.article && (
                               <div className="text-xs text-gray-500 truncate max-w-xs">
                                 Article: {issue.article.headline}

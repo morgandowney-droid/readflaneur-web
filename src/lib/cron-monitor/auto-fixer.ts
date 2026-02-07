@@ -5,7 +5,8 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { CronIssue, FixResult, FIX_CONFIG } from './types';
+import { CronIssue, FixResult, FIX_CONFIG, EmailDiagnosis } from './types';
+import { fixEmailRootCause, resendEmail } from './email-monitor';
 
 /**
  * Calculate the next retry time based on retry count
@@ -142,6 +143,56 @@ export async function fixMissingBrief(
 }
 
 /**
+ * Fix thin content by generating a fresh brief for the neighborhood.
+ * A fresh Grok brief is the most impactful single piece of content
+ * for the daily email and the neighborhood feed.
+ */
+export async function fixThinContent(
+  neighborhoodId: string,
+  baseUrl: string,
+  cronSecret: string
+): Promise<FixResult> {
+  try {
+    // Generate a fresh brief via sync-neighborhood-briefs (supports ?test=ID&force=true)
+    const response = await fetch(
+      `${baseUrl}/api/cron/sync-neighborhood-briefs?test=${neighborhoodId}&force=true`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${cronSecret}`,
+        },
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data.error || `HTTP ${response.status}`,
+      };
+    }
+
+    if (data.briefs_generated > 0) {
+      return {
+        success: true,
+        message: `Generated fresh brief for neighborhood`,
+      };
+    }
+
+    return {
+      success: false,
+      message: data.errors?.[0] || 'No brief generated',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
  * Attempt to fix an issue
  */
 export async function attemptFix(
@@ -183,6 +234,44 @@ export async function attemptFix(
     case 'job_failure':
       // Job failures are not auto-fixable
       result = { success: false, message: 'Job failures require manual review' };
+      break;
+
+    case 'missed_email': {
+      // Parse diagnosis from description
+      let diagnosis: EmailDiagnosis;
+      try {
+        diagnosis = JSON.parse(issue.description);
+      } catch {
+        result = { success: false, message: 'Could not parse email diagnosis from issue description' };
+        break;
+      }
+
+      if (!diagnosis.autoFixable) {
+        result = { success: false, message: `Not auto-fixable: ${diagnosis.cause}` };
+        break;
+      }
+
+      // Step 1: Fix root cause
+      const rootCauseResult = await fixEmailRootCause(supabase, diagnosis);
+      if (!rootCauseResult.success) {
+        result = rootCauseResult;
+        break;
+      }
+
+      // Step 2: Resend the email
+      result = await resendEmail(diagnosis.email, baseUrl, cronSecret);
+      if (result.success) {
+        result.message = `Root cause (${diagnosis.cause}) fixed. ${result.message}`;
+      }
+      break;
+    }
+
+    case 'thin_content':
+      if (!issue.neighborhood_id) {
+        result = { success: false, message: 'No neighborhood ID provided' };
+      } else {
+        result = await fixThinContent(issue.neighborhood_id, baseUrl, cronSecret);
+      }
       break;
 
     case 'api_rate_limit':

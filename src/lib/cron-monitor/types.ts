@@ -6,9 +6,30 @@ export type IssueType =
   | 'missing_image'
   | 'placeholder_image'
   | 'missing_brief'
+  | 'missed_email'
+  | 'thin_content'
   | 'job_failure'
   | 'api_rate_limit'
   | 'external_service_down';
+
+export type EmailFailureCause =
+  | 'missing_timezone'
+  | 'no_neighborhoods'
+  | 'cron_not_run'
+  | 'send_failed'
+  | 'rate_limit_overflow'
+  | 'disabled_by_user'
+  | 'unknown';
+
+export interface EmailDiagnosis {
+  recipientId: string;
+  email: string;
+  source: 'profile' | 'newsletter';
+  cause: EmailFailureCause;
+  details: string;
+  autoFixable: boolean;
+  fixAction?: string;
+}
 
 export type IssueStatus = 'open' | 'resolved' | 'needs_manual' | 'retrying';
 
@@ -85,11 +106,29 @@ export const FIX_CONFIG = {
   // Rate limit: max brief regenerations per monitor run
   MAX_BRIEFS_PER_RUN: 10,
 
+  // Rate limit: max email resends per monitor run
+  MAX_EMAILS_PER_RUN: 10,
+
   // Delay between image generation calls (ms)
   IMAGE_GEN_DELAY_MS: 3000,
 
   // Delay between brief generation calls (ms)
   BRIEF_GEN_DELAY_MS: 1000,
+
+  // Delay between email resends (ms)
+  EMAIL_RESEND_DELAY_MS: 2000,
+
+  // Hours after 7 AM local before flagging missed email
+  EMAIL_DETECTION_GRACE_HOURS: 1,
+
+  // Max thin content fixes (news regeneration) per monitor run
+  MAX_THIN_CONTENT_PER_RUN: 5,
+
+  // Delay between news regeneration calls (ms)
+  THIN_CONTENT_DELAY_MS: 2000,
+
+  // Minimum articles in last 24h before flagging as thin content
+  THIN_CONTENT_THRESHOLD: 1,
 
   // Look back window for detecting issues (hours)
   ISSUE_DETECTION_WINDOW_HOURS: 6,

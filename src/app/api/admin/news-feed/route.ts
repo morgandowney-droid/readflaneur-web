@@ -144,19 +144,19 @@ export async function GET(request: NextRequest) {
 
     const { data: articles } = await articlesQuery;
 
-    // Get failed/stuck content
+    // Get stuck content (stale drafts/pending articles older than 24h)
     const { data: failedContent } = await supabase
       .from('articles')
       .select(`
         id,
         headline,
         status,
-        scheduled_for,
         created_at,
         editor_notes,
         neighborhood:neighborhoods!articles_neighborhood_id_fkey(name)
       `)
-      .or(`and(status.eq.scheduled,scheduled_for.lt.${now.toISOString()}),and(status.in.(draft,pending),created_at.lt.${twentyFourHoursAgo.toISOString()})`)
+      .in('status', ['draft', 'pending'])
+      .lt('created_at', twentyFourHoursAgo.toISOString())
       .order('created_at', { ascending: false })
       .limit(50);
 

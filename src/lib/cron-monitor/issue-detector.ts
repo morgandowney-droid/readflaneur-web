@@ -129,6 +129,73 @@ export async function detectMissingBriefs(
 }
 
 /**
+ * Detect neighborhoods with thin/zero content in the last 24 hours
+ * These neighborhoods would produce empty daily brief emails
+ */
+export async function detectThinContent(
+  supabase: SupabaseClient
+): Promise<DetectedIssue[]> {
+  const issues: DetectedIssue[] = [];
+
+  // Only check after 12:00 UTC to give morning crons time to run
+  const currentHour = new Date().getUTCHours();
+  if (currentHour < 12) {
+    console.log(`[ThinContentDetector] Skipping - only ${currentHour}:00 UTC, waiting until 12:00 UTC`);
+    return issues;
+  }
+
+  // Get all active non-combo neighborhoods
+  const { data: activeNeighborhoods, error: neighborhoodError } = await supabase
+    .from('neighborhoods')
+    .select('id, name, city')
+    .eq('is_active', true)
+    .eq('is_combo', false);
+
+  if (neighborhoodError || !activeNeighborhoods) {
+    console.error('Error fetching neighborhoods for thin content check:', neighborhoodError);
+    return issues;
+  }
+
+  // Count published articles per neighborhood in the last 24 hours
+  const twentyFourHoursAgo = new Date();
+  twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+  const { data: recentArticles, error: articlesError } = await supabase
+    .from('articles')
+    .select('neighborhood_id')
+    .eq('status', 'published')
+    .gte('published_at', twentyFourHoursAgo.toISOString());
+
+  if (articlesError) {
+    console.error('Error fetching recent articles for thin content check:', articlesError);
+    return issues;
+  }
+
+  // Count articles per neighborhood
+  const articleCounts: Record<string, number> = {};
+  for (const article of recentArticles || []) {
+    if (article.neighborhood_id) {
+      articleCounts[article.neighborhood_id] = (articleCounts[article.neighborhood_id] || 0) + 1;
+    }
+  }
+
+  // Flag neighborhoods below threshold
+  for (const neighborhood of activeNeighborhoods) {
+    const count = articleCounts[neighborhood.id] || 0;
+    if (count < FIX_CONFIG.THIN_CONTENT_THRESHOLD) {
+      issues.push({
+        issue_type: 'thin_content',
+        neighborhood_id: neighborhood.id,
+        description: `${neighborhood.name} (${neighborhood.city}) has ${count} articles in the last 24h`,
+        auto_fixable: true,
+      });
+    }
+  }
+
+  return issues;
+}
+
+/**
  * Detect failed cron job executions
  */
 export async function detectFailedJobs(

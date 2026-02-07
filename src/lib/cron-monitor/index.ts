@@ -10,3 +10,4 @@ export * from './types';
 export * from './image-validator';
 export * from './issue-detector';
 export * from './auto-fixer';
+export * from './email-monitor';

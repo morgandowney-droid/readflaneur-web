@@ -137,18 +137,65 @@ async function fetchNeighborhoodsData(timeoutMs: number = 8000): Promise<{
     const data = await response.json();
     const neighborhoods: NeighborhoodWithCombo[] = data.neighborhoods || [];
 
-    // Load preferences from localStorage (fast, no network)
+    // Check auth and load DB preferences (with 3s timeout to avoid hanging)
+    let userId: string | null = null;
     let selected = new Set<string>();
-    const stored = localStorage.getItem(PREFS_KEY);
-    if (stored) {
-      try {
-        selected = new Set(JSON.parse(stored));
-      } catch {
-        // Invalid stored data
+
+    try {
+      const authResult = await Promise.race([
+        (async () => {
+          const supabase = createClient();
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.user) return { userId: null as string | null, prefs: [] as string[] };
+
+          const uid = session.user.id;
+          const { data: prefs } = await supabase
+            .from('user_neighborhood_preferences')
+            .select('neighborhood_id')
+            .eq('user_id', uid);
+
+          return { userId: uid, prefs: prefs?.map(p => p.neighborhood_id) || [] };
+        })(),
+        new Promise<{ userId: null; prefs: [] }>((resolve) =>
+          setTimeout(() => resolve({ userId: null, prefs: [] }), 3000)
+        ),
+      ]);
+
+      userId = authResult.userId;
+      if (authResult.prefs.length > 0) {
+        selected = new Set(authResult.prefs);
+      }
+    } catch {
+      // Auth check failed — fall through to localStorage
+    }
+
+    // Fall back to localStorage if no DB preferences
+    if (selected.size === 0) {
+      const stored = localStorage.getItem(PREFS_KEY);
+      if (stored) {
+        try {
+          selected = new Set(JSON.parse(stored));
+
+          // Migrate localStorage prefs to DB for logged-in users (fire and forget)
+          if (userId && selected.size > 0) {
+            const supabase = createClient();
+            Promise.resolve(
+              supabase
+                .from('user_neighborhood_preferences')
+                .upsert(
+                  Array.from(selected).map(id => ({ user_id: userId, neighborhood_id: id }))
+                )
+            )
+              .then(() => console.log(`Migrated ${selected.size} neighborhood prefs to DB`))
+              .catch(() => {});
+          }
+        } catch {
+          // Invalid stored data
+        }
       }
     }
 
-    return { neighborhoods, selected, userId: null };
+    return { neighborhoods, selected, userId };
   } catch (err) {
     clearTimeout(timeoutId);
     throw err;

@@ -29,10 +29,18 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh session if expired
+  // Check session — use getSession() with getUser() as a non-blocking refresh
+  // getSession() reads from cookies (fast), getUser() verifies with server (can hang)
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const user = session?.user ?? null;
+
+  // Attempt token refresh in the background (non-blocking)
+  if (session) {
+    supabase.auth.getUser().catch(() => {});
+  }
 
   // Protected routes
   const protectedPaths = ['/advertiser', '/journalist', '/admin'];

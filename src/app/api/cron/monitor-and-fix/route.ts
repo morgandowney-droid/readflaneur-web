@@ -4,6 +4,8 @@ import {
   detectImageIssues,
   detectFailedJobs,
   detectMissingBriefs,
+  detectThinContent,
+  detectMissedEmails,
   createIssues,
   getRetryableIssues,
   attemptFix,
@@ -52,9 +54,10 @@ export async function GET(request: Request) {
   );
 
   // Get base URL for internal API calls
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  // IMPORTANT: Use NEXT_PUBLIC_APP_URL (production) first, NOT VERCEL_URL
+  // VERCEL_URL points to preview deployments which return 404 for internal APIs
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\\n$/, '').replace(/\/$/, '')
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
   const result: MonitorRunResult = {
     started_at: startTime.toISOString(),
@@ -85,7 +88,15 @@ export async function GET(request: Request) {
     const briefIssues = await detectMissingBriefs(supabase);
     console.log(`[Monitor] Found ${briefIssues.length} missing brief issues`);
 
-    const allNewIssues = [...imageIssues, ...jobIssues, ...briefIssues];
+    console.log('[Monitor] Detecting thin content...');
+    const thinContentIssues = await detectThinContent(supabase);
+    console.log(`[Monitor] Found ${thinContentIssues.length} thin content issues`);
+
+    console.log('[Monitor] Detecting missed emails...');
+    const emailIssues = await detectMissedEmails(supabase);
+    console.log(`[Monitor] Found ${emailIssues.length} missed email issues`);
+
+    const allNewIssues = [...imageIssues, ...jobIssues, ...briefIssues, ...thinContentIssues, ...emailIssues];
     result.details.new_issues = allNewIssues;
 
     // Step 2: Create new issues in database
@@ -100,6 +111,8 @@ export async function GET(request: Request) {
     // Step 4: Attempt fixes (with rate limiting)
     let imageFixCount = 0;
     let briefFixCount = 0;
+    let thinContentFixCount = 0;
+    let emailFixCount = 0;
 
     for (const issue of retryableIssues) {
       // Check if can retry
@@ -163,6 +176,62 @@ export async function GET(request: Request) {
 
         briefFixCount++;
         await delay(FIX_CONFIG.BRIEF_GEN_DELAY_MS);
+      }
+      // Handle thin content issues
+      else if (issue.issue_type === 'thin_content') {
+        if (thinContentFixCount >= FIX_CONFIG.MAX_THIN_CONTENT_PER_RUN) {
+          result.issues_skipped++;
+          console.log(`[Monitor] Thin content rate limit reached`);
+          continue;
+        }
+
+        console.log(`[Monitor] Attempting thin content fix for issue ${issue.id}`);
+        const fixResult = await attemptFix(supabase, issue, baseUrl, cronSecret!);
+
+        result.details.fix_attempts.push({
+          issue_id: issue.id,
+          issue_type: issue.issue_type,
+          result: fixResult,
+        });
+
+        if (fixResult.success) {
+          result.issues_fixed++;
+          console.log(`[Monitor] Fixed: ${fixResult.message}`);
+        } else {
+          result.issues_failed++;
+          console.log(`[Monitor] Failed: ${fixResult.message}`);
+        }
+
+        thinContentFixCount++;
+        await delay(FIX_CONFIG.THIN_CONTENT_DELAY_MS);
+      }
+      // Handle missed email issues
+      else if (issue.issue_type === 'missed_email') {
+        if (emailFixCount >= FIX_CONFIG.MAX_EMAILS_PER_RUN) {
+          result.issues_skipped++;
+          console.log(`[Monitor] Email rate limit reached`);
+          continue;
+        }
+
+        console.log(`[Monitor] Attempting email fix for issue ${issue.id}`);
+        const fixResult = await attemptFix(supabase, issue, baseUrl, cronSecret!);
+
+        result.details.fix_attempts.push({
+          issue_id: issue.id,
+          issue_type: issue.issue_type,
+          result: fixResult,
+        });
+
+        if (fixResult.success) {
+          result.issues_fixed++;
+          console.log(`[Monitor] Fixed: ${fixResult.message}`);
+        } else {
+          result.issues_failed++;
+          console.log(`[Monitor] Failed: ${fixResult.message}`);
+        }
+
+        emailFixCount++;
+        await delay(FIX_CONFIG.EMAIL_RESEND_DELAY_MS);
       }
       // Skip non-auto-fixable issues
       else {
