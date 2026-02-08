@@ -62,3 +62,22 @@ export function categoryLabelToSlug(label: string): string {
   // e.g., 'Weekly Civic Recap' -> 'weekly-civic-recap'
   return label.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }
+
+/**
+ * Strip redundant "Neighborhood DAILY BRIEF:" prefix from article headlines
+ * e.g., "Östermalm DAILY BRIEF: Hockey Puck Drop" → "Hockey Puck Drop"
+ */
+export function cleanArticleHeadline(headline: string): string {
+  // Strip patterns like "Neighborhood DAILY BRIEF:" or "Neighborhood Daily Brief:"
+  let cleaned = headline.replace(/^[^:]*DAILY\s+BRIEF\s*:\s*/i, '');
+  return cleaned || headline;
+}
+
+/**
+ * Get day-of-week abbreviation from a date string
+ * e.g., "2026-02-08T..." → "Sun"
+ */
+export function getDayAbbr(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { weekday: 'short' });
+}

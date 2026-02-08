@@ -864,7 +864,7 @@ export function NeighborhoodBrief({
         <div className="flex items-center justify-between mb-1.5">
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium uppercase tracking-wider text-amber-700">
-              Today&apos;s Brief
+              {new Date(generatedAt).toLocaleDateString('en-US', { weekday: 'short' })} Daily Brief
             </span>
             {isExpanded && (
               <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
@@ -872,9 +872,14 @@ export function NeighborhoodBrief({
               </span>
             )}
           </div>
-          <span className="text-xs text-amber-600">
-            {formatTime(generatedAt)}
-          </span>
+          <div className="text-right">
+            <span className="text-xs text-amber-600 block">
+              {formatTime(generatedAt)}
+            </span>
+            <span className="text-[9px] text-amber-400 block">
+              Updated daily at 7 AM
+            </span>
+          </div>
         </div>
 
       {/* Headline */}

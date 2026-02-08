@@ -53,14 +53,9 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
                 />
               ) : null}
 
-              {/* Hero story (first story with full image) */}
+              {/* First two stories (compact primary layout) */}
               {primary.stories.length > 0 && (
-                <HeroStory story={primary.stories[0]} />
-              )}
-
-              {/* Second story */}
-              {primary.stories.length > 1 && (
-                <StoryList stories={primary.stories.slice(1, 2)} />
+                <StoryList stories={primary.stories.slice(0, 2)} variant="primary" />
               )}
 
               {/* Native ad injected at position 2 */}
@@ -68,7 +63,7 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
 
               {/* Remaining stories */}
               {primary.stories.length > 2 && (
-                <StoryList stories={primary.stories.slice(2)} />
+                <StoryList stories={primary.stories.slice(2)} variant="primary" />
               )}
             </Section>
           )}

@@ -78,7 +78,7 @@ async function fetchStories(
   neighborhoodIds: string[],
   limit: number,
   pausedTopics: string[] = []
-): Promise<{ id: string; headline: string; preview_text: string; image_url: string; category_label: string; slug: string; neighborhood_id: string }[]> {
+): Promise<{ id: string; headline: string; preview_text: string; image_url: string; category_label: string; slug: string; neighborhood_id: string; published_at?: string; created_at?: string }[]> {
   const lookbacks = [24, 48, 168]; // hours
   // Fetch extra to ensure Daily Brief is included even if not in top N by recency
   const fetchLimit = Math.max(limit + 3, 8);
@@ -88,7 +88,7 @@ async function fetchStories(
 
     const { data } = await supabase
       .from('articles')
-      .select('id, headline, preview_text, image_url, category_label, slug, neighborhood_id')
+      .select('id, headline, preview_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
       .eq('status', 'published')
       .in('neighborhood_id', neighborhoodIds)
       .gte('published_at', since)
@@ -134,7 +134,7 @@ async function fetchBriefAsStory(
   const since48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
   const { data: briefArticle } = await supabase
     .from('articles')
-    .select('headline, preview_text, image_url, category_label, slug, neighborhood_id')
+    .select('headline, preview_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
     .eq('status', 'published')
     .eq('neighborhood_id', neighborhoodId)
     .ilike('category_label', '%daily brief%')
@@ -182,7 +182,7 @@ async function fetchBriefAsStory(
   // Check if an article with this slug already exists (from a previous email run)
   const { data: existingArticle } = await supabase
     .from('articles')
-    .select('headline, preview_text, image_url, category_label, slug, neighborhood_id')
+    .select('headline, preview_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
     .eq('slug', slug)
     .single();
 
@@ -208,7 +208,7 @@ async function fetchBriefAsStory(
       brief_id: brief.id,
       image_url: '',
     })
-    .select('headline, preview_text, image_url, category_label, slug, neighborhood_id')
+    .select('headline, preview_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
     .single();
 
   if (newArticle) {
@@ -420,6 +420,18 @@ function escapeRegex(str: string): string {
 }
 
 /**
+ * Format a dateline suffix from a date string
+ * e.g., "Mon Feb 12"
+ */
+function formatDateline(dateString?: string): string {
+  const date = dateString ? new Date(dateString) : new Date();
+  const day = date.toLocaleDateString('en-US', { weekday: 'short' });
+  const month = date.toLocaleDateString('en-US', { month: 'short' });
+  const dayNum = date.getDate();
+  return `${day} ${month} ${dayNum}`;
+}
+
+/**
  * Convert a DB article row to an EmailStory
  */
 function toEmailStory(
@@ -430,15 +442,21 @@ function toEmailStory(
     category_label: string;
     slug: string;
     neighborhood_id: string;
+    published_at?: string;
+    created_at?: string;
   },
   neighborhoodName: string,
   cityName: string
 ): EmailStory {
+  const cleanedLabel = cleanCategoryLabel(article.category_label, neighborhoodName);
+  const dateline = formatDateline(article.published_at || article.created_at);
+  const labelWithDate = cleanedLabel ? `${cleanedLabel} - ${dateline}` : null;
+
   return {
     headline: cleanHeadline(article.headline, neighborhoodName),
     previewText: article.preview_text || '',
     imageUrl: article.image_url && !article.image_url.endsWith('.svg') ? article.image_url : null,
-    categoryLabel: cleanCategoryLabel(article.category_label, neighborhoodName),
+    categoryLabel: labelWithDate,
     articleUrl: buildArticleUrl(article.neighborhood_id, cityName, article.slug) + '?ref=email',
     location: `${neighborhoodName}, ${cityName}`,
   };

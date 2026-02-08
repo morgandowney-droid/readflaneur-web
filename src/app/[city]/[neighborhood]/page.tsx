@@ -6,7 +6,7 @@ import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { injectAds } from '@/lib/ad-engine';
 import { Article, Ad } from '@/types';
 import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
-import { getNeighborhoodIdsForQuery, getComboInfo } from '@/lib/combo-utils';
+import { getNeighborhoodIdsForQuery, getComboInfo, getComboForComponent } from '@/lib/combo-utils';
 
 const INITIAL_PAGE_SIZE = 10;
 
@@ -117,7 +117,7 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
 
   // Fetch the latest neighborhood brief (if not expired)
   const now = new Date().toISOString();
-  const { data: brief } = await supabase
+  let { data: brief } = await supabase
     .from('neighborhood_briefs')
     .select('id, headline, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
     .eq('neighborhood_id', neighborhoodId)
@@ -125,6 +125,26 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
     .order('generated_at', { ascending: false })
     .limit(1)
     .single();
+
+  // If no brief and this is a component neighborhood, try the parent combo's brief
+  let comboBriefAttribution: string | null = null;
+  if (!brief && !neighborhoodData.is_combo) {
+    const parentCombo = await getComboForComponent(supabase, neighborhoodId);
+    if (parentCombo) {
+      const { data: comboBrief } = await supabase
+        .from('neighborhood_briefs')
+        .select('id, headline, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
+        .eq('neighborhood_id', parentCombo.comboId)
+        .gt('expires_at', now)
+        .order('generated_at', { ascending: false })
+        .limit(1)
+        .single();
+      if (comboBrief) {
+        brief = comboBrief;
+        comboBriefAttribution = parentCombo.comboName;
+      }
+    }
+  }
 
   // Inject ads into feed
   const feedItems = injectAds(
@@ -158,6 +178,11 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
         )}
 
         {/* What's Happening Today brief - only show when not filtering */}
+        {!category && brief && comboBriefAttribution && (
+          <p className="text-[10px] text-amber-600 italic mb-1">
+            From {comboBriefAttribution} daily brief
+          </p>
+        )}
         {!category && brief && (
           <NeighborhoodBrief
             headline={brief.headline}

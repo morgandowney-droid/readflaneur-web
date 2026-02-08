@@ -130,6 +130,27 @@ export async function getComboInfo(
 }
 
 /**
+ * Reverse lookup: given a component neighborhood ID, find its parent combo
+ * Returns { comboId, comboName } or null if not a component of any combo
+ */
+export async function getComboForComponent(
+  supabase: SupabaseClient,
+  componentId: string
+): Promise<{ comboId: string; comboName: string } | null> {
+  const { data } = await supabase
+    .from('combo_neighborhoods')
+    .select('combo_id, combo:neighborhoods!combo_neighborhoods_combo_id_fkey(id, name)')
+    .eq('component_id', componentId)
+    .limit(1)
+    .single();
+
+  if (!data?.combo) return null;
+
+  const combo = data.combo as unknown as { id: string; name: string };
+  return { comboId: combo.id, comboName: combo.name };
+}
+
+/**
  * Get component names as a comma-separated string
  * Useful for display like "Includes: Dumbo, Cobble Hill, Park Slope"
  */

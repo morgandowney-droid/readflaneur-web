@@ -2,11 +2,11 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { formatRelativeTime, categoryLabelToSlug } from '@/lib/utils';
+import { formatRelativeTime, categoryLabelToSlug, cleanArticleHeadline, getDayAbbr, neighborhoodToSlug } from '@/lib/utils';
 import { StoryOpenAd } from '@/components/feed/StoryOpenAd';
 import { FallbackAd } from '@/components/feed/FallbackAd';
 import { ArticleViewTracker } from '@/components/tracking/ArticleViewTracker';
-import { Comments } from '@/components/comments/Comments';
+import { ArticleReactions } from '@/components/article/ArticleReactions';
 import { ArticleBody } from '@/components/article/ArticleBody';
 import { AIImageDisclaimer, AIImageBadge } from '@/components/article/AIImageDisclaimer';
 import { SourceAttribution } from '@/components/article/SourceAttribution';
@@ -103,6 +103,15 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     fallbackData = await getFallback(supabase, neighborhoodId);
   }
 
+  // Fetch nearby neighborhoods in the same city for exploration
+  const { data: nearbyNeighborhoods } = await supabase
+    .from('neighborhoods')
+    .select('id, name')
+    .eq('city', article.neighborhood?.city || '')
+    .eq('is_active', true)
+    .neq('id', neighborhoodId)
+    .limit(5);
+
   const neighborhoodUrl = `/${city}/${neighborhood}`;
 
   return (
@@ -131,38 +140,67 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
         {/* Article Header */}
         <header className="mb-8">
-          <div className="flex items-center gap-2 text-xs text-neutral-400 mb-4">
-            <span className="uppercase tracking-wider">
-              {article.neighborhood?.name}
-            </span>
-            <span>&middot;</span>
-            <span>{formatRelativeTime(article.created_at)}</span>
-            {article.category_label && (
+          {(() => {
+            const isBrief = article.article_type === 'brief_summary' ||
+              (article.category_label && article.category_label.toLowerCase().includes('daily brief'));
+
+            if (isBrief) {
+              return (
+                <>
+                  <p className="text-xs uppercase tracking-wider text-neutral-400 mb-1">
+                    {article.neighborhood?.name}
+                    {article.neighborhood?.city && <span> &middot; {article.neighborhood.city}</span>}
+                  </p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-amber-700 mb-3">
+                    {getDayAbbr(article.published_at || article.created_at)} Daily Brief
+                  </p>
+                  <h1 className="text-3xl font-light leading-tight mb-3">
+                    {cleanArticleHeadline(article.headline)}
+                  </h1>
+                  <p className="text-xs text-neutral-400">
+                    {formatRelativeTime(article.created_at)}
+                  </p>
+                </>
+              );
+            }
+
+            return (
               <>
-                <span>&middot;</span>
-                <Link
-                  href={`/${city}/${neighborhood}?category=${categoryLabelToSlug(article.category_label)}`}
-                  className="text-neutral-300 italic hover:text-neutral-500 hover:underline transition-colors"
-                >
-                  {article.category_label}
-                </Link>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-neutral-400 mb-4">
+                  <span className="uppercase tracking-wider">
+                    {article.neighborhood?.name}
+                  </span>
+                  <span>&middot;</span>
+                  <span>{formatRelativeTime(article.created_at)}</span>
+                  {article.category_label && (
+                    <>
+                      <span>&middot;</span>
+                      <Link
+                        href={`/${city}/${neighborhood}?category=${categoryLabelToSlug(article.category_label)}`}
+                        className="text-neutral-300 italic hover:text-neutral-500 hover:underline transition-colors"
+                      >
+                        {article.category_label}
+                      </Link>
+                    </>
+                  )}
+                  {(article.article_type === 'community_news' || article.article_type === 'brief_summary' || article.author_type === 'ai') && (
+                    <>
+                      <span>&middot;</span>
+                      <span className="text-neutral-300">AI-Synthesized Brief</span>
+                    </>
+                  )}
+                </div>
+                <h1 className="text-3xl font-light leading-tight mb-6">
+                  {article.headline}
+                </h1>
+                {article.author?.full_name && (
+                  <p className="text-sm text-neutral-500">
+                    By {article.author.full_name}
+                  </p>
+                )}
               </>
-            )}
-            {(article.article_type === 'community_news' || article.article_type === 'brief_summary' || article.author_type === 'ai') && (
-              <>
-                <span>&middot;</span>
-                <span className="text-neutral-300">AI-Synthesized Brief</span>
-              </>
-            )}
-          </div>
-          <h1 className="text-3xl font-light leading-tight mb-6">
-            {article.headline}
-          </h1>
-          {article.author?.full_name && (
-            <p className="text-sm text-neutral-500">
-              By {article.author.full_name}
-            </p>
-          )}
+            );
+          })()}
         </header>
 
         {/* Featured Image - only show if image exists */}
@@ -240,8 +278,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           )}
         </div>
 
-        {/* Comments Section */}
-        <Comments articleId={article.id} />
+        {/* Reactions */}
+        <ArticleReactions articleId={article.id} />
 
         {/* More from neighborhood */}
         <div className="mt-12 pt-8 border-t border-neutral-200 text-center">
@@ -252,6 +290,24 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             More from {article.neighborhood?.name}
           </Link>
         </div>
+
+        {/* Explore nearby neighborhoods */}
+        {nearbyNeighborhoods && nearbyNeighborhoods.length > 0 && (
+          <div className="mt-8 text-center">
+            <p className="text-[10px] uppercase tracking-widest text-neutral-400 mb-3">Explore nearby</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {nearbyNeighborhoods.map((n) => (
+                <Link
+                  key={n.id}
+                  href={`/${city}/${neighborhoodToSlug(n.id)}`}
+                  className="px-3 py-1.5 text-xs border border-neutral-200 rounded-full text-neutral-600 hover:border-neutral-400 hover:text-black transition-colors"
+                >
+                  {n.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

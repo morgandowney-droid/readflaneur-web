@@ -3,10 +3,13 @@ import { EmailStory } from '../../types';
 
 interface StoryListProps {
   stories: EmailStory[];
+  variant?: 'primary' | 'default';
 }
 
-export function StoryList({ stories }: StoryListProps) {
+export function StoryList({ stories, variant = 'default' }: StoryListProps) {
   if (stories.length === 0) return null;
+
+  const isPrimary = variant === 'primary';
 
   return (
     <Section>
@@ -19,10 +22,10 @@ export function StoryList({ stories }: StoryListProps) {
             {story.location && <span style={locationTag}>{story.location}</span>}
           </Text>
           <Link href={story.articleUrl} style={headlineLink}>
-            <Text style={headline}>{story.headline}</Text>
+            <Text style={isPrimary ? headlinePrimary : headline}>{story.headline}</Text>
           </Link>
           {story.previewText && (
-            <Text style={preview}>
+            <Text style={isPrimary ? previewPrimary : preview}>
               {story.previewText.length > 120
                 ? story.previewText.slice(0, 120) + '...'
                 : story.previewText}
@@ -66,8 +69,25 @@ const headline = {
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
+const headlinePrimary = {
+  fontSize: '19px',
+  fontWeight: '600' as const,
+  color: '#000000',
+  margin: '0 0 4px',
+  lineHeight: '1.3',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
 const preview = {
   fontSize: '15px',
+  color: '#666666',
+  lineHeight: '1.4',
+  margin: '0',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const previewPrimary = {
+  fontSize: '16px',
   color: '#666666',
   lineHeight: '1.4',
   margin: '0',
