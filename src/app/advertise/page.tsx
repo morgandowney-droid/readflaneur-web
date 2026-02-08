@@ -26,11 +26,12 @@ export default async function AdvertisePage() {
           Advertising
         </p>
         <h1 className="font-[family-name:var(--font-cormorant)] text-4xl md:text-5xl font-light leading-tight max-w-3xl mx-auto mb-6">
-          Reach The World&apos;s Most Important People
+          Reach Some of the World&apos;s Most Discerning Audiences.
         </h1>
         <p className="text-neutral-400 max-w-xl mx-auto text-base leading-relaxed">
-          Your brand, native in the neighborhoods where wealth concentrates.
-          Every placement is hand-reviewed and designed to feel like editorial.
+          Your brand, woven into the daily rituals of the West Village, Mayfair,
+          &Ouml;stermalm, and beyond. Placements are hand-selected to feel like
+          recommendations, not interruptions.
         </p>
       </section>
 
