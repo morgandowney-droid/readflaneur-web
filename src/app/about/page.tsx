@@ -17,13 +17,8 @@ export default async function AboutPage() {
   const regularNeighborhoods = (neighborhoods || []).filter(n => !n.is_combo);
   const neighborhoodCount = regularNeighborhoods.length;
 
-  // Count unique cities (excluding vacation regions)
-  const cities = new Set(
-    regularNeighborhoods
-      .filter(n => !n.region?.includes('vacation'))
-      .map(n => n.city)
-  );
-  const cityCount = cities.size;
+  // Count unique cities (including vacation destinations)
+  const cityCount = new Set(regularNeighborhoods.map(n => n.city)).size;
 
   // Count vacation destinations
   const vacationCount = regularNeighborhoods.filter(n => n.region?.includes('vacation')).length;
