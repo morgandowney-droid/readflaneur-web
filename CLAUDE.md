@@ -64,9 +64,10 @@ Recent work: Daily brief UX (day labels, reactions, email compact layout, nearby
 
 ### Sentry Monitoring
 - **Project:** `flaneur-web` (org: `flaneur-vk`, project ID: `4510840235884544`)
-- **Configs:** `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`
+- **SDK:** `@sentry/nextjs` v10 — client via `src/instrumentation-client.ts`, server/edge via `sentry.{server,edge}.config.ts`
 - **Tunnel:** `/monitoring` route (bypasses ad blockers)
-- **Trace rate:** 20% (all errors still captured at 100%)
+- **Trace rate:** 20% on all configs, session replays off, error replays 100%
+- **API token:** `SENTRY_AUTH_TOKEN` in `.env.local` (read scope for issue queries)
 
 ## Critical Gotchas
 
@@ -130,7 +131,7 @@ src/
 ## Environment Variables
 
 **Required:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_PLACES_API_KEY`, `CRON_SECRET`
-**Optional:** `GEMINI_API_KEY`, `GROK_API_KEY`, `OPENAI_API_KEY`, `RESEND_WEBHOOK_SECRET`, `STRIPE_WEBHOOK_SECRET`
+**Optional:** `GEMINI_API_KEY`, `GROK_API_KEY`, `OPENAI_API_KEY`, `RESEND_WEBHOOK_SECRET`, `STRIPE_WEBHOOK_SECRET`, `SENTRY_AUTH_TOKEN`
 
 ## Key Database Tables
 

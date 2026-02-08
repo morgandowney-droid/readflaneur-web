@@ -17,9 +17,12 @@
 - DB: migration 042 (`article_reactions` table with RLS)
 
 **Sentry Monitoring Fix:**
-- Added missing `sentry.client.config.ts` — browser JS errors were not being captured
-- Reduced `tracesSampleRate` from 100% to 20% on server, edge, and client configs
+- SDK v10 client init is `src/instrumentation-client.ts`, NOT root `sentry.client.config.ts` (v8 pattern)
+- Deleted unused `sentry.client.config.ts`, fixed actual client config in `instrumentation-client.ts`
+- Reduced `tracesSampleRate` from 100% to 20% on all configs (server, edge, client)
+- Session replays reduced from 10% to 0% (error replays remain at 100%)
 - Project confirmed as `flaneur-web` (org: `flaneur-vk`)
+- Added `SENTRY_AUTH_TOKEN` to `.env.local` for API issue queries
 
 **Font Size Readability Upgrade (17px iOS Baseline):**
 - All body/reading text bumped to 17px to match iOS Mail compose standard (was 13-14px)
