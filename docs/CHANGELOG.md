@@ -5,6 +5,22 @@
 
 ## 2026-02-08
 
+**Enhanced Neighborhood Search:**
+- New shared search module: `src/lib/search-aliases.ts` — country aliases (USA/UK/UAE etc.), region aliases (Europe/APAC/LATAM), US state + international province aliases
+- `resolveSearchQuery()` with priority scoring: name exact (1) > starts-with (2) > contains (3) > city (4-5) > component (6) > state (7) > country (8) > region (9)
+- Alias suppression: when query matches a country/region/state alias, loose substring matches are suppressed (prevents "US" matching "Justicia" or "Bogenhausen")
+- New `src/lib/geo-utils.ts`: extracted Haversine distance from NeighborhoodSelectorModal, added `sortByDistance()` and `formatDistance()`
+- AdBookingCalendar: "Near me" geolocation button, grouped city headers for broad queries (with "Select all"), combo component names below selected pills
+- NeighborhoodSelectorModal: replaced hardcoded `CITY_COORDINATES` (~20 cities) with dynamic computation from neighborhood lat/lng (all 92+ cities), added country/region/state filtering
+- Added `'south-america'` to `GlobalRegion` type (was missing despite seed script using it)
+
+**Advertise Page — Placement Toggle & Copy Refresh:**
+- New `CollectionsWithPlacement.tsx` client component: Daily Brief / Sunday Edition toggle between Collections header and pricing cards
+- Pricing highlight: selected placement turns bright white, non-selected dims to neutral-600; default state unchanged
+- Removed duplicate placement toggle from booking calendar section
+- Hero headline: "Reach Some of the World's Most Discerning Audiences."
+- Hero subheading: "Your brand, woven into the daily rituals of the West Village, Mayfair, Östermalm, and beyond..."
+
 **Flaneur 200 — Global Neighborhood Expansion:**
 - Seeded 200 neighborhoods across 73 cities and 42 countries (the "Flaneur 200")
 - Tier classification: 82 superprime (Tier 1), 90 metropolitan (Tier 2), 28 discovery (Tier 3)
@@ -25,7 +41,7 @@
 - Multi-neighborhood selection: pills UI, merged availability calendar, one Stripe checkout with N line items
 - Combo component search: typing "FiDi" surfaces Tribeca with "(incl. FiDi)" label
 - Font sizes bumped to 17px iOS baseline (text-base body, text-sm descriptions)
-- Hero text: "Reach The World's Most Important People"
+- Hero text: "Reach Some of the World's Most Discerning Audiences." (updated from original "Reach The World's Most Important People")
 - Price labels: "$X/day per individual neighborhood" on all cards
 - Price alignment: `md:min-h-[180px]` wrapper ensures $500/$200/$100 align horizontally
 - Rounded corners (`rounded-lg`) on all buttons, inputs, dropdowns, calendar containers

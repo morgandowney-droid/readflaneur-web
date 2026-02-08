@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-08
 
-Recent work: Flaneur 200 expansion (200 neighborhoods seeded across 73 cities/42 countries), ad-tier alignment (superprime/metropolitan/discovery → Tier 1/2/3), new seasonal markets (Riviera, expanded Ski & Snow).
+Recent work: Enhanced neighborhood search (country/region/state aliases, "Near me" geolocation), placement toggle on advertise page with pricing card highlights, hero copy refresh.
 
 ## Key Patterns
 
@@ -45,6 +45,7 @@ Recent work: Flaneur 200 expansion (200 neighborhoods seeded across 73 cities/42
 - **Pricing:** `src/config/ad-tiers.ts`, `src/lib/PricingService.ts` — flat per-day rates (Tier 1: $500/$750, Tier 2: $200/$300, Tier 3: $100/$150)
 
 - **Booking:** `/advertise` page with `react-day-picker` calendar → Stripe Checkout → asset upload → AI review
+- **Placement toggle:** `CollectionsWithPlacement.tsx` — Daily Brief / Sunday Edition toggle between Collections header and pricing cards, highlights active pricing
 - **Availability:** `GET /api/ads/availability` — booked/blocked dates + pricing per neighborhood/month
 - **Checkout:** `POST /api/ads/checkout` — accepts `neighborhoodIds[]` array, creates N ads + N Stripe line items, 48h–90d window
 - **Upload:** `/advertise/upload/[adId]` — sponsor label, headline, body, image, click URL (one per neighborhood)
@@ -55,11 +56,18 @@ Recent work: Flaneur 200 expansion (200 neighborhoods seeded across 73 cities/42
 - **AI quality:** `pending_ai` → `pending_approval` → `approved` / `changes_requested`
 - **Sunday ad resolver:** `src/lib/email/sunday-ad-resolver.ts` — date-aware cascade with house ad fallback
 - **Date-aware delivery:** `src/lib/email/ads.ts` and `src/lib/ad-engine.ts` filter by `start_date <= today <= end_date`
-- **Multi-neighborhood:** Calendar shows merged availability, pills UI for selection, combo component search (e.g. "FiDi" finds Tribeca)
+- **Multi-neighborhood:** Calendar shows merged availability, pills UI for selection (with combo component names), combo component search (e.g. "FiDi" finds Tribeca)
 - **Double-booking prevention:** unique composite index on `(neighborhood_id, placement_type, start_date)`
 - **Stripe session:** `stripe_session_id` shared across N ads from same checkout (not unique)
 - **Global takeover:** $10,000/day or $15,000/Sunday, contact-only (`ads@readflaneur.com`)
 - **Storage:** `ad-assets` Supabase bucket for uploaded ad images
+
+### Enhanced Neighborhood Search
+- **Shared search:** `src/lib/search-aliases.ts` — country/region/state aliases + `resolveSearchQuery()` with priority scoring
+- **Geo utils:** `src/lib/geo-utils.ts` — Haversine distance, `sortByDistance()`, `formatDistance()`
+- **Advertise page:** `AdBookingCalendar.tsx` — searches by name/city/component/country/region/state, "Near me" geolocation, grouped city headers for broad queries, "Select all in city"
+- **Header modal:** `NeighborhoodSelectorModal.tsx` — dynamic city coordinates (computed from neighborhood lat/lng, not hardcoded), country/region/state search filtering
+- **Alias suppression:** when query matches a country/region/state alias, loose substring matches are suppressed (prevents "US" matching "Justicia")
 
 ### Combo Neighborhoods
 - `src/lib/combo-utils.ts` — `getNeighborhoodIdsForQuery()`, `getComboInfo()`, `getComboForComponent()`
@@ -135,6 +143,8 @@ src/
     ├── email/                     # Scheduler, assembler, sender, templates
     ├── location/                  # IP detection, timezone resolution
     ├── combo-utils.ts             # Combo neighborhood queries
+    ├── search-aliases.ts          # Country/region/state search aliases
+    ├── geo-utils.ts               # Haversine distance + sorting
     ├── grok.ts                    # Grok X Search integration
     ├── brief-enricher-gemini.ts   # Gemini enrichment pipeline
     ├── weekly-brief-service.ts    # Sunday Edition generation
