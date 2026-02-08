@@ -72,6 +72,14 @@ export interface Ad {
   passionfroot_order_id?: string;
   client_name?: string;
   client_email?: string;
+  // AI Quality Control
+  ai_quality_score?: number | null;
+  ai_flag_reason?: string | null;
+  ai_suggested_rewrite?: string | null;
+  original_copy?: string | null;
+  proof_token?: string | null;
+  approval_status?: 'pending_ai' | 'pending_approval' | 'approved' | 'changes_requested';
+  customer_change_request?: string | null;
   // Joined data for section targeting
   ad_sections?: AdSection[];
   section_ids?: string[];

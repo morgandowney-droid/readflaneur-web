@@ -60,6 +60,10 @@ export async function GET(request: NextRequest) {
       query = query.eq('status', 'active');
     } else if (filter === 'sunday_edition') {
       query = query.eq('placement_type', 'sunday_edition');
+    } else if (filter === 'awaiting_client') {
+      query = query.eq('approval_status', 'pending_approval');
+    } else if (filter === 'changes_requested') {
+      query = query.eq('approval_status', 'changes_requested');
     }
 
     const { data: ads, error: adsError } = await query;

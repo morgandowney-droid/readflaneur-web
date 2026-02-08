@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { notifyAdvertiserApproved, notifyAdvertiserRejected } from '@/lib/email';
+import { createClient as createServerClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
+import { notifyAdvertiserApproved, notifyAdvertiserRejected, notifyCustomerProofReady } from '@/lib/email';
+import { processAdQuality } from '@/lib/ad-quality-service';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = await createServerClient();
 
     // Check authentication
     const { data: { user } } = await supabase.auth.getUser();
@@ -33,11 +35,54 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (action !== 'approve' && action !== 'reject') {
+    if (!['approve', 'reject', 'run_ai_check', 'send_proof'].includes(action)) {
       return NextResponse.json(
         { error: 'Invalid action' },
         { status: 400 }
       );
+    }
+
+    // Handle AI check action
+    if (action === 'run_ai_check') {
+      const serviceSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+      const result = await processAdQuality(adId, serviceSupabase);
+      if (!result.success) {
+        return NextResponse.json({ error: 'AI check failed' }, { status: 500 });
+      }
+      return NextResponse.json({ success: true, action: 'run_ai_check', autoRejected: result.autoRejected });
+    }
+
+    // Handle send proof action
+    if (action === 'send_proof') {
+      const serviceSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+
+      // Run AI check first (ensures approval_status advances)
+      await processAdQuality(adId, serviceSupabase);
+
+      // Fetch ad for proof email
+      const { data: proofAd } = await serviceSupabase
+        .from('ads')
+        .select('client_email, client_name, headline, proof_token')
+        .eq('id', adId)
+        .single();
+
+      if (proofAd?.client_email && proofAd?.proof_token) {
+        await notifyCustomerProofReady({
+          clientEmail: proofAd.client_email,
+          clientName: proofAd.client_name || 'Advertiser',
+          headline: proofAd.headline || 'Your Placement',
+          proofToken: proofAd.proof_token,
+        });
+        return NextResponse.json({ success: true, action: 'send_proof', email: proofAd.client_email });
+      }
+
+      return NextResponse.json({ error: 'No client email on this ad' }, { status: 400 });
     }
 
     if (action === 'reject' && !reason) {
@@ -72,8 +117,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Update ad status — approve goes directly to 'active' (one-click go-live)
+    // Also sets approval_status to 'approved' (admin bypass of customer proof)
     const updateData: Record<string, string | undefined> = {
       status: action === 'approve' ? 'active' : 'rejected',
+      approval_status: action === 'approve' ? 'approved' : undefined,
     };
 
     if (action === 'reject') {

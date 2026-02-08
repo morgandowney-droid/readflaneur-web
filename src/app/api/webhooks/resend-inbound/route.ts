@@ -191,6 +191,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Fire-and-forget AI quality check
+    if (ad?.id) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '')
+        || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+      fetch(`${appUrl}/api/ads/quality`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.CRON_SECRET}`,
+        },
+        body: JSON.stringify({ adId: ad.id }),
+      }).catch((err) => console.error('Fire-and-forget quality check failed:', err));
+    }
+
     return NextResponse.json({
       success: true,
       adId: ad?.id,

@@ -301,6 +301,94 @@ export async function notifyTipSubmitterRejected(tip: {
   });
 }
 
+// Notify customer that their ad proof is ready for review
+export async function notifyCustomerProofReady(params: {
+  clientEmail: string;
+  clientName: string;
+  headline: string;
+  proofToken: string;
+}): Promise<boolean> {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://readflaneur.com';
+  const proofUrl = `${appUrl}/proofs/${params.proofToken}`;
+
+  const html = `
+    <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h1 style="font-weight: 300; letter-spacing: 0.1em;">FLANEUR</h1>
+      <h2 style="font-weight: 400;">Approve Your Placement</h2>
+
+      <p>Dear ${params.clientName},</p>
+
+      <p>Your ad &ldquo;${params.headline}&rdquo; has been prepared for publication in Flaneur. Please review how it will appear to our readers and approve it for publication.</p>
+
+      <div style="margin: 30px 0;">
+        <a href="${proofUrl}" style="background: #000; color: #fff; padding: 14px 32px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.1em; font-size: 14px;">
+          Review &amp; Approve
+        </a>
+      </div>
+
+      <p style="color: #666; font-size: 14px;">
+        You can preview exactly how your placement will appear in our newsletter and approve it with one click.
+      </p>
+
+      <p style="color: #999; font-size: 12px; margin-top: 40px;">
+        This link is unique to your placement. Do not share it.
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to: params.clientEmail,
+    subject: `Approve Your Flaneur Placement: ${params.headline}`,
+    html,
+    from: 'Flaneur Ads <ads@readflaneur.com>',
+  });
+}
+
+// Notify admin when a customer requests changes to their ad
+export async function notifyAdminChangeRequest(params: {
+  adId: string;
+  clientName: string;
+  headline: string;
+  message: string;
+}): Promise<boolean> {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) {
+    console.warn('No admin email configured');
+    return false;
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://readflaneur.com';
+
+  const html = `
+    <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h1 style="font-weight: 300; letter-spacing: 0.1em;">FLANEUR</h1>
+      <h2 style="font-weight: 400;">Ad Change Request</h2>
+
+      <div style="background: #f5f5f5; padding: 20px; margin: 20px 0;">
+        <p><strong>Client:</strong> ${params.clientName}</p>
+        <p><strong>Ad:</strong> ${params.headline}</p>
+      </div>
+
+      <div style="background: #fff7ed; padding: 20px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+        <p style="margin: 0; font-weight: 500; margin-bottom: 8px;">Customer Message:</p>
+        <p style="margin: 0; white-space: pre-wrap;">${params.message}</p>
+      </div>
+
+      <div style="margin: 30px 0;">
+        <a href="${appUrl}/admin/ads" style="background: #000; color: #fff; padding: 12px 24px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.1em; font-size: 14px;">
+          Review in Dashboard
+        </a>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({
+    to: adminEmail,
+    subject: `Ad Change Request: ${params.clientName} — ${params.headline}`,
+    html,
+  });
+}
+
 // Helper to build Google Maps URL
 function getMapsUrl(place: { name: string; address: string | null; latitude: number | null; longitude: number | null }): string {
   const query = place.address ? `${place.name}, ${place.address}` : place.name;

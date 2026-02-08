@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Ad } from '@/types';
 
-type FilterType = 'pending_review' | 'needs_design' | 'active' | 'sunday_edition' | 'all';
+type FilterType = 'pending_review' | 'needs_design' | 'active' | 'sunday_edition' | 'awaiting_client' | 'changes_requested' | 'all';
 
 interface AdWithAdvertiser extends Ad {
   advertiser?: {
@@ -28,6 +28,8 @@ export default function AdminAdsPage() {
   const [editedHeadlines, setEditedHeadlines] = useState<Record<string, string>>({});
   const [editedBodies, setEditedBodies] = useState<Record<string, string>>({});
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
+  const [aiProcessingId, setAiProcessingId] = useState<string | null>(null);
+  const [proofSendingId, setProofSendingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadAds();
@@ -132,6 +134,49 @@ export default function AdminAdsPage() {
     setProcessingId(null);
   };
 
+  const handleRunAiCheck = async (adId: string) => {
+    setAiProcessingId(adId);
+    try {
+      const response = await fetch('/api/admin/ads/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adId, action: 'run_ai_check' }),
+      });
+      if (response.ok) {
+        loadAds();
+      }
+    } catch (error) {
+      console.error('AI check error:', error);
+    }
+    setAiProcessingId(null);
+  };
+
+  const handleSendProof = async (ad: AdWithAdvertiser) => {
+    if (!ad.client_email) return;
+    setProofSendingId(ad.id);
+    try {
+      const response = await fetch('/api/admin/ads/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adId: ad.id, action: 'send_proof' }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        alert(`Proof email sent to ${data.email || ad.client_email}`);
+        loadAds();
+      }
+    } catch (error) {
+      console.error('Send proof error:', error);
+    }
+    setProofSendingId(null);
+  };
+
+  const copyProofUrl = (token: string) => {
+    const url = `${window.location.origin}/proofs/${token}`;
+    navigator.clipboard.writeText(url);
+    alert('Proof URL copied to clipboard');
+  };
+
   if (loading) {
     return (
       <div className="py-12 px-4">
@@ -146,6 +191,8 @@ export default function AdminAdsPage() {
 
   const filters: { key: FilterType; label: string }[] = [
     { key: 'pending_review', label: 'Pending' },
+    { key: 'awaiting_client', label: 'Awaiting Client' },
+    { key: 'changes_requested', label: 'Changes' },
     { key: 'needs_design', label: 'Needs Design' },
     { key: 'active', label: 'Active' },
     { key: 'sunday_edition', label: 'Sunday' },
@@ -223,7 +270,11 @@ export default function AdminAdsPage() {
                     ? 'No active ads.'
                     : filter === 'sunday_edition'
                       ? 'No Sunday Edition ads.'
-                      : 'No ads found.'}
+                      : filter === 'awaiting_client'
+                        ? 'No ads awaiting client approval.'
+                        : filter === 'changes_requested'
+                          ? 'No ads with change requests.'
+                          : 'No ads found.'}
             </p>
           </div>
         ) : (
@@ -272,6 +323,37 @@ export default function AdminAdsPage() {
                   >
                     {ad.status.replace('_', ' ')}
                   </span>
+                  {/* Approval status badges */}
+                  {ad.approval_status === 'pending_ai' && (
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-blue-100 text-blue-800">
+                      AI Processing
+                    </span>
+                  )}
+                  {ad.approval_status === 'pending_approval' && (
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-amber-100 text-amber-800">
+                      Awaiting Client
+                    </span>
+                  )}
+                  {ad.approval_status === 'approved' && ad.status !== 'active' && (
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-green-100 text-green-800">
+                      Client Approved
+                    </span>
+                  )}
+                  {ad.approval_status === 'changes_requested' && (
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-orange-100 text-orange-800">
+                      Changes Requested
+                    </span>
+                  )}
+                  {/* AI quality score */}
+                  {ad.ai_quality_score != null && (
+                    <span className={`inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase ${
+                      ad.ai_quality_score >= 70 ? 'bg-green-50 text-green-700' :
+                      ad.ai_quality_score >= 40 ? 'bg-amber-50 text-amber-700' :
+                      'bg-red-50 text-red-700'
+                    }`}>
+                      AI: {ad.ai_quality_score}/100
+                    </span>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -448,6 +530,15 @@ export default function AdminAdsPage() {
                     <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
                       Actions
                     </p>
+
+                    {/* Customer change request message */}
+                    {ad.customer_change_request && (
+                      <div className="bg-orange-50 border border-orange-200 p-3 mb-3">
+                        <p className="text-[10px] tracking-widest uppercase text-orange-600 mb-1">Customer Feedback</p>
+                        <p className="text-sm text-orange-800 whitespace-pre-wrap">{ad.customer_change_request}</p>
+                      </div>
+                    )}
+
                     {ad.status === 'pending_review' ? (
                       <div className="space-y-3">
                         <button
@@ -464,6 +555,37 @@ export default function AdminAdsPage() {
                         >
                           Reject
                         </button>
+
+                        {/* AI Quality Check */}
+                        <button
+                          onClick={() => handleRunAiCheck(ad.id)}
+                          disabled={aiProcessingId === ad.id}
+                          className="w-full border border-blue-300 text-blue-700 py-2 text-sm tracking-widest uppercase hover:bg-blue-50 transition-colors disabled:opacity-50"
+                        >
+                          {aiProcessingId === ad.id ? 'Running AI...' : 'Run AI Check'}
+                        </button>
+
+                        {/* Send Proof Email */}
+                        {ad.client_email && (
+                          <button
+                            onClick={() => handleSendProof(ad)}
+                            disabled={proofSendingId === ad.id}
+                            className="w-full border border-amber-300 text-amber-700 py-2 text-sm tracking-widest uppercase hover:bg-amber-50 transition-colors disabled:opacity-50"
+                          >
+                            {proofSendingId === ad.id ? 'Sending...' : 'Send Proof to Client'}
+                          </button>
+                        )}
+
+                        {/* Copy Proof URL */}
+                        {ad.proof_token && (
+                          <button
+                            onClick={() => copyProofUrl(ad.proof_token!)}
+                            className="w-full border border-neutral-200 text-neutral-600 py-2 text-sm tracking-widest uppercase hover:border-black transition-colors"
+                          >
+                            Copy Proof URL
+                          </button>
+                        )}
+
                         {ad.click_url && (
                           <a
                             href={ad.click_url}
@@ -476,7 +598,7 @@ export default function AdminAdsPage() {
                         )}
                       </div>
                     ) : (
-                      <div className="text-sm text-neutral-500">
+                      <div className="text-sm text-neutral-500 space-y-2">
                         {ad.status === 'rejected' && ad.rejection_reason && (
                           <span className="block text-red-600">
                             Rejected: {ad.rejection_reason}
@@ -486,6 +608,15 @@ export default function AdminAdsPage() {
                           <span className="block text-green-700">
                             Live
                           </span>
+                        )}
+                        {/* Proof URL for active/non-pending ads too */}
+                        {ad.proof_token && (
+                          <button
+                            onClick={() => copyProofUrl(ad.proof_token!)}
+                            className="w-full border border-neutral-200 text-neutral-600 py-1.5 text-xs tracking-widest uppercase hover:border-black transition-colors mt-2"
+                          >
+                            Copy Proof URL
+                          </button>
                         )}
                       </div>
                     )}
