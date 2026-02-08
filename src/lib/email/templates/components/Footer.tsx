@@ -19,7 +19,7 @@ export function Footer({ unsubscribeUrl, preferencesUrl }: FooterProps) {
         <Link href={unsubscribeUrl} style={link}>Unsubscribe</Link>
       </Text>
       <Text style={copyright}>
-        Flaneur {new Date().getFullYear()}
+        &copy; Flaneur {new Date().getFullYear()}
       </Text>
     </Section>
   );

@@ -173,6 +173,7 @@ export async function GET(request: Request) {
           value: 'Data unavailable this week',
           context: '',
         }) as SundayEditionContent['dataPoint'],
+        holidaySection: brief.holiday_section || null,
         imageUrl: null,
         articleUrl,
         unsubscribeUrl: `${appUrl}/api/email/unsubscribe?token=${recipient.unsubscribeToken}`,

@@ -50,6 +50,18 @@ export interface HorizonEvent {
   category: string;  // High Culture, The Scene, Urban Nature, Real Estate
 }
 
+export interface HolidayEvent {
+  name: string;
+  day: string;       // e.g., "Friday Feb 13 7pm"
+  description: string;
+}
+
+export interface HolidaySection {
+  holidayName: string;
+  date: string;       // e.g., "Saturday, February 14"
+  events: HolidayEvent[];
+}
+
 export type DataPointType = 'real_estate' | 'safety' | 'environment' | 'flaneur_index';
 
 export interface WeeklyDataPoint {
@@ -64,6 +76,7 @@ export interface WeeklyBriefContent {
   rearviewStories: RearviewStory[];
   horizonEvents: HorizonEvent[];
   dataPoint: WeeklyDataPoint;
+  holidaySection?: HolidaySection | null;
 }
 
 // ─── Constants ───
@@ -163,6 +176,34 @@ export async function generateWeeklyBrief(
     horizonEvents = await huntEventsWithGemini(genAI, neighborhoodName, city, timeFormat);
   }
 
+  // Sort horizon events chronologically (closest date first)
+  horizonEvents.sort((a, b) => parseEventDayForSort(a.day) - parseEventDayForSort(b.day));
+
+  // ─── Holiday Section: That Time of Year ───
+  let holidaySection: HolidaySection | null = null;
+  const upcomingHoliday = detectUpcomingHoliday(country);
+  if (upcomingHoliday) {
+    console.log(`[SundayEdition] ${neighborhoodName}: detected holiday "${upcomingHoliday.name}" on ${upcomingHoliday.date.toDateString()}`);
+    try {
+      holidaySection = await generateHolidaySection(
+        genAI,
+        grokKey,
+        upcomingHoliday,
+        neighborhoodName,
+        city,
+        country,
+        timeFormat,
+      );
+      if (holidaySection.events.length === 0) {
+        console.log(`[SundayEdition] ${neighborhoodName}: no holiday events found, skipping section`);
+        holidaySection = null;
+      }
+    } catch (err) {
+      console.error(`[SundayEdition] Holiday section error:`, err);
+      holidaySection = null;
+    }
+  }
+
   // ─── Section 3: The Weekly Data Point ───
   console.log(`[SundayEdition] ${neighborhoodName}: generating data point...`);
 
@@ -187,6 +228,7 @@ export async function generateWeeklyBrief(
       value: stripDashes(dataPoint.value),
       context: dataPoint.context ? stripDashes(dataPoint.context) : dataPoint.context,
     },
+    holidaySection,
   };
 }
 
@@ -583,6 +625,294 @@ Respond with ONLY this JSON:
   };
 }
 
+// ─── Holiday Detection & Generation ───
+
+interface HolidayDef {
+  name: string;
+  getDate: (year: number) => Date;
+  countries: string[];
+}
+
+/** Easter Sunday via Butcher's algorithm. */
+function easterSunday(year: number): Date {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(year, month - 1, day);
+}
+
+/** Nth weekday of a month (weekday: 0=Sun..6=Sat, n: 1-based). */
+function nthWeekdayOf(year: number, month: number, weekday: number, n: number): Date {
+  const first = new Date(year, month - 1, 1);
+  const diff = (weekday - first.getDay() + 7) % 7;
+  return new Date(year, month - 1, 1 + diff + (n - 1) * 7);
+}
+
+/** Last weekday of a month. */
+function lastWeekdayOf(year: number, month: number, weekday: number): Date {
+  const last = new Date(year, month, 0);
+  const diff = (last.getDay() - weekday + 7) % 7;
+  return new Date(year, month - 1, last.getDate() - diff);
+}
+
+const HOLIDAYS: HolidayDef[] = [
+  { name: "New Year's Day", getDate: (y) => new Date(y, 0, 1), countries: ['all'] },
+  { name: "Valentine's Day", getDate: (y) => new Date(y, 1, 14), countries: ['all'] },
+  { name: "St. Patrick's Day", getDate: (y) => new Date(y, 2, 17), countries: ['USA', 'Ireland', 'UK', 'Canada', 'Australia', 'New Zealand'] },
+  { name: "Easter", getDate: easterSunday, countries: ['all'] },
+  { name: "Cinco de Mayo", getDate: (y) => new Date(y, 4, 5), countries: ['USA'] },
+  { name: "Memorial Day", getDate: (y) => lastWeekdayOf(y, 5, 1), countries: ['USA'] },
+  { name: "Canada Day", getDate: (y) => new Date(y, 6, 1), countries: ['Canada'] },
+  { name: "Independence Day", getDate: (y) => new Date(y, 6, 4), countries: ['USA'] },
+  { name: "Bastille Day", getDate: (y) => new Date(y, 6, 14), countries: ['France'] },
+  { name: "National Day", getDate: (y) => new Date(y, 7, 9), countries: ['Singapore'] },
+  { name: "Halloween", getDate: (y) => new Date(y, 9, 31), countries: ['USA', 'UK', 'Ireland', 'Canada', 'Australia', 'New Zealand'] },
+  { name: "Guy Fawkes Night", getDate: (y) => new Date(y, 10, 5), countries: ['UK'] },
+  { name: "Thanksgiving", getDate: (y) => nthWeekdayOf(y, 11, 4, 4), countries: ['USA'] },
+  { name: "Christmas", getDate: (y) => new Date(y, 11, 25), countries: ['all'] },
+  { name: "New Year's Eve", getDate: (y) => new Date(y, 11, 31), countries: ['all'] },
+  { name: "Midsommar", getDate: (y) => {
+    const d = new Date(y, 5, 19);
+    while (d.getDay() !== 5) d.setDate(d.getDate() + 1);
+    return d;
+  }, countries: ['Sweden'] },
+  { name: "Australia Day", getDate: (y) => new Date(y, 0, 26), countries: ['Australia'] },
+  { name: "ANZAC Day", getDate: (y) => new Date(y, 3, 25), countries: ['Australia', 'New Zealand'] },
+  { name: "Labor Day", getDate: (y) => nthWeekdayOf(y, 9, 1, 1), countries: ['USA'] },
+];
+
+/**
+ * Detect if a major holiday falls within the next 7 days for this country.
+ */
+function detectUpcomingHoliday(country: string): { name: string; date: Date } | null {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const endDate = new Date(now);
+  endDate.setDate(endDate.getDate() + 7);
+
+  for (const holiday of HOLIDAYS) {
+    if (!holiday.countries.includes('all') && !holiday.countries.includes(country)) continue;
+
+    const holidayDate = holiday.getDate(now.getFullYear());
+    holidayDate.setHours(0, 0, 0, 0);
+    if (holidayDate >= now && holidayDate <= endDate) {
+      return { name: holiday.name, date: holidayDate };
+    }
+  }
+  return null;
+}
+
+/**
+ * Search for holiday events via Grok X Search.
+ */
+async function searchHolidayEvents(
+  grokKey: string,
+  holidayName: string,
+  neighborhoodName: string,
+  city: string,
+  country: string,
+): Promise<string | null> {
+  const searchLocation = getSearchLocation(neighborhoodName, city, country);
+
+  const prompt = `Search for ${holidayName} events, celebrations, and special happenings in ${searchLocation} this year. Include restaurant specials, pop-ups, community events, parties, and any notable ${holidayName}-themed activities happening this week. Find at least 5-8 events with dates, times, venues, and descriptions.`;
+
+  try {
+    const response = await fetch(GROK_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${grokKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: GROK_MODEL,
+        input: [
+          {
+            role: 'system',
+            content: `You are a local event scout for residents of ${neighborhoodName}, ${city}. Find the best ${holidayName} events and celebrations happening nearby.`,
+          },
+          { role: 'user', content: prompt },
+        ],
+        tools: [{ type: 'x_search' }, { type: 'web_search' }],
+        temperature: 0.5,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error(`[SundayEdition] Holiday Grok error: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    const output = data.output || [];
+    const messageContent = output
+      .filter((o: { type: string }) => o.type === 'message')
+      .map((o: { content: Array<{ type: string; text: string }> | string }) => {
+        if (typeof o.content === 'string') return o.content;
+        if (Array.isArray(o.content)) {
+          return o.content
+            .filter((c: { type: string }) => c.type === 'output_text')
+            .map((c: { text: string }) => c.text)
+            .join('');
+        }
+        return '';
+      })
+      .join('\n');
+
+    return messageContent || null;
+  } catch (err) {
+    console.error('[SundayEdition] Holiday Grok search error:', err);
+    return null;
+  }
+}
+
+/**
+ * Curate holiday events via Gemini (with Google Search grounding as fallback).
+ */
+async function curateHolidayEvents(
+  genAI: GoogleGenAI,
+  holidayName: string,
+  rawEvents: string | null,
+  neighborhoodName: string,
+  city: string,
+  timeFormat: string,
+): Promise<HolidayEvent[]> {
+  const searchContext = rawEvents
+    ? `FOUND EVENTS:\n${rawEvents}`
+    : `No specific events found from search. Use Google Search to find ${holidayName} events in ${neighborhoodName}, ${city}.`;
+
+  const prompt = `You are a local insider in ${neighborhoodName}, ${city}. Pick the 3 best ${holidayName} events or happenings in and around the neighborhood.
+
+${searchContext}
+
+CRITERIA:
+- Exclusive or unique events over generic ones
+- Neighborhood-specific over city-wide when possible
+- Quality dining specials, pop-ups, or cultural events over chain promotions
+- Include a mix of event types (dining, cultural, community)
+
+FORMAT:
+- "name": The event or venue name
+- "day": Weekday, date and time in ${timeFormat} format (e.g., "Friday Feb 13 7pm" or "Friday Feb 13 19:00")
+- "description": One sentence about why this is worth attending, written as a local insider
+- NEVER use em dashes or en dashes. Use hyphens (-) instead.
+
+Respond with ONLY this JSON:
+\`\`\`json
+{
+  "events": [
+    {"name": "Event/Venue Name", "day": "Saturday Feb 14 7pm", "description": "One insider sentence about why this is worth your time."},
+    {"name": "Event Name", "day": "Friday Feb 13 8pm", "description": "One sentence."},
+    {"name": "Event Name", "day": "Saturday Feb 14 6pm", "description": "One sentence."}
+  ]
+}
+\`\`\``;
+
+  try {
+    const useSearch = !rawEvents;
+    const response = await genAI.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: prompt,
+      config: {
+        ...(useSearch ? { tools: [{ googleSearch: {} }] } : {}),
+        temperature: 0.5,
+      },
+    });
+
+    const text = response.text || '';
+    const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/\{[\s\S]*"events"[\s\S]*\}/);
+    if (jsonMatch) {
+      const jsonStr = jsonMatch[1] || jsonMatch[0];
+      const parsed = JSON.parse(jsonStr.trim());
+      if (parsed.events && Array.isArray(parsed.events)) {
+        return parsed.events.slice(0, 3).map((e: HolidayEvent) => ({
+          ...e,
+          description: stripDashes(e.description),
+          name: stripDashes(e.name),
+        }));
+      }
+    }
+  } catch (err) {
+    console.error('[SundayEdition] Holiday event curation error:', err);
+  }
+
+  return [];
+}
+
+/**
+ * Generate the complete holiday section for the Sunday Edition.
+ */
+async function generateHolidaySection(
+  genAI: GoogleGenAI,
+  grokKey: string | undefined,
+  holiday: { name: string; date: Date },
+  neighborhoodName: string,
+  city: string,
+  country: string,
+  timeFormat: string,
+): Promise<HolidaySection> {
+  const dateStr = holiday.date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  let rawEvents: string | null = null;
+  if (grokKey) {
+    rawEvents = await searchHolidayEvents(grokKey, holiday.name, neighborhoodName, city, country);
+  }
+
+  const events = await curateHolidayEvents(genAI, holiday.name, rawEvents, neighborhoodName, city, timeFormat);
+
+  return {
+    holidayName: holiday.name,
+    date: dateStr,
+    events,
+  };
+}
+
+// ─── Event Sorting ───
+
+/**
+ * Parse an event day string (e.g., "Tuesday Feb 10 6pm") into a timestamp for sorting.
+ */
+function parseEventDayForSort(dayStr: string): number {
+  const match = dayStr.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d+)/i);
+  if (!match) return 0;
+
+  const months: Record<string, number> = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+  };
+  const month = months[match[1].toLowerCase()];
+  const day = parseInt(match[2]);
+  if (month === undefined || isNaN(day)) return 0;
+
+  let hour = 0;
+  const time12 = dayStr.match(/(\d{1,2})(am|pm)/i);
+  const time24 = dayStr.match(/(\d{1,2}):(\d{2})/);
+  if (time12) {
+    hour = parseInt(time12[1]);
+    if (time12[2].toLowerCase() === 'pm' && hour !== 12) hour += 12;
+    if (time12[2].toLowerCase() === 'am' && hour === 12) hour = 0;
+  } else if (time24) {
+    hour = parseInt(time24[1]);
+  }
+
+  const year = new Date().getFullYear();
+  return new Date(year, month, day, hour).getTime();
+}
+
 // ─── Utility ───
 
 function getISOWeekNumber(date: Date): number {
@@ -610,6 +940,15 @@ export function formatWeeklyBriefAsArticle(
     body += '[[The Agenda]]\n\n';
     for (const event of content.horizonEvents) {
       body += `${event.day}: ${event.name} - ${event.whyItMatters}\n\n`;
+    }
+  }
+
+  // Holiday Section: That Time of Year
+  if (content.holidaySection && content.holidaySection.events.length > 0) {
+    body += `[[That Time of Year: ${content.holidaySection.holidayName}]]\n`;
+    body += `${content.holidaySection.date}\n\n`;
+    for (const event of content.holidaySection.events) {
+      body += `${event.day}: ${event.name} - ${event.description}\n\n`;
     }
   }
 

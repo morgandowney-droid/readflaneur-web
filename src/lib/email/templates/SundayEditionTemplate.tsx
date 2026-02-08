@@ -10,7 +10,7 @@ import {
   Hr,
   Preview,
 } from '@react-email/components';
-import type { HorizonEvent, WeeklyDataPoint, RearviewStory } from '../../weekly-brief-service';
+import type { HorizonEvent, WeeklyDataPoint, RearviewStory, HolidaySection } from '../../weekly-brief-service';
 
 export interface SundayEditionContent {
   neighborhoodName: string;
@@ -20,6 +20,7 @@ export interface SundayEditionContent {
   rearviewStories: RearviewStory[];
   horizonEvents: HorizonEvent[];
   dataPoint: WeeklyDataPoint;
+  holidaySection?: HolidaySection | null;
   imageUrl: string | null;
   articleUrl: string | null;
   unsubscribeUrl: string;
@@ -153,6 +154,32 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
             </>
           )}
 
+          {/* Holiday Section: That Time of Year */}
+          {content.holidaySection && content.holidaySection.events.length > 0 && (
+            <>
+              <Section style={sectionContainer}>
+                <Text style={sectionLabel}>THAT TIME OF YEAR</Text>
+                <Text style={holidayNameStyle}>{content.holidaySection.holidayName}</Text>
+                <Text style={holidayDateStyle}>{content.holidaySection.date}</Text>
+
+                {content.holidaySection.events.map((event, i) => {
+                  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(event.name + ' ' + content.neighborhoodName + ' ' + content.cityName)}`;
+                  return (
+                    <Section key={i} style={eventItem}>
+                      <Text style={eventDay}>{event.day.toUpperCase()}</Text>
+                      <Text style={eventName}>
+                        <Link href={searchUrl} style={eventNameLink}>{event.name}</Link>
+                      </Text>
+                      <Text style={eventWhy}>{event.description}</Text>
+                    </Section>
+                  );
+                })}
+              </Section>
+
+              <Hr style={divider} />
+            </>
+          )}
+
           {/* Section 3: The Data Point (clickable for weather) */}
           {content.dataPoint.value !== 'Data unavailable this week' && (
             <>
@@ -186,7 +213,7 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
               </Link>
             </Text>
             <Text style={copyrightText}>
-              Flaneur {new Date().getFullYear()}
+              &copy; Flaneur {new Date().getFullYear()}
             </Text>
           </Section>
         </Container>
@@ -355,8 +382,7 @@ const storyHeadlineLink = {
 
 const storySignificance = {
   fontWeight: '400' as const,
-  fontStyle: 'italic' as const,
-  color: '#666666',
+  color: '#555555',
 };
 
 const eventItem = {
@@ -390,8 +416,8 @@ const eventNameLink = {
 };
 
 const eventWhy = {
-  fontSize: '14px',
-  color: '#555555',
+  fontSize: '15px',
+  color: '#444444',
   lineHeight: '1.5',
   margin: '0 0 2px',
   fontFamily: 'Georgia, "Times New Roman", serif',
@@ -405,6 +431,21 @@ const eventCategory = {
   margin: '0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
   textTransform: 'uppercase' as const,
+};
+
+const holidayNameStyle = {
+  fontSize: '22px',
+  fontWeight: '600' as const,
+  color: '#1a1a1a',
+  margin: '0 0 4px',
+  fontFamily: 'Georgia, "Times New Roman", serif',
+};
+
+const holidayDateStyle = {
+  fontSize: '14px',
+  color: '#888888',
+  margin: '0 0 20px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
 const dataPointSection = {
@@ -426,11 +467,10 @@ const dataPointValue = {
 
 const dataPointContext = {
   fontSize: '15px',
-  color: '#666666',
+  color: '#555555',
   lineHeight: '1.5',
   margin: '0',
   fontFamily: 'Georgia, "Times New Roman", serif',
-  fontStyle: 'italic' as const,
 };
 
 const readMoreText = {

@@ -164,6 +164,7 @@ export async function GET(request: Request) {
             rearview_stories: content.rearviewStories,
             horizon_events: content.horizonEvents,
             data_point: content.dataPoint,
+            holiday_section: content.holidaySection || null,
             article_id: article?.id || null,
             generated_at: new Date().toISOString(),
           }, {
