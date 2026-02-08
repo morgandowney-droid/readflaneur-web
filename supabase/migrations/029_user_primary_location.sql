@@ -11,7 +11,7 @@ ALTER TABLE newsletter_subscribers
 ADD COLUMN IF NOT EXISTS timezone TEXT;
 
 -- Comments
-COMMENT ON COLUMN profiles.primary_city IS 'User-selected primary city from our supported 38 cities';
+COMMENT ON COLUMN profiles.primary_city IS 'User-selected primary city from our supported cities';
 COMMENT ON COLUMN profiles.primary_timezone IS 'IANA timezone (e.g., Europe/London) for the primary city';
 COMMENT ON COLUMN profiles.location_prompt_dismissed_at IS 'When user dismissed the location prompt - do not ask again for 30 days';
 COMMENT ON COLUMN newsletter_subscribers.timezone IS 'Browser-detected IANA timezone for newsletter send time optimization';

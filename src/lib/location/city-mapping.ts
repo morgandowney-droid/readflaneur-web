@@ -1,7 +1,7 @@
 /**
  * City to Timezone Mapping
  *
- * Maps our supported 38 cities to their IANA timezones.
+ * Maps our supported cities to their IANA timezones.
  * Used for location detection and timezone priority.
  */
 

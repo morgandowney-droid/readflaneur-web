@@ -28,5 +28,5 @@ CREATE POLICY "Service role can manage house ads"
 INSERT INTO house_ads (type, headline, body, click_url, weight) VALUES
   ('waitlist', 'Know Someone Who Belongs?', 'Invite a friend to the world''s most exclusive local feed.', '/invite', 3),
   ('app_download', 'Take Flaneur With You', 'The app is coming soon. Get notified when it launches.', '/app', 2),
-  ('advertise', 'Your Brand Belongs Here', 'Reach the most discerning readers in 128 neighborhoods worldwide.', '/advertise', 2),
+  ('advertise', 'Your Brand Belongs Here', 'Reach the most discerning readers in 200 neighborhoods worldwide.', '/advertise', 2),
   ('newsletter', 'The Daily Brief', 'Get hyper-local intelligence delivered every morning.', '/email/subscribe', 3);

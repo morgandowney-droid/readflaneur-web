@@ -2,6 +2,7 @@
 
 import { AD_COLLECTIONS } from '@/config/ad-config';
 import { GLOBAL_TAKEOVER_RATES } from '@/config/ad-tiers';
+import { SITE_STATS } from '@/config/site-stats';
 import { AdBookingCalendar } from '@/components/advertise/AdBookingCalendar';
 import { AdvertiserPersonas } from '@/components/advertise/AdvertiserPersonas';
 
@@ -28,8 +29,8 @@ export default function AdvertisePage() {
           {[
             { label: 'Avg. Net Worth', value: 'High' },
             { label: 'Email Open Rate', value: '>55%' },
-            { label: 'Neighborhoods', value: '200' },
-            { label: 'Cities', value: '73' },
+            { label: 'Neighborhoods', value: String(SITE_STATS.neighborhoods) },
+            { label: 'Cities', value: String(SITE_STATS.cities) },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -137,8 +138,8 @@ export default function AdvertisePage() {
             Global Takeover
           </h2>
           <p className="text-base text-neutral-400 mb-6 leading-relaxed max-w-lg mx-auto">
-            Own every neighborhood for an entire day. Your brand appears across all 200 neighborhoods
-            in 73 cities — the most concentrated wealth audience on the internet.
+            Own every neighborhood for an entire day. Your brand appears across all {SITE_STATS.neighborhoods} neighborhoods
+            in {SITE_STATS.cities} cities — the most concentrated wealth audience on the internet.
           </p>
           <div className="flex justify-center gap-8 mb-8">
             <div>
