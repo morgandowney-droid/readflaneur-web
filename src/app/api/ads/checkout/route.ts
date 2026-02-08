@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ─── Create Stripe Checkout Session ───
-    const origin = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '')
+    const origin = process.env.NEXT_PUBLIC_APP_URL?.replace(/[\n\r]+$/, '').replace(/\/$/, '')
       || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
     const displayName = placementType === 'sunday_edition' ? 'Sunday Edition' : 'Daily Brief';
