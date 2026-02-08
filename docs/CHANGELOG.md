@@ -5,6 +5,22 @@
 
 ## 2026-02-08
 
+**Self-Hosted Ad Booking Engine:**
+- Replaced Passionfroot integration with native Stripe Checkout booking flow
+- Flat per-day pricing: Tier 1 $500/$750, Tier 2 $200/$300, Tier 3 $100/$150 (daily/Sunday)
+- Global takeover: $10,000/day, $15,000/Sunday (contact-only)
+- Booking calendar: `react-day-picker` with neighborhood search, placement toggle, booked/blocked dates
+- Checkout API: 48h–90d booking window, Sunday-only validation for Sunday Edition
+- Stripe webhook: `pending_payment` → `pending_assets` on payment, sends confirmation + admin emails
+- Asset upload page: `/advertise/upload/[adId]` (UUID-secured, no auth) — brand name, headline, body, image, click URL
+- Success page: `/advertise/success` with booking summary and upload link
+- Date-aware ad delivery: email ads, Sunday ad resolver, and feed ads all filter by `start_date <= today`
+- Double-booking prevention: unique composite index on `(neighborhood_id, placement_type, start_date)` where status not rejected/pending_payment
+- DB: migration `20260208144538_self_hosted_booking.sql` — `stripe_session_id`, `customer_email`, `is_global_takeover` columns, updated status constraint, `ad-assets` storage bucket
+- Deleted `src/lib/passionfroot-email-parser.ts`, simplified Resend inbound webhook
+- New files: `AdBookingCalendar.tsx`, `BookingForm.tsx`, availability/checkout/upload/booking-info API routes
+- Stripe checkout uses raw `fetch` to `api.stripe.com` (SDK connection issues in serverless)
+
 **Daily Brief UX Improvements (9 items):**
 - Article page: structured header for brief articles (day label, cleaned headline without "Neighborhood DAILY BRIEF:" prefix), flex-wrap left-aligned metadata for non-briefs
 - Brief card: day-of-week label ("Sun Daily Brief" instead of "Today's Brief"), "Updated daily at 7 AM" indicator
@@ -59,6 +75,10 @@
 - Conditional section detects upcoming holidays (within 7 days) per country
 - 20 holidays, Easter via Butcher's algorithm, nth weekday helpers
 - DB: `weekly_briefs.holiday_section` JSONB (migration 039)
+
+**Sunday Edition Cron Fix:**
+- `sync-weekly-brief` used `.eq('active', true)` — column is `is_active`. Supabase returned 0 rows silently (no error). Fixed to `.eq('is_active', true)`
+- Manually re-triggered Sunday Edition generation for all 140 neighborhoods after fix
 
 **Other:**
 - Advertise page copy fixes (Dublin format, "Submit Assets" step)

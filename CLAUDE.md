@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-08
 
-Recent work: Daily brief UX (day labels, reactions, email compact layout, nearby neighborhoods), Sentry client-side monitoring, 17px font size upgrade, ad quality control system.
+Recent work: Self-hosted ad booking engine (Stripe Checkout, react-day-picker calendar, asset upload flow), replaced Passionfroot integration with native booking.
 
 ## Key Patterns
 
@@ -42,12 +42,21 @@ Recent work: Daily brief UX (day labels, reactions, email compact layout, nearby
 - **Layout:** Primary stories use compact `StoryList variant="primary"` (19px/16px), no hero image
 
 ### Ad System
-- **Pricing:** `src/config/ad-tiers.ts`, `src/lib/PricingService.ts` (3 tiers: $45/$25/$15 CPM)
+- **Pricing:** `src/config/ad-tiers.ts`, `src/lib/PricingService.ts` — flat per-day rates (Tier 1: $500/$750, Tier 2: $200/$300, Tier 3: $100/$150)
+- **Booking:** `/advertise` page with `react-day-picker` calendar → Stripe Checkout → asset upload → AI review
+- **Availability:** `GET /api/ads/availability` — booked/blocked dates + pricing per neighborhood/month
+- **Checkout:** `POST /api/ads/checkout` — creates ad row + Stripe session, 48h–90d booking window
+- **Upload:** `/advertise/upload/[adId]` — sponsor label, headline, body, image, click URL
+- **Success:** `/advertise/success` — post-payment confirmation with upload link
 - **Quality:** `src/lib/ad-quality-service.ts` — Gemini image analysis + copy polisher
 - **Proof page:** `/proofs/[token]` — no auth, token-based
-- **State machine:** `pending_ai` → `pending_approval` → `approved` / `changes_requested`
-- **Sunday ad resolver:** `src/lib/email/sunday-ad-resolver.ts` — cascade with house ad fallback
-- **Ingestion:** Passionfroot webhook + Resend inbound email parser
+- **Approval flow:** `pending_payment` → `pending_assets` → `in_review` → `active` (via admin approval)
+- **AI quality:** `pending_ai` → `pending_approval` → `approved` / `changes_requested`
+- **Sunday ad resolver:** `src/lib/email/sunday-ad-resolver.ts` — date-aware cascade with house ad fallback
+- **Date-aware delivery:** `src/lib/email/ads.ts` and `src/lib/ad-engine.ts` filter by `start_date <= today <= end_date`
+- **Double-booking prevention:** unique composite index on `(neighborhood_id, placement_type, start_date)`
+- **Global takeover:** $10,000/day or $15,000/Sunday, contact-only (`ads@readflaneur.com`)
+- **Storage:** `ad-assets` Supabase bucket for uploaded ad images
 
 ### Combo Neighborhoods
 - `src/lib/combo-utils.ts` — `getNeighborhoodIdsForQuery()`, `getComboInfo()`, `getComboForComponent()`
@@ -103,17 +112,18 @@ src/
 │   ├── saved/                     # Saved/bookmarked stories page
 │   ├── settings/                  # User location preferences
 │   ├── email/preferences/         # Email topic management
-│   ├── advertise/                 # Ad collections page
+│   ├── advertise/                 # Booking calendar, success, upload pages
 │   ├── proofs/[token]/            # Customer ad proof page
 │   └── api/
 │       ├── cron/                  # 30+ automated cron jobs
 │       ├── admin/                 # Admin APIs
+│       ├── ads/                   # Availability, checkout, upload, booking-info
 │       ├── reactions/             # Emoji reactions API + saved articles
 │       ├── internal/              # Image generation, resend
-│       └── webhooks/              # Passionfroot, Resend inbound
+│       └── webhooks/              # Resend inbound
 ├── config/
-│   ├── ad-tiers.ts                # Pricing tiers & seasonal rules
-│   ├── ad-config.ts               # Ad collections & Sunday Edition
+│   ├── ad-tiers.ts                # Flat per-day rates, tiers & seasonal rules
+│   ├── ad-config.ts               # Ad collections (3 tiers)
 │   ├── global-locations.ts        # City configs, vocabulary, zones
 │   └── nyc-locations.ts           # NYC zip/precinct mappings
 └── lib/
@@ -140,7 +150,7 @@ src/
 - `articles` — news articles with AI images (`enriched_at`, `enrichment_model`)
 - `neighborhood_briefs` — Grok-generated daily summaries
 - `weekly_briefs` — Sunday Edition content (rearview, horizon, holiday, data_point)
-- `ads` — ad campaigns with quality control fields (proof_token, approval_status, ai_quality_score)
+- `ads` — ad campaigns with booking fields (stripe_session_id, customer_email, is_global_takeover) and quality control (proof_token, approval_status, ai_quality_score)
 - `house_ads` — fallback ads (types: waitlist, app_download, advertise, newsletter, sunday_edition)
 - `article_reactions` — emoji reactions (bookmark/heart/fire), anonymous + authenticated
 - `cron_executions` / `cron_issues` — monitoring & self-healing
