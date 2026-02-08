@@ -1,1209 +1,142 @@
-# Flâneur Web - Project Status
+# Flaneur Web
 
-> **How to use:** When starting a new Claude session, say "read CLAUDE.md and pick up where we left off"
->
-> **See also:** `../flaneur/CLAUDE.md` for the full project overview and mobile app details.
->
-> **User Location:** Stockholm, Sweden (CET/CEST timezone) - use this for time-related references.
+> **User Location:** Stockholm, Sweden (CET/CEST timezone)
+> **Full changelog:** `docs/CHANGELOG.md` (read only when needed)
+> **Mobile app:** `../flaneur/CLAUDE.md`
 
-## Current Status
-**Last Updated:** 2026-02-08
+## What's Live
 
-### Recent Changes (2026-02-08)
-
-**Ad Quality Control & Customer Approval System:**
-- AI-powered ad quality pipeline using Gemini: image analysis (brand safety + aesthetic scoring 0-100) and copy polisher (Economist/Monocle editorial voice)
-- Customer-facing proof page at `/proofs/[token]` — no auth required, token = auth
-- State machine: `pending_ai` → `pending_approval` → `approved` (or `changes_requested`)
-- Webhook → AI runs automatically → proof email sent to customer → customer approves/requests changes → live
-- Admin force-approve bypasses customer proof flow
-- AI auto-rejects unsafe images (brand safety violation → `status: 'rejected'`)
-- Copy polisher saves original to `original_copy`, rewrite to `ai_suggested_rewrite` — proof page lets customer toggle between them
-- Admin page: new badges (AI Processing, Awaiting Client, Client Approved, Changes Requested), AI quality score display, "Run AI Check" button, "Send Proof to Client" button, copyable proof URL, customer change request feedback box
-- New filter tabs: "Awaiting Client" and "Changes" on admin ads page
-- Notification emails: `notifyCustomerProofReady()` and `notifyAdminChangeRequest()`
-- Fire-and-forget quality triggers from both Passionfroot and Resend inbound webhooks
-- DB: `ads.ai_quality_score`, `ads.ai_flag_reason`, `ads.ai_suggested_rewrite`, `ads.original_copy`, `ads.proof_token` (UUID, unique index), `ads.approval_status`, `ads.customer_change_request` (migration 041)
-- Files: `src/lib/ad-quality-service.ts` (NEW), `src/app/api/ads/quality/route.ts` (NEW), `src/app/api/proofs/[token]/route.ts` (NEW), `src/app/proofs/[token]/page.tsx` (NEW), `src/types/index.ts`, `src/lib/email.ts`, `passionfroot/route.ts`, `resend-inbound/route.ts`, `admin/ads/` (route + review + page)
-
-**Sunday Edition - Presenting Sponsor Ad Slot:**
-- New "Presenting Sponsor" placement between The Rearview and The Horizon sections
-- Full ingestion-to-display pipeline: Passionfroot booking → ad created → admin review → live in email
-- Ad resolver cascade: neighborhood-targeted paid → global paid → Sunday house ad → hardcoded default
-- Never empty — house ad fallback: "Become This Edition's Presenting Sponsor" → `/advertise`
-- Visual: warm ivory background, gold "PRESENTED BY [SPONSOR]" label, image, headline, body, "Learn more →" CTA
-- Impression tracking after each send (RPC with select+update fallback)
-- Webhook detection: "sunday" in product name → `placement_type: 'sunday_edition'`
-- Admin: purple "Sunday" badge, "Sunday" filter tab, body copy textarea, email type display
-- 4th ad collection: "The Sunday Edition" at $750/week on `/advertise` page
-- DB: `ads.placement_type` (daily_brief/sunday_edition), `ads.body` TEXT, `house_ads.type` expanded (migration 040)
-- Files: `src/lib/email/sunday-ad-resolver.ts` (NEW), `SundayEditionTemplate.tsx`, `send-sunday-edition/route.ts`, `resend-inbound/route.ts`, `passionfroot/route.ts`, `admin/ads/` (route + review + page), `ad-config.ts`, `src/types/index.ts`
-
-**Sunday Edition - Data Point Label Fix:**
-- Label changed from "The Air We Breathe" to "The Temperature"
-- JSON example in prompt changed from `'AQI 42'` to `'28°C / 82°F'` — Gemini was following the AQI example despite "Do NOT use AQI" instruction
-- File: `src/lib/weekly-brief-service.ts`
-
-**Sunday Edition - Rearview Paragraph Sizing:**
-- Gemini prompt changed from "2-3 SHORT paragraphs" to "exactly 4 short paragraphs (each 2-3 sentences max)"
-- Produces more readable, scannable narrative instead of 2 dense blocks
-- File: `src/lib/weekly-brief-service.ts`
-
-**Advertise Page Copy Fixes:**
-- Discovery Collection: `Dublin / Dalkey` → `Dublin (Dalkey)` in example neighborhoods
-- How It Works step 2: `We Produce` → `Submit Assets`, description updated to "Provide your imagery and core message. Our editorial team refines the copy to ensure a seamless, native fit."
-- Files: `src/config/ad-config.ts`, `src/app/advertise/page.tsx`
-
-**Sunday Edition - "THAT TIME OF YEAR" Holiday Section:**
-- New conditional section detects upcoming holidays (within 7 days) per country
-- Grok X Search finds neighborhood-specific holiday events, Gemini curates top 3
-- 20 holidays supported: Valentine's Day, Easter, Halloween, Christmas, Thanksgiving, Midsommar, Guy Fawkes, ANZAC Day, Bastille Day, Canada Day, Singapore National Day, etc.
-- Holiday calendar uses computed dates (Easter via Butcher's algorithm, nth weekday for Thanksgiving/Memorial Day/Labor Day)
-- Each holiday event has name, day+time, and insider description with Google search link
-- Section only appears when a holiday is detected for the neighborhood's country
-- DB: `weekly_briefs.holiday_section` JSONB column (migration 039)
-- Files: `src/lib/weekly-brief-service.ts`, `src/lib/email/templates/SundayEditionTemplate.tsx`
-
-**Sunday Edition - Chronological Event Sorting:**
-- Horizon events now sorted by date (closest first) via `parseEventDayForSort()` parser
-- Parses date strings like "Tuesday Feb 10 6pm" into timestamps for comparison
-- Previously events appeared in whatever order Gemini returned them
-
-**Sunday Edition - Readability Improvements:**
-- Story significance blurbs: removed italic, darkened color (#555555)
-- Event "why it matters" text: increased 14px to 15px, darkened (#444444)
-- Data point context: removed italic for consistency
-- All fonts match Daily Brief readability standards
-
-**Sunday Edition - Persona Reverted to Daily Brief Voice:**
-- Reverted from "Smart Neighbor" persona back to proven Daily Brief Gemini persona
-- "Well-travelled, successful 35-year-old who has lived in [neighborhood] for years"
-- Applied to all Gemini prompts: significance filter, editorial synthesis, event curation, data points
-
-**Sunday Edition - Template Enhancements:**
-- Story headlines in "Three Stories That Mattered" now hyperlink to Google search
-- Rearview shows teaser paragraph with "Continue reading" link to full article on website
-- Narrative split into 4 short paragraphs (each 2-3 sentences max)
-- Weather data point section clickable - links to Google weather search
-- Data point label: "The Temperature" (not "The Air We Breathe"), always temperature, never AQI
-- Presenting Sponsor block between Rearview and Horizon (with house ad fallback)
-- Copyright symbol added: "© Flaneur 2026" in footer
-
-**Sunday Edition - Combo Neighborhood Article Fix:**
-- Root cause: `getNeighborhoodIdsForQuery()` returned only component IDs, but articles stored under combo ID
-- Fix: Include combo ID itself: `return [neighborhoodId, ...components.map(c => c.component_id)]`
-- This was causing 0 articles found for ALL combo neighborhoods' Sunday Editions
-- File: `src/lib/combo-utils.ts`
-
-**Email Preferences - Combo Neighborhood Display:**
-- Combo neighborhoods now show component names in light grey below neighborhood name
-- API fetches combo component names from `combo_neighborhoods` join table
-- Files: `src/app/api/email/preferences/route.ts`, `src/app/email/preferences/page.tsx`
-
-**Global Rounded Corners:**
-- `.btn-primary`, `.btn-secondary`, `.btn-ghost` all have `rounded-lg`
-- Email preferences page: all buttons, inputs, labels, cards have rounded corners
-- File: `src/app/globals.css`
-
-**Copyright Symbol in All Email Footers:**
-- "© Flaneur 2026" in both Sunday Edition and Daily Brief email footers
-- Files: `SundayEditionTemplate.tsx`, `components/Footer.tsx`
-
-### Previous Changes (2026-02-07)
-
-**Fahrenheit for US Neighborhoods in Daily Emails:**
-- US neighborhoods now show °F as primary unit in weather stories and widgets (e.g., `10°F / -12°C`)
-- Headlines use °F too: `Sharp Drop: 14°F Tomorrow (Sun).` instead of `-10°C`
-- Snow shows inches for US (`4"` instead of `10cm`), precipitation in inches too
-- Determined by `country` field on neighborhoods table (`USA` → Fahrenheit, all others → Celsius)
-- Files: `src/lib/email/weather-story.ts`, `src/lib/email/weather.ts`, `src/lib/email/types.ts`, `src/lib/email/assembler.ts`, `WeatherStoryCard.tsx`, `WeatherWidget.tsx`
-
-**RSS Article Enrichment Pipeline Fix:**
-- Root cause: 48-hour time window meant articles older than 48h were **permanently skipped** by enrichment cron
-- 201 of 228 RSS articles had never been enriched (no sources shown on article pages)
-- Fix: Removed arbitrary time window — `enriched_at IS NULL` filter + batch size is sufficient
-- Added time budgeting: 280s total budget, 120s Phase 1 cap, so Phase 2 always gets time
-- Moved cron execution logging into `try/finally` block (was never logging due to timeout)
-- Backlog of 201 articles clearing automatically at ~10/hour via hourly cron
-- File: `src/app/api/cron/enrich-briefs/route.ts`
-
-**Instant Email Resend on Settings Change:**
-- Changing timezone, neighborhoods, or paused topics triggers immediate re-send of daily brief
-- Rate limited: max 3 resends per day per recipient via `instant_resend_log` table
-- Fire-and-forget pattern: settings endpoints call resend endpoint, user response is instant
-- UI notifications: "A fresh Daily Brief reflecting your changes is on its way." / "To save your inbox, your changes will be reflected in tomorrow morning's email."
-- Files: `src/lib/email/instant-resend.ts` (NEW), `src/app/api/internal/resend-daily-brief/route.ts` (NEW), `src/app/api/location/set-primary/route.ts`, `src/app/api/email/preferences/route.ts`, `src/app/settings/page.tsx`, `src/app/email/preferences/page.tsx`
-- Migration: `supabase/migrations/036_instant_resend_log.sql`
-
-**Thin Content Detector Fix:**
-- Now skips exempt regions: `test`, `us-vacation`, `europe-vacation`, `caribbean-vacation`
-- Only flags neighborhoods whose city has active RSS sources in `rss_sources` table
-- Reduced false positives from 52 to near zero
-- File: `src/lib/cron-monitor/issue-detector.ts`
-
-**RSS Article Source Attribution:**
-- Gemini enrichment of RSS articles now extracts sources and saves to `article_sources` table
-- RSS articles display proper source attribution (same as daily brief articles)
-- Sources deduplicated by URL before insertion
-- File: `src/app/api/cron/enrich-briefs/route.ts`
-
-**Urban Context in Gemini Prompts:**
-- Dense urban cities (NYC, London, Paris, Stockholm, etc.) now get explicit instruction not to reference driving/parking
-- Prevents inappropriate car-centric language in neighborhood updates
-- Applies to both daily brief and RSS enrichment prompts
-- File: `src/lib/brief-enricher-gemini.ts`
-
-**Admin News Feed Neighborhood Dropdown Fix:**
-- Dropdown was built from article results only, missing most neighborhoods
-- Now fetches all active neighborhoods from the database via API
-- API returns full `neighborhoods` array; frontend uses it directly
-- Files: `src/app/api/admin/news-feed/route.ts`, `src/app/admin/news-feed/page.tsx`
-
-**Email Monitoring & Self-Healing System:**
-- New `missed_email` issue type in cron monitor with root cause diagnosis engine
-- 6-check diagnostic cascade: disabled_by_user > missing_timezone > no_neighborhoods > cron_not_run > send_failed > rate_limit_overflow
-- Auto-fixes root causes (e.g., sets timezone from neighborhood) then resends via `?test={email}&force=true`
-- Files: `src/lib/cron-monitor/email-monitor.ts` (NEW), `src/lib/cron-monitor/types.ts`, `src/lib/cron-monitor/auto-fixer.ts`
-- Detection: Runs after recipient's 7 AM + 1 hour grace period; compares eligible recipients against `daily_brief_sends`
-- Admin UI: Orange "missed email" badge on `/admin/cron-monitor` with diagnosis details
-
-**Thin Content Detector & Auto-Fixer:**
-- New `thin_content` issue type detects neighborhoods with 0 articles in last 24h
-- Auto-fixes by generating fresh Grok brief via `sync-neighborhood-briefs?test={id}&force=true`
-- Detection only after 12:00 UTC to give morning crons time to run
-- Rate limited: max 5 per monitor run with 2s delay
-- Files: `src/lib/cron-monitor/issue-detector.ts`, `src/lib/cron-monitor/auto-fixer.ts`
-
-**Critical Bug Fix: Auto-Fixer baseUrl:**
-- Root cause: `VERCEL_URL` pointed to preview deployment URL, not production
-- ALL auto-fix HTTP calls were returning HTML 404 pages → `"Unexpected token '<'"` JSON parse error
-- Fix: Use `NEXT_PUBLIC_APP_URL` (production URL) first, fall back to `VERCEL_URL`
-- This unblocks ALL existing self-healing (missing images, missing briefs, etc.)
-- File: `src/app/api/cron/monitor-and-fix/route.ts`
-
-**Cron Execution Logging for Briefs:**
-- `sync-neighborhood-briefs` now logs to `cron_executions` table
-- Previously invisible to the monitoring system (no execution records at all)
-- File: `src/app/api/cron/sync-neighborhood-briefs/route.ts`
-
-**Auth Hang Fixes (getUser → getSession):**
-- `supabase.auth.getUser()` was hanging indefinitely (network call to verify JWT)
-- Switched to `getSession()` (reads from cookies, no network) in:
-  - Settings page (`src/app/settings/page.tsx`) — added 5s safety timeout
-  - Middleware (`src/lib/supabase/middleware.ts`) — non-blocking `getUser()` refresh
-  - Neighborhood selector (`src/components/neighborhoods/NeighborhoodSelectorModal.tsx`) — 3s Promise.race timeout
-- Neighborhood selector now loads DB preferences for logged-in users with auto-migration from localStorage
-
-**Admin News Feed Fix:**
-- Removed broken `scheduled_for` column and `scheduled` status references from failed articles query
-- These columns/statuses never existed in the database (schema mismatch)
-- File: `src/app/api/admin/news-feed/route.ts`
-
-**Resend Email Tracking:**
-- Enabled open_tracking and click_tracking on Resend domain via API
-- No code changes needed — Resend injects 1x1 pixel for opens, rewrites links for clicks
-
-**Test Lab Region (Experimental Geographic Scales):**
-- 4 test neighborhoods exploring non-standard geographic scales for content generation
-- County Limerick (Ireland) — rural county, Ireland (whole island), Stockholm (city-wide), Sweden (country-wide)
-- Purple "Test Lab" group in neighborhood selector with alchemist icon
-- Region type `test` added to `GlobalRegion` union type
-- IDs: `ie-county-limerick`, `ie-ireland`, `se-stockholm`, `se-sweden`
-- Will generate Grok briefs + news articles on normal cron schedules
-- Migration: `supabase/migrations/20260207_test_neighborhoods.sql`
-
-**Neighborhood Brief Window Widened:**
-- Changed morning window from 6-7am to 5-7am local time
-- Catches more timezone groups per hourly cron tick (was missing ~61 neighborhoods)
-- File: `src/app/api/cron/sync-neighborhood-briefs/route.ts`
-
-**RSS Article Gemini Enrichment:**
-- RSS-sourced articles (ai_model = 'claude-sonnet-4') now auto-enriched through Gemini with Google Search grounding
-- Same pipeline as Grok brief enrichment: source verification, hyperlink injection, insider tone rewriting
-- Runs in Phase 2 of `enrich-briefs` cron (15 min past each hour), picks up articles from last 6 hours
-- Uses `weekly_recap` article type (no greeting/sign-off — straight news)
-- Database: `articles.enriched_at`, `articles.enrichment_model` columns (migration 035)
-- Test: `?test-article=<article-id>` on enrich-briefs endpoint
-- Cost: ~$0.003-0.01 per article (Gemini 3 Pro)
-
-**Escape Index Condition-Specific Images:**
-- Split single `escape-index` cached image into 3: `escape-index` (snow/mountains), `escape-surf` (beach/waves), `escape-sun` (pool/sunshine)
-- Surf stories now show warm beach scenes instead of snow-covered mountains
-- Gemini prompt updated: context-appropriate action phrases ("Pack the car." for driving distance, "Book the flight." for far destinations) instead of always "Wheels up."
-- Files: `src/lib/cron-images.ts`, `src/lib/escape-index.ts`, `src/app/api/cron/sync-escape-index/route.ts`
-
-**WeatherStoryService (Editorial Weather for Daily Brief):**
-- Transforms Open-Meteo forecast data into actionable editorial weather stories
-- 4-tier priority hierarchy: Safety/Extremes > Commute/Lunch Check > Weekend Lookahead > Temperature Anomaly
-- Priority 1: Blizzard (>10cm snow), Extreme Heat (>35°C) — red alert styling
-- Priority 2: Hourly rain probability for morning commute (8-10am >60%), lunch (12-2pm >50%), evening commute (5-7pm >60%) — weekdays only
-- Priority 3: Weekend forecast on Thu/Fri emails — good (warm+dry) or bad (>5mm rain)
-- Priority 4: Tomorrow's high vs climate normals — flags ±5°C anomalies
-- Date naming rule: NEVER "Tomorrow" alone, always "Tomorrow (Sat)" or full day name
-- Climate normals for 28 cities including southern hemisphere (reversed seasons)
-- WeatherStoryCard replaces WeatherWidget when story triggers, falls back to widget on calm days
-- Zero LLM cost — all pure logic, no AI generation
-- Files: `src/lib/email/weather-story.ts`, `src/lib/email/date-utils.ts`, `src/lib/email/climate-normals.ts`, `src/lib/email/templates/components/WeatherStoryCard.tsx`
-- Modified: `src/lib/email/types.ts` (WeatherStory interface), `src/lib/email/assembler.ts`, `src/lib/email/templates/DailyBriefTemplate.tsx`
-
-**Commercial Stack — Collections Page + Fallback Protocol:**
-- Dark "Night Flaneur" themed `/advertise` page with 4 Collection tiers
-- Passionfroot deep-link booking URLs for each tier (Super-Prime $500, Metropolitan $200, Discovery $100, Sunday Edition $750/week)
-- Neighborhood Tier Lookup widget (search-as-you-type, shows seasonal labels)
-- FallbackService for ad slots: Bonus ads (Tier 1 cross-sell) > House ads (weighted random from DB) > Default (80/20 newsletter/house-ad)
-- Database: `house_ads` table with 5 seed rows (waitlist, app_download, advertise, newsletter, sunday_edition)
-- Files: `src/config/ad-config.ts`, `src/app/advertise/page.tsx`, `src/lib/FallbackService.ts`, `src/components/feed/FallbackAd.tsx`, `supabase/migrations/032_house_ads.sql`
-
-**Ad Approval Workflow + Passionfroot Webhook + Design Concierge:**
-- Passionfroot webhook endpoint creates `pending_review` ads from bookings
-- Admin page (`/admin/ads`) with inline headline editing, admin notes, design flag badges
-- Approve goes directly to `active` (one-click go-live)
-- Filter tabs: Pending | Needs Design | Active | Sunday | All
-- Source badges distinguish Passionfroot vs Direct ads
-- Database: `ads.needs_design_service`, `ads.admin_notes`, `ads.passionfroot_order_id`, `ads.client_name`, `ads.client_email`, `ads.placement_type`, `ads.body`
-- Fixed `ads_status_check` constraint to allow `pending_review` and `rejected`
-- Files: `src/app/api/webhooks/passionfroot/route.ts`, `src/app/admin/ads/page.tsx`, `src/app/api/admin/ads/route.ts`, `src/app/api/admin/ads/review/route.ts`
-- Migrations: `033_ad_approval_enhancements.sql`, `034_fix_ads_status_constraint.sql`
-
-**Email Parser Fallback (Passionfroot via Resend Inbound):**
-- When Passionfroot lacks webhook support, booking emails are parsed automatically
-- Pipeline: Passionfroot email > Gmail > Gmail filter > Resend inbound > webhook > ad created
-- Resend inbound address: `passionfroot@alitolaa.resend.app`
-- Adaptive HTML parser extracts client name, email, product, amount from email body
-- Svix signature verification + test mode via `x-test-secret` header
-- Idempotency via `passionfroot_order_id = 'email-{resend_email_id}'`
-- Files: `src/lib/passionfroot-email-parser.ts`, `src/app/api/webhooks/resend-inbound/route.ts`
-- Env vars: `RESEND_WEBHOOK_SECRET` (Vercel)
-- Gmail filter: from `passionfroot.me`, subject contains `booking` > forward to Resend inbound
-
-**Passionfroot Account Setup:**
-- Creator account: https://www.passionfroot.me/flaneur
-- 4 products: Super-Prime ($500), Metropolitan ($200), Discovery ($100), Sunday Edition ($750/week)
-- Stripe + bank account connected
-- Passionfroot takes 15% cut on marketplace deals, 0% on direct `/advertise` bookings
-
-### Previous Changes (2026-02-06)
-
-**Ad Pricing Service (Wealth Density Model):**
-- Dynamic neighborhood-aware pricing with 3 tiers: Super-Prime ($45 CPM), Establishment ($25 CPM), Default ($15 CPM)
-- Seasonal market rules: resort neighborhoods shift between Tier 1 (peak season) and Tier 3 (off-peak)
-  - Winter Suns (Nov–Apr): Palm Beach, St. Barts, Cape Town Atlantic Seaboard
-  - Ski & Snow (Dec–Mar): Aspen
-  - Summer Socials (May–Sep): Hamptons, Nantucket
-- Holiday surge multiplier (1.5x) for Nov 15 – Dec 25 across all tiers
-- Pure functions — no DB calls, static config in code
-- Files: `src/config/ad-tiers.ts` (tier definitions, seasonal rules, base rates), `src/lib/PricingService.ts` (getTierForNeighborhood, calculateRate, getQuote)
-
-**Sentry Error Monitoring:**
-- Installed `@sentry/nextjs` with tracing, session replay, and logs
-- Source maps uploaded to Sentry on every Vercel build via `SENTRY_AUTH_TOKEN`
-- Browser requests tunneled through `/monitoring` to avoid ad blockers
-- Automatic Vercel Cron Monitor instrumentation
-- Config files: `sentry.server.config.ts`, `sentry.edge.config.ts`, `src/instrumentation-client.ts`, `src/instrumentation.ts`
-- Sentry org: `flaneur-vk`, project: `flaneur-web`
-- Dashboard: https://sentry.io/organizations/flaneur-vk/issues/
-
-**Email & Domain Setup:**
-- ImprovMX wildcard forwarding: `*@readflaneur.com` → `morgan.downey@gmail.com`
-- 7 email addresses in use: contact@, ads@, tips@, editors@, ethics@, legal@, noreply@, hello@
-- Resend MCP configured for sending emails from Claude Code
-- Stripe MCP configured for payment management
-- Sentry MCP configured for error debugging
-
-**Email Topic Preferences & Suggestions:**
-- Users can pause specific content categories from their Daily Brief email
-- 20 topics grouped into 6 themes: Dining & Lifestyle, Arts & Culture, Shopping & Fashion, Auctions, Travel, Civic & Community
-- Topic suggestions feature lets users request new content types
-- Paused topics are filtered out during email assembly (Daily Brief always included)
-- Database: `profiles.paused_topics`, `newsletter_subscribers.paused_topics` (TEXT[]), `topic_suggestions` table
-- API: `/api/email/preferences` — GET returns `paused_topics`, POST handles `update_topics` and `suggest_topic` actions
-- UI: `/email/preferences` page — topic toggles with save button, suggestion text input
-- Migration: `supabase/migrations/031_topic_preferences.sql`
-- Files modified: `src/lib/email/types.ts`, `src/lib/email/scheduler.ts`, `src/lib/email/assembler.ts`, `src/app/api/email/preferences/route.ts`, `src/app/email/preferences/page.tsx`, `src/app/api/cron/send-daily-brief/route.ts`
-
-**Primary Location & Timezone Feature:**
-- Detect user location on first visit via IP geolocation (ipinfo.io)
-- Toast prompt asks users to set detected city as their primary location
-- Settings page (`/settings`) for manual location management
-- Timezone priority for newsletters: primary > browser > neighborhood > default
-- 31 supported cities with IANA timezone mappings
-- Database: `profiles.primary_city`, `profiles.primary_timezone`, `profiles.location_prompt_dismissed_at`
-- Newsletter subscribers now capture browser timezone
-- 30-day dismiss cooldown for location prompt
-- Files:
-  - `src/lib/location/` - Detection library (city-mapping, detect, timezone)
-  - `src/app/api/location/detect/route.ts` - IP geolocation endpoint
-  - `src/app/api/location/set-primary/route.ts` - Save/clear/dismiss endpoints
-  - `src/components/location/LocationPrompt.tsx` - Toast-style prompt component
-  - `src/app/settings/page.tsx` - User settings page
-- Migration: `supabase/migrations/029_user_primary_location.sql`
-
-### Previous Changes (2026-02-05 Night)
-
-**Daily Briefs Fix:**
-- Fixed brief generation to check for TODAY's briefs instead of unexpired briefs
-- Each neighborhood now gets a fresh brief every morning regardless of prior day's brief status
-- Increased default batch size from 20 to 50 to handle all neighborhoods in timezone window
-- File: `src/app/api/cron/sync-neighborhood-briefs/route.ts`
-
-**Cron Job Monitoring & Auto-Fix System:**
-- New self-healing system that monitors cron job execution and auto-fixes recoverable issues
-- Database tables: `cron_executions` (tracks all cron runs), `cron_issues` (tracks issues needing attention)
-- Library: `src/lib/cron-monitor/` with types, issue detector, auto-fixer, image validator
-- Cron endpoint: `/api/cron/monitor-and-fix` (runs every 30 minutes)
-- Admin dashboard: `/admin/cron-monitor` with overview, issues list, execution history
-- Auto-detects:
-  - Missing article images (image_url is null or empty)
-  - Placeholder SVG images (*.svg files)
-  - Failed cron job executions
-- Auto-fixes:
-  - Regenerates missing/placeholder images via `/api/internal/generate-image`
-  - Max 3 retries with exponential backoff (0, 15min, 1hr)
-  - Rate limits to 5 image regenerations per run with 3-second delays
-- Manual actions via admin dashboard:
-  - Force retry any issue
-  - Mark issues as resolved
-  - Run monitor immediately
-- Files: `src/lib/cron-monitor/`, `src/app/api/cron/monitor-and-fix/route.ts`, `src/app/admin/cron-monitor/page.tsx`
-- Migration: `supabase/migrations/027_cron_monitoring_system.sql`
-
-### Recent Changes (2026-02-05 Evening)
-
-**Cron Jobs Bug Fixes:**
-- Fixed `is_pinned` column bug in 3 cron jobs (column doesn't exist in articles table):
-  - `sync-escape-index` - Was failing on all article inserts
-  - `sync-art-fairs` - Would fail during active fairs
-  - `sync-design-week` - Would fail during active events
-- Files changed: All three route.ts files in `src/app/api/cron/`
-
-**Combo Neighborhoods Fixes:**
-- Force-generated briefs for 10 combo neighborhoods that were missing daily briefs
-- Manually triggered Gemini enrichment for 15 combo briefs (all now enriched)
-- Issue: Enrichment cron has 2-hour window; older briefs need `?test=<brief-id>` to bypass
-
-**Cron Jobs Verified Working:**
-| Cron | Status | Notes |
-|------|--------|-------|
-| sync-anglosphere-features | ✅ | Generated 6 articles (Singapore + Palm Beach) |
-| sync-global-fallback | ✅ | No fallback needed (all neighborhoods covered) |
-| sync-review-watch | ✅ | Generated 2 Dining Watch articles |
-| sync-nuisance-watch | ✅ | Generated 10 Block Watch articles |
-| sync-filming-permits | ✅ | No film permits in coverage areas |
-| sync-retail-watch | ✅ | No luxury brand signage permits |
-| sync-gala-watch | ✅ | No gala events this period |
-| sync-museum-watch | ✅ | No blockbuster exhibitions opening |
-| sync-sample-sales | ✅ | No luxury sample sales detected |
-| sync-archive-hunter | ✅ | No investment-grade vintage items |
-| sync-overture-alerts | ✅ | No opera/ballet premieres in 48h |
-| sync-art-fairs | ✅ | No active art fairs (off-season) |
-| sync-escape-index | ✅ (fixed) | Found surf alerts, was failing before fix |
-
-### Recent Changes (2026-02-05)
-
-**Global Rollout (8 New Neighborhoods across 5 Cities):**
-- Added 5 new cities with city-specific special features:
-
-**Vancouver, Canada (2 neighborhoods):**
-- **West Vancouver** - British Properties grandeur, waterfront mansions, Dundarave village
-- **Point Grey** - UBC endowment lands, Marine Drive estates, old money discretion
-- New adapter: `src/lib/adapters/vancouver-adapter.ts`
-- **"View Watch"**: Height variance permit monitoring for protected view cones (North Shore mountains, English Bay)
-- Auction house: Waddington's (Canadian art, Lawren Harris, Emily Carr)
-
-**Cape Town, South Africa (2 neighborhoods):**
-- **Atlantic Seaboard** - Clifton, Camps Bay, Sea Point promenade
-- **Constantia** - Vineyard estates, old Cape Dutch money, wine country elegance
-- New adapter: `src/lib/adapters/capetown-adapter.ts`
-- **"Beach Alert"**: Wind condition monitoring (perfect beach days when wind <15km/h on weekends)
-- **"Grid Watch"**: Load shedding schedule monitoring (Eskom power cuts)
-- Auction houses: Strauss & Co (Irma Stern, Pierneef, Cape Dutch furniture), Aspire Art (contemporary African)
-
-**Singapore (2 neighborhoods):**
-- **Nassim** - Embassy row, Good Class Bungalows, diplomatic elegance, Botanic Gardens
-- **Sentosa** - Billionaire island, Cove estates, casino adjacency
-- New adapter: `src/lib/adapters/singapore-adapter.ts`
-- **"Motor Watch"**: COE (Certificate of Entitlement) results monitoring for premium car licenses
-- **"GCB Alert"**: Good Class Bungalow transactions over $20M SGD
-- Auction house: Larasati (Southeast Asian art, Indonesian masters)
-
-**Palm Beach, Florida (1 neighborhood):**
-- **Palm Beach Island** - Old money resort, Worth Avenue, oceanfront estates
-- New adapter: `src/lib/adapters/palm-beach-adapter.ts`
-- **"Design Watch"**: ARCOM (Architectural Commission) agenda monitoring for aesthetic battles
-- Auction house: Palm Beach Modern Auctions (20th century design, Florida estates)
-
-**Greenwich, Connecticut (1 neighborhood):**
-- **Backcountry** - Hedge fund estates, Round Hill Road, Conyers Farm, equestrian properties
-- New adapter: `src/lib/adapters/greenwich-adapter.ts`
-- Premium street detection: Round Hill Road, North Street, Conyers Farm, Stanwich Road
-
-**Files changed:** `global-locations.ts`, `vancouver-adapter.ts` (new), `capetown-adapter.ts` (new), `singapore-adapter.ts` (new), `palm-beach-adapter.ts` (new), `greenwich-adapter.ts` (new), `adapters/index.ts`, `specialty-auctions.ts`
-
-**New Zealand Integration (5 New Neighborhoods - "Bunker Watch"):**
-- Added New Zealand as Tier 1 market for ultra-wealthy survivalists (Thiel, Page, Cameron)
-- **Auckland (The City)** - 3 neighborhoods:
-  - **Herne Bay** - Old money waterfront, Marine Parade elegance, yacht club proximity
-  - **Remuera** - Aristocratic northern slopes, Arney Road grandeur, grammar zone prestige
-  - **Waiheke Island** - Vineyard luxury, Oneroa sophistication, celebrity hideaways
-- **Queenstown (The Retreat/Bunker)** - 2 neighborhoods:
-  - **Dalefield/Millbrook** - Billionaire rural retreats, survivalist compounds
-  - **Kelvin Heights** - Lakeside privacy, Peninsula Road estates, alpine luxury
-- New adapter: `src/lib/adapters/nz-adapter.ts`
-  - Resource/Building consents from Auckland Council and QLDC
-  - Liquor licenses from District Licensing Committees
-  - Crime stats from NZ Police
-  - OIO (Overseas Investment Office) decision monitoring
-- **OIO Service "Bunker Watch"**: `src/lib/oio-service.ts`
-  - Monitors LINZ Decision Summaries for foreign land acquisitions
-  - Filter: $10M+ NZD sensitive land in Auckland/Queenstown/Wanaka
-  - Detects obscured ownership (Trusts/LLCs hiding billionaire names)
-  - Gemini story generation with "Bunker Alert" tone
-- Auction houses in `src/lib/specialty-auctions.ts`:
-  - **Webb's** - Colin McCahon, Goldie, Vintage Cars (Herne Bay, Remuera)
-  - **Art+Object** - Contemporary NZ Art, Ralph Hotere (all Auckland neighborhoods)
-  - New `oceania` region type
-- NZ vocabulary: Resource Consent, Lifestyle Block, Harbour Views, Homestead, etc.
-- Files changed: `global-locations.ts`, `nz-adapter.ts` (new), `oio-service.ts` (new), `adapters/index.ts`, `specialty-auctions.ts`
-
-**Dublin Integration (3 New Neighborhoods):**
-- Added Dublin, Ireland to the Flâneur ecosystem with 3 premium neighborhoods:
-  - **Ballsbridge (D4)** - Old money embassy belt, RDS grounds, Shrewsbury Road billionaires
-  - **Ranelagh (D6)** - Cosmopolitan village, Dartmouth Square elegance, creative professionals
-  - **Dalkey** - Coastal luxury, Vico Road views, celebrity retreats, literary heritage
-- New adapter: `src/lib/adapters/dublin-adapter.ts`
-  - Planning permits from Dublin City Council + Dún Laoghaire-Rathdown
-  - Liquor licences from Courts Service (Intoxicating Liquor Licences)
-  - Crime stats from Garda Síochána / CSO
-  - Premium street detection (Shrewsbury, Ailesbury, Vico Road, etc.)
-  - Protected structure/heritage keyword filtering
-  - Dublin postcode mapping (D04, D06, A96)
-- Dublin vocabulary added to `src/config/global-locations.ts`:
-  - Permit terms: Planning Application, Protected Structure, Conservation Area, etc.
-  - Liquor terms: Intoxicating Liquor Licence, Publican's Licence, Special Exemption Order
-  - Real estate terms: Georgian, Victorian, Period property, Mews, Embassy, Red brick
-  - Local phrases: the Southside, D4, D6, the village, embassy belt, DART line
-  - Currency: EUR (€)
-- Auction houses added to `src/lib/specialty-auctions.ts`:
-  - **Adam's** - Classic Irish Art, Jack B. Yeats, Period Furniture (all 3 neighborhoods)
-  - **Whyte's** - History, Irish Republic Memorabilia, Fine Art (Ballsbridge only)
-  - New `uk-ireland` region type for auction house targeting
-- Files changed: `global-locations.ts`, `dublin-adapter.ts` (new), `adapters/index.ts`, `specialty-auctions.ts`
-
-**RSS Article Metadata Compliance:**
-- RSS-sourced articles now have proper metadata:
-  - `author_type: 'ai'`
-  - `ai_model: 'claude-sonnet-4'`
-  - `category_label: 'News Brief'`
-- File: `src/app/api/cron/sync-news/route.ts`
-- Backfill endpoint: `/api/admin/backfill-rss-metadata` (GET=preview, POST=apply)
-- 147 existing RSS articles backfilled with correct metadata
-
-**AI Image Standards Compliance:**
-- Image generation now follows `/standards` requirements
-- Changed from "photorealistic editorial photograph" to "stylized artistic illustration"
-- Uses watercolor/gouache painting style, NOT photographs
-- Added rule against photorealistic human faces
-- File: `src/app/api/internal/generate-image/route.ts`
-
-**Admin News Feed - Source Filter:**
-- New "Source" filter dropdown on `/admin/news-feed` page
-- Options: RSS Feeds (News Brief), Grok AI, Gemini AI
-- New "Source" column showing color-coded badges (Blue=RSS, Purple=Grok, Green=Gemini)
-- Files: `src/app/admin/news-feed/page.tsx`, `src/app/api/admin/news-feed/route.ts`
-
-**Simplified Hyperlink System:**
-- Removed `entity_type` from link candidates - Gemini now just returns `{text: "exact phrase"}`
-- Simplified `buildGoogleSearchUrl()` to use `{text} {neighborhood.name} {neighborhood.city}` for all links
-- Updated all 23 Gemini story generators to use the new simplified format
-- File: `src/lib/hyperlink-injector.ts` - Core hyperlink injection utility
-
-**Gemini Story Registry:**
-- New central registry of all 24 Gemini-enriched story generators
-- File: `src/lib/gemini-story-registry.ts`
-- Exports `GEMINI_STORY_GENERATORS` array with id, name, file, categoryLabel, description
-- Helper functions: `getGeneratorById()`, `getGeneratorsByCategory()`, `getGeneratorCount()`
-- Used by admin news-feed page for Story Type filter
-
-**Admin News Feed QC - Story Type Filter:**
-- New "Story Type" filter dropdown on `/admin/news-feed` page
-- Shows all 24 Gemini story generators by name (Daily Brief, Set Life, Al Fresco Alert, etc.)
-- Filters articles by category_label matching the selected story type
-- Fixed pre-existing TypeScript null-check errors in the page
-
-**Cached Cron Image System:**
-- New system for reusing AI-generated images across recurring cron stories
-- Saves Gemini token costs by caching category-specific images in Supabase
-- 22 image categories: route-alert, residency-radar, fashion-week, archive-hunter, sample-sale, nimby-alert, political-wallet, review-watch, gala-watch, retail-watch, escape-index, nuisance-watch, art-fair, auction, heritage-watch, alfresco-watch, filming-permit, civic-data, real-estate, museum-watch, overture-alert, design-week
-- Library: `src/lib/cron-images.ts` with `getCronImage(category, supabase)`
-- Admin API: `/api/admin/pregenerate-cron-images` (GET=list, POST=generate)
-- All cron jobs now use cached images for consistent visuals and cost savings
-- First request generates image, subsequent requests reuse cached URL
-
-**Museum Watch Service ("The Blockbuster Filter"):**
-- New service monitoring Tier 1 global museums for blockbuster exhibitions
-- 17 museums across 5 hub cities: NYC (Met, MoMA, Guggenheim, Whitney), London (Tate Modern, V&A, British Museum, National Gallery), Paris (Louvre, Musée d'Orsay, Pompidou, Fondation Louis Vuitton), Tokyo (Mori, teamLab, National Museum), LA (LACMA, Getty, Broad)
-- Blockbuster filter: Must have keywords (Picasso, Van Gogh, Monet, etc.) OR 2+ month duration
-- Dual trigger: Member Preview (48h window) with "Insider" tone, Public Opening with "Critic" tone
-- Hub-to-spoke syndication targets relevant neighborhoods per museum
-- Files: `src/lib/museum-watch.ts`, `src/app/api/cron/sync-museum-watch/route.ts`
-- Cron: Weekly on Mondays at 7 AM UTC
-
-**Overture Alert Service ("The Premiere Filter"):**
-- New service monitoring Opera, Ballet, and Symphony for Opening Nights and Premieres
-- 10 Tier 1 venues: Met Opera, Royal Opera House, La Scala, Opéra Garnier, Sydney Opera House, Berlin Staatsoper, Vienna State Opera, San Francisco Opera, Chicago Lyric, Paris National Opera Ballet
-- Premiere filter: Opening Night, New Production, Premiere, Gala keywords
-- Star Power whitelists: 10 conductors (Dudamel, Nézet-Séguin), 15 singers (Netrebko, Kaufmann), 8 dancers (Copeland, Cojocaru)
-- 48-hour trigger window before performances
-- "Glittering" editorial tone with cultural prestige focus
-- Files: `src/lib/overture-alert.ts`, `src/app/api/cron/sync-overture-alerts/route.ts`
-- Cron: Daily at 10 AM UTC
-
-**Design Week Service ("The Calendar Override"):**
-- Special Event engine for Global Design Weeks
-- 6 major events: Salone del Mobile (Milan), London Design Festival, Design Miami, 3 Days of Design (Copenhagen), Stockholm Design Week, NYCxDESIGN
-- Event states: Preview (teaser), Live (daily coverage), Wrap (recap), Dormant (off-season)
-- Daily Focus rotation highlighting different neighborhoods/hubs during events
-- Hero priority for Live coverage (articles pinned to top)
-- Hub-to-spoke syndication targets design district neighborhoods
-- Files: `src/lib/design-week.ts`, `src/app/api/cron/sync-design-week/route.ts`
-- Cron: Daily at 6 AM UTC (only generates during active/preview periods)
-
-**Route Alert Service ("The Hub Map"):**
-- New service monitoring airline schedules for new "Direct Premium Routes"
-- 8 hub markets: NYC (JFK/EWR), London (LHR/LGW), LA (LAX), Sydney (SYD), Paris (CDG), Miami, SF, Chicago
-- 22+ legacy/premium carriers: Delta, United, BA, Air France, Emirates, Qantas, Singapore Airlines, etc.
-- 45+ leisure destinations across 4 types:
-  - Leisure Capital: Nice, Naples, Mykonos, Maldives, Aspen, Phuket, St. Barths
-  - Financial Hub: Geneva, Zurich, Singapore, Hong Kong, Dubai
-  - Cultural Center: Tokyo, Rome, Edinburgh, Tel Aviv
-- Premium Leisure Filter: Only legacy carriers + premium destinations (excludes Spirit to Cleveland)
-- News sources: Points Guy, Routes Online, Simple Flying, One Mile at a Time, View from the Wing
-- Gemini story generation with "Flight Check" / "Utility" tone
-- Files: `src/lib/route-alert.ts`, `src/app/api/cron/sync-route-alerts/route.ts`
-- Cron: Weekly on Thursdays at 7 AM UTC
-
-**Residency Radar Service ("Brand Migration"):**
-- New service tracking seasonal pop-ups of luxury brands in vacation hotspots
-- Strategy: City brands migrate with the seasons - Winter: Alps, St. Barts; Summer: Med, Hamptons
-- 15 seasonal hotspots: St. Moritz, Aspen, Courchevel, Gstaad, Verbier (Winter); Mykonos, St. Tropez, Hamptons, Capri, Ibiza, Marbella, Amalfi, Sardinia (Summer); St. Barts (Winter Caribbean)
-- 30+ migrating luxury brands across 4 categories:
-  - Hospitality: Nobu, Carbone, Cipriani, Casa Tua, Zuma, Bagatelle, Nammos, Scorpios
-  - Fashion: Dior, Louis Vuitton, Chanel, Gucci, Jacquemus, Loro Piana, The Row, Bottega Veneta
-  - Jewelry: Cartier, Bulgari, Van Cleef & Arpels, Rolex
-  - Lifestyle: Aman, Six Senses, Soho House
-- News sources: Eater, Robb Report, WWD, Wallpaper*, Departures, Bloomberg Pursuits
-- Feeder city targeting: NYC residents see Hamptons pop-ups, London sees St. Tropez
-- Residency types: Restaurant, Beach_Club, Pop_Up_Shop, Spa, Hotel_Takeover
-- Gemini story generation with "Scene Watch" editorial tone
-- Files: `src/lib/residency-radar.ts`, `src/app/api/cron/sync-residency-radar/route.ts`
-- Cron: Weekly on Wednesdays at 8 AM UTC
-
-**Archive Hunter Service ("Digital to Physical"):**
-- New service monitoring luxury resale boutique inventory for "Investment Grade" pieces
-- Store locations: TheRealReal, WGACA, Rebag, Fashionphile (15 locations)
-- Brand whitelist: 25+ brands with tier classification (Grail/Investment/Collectible)
-- Trophy item filter: $3,000+ threshold, $10k+ for grail tier
-- Grail items: Birkin, Kelly, Submariner, Daytona, Classic Flap, Alhambra, etc.
-- Gemini story generation with "Urgent" tone for collectors
-- Files: `src/lib/archive-hunter.ts`, `src/app/api/cron/sync-archive-hunter/route.ts`
-- Cron: Twice daily at 9 AM and 5 PM UTC
-
-**Fashion Week Service ("Calendar Override"):**
-- Special Event engine for Big Four fashion weeks (NYFW, LFW, MFW, PFW)
-- Calendar window detection for Feb/Sept (and Jan/June for Paris Mens)
-- Show schedule scrapers for official sources (CFDA, BFC, Camera Moda, FHCM)
-- 50+ high-profile designer tracking (Marc Jacobs, Chanel, Prada, etc.)
-- Venue-to-neighborhood mapping with traffic alert triggers
-- Gemini story generation with "Chaotic Chic" tone
-- Files: `src/config/fashion-weeks.ts`, `src/lib/fashion-week.ts`, `src/app/api/cron/sync-fashion-week/route.ts`
-- Cron: Daily at 5 AM UTC (only generates during active weeks)
-
-**Political Wallet Service ("Follow the Money"):**
-- New service aggregating political contribution data to show neighborhood donation trends
-- Data sources: US FEC API, UK Electoral Commission API
-- Power Donor filter: $1,000+ minimum, $10k threshold triggers story
-- Neighborhood zip mappings for 25+ US/UK neighborhoods
-- Privacy-focused: aggregate trends only, never individual names
-- Gemini story generation with "Insider" tone
-- Files: `src/lib/political-wallet.ts`, `src/app/api/cron/sync-political-wallet/route.ts`
-- Cron: Weekly on Tuesdays at 7 AM UTC
-
-**NIMBY Alert Service ("Early Warning System"):**
-- New service scraping Community Board / Council Meeting agendas for controversial votes
-- Data sources: NYC Community Boards (CB 1-8 Manhattan, CB 1-6 Brooklyn), London Borough Councils, Sydney Councils
-- Controversy filters: Liquor (4am, nightclub), Zoning (variance, upzoning), Social (shelter, dispensary), Development, Noise
-- PDF parsing via `pdf-parse` package to extract agenda text
-- Street name extraction for geofencing within board coverage areas
-- Gemini story generation with civic engagement tone
-- Files: `src/lib/nimby-alert.ts`, `src/app/api/cron/sync-nimby-alerts/route.ts`
-- Cron: Weekly on Mondays at 6 AM UTC
-
-**Sample Sale Service ("Insider Access"):**
-- New service scraping fashion aggregators for luxury sample sales
-- Data sources: Chicmi (Global), 260 Sample Sale (NYC), Arlettie (Paris/London)
-- Brand whitelist: 70+ luxury brands with regex patterns (Hermès, The Row, Kith, etc.)
-- Brand tier classification: Ultra (top tier) vs Aspirational (accessible luxury)
-- City-to-neighborhood mapping for NYC, London, LA, Paris
-- Gemini story generation with "Secret Intel" tone
-- Files: `src/lib/sample-sale.ts`, `src/app/api/cron/sync-sample-sales/route.ts`
-- Cron: Daily at 8 AM UTC
-
-**Heritage Watch (Preservation Alerts):**
-- New service monitoring NYC DOB Job Application Filings for preservation issues
-- Three triggers:
-  - Trigger A: Demolition (`job_type = 'DM'`) - "Teardown Alert" with eulogy tone
-  - Trigger B: Landmark alterations (`landmark = 'Y'` + facade keywords) - "Facade Watch" with curator tone
-  - Trigger C: Tree removal (keywords in description) - "Green Loss" with concerned neighbor tone
-- 20+ landmark keywords: facade, restoration, cornice, brownstone, terra cotta, etc.
-- 9+ tree keywords: tree removal, tree protection, specimen tree, etc.
-- LPC approval requirement mentioned for landmark properties
-- Files: `src/lib/nyc-heritage.ts`, `src/app/api/cron/sync-heritage-filings/route.ts`
-- Cron: Daily at 8 AM UTC
-
-**Alfresco Watch ("Al Fresco Alert"):**
-- New service fetching NYC Open Restaurants Applications from NYC Open Data
-- Generates "Al Fresco Alert" stories for new outdoor dining setups
-- Geofenced to 11 NYC neighborhoods via zip codes
-- Filters for approved sidewalk/roadway seating in last 7 days
-- Prioritizes: Sidewalk > Both > Roadway (cafe culture over shed culture)
-- `isChain()` helper excludes 40+ chain patterns (Dunkin, Starbucks, Shake Shack, etc.)
-- Alcohol-serving venues prioritized
-- Seasonal context in prompts (Spring/Summer vs Winter tone)
-- Files: `src/lib/nyc-alfresco.ts`, `src/app/api/cron/sync-alfresco-permits/route.ts`
-- Cron: Daily at 9 AM UTC
-
-**Filming Location Watch ("Set Life"):**
-- New service fetching NYC Film Permits from NYC Open Data
-- Generates "Set Life" stories alerting residents about nearby film shoots
-- Geofenced to 11 NYC neighborhoods via zip codes
-- Filters for premium productions: Television, Feature Film, Commercial (excludes Student, Still Photography)
-- Prioritizes known productions (Law & Order, Succession, And Just Like That, etc.)
-- Extracts street-level impact from `parking_held` field
-- Impact levels: High (major footprint), Medium, Low
-- Gemini generates insider-tone alerts with traffic/parking warnings
-- Files: `src/lib/nyc-filming.ts`, `src/app/api/cron/sync-filming-permits/route.ts`
-- Cron: Every 6 hours (fetches next 48 hours of permits)
-
-**Global Data Engine (International Markets):**
-- New City Adapter pattern for standardized civic data fetching across 13 international markets
-- Supported cities: London (UK), Sydney (AU), Chicago (US), Los Angeles (US), Washington DC (US), Dublin (IE), Auckland (NZ), Queenstown (NZ), Vancouver (CA), Cape Town (ZA), Singapore (SG), Palm Beach (US), Greenwich (US)
-- Each adapter implements: `getPermits()`, `getLiquor()`, `getSafety()` with city-specific API integrations
-- City-specific vocabulary injection for AI content (currency symbols, local terminology)
-- Config: `src/config/global-locations.ts` with zones, postal codes, editorial tones
-- Adapters: `src/lib/adapters/` (london, sydney, chicago, los-angeles, washington-dc, dublin, nz, vancouver, capetown, singapore, palm-beach, greenwich)
-- Content generator: `src/lib/global-content-generator.ts` with Gemini + cultural context
-- Database tables: `global_permits`, `global_licenses`, `global_safety_stats`
-- Four new cron jobs for international data sync and weekly digest generation
-
-**API Sources by City:**
-| City | Permits | Liquor | Safety |
-|------|---------|--------|--------|
-| London | Westminster Planning | UK Licensing | UK Police API |
-| Sydney | NSW Planning Portal | NSW Liquor | BOCSAR |
-| Chicago | Chicago Data Portal (Socrata) | Business Licenses | Crimes Dataset |
-| Los Angeles | LA Open Data (Socrata) | CA ABC | LAPD Data |
-| Washington DC | DC Open Data (ArcGIS) | ABRA | MPD Data |
-| Dublin | Dublin City Council + DLR | Courts Service | Garda Síochána / CSO |
-| Auckland | Auckland Council | DLC | NZ Police |
-| Queenstown | QLDC | DLC | NZ Police |
-| Vancouver | City of Vancouver DevApps | BCLCLB | VPD Open Data |
-| Cape Town | City of Cape Town ePlan | WCLB | SAPS |
-| Singapore | URA IRAS | SLA | SPF |
-| Palm Beach | Town Building Division | FL DBPR | PBPD |
-| Greenwich | Town Building Division | CT DCP | GPD |
-
-**Special Features by City:**
-| City | Feature | Source | File |
-|------|---------|--------|------|
-| New Zealand | OIO Bunker Watch | LINZ OIO Decisions ($10M+ NZD foreign land) | `oio-service.ts` |
-| Vancouver | View Watch | Height variance permits (protected view cones) | `vancouver-views.ts` |
-| Cape Town | Calm Alert | Wind conditions (<15km/h = perfect day) | `capetown-conditions.ts` |
-| Cape Town | Grid Watch | Eskom load shedding schedules | `capetown-conditions.ts` |
-| Singapore | Motor Watch | LTA COE bidding results (Cat B drop >$5k) | `singapore-market.ts` |
-| Singapore | GCB Alert | URA Good Class Bungalow sales ($20M+ SGD) | `singapore-market.ts` |
-| Palm Beach | Design Watch | ARCOM agenda (architectural review battles) | `palm-beach-arcom.ts` |
-
-**Global Fallback Service:**
-- File: `src/lib/global-fallback.ts`
-- Ensures no neighborhood is ever empty
-- Fallback A: Development Watch (real estate, openings, zoning)
-- Fallback B: Lifestyle Watch (dining, shopping, culture)
-- Fallback C: Weather conditions (last resort via Open-Meteo)
-- Cron: Daily at 11 AM UTC (`sync-global-fallback`)
-
-### Previous Changes (2026-02-04)
-
-**NYC Open Data Integration:**
-- New data fetching system for NYC permits, liquor licenses, and crime stats
-- Geofenced to 11 NYC coverage areas via zip codes and police precincts
-- Config file: `src/config/nyc-locations.ts` with neighborhood → zip/precinct mappings
-- Fetchers: `src/lib/nyc-permits.ts`, `src/lib/nyc-liquor.ts`, `src/lib/nyc-crime.ts`
-- Content generator: `src/lib/nyc-content-generator.ts` with Gemini + neighborhood tone injection
-- NYC data auto-injected into daily briefs for NYC neighborhoods
-- Weekly digest articles generated from aggregated civic data
-- Database tables: `nyc_permits`, `nyc_liquor_licenses`, `nyc_crime_stats`
-- Four new cron jobs for data sync and digest generation
-
-**Combo Neighborhoods System:**
-- 15 combo neighborhoods that aggregate multiple areas into single feeds
-- Combo neighborhoods: SoHo (SoHo, NoHo, NoLita, Hudson Square), Tribeca (Tribeca, FiDi), Brooklyn West (Dumbo, Cobble Hill, Park Slope), The Hamptons (The Hamptons, Montauk), Östermalm & City (Östermalm, Norrmalm, Gamla Stan, Djurgården)
-- Surroundings regions for NYC and Stockholm suburbs
-- Database: `is_combo` flag on neighborhoods, `combo_neighborhoods` join table
-- Utility: `src/lib/combo-utils.ts` for querying combo components
-- Search in neighborhood selector searches component names too
-
-**New Neighborhoods Added:**
-- Stockholm: Vasastan, Södermalm, Kungsholmen
-- New York: Upper West Side, Hudson Yards, Meatpacking District
-
-**UI/UX Improvements:**
-- Unified neighborhood modal - homepage and header buttons use same instant-loading modal
-- Pre-fetch strategy loads neighborhood data on mount for instant modal opening
-- Combo neighborhoods show tooltip with component names on hover
-- Renamed "Enclaves" to "Surroundings" throughout UI
-- 3-phase design audit: feed cards, AI badges, ad frequency, search empty state
-
-**Key Files for Combos:**
-- `src/lib/combo-utils.ts` - `getNeighborhoodIdsForQuery()`, `getComboInfo()`
-- `src/components/neighborhoods/NeighborhoodSelectorModal.tsx` - Combo tooltip, pre-fetch
-- Database tables: `neighborhoods.is_combo`, `combo_neighborhoods`
-
-### Previous Changes (2026-02-03)
-
-**Vacation Neighborhoods (8 New Destinations):**
-- Added 8 vacation neighborhoods grouped into 3 regions:
-  - **US Vacation** (○): Nantucket, Martha's Vineyard, The Hamptons, Aspen
-  - **Caribbean Vacation** (□): St. Barts
-  - **European Vacation** (△): Saint-Tropez, Marbella, Sylt
-- Vacation neighborhoods grouped under region headers (not individual city cards)
-- Dark green (#00563F) styling for vacation regions
-- Muted geometric icons (○, □, △) instead of colorful emojis
-- The Hamptons searches include Montauk, East Hampton, Southampton, Sag Harbor
-
-**RSS Feeds for Vacation Neighborhoods (11 new feeds):**
-- Aspen: Aspen Daily News, Aspen Times
-- Martha's Vineyard: Vineyard Gazette, MV Times
-- Nantucket: Inquirer and Mirror, Nantucket Current
-- The Hamptons: Dan's Papers
-- St. Barts: St Barth Weekly
-- Saint-Tropez: Riviera Radio
-- Marbella: Sur in English, Euro Weekly News
-
-**Key Files Changed:**
-- `src/lib/neighborhood-utils.ts` - Added `getSearchLocation()` for expanded search terms
-- `src/lib/grok.ts` - Uses getSearchLocation for vacation neighborhood searches
-- `src/components/home/HomeSignupEnhanced.tsx` - Groups vacation neighborhoods by region
-- `src/components/neighborhoods/EnhancedNeighborhoodSelector.tsx` - Vacation region icons
-- `src/types/index.ts` - Extended GlobalRegion type with vacation regions
-
-### Previous Changes (2026-02-02 late night)
-
-**Neighborhood Briefs - Major UI/UX Improvements:**
-- Header: "WHAT'S HAPPENING TODAY LIVE" (removed satellite dish emoji)
-- **Smart Entity Detection:** Proper nouns auto-link to Google Search
-- **Address Detection:** Street addresses link to Google Maps (US + European formats)
-- **Word Replacements:** classy→tasteful, foodie→gastronome (elegant tone)
-- **Brief Archive:** Previous briefs accessible via "Previous briefs" toggle
-- **Commentary Detection:** Last paragraph (if short/question) doesn't get hyperlinks
-
-**Entity Detection Logic (`NeighborhoodBrief.tsx`):**
-- Single words at sentence start: NOT linked by default (grammar capitalization)
-- Exception: CamelCase, all-caps, non-ASCII, or possessive words ARE linked
-- NEVER_LINK_WORDS: months, days, nationalities, cuisines, currencies
-- COMMON_CONTRACTIONS: it's, that's, there's, etc.
-- CURRENCY_CODES: AED, USD, EUR, etc.
-
-**Briefs Cron Job Updates:**
-- Batch size: 20 neighborhoods per run (was 10)
-- Expiration: 48 hours (was 6 hours)
-- Archive: All briefs kept for history (no deletion)
-- Status: 48/95 neighborhoods have briefs (~12 hours until all complete)
-
-**Apple Sign-In:**
-- Frontend code: READY (buttons in login.tsx and signup.tsx)
-- Backend: Needs Supabase configuration
-- See Apple Developer Console setup in session notes
-
-**Vercel Deployment Note:**
-- Commits deploy as "Preview" not "Production"
-- Must manually "Promote to Production" in Vercel dashboard
-- Or change Production Branch from `main` to `master` in Settings → Git
-
-**Vercel MCP Setup:**
-```bash
-claude mcp add --transport http vercel https://mcp.vercel.com
-```
-Then restart Claude Code and run `/mcp` to authenticate.
-
-### Earlier Changes (2026-02-02 night)
-
-**Grok Integration for Real-Time Local News:**
-- New lib: `src/lib/grok.ts` - Grok API with X Search for real-time posts
-- Model: `grok-4.1-fast` ($0.20/1M input, $0.50/1M output)
-- X Search tool: $5 per 1,000 calls
-- Two features implemented:
-  1. **Neighborhood Briefs** - "What's Happening Today" at top of feed
-  2. **Grok News Fallback** - Generate stories when RSS is dry
-
-**Database Table: `neighborhood_briefs`**
-- Caches Grok-generated summaries per neighborhood
-- Fields: headline, content, sources, model, search_query, expires_at
-- Auto-expires after 48 hours (configurable)
-
-**Cron Job: `sync-neighborhood-briefs`**
-- Schedule: Every 4 hours (`0 */4 * * *`)
-- Batch size: 20 neighborhoods per run
-- Cost: ~$0.30 per run (~$45/month for 6 runs/day)
-- Queries Grok X Search for each active neighborhood
-
-**Enhanced `sync-news` Cron:**
-- Added Grok fallback when RSS yields < 5 articles per neighborhood
-- Generates up to 10 additional Grok stories per neighborhood
-- Tracks `grok_articles_created` and `grok_neighborhoods_filled` in results
-
-**UI Component: `NeighborhoodBrief`**
-- Displays at top of neighborhood feed
-- Shows headline, content, timestamp
-- Expandable for longer briefs
-- Styled with amber gradient theme
-- Tappable entities for search
-
-**Environment Variable Required:**
-- `GROK_API_KEY` or `XAI_API_KEY` - Get from https://x.ai/api
-
-### Earlier Changes (2026-02-02 evening)
-
-**Gemini Image Generation Fixed:**
-- Model: `gemini-2.5-flash-image` (correct production model)
-- Previous deprecated models (`gemini-2.0-flash-exp`, `gemini-2.5-flash-preview-04-17`) no longer work
-- Endpoint: `/api/internal/generate-image`
-- Admin UI: `/admin/regenerate-images` - working and tested
-
-**Supabase MCP Configured:**
-- File: `.mcp.json` in project root
-- Project ref: `ujpdhueytlfqkwzvqetd`
-- Restart Claude Code to activate (browser auth required)
-
-**Admin Dashboard:**
-- New index page at `/admin/page.tsx` with links to all admin sections
-- Fixed neighborhoods loading on regenerate-images page (uses `/api/neighborhoods` endpoint)
-
-### Earlier Changes (2026-02-02)
-
-**UI Consolidation on Neighborhood Pages:**
-- Removed Tonight, Spotted, Property buttons (no content yet)
-- Removed Tip button from header (still available at /contact)
-- Renamed "Guide" button to "Places"
-- Map button now links to Google Maps externally
-- Consolidated layout: neighborhood name left, nav buttons (Places, Map, Wiki) right
-- File: `src/components/feed/NeighborhoodHeader.tsx`
-
-**Places Page Performance Fix:**
-- Converted from client-side to server-side data fetching
-- Initial data preloaded on server for instant page loads
-- New loading skeleton component
-- Files:
-  - `src/app/[city]/[neighborhood]/guides/page.tsx` (server component)
-  - `src/app/[city]/[neighborhood]/guides/GuidesClient.tsx` (client component)
-  - `src/app/[city]/[neighborhood]/guides/loading.tsx` (skeleton)
-
-**Local Image Generation API:**
-- New endpoint: `/api/internal/generate-image`
-- Uses Google Gemini directly when `GEMINI_API_KEY` is set
-- Fallback when flaneur-azure is unavailable
-- Fixed Gemini API: `responseModalities: ['Image']` (capital I)
-- sync-news cron automatically uses local API if GEMINI_API_KEY is configured
-
-**Neighborhood Boundary Fixes:**
-- Fixed 8 neighborhoods with incorrect coordinates
-- File: `src/lib/neighborhood-boundaries.ts`
-
-### Previous Changes (2026-02-01)
-
-**Playwright MCP for UI/UX Testing:**
-- Configured Playwright MCP server for browser automation
-- Enables interactive page testing, screenshots, visual verification
-- Setup: `claude mcp add --transport stdio playwright -- npx -y @microsoft/playwright-mcp`
-
-**Guide Cards with Rank Numbers (Deployed):**
-- Each place card shows rank (1, 2, 3...) based on sort order
-- Number overlaid on photo for cards with images
-- Number inline with name for cards without images
-- Live at https://readflaneur.com/stockholm/ostermalm/guides
-
-**Neighborhood Expansion System:**
-- Expanded from 5 to 91 neighborhoods globally
-- 84 neighborhoods being batch-seeded with Google Places data
-- Neighborhoods now have: country, region, latitude, longitude, radius, seeded_at
-- Shared utility `src/lib/neighborhood-utils.ts` for city prefix mapping
-
-**Batch Seeding Script:**
-```bash
-# Seed all neighborhoods at once
-npx tsx scripts/seed-all-neighborhoods.ts
-
-# Seed specific neighborhoods
-npx tsx scripts/seed-neighborhoods.ts nyc-tribeca la-beverly-hills
-```
-
-**Image Generation (Unified with Flaneur API):**
-- Cron jobs call flaneur backend API for image generation
-- Uses Google Gemini 2.5 Flash Image (primary) with DALL-E fallback
-- Images uploaded to Supabase storage automatically
-- API: `https://flaneur-azure.vercel.app/api/regenerate-images`
-
-**News Coverage Admin (`/admin/news-coverage`):**
-- Monitor article coverage by neighborhood
-- View/add/edit/delete RSS feed sources
-- Color-coded status: green (good), yellow (low), red (none)
-- Database table: `rss_sources` (50+ feeds pre-populated)
-
-**New Files:**
-- `scripts/seed-all-neighborhoods.ts` - Batch seeder
-- `src/lib/neighborhood-utils.ts` - City prefix mapping
-- `src/app/admin/news-coverage/page.tsx` - Coverage monitor
-- `src/app/api/admin/rss-sources/route.ts` - RSS CRUD API
-- `supabase/migrations/020_rss_sources_table.sql` - RSS sources table
-
-### Previous Changes (2026-01-31)
-
-**Google OAuth Now Live:**
-- Google login working at https://readflaneur.com/login
-- OAuth configured in Supabase + Google Cloud Console
-
-**Vercel Pro Activated:**
-- Upgraded from Hobby to Pro ($20/mo)
-- 30-minute cron intervals now supported
-
-### What's Live
 - **Website:** https://readflaneur.com
 - **Backend API:** https://flaneur-azure.vercel.app
 - **GitHub:** https://github.com/morgandowney-droid/readflaneur-web
-- **Neighborhoods:** 128 active (including 15 combo neighborhoods across 38 cities)
+- **Sentry:** https://sentry.io/organizations/flaneur-vk/issues/
+- **128 neighborhoods** across 38 cities (15 combo neighborhoods)
+
+## Last Updated: 2026-02-08
+
+Recent work: 17px font size upgrade (iOS baseline), ad quality control & customer approval system, Sunday Edition presenting sponsor slot + holiday section + various fixes.
+
+## Key Patterns
+
+### Cron Jobs
+- All in `src/app/api/cron/[job-name]/route.ts`
+- Auth: `x-vercel-cron` header or `CRON_SECRET`
+- **MUST** log to `cron_executions` table
+- Use `maxDuration = 300` for long-running jobs
+- Use time budgets to ensure logging completes in `try/finally`
+
+### Image Generation
+- Endpoint: `/api/internal/generate-image`
+- Model: `gemini-2.5-flash-image`
+- Style: Watercolor/gouache illustrations, NOT photographs
+- Cached images: `src/lib/cron-images.ts` (22 categories)
+
+### Email System
+- **Scheduler:** `src/lib/email/scheduler.ts` — 7 AM local time per recipient
+- **Assembler:** `src/lib/email/assembler.ts` — articles + weather
+- **Sender:** `src/lib/email/sender.ts` — React Email via Resend
+- **Sunday Edition:** `src/lib/weekly-brief-service.ts` — Gemini + Grok
+- **Weather:** Pure logic in `src/lib/email/weather-story.ts` (no LLM)
+- **US neighborhoods:** °F primary. Determined by `neighborhoods.country`
+- **Instant resend:** `src/lib/email/instant-resend.ts` (3/day limit)
+
+### Ad System
+- **Pricing:** `src/config/ad-tiers.ts`, `src/lib/PricingService.ts` (3 tiers: $45/$25/$15 CPM)
+- **Quality:** `src/lib/ad-quality-service.ts` — Gemini image analysis + copy polisher
+- **Proof page:** `/proofs/[token]` — no auth, token-based
+- **State machine:** `pending_ai` → `pending_approval` → `approved` / `changes_requested`
+- **Sunday ad resolver:** `src/lib/email/sunday-ad-resolver.ts` — cascade with house ad fallback
+- **Ingestion:** Passionfroot webhook + Resend inbound email parser
+
+### Combo Neighborhoods
+- `src/lib/combo-utils.ts` — `getNeighborhoodIdsForQuery()`, `getComboInfo()`
+- Articles stored under combo ID, not component IDs
+- Query must include BOTH combo ID and component IDs
+
+## Critical Gotchas
+
+### VERCEL_URL vs NEXT_PUBLIC_APP_URL
+`VERCEL_URL` points to preview deployments, NOT production. Always use:
+```typescript
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\n$/, '').replace(/\/$/, '')
+  || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+```
+
+### Supabase Auth: getUser() vs getSession()
+- `getUser()` = network call, can hang. `getSession()` = cookies, instant.
+- **Always use `getSession()`** in middleware/pages/components
+- Add timeout wrappers (3-5s `Promise.race`) for auth/DB calls in UI
+
+### Supabase PromiseLike
+No `.catch()` on query builder. Use `.then(null, errorHandler)` or `Promise.resolve(query).catch(...)`.
+
+### Gemini Prompts
+JSON examples override prose instructions. If prompt says "Don't use AQI" but example shows `"AQI 42"`, Gemini follows the example.
+
+### Font Sizes (17px iOS Baseline)
+- Body: 17px, Headlines: 20-22px, Metadata: 10-12px, Masthead: 30px
+- Website: `text-base`/`text-lg` body, `prose prose-lg` for articles
 
 ## Project Structure
 
 ```
-readflaneur-web/
-├── src/
-│   ├── app/
-│   │   ├── [city]/[neighborhood]/
-│   │   │   ├── page.tsx              # Main feed
-│   │   │   ├── [slug]/page.tsx       # Article detail
-│   │   │   ├── guides/page.tsx       # Neighborhood guides (ranked)
-│   │   │   ├── tonight/page.tsx      # Tonight picks
-│   │   │   ├── spotted/page.tsx      # Spotted sightings
-│   │   │   ├── property-watch/page.tsx
-│   │   │   └── map/page.tsx
-│   │   ├── admin/
-│   │   │   ├── articles/
-│   │   │   ├── news-coverage/        # RSS & coverage monitor
-│   │   │   ├── regenerate-images/
-│   │   │   ├── guides/add-place/     # Manual place entry
-│   │   │   └── ...
-│   │   ├── settings/
-│   │   │   └── page.tsx              # User settings (location preferences)
-│   │   └── api/
-│   │       ├── cron/
-│   │       │   ├── sync-guides/      # Daily Google Places sync
-│   │       │   ├── sync-news/        # Every 6 hrs RSS aggregation
-│   │       │   ├── generate-guide-digests/ # Weekly neighborhood digests
-│   │       │   └── ...
-│   │       └── admin/
-│   │           └── rss-sources/      # RSS feed CRUD
-│   ├── config/
-│   │   └── ad-tiers.ts               # Tier definitions, seasonal rules, base rates
-│   └── lib/
-│       ├── neighborhood-utils.ts     # City prefix mapping
-│       ├── google-places.ts          # Places API
-│       ├── rss-sources.ts            # RSS fetching (DB + fallback)
-│       ├── PricingService.ts          # Ad pricing: tier resolution, surge, quotes
-│       └── location/                 # Location detection & timezone utilities
-│           ├── city-mapping.ts       # 31 supported cities with timezones
-│           ├── detect.ts             # IP geolocation via ipinfo.io
-│           └── timezone.ts           # Timezone resolution priority
-├── scripts/
-│   ├── seed-neighborhoods.ts         # Single neighborhood seeder
-│   └── seed-all-neighborhoods.ts     # Batch seeder
-└── supabase/migrations/
-    └── 020_rss_sources_table.sql     # RSS sources table
+src/
+├── app/
+│   ├── [city]/[neighborhood]/     # Feed, articles, guides
+│   ├── admin/                     # Cron monitor, ads, news-coverage, images
+│   ├── settings/                  # User location preferences
+│   ├── email/preferences/         # Email topic management
+│   ├── advertise/                 # Ad collections page
+│   ├── proofs/[token]/            # Customer ad proof page
+│   └── api/
+│       ├── cron/                  # 30+ automated cron jobs
+│       ├── admin/                 # Admin APIs
+│       ├── internal/              # Image generation, resend
+│       └── webhooks/              # Passionfroot, Resend inbound
+├── config/
+│   ├── ad-tiers.ts                # Pricing tiers & seasonal rules
+│   ├── ad-config.ts               # Ad collections & Sunday Edition
+│   ├── global-locations.ts        # City configs, vocabulary, zones
+│   └── nyc-locations.ts           # NYC zip/precinct mappings
+└── lib/
+    ├── adapters/                  # 13 city adapters (permits, liquor, safety)
+    ├── cron-monitor/              # Self-healing system
+    ├── email/                     # Scheduler, assembler, sender, templates
+    ├── location/                  # IP detection, timezone resolution
+    ├── combo-utils.ts             # Combo neighborhood queries
+    ├── grok.ts                    # Grok X Search integration
+    ├── brief-enricher-gemini.ts   # Gemini enrichment pipeline
+    ├── weekly-brief-service.ts    # Sunday Edition generation
+    └── ad-quality-service.ts      # AI ad review pipeline
 ```
 
 ## Environment Variables
 
-### Required
-```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-ANTHROPIC_API_KEY=               # AI content curation
-GOOGLE_PLACES_API_KEY=           # Guides, photos
-CRON_SECRET=
-FLANEUR_API_URL=https://flaneur-azure.vercel.app  # Image generation
-```
+**Required:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_PLACES_API_KEY`, `CRON_SECRET`
+**Optional:** `GEMINI_API_KEY`, `GROK_API_KEY`, `OPENAI_API_KEY`, `RESEND_WEBHOOK_SECRET`, `STRIPE_WEBHOOK_SECRET`
 
-### Optional
-```
-OPENAI_API_KEY=                  # Fallback image generation
-GEMINI_API_KEY=                  # Image generation (model: gemini-2.5-flash-image)
-GROK_API_KEY=                    # Grok X Search for real-time local news
-RESEND_WEBHOOK_SECRET=           # Resend inbound email webhook (Svix signing secret)
-PASSIONFROOT_WEBHOOK_SECRET=     # Passionfroot webhook auth (if they add webhook support)
-STRIPE_WEBHOOK_SECRET=           # Stripe payment webhook
-```
+## Key Database Tables
 
-## Automated Cron Jobs
-
-| Job | Schedule | Purpose |
-|-----|----------|---------|
-| sync-guides | Daily 3 AM UTC | Update Google Places data |
-| sync-news | Every 6 hours | Fetch RSS, create articles with AI images, Grok fallback |
-| sync-neighborhood-briefs | Hourly | Generate "What's Happening" briefs via Grok X Search |
-| generate-guide-digests | Monday 10 AM UTC | Weekly "What's New" articles |
-| sync-tonight | Daily 2 PM UTC | Fetch & curate events |
-| sync-spotted | Every 30 min | Monitor social media |
-| process-property-watch | Daily 7 AM UTC | Process user submissions |
-| generate-digests | Weekly Mon 8 AM UTC | Property watch summaries |
-| sync-filming-permits | Every 6 hours (:30) | Fetch NYC film permits, generate Set Life stories |
-| sync-alfresco-permits | Daily 9 AM UTC | Fetch NYC outdoor dining permits, generate Al Fresco alerts |
-| sync-heritage-filings | Daily 8 AM UTC | Fetch NYC DOB filings, generate heritage alerts (demolition, landmark, tree) |
-| sync-nyc-permits | Daily 6 AM UTC | Fetch NYC DOB permit filings |
-| sync-nyc-liquor | Monday 7 AM UTC | Fetch NY State liquor licenses |
-| sync-nyc-crime | Saturday 8 AM UTC | Aggregate NYPD crime stats by neighborhood |
-| generate-nyc-weekly-digest | Saturday 10 AM UTC | Generate weekly civic data articles for NYC |
-| sync-global-permits | Daily 7 AM UTC | Fetch permits from London, Sydney, Chicago, LA, DC |
-| sync-global-liquor | Tuesday 7 AM UTC | Fetch liquor licenses from international cities |
-| sync-global-crime | Saturday 9 AM UTC | Aggregate crime stats from international cities |
-| generate-global-weekly-digest | Saturday 11 AM UTC | Generate weekly civic data articles for international neighborhoods |
-| sync-auction-calendar | Sunday 11 PM UTC | Scrape Blue Chip auction calendars, syndicate to Northeast Luxury Corridor |
-| sync-global-auction-calendar | Sunday 10 PM UTC | Hub & Spoke auction syndication for London, Paris, HK, LA, Geneva |
-| sync-art-fairs | Daily 7 AM UTC | Calendar-based coverage for Big 5 fairs (Preview/Live/Wrap states) |
-| sync-retail-watch | Daily 10 AM UTC | Detect luxury retail openings via signage permits (80+ brands) |
-| sync-nuisance-watch | Daily 12 PM UTC | 311 complaint clustering with spike detection |
-| sync-specialty-auctions | Sunday 9 PM UTC | Tier 2 National Champions + Tier 3 Vacation Mappings |
-| sync-gala-watch | Daily 6 AM UTC | High-society charity events via Hub Broadcast model |
-| sync-escape-index | Every 6 hours (:45) | Vacation conditions (Snow/Surf/Sun) via Feeder Map |
-| sync-review-watch | Every 4 hours | Restaurant reviews from major publications (NYT, Infatuation, Eater) |
-| sync-sample-sales | Daily 8 AM UTC | Luxury sample sale alerts from fashion aggregators (Chicmi, 260, Arlettie) |
-| sync-nimby-alerts | Monday 6 AM UTC | Community board agenda monitoring for controversial votes (liquor, zoning, social) |
-| sync-political-wallet | Tuesday 7 AM UTC | Political donation trends from FEC/UK Electoral Commission ($1k+ donors) |
-| sync-fashion-week | Daily 5 AM UTC | Big Four fashion week coverage (NYFW, LFW, MFW, PFW) with traffic alerts |
-| sync-archive-hunter | 9 AM, 5 PM UTC | Luxury resale inventory alerts (TheRealReal, WGACA, Rebag, Fashionphile) |
-| sync-residency-radar | Wednesday 8 AM UTC | Seasonal luxury brand pop-ups in vacation hotspots (Nobu, Carbone, Dior, etc.) |
-| sync-route-alerts | Thursday 7 AM UTC | Premium airline route announcements (JFK-Nice, LHR-Phuket, etc.) |
-| sync-museum-watch | Monday 7 AM UTC | Tier 1 museum blockbuster exhibition alerts (Met, MoMA, Tate, Louvre, etc.) |
-| sync-overture-alerts | Daily 10 AM UTC | Opera/Ballet/Symphony Opening Nights and Premieres (Met Opera, ROH, La Scala, etc.) |
-| sync-design-week | Daily 6 AM UTC | Global Design Week coverage (Salone del Mobile, LDF, Design Miami, etc.) |
-| sync-anglosphere-features | Daily 8 AM UTC | Anglosphere city features (Vancouver View Watch, Cape Town Conditions, Singapore Market, Palm Beach ARCOM) |
-| sync-global-fallback | Daily 11 AM UTC | Fallback content for neighborhoods without custom adapters |
-| sync-weekly-brief | Sunday 4 AM UTC | Generate Sunday Edition weekly briefs (Rearview + Horizon + Holiday + Data Point) |
-| send-sunday-edition | Hourly on Sundays | Send Sunday Edition at 7 AM local time per recipient |
-| monitor-and-fix | Every 30 min | Self-healing: detect missing images, auto-regenerate, track cron failures |
-
-## Database Tables
-
-### Neighborhood System
-- `neighborhoods` - All 120 neighborhoods with coordinates, region, country
-  - Vacation neighborhoods have `region` set to: `us-vacation`, `caribbean-vacation`, `europe-vacation`
-- `neighborhood_briefs` - Daily "What's Happening" summaries from Grok X Search
-- `guide_listings` - Places from Google Places API
-- `guide_categories` - Restaurant, Coffee, Bars, etc.
-- `rss_sources` - RSS feed URLs by city (manageable via admin)
-
-### NYC Open Data (geofenced to 11 NYC coverage areas)
-- `nyc_permits` - DOB permit filings cached from NYC Open Data
-- `nyc_liquor_licenses` - SLA liquor licenses from NY State Open Data
-- `nyc_crime_stats` - Aggregated NYPD crime statistics by neighborhood
-
-### Global Civic Data (5 international markets)
-- `global_permits` - Building/planning permits from London, Sydney, Chicago, LA, DC
-- `global_licenses` - Liquor/premises licenses from international cities
-- `global_safety_stats` - Crime/safety statistics from international cities
-
-### Content
-- `articles` - News articles with AI-generated images
-- `article_sections` - Article-to-section mapping
-
-### Email Preferences
-- `topic_suggestions` - User-submitted topic suggestions from preferences page
-- `profiles.paused_topics` / `newsletter_subscribers.paused_topics` - TEXT[] of category_labels to exclude
-
-### Sunday Edition (Weekly Email)
-- `weekly_briefs` - Structured weekly content (rearview_narrative, rearview_stories, horizon_events, data_point, holiday_section)
-- `weekly_brief_sends` - Dedup tracking (recipient_id + week_date)
-- `ads.placement_type` - 'daily_brief' or 'sunday_edition' (determines which email the ad appears in)
-- `ads.body` - Ad copy text (used by Sunday Edition sponsor block)
-- `house_ads` type 'sunday_edition' - Fallback sponsor slot
-
-### Ad Quality Control (on `ads` table)
-- `ai_quality_score` INTEGER - Gemini aesthetic score 0-100
-- `ai_flag_reason` TEXT - Issues found by image analysis
-- `ai_suggested_rewrite` TEXT - JSON `{headline, body}` polished copy
-- `original_copy` TEXT - JSON `{headline, body}` client's original submission
-- `proof_token` UUID - Unique token for customer proof page (auto-generated)
-- `approval_status` TEXT - State machine: `pending_ai` → `pending_approval` → `approved` / `changes_requested`
-- `customer_change_request` TEXT - Customer's feedback message
-
-### Cron Monitoring
-- `cron_executions` - Tracks all cron job runs with timing, success status, errors
-- `cron_issues` - Tracks issues detected by monitor (missing images, failures) with retry status
-
-## Admin Pages
-
-| Page | URL | Purpose |
-|------|-----|---------|
-| Cron Monitor | `/admin/cron-monitor` | Self-healing cron system, issue tracking, auto-fix |
-| Ad Review | `/admin/ads` | Approve/reject ads, inline editing, design flags, filter tabs |
-| News Coverage | `/admin/news-coverage` | Monitor coverage, manage RSS feeds |
-| Regenerate Images | `/admin/regenerate-images` | Regenerate article images |
-| Add Place | `/admin/guides/add-place` | Manually add guide listings |
-| Articles | `/admin/articles` | Manage articles |
-| Sections | `/admin/sections` | Manage content sections |
-
-## User Pages
-
-| Page | URL | Purpose |
-|------|-----|---------|
-| Settings | `/settings` | Primary location, timezone preferences |
-| Advertise | `/advertise` | Ad Collections page with Passionfroot booking links |
-| Ad Proof | `/proofs/[token]` | Customer-facing ad proof review & approval (no auth, token = auth) |
+- `neighborhoods` — 128 neighborhoods with coordinates, region, country, `is_combo`
+- `combo_neighborhoods` — join table for combo components
+- `articles` — news articles with AI images (`enriched_at`, `enrichment_model`)
+- `neighborhood_briefs` — Grok-generated daily summaries
+- `weekly_briefs` — Sunday Edition content (rearview, horizon, holiday, data_point)
+- `ads` — ad campaigns with quality control fields (proof_token, approval_status, ai_quality_score)
+- `house_ads` — fallback ads (types: waitlist, app_download, advertise, newsletter, sunday_edition)
+- `cron_executions` / `cron_issues` — monitoring & self-healing
+- `daily_brief_sends` / `weekly_brief_sends` — email dedup
+- `profiles` — user prefs (primary_city, primary_timezone, paused_topics)
+- `newsletter_subscribers` — timezone, paused_topics
+- `rss_sources` — RSS feed URLs by city
 
 ## Deployment
 
 ```bash
-cd C:\Users\morga\Desktop\readflaneur-web
-git add . && git commit -m "message" && git push origin master
-npx vercel --prod
+git push origin master    # Deploy (then promote in Vercel dashboard)
+npx supabase db push --include-all --yes  # Run migrations
 ```
 
-## Claude Code Setup
+## MCP Servers
 
-**MCP Servers Configured:**
-- **Supabase MCP** - Direct database access (configured in `.mcp.json`)
-- **Vercel MCP** - Deployment management, logs, promotions
-- **Playwright MCP** - Browser automation, screenshots, UI testing
-- **Supermemory** - Persistent context across sessions
-- **Frontend Design** - Polished UI code generation
-
-**Add Vercel MCP:**
-```bash
-claude mcp add --transport http vercel https://mcp.vercel.com
-# Restart Claude Code, then run /mcp to authenticate
-```
-
-**Useful Commands:**
-```bash
-# UI screenshot
-npx playwright screenshot --wait-for-timeout=5000 [url] [output.png]
-
-# Deploy to production
-git add . && git commit -m "message" && git push origin master
-# Then promote Preview to Production in Vercel dashboard
-
-# Check MCP status
-/mcp
-```
-
-## Related Project
-
-Backend API and mobile app in `../flaneur/` - see `../flaneur/CLAUDE.md`
+Supabase, Vercel, Playwright, Supermemory, Frontend Design, Resend, Stripe, Sentry
