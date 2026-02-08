@@ -557,7 +557,7 @@ const DATA_POINT_PROMPTS: Record<DataPointType, (n: string, c: string, co: strin
   safety: (n, c) =>
     `What are the recent crime or safety statistics for ${n}, ${c}? Compare to last year same period. Provide one key metric and one sentence of context. VOICE: Write as a local insider using "we/our" - e.g., "We're seeing a 12% drop in incidents" or "${n} is holding steady." NEVER say "Residents are." NEVER use em dashes.`,
   environment: (n, c) =>
-    `What is the current air quality or notable environmental condition in ${n}, ${c}? Provide one measurement and one sentence of context. VOICE: Write as a local insider using "we/our" - e.g., "We're breathing easy today" or "${n} is dealing with a cold snap." NEVER say "Residents are." NEVER use em dashes.`,
+    `What is the current temperature in ${n}, ${c}? Provide the temperature as the value (e.g., "12°F" or "28°C") and one sentence of context about current weather conditions. Do NOT use AQI or air quality index. VOICE: Write as a local insider using "we/our" - e.g., "We're staying indoors today" or "${n} is dealing with a cold snap." NEVER say "Residents are." NEVER use em dashes.`,
   flaneur_index: (n, c, co) => {
     const currency = co === 'USA' ? 'USD' : co === 'UK' ? 'GBP' : co === 'Sweden' ? 'SEK' : co === 'Australia' ? 'AUD' : 'local currency';
     return `What is the average price of a latte at premium cafes in ${n}, ${c}? Give the price in ${currency} and compare to the city average. This is our "Flaneur Index" - a lighthearted cost-of-living indicator. VOICE: Write as a local insider - e.g., "Our morning latte runs about $6.50" or "We're paying a premium." NEVER say "Residents are." NEVER use em dashes.`;
