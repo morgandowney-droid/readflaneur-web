@@ -7,9 +7,65 @@
 > **User Location:** Stockholm, Sweden (CET/CEST timezone) - use this for time-related references.
 
 ## Current Status
-**Last Updated:** 2026-02-07
+**Last Updated:** 2026-02-08
 
-### Recent Changes (2026-02-07)
+### Recent Changes (2026-02-08)
+
+**Sunday Edition - "THAT TIME OF YEAR" Holiday Section:**
+- New conditional section detects upcoming holidays (within 7 days) per country
+- Grok X Search finds neighborhood-specific holiday events, Gemini curates top 3
+- 20 holidays supported: Valentine's Day, Easter, Halloween, Christmas, Thanksgiving, Midsommar, Guy Fawkes, ANZAC Day, Bastille Day, Canada Day, Singapore National Day, etc.
+- Holiday calendar uses computed dates (Easter via Butcher's algorithm, nth weekday for Thanksgiving/Memorial Day/Labor Day)
+- Each holiday event has name, day+time, and insider description with Google search link
+- Section only appears when a holiday is detected for the neighborhood's country
+- DB: `weekly_briefs.holiday_section` JSONB column (migration 039)
+- Files: `src/lib/weekly-brief-service.ts`, `src/lib/email/templates/SundayEditionTemplate.tsx`
+
+**Sunday Edition - Chronological Event Sorting:**
+- Horizon events now sorted by date (closest first) via `parseEventDayForSort()` parser
+- Parses date strings like "Tuesday Feb 10 6pm" into timestamps for comparison
+- Previously events appeared in whatever order Gemini returned them
+
+**Sunday Edition - Readability Improvements:**
+- Story significance blurbs: removed italic, darkened color (#555555)
+- Event "why it matters" text: increased 14px to 15px, darkened (#444444)
+- Data point context: removed italic for consistency
+- All fonts match Daily Brief readability standards
+
+**Sunday Edition - Persona Reverted to Daily Brief Voice:**
+- Reverted from "Smart Neighbor" persona back to proven Daily Brief Gemini persona
+- "Well-travelled, successful 35-year-old who has lived in [neighborhood] for years"
+- Applied to all Gemini prompts: significance filter, editorial synthesis, event curation, data points
+
+**Sunday Edition - Template Enhancements:**
+- Story headlines in "Three Stories That Mattered" now hyperlink to Google search
+- Rearview shows teaser paragraph with "Continue reading" link to full article on website
+- Narrative split into paragraphs (2-3 short paragraphs instead of dense block)
+- Weather data point section clickable - links to Google weather search
+- Copyright symbol added: "© Flaneur 2026" in footer
+- "The Air We Breathe" always shows temperature, never AQI
+
+**Sunday Edition - Combo Neighborhood Article Fix:**
+- Root cause: `getNeighborhoodIdsForQuery()` returned only component IDs, but articles stored under combo ID
+- Fix: Include combo ID itself: `return [neighborhoodId, ...components.map(c => c.component_id)]`
+- This was causing 0 articles found for ALL combo neighborhoods' Sunday Editions
+- File: `src/lib/combo-utils.ts`
+
+**Email Preferences - Combo Neighborhood Display:**
+- Combo neighborhoods now show component names in light grey below neighborhood name
+- API fetches combo component names from `combo_neighborhoods` join table
+- Files: `src/app/api/email/preferences/route.ts`, `src/app/email/preferences/page.tsx`
+
+**Global Rounded Corners:**
+- `.btn-primary`, `.btn-secondary`, `.btn-ghost` all have `rounded-lg`
+- Email preferences page: all buttons, inputs, labels, cards have rounded corners
+- File: `src/app/globals.css`
+
+**Copyright Symbol in All Email Footers:**
+- "© Flaneur 2026" in both Sunday Edition and Daily Brief email footers
+- Files: `SundayEditionTemplate.tsx`, `components/Footer.tsx`
+
+### Previous Changes (2026-02-07)
 
 **Fahrenheit for US Neighborhoods in Daily Emails:**
 - US neighborhoods now show °F as primary unit in weather stories and widgets (e.g., `10°F / -12°C`)
@@ -996,6 +1052,8 @@ STRIPE_WEBHOOK_SECRET=           # Stripe payment webhook
 | sync-design-week | Daily 6 AM UTC | Global Design Week coverage (Salone del Mobile, LDF, Design Miami, etc.) |
 | sync-anglosphere-features | Daily 8 AM UTC | Anglosphere city features (Vancouver View Watch, Cape Town Conditions, Singapore Market, Palm Beach ARCOM) |
 | sync-global-fallback | Daily 11 AM UTC | Fallback content for neighborhoods without custom adapters |
+| sync-weekly-brief | Sunday 4 AM UTC | Generate Sunday Edition weekly briefs (Rearview + Horizon + Holiday + Data Point) |
+| send-sunday-edition | Hourly on Sundays | Send Sunday Edition at 7 AM local time per recipient |
 | monitor-and-fix | Every 30 min | Self-healing: detect missing images, auto-regenerate, track cron failures |
 
 ## Database Tables
@@ -1025,6 +1083,10 @@ STRIPE_WEBHOOK_SECRET=           # Stripe payment webhook
 ### Email Preferences
 - `topic_suggestions` - User-submitted topic suggestions from preferences page
 - `profiles.paused_topics` / `newsletter_subscribers.paused_topics` - TEXT[] of category_labels to exclude
+
+### Sunday Edition (Weekly Email)
+- `weekly_briefs` - Structured weekly content (rearview_narrative, rearview_stories, horizon_events, data_point, holiday_section)
+- `weekly_brief_sends` - Dedup tracking (recipient_id + week_date)
 
 ### Cron Monitoring
 - `cron_executions` - Tracks all cron job runs with timing, success status, errors
