@@ -80,6 +80,15 @@ INSERT INTO neighborhoods (
 | Paris | `paris-` | `paris-marais` |
 | Tokyo | `tokyo-` | `tokyo-shibuya` |
 | Hong Kong | `hk-` | `hk-central` |
+| Stockholm | `stockholm-` | `stockholm-ostermalm` |
+| Dublin | `dublin-` | `dublin-ballsbridge` |
+| Auckland | `auckland-` | `auckland-herne-bay` |
+| Queenstown | `queenstown-` | `queenstown-kelvin-heights` |
+| Vancouver | `vancouver-` | `vancouver-west-vancouver` |
+| Cape Town | `capetown-` | `capetown-atlantic-seaboard` |
+| Singapore | `singapore-` | `singapore-nassim` |
+| Palm Beach | `palm-beach-` | `palm-beach-island` |
+| Greenwich | `greenwich-` | `greenwich-backcountry` |
 
 **Vacation Neighborhoods** (special case - use location name as prefix):
 | Location | Prefix | Example |
@@ -382,6 +391,15 @@ cat scripts/llm-boundaries-results.json
 | Paris | 48.80 - 48.92 | 2.20 - 2.50 |
 | Tokyo | 35.60 - 35.75 | 139.65 - 139.85 |
 | Los Angeles | 33.90 - 34.15 | -118.50 - -118.15 |
+| Stockholm | 59.30 - 59.36 | 18.04 - 18.12 |
+| Dublin | 53.28 - 53.35 | -6.30 - -6.10 |
+| Auckland | -36.90 - -36.82 | 174.72 - 174.85 |
+| Queenstown | -45.05 - -44.98 | 168.63 - 168.72 |
+| Vancouver | 49.22 - 49.32 | -123.25 - -123.10 |
+| Cape Town | -34.05 - -33.88 | 18.35 - 18.50 |
+| Singapore | 1.25 - 1.32 | 103.80 - 103.87 |
+| Palm Beach | 26.67 - 26.73 | -80.05 - -80.03 |
+| Greenwich | 41.00 - 41.10 | -73.65 - -73.55 |
 
 ---
 
@@ -1999,7 +2017,7 @@ const CITY_TO_ADAPTER: Record<string, string> = {
 };
 ```
 
-### 8.5 Current International Coverage
+### 8.5 Current International Coverage (13 Cities)
 
 | City | Adapter | Data Sources |
 |------|---------|--------------|
@@ -2008,7 +2026,27 @@ const CITY_TO_ADAPTER: Record<string, string> = {
 | Chicago | `ChicagoAdapter` | Chicago Data Portal (Socrata) |
 | Los Angeles | `LosAngelesAdapter` | LA Open Data (Socrata) |
 | Washington DC | `WashingtonDCAdapter` | DC Open Data (ArcGIS) |
+| Dublin | `DublinAdapter` | Dublin City Council + DLR, Courts Service, Garda/CSO |
+| Auckland | `NZAdapter` | Auckland Council, DLC, NZ Police |
+| Queenstown | `NZAdapter` | QLDC, DLC, NZ Police |
+| Vancouver | `VancouverAdapter` | City of Vancouver DevApps, BCLCLB, VPD |
+| Cape Town | `CapeTownAdapter` | City of Cape Town ePlan, WCLB, SAPS |
+| Singapore | `SingaporeAdapter` | URA IRAS, SLA, SPF |
+| Palm Beach | `PalmBeachAdapter` | Town Building Division, FL DBPR, PBPD |
+| Greenwich | `GreenwichAdapter` | Town Building Division, CT DCP, GPD |
+
+### 8.6 Special City Features
+
+| City | Feature | Source | File |
+|------|---------|--------|------|
+| New Zealand | OIO Bunker Watch | LINZ OIO Decisions ($10M+ NZD foreign land) | `oio-service.ts` |
+| Vancouver | View Watch | Height variance permits (protected view cones) | `vancouver-views.ts` |
+| Cape Town | Calm Alert | Wind conditions (<15km/h = perfect day) | `capetown-conditions.ts` |
+| Cape Town | Grid Watch | Eskom load shedding schedules | `capetown-conditions.ts` |
+| Singapore | Motor Watch | LTA COE bidding results (Cat B drop >$5k) | `singapore-market.ts` |
+| Singapore | GCB Alert | URA Good Class Bungalow sales ($20M+ SGD) | `singapore-market.ts` |
+| Palm Beach | Design Watch | ARCOM agenda (architectural review battles) | `palm-beach-arcom.ts` |
 
 ---
 
-*Last updated: February 6, 2026*
+*Last updated: February 8, 2026*

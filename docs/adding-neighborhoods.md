@@ -160,6 +160,12 @@ Before committing:
 | Tokyo | 35.64 - 35.70 | 139.69 - 139.77 |
 | San Francisco | 37.74 - 37.81 | -122.45 - -122.39 |
 | Sydney | -33.90 - -33.82 | 151.21 - 151.29 |
+| Stockholm | 59.30 - 59.36 | 18.04 - 18.12 |
+| Dublin | 53.28 - 53.35 | -6.30 - -6.10 |
+| Auckland | -36.90 - -36.82 | 174.72 - 174.85 |
+| Vancouver | 49.22 - 49.32 | -123.25 - -123.10 |
+| Cape Town | -34.05 - -33.88 | 18.35 - 18.50 |
+| Singapore | 1.25 - 1.32 | 103.80 - 103.87 |
 | Nantucket | 41.27 - 41.30 | -70.13 - -70.05 |
 | The Hamptons | 40.85 - 41.05 | -72.45 - -71.85 |
 | Aspen | 39.18 - 39.20 | -106.84 - -106.80 |
@@ -679,7 +685,7 @@ Schedule: Twice daily at 9 AM and 5 PM UTC.
 
 ## Global Locations Configuration (International)
 
-International neighborhoods (London, Sydney, Chicago, LA, DC) have their own civic data integration using the City Adapter pattern.
+International neighborhoods across 13 cities have their own civic data integration using the City Adapter pattern.
 
 ### Adding International Neighborhoods
 
@@ -703,7 +709,7 @@ export const GLOBAL_CITY_CONFIG: Record<string, CityConfig> = {
       // Add more zones...
     ],
   },
-  // Other cities: Sydney, Chicago, 'Los Angeles', 'Washington DC'
+  // Other cities: Sydney, Chicago, 'Los Angeles', 'Washington DC', Dublin, Auckland, Queenstown, Vancouver, 'Cape Town', Singapore, 'Palm Beach', Greenwich
 };
 ```
 
@@ -724,12 +730,30 @@ export const CITY_VOCABULARIES: Record<string, CityVocabulary> = {
 };
 ```
 
-### Current International Coverage
+### Current International Coverage (13 Cities)
 
-| City | Zones | Data Sources |
-|------|-------|--------------|
-| London | Mayfair, Chelsea, Notting Hill, Kensington, Hampstead | UK Police API, Westminster Planning |
-| Sydney | Double Bay, Mosman, Paddington, Woollahra, Balmoral | NSW Planning Portal, BOCSAR |
-| Chicago | Gold Coast, Lincoln Park, River North, Streeterville | Chicago Data Portal (Socrata) |
-| Los Angeles | Bel Air, Beverly Hills, Pacific Palisades, Brentwood, Santa Monica | LA Open Data |
-| Washington DC | Georgetown, Dupont Circle, Kalorama, Capitol Hill | DC Open Data (ArcGIS) |
+| City | Adapter | Data Sources |
+|------|---------|--------------|
+| London | `LondonAdapter` | UK Police API, Westminster Planning |
+| Sydney | `SydneyAdapter` | NSW Planning Portal, BOCSAR |
+| Chicago | `ChicagoAdapter` | Chicago Data Portal (Socrata) |
+| Los Angeles | `LosAngelesAdapter` | LA Open Data (Socrata) |
+| Washington DC | `WashingtonDCAdapter` | DC Open Data (ArcGIS) |
+| Dublin | `DublinAdapter` | Dublin City Council + DLR, Courts Service, Garda/CSO |
+| Auckland | `NZAdapter` | Auckland Council, DLC, NZ Police |
+| Queenstown | `NZAdapter` | QLDC, DLC, NZ Police |
+| Vancouver | `VancouverAdapter` | City of Vancouver DevApps, BCLCLB, VPD |
+| Cape Town | `CapeTownAdapter` | City of Cape Town ePlan, WCLB, SAPS |
+| Singapore | `SingaporeAdapter` | URA IRAS, SLA, SPF |
+| Palm Beach | `PalmBeachAdapter` | Town Building Division, FL DBPR, PBPD |
+| Greenwich | `GreenwichAdapter` | Town Building Division, CT DCP, GPD |
+
+### Special City Features
+
+| City | Feature | Source |
+|------|---------|--------|
+| New Zealand | OIO Bunker Watch | LINZ OIO Decisions ($10M+ NZD foreign land) |
+| Vancouver | View Watch | Height variance permits (protected view cones) |
+| Cape Town | Calm Alert / Grid Watch | Wind conditions, Eskom load shedding |
+| Singapore | Motor Watch / GCB Alert | COE bidding, Good Class Bungalow sales |
+| Palm Beach | Design Watch | ARCOM agenda (architectural review) |
