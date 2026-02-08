@@ -16,6 +16,11 @@
 - Expanded Summer Socials: Hamptons (3 neighborhoods), Mykonos, Ibiza
 - Seed script: `scripts/seed-flaneur-200.ts` (idempotent upsert, run via `npx tsx`)
 
+**Advertise Page — Strategy Selector & Centralized Stats:**
+- New `AdvertiserPersonas` component: 3 strategy cards (Local Pillar, National Trust, Global Icon) above pricing table
+- Centralized `src/config/site-stats.ts` — single source of truth for neighborhood/city/country counts
+- Advertise page, layout meta, and all marketing copy now reference `SITE_STATS` instead of hardcoded numbers
+
 **Advertise Page Polish & Multi-Neighborhood Booking:**
 - Multi-neighborhood selection: pills UI, merged availability calendar, one Stripe checkout with N line items
 - Combo component search: typing "FiDi" surfaces Tribeca with "(incl. FiDi)" label
