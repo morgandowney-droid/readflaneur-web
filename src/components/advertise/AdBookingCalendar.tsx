@@ -350,6 +350,7 @@ export function AdBookingCalendar() {
         {/* Search input + Near Me button */}
         <div className="flex gap-2">
           <input
+            id="neighborhood-search"
             type="text"
             value={query}
             onChange={(e) => handleSearch(e.target.value)}

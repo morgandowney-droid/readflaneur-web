@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AD_COLLECTIONS, type AdCollection } from '@/config/ad-config';
 
 type PlacementFilter = 'none' | 'daily_brief' | 'sunday_edition';
@@ -8,8 +8,18 @@ type PlacementFilter = 'none' | 'daily_brief' | 'sunday_edition';
 export function CollectionsWithPlacement() {
   const [activePlacement, setActivePlacement] = useState<PlacementFilter>('none');
 
+  // Listen for placement-select events from AdvertiserPersonas
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const placement = (e as CustomEvent).detail as PlacementFilter;
+      setActivePlacement(placement);
+    };
+    window.addEventListener('placement-select', handler);
+    return () => window.removeEventListener('placement-select', handler);
+  }, []);
+
   return (
-    <>
+    <div id="collections">
       {/* Collections Header */}
       <h2 className="text-xs tracking-[0.3em] uppercase text-neutral-500 mb-10 text-center">
         Collections
@@ -69,8 +79,20 @@ export function CollectionsWithPlacement() {
           />
         ))}
       </div>
-    </>
+    </div>
   );
+}
+
+function scrollToBookAndFocus() {
+  const bookSection = document.getElementById('book');
+  if (bookSection) {
+    bookSection.scrollIntoView({ behavior: 'smooth' });
+    // Focus the search input after scroll completes
+    setTimeout(() => {
+      const input = document.getElementById('neighborhood-search');
+      if (input) input.focus();
+    }, 600);
+  }
 }
 
 function CollectionCard({
@@ -141,7 +163,7 @@ function CollectionCard({
               isSundayHighlighted ? 'text-neutral-300' : 'text-neutral-500'
             }`}
           >
-            /day per individual neighborhood
+            /Sunday per individual neighborhood
           </span>
         </div>
       </div>
@@ -150,12 +172,17 @@ function CollectionCard({
         {collection.description}
       </p>
       <div className="mb-6">
-        <p className="text-xs tracking-[0.2em] uppercase text-neutral-600 mb-2">
-          Example Neighborhoods
-        </p>
-        <p className="text-sm text-neutral-400">
-          {collection.exampleNeighborhoods.join(' / ')}
-        </p>
+        <button
+          onClick={scrollToBookAndFocus}
+          className="text-left w-full group cursor-pointer"
+        >
+          <p className="text-xs tracking-[0.2em] uppercase text-neutral-600 mb-2 group-hover:text-neutral-400 transition-colors">
+            Example Neighborhoods
+          </p>
+          <p className="text-sm text-neutral-400 group-hover:text-neutral-200 transition-colors">
+            {collection.exampleNeighborhoods.join(' / ')}
+          </p>
+        </button>
       </div>
       <a
         href="#book"

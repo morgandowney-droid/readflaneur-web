@@ -5,6 +5,12 @@
 
 ## 2026-02-08
 
+**Advertise Page — Interactive Navigation & Pricing Fix:**
+- "Example Neighborhoods" text and names in collection cards now clickable — scrolls to booking calendar and focuses search input
+- Strategy card "Recommended" text now clickable — scrolls to Collections section and auto-selects the corresponding placement toggle (Daily Brief or Sunday Edition) via custom DOM event
+- Fixed Sunday pricing labels: changed "/day per individual neighborhood" to "/Sunday per individual neighborhood" on all three collection cards
+- Homepage "252 neighborhoods, 92 cities" stat line now clickable — opens the NeighborhoodSelectorModal (via new `HeroStats.tsx` client component)
+
 **RSS Sources — Global Expansion (100% City Coverage):**
 - Expanded from 23 cities to 92 cities (100% of active neighborhoods now have RSS feeds)
 - Total feeds: 192 (was ~65), covering all regions including previously uncovered South America

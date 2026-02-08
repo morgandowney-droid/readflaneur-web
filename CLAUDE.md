@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-08
 
-Recent work: RSS sources expanded to 100% city coverage (192 feeds across 92 cities), enhanced neighborhood search, placement toggle on advertise page.
+Recent work: Advertise page interactive navigation (clickable strategy recommendations, example neighborhoods, Sunday pricing fix), RSS sources 100% coverage, enhanced search.
 
 ## Key Patterns
 

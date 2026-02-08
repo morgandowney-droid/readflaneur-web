@@ -1,5 +1,7 @@
 'use client';
 
+type PlacementAction = 'daily_brief' | 'sunday_edition' | 'global_takeover';
+
 const PERSONAS = [
   {
     title: 'The Local Pillar',
@@ -27,6 +29,7 @@ const PERSONAS = [
     recommended: 'Daily Brief: Superprime ($500/day)',
     badge: 'Best for Real Estate',
     highlight: true,
+    action: 'daily_brief' as PlacementAction,
   },
   {
     title: 'The National Trust',
@@ -55,6 +58,7 @@ const PERSONAS = [
     recommended: 'Daily Brief: Metropolitan Bundle ($200/day)',
     badge: null,
     highlight: false,
+    action: 'daily_brief' as PlacementAction,
   },
   {
     title: 'The Global Icon',
@@ -78,8 +82,27 @@ const PERSONAS = [
     recommended: 'Global Network Takeover ($15k/each Sunday)',
     badge: null,
     highlight: false,
+    action: 'sunday_edition' as PlacementAction,
   },
 ] as const;
+
+function handleRecommendedClick(action: PlacementAction) {
+  if (action === 'global_takeover') {
+    // Scroll to Global Takeover section (it's after collections)
+    const el = document.querySelector('[href="mailto:ads@readflaneur.com?subject=Global%20Takeover%20Inquiry"]');
+    if (el) el.closest('section')?.scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+  // Scroll to collections and set placement
+  const collections = document.getElementById('collections');
+  if (collections) {
+    collections.scrollIntoView({ behavior: 'smooth' });
+    // Dispatch event after a short delay so the scroll is visible first
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('placement-select', { detail: action }));
+    }, 300);
+  }
+}
 
 export function AdvertiserPersonas() {
   return (
@@ -139,9 +162,12 @@ export function AdvertiserPersonas() {
                 <p className="text-xs tracking-[0.15em] uppercase text-neutral-600 mb-1">
                   Recommended
                 </p>
-                <p className="text-sm text-amber-500/90 font-medium">
+                <button
+                  onClick={() => handleRecommendedClick(persona.action)}
+                  className="text-sm text-amber-500/90 font-medium hover:text-amber-400 transition-colors cursor-pointer text-left"
+                >
                   {persona.recommended}
-                </p>
+                </button>
               </div>
             </div>
           ))}

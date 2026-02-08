@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { HomeSignupEnhanced } from '@/components/home/HomeSignupEnhanced';
+import { HeroStats } from '@/components/home/HeroStats';
 import { Neighborhood } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -36,11 +37,7 @@ export default async function HomePage() {
           </p>
 
           {/* Stats */}
-          <div className="flex items-center justify-center gap-3 text-xs tracking-[0.2em] uppercase text-neutral-500 mb-10">
-            <span>{regularNeighborhoods.length} neighborhoods</span>
-            <span className="w-px h-3 bg-neutral-700" />
-            <span>{cityCount} cities</span>
-          </div>
+          <HeroStats neighborhoodCount={regularNeighborhoods.length} cityCount={cityCount} />
 
           {/* Decorative element */}
           <div className="w-8 h-px bg-neutral-600 mx-auto" />
