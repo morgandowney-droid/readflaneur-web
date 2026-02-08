@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { adId, action, reason, headline, adminNotes } = body;
+    const { adId, action, reason, headline, adminNotes, body: adBody } = body;
 
     if (!adId || !action) {
       return NextResponse.json(
@@ -88,6 +88,11 @@ export async function POST(request: NextRequest) {
     // Save internal admin notes
     if (adminNotes !== undefined) {
       updateData.admin_notes = adminNotes || undefined;
+    }
+
+    // Save ad body copy (Sunday Edition)
+    if (adBody !== undefined) {
+      updateData.body = adBody || undefined;
     }
 
     const { error: updateError } = await supabase

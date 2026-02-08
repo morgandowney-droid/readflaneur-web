@@ -45,17 +45,20 @@ export interface Article {
 }
 
 export type AdPlacement = 'feed' | 'story_open';
+export type AdPlacementType = 'daily_brief' | 'sunday_edition';
 
 export interface Ad {
   id: string;
   advertiser_id?: string;
   image_url: string;
   headline: string;
+  body?: string;
   click_url: string;
   is_global: boolean;
   neighborhood_id: string | null;
   sponsor_label: string;
   placement: AdPlacement;
+  placement_type: AdPlacementType;
   status: 'pending_review' | 'approved' | 'rejected' | 'active' | 'paused' | 'expired';
   rejection_reason?: string;
   start_date?: string;

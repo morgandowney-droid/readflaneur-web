@@ -120,11 +120,15 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
+    // Detect Sunday Edition placement from product name
+    const isSundayEdition = (booking.productName || '').toLowerCase().includes('sunday');
+
     const { data: ad, error: insertError } = await supabase
       .from('ads')
       .insert({
         status: 'pending_review',
         placement: 'story_open',
+        placement_type: isSundayEdition ? 'sunday_edition' : 'daily_brief',
         headline: '',
         image_url: '',
         click_url: '',

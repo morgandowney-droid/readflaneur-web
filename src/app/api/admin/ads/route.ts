@@ -58,6 +58,8 @@ export async function GET(request: NextRequest) {
       query = query.eq('needs_design_service', true).eq('status', 'pending_review');
     } else if (filter === 'active') {
       query = query.eq('status', 'active');
+    } else if (filter === 'sunday_edition') {
+      query = query.eq('placement_type', 'sunday_edition');
     }
 
     const { data: ads, error: adsError } = await query;

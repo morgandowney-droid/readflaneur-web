@@ -3,7 +3,7 @@
 // Tier mapping aligns with PricingService wealth-density model.
 
 export interface AdCollection {
-  key: 'tier1' | 'tier2' | 'tier3';
+  key: 'tier1' | 'tier2' | 'tier3' | 'sunday';
   name: string;
   tagline: string;
   price: number;
@@ -43,6 +43,16 @@ export const AD_COLLECTIONS: AdCollection[] = [
     bookingUrl: 'https://www.passionfroot.me/flaneur/packages/27c87140-5d5d-48f9-8048-b7ee0e05ce18/book',
     description: 'Strategic reach into neighborhoods on the rise. Early positioning in markets with accelerating wealth density and cultural momentum, from Cape Town\'s Atlantic Seaboard to Dublin\'s Dalkey coast.',
     exampleNeighborhoods: ['Cape Town', 'Vancouver', 'Dublin', 'Dalkey'],
+  },
+  {
+    key: 'sunday',
+    name: 'The Sunday Edition',
+    tagline: 'Own the most-read moment of the week.',
+    price: 750,
+    unit: '/week',
+    bookingUrl: 'https://www.passionfroot.me/flaneur',
+    description: 'Presenting Sponsor of the Sunday Edition — our curated weekly email with the highest open rates. Your brand appears as native content between The Rearview and The Horizon, reaching engaged readers during their Sunday morning ritual.',
+    exampleNeighborhoods: ['All neighborhoods'],
   },
 ];
 

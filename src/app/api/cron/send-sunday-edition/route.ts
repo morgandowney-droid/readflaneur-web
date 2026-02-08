@@ -4,6 +4,7 @@ import { render } from '@react-email/components';
 import { SundayEditionTemplate, SundayEditionContent } from '@/lib/email/templates/SundayEditionTemplate';
 import { sendEmail } from '@/lib/email';
 import { resolveRecipients } from '@/lib/email/scheduler';
+import { resolveSundayAd } from '@/lib/email/sunday-ad-resolver';
 
 /**
  * Send "The Sunday Edition" weekly email to subscribers.
@@ -180,6 +181,16 @@ export async function GET(request: Request) {
         preferencesUrl: `${appUrl}/email/preferences?token=${recipient.unsubscribeToken}`,
       };
 
+      // Resolve sponsor ad for this neighborhood
+      const sundayAd = await resolveSundayAd(supabase, primaryId);
+      emailContent.sponsorAd = {
+        sponsorLabel: sundayAd.sponsorLabel,
+        imageUrl: sundayAd.imageUrl,
+        headline: sundayAd.headline,
+        body: sundayAd.body,
+        clickUrl: sundayAd.clickUrl,
+      };
+
       if (dry) {
         results.emails_sent++;
         emailsSent++;
@@ -206,6 +217,18 @@ export async function GET(request: Request) {
             neighborhood_id: primaryId,
             week_date: weekDate,
           }).then(null, () => {});
+
+          // Track ad impression
+          if (sundayAd.adId) {
+            const { error: rpcErr } = await supabase.rpc('increment_ad_impressions', { ad_id: sundayAd.adId });
+            if (rpcErr) {
+              // Fallback: select then update
+              const { data: adRow } = await supabase.from('ads').select('impressions').eq('id', sundayAd.adId).single();
+              if (adRow) {
+                await supabase.from('ads').update({ impressions: (adRow.impressions || 0) + 1 }).eq('id', sundayAd.adId).then(null, () => {});
+              }
+            }
+          }
 
           results.emails_sent++;
           emailsSent++;

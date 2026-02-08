@@ -12,6 +12,14 @@ import {
 } from '@react-email/components';
 import type { HorizonEvent, WeeklyDataPoint, RearviewStory, HolidaySection } from '../../weekly-brief-service';
 
+export interface SundayEditionAd {
+  sponsorLabel: string;
+  imageUrl: string | null;
+  headline: string;
+  body: string | null;
+  clickUrl: string;
+}
+
 export interface SundayEditionContent {
   neighborhoodName: string;
   cityName: string;
@@ -21,6 +29,7 @@ export interface SundayEditionContent {
   horizonEvents: HorizonEvent[];
   dataPoint: WeeklyDataPoint;
   holidaySection?: HolidaySection | null;
+  sponsorAd?: SundayEditionAd | null;
   imageUrl: string | null;
   articleUrl: string | null;
   unsubscribeUrl: string;
@@ -127,6 +136,38 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
           </Section>
 
           <Hr style={divider} />
+
+          {/* Presenting Sponsor */}
+          {content.sponsorAd && (
+            <>
+              <Section style={sponsorSection}>
+                <Text style={sponsorLabel}>
+                  PRESENTED BY {content.sponsorAd.sponsorLabel.toUpperCase()}
+                </Text>
+                {content.sponsorAd.imageUrl && (
+                  <Link href={content.sponsorAd.clickUrl}>
+                    <Img
+                      src={content.sponsorAd.imageUrl}
+                      alt={content.sponsorAd.headline}
+                      width="100%"
+                      style={sponsorImage}
+                    />
+                  </Link>
+                )}
+                <Text style={sponsorHeadline}>{content.sponsorAd.headline}</Text>
+                {content.sponsorAd.body && (
+                  <Text style={sponsorBody}>{content.sponsorAd.body}</Text>
+                )}
+                <Text style={sponsorCta}>
+                  <Link href={content.sponsorAd.clickUrl} style={sponsorCtaLink}>
+                    Learn more &rarr;
+                  </Link>
+                </Text>
+              </Section>
+
+              <Hr style={divider} />
+            </>
+          )}
 
           {/* Section 2: The Horizon */}
           {content.horizonEvents.length > 0 && (
@@ -518,4 +559,59 @@ const copyrightText = {
   letterSpacing: '0.1em',
   textTransform: 'uppercase' as const,
   fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+// ─── Sponsor Styles ───
+
+const sponsorSection = {
+  padding: '30px',
+  backgroundColor: '#FAF7F2',
+  textAlign: 'center' as const,
+};
+
+const sponsorLabel = {
+  fontSize: '10px',
+  fontWeight: '600' as const,
+  letterSpacing: '3px',
+  color: '#C9A96E',
+  margin: '0 0 16px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+  textTransform: 'uppercase' as const,
+};
+
+const sponsorImage = {
+  display: 'block' as const,
+  width: '100%',
+  maxHeight: '250px',
+  objectFit: 'cover' as const,
+  marginBottom: '16px',
+};
+
+const sponsorHeadline = {
+  fontSize: '20px',
+  fontWeight: '700' as const,
+  color: '#1a1a1a',
+  margin: '0 0 8px',
+  fontFamily: 'Georgia, "Times New Roman", serif',
+};
+
+const sponsorBody = {
+  fontSize: '16px',
+  fontStyle: 'italic' as const,
+  color: '#555555',
+  lineHeight: '1.6',
+  margin: '0 0 12px',
+  fontFamily: 'Georgia, "Times New Roman", serif',
+};
+
+const sponsorCta = {
+  fontSize: '14px',
+  margin: '0',
+  fontFamily: 'Georgia, "Times New Roman", serif',
+};
+
+const sponsorCtaLink = {
+  color: '#C9A96E',
+  textDecoration: 'none' as const,
+  fontWeight: '600' as const,
 };

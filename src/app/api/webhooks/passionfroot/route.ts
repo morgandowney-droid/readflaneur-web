@@ -54,6 +54,9 @@ export async function POST(request: NextRequest) {
       allText.includes('creative service') ||
       allText.includes('creative production');
 
+    // Detect Sunday Edition placement from product name or notes
+    const isSundayEdition = allText.includes('sunday');
+
     if (!orderId) {
       return NextResponse.json({ error: 'Missing order ID' }, { status: 400 });
     }
@@ -70,6 +73,7 @@ export async function POST(request: NextRequest) {
       .insert({
         status: 'pending_review',
         placement: 'story_open',
+        placement_type: isSundayEdition ? 'sunday_edition' : 'daily_brief',
         headline: '',
         image_url: '',
         click_url: '',

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Ad } from '@/types';
 
-type FilterType = 'pending_review' | 'needs_design' | 'active' | 'all';
+type FilterType = 'pending_review' | 'needs_design' | 'active' | 'sunday_edition' | 'all';
 
 interface AdWithAdvertiser extends Ad {
   advertiser?: {
@@ -26,6 +26,7 @@ export default function AdminAdsPage() {
   const [showRejectModal, setShowRejectModal] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>('pending_review');
   const [editedHeadlines, setEditedHeadlines] = useState<Record<string, string>>({});
+  const [editedBodies, setEditedBodies] = useState<Record<string, string>>({});
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -52,12 +53,15 @@ export default function AdminAdsPage() {
 
       // Pre-populate editable fields
       const headlines: Record<string, string> = {};
+      const bodies: Record<string, string> = {};
       const notes: Record<string, string> = {};
       loaded.forEach((ad) => {
         headlines[ad.id] = ad.headline || '';
+        bodies[ad.id] = ad.body || '';
         notes[ad.id] = ad.admin_notes || '';
       });
       setEditedHeadlines(headlines);
+      setEditedBodies(bodies);
       setAdminNotes(notes);
       setLoading(false);
     } catch (err) {
@@ -77,6 +81,7 @@ export default function AdminAdsPage() {
           adId,
           action: 'approve',
           headline: editedHeadlines[adId] || undefined,
+          body: editedBodies[adId] || undefined,
           adminNotes: adminNotes[adId] || undefined,
         }),
       });
@@ -143,6 +148,7 @@ export default function AdminAdsPage() {
     { key: 'pending_review', label: 'Pending' },
     { key: 'needs_design', label: 'Needs Design' },
     { key: 'active', label: 'Active' },
+    { key: 'sunday_edition', label: 'Sunday' },
     { key: 'all', label: 'All' },
   ];
 
@@ -215,7 +221,9 @@ export default function AdminAdsPage() {
                   ? 'No ads needing design service.'
                   : filter === 'active'
                     ? 'No active ads.'
-                    : 'No ads found.'}
+                    : filter === 'sunday_edition'
+                      ? 'No Sunday Edition ads.'
+                      : 'No ads found.'}
             </p>
           </div>
         ) : (
@@ -239,6 +247,11 @@ export default function AdminAdsPage() {
                   {!ad.passionfroot_order_id && (
                     <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-neutral-100 text-neutral-600">
                       Direct
+                    </span>
+                  )}
+                  {ad.placement_type === 'sunday_edition' && (
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-violet-100 text-violet-800 font-medium">
+                      Sunday
                     </span>
                   )}
                   {ad.needs_design_service && (
@@ -343,6 +356,10 @@ export default function AdminAdsPage() {
                         <span className="text-neutral-400">Placement:</span>{' '}
                         {ad.placement === 'story_open' ? 'Story Open' : 'Feed'}
                       </div>
+                      <div>
+                        <span className="text-neutral-400">Email Type:</span>{' '}
+                        {ad.placement_type === 'sunday_edition' ? 'Sunday Edition' : 'Daily Brief'}
+                      </div>
                       {(ad.status === 'active' || ad.status === 'paused') && (
                         <div className="pt-2 mt-2 border-t border-neutral-200">
                           <p className="text-neutral-400 mb-1">Performance:</p>
@@ -371,6 +388,27 @@ export default function AdminAdsPage() {
                             placeholder="Enter or edit the ad headline..."
                             className="w-full px-3 py-2 border border-neutral-200 focus:border-black focus:outline-none text-sm"
                             rows={2}
+                          />
+                        </div>
+                      )}
+
+                      {/* Body copy (Sunday Edition ads) */}
+                      {ad.status === 'pending_review' && ad.placement_type === 'sunday_edition' && (
+                        <div>
+                          <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-1">
+                            Body Copy (shown in email)
+                          </label>
+                          <textarea
+                            value={editedBodies[ad.id] ?? ''}
+                            onChange={(e) =>
+                              setEditedBodies({
+                                ...editedBodies,
+                                [ad.id]: e.target.value,
+                              })
+                            }
+                            placeholder="Short sponsor body copy for the Sunday Edition..."
+                            className="w-full px-3 py-2 border border-neutral-200 focus:border-black focus:outline-none text-sm"
+                            rows={3}
                           />
                         </div>
                       )}
