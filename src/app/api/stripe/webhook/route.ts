@@ -46,47 +46,45 @@ export async function POST(request: NextRequest) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      // ─── New booking flow (ad_id in metadata, no order_id) ───
-      if (session.metadata?.ad_id && !session.metadata?.order_id) {
-        const adId = session.metadata.ad_id;
+      // ─── New booking flow (ad_ids or ad_id in metadata, no order_id) ───
+      if ((session.metadata?.ad_ids || session.metadata?.ad_id) && !session.metadata?.order_id) {
+        // Support multi-neighborhood: ad_ids is comma-separated, fall back to single ad_id
+        const adIds = session.metadata.ad_ids
+          ? session.metadata.ad_ids.split(',')
+          : [session.metadata.ad_id!];
 
-        // Update ad status to pending_assets
+        // Update all ads to pending_assets
         const { error: updateError } = await supabaseAdmin
           .from('ads')
           .update({ status: 'pending_assets' })
-          .eq('id', adId)
+          .in('id', adIds)
           .eq('status', 'pending_payment');
 
         if (updateError) {
-          console.error(`Booking webhook: failed to update ad ${adId}:`, updateError);
+          console.error(`Booking webhook: failed to update ads ${adIds.join(',')}:`, updateError);
           break;
         }
 
         // Get ad details for email
-        const { data: ad } = await supabaseAdmin
+        const { data: ads } = await supabaseAdmin
           .from('ads')
-          .select('customer_email, neighborhood_id, start_date, placement_type')
-          .eq('id', adId)
-          .single();
+          .select('id, customer_email, neighborhood_id, start_date, placement_type')
+          .in('id', adIds);
 
-        if (ad?.customer_email) {
-          // Look up neighborhood name
-          let neighborhoodName = 'your neighborhood';
-          let cityName = '';
-          if (ad.neighborhood_id) {
-            const { data: hood } = await supabaseAdmin
-              .from('neighborhoods')
-              .select('name, city')
-              .eq('id', ad.neighborhood_id)
-              .single();
-            if (hood) {
-              neighborhoodName = hood.name;
-              cityName = hood.city;
-            }
-          }
+        const customerEmail = ads?.[0]?.customer_email;
+        if (customerEmail && ads && ads.length > 0) {
+          // Look up neighborhood names
+          const hoodIds = [...new Set(ads.map((a) => a.neighborhood_id).filter(Boolean))];
+          const { data: hoods } = await supabaseAdmin
+            .from('neighborhoods')
+            .select('id, name, city')
+            .in('id', hoodIds);
 
-          const displayDate = ad.start_date
-            ? new Date(ad.start_date + 'T00:00:00Z').toLocaleDateString('en-US', {
+          const hoodMap = new Map((hoods || []).map((h) => [h.id, h]));
+
+          const firstAd = ads[0];
+          const displayDate = firstAd.start_date
+            ? new Date(firstAd.start_date + 'T00:00:00Z').toLocaleDateString('en-US', {
                 weekday: 'long',
                 month: 'long',
                 day: 'numeric',
@@ -95,7 +93,7 @@ export async function POST(request: NextRequest) {
               })
             : 'your booked date';
 
-          const placementLabel = ad.placement_type === 'sunday_edition'
+          const placementLabel = firstAd.placement_type === 'sunday_edition'
             ? 'Sunday Edition'
             : 'Daily Brief';
 
@@ -103,15 +101,30 @@ export async function POST(request: NextRequest) {
             ? `$${(session.amount_total / 100).toFixed(0)}`
             : '';
 
-          const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '')
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/[\n\r]+$/, '').replace(/\/$/, '')
             || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://readflaneur.com');
 
-          const uploadUrl = `${appUrl}/advertise/upload/${adId}`;
+          // Build neighborhood list and upload links
+          const neighborhoodList = ads.map((a) => {
+            const hood = hoodMap.get(a.neighborhood_id);
+            return hood ? `${hood.name}, ${hood.city}` : a.neighborhood_id;
+          });
+
+          const uploadLinks = ads.map((a) => {
+            const hood = hoodMap.get(a.neighborhood_id);
+            const label = hood ? hood.name : a.neighborhood_id;
+            return `<a href="${appUrl}/advertise/upload/${a.id}" style="color: #1a1a1a; text-decoration: underline;">${label}</a>`;
+          });
+
+          const neighborhoodSummary = neighborhoodList.join(', ');
+          const subject = ads.length === 1
+            ? `Your Flâneur booking is confirmed — ${neighborhoodList[0]}, ${displayDate}`
+            : `Your Flâneur booking is confirmed — ${ads.length} neighborhoods, ${displayDate}`;
 
           // Send confirmation email to customer
           await sendEmail({
-            to: ad.customer_email,
-            subject: `Your Flâneur booking is confirmed — ${neighborhoodName}${cityName ? `, ${cityName}` : ''}, ${displayDate}`,
+            to: customerEmail,
+            subject,
             html: `
               <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
                 <h1 style="font-weight: 300; letter-spacing: 0.1em; font-size: 24px; margin-bottom: 8px;">FLÂNEUR</h1>
@@ -120,21 +133,22 @@ export async function POST(request: NextRequest) {
                 <h2 style="font-weight: 400; font-size: 20px;">Booking Confirmed</h2>
 
                 <div style="background: #fafafa; padding: 20px; margin: 20px 0; border-left: 3px solid #1a1a1a;">
-                  <p style="margin: 4px 0;"><strong>Neighborhood:</strong> ${neighborhoodName}${cityName ? `, ${cityName}` : ''}</p>
+                  <p style="margin: 4px 0;"><strong>${ads.length > 1 ? 'Neighborhoods' : 'Neighborhood'}:</strong> ${neighborhoodSummary}</p>
                   <p style="margin: 4px 0;"><strong>Date:</strong> ${displayDate}</p>
                   <p style="margin: 4px 0;"><strong>Placement:</strong> ${placementLabel}</p>
                   ${amountPaid ? `<p style="margin: 4px 0;"><strong>Amount:</strong> ${amountPaid}</p>` : ''}
                 </div>
 
                 <p style="font-size: 15px; line-height: 1.6;">
-                  Payment received. Next step: upload your ad creative using the link below.
-                  Our editorial team will review it and notify you when your ad is live.
+                  Payment received. Next step: upload your ad creative for each neighborhood.
+                  Our editorial team will review it and notify you when your ads are live.
                 </p>
 
                 <div style="margin: 30px 0;">
-                  <a href="${uploadUrl}" style="background: #1a1a1a; color: #fff; padding: 14px 28px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.1em; font-size: 13px; display: inline-block;">
-                    Upload Your Creative
-                  </a>
+                  ${ads.length === 1
+                    ? `<a href="${appUrl}/advertise/upload/${ads[0].id}" style="background: #1a1a1a; color: #fff; padding: 14px 28px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.1em; font-size: 13px; display: inline-block;">Upload Your Creative</a>`
+                    : `<p style="font-size: 15px; font-weight: 500; margin-bottom: 12px;">Upload links:</p>${uploadLinks.map((link) => `<p style="margin: 8px 0; font-size: 15px;">→ ${link}</p>`).join('')}`
+                  }
                 </div>
 
                 <p style="font-size: 12px; color: #999;">
@@ -149,19 +163,20 @@ export async function POST(request: NextRequest) {
           if (adminEmail) {
             await sendEmail({
               to: adminEmail,
-              subject: `New Ad Booking: ${neighborhoodName} — ${displayDate} (${placementLabel})`,
+              subject: `New Ad Booking: ${neighborhoodSummary} — ${displayDate} (${placementLabel})`,
               html: `
                 <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px;">
                   <h1 style="font-weight: 300; letter-spacing: 0.1em;">FLÂNEUR</h1>
                   <h2 style="font-weight: 400;">New Booking Received</h2>
                   <div style="background: #f5f5f5; padding: 20px; margin: 20px 0;">
-                    <p><strong>Customer:</strong> ${ad.customer_email}</p>
-                    <p><strong>Neighborhood:</strong> ${neighborhoodName}${cityName ? `, ${cityName}` : ''}</p>
+                    <p><strong>Customer:</strong> ${customerEmail}</p>
+                    <p><strong>Neighborhoods:</strong> ${neighborhoodSummary}</p>
                     <p><strong>Date:</strong> ${displayDate}</p>
                     <p><strong>Placement:</strong> ${placementLabel}</p>
+                    <p><strong>Ads:</strong> ${ads.length}</p>
                     ${amountPaid ? `<p><strong>Amount:</strong> ${amountPaid}</p>` : ''}
                   </div>
-                  <p>The customer has been sent an upload link. Creative will go through AI quality check on submission.</p>
+                  <p>The customer has been sent upload links. Creative will go through AI quality check on submission.</p>
                   <a href="${appUrl}/admin/ads" style="background: #000; color: #fff; padding: 12px 24px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.1em; font-size: 14px; display: inline-block;">
                     View in Dashboard
                   </a>
@@ -171,7 +186,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        console.log(`Booking completed: ad ${adId} → pending_assets`);
+        console.log(`Booking completed: ${adIds.length} ads → pending_assets`);
         break;
       }
 

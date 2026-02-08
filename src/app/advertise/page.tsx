@@ -13,9 +13,9 @@ export default function AdvertisePage() {
           Advertising
         </p>
         <h1 className="font-[family-name:var(--font-cormorant)] text-4xl md:text-5xl font-light leading-tight max-w-3xl mx-auto mb-6">
-          Sponsor The World&apos;s Most Exclusive Local Feed
+          Reach The World&apos;s Most Important People
         </h1>
-        <p className="text-neutral-400 max-w-xl mx-auto text-sm leading-relaxed">
+        <p className="text-neutral-400 max-w-xl mx-auto text-base leading-relaxed">
           Your brand, native in the neighborhoods where wealth concentrates.
           Every placement is hand-reviewed and designed to feel like editorial.
         </p>
@@ -35,7 +35,7 @@ export default function AdvertisePage() {
               className="bg-neutral-900 border border-neutral-800 p-5 text-center"
             >
               <p className="text-2xl font-light mb-1">{stat.value}</p>
-              <p className="text-[10px] tracking-[0.2em] uppercase text-neutral-500">
+              <p className="text-xs tracking-[0.2em] uppercase text-neutral-500">
                 {stat.label}
               </p>
             </div>
@@ -59,41 +59,46 @@ export default function AdvertisePage() {
                     : 'border-neutral-800'
                 }`}
               >
-                {collection.key === 'tier1' && (
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-amber-600 mb-3">
+                {/* Badge row — invisible placeholder on non-tier1 to align prices */}
+                {collection.key === 'tier1' ? (
+                  <span className="text-xs tracking-[0.2em] uppercase text-amber-600 mb-3 block">
                     Flagship
+                  </span>
+                ) : (
+                  <span className="text-xs mb-3 block invisible" aria-hidden="true">
+                    &nbsp;
                   </span>
                 )}
                 <h3 className="font-[family-name:var(--font-cormorant)] text-2xl font-light mb-2">
                   {collection.name}
                 </h3>
-                <p className="text-sm text-neutral-400 mb-6 leading-relaxed">
+                <p className="text-base text-neutral-400 mb-6 leading-relaxed">
                   {collection.tagline}
                 </p>
                 <div className="mb-6 space-y-1">
                   <div>
                     <span className="text-3xl font-light">${collection.dailyPrice}</span>
-                    <span className="text-neutral-500 text-sm">/day</span>
+                    <span className="text-neutral-500 text-sm">/day per individual neighborhood</span>
                   </div>
                   <div>
                     <span className="text-xl font-light text-neutral-300">${collection.sundayPrice}</span>
-                    <span className="text-neutral-500 text-sm">/Sunday</span>
+                    <span className="text-neutral-500 text-sm">/day per individual neighborhood</span>
                   </div>
                 </div>
-                <p className="text-xs text-neutral-500 mb-6 leading-relaxed flex-1">
+                <p className="text-sm text-neutral-500 mb-6 leading-relaxed flex-1">
                   {collection.description}
                 </p>
                 <div className="mb-6">
-                  <p className="text-[10px] tracking-[0.2em] uppercase text-neutral-600 mb-2">
+                  <p className="text-xs tracking-[0.2em] uppercase text-neutral-600 mb-2">
                     Example Neighborhoods
                   </p>
-                  <p className="text-xs text-neutral-400">
+                  <p className="text-sm text-neutral-400">
                     {collection.exampleNeighborhoods.join(' / ')}
                   </p>
                 </div>
                 <a
                   href="#book"
-                  className="block text-center bg-white text-black py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors"
+                  className="block text-center bg-white text-black py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-neutral-200 transition-colors"
                 >
                   Book Now
                 </a>
@@ -109,7 +114,7 @@ export default function AdvertisePage() {
           <h2 className="text-xs tracking-[0.3em] uppercase text-neutral-500 mb-3 text-center">
             Book a Placement
           </h2>
-          <p className="text-neutral-400 text-sm text-center mb-8">
+          <p className="text-neutral-400 text-base text-center mb-8">
             Select a neighborhood, choose your date, and check out securely via Stripe.
           </p>
           <AdBookingCalendar />
@@ -119,13 +124,13 @@ export default function AdvertisePage() {
       {/* Global Takeover */}
       <section className="px-4 pb-20">
         <div className="max-w-2xl mx-auto text-center border border-amber-800/30 bg-neutral-900 py-12 px-6">
-          <p className="text-[10px] tracking-[0.2em] uppercase text-amber-600 mb-4">
+          <p className="text-xs tracking-[0.2em] uppercase text-amber-600 mb-4">
             Premium
           </p>
           <h2 className="font-[family-name:var(--font-cormorant)] text-2xl font-light mb-4">
             Global Takeover
           </h2>
-          <p className="text-sm text-neutral-400 mb-6 leading-relaxed max-w-lg mx-auto">
+          <p className="text-base text-neutral-400 mb-6 leading-relaxed max-w-lg mx-auto">
             Own every neighborhood for an entire day. Your brand appears across all 128 neighborhoods
             in 38 cities — the most concentrated wealth audience on the internet.
           </p>
@@ -141,7 +146,7 @@ export default function AdvertisePage() {
           </div>
           <a
             href="mailto:ads@readflaneur.com?subject=Global%20Takeover%20Inquiry"
-            className="inline-block bg-white text-black px-8 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors"
+            className="inline-block bg-white text-black px-8 py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-neutral-200 transition-colors"
           >
             Contact Us
           </a>
@@ -181,8 +186,8 @@ export default function AdvertisePage() {
                 <div className="w-10 h-10 border border-neutral-700 flex items-center justify-center text-sm text-neutral-400 mx-auto mb-4">
                   {item.step}
                 </div>
-                <h3 className="font-medium text-sm mb-2">{item.title}</h3>
-                <p className="text-xs text-neutral-500 leading-relaxed">
+                <h3 className="font-medium text-base mb-2">{item.title}</h3>
+                <p className="text-sm text-neutral-500 leading-relaxed">
                   {item.desc}
                 </p>
               </div>
@@ -197,7 +202,7 @@ export default function AdvertisePage() {
           <h2 className="font-[family-name:var(--font-cormorant)] text-2xl font-light mb-4">
             Ready to reach the world&apos;s most discerning readers?
           </h2>
-          <p className="text-sm text-neutral-400 mb-8">
+          <p className="text-base text-neutral-400 mb-8">
             Questions? Email{' '}
             <a
               href="mailto:ads@readflaneur.com"
@@ -208,7 +213,7 @@ export default function AdvertisePage() {
           </p>
           <a
             href="#book"
-            className="inline-block bg-white text-black px-8 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors"
+            className="inline-block bg-white text-black px-8 py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-neutral-200 transition-colors"
           >
             Book Your Placement
           </a>

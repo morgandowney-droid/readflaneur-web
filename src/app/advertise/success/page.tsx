@@ -4,7 +4,17 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
+interface BookingItem {
+  adId: string;
+  neighborhoodName: string;
+  cityName: string;
+  date: string;
+  placementType: string;
+}
+
 interface BookingInfo {
+  bookings: BookingItem[];
+  // Legacy single fields
   neighborhoodName: string;
   cityName: string;
   date: string;
@@ -15,7 +25,7 @@ interface BookingInfo {
 function SuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
-  const [booking, setBooking] = useState<BookingInfo | null>(null);
+  const [info, setInfo] = useState<BookingInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,18 +34,19 @@ function SuccessContent() {
       return;
     }
 
-    // Look up booking details from session ID
     fetch(`/api/ads/booking-info?session_id=${encodeURIComponent(sessionId)}`)
-      .then((res) => res.ok ? res.json() : null)
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data) setBooking(data);
+        if (data) setInfo(data);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [sessionId]);
 
-  const displayDate = booking?.date
-    ? new Date(booking.date + 'T00:00:00Z').toLocaleDateString('en-US', {
+  const bookings = info?.bookings || (info ? [info] : []);
+
+  const displayDate = bookings[0]?.date
+    ? new Date(bookings[0].date + 'T00:00:00Z').toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
@@ -44,9 +55,8 @@ function SuccessContent() {
       })
     : '';
 
-  const placementLabel = booking?.placementType === 'sunday_edition'
-    ? 'Sunday Edition'
-    : 'Daily Brief';
+  const placementLabel =
+    bookings[0]?.placementType === 'sunday_edition' ? 'Sunday Edition' : 'Daily Brief';
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">
@@ -58,13 +68,30 @@ function SuccessContent() {
           {loading ? 'Processing...' : 'Your placement is secured'}
         </h1>
 
-        {booking && (
-          <div className="bg-neutral-900 border border-neutral-800 p-6 mb-8 text-left">
+        {bookings.length > 0 && (
+          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 mb-8 text-left">
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-neutral-500">Neighborhood</span>
-                <span>{booking.neighborhoodName}{booking.cityName ? `, ${booking.cityName}` : ''}</span>
-              </div>
+              {bookings.length === 1 ? (
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Neighborhood</span>
+                  <span>
+                    {bookings[0].neighborhoodName}
+                    {bookings[0].cityName ? `, ${bookings[0].cityName}` : ''}
+                  </span>
+                </div>
+              ) : (
+                <div>
+                  <span className="text-neutral-500 block mb-1">Neighborhoods</span>
+                  {bookings.map((b) => (
+                    <div key={b.adId} className="flex justify-between py-0.5">
+                      <span>
+                        {b.neighborhoodName}
+                        {b.cityName ? `, ${b.cityName}` : ''}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-neutral-500">Date</span>
                 <span>{displayDate}</span>
@@ -77,18 +104,34 @@ function SuccessContent() {
           </div>
         )}
 
-        <p className="text-neutral-400 text-sm leading-relaxed mb-8">
-          Check your email for a link to upload your ad creative.
-          Our editorial team will review it and notify you when it&apos;s live.
+        <p className="text-neutral-400 text-base leading-relaxed mb-8">
+          Check your email for {bookings.length > 1 ? 'links' : 'a link'} to upload your ad
+          creative. Our editorial team will review it and notify you when{' '}
+          {bookings.length > 1 ? 'your ads are' : "it's"} live.
         </p>
 
-        {booking?.adId && (
+        {/* Upload links */}
+        {bookings.length === 1 && bookings[0].adId && (
           <a
-            href={`/advertise/upload/${booking.adId}`}
-            className="inline-block bg-white text-black px-8 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors mb-4"
+            href={`/advertise/upload/${bookings[0].adId}`}
+            className="inline-block bg-white text-black px-8 py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-neutral-200 transition-colors mb-4"
           >
             Upload Creative Now
           </a>
+        )}
+
+        {bookings.length > 1 && (
+          <div className="space-y-2 mb-4">
+            {bookings.map((b) => (
+              <a
+                key={b.adId}
+                href={`/advertise/upload/${b.adId}`}
+                className="block bg-white text-black px-6 py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-neutral-200 transition-colors"
+              >
+                Upload — {b.neighborhoodName}
+              </a>
+            ))}
+          </div>
         )}
 
         <div className="mt-4">
@@ -106,11 +149,13 @@ function SuccessContent() {
 
 export default function SuccessPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">
-        <p className="text-neutral-500 text-sm">Loading...</p>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">
+          <p className="text-neutral-500 text-sm">Loading...</p>
+        </div>
+      }
+    >
       <SuccessContent />
     </Suspense>
   );

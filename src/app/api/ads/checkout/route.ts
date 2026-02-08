@@ -8,24 +8,35 @@ const BOOKING_MAX_DAYS = 90;
 /**
  * POST /api/ads/checkout
  *
- * Creates a Stripe Checkout Session for an ad booking.
- * No auth required (public checkout).
+ * Creates a Stripe Checkout Session for ad booking(s).
+ * Supports single or multi-neighborhood bookings.
  *
  * Body:
  *   date            - YYYY-MM-DD
- *   neighborhoodId  - neighborhood slug
+ *   neighborhoodId  - single neighborhood slug (legacy)
+ *   neighborhoodIds - array of neighborhood slugs (multi)
  *   placementType   - 'daily_brief' | 'sunday_edition'
  *   customerEmail   - buyer's email
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { date, neighborhoodId, placementType, customerEmail } = body;
+    const { date, neighborhoodId, neighborhoodIds: rawIds, placementType, customerEmail } = body;
+
+    // Support both single and multi-neighborhood
+    const neighborhoodIds: string[] = rawIds || (neighborhoodId ? [neighborhoodId] : []);
 
     // ─── Validate inputs ───
-    if (!date || !neighborhoodId || !placementType || !customerEmail) {
+    if (!date || neighborhoodIds.length === 0 || !placementType || !customerEmail) {
       return NextResponse.json(
-        { error: 'Missing required fields: date, neighborhoodId, placementType, customerEmail' },
+        { error: 'Missing required fields: date, neighborhoodIds, placementType, customerEmail' },
+        { status: 400 }
+      );
+    }
+
+    if (neighborhoodIds.length > 20) {
+      return NextResponse.json(
+        { error: 'Maximum 20 neighborhoods per booking' },
         { status: 400 }
       );
     }
@@ -80,37 +91,37 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // ─── Validate neighborhood exists ───
-    const { data: neighborhood } = await supabase
+    // ─── Validate all neighborhoods exist ───
+    const { data: neighborhoods } = await supabase
       .from('neighborhoods')
       .select('id, name, city')
-      .eq('id', neighborhoodId)
-      .single();
+      .in('id', neighborhoodIds);
 
-    if (!neighborhood) {
-      return NextResponse.json({ error: 'Neighborhood not found' }, { status: 404 });
+    if (!neighborhoods || neighborhoods.length !== neighborhoodIds.length) {
+      return NextResponse.json({ error: 'One or more neighborhoods not found' }, { status: 404 });
     }
 
-    // ─── Race condition check ───
-    // Check for existing booking on this date + neighborhood + type
-    const { data: existingBooking } = await supabase
+    // ─── Race condition check: existing bookings ───
+    const { data: existingBookings } = await supabase
       .from('ads')
-      .select('id')
-      .eq('neighborhood_id', neighborhoodId)
+      .select('id, neighborhood_id')
+      .in('neighborhood_id', neighborhoodIds)
       .eq('placement_type', placementType)
       .eq('start_date', date)
-      .not('status', 'in', '("rejected","pending_payment")')
-      .limit(1)
-      .single();
+      .not('status', 'in', '("rejected","pending_payment")');
 
-    if (existingBooking) {
+    if (existingBookings && existingBookings.length > 0) {
+      const bookedIds = existingBookings.map((b) => b.neighborhood_id);
+      const bookedNames = neighborhoods
+        .filter((n) => bookedIds.includes(n.id))
+        .map((n) => n.name);
       return NextResponse.json(
-        { error: 'This date is already booked for this neighborhood' },
+        { error: `Already booked: ${bookedNames.join(', ')}` },
         { status: 409 }
       );
     }
 
-    // Also check for global takeover on this date
+    // Global takeover check
     const { data: globalBooking } = await supabase
       .from('ads')
       .select('id')
@@ -128,43 +139,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ─── Compute price server-side ───
-    const pricing = getBookingPrice(neighborhoodId, placementType, bookingDate);
+    // ─── Compute prices server-side ───
+    const lineItems: { neighborhoodId: string; name: string; city: string; priceCents: number }[] = [];
+    for (const nId of neighborhoodIds) {
+      const n = neighborhoods.find((x) => x.id === nId)!;
+      const pricing = getBookingPrice(nId, placementType, bookingDate);
+      lineItems.push({
+        neighborhoodId: nId,
+        name: n.name,
+        city: n.city,
+        priceCents: pricing.priceCents,
+      });
+    }
 
-    // ─── Insert ad row with pending_payment status ───
-    const { data: ad, error: insertError } = await supabase
+    // ─── Insert ad rows (one per neighborhood) ───
+    const adRows = lineItems.map((item) => ({
+      status: 'pending_payment',
+      placement: 'story_open',
+      placement_type: placementType,
+      headline: '',
+      image_url: '',
+      click_url: '',
+      sponsor_label: '',
+      is_global: false,
+      is_global_takeover: false,
+      neighborhood_id: item.neighborhoodId,
+      start_date: date,
+      end_date: date,
+      customer_email: customerEmail,
+      impressions: 0,
+      clicks: 0,
+    }));
+
+    const { data: ads, error: insertError } = await supabase
       .from('ads')
-      .insert({
-        status: 'pending_payment',
-        placement: 'story_open',
-        placement_type: placementType,
-        headline: '',
-        image_url: '',
-        click_url: '',
-        sponsor_label: '',
-        is_global: false,
-        is_global_takeover: false,
-        neighborhood_id: neighborhoodId,
-        start_date: date,
-        end_date: date,
-        customer_email: customerEmail,
-        impressions: 0,
-        clicks: 0,
-      })
-      .select('id')
-      .single();
+      .insert(adRows)
+      .select('id, neighborhood_id');
 
     if (insertError) {
-      // Unique constraint violation = double booking
       if (insertError.code === '23505') {
         return NextResponse.json(
-          { error: 'This date is already booked' },
+          { error: 'One or more dates are already booked' },
           { status: 409 }
         );
       }
       console.error('Checkout insert error:', insertError);
       return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 });
     }
+
+    const adIds = ads!.map((a) => a.id);
 
     // ─── Create Stripe Checkout Session ───
     const origin = process.env.NEXT_PUBLIC_APP_URL?.replace(/[\n\r]+$/, '').replace(/\/$/, '')
@@ -178,19 +201,28 @@ export async function POST(request: NextRequest) {
       timeZone: 'UTC',
     });
 
-    const productName = `Flâneur — ${neighborhood.name}, ${neighborhood.city} — ${formattedDate}`;
     const params = new URLSearchParams();
     params.append('mode', 'payment');
     params.append('customer_email', customerEmail);
-    params.append('line_items[0][price_data][currency]', 'usd');
-    params.append('line_items[0][price_data][product_data][name]', productName);
-    params.append('line_items[0][price_data][product_data][description]', `${displayName} placement`);
-    params.append('line_items[0][price_data][unit_amount]', String(pricing.priceCents));
-    params.append('line_items[0][quantity]', '1');
-    params.append('metadata[ad_id]', ad.id);
-    params.append('metadata[neighborhood_id]', neighborhoodId);
+
+    // One line item per neighborhood
+    lineItems.forEach((item, i) => {
+      const productName = `Flâneur — ${item.name}, ${item.city} — ${formattedDate}`;
+      params.append(`line_items[${i}][price_data][currency]`, 'usd');
+      params.append(`line_items[${i}][price_data][product_data][name]`, productName);
+      params.append(`line_items[${i}][price_data][product_data][description]`, `${displayName} placement`);
+      params.append(`line_items[${i}][price_data][unit_amount]`, String(item.priceCents));
+      params.append(`line_items[${i}][quantity]`, '1');
+    });
+
+    // Metadata — ad_ids for webhook, plus legacy ad_id for single bookings
+    params.append('metadata[ad_ids]', adIds.join(','));
     params.append('metadata[placement_type]', placementType);
     params.append('metadata[date]', date);
+    if (adIds.length === 1) {
+      params.append('metadata[ad_id]', adIds[0]);
+    }
+
     params.append('success_url', `${origin}/advertise/success?session_id={CHECKOUT_SESSION_ID}`);
     params.append('cancel_url', `${origin}/advertise`);
 
@@ -207,23 +239,23 @@ export async function POST(request: NextRequest) {
 
     if (!stripeRes.ok) {
       console.error('Stripe session creation failed:', session);
-      // Clean up the pending_payment row
-      await supabase.from('ads').delete().eq('id', ad.id);
+      // Clean up pending_payment rows
+      await supabase.from('ads').delete().in('id', adIds);
       return NextResponse.json(
         { error: 'Payment setup failed', details: session.error?.message },
         { status: 502 }
       );
     }
 
-    // Update ad row with stripe session ID
+    // Update all ad rows with stripe session ID
     await supabase
       .from('ads')
       .update({ stripe_session_id: session.id })
-      .eq('id', ad.id);
+      .in('id', adIds);
 
     return NextResponse.json({
       url: session.url,
-      adId: ad.id,
+      adIds,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

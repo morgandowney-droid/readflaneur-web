@@ -25,7 +25,7 @@ export const AD_COLLECTIONS: AdCollection[] = [
   {
     key: 'tier2',
     name: 'The Metropolitan Collection',
-    tagline: 'Reach the creative class in established cultural centers.',
+    tagline: 'Reach established cultural centers.',
     dailyPrice: 200,
     sundayPrice: 300,
     description: 'Premium positioning in the world\'s most influential cultural neighborhoods. Your brand connects with tastemakers, gallery owners, and the professionals who shape urban living.',
