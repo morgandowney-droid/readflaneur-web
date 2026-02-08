@@ -5,6 +5,14 @@
 
 ## 2026-02-08
 
+**RSS Sources — Global Expansion (100% City Coverage):**
+- Expanded from 23 cities to 92 cities (100% of active neighborhoods now have RSS feeds)
+- Total feeds: 192 (was ~65), covering all regions including previously uncovered South America
+- Two migrations: `20260208200000_seed_rss_sources_global.sql` (58 cities, 116 feeds) and `20260208201000_seed_rss_sources_remaining.sql` (6 legacy cities, 12 feeds)
+- Hardcoded `RSS_FEEDS` fallback array expanded with 35 key feeds for major cities
+- Key sources: Eater (US cities), CultureMap (Texas), The Local (European countries), Coconuts (SE Asia), national English papers (Korea Herald, Bangkok Post, Buenos Aires Times, etc.)
+- File: `src/lib/rss-sources.ts` (DB primary via `rss_sources` table, hardcoded fallback)
+
 **Enhanced Neighborhood Search:**
 - New shared search module: `src/lib/search-aliases.ts` — country aliases (USA/UK/UAE etc.), region aliases (Europe/APAC/LATAM), US state + international province aliases
 - `resolveSearchQuery()` with priority scoring: name exact (1) > starts-with (2) > contains (3) > city (4-5) > component (6) > state (7) > country (8) > region (9)

@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-08
 
-Recent work: Enhanced neighborhood search (country/region/state aliases, "Near me" geolocation), placement toggle on advertise page with pricing card highlights, hero copy refresh.
+Recent work: RSS sources expanded to 100% city coverage (192 feeds across 92 cities), enhanced neighborhood search, placement toggle on advertise page.
 
 ## Key Patterns
 
@@ -143,6 +143,7 @@ src/
     ├── email/                     # Scheduler, assembler, sender, templates
     ├── location/                  # IP detection, timezone resolution
     ├── combo-utils.ts             # Combo neighborhood queries
+    ├── rss-sources.ts             # RSS feed aggregation (DB + hardcoded fallback)
     ├── search-aliases.ts          # Country/region/state search aliases
     ├── geo-utils.ts               # Haversine distance + sorting
     ├── grok.ts                    # Grok X Search integration
@@ -170,7 +171,7 @@ src/
 - `daily_brief_sends` / `weekly_brief_sends` — email dedup
 - `profiles` — user prefs (primary_city, primary_timezone, paused_topics)
 - `newsletter_subscribers` — timezone, paused_topics
-- `rss_sources` — RSS feed URLs by city
+- `rss_sources` — RSS feed URLs by city (192 feeds across 92 cities, 100% coverage)
 
 ## Deployment
 
