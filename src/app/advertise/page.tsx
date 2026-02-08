@@ -3,6 +3,7 @@
 import { AD_COLLECTIONS } from '@/config/ad-config';
 import { GLOBAL_TAKEOVER_RATES } from '@/config/ad-tiers';
 import { AdBookingCalendar } from '@/components/advertise/AdBookingCalendar';
+import { AdvertiserPersonas } from '@/components/advertise/AdvertiserPersonas';
 
 export default function AdvertisePage() {
   return (
@@ -27,8 +28,8 @@ export default function AdvertisePage() {
           {[
             { label: 'Avg. Net Worth', value: 'High' },
             { label: 'Email Open Rate', value: '>55%' },
-            { label: 'Neighborhoods', value: '128' },
-            { label: 'Cities', value: '38' },
+            { label: 'Neighborhoods', value: '200' },
+            { label: 'Cities', value: '73' },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -42,6 +43,9 @@ export default function AdvertisePage() {
           ))}
         </div>
       </section>
+
+      {/* Strategy Selector */}
+      <AdvertiserPersonas />
 
       {/* The Three Collections */}
       <section className="px-4 pb-20">
@@ -133,8 +137,8 @@ export default function AdvertisePage() {
             Global Takeover
           </h2>
           <p className="text-base text-neutral-400 mb-6 leading-relaxed max-w-lg mx-auto">
-            Own every neighborhood for an entire day. Your brand appears across all 128 neighborhoods
-            in 38 cities — the most concentrated wealth audience on the internet.
+            Own every neighborhood for an entire day. Your brand appears across all 200 neighborhoods
+            in 73 cities — the most concentrated wealth audience on the internet.
           </p>
           <div className="flex justify-center gap-8 mb-8">
             <div>
