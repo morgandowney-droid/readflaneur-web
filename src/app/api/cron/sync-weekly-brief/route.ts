@@ -65,7 +65,7 @@ export async function GET(request: Request) {
     let neighborhoodsQuery = supabase
       .from('neighborhoods')
       .select('id, name, city, country')
-      .eq('active', true)
+      .eq('is_active', true)
       .order('name');
 
     if (testNeighborhoodId) {
