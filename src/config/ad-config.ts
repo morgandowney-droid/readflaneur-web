@@ -42,7 +42,7 @@ export const AD_COLLECTIONS: AdCollection[] = [
     unit: '/day',
     bookingUrl: 'https://www.passionfroot.me/flaneur/packages/27c87140-5d5d-48f9-8048-b7ee0e05ce18/book',
     description: 'Strategic reach into neighborhoods on the rise. Early positioning in markets with accelerating wealth density and cultural momentum, from Cape Town\'s Atlantic Seaboard to Dublin\'s Dalkey coast.',
-    exampleNeighborhoods: ['Cape Town', 'Vancouver', 'Dublin', 'Dalkey'],
+    exampleNeighborhoods: ['Cape Town', 'Vancouver', 'Dublin (Dalkey)'],
   },
   {
     key: 'sunday',

@@ -134,8 +134,8 @@ export default function AdvertisePage() {
               },
               {
                 step: '2',
-                title: 'We Produce',
-                desc: 'Our team crafts your native placement to match editorial quality and tone.',
+                title: 'Submit Assets',
+                desc: 'Provide your imagery and core message. Our editorial team refines the copy to ensure a seamless, native fit.',
               },
               {
                 step: '3',
