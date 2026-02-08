@@ -5,6 +5,22 @@
 
 ## 2026-02-08
 
+**Daily Brief UX Improvements (9 items):**
+- Article page: structured header for brief articles (day label, cleaned headline without "Neighborhood DAILY BRIEF:" prefix), flex-wrap left-aligned metadata for non-briefs
+- Brief card: day-of-week label ("Sun Daily Brief" instead of "Today's Brief"), "Updated daily at 7 AM" indicator
+- Email: satellite-style compact layout for primary stories (`StoryList variant="primary"`, 19px headline / 16px preview), replaces hero image layout
+- Email: dateline appended to all category labels (e.g., "DAILY BRIEF - Mon Feb 12")
+- Reactions: emoji reactions (bookmark/heart/fire) replacing comments on article pages, with `/saved` page
+- Nearby neighborhoods: "Explore nearby" pill links on article pages (same city, up to 5)
+- Combo brief fallback: component neighborhoods (e.g., FiDi) show parent combo's (Tribeca) daily brief with attribution
+- New helpers: `cleanArticleHeadline()`, `getDayAbbr()` in utils.ts, `getComboForComponent()` in combo-utils.ts
+- DB: migration 042 (`article_reactions` table with RLS)
+
+**Sentry Monitoring Fix:**
+- Added missing `sentry.client.config.ts` — browser JS errors were not being captured
+- Reduced `tracesSampleRate` from 100% to 20% on server, edge, and client configs
+- Project confirmed as `flaneur-web` (org: `flaneur-vk`)
+
 **Font Size Readability Upgrade (17px iOS Baseline):**
 - All body/reading text bumped to 17px to match iOS Mail compose standard (was 13-14px)
 - Headlines, metadata, and labels proportionally increased (+1-2px each)

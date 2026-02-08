@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-08
 
-Recent work: 17px font size upgrade (iOS baseline), ad quality control & customer approval system, Sunday Edition presenting sponsor slot + holiday section + various fixes.
+Recent work: Daily brief UX (day labels, reactions, email compact layout, nearby neighborhoods), Sentry client-side monitoring, 17px font size upgrade, ad quality control system.
 
 ## Key Patterns
 
@@ -33,12 +33,13 @@ Recent work: 17px font size upgrade (iOS baseline), ad quality control & custome
 
 ### Email System
 - **Scheduler:** `src/lib/email/scheduler.ts` — 7 AM local time per recipient
-- **Assembler:** `src/lib/email/assembler.ts` — articles + weather
+- **Assembler:** `src/lib/email/assembler.ts` — articles + weather, dateline in category labels
 - **Sender:** `src/lib/email/sender.ts` — React Email via Resend
 - **Sunday Edition:** `src/lib/weekly-brief-service.ts` — Gemini + Grok
 - **Weather:** Pure logic in `src/lib/email/weather-story.ts` (no LLM)
 - **US neighborhoods:** °F primary. Determined by `neighborhoods.country`
 - **Instant resend:** `src/lib/email/instant-resend.ts` (3/day limit)
+- **Layout:** Primary stories use compact `StoryList variant="primary"` (19px/16px), no hero image
 
 ### Ad System
 - **Pricing:** `src/config/ad-tiers.ts`, `src/lib/PricingService.ts` (3 tiers: $45/$25/$15 CPM)
@@ -49,9 +50,23 @@ Recent work: 17px font size upgrade (iOS baseline), ad quality control & custome
 - **Ingestion:** Passionfroot webhook + Resend inbound email parser
 
 ### Combo Neighborhoods
-- `src/lib/combo-utils.ts` — `getNeighborhoodIdsForQuery()`, `getComboInfo()`
+- `src/lib/combo-utils.ts` — `getNeighborhoodIdsForQuery()`, `getComboInfo()`, `getComboForComponent()`
 - Articles stored under combo ID, not component IDs
 - Query must include BOTH combo ID and component IDs
+- Component neighborhoods fall back to parent combo's daily brief on feed page
+
+### Reactions System
+- **Table:** `article_reactions` (bookmark, heart, fire) — replaces comments
+- **API:** `src/app/api/reactions/route.ts` — GET counts, POST toggle
+- **Saved:** `src/app/api/reactions/saved/route.ts` + `/saved` page
+- **Component:** `src/components/article/ArticleReactions.tsx` — optimistic UI, anonymous via localStorage
+- Anonymous ID stored in `flaneur-anonymous-id` localStorage key
+
+### Sentry Monitoring
+- **Project:** `flaneur-web` (org: `flaneur-vk`, project ID: `4510840235884544`)
+- **Configs:** `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`
+- **Tunnel:** `/monitoring` route (bypasses ad blockers)
+- **Trace rate:** 20% (all errors still captured at 100%)
 
 ## Critical Gotchas
 
@@ -84,6 +99,7 @@ src/
 ├── app/
 │   ├── [city]/[neighborhood]/     # Feed, articles, guides
 │   ├── admin/                     # Cron monitor, ads, news-coverage, images
+│   ├── saved/                     # Saved/bookmarked stories page
 │   ├── settings/                  # User location preferences
 │   ├── email/preferences/         # Email topic management
 │   ├── advertise/                 # Ad collections page
@@ -91,6 +107,7 @@ src/
 │   └── api/
 │       ├── cron/                  # 30+ automated cron jobs
 │       ├── admin/                 # Admin APIs
+│       ├── reactions/             # Emoji reactions API + saved articles
 │       ├── internal/              # Image generation, resend
 │       └── webhooks/              # Passionfroot, Resend inbound
 ├── config/
@@ -124,6 +141,7 @@ src/
 - `weekly_briefs` — Sunday Edition content (rearview, horizon, holiday, data_point)
 - `ads` — ad campaigns with quality control fields (proof_token, approval_status, ai_quality_score)
 - `house_ads` — fallback ads (types: waitlist, app_download, advertise, newsletter, sunday_edition)
+- `article_reactions` — emoji reactions (bookmark/heart/fire), anonymous + authenticated
 - `cron_executions` / `cron_issues` — monitoring & self-healing
 - `daily_brief_sends` / `weekly_brief_sends` — email dedup
 - `profiles` — user prefs (primary_city, primary_timezone, paused_topics)
