@@ -91,7 +91,7 @@ export default async function AdvertisePage() {
           </h2>
           <p className="text-base text-neutral-400 mb-6 leading-relaxed max-w-lg mx-auto">
             Own every neighborhood for an entire day. Your brand appears across all {neighborhoodCount} neighborhoods
-            in {cityCount} cities — the most concentrated wealth audience on the internet.
+            in {cityCount} cities - the most concentrated wealth audience on the internet.
           </p>
           <div className="flex justify-center gap-8 mb-8">
             <div>

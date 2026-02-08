@@ -109,6 +109,9 @@ No `.catch()` on query builder. Use `.then(null, errorHandler)` or `Promise.reso
 ### Gemini Prompts
 JSON examples override prose instructions. If prompt says "Don't use AQI" but example shows `"AQI 42"`, Gemini follows the example.
 
+### No Em Dashes
+Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashes look AI-generated.
+
 ### Font Sizes (17px iOS Baseline)
 - Body: 17px, Headlines: 20-22px, Metadata: 10-12px, Masthead: 30px
 - Website: `text-base`/`text-lg` body, `prose prose-lg` for articles

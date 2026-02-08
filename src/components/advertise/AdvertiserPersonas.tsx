@@ -137,28 +137,34 @@ export function AdvertiserPersonas() {
                 {persona.title}
               </h3>
 
-              <p className="text-xs tracking-[0.15em] uppercase text-neutral-500 mb-1">
-                Who
-              </p>
-              <p className="text-sm text-neutral-300 mb-4 leading-relaxed">
-                {persona.who}
-              </p>
+              <div className="md:min-h-[60px]">
+                <p className="text-xs tracking-[0.15em] uppercase text-neutral-500 mb-1">
+                  Who
+                </p>
+                <p className="text-sm text-neutral-300 leading-relaxed">
+                  {persona.who}
+                </p>
+              </div>
 
-              <p className="text-xs tracking-[0.15em] uppercase text-neutral-500 mb-1">
-                The Goal
-              </p>
-              <p className="text-sm text-white font-medium mb-4">
-                {persona.goal}
-              </p>
+              <div className="mt-4">
+                <p className="text-xs tracking-[0.15em] uppercase text-neutral-500 mb-1">
+                  The Goal
+                </p>
+                <p className="text-sm text-white font-medium">
+                  {persona.goal}
+                </p>
+              </div>
 
-              <p className="text-xs tracking-[0.15em] uppercase text-neutral-500 mb-1">
-                The Play
-              </p>
-              <p className="text-sm text-neutral-400 mb-6 leading-relaxed flex-1">
-                {persona.play}
-              </p>
+              <div className="mt-4 flex-1">
+                <p className="text-xs tracking-[0.15em] uppercase text-neutral-500 mb-1">
+                  The Play
+                </p>
+                <p className="text-sm text-neutral-400 leading-relaxed">
+                  {persona.play}
+                </p>
+              </div>
 
-              <div className="border-t border-neutral-800 pt-4">
+              <div className="border-t border-neutral-800 pt-4 mt-auto">
                 <p className="text-xs tracking-[0.15em] uppercase text-neutral-600 mb-1">
                   Recommended
                 </p>
