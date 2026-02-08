@@ -5,6 +5,20 @@
 
 ## 2026-02-08
 
+**Advertise Page Polish & Multi-Neighborhood Booking:**
+- Multi-neighborhood selection: pills UI, merged availability calendar, one Stripe checkout with N line items
+- Combo component search: typing "FiDi" surfaces Tribeca with "(incl. FiDi)" label
+- Font sizes bumped to 17px iOS baseline (text-base body, text-sm descriptions)
+- Hero text: "Reach The World's Most Important People"
+- Price labels: "$X/day per individual neighborhood" on all cards
+- Price alignment: `md:min-h-[180px]` wrapper ensures $500/$200/$100 align horizontally
+- Rounded corners (`rounded-lg`) on all buttons, inputs, dropdowns, calendar containers
+- Tier 2 tagline shortened: "Reach established cultural centers."
+- Checkout API accepts `neighborhoodIds[]` array, creates N ad rows + N Stripe line items
+- Webhook handles multi-ad `ad_ids` metadata, sends per-neighborhood upload links
+- Success page and booking-info API return array of bookings with individual upload buttons
+- DB: migration `20260208152500_multi_neighborhood_booking.sql` — dropped unique on `stripe_session_id`, added index
+
 **Self-Hosted Ad Booking Engine:**
 - Replaced Passionfroot integration with native Stripe Checkout booking flow
 - Flat per-day pricing: Tier 1 $500/$750, Tier 2 $200/$300, Tier 3 $100/$150 (daily/Sunday)

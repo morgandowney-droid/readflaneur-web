@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-08
 
-Recent work: Self-hosted ad booking engine (Stripe Checkout, react-day-picker calendar, asset upload flow), replaced Passionfroot integration with native booking.
+Recent work: Multi-neighborhood ad booking (select N neighborhoods, one Stripe checkout), advertise page polish (17px fonts, rounded corners, price alignment), combo component search.
 
 ## Key Patterns
 
@@ -45,16 +45,18 @@ Recent work: Self-hosted ad booking engine (Stripe Checkout, react-day-picker ca
 - **Pricing:** `src/config/ad-tiers.ts`, `src/lib/PricingService.ts` — flat per-day rates (Tier 1: $500/$750, Tier 2: $200/$300, Tier 3: $100/$150)
 - **Booking:** `/advertise` page with `react-day-picker` calendar → Stripe Checkout → asset upload → AI review
 - **Availability:** `GET /api/ads/availability` — booked/blocked dates + pricing per neighborhood/month
-- **Checkout:** `POST /api/ads/checkout` — creates ad row + Stripe session, 48h–90d booking window
-- **Upload:** `/advertise/upload/[adId]` — sponsor label, headline, body, image, click URL
-- **Success:** `/advertise/success` — post-payment confirmation with upload link
+- **Checkout:** `POST /api/ads/checkout` — accepts `neighborhoodIds[]` array, creates N ads + N Stripe line items, 48h–90d window
+- **Upload:** `/advertise/upload/[adId]` — sponsor label, headline, body, image, click URL (one per neighborhood)
+- **Success:** `/advertise/success` — post-payment confirmation with per-neighborhood upload links
 - **Quality:** `src/lib/ad-quality-service.ts` — Gemini image analysis + copy polisher
 - **Proof page:** `/proofs/[token]` — no auth, token-based
 - **Approval flow:** `pending_payment` → `pending_assets` → `in_review` → `active` (via admin approval)
 - **AI quality:** `pending_ai` → `pending_approval` → `approved` / `changes_requested`
 - **Sunday ad resolver:** `src/lib/email/sunday-ad-resolver.ts` — date-aware cascade with house ad fallback
 - **Date-aware delivery:** `src/lib/email/ads.ts` and `src/lib/ad-engine.ts` filter by `start_date <= today <= end_date`
+- **Multi-neighborhood:** Calendar shows merged availability, pills UI for selection, combo component search (e.g. "FiDi" finds Tribeca)
 - **Double-booking prevention:** unique composite index on `(neighborhood_id, placement_type, start_date)`
+- **Stripe session:** `stripe_session_id` shared across N ads from same checkout (not unique)
 - **Global takeover:** $10,000/day or $15,000/Sunday, contact-only (`ads@readflaneur.com`)
 - **Storage:** `ad-assets` Supabase bucket for uploaded ad images
 
