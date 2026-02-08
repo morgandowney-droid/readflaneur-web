@@ -567,7 +567,7 @@ const DATA_POINT_PROMPTS: Record<DataPointType, (n: string, c: string, co: strin
 const DATA_POINT_LABELS: Record<DataPointType, string> = {
   real_estate: 'The Market',
   safety: 'The Safety Index',
-  environment: 'The Air We Breathe',
+  environment: 'The Temperature',
   flaneur_index: 'The Flaneur Index',
 };
 
@@ -586,7 +586,7 @@ async function generateDataPoint(
 Respond with ONLY this JSON:
 \`\`\`json
 {
-  "value": "The key number or metric (e.g., '$4.2M', '12% decrease', 'AQI 42')",
+  "value": "The key number or metric (e.g., '$4.2M', '12% decrease', '28°C / 82°F')",
   "context": "One sentence explaining what this means for residents."
 }
 \`\`\``;
