@@ -330,9 +330,9 @@ TONE AND VOCABULARY:
 - NEVER use em dashes or en dashes. Use hyphens (-) instead.
 
 STRUCTURE:
-- Write in 2-3 SHORT paragraphs separated by blank lines (not one dense wall of text)
+- Write in exactly 4 short paragraphs separated by blank lines (each paragraph 2-3 sentences max)
 - NO greeting or sign-off. NO markdown, bold, or formatting.
-- Exactly 200 words.`;
+- Approximately 200 words total.`;
 
   try {
     const response = await genAI.models.generateContent({
