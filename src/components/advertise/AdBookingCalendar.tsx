@@ -431,46 +431,6 @@ export function AdBookingCalendar() {
         )}
       </div>
 
-      {/* Placement Type Toggle */}
-      <div>
-        <label className="block text-xs tracking-[0.2em] uppercase text-neutral-500 mb-2">
-          Placement
-        </label>
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              setPlacementType('daily_brief');
-              setSelectedDate(undefined);
-            }}
-            className={`flex-1 py-3 text-sm tracking-wide uppercase transition-colors rounded-lg ${
-              placementType === 'daily_brief'
-                ? 'bg-white text-black'
-                : 'bg-neutral-900 text-neutral-400 border border-neutral-700 hover:border-neutral-500'
-            }`}
-          >
-            Daily Brief
-          </button>
-          <button
-            onClick={() => {
-              setPlacementType('sunday_edition');
-              setSelectedDate(undefined);
-            }}
-            className={`flex-1 py-3 text-sm tracking-wide uppercase transition-colors rounded-lg ${
-              placementType === 'sunday_edition'
-                ? 'bg-white text-black'
-                : 'bg-neutral-900 text-neutral-400 border border-neutral-700 hover:border-neutral-500'
-            }`}
-          >
-            Sunday Edition
-          </button>
-        </div>
-        <p className="text-sm text-neutral-600 mt-1">
-          {placementType === 'sunday_edition'
-            ? 'Only Sundays are available for Sunday Edition bookings.'
-            : 'Available Monday through Saturday.'}
-        </p>
-      </div>
-
       {/* Calendar */}
       {selectedNeighborhoods.length > 0 && (
         <div>
