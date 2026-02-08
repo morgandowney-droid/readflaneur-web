@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Neighborhood, GlobalRegion } from '@/types';
 import { getCityCode } from '@/lib/neighborhood-utils';
+import { getDistance } from '@/lib/geo-utils';
+import { findCountryForQuery, findRegionForQuery, findStateForQuery } from '@/lib/search-aliases';
 
 // Extend Neighborhood type to include combo info for display
 interface NeighborhoodWithCombo extends Neighborhood {
@@ -13,42 +15,6 @@ interface NeighborhoodWithCombo extends Neighborhood {
 }
 
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
-
-// City coordinates for distance calculation
-const CITY_COORDINATES: Record<string, [number, number]> = {
-  'New York': [40.7128, -74.0060],
-  'San Francisco': [37.7749, -122.4194],
-  'Los Angeles': [34.0522, -118.2437],
-  'Chicago': [41.8781, -87.6298],
-  'Miami': [25.7617, -80.1918],
-  'Washington DC': [38.9072, -77.0369],
-  'Toronto': [43.6532, -79.3832],
-  'London': [51.5074, -0.1278],
-  'Paris': [48.8566, 2.3522],
-  'Berlin': [52.5200, 13.4050],
-  'Amsterdam': [52.3676, 4.9041],
-  'Stockholm': [59.3293, 18.0686],
-  'Copenhagen': [55.6761, 12.5683],
-  'Barcelona': [41.3851, 2.1734],
-  'Milan': [45.4642, 9.1900],
-  'Lisbon': [38.7223, -9.1393],
-  'Tokyo': [35.6762, 139.6503],
-  'Hong Kong': [22.3193, 114.1694],
-  'Singapore': [1.3521, 103.8198],
-  'Sydney': [-33.8688, 151.2093],
-  'Melbourne': [-37.8136, 144.9631],
-  'Dubai': [25.2048, 55.2708],
-  'Tel Aviv': [32.0853, 34.7818],
-  // Vacation destinations
-  'US Vacation': [41.2835, -70.0995], // Nantucket coordinates
-  'Caribbean Vacation': [17.8967, -62.8500], // St. Barts
-  'European Vacation': [43.2727, 6.6406], // Saint-Tropez
-  // Surroundings (wealthy suburbs)
-  'New York Surroundings': [41.0263, -73.6285], // Greenwich, CT area
-  'Stockholm Surroundings': [59.3293, 18.0686], // Stockholm area
-  // Test Lab
-  'Test Lab': [53.3498, -6.2603], // Dublin (midpoint-ish)
-};
 
 // Vacation region labels and styling
 const VACATION_REGIONS: Record<string, { label: string; color: string }> = {
@@ -82,18 +48,6 @@ function isVacationRegion(region?: string): boolean {
 // Check if a region is an enclave region
 function isEnclaveRegion(region?: string): boolean {
   return region ? region.includes('enclaves') : false;
-}
-
-// Calculate distance between two points using Haversine formula
-function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Earth's radius in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
 }
 
 // Modal Context
@@ -378,6 +332,40 @@ function GlobalNeighborhoodModal({
     };
   }, [isOpen, onClose]);
 
+  // Compute dynamic city coordinates by averaging neighborhood lat/lng per group
+  const cityCoordinates = useMemo(() => {
+    const coords: Record<string, [number, number]> = {};
+    const cityLatSums: Record<string, { latSum: number; lngSum: number; count: number }> = {};
+
+    neighborhoods.forEach(n => {
+      if (n.latitude == null || n.longitude == null) return;
+      // Determine group key the same way as the main grouping below
+      let groupKey: string;
+      if (isVacationRegion(n.region)) {
+        const vacationInfo = VACATION_REGIONS[n.region!];
+        groupKey = vacationInfo?.label || n.region!;
+      } else if (isEnclaveRegion(n.region)) {
+        const enclaveInfo = ENCLAVE_REGIONS[n.region!];
+        groupKey = enclaveInfo?.label || n.region!;
+      } else {
+        groupKey = n.city;
+      }
+
+      if (!cityLatSums[groupKey]) {
+        cityLatSums[groupKey] = { latSum: 0, lngSum: 0, count: 0 };
+      }
+      cityLatSums[groupKey].latSum += n.latitude;
+      cityLatSums[groupKey].lngSum += n.longitude;
+      cityLatSums[groupKey].count++;
+    });
+
+    for (const [key, sums] of Object.entries(cityLatSums)) {
+      coords[key] = [sums.latSum / sums.count, sums.lngSum / sums.count];
+    }
+
+    return coords;
+  }, [neighborhoods]);
+
   // Group neighborhoods by city (or vacation/enclave region) and sort
   const citiesWithNeighborhoods = useMemo(() => {
     interface CityGroup {
@@ -437,8 +425,8 @@ function GlobalNeighborhoodModal({
       headerColor: data.headerColor,
       buttonBgColor: data.buttonBgColor,
       buttonTextColor: data.buttonTextColor,
-      distance: userLocation && CITY_COORDINATES[city]
-        ? getDistance(userLocation[0], userLocation[1], CITY_COORDINATES[city][0], CITY_COORDINATES[city][1])
+      distance: userLocation && cityCoordinates[city]
+        ? getDistance(userLocation[0], userLocation[1], cityCoordinates[city][0], cityCoordinates[city][1])
         : Infinity,
     }));
 
@@ -450,23 +438,37 @@ function GlobalNeighborhoodModal({
     }
 
     return cities;
-  }, [neighborhoods, sortBy, userLocation]);
+  }, [neighborhoods, sortBy, userLocation, cityCoordinates]);
 
-  // Filter based on search (includes combo component names)
+  // Filter based on search (includes combo component names + country/region/state)
   const filteredCities = useMemo(() => {
     if (!searchQuery.trim()) return citiesWithNeighborhoods;
     const query = searchQuery.toLowerCase();
+
+    // Check for country/region/state matches
+    const matchedCountry = findCountryForQuery(searchQuery);
+    const matchedRegion = findRegionForQuery(searchQuery);
+    const matchedState = findStateForQuery(searchQuery);
+    const stateCities = matchedState?.cities ? new Set(matchedState.cities.map(c => c.toLowerCase())) : null;
+
     return citiesWithNeighborhoods
       .map(c => ({
         ...c,
-        neighborhoods: c.neighborhoods.filter(n =>
-          n.name.toLowerCase().includes(query) ||
-          n.city.toLowerCase().includes(query) ||
-          // Search within combo component names (e.g., "Westport" finds "Gold Coast CT")
-          (n.combo_component_names && n.combo_component_names.some(
+        neighborhoods: c.neighborhoods.filter(n => {
+          // Direct name/city/component match
+          if (n.name.toLowerCase().includes(query)) return true;
+          if (n.city.toLowerCase().includes(query)) return true;
+          if (n.combo_component_names && n.combo_component_names.some(
             comp => comp.toLowerCase().includes(query)
-          ))
-        ),
+          )) return true;
+          // Country match
+          if (matchedCountry && n.country?.toLowerCase() === matchedCountry.toLowerCase()) return true;
+          // Region match
+          if (matchedRegion && n.region === matchedRegion) return true;
+          // State/province match
+          if (stateCities && stateCities.has(n.city.toLowerCase())) return true;
+          return false;
+        }),
       }))
       .filter(c => c.neighborhoods.length > 0);
   }, [citiesWithNeighborhoods, searchQuery]);

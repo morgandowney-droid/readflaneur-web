@@ -68,6 +68,11 @@ const REGION_DATA: Record<GlobalRegion, { label: string; icon: string; descripti
     icon: '◆',
     description: 'Dubai to Tel Aviv'
   },
+  'south-america': {
+    label: 'South America',
+    icon: '◎',
+    description: 'São Paulo to Buenos Aires'
+  },
   'us-vacation': {
     label: 'US Vacation',
     icon: '○',
@@ -190,6 +195,7 @@ export function EnhancedNeighborhoodSelector({
       'europe': [],
       'asia-pacific': [],
       'middle-east': [],
+      'south-america': [],
       'us-vacation': [],
       'caribbean-vacation': [],
       'europe-vacation': [],
@@ -238,6 +244,7 @@ export function EnhancedNeighborhoodSelector({
       'europe': [],
       'asia-pacific': [],
       'middle-east': [],
+      'south-america': [],
       'us-vacation': [],
       'caribbean-vacation': [],
       'europe-vacation': [],

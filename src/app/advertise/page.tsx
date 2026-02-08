@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
-import { AD_COLLECTIONS } from '@/config/ad-config';
 import { GLOBAL_TAKEOVER_RATES } from '@/config/ad-tiers';
 import { AdBookingCalendar } from '@/components/advertise/AdBookingCalendar';
 import { AdvertiserPersonas } from '@/components/advertise/AdvertiserPersonas';
+import { CollectionsWithPlacement } from '@/components/advertise/CollectionsWithPlacement';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,70 +59,10 @@ export default async function AdvertisePage() {
       {/* Strategy Selector */}
       <AdvertiserPersonas />
 
-      {/* The Three Collections */}
+      {/* The Three Collections + Placement Toggle */}
       <section className="px-4 pb-20">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-xs tracking-[0.3em] uppercase text-neutral-500 mb-10 text-center">
-            Collections
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {AD_COLLECTIONS.map((collection) => (
-              <div
-                key={collection.key}
-                className={`bg-neutral-900 border p-8 flex flex-col ${
-                  collection.key === 'tier1'
-                    ? 'border-amber-800/40'
-                    : 'border-neutral-800'
-                }`}
-              >
-                {/* Top section — fixed min-height on desktop so prices align across cards */}
-                <div className="md:min-h-[180px]">
-                  {collection.key === 'tier1' ? (
-                    <span className="text-xs tracking-[0.2em] uppercase text-amber-600 mb-3 block">
-                      Flagship
-                    </span>
-                  ) : (
-                    <span className="text-xs mb-3 block invisible" aria-hidden="true">
-                      &nbsp;
-                    </span>
-                  )}
-                  <h3 className="font-[family-name:var(--font-cormorant)] text-2xl font-light mb-2">
-                    {collection.name}
-                  </h3>
-                  <p className="text-base text-neutral-400 mb-6 leading-relaxed">
-                    {collection.tagline}
-                  </p>
-                </div>
-                <div className="mb-6 space-y-1">
-                  <div>
-                    <span className="text-3xl font-light">${collection.dailyPrice}</span>
-                    <span className="text-neutral-500 text-sm">/day per individual neighborhood</span>
-                  </div>
-                  <div>
-                    <span className="text-xl font-light text-neutral-300">${collection.sundayPrice}</span>
-                    <span className="text-neutral-500 text-sm">/day per individual neighborhood</span>
-                  </div>
-                </div>
-                <p className="text-sm text-neutral-500 mb-6 leading-relaxed flex-1">
-                  {collection.description}
-                </p>
-                <div className="mb-6">
-                  <p className="text-xs tracking-[0.2em] uppercase text-neutral-600 mb-2">
-                    Example Neighborhoods
-                  </p>
-                  <p className="text-sm text-neutral-400">
-                    {collection.exampleNeighborhoods.join(' / ')}
-                  </p>
-                </div>
-                <a
-                  href="#book"
-                  className="block text-center bg-white text-black py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-neutral-200 transition-colors"
-                >
-                  Book Now
-                </a>
-              </div>
-            ))}
-          </div>
+          <CollectionsWithPlacement />
         </div>
       </section>
 
