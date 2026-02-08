@@ -22,10 +22,11 @@ const DEFAULT_AD: ResolvedSundayAd = {
 
 /**
  * Resolve the best Sunday Edition ad for a given neighborhood.
+ * Date-aware: only matches ads booked for today.
  *
  * Cascade:
- * 1. Neighborhood-targeted paid ad (placement_type = 'sunday_edition', status = 'active')
- * 2. Global paid ad (is_global = true)
+ * 1. Neighborhood-targeted paid ad (placement_type = 'sunday_edition', status = 'active', start_date = today)
+ * 2. Global paid ad (is_global = true, start_date = today)
  * 3. Sunday house ad (from house_ads table)
  * 4. Hardcoded default
  */
@@ -33,13 +34,16 @@ export async function resolveSundayAd(
   supabase: SupabaseClient,
   neighborhoodId: string
 ): Promise<ResolvedSundayAd> {
-  // 1. Neighborhood-targeted paid ad
+  const today = new Date().toISOString().split('T')[0];
+
+  // 1. Neighborhood-targeted paid ad for today
   const { data: targetedAd } = await supabase
     .from('ads')
     .select('id, sponsor_label, image_url, headline, body, click_url')
     .eq('placement_type', 'sunday_edition')
     .eq('status', 'active')
     .eq('neighborhood_id', neighborhoodId)
+    .eq('start_date', today)
     .order('created_at', { ascending: false })
     .limit(1)
     .single();
@@ -56,13 +60,14 @@ export async function resolveSundayAd(
     };
   }
 
-  // 2. Global paid ad
+  // 2. Global paid ad for today
   const { data: globalAd } = await supabase
     .from('ads')
     .select('id, sponsor_label, image_url, headline, body, click_url')
     .eq('placement_type', 'sunday_edition')
     .eq('status', 'active')
     .eq('is_global', true)
+    .eq('start_date', today)
     .order('created_at', { ascending: false })
     .limit(1)
     .single();

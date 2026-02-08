@@ -16,13 +16,17 @@ export function injectAds(
   options?: InjectAdsOptions
 ): FeedItem[] {
   const { sectionIds, userInterestIds } = options || {};
+  const today = new Date().toISOString().split('T')[0];
 
-  // Filter ads: active, feed placement, and global OR matching any selected neighborhood
+  // Filter ads: active, feed placement, date-aware, and global OR matching any selected neighborhood
   let relevantAds = ads.filter(
     (ad) =>
       ad.status === 'active' &&
       (ad.placement === 'feed' || !ad.placement) && // Default to feed if no placement set
-      (ad.is_global || (ad.neighborhood_id && neighborhoodIds.includes(ad.neighborhood_id)))
+      (ad.is_global || (ad.neighborhood_id && neighborhoodIds.includes(ad.neighborhood_id))) &&
+      // Date-aware: only show ads where today falls within start_date..end_date
+      (!ad.start_date || ad.start_date <= today) &&
+      (!ad.end_date || ad.end_date >= today)
   );
 
   // If section targeting is enabled, filter ads by section
@@ -54,10 +58,14 @@ export function injectAds(
 }
 
 export function getStoryOpenAds(ads: Ad[], neighborhoodId: string): Ad[] {
+  const today = new Date().toISOString().split('T')[0];
+
   return ads.filter(
     (ad) =>
       ad.status === 'active' &&
       ad.placement === 'story_open' &&
-      (ad.is_global || ad.neighborhood_id === neighborhoodId)
+      (ad.is_global || ad.neighborhood_id === neighborhoodId) &&
+      (!ad.start_date || ad.start_date <= today) &&
+      (!ad.end_date || ad.end_date >= today)
   );
 }

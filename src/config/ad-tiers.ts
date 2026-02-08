@@ -74,11 +74,17 @@ export const SEASONAL_MARKETS: SeasonalMarket[] = [
   },
 ];
 
-// ─── Base Rates by Tier ───
+// ─── Flat Per-Day Rates by Tier (cents) ───
 export const TIER_RATES = {
-  1: { cpm: 45.00, emailRate: 150.00 },
-  2: { cpm: 25.00, emailRate: 75.00 },
-  3: { cpm: 15.00, emailRate: 50.00 },
+  1: { dailyBrief: 50000, sundayEdition: 75000 },   // $500 / $750
+  2: { dailyBrief: 20000, sundayEdition: 30000 },   // $200 / $300
+  3: { dailyBrief: 10000, sundayEdition: 15000 },   // $100 / $150
+} as const;
+
+// ─── Global Takeover Rates (cents) ───
+export const GLOBAL_TAKEOVER_RATES = {
+  dailyBrief: 1000000,     // $10,000
+  sundayEdition: 1500000,  // $15,000
 } as const;
 
 // Everything not in TIER_1, TIER_2, or SEASONAL defaults to TIER 3

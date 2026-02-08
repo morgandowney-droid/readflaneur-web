@@ -55,18 +55,22 @@ export interface Ad {
   body?: string;
   click_url: string;
   is_global: boolean;
+  is_global_takeover?: boolean;
   neighborhood_id: string | null;
   sponsor_label: string;
   placement: AdPlacement;
   placement_type: AdPlacementType;
-  status: 'pending_review' | 'approved' | 'rejected' | 'active' | 'paused' | 'expired';
+  status: 'pending_payment' | 'pending_assets' | 'in_review' | 'pending_review' | 'approved' | 'rejected' | 'active' | 'paused' | 'expired';
   rejection_reason?: string;
   start_date?: string;
   end_date?: string;
   impressions: number;
   clicks: number;
   created_at: string;
-  // Design concierge & Passionfroot integration
+  // Booking
+  stripe_session_id?: string;
+  customer_email?: string;
+  // Design concierge (legacy)
   needs_design_service?: boolean;
   admin_notes?: string;
   passionfroot_order_id?: string;

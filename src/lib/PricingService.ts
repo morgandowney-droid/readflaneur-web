@@ -3,16 +3,13 @@ import {
   TIER_2_IDS,
   SEASONAL_MARKETS,
   TIER_RATES,
+  GLOBAL_TAKEOVER_RATES,
 } from '@/config/ad-tiers';
 
-export interface PriceQuote {
+export interface BookingPrice {
+  priceCents: number;
   tier: 1 | 2 | 3;
-  baseCpm: number;
-  baseEmailRate: number;
-  multiplier: number;
-  reason: 'standard' | 'surge' | 'fire_sale';
-  finalCpm: number;
-  finalEmailRate: number;
+  isGlobal: boolean;
   seasonalLabel?: string;
 }
 
@@ -73,41 +70,35 @@ export function getTierForNeighborhood(
   return { tier: 3 };
 }
 
-/** Calculate surge/fire-sale multiplier based on date */
-export function calculateRate(
-  startDate: Date
-): { multiplier: number; reason: 'standard' | 'surge' | 'fire_sale' } {
-  const m = startDate.getMonth() + 1;
-  const d = startDate.getDate();
-
-  // Holiday surge: Nov 15 – Dec 25
-  if (
-    (m === 11 && d >= 15) ||
-    (m === 12 && d <= 25)
-  ) {
-    return { multiplier: 1.5, reason: 'surge' };
+/**
+ * Get the booking price for a neighborhood + placement type + date.
+ * Price is always computed server-side — the client displays it but Stripe charges this amount.
+ */
+export function getBookingPrice(
+  neighborhoodId: string | null,
+  placementType: 'daily_brief' | 'sunday_edition',
+  date: Date
+): BookingPrice {
+  // Global takeover
+  if (neighborhoodId === null) {
+    const globalPrice = placementType === 'sunday_edition'
+      ? GLOBAL_TAKEOVER_RATES.sundayEdition
+      : GLOBAL_TAKEOVER_RATES.dailyBrief;
+    return {
+      priceCents: globalPrice,
+      tier: 1,
+      isGlobal: true,
+    };
   }
 
-  return { multiplier: 1.0, reason: 'standard' };
-}
-
-/** Full quote: tier resolution + rate calculation */
-export function getQuote(
-  neighborhoodId: string | null,
-  targetDate: Date
-): PriceQuote {
-  const { tier, seasonalLabel } = getTierForNeighborhood(neighborhoodId, targetDate);
+  const { tier, seasonalLabel } = getTierForNeighborhood(neighborhoodId, date);
   const rates = TIER_RATES[tier];
-  const { multiplier, reason } = calculateRate(targetDate);
+  const priceCents = placementType === 'sunday_edition' ? rates.sundayEdition : rates.dailyBrief;
 
   return {
+    priceCents,
     tier,
-    baseCpm: rates.cpm,
-    baseEmailRate: rates.emailRate,
-    multiplier,
-    reason,
-    finalCpm: Math.round(rates.cpm * multiplier * 100) / 100,
-    finalEmailRate: Math.round(rates.emailRate * multiplier * 100) / 100,
+    isGlobal: false,
     seasonalLabel,
   };
 }
