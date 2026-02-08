@@ -59,22 +59,24 @@ export default function AdvertisePage() {
                     : 'border-neutral-800'
                 }`}
               >
-                {/* Badge row — invisible placeholder on non-tier1 to align prices */}
-                {collection.key === 'tier1' ? (
-                  <span className="text-xs tracking-[0.2em] uppercase text-amber-600 mb-3 block">
-                    Flagship
-                  </span>
-                ) : (
-                  <span className="text-xs mb-3 block invisible" aria-hidden="true">
-                    &nbsp;
-                  </span>
-                )}
-                <h3 className="font-[family-name:var(--font-cormorant)] text-2xl font-light mb-2">
-                  {collection.name}
-                </h3>
-                <p className="text-base text-neutral-400 mb-6 leading-relaxed">
-                  {collection.tagline}
-                </p>
+                {/* Top section — fixed min-height on desktop so prices align across cards */}
+                <div className="md:min-h-[180px]">
+                  {collection.key === 'tier1' ? (
+                    <span className="text-xs tracking-[0.2em] uppercase text-amber-600 mb-3 block">
+                      Flagship
+                    </span>
+                  ) : (
+                    <span className="text-xs mb-3 block invisible" aria-hidden="true">
+                      &nbsp;
+                    </span>
+                  )}
+                  <h3 className="font-[family-name:var(--font-cormorant)] text-2xl font-light mb-2">
+                    {collection.name}
+                  </h3>
+                  <p className="text-base text-neutral-400 mb-6 leading-relaxed">
+                    {collection.tagline}
+                  </p>
+                </div>
                 <div className="mb-6 space-y-1">
                   <div>
                     <span className="text-3xl font-light">${collection.dailyPrice}</span>
