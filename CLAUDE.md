@@ -10,11 +10,11 @@
 - **Backend API:** https://flaneur-azure.vercel.app
 - **GitHub:** https://github.com/morgandowney-droid/readflaneur-web
 - **Sentry:** https://sentry.io/organizations/flaneur-vk/issues/
-- **128 neighborhoods** across 38 cities (15 combo neighborhoods)
+- **200 neighborhoods** across 73 cities, 42 countries (the "Flaneur 200")
 
 ## Last Updated: 2026-02-08
 
-Recent work: Multi-neighborhood ad booking (select N neighborhoods, one Stripe checkout), advertise page polish (17px fonts, rounded corners, price alignment), combo component search.
+Recent work: Flaneur 200 expansion (200 neighborhoods seeded across 73 cities/42 countries), ad-tier alignment (superprime/metropolitan/discovery → Tier 1/2/3), new seasonal markets (Riviera, expanded Ski & Snow).
 
 ## Key Patterns
 
@@ -147,7 +147,7 @@ src/
 
 ## Key Database Tables
 
-- `neighborhoods` — 128 neighborhoods with coordinates, region, country, `is_combo`
+- `neighborhoods` — 200 neighborhoods (Flaneur 200) with coordinates, region, country, `is_combo`
 - `combo_neighborhoods` — join table for combo components
 - `articles` — news articles with AI images (`enriched_at`, `enrichment_model`)
 - `neighborhood_briefs` — Grok-generated daily summaries

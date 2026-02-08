@@ -5,6 +5,17 @@
 
 ## 2026-02-08
 
+**Flaneur 200 — Global Neighborhood Expansion:**
+- Seeded 200 neighborhoods across 73 cities and 42 countries (the "Flaneur 200")
+- Tier classification: 82 superprime (Tier 1), 90 metropolitan (Tier 2), 28 discovery (Tier 3)
+- New regions: South America (Brazil, Argentina, Chile, Colombia), expanded Middle East & Africa
+- New cities: Seoul, Shanghai, Beijing, Bangkok, Jakarta, Riyadh, Cairo, Johannesburg, São Paulo, Rio, Buenos Aires, Santiago, Medellín, and many more
+- Ad-tiers.ts fully aligned with superprime/metropolitan/discovery → Tier 1/2/3
+- New seasonal market: Riviera Season (May–Sep): Cap Ferrat, Antibes, Cannes, Monaco, Portofino, Capri
+- Expanded Ski & Snow: added St. Moritz, Gstaad, Courchevel, Niseko
+- Expanded Summer Socials: Hamptons (3 neighborhoods), Mykonos, Ibiza
+- Seed script: `scripts/seed-flaneur-200.ts` (idempotent upsert, run via `npx tsx`)
+
 **Advertise Page Polish & Multi-Neighborhood Booking:**
 - Multi-neighborhood selection: pills UI, merged availability calendar, one Stripe checkout with N line items
 - Combo component search: typing "FiDi" surfaces Tribeca with "(incl. FiDi)" label
