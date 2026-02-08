@@ -11,6 +11,34 @@
 
 ### Recent Changes (2026-02-08)
 
+**Sunday Edition - Presenting Sponsor Ad Slot:**
+- New "Presenting Sponsor" placement between The Rearview and The Horizon sections
+- Full ingestion-to-display pipeline: Passionfroot booking → ad created → admin review → live in email
+- Ad resolver cascade: neighborhood-targeted paid → global paid → Sunday house ad → hardcoded default
+- Never empty — house ad fallback: "Become This Edition's Presenting Sponsor" → `/advertise`
+- Visual: warm ivory background, gold "PRESENTED BY [SPONSOR]" label, image, headline, body, "Learn more →" CTA
+- Impression tracking after each send (RPC with select+update fallback)
+- Webhook detection: "sunday" in product name → `placement_type: 'sunday_edition'`
+- Admin: purple "Sunday" badge, "Sunday" filter tab, body copy textarea, email type display
+- 4th ad collection: "The Sunday Edition" at $750/week on `/advertise` page
+- DB: `ads.placement_type` (daily_brief/sunday_edition), `ads.body` TEXT, `house_ads.type` expanded (migration 040)
+- Files: `src/lib/email/sunday-ad-resolver.ts` (NEW), `SundayEditionTemplate.tsx`, `send-sunday-edition/route.ts`, `resend-inbound/route.ts`, `passionfroot/route.ts`, `admin/ads/` (route + review + page), `ad-config.ts`, `src/types/index.ts`
+
+**Sunday Edition - Data Point Label Fix:**
+- Label changed from "The Air We Breathe" to "The Temperature"
+- JSON example in prompt changed from `'AQI 42'` to `'28°C / 82°F'` — Gemini was following the AQI example despite "Do NOT use AQI" instruction
+- File: `src/lib/weekly-brief-service.ts`
+
+**Sunday Edition - Rearview Paragraph Sizing:**
+- Gemini prompt changed from "2-3 SHORT paragraphs" to "exactly 4 short paragraphs (each 2-3 sentences max)"
+- Produces more readable, scannable narrative instead of 2 dense blocks
+- File: `src/lib/weekly-brief-service.ts`
+
+**Advertise Page Copy Fixes:**
+- Discovery Collection: `Dublin / Dalkey` → `Dublin (Dalkey)` in example neighborhoods
+- How It Works step 2: `We Produce` → `Submit Assets`, description updated to "Provide your imagery and core message. Our editorial team refines the copy to ensure a seamless, native fit."
+- Files: `src/config/ad-config.ts`, `src/app/advertise/page.tsx`
+
 **Sunday Edition - "THAT TIME OF YEAR" Holiday Section:**
 - New conditional section detects upcoming holidays (within 7 days) per country
 - Grok X Search finds neighborhood-specific holiday events, Gemini curates top 3
@@ -40,10 +68,11 @@
 **Sunday Edition - Template Enhancements:**
 - Story headlines in "Three Stories That Mattered" now hyperlink to Google search
 - Rearview shows teaser paragraph with "Continue reading" link to full article on website
-- Narrative split into paragraphs (2-3 short paragraphs instead of dense block)
+- Narrative split into 4 short paragraphs (each 2-3 sentences max)
 - Weather data point section clickable - links to Google weather search
+- Data point label: "The Temperature" (not "The Air We Breathe"), always temperature, never AQI
+- Presenting Sponsor block between Rearview and Horizon (with house ad fallback)
 - Copyright symbol added: "© Flaneur 2026" in footer
-- "The Air We Breathe" always shows temperature, never AQI
 
 **Sunday Edition - Combo Neighborhood Article Fix:**
 - Root cause: `getNeighborhoodIdsForQuery()` returned only component IDs, but articles stored under combo ID
@@ -203,20 +232,20 @@
 - Modified: `src/lib/email/types.ts` (WeatherStory interface), `src/lib/email/assembler.ts`, `src/lib/email/templates/DailyBriefTemplate.tsx`
 
 **Commercial Stack — Collections Page + Fallback Protocol:**
-- Dark "Night Flaneur" themed `/advertise` page with 3 Collection tiers
-- Passionfroot deep-link booking URLs for each tier (Super-Prime $500, Metropolitan $200, Discovery $100)
+- Dark "Night Flaneur" themed `/advertise` page with 4 Collection tiers
+- Passionfroot deep-link booking URLs for each tier (Super-Prime $500, Metropolitan $200, Discovery $100, Sunday Edition $750/week)
 - Neighborhood Tier Lookup widget (search-as-you-type, shows seasonal labels)
 - FallbackService for ad slots: Bonus ads (Tier 1 cross-sell) > House ads (weighted random from DB) > Default (80/20 newsletter/house-ad)
-- Database: `house_ads` table with 4 seed rows (waitlist, app_download, advertise, newsletter)
+- Database: `house_ads` table with 5 seed rows (waitlist, app_download, advertise, newsletter, sunday_edition)
 - Files: `src/config/ad-config.ts`, `src/app/advertise/page.tsx`, `src/lib/FallbackService.ts`, `src/components/feed/FallbackAd.tsx`, `supabase/migrations/032_house_ads.sql`
 
 **Ad Approval Workflow + Passionfroot Webhook + Design Concierge:**
 - Passionfroot webhook endpoint creates `pending_review` ads from bookings
 - Admin page (`/admin/ads`) with inline headline editing, admin notes, design flag badges
 - Approve goes directly to `active` (one-click go-live)
-- Filter tabs: Pending | Needs Design | Active | All
+- Filter tabs: Pending | Needs Design | Active | Sunday | All
 - Source badges distinguish Passionfroot vs Direct ads
-- Database: `ads.needs_design_service`, `ads.admin_notes`, `ads.passionfroot_order_id`, `ads.client_name`, `ads.client_email`
+- Database: `ads.needs_design_service`, `ads.admin_notes`, `ads.passionfroot_order_id`, `ads.client_name`, `ads.client_email`, `ads.placement_type`, `ads.body`
 - Fixed `ads_status_check` constraint to allow `pending_review` and `rejected`
 - Files: `src/app/api/webhooks/passionfroot/route.ts`, `src/app/admin/ads/page.tsx`, `src/app/api/admin/ads/route.ts`, `src/app/api/admin/ads/review/route.ts`
 - Migrations: `033_ad_approval_enhancements.sql`, `034_fix_ads_status_constraint.sql`
@@ -234,7 +263,7 @@
 
 **Passionfroot Account Setup:**
 - Creator account: https://www.passionfroot.me/flaneur
-- 3 products: Super-Prime ($500), Metropolitan ($200), Discovery ($100)
+- 4 products: Super-Prime ($500), Metropolitan ($200), Discovery ($100), Sunday Edition ($750/week)
 - Stripe + bank account connected
 - Passionfroot takes 15% cut on marketplace deals, 0% on direct `/advertise` bookings
 
@@ -1087,6 +1116,9 @@ STRIPE_WEBHOOK_SECRET=           # Stripe payment webhook
 ### Sunday Edition (Weekly Email)
 - `weekly_briefs` - Structured weekly content (rearview_narrative, rearview_stories, horizon_events, data_point, holiday_section)
 - `weekly_brief_sends` - Dedup tracking (recipient_id + week_date)
+- `ads.placement_type` - 'daily_brief' or 'sunday_edition' (determines which email the ad appears in)
+- `ads.body` - Ad copy text (used by Sunday Edition sponsor block)
+- `house_ads` type 'sunday_edition' - Fallback sponsor slot
 
 ### Cron Monitoring
 - `cron_executions` - Tracks all cron job runs with timing, success status, errors
