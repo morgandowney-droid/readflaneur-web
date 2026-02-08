@@ -5,11 +5,13 @@
 
 ## 2026-02-08
 
-**Advertise Page — Interactive Navigation & Pricing Fix:**
-- "Example Neighborhoods" text and names in collection cards now clickable — scrolls to booking calendar and focuses search input
-- Strategy card "Recommended" text now clickable — scrolls to Collections section and auto-selects the corresponding placement toggle (Daily Brief or Sunday Edition) via custom DOM event
+**Advertise Page — Interactive Navigation & Polish:**
+- "Example Neighborhoods" text and names in collection cards now clickable - scrolls to booking calendar and focuses search input
+- Strategy card "Recommended" text now clickable - scrolls to Collections section and auto-selects the corresponding placement toggle (Daily Brief or Sunday Edition) via custom DOM event `placement-select`
+- Strategy cards: "The Goal" and "Recommended" sections now align horizontally across all three cards (`md:min-h-[60px]` on Who section, `mt-auto` on Recommended)
 - Fixed Sunday pricing labels: changed "/day per individual neighborhood" to "/Sunday per individual neighborhood" on all three collection cards
-- Homepage "252 neighborhoods, 92 cities" stat line now clickable — opens the NeighborhoodSelectorModal (via new `HeroStats.tsx` client component)
+- Removed em dashes from Global Takeover copy (general rule: never use em dashes in user-facing text)
+- Homepage "252 neighborhoods, 92 cities" stat line now clickable and centered - opens the NeighborhoodSelectorModal (via new `HeroStats.tsx` client component)
 
 **RSS Sources — Global Expansion (100% City Coverage):**
 - Expanded from 23 cities to 92 cities (100% of active neighborhoods now have RSS feeds)
