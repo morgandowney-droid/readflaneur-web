@@ -11,6 +11,21 @@
 
 ### Recent Changes (2026-02-08)
 
+**Ad Quality Control & Customer Approval System:**
+- AI-powered ad quality pipeline using Gemini: image analysis (brand safety + aesthetic scoring 0-100) and copy polisher (Economist/Monocle editorial voice)
+- Customer-facing proof page at `/proofs/[token]` — no auth required, token = auth
+- State machine: `pending_ai` → `pending_approval` → `approved` (or `changes_requested`)
+- Webhook → AI runs automatically → proof email sent to customer → customer approves/requests changes → live
+- Admin force-approve bypasses customer proof flow
+- AI auto-rejects unsafe images (brand safety violation → `status: 'rejected'`)
+- Copy polisher saves original to `original_copy`, rewrite to `ai_suggested_rewrite` — proof page lets customer toggle between them
+- Admin page: new badges (AI Processing, Awaiting Client, Client Approved, Changes Requested), AI quality score display, "Run AI Check" button, "Send Proof to Client" button, copyable proof URL, customer change request feedback box
+- New filter tabs: "Awaiting Client" and "Changes" on admin ads page
+- Notification emails: `notifyCustomerProofReady()` and `notifyAdminChangeRequest()`
+- Fire-and-forget quality triggers from both Passionfroot and Resend inbound webhooks
+- DB: `ads.ai_quality_score`, `ads.ai_flag_reason`, `ads.ai_suggested_rewrite`, `ads.original_copy`, `ads.proof_token` (UUID, unique index), `ads.approval_status`, `ads.customer_change_request` (migration 041)
+- Files: `src/lib/ad-quality-service.ts` (NEW), `src/app/api/ads/quality/route.ts` (NEW), `src/app/api/proofs/[token]/route.ts` (NEW), `src/app/proofs/[token]/page.tsx` (NEW), `src/types/index.ts`, `src/lib/email.ts`, `passionfroot/route.ts`, `resend-inbound/route.ts`, `admin/ads/` (route + review + page)
+
 **Sunday Edition - Presenting Sponsor Ad Slot:**
 - New "Presenting Sponsor" placement between The Rearview and The Horizon sections
 - Full ingestion-to-display pipeline: Passionfroot booking → ad created → admin review → live in email
@@ -1120,6 +1135,15 @@ STRIPE_WEBHOOK_SECRET=           # Stripe payment webhook
 - `ads.body` - Ad copy text (used by Sunday Edition sponsor block)
 - `house_ads` type 'sunday_edition' - Fallback sponsor slot
 
+### Ad Quality Control (on `ads` table)
+- `ai_quality_score` INTEGER - Gemini aesthetic score 0-100
+- `ai_flag_reason` TEXT - Issues found by image analysis
+- `ai_suggested_rewrite` TEXT - JSON `{headline, body}` polished copy
+- `original_copy` TEXT - JSON `{headline, body}` client's original submission
+- `proof_token` UUID - Unique token for customer proof page (auto-generated)
+- `approval_status` TEXT - State machine: `pending_ai` → `pending_approval` → `approved` / `changes_requested`
+- `customer_change_request` TEXT - Customer's feedback message
+
 ### Cron Monitoring
 - `cron_executions` - Tracks all cron job runs with timing, success status, errors
 - `cron_issues` - Tracks issues detected by monitor (missing images, failures) with retry status
@@ -1142,6 +1166,7 @@ STRIPE_WEBHOOK_SECRET=           # Stripe payment webhook
 |------|-----|---------|
 | Settings | `/settings` | Primary location, timezone preferences |
 | Advertise | `/advertise` | Ad Collections page with Passionfroot booking links |
+| Ad Proof | `/proofs/[token]` | Customer-facing ad proof review & approval (no auth, token = auth) |
 
 ## Deployment
 
