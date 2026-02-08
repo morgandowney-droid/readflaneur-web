@@ -43,7 +43,7 @@ Recent work: Flaneur 200 expansion (200 neighborhoods seeded across 73 cities/42
 
 ### Ad System
 - **Pricing:** `src/config/ad-tiers.ts`, `src/lib/PricingService.ts` — flat per-day rates (Tier 1: $500/$750, Tier 2: $200/$300, Tier 3: $100/$150)
-- **Site stats:** `src/config/site-stats.ts` — single source of truth for neighborhood/city/country counts used across marketing pages
+
 - **Booking:** `/advertise` page with `react-day-picker` calendar → Stripe Checkout → asset upload → AI review
 - **Availability:** `GET /api/ads/availability` — booked/blocked dates + pricing per neighborhood/month
 - **Checkout:** `POST /api/ads/checkout` — accepts `neighborhoodIds[]` array, creates N ads + N Stripe line items, 48h–90d window
@@ -127,7 +127,6 @@ src/
 ├── config/
 │   ├── ad-tiers.ts                # Flat per-day rates, tiers & seasonal rules
 │   ├── ad-config.ts               # Ad collections (3 tiers)
-│   ├── site-stats.ts              # Neighborhood/city/country counts (single source of truth)
 │   ├── global-locations.ts        # City configs, vocabulary, zones
 │   └── nyc-locations.ts           # NYC zip/precinct mappings
 └── lib/

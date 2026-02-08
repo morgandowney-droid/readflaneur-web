@@ -1,12 +1,23 @@
-'use client';
-
+import { createClient } from '@/lib/supabase/server';
 import { AD_COLLECTIONS } from '@/config/ad-config';
 import { GLOBAL_TAKEOVER_RATES } from '@/config/ad-tiers';
-import { SITE_STATS } from '@/config/site-stats';
 import { AdBookingCalendar } from '@/components/advertise/AdBookingCalendar';
 import { AdvertiserPersonas } from '@/components/advertise/AdvertiserPersonas';
 
-export default function AdvertisePage() {
+export const dynamic = 'force-dynamic';
+
+export default async function AdvertisePage() {
+  const supabase = await createClient();
+
+  const { data: neighborhoods } = await supabase
+    .from('neighborhoods')
+    .select('id, city, is_combo')
+    .eq('is_active', true);
+
+  const regularNeighborhoods = (neighborhoods || []).filter(n => !n.is_combo);
+  const neighborhoodCount = regularNeighborhoods.length;
+  const cityCount = new Set(regularNeighborhoods.map(n => n.city)).size;
+
   return (
     <div className="bg-neutral-950 text-white min-h-screen -mt-[1px]">
       {/* Hero */}
@@ -29,8 +40,8 @@ export default function AdvertisePage() {
           {[
             { label: 'Avg. Net Worth', value: 'High' },
             { label: 'Email Open Rate', value: '>55%' },
-            { label: 'Neighborhoods', value: String(SITE_STATS.neighborhoods) },
-            { label: 'Cities', value: String(SITE_STATS.cities) },
+            { label: 'Neighborhoods', value: String(neighborhoodCount) },
+            { label: 'Cities', value: String(cityCount) },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -138,8 +149,8 @@ export default function AdvertisePage() {
             Global Takeover
           </h2>
           <p className="text-base text-neutral-400 mb-6 leading-relaxed max-w-lg mx-auto">
-            Own every neighborhood for an entire day. Your brand appears across all {SITE_STATS.neighborhoods} neighborhoods
-            in {SITE_STATS.cities} cities — the most concentrated wealth audience on the internet.
+            Own every neighborhood for an entire day. Your brand appears across all {neighborhoodCount} neighborhoods
+            in {cityCount} cities — the most concentrated wealth audience on the internet.
           </p>
           <div className="flex justify-center gap-8 mb-8">
             <div>
