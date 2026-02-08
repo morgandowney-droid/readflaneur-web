@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getStripe } from '@/lib/stripe';
+import Stripe from 'stripe';
 import { getBookingPrice } from '@/lib/PricingService';
 
 const BOOKING_LEAD_HOURS = 48;
@@ -179,7 +179,11 @@ export async function POST(request: NextRequest) {
       timeZone: 'UTC',
     });
 
-    const stripe = getStripe();
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      typescript: true,
+      maxNetworkRetries: 3,
+      timeout: 20000,
+    });
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       customer_email: customerEmail,
@@ -204,7 +208,6 @@ export async function POST(request: NextRequest) {
       },
       success_url: `${origin}/advertise/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/advertise`,
-      expires_at: Math.floor(Date.now() / 1000) + 30 * 60, // 30 minutes
     });
 
     // Update ad row with stripe session ID
