@@ -290,7 +290,7 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
   }
 
   return (
-    <article className="prose prose-neutral max-w-none">
+    <article className="prose prose-lg prose-neutral max-w-none">
       {paragraphs.map((paragraph, index) => {
         // Check if this is a section header (wrapped in [[ ]])
         const headerMatch = paragraph.match(/^\[\[([^\]]+)\]\]$/);

@@ -36,7 +36,7 @@ const divider = {
 };
 
 const footerText = {
-  fontSize: '12px',
+  fontSize: '13px',
   color: '#999999',
   textAlign: 'center' as const,
   margin: '0 0 8px',
@@ -50,7 +50,7 @@ const link = {
 };
 
 const copyright = {
-  fontSize: '11px',
+  fontSize: '12px',
   color: '#cccccc',
   textAlign: 'center' as const,
   margin: '16px 0 0',

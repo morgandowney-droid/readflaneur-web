@@ -122,7 +122,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
               </>
             )}
           </div>
-          <h2 className="font-semibold text-sm leading-tight mb-1 line-clamp-2">
+          <h2 className="font-semibold text-base leading-tight mb-1 line-clamp-2">
             {article.headline}
           </h2>
           {article.preview_text && (

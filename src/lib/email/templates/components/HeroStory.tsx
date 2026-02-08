@@ -50,7 +50,7 @@ const image = {
 };
 
 const category = {
-  fontSize: '11px',
+  fontSize: '12px',
   fontWeight: '600' as const,
   letterSpacing: '0.1em',
   textTransform: 'uppercase' as const,
@@ -64,7 +64,7 @@ const headlineLink = {
 };
 
 const headline = {
-  fontSize: '20px',
+  fontSize: '22px',
   fontWeight: '600' as const,
   color: '#000000',
   margin: '0 0 8px',
@@ -73,7 +73,7 @@ const headline = {
 };
 
 const preview = {
-  fontSize: '14px',
+  fontSize: '17px',
   color: '#555555',
   lineHeight: '1.5',
   margin: '0',

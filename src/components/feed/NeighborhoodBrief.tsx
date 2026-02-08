@@ -878,12 +878,12 @@ export function NeighborhoodBrief({
         </div>
 
       {/* Headline */}
-      <h3 className="font-semibold text-base mb-1.5 text-neutral-900">
+      <h3 className="font-semibold text-lg mb-1.5 text-neutral-900">
         {headline}
       </h3>
 
       {/* Content */}
-      <div className="text-sm text-neutral-700 leading-relaxed">
+      <div className="text-base text-neutral-700 leading-relaxed">
         {isExpanded ? (
           <div className="space-y-4">
             {paragraphs.map((p, i) => (

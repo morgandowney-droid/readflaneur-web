@@ -286,7 +286,7 @@ const mastheadSection = {
 };
 
 const mastheadBrand = {
-  fontSize: '11px',
+  fontSize: '12px',
   fontWeight: '400' as const,
   letterSpacing: '4px',
   color: '#C9A96E',
@@ -296,7 +296,7 @@ const mastheadBrand = {
 };
 
 const mastheadTitle = {
-  fontSize: '28px',
+  fontSize: '30px',
   fontWeight: '400' as const,
   letterSpacing: '1px',
   color: '#FFFFFF',
@@ -305,7 +305,7 @@ const mastheadTitle = {
 };
 
 const mastheadNeighborhood = {
-  fontSize: '14px',
+  fontSize: '15px',
   fontWeight: '600' as const,
   letterSpacing: '2px',
   color: '#FFFFFF',
@@ -319,7 +319,7 @@ const mastheadCity = {
 };
 
 const mastheadDate = {
-  fontSize: '12px',
+  fontSize: '13px',
   color: '#888888',
   margin: '8px 0 0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
@@ -347,7 +347,7 @@ const sectionContainer = {
 };
 
 const sectionLabel = {
-  fontSize: '14px',
+  fontSize: '15px',
   fontWeight: '700' as const,
   letterSpacing: '3px',
   color: '#C9A96E',
@@ -357,7 +357,7 @@ const sectionLabel = {
 };
 
 const sectionSubtitle = {
-  fontSize: '14px',
+  fontSize: '15px',
   fontStyle: 'italic' as const,
   color: '#888888',
   margin: '0 0 20px',
@@ -365,7 +365,7 @@ const sectionSubtitle = {
 };
 
 const narrativeText = {
-  fontSize: '17px',
+  fontSize: '18px',
   lineHeight: '1.7',
   color: '#2a2a2a',
   margin: '0 0 16px',
@@ -373,7 +373,7 @@ const narrativeText = {
 };
 
 const continueReadingText = {
-  fontSize: '15px',
+  fontSize: '17px',
   margin: '0 0 24px',
   fontFamily: 'Georgia, "Times New Roman", serif',
 };
@@ -392,7 +392,7 @@ const storiesBox = {
 };
 
 const storiesBoxTitle = {
-  fontSize: '11px',
+  fontSize: '12px',
   fontWeight: '600' as const,
   letterSpacing: '2px',
   color: '#999999',
@@ -401,7 +401,7 @@ const storiesBoxTitle = {
 };
 
 const storyItem = {
-  fontSize: '15px',
+  fontSize: '17px',
   lineHeight: '1.5',
   color: '#333333',
   margin: '0 0 12px',
@@ -433,7 +433,7 @@ const eventItem = {
 };
 
 const eventDay = {
-  fontSize: '11px',
+  fontSize: '12px',
   fontWeight: '700' as const,
   letterSpacing: '2px',
   color: '#C9A96E',
@@ -442,7 +442,7 @@ const eventDay = {
 };
 
 const eventName = {
-  fontSize: '16px',
+  fontSize: '17px',
   fontWeight: '600' as const,
   color: '#1a1a1a',
   margin: '0 0 4px',
@@ -457,7 +457,7 @@ const eventNameLink = {
 };
 
 const eventWhy = {
-  fontSize: '15px',
+  fontSize: '17px',
   color: '#444444',
   lineHeight: '1.5',
   margin: '0 0 2px',
@@ -465,7 +465,7 @@ const eventWhy = {
 };
 
 const eventCategory = {
-  fontSize: '11px',
+  fontSize: '12px',
   fontWeight: '500' as const,
   letterSpacing: '1px',
   color: '#999999',
@@ -475,7 +475,7 @@ const eventCategory = {
 };
 
 const holidayNameStyle = {
-  fontSize: '22px',
+  fontSize: '24px',
   fontWeight: '600' as const,
   color: '#1a1a1a',
   margin: '0 0 4px',
@@ -483,7 +483,7 @@ const holidayNameStyle = {
 };
 
 const holidayDateStyle = {
-  fontSize: '14px',
+  fontSize: '16px',
   color: '#888888',
   margin: '0 0 20px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
@@ -507,7 +507,7 @@ const dataPointValue = {
 };
 
 const dataPointContext = {
-  fontSize: '15px',
+  fontSize: '17px',
   color: '#555555',
   lineHeight: '1.5',
   margin: '0',
@@ -515,7 +515,7 @@ const dataPointContext = {
 };
 
 const readMoreText = {
-  fontSize: '15px',
+  fontSize: '17px',
   margin: '20px 0 0',
   fontFamily: 'Georgia, "Times New Roman", serif',
 };
@@ -533,14 +533,14 @@ const footerSection = {
 };
 
 const footerText = {
-  fontSize: '12px',
+  fontSize: '13px',
   color: '#999999',
   margin: '0 0 8px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
 const footerLinks = {
-  fontSize: '12px',
+  fontSize: '13px',
   color: '#999999',
   margin: '0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
@@ -552,7 +552,7 @@ const footerLink = {
 };
 
 const copyrightText = {
-  fontSize: '11px',
+  fontSize: '12px',
   color: '#cccccc',
   textAlign: 'center' as const,
   margin: '16px 0 0',
@@ -570,7 +570,7 @@ const sponsorSection = {
 };
 
 const sponsorLabel = {
-  fontSize: '10px',
+  fontSize: '11px',
   fontWeight: '600' as const,
   letterSpacing: '3px',
   color: '#C9A96E',
@@ -588,7 +588,7 @@ const sponsorImage = {
 };
 
 const sponsorHeadline = {
-  fontSize: '20px',
+  fontSize: '22px',
   fontWeight: '700' as const,
   color: '#1a1a1a',
   margin: '0 0 8px',
@@ -596,7 +596,7 @@ const sponsorHeadline = {
 };
 
 const sponsorBody = {
-  fontSize: '16px',
+  fontSize: '17px',
   fontStyle: 'italic' as const,
   color: '#555555',
   lineHeight: '1.6',
@@ -605,7 +605,7 @@ const sponsorBody = {
 };
 
 const sponsorCta = {
-  fontSize: '14px',
+  fontSize: '15px',
   margin: '0',
   fontFamily: 'Georgia, "Times New Roman", serif',
 };

@@ -108,7 +108,7 @@ const container = {
 };
 
 const neighborhoodTitle = {
-  fontSize: '18px',
+  fontSize: '20px',
   fontWeight: '700' as const,
   letterSpacing: '0.05em',
   textTransform: 'uppercase' as const,
@@ -122,7 +122,7 @@ const citySubtitle = {
   color: '#999999',
   textTransform: 'none' as const,
   letterSpacing: '0',
-  fontSize: '14px',
+  fontSize: '15px',
 };
 
 const emptyState = {

@@ -70,7 +70,7 @@ const headlineLink = {
 };
 
 const headline = {
-  fontSize: '14px',
+  fontSize: '16px',
   fontWeight: '500' as const,
   color: '#333333',
   margin: '0 0 2px',
@@ -79,7 +79,7 @@ const headline = {
 };
 
 const categoryLine = {
-  fontSize: '10px',
+  fontSize: '11px',
   fontWeight: '600' as const,
   letterSpacing: '0.08em',
   textTransform: 'uppercase' as const,

@@ -46,7 +46,7 @@ const masthead = {
 };
 
 const dateLine = {
-  fontSize: '13px',
+  fontSize: '14px',
   color: '#666666',
   textAlign: 'center' as const,
   margin: '0 0 16px',

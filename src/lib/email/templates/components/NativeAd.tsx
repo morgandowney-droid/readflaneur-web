@@ -58,7 +58,7 @@ const headlineLink = {
 };
 
 const headline = {
-  fontSize: '14px',
+  fontSize: '16px',
   fontWeight: '500' as const,
   color: '#333333',
   margin: '0 0 4px',
@@ -67,7 +67,7 @@ const headline = {
 };
 
 const sponsor = {
-  fontSize: '11px',
+  fontSize: '12px',
   color: '#999999',
   margin: '0',
   fontFamily: 'system-ui, -apple-system, sans-serif',

@@ -109,13 +109,13 @@ export function EnrichedNeighborhoodBrief({
       </div>
 
       {/* Headline */}
-      <h3 className="font-semibold text-base mb-3 text-neutral-900">
+      <h3 className="font-semibold text-lg mb-3 text-neutral-900">
         {headline}
       </h3>
 
       {/* Original Brief Content (collapsed view) */}
       {!showSources && (
-        <div className="text-sm text-neutral-700 leading-relaxed mb-3">
+        <div className="text-base text-neutral-700 leading-relaxed mb-3">
           <p>
             {isExpanded
               ? cleanedContent

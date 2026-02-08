@@ -28,7 +28,7 @@ const container = {
 };
 
 const tempText = {
-  fontSize: '14px',
+  fontSize: '16px',
   fontWeight: '500' as const,
   color: '#333333',
   margin: '0',
@@ -43,5 +43,5 @@ const descText = {
 const timeText = {
   fontWeight: '400' as const,
   color: '#999999',
-  fontSize: '12px',
+  fontSize: '13px',
 };

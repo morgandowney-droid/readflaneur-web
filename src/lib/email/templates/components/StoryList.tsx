@@ -44,7 +44,7 @@ const divider = {
 };
 
 const category = {
-  fontSize: '10px',
+  fontSize: '11px',
   fontWeight: '600' as const,
   letterSpacing: '0.1em',
   textTransform: 'uppercase' as const,
@@ -58,7 +58,7 @@ const headlineLink = {
 };
 
 const headline = {
-  fontSize: '15px',
+  fontSize: '17px',
   fontWeight: '600' as const,
   color: '#000000',
   margin: '0 0 4px',
@@ -67,7 +67,7 @@ const headline = {
 };
 
 const preview = {
-  fontSize: '13px',
+  fontSize: '15px',
   color: '#666666',
   lineHeight: '1.4',
   margin: '0',

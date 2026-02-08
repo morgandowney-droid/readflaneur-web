@@ -50,7 +50,7 @@ const tempLine = {
 };
 
 const headline = {
-  fontSize: '15px',
+  fontSize: '17px',
   fontWeight: '600' as const,
   color: '#1a1a1a',
   margin: '0 0 6px',
@@ -59,7 +59,7 @@ const headline = {
 };
 
 const headlineAlert = {
-  fontSize: '15px',
+  fontSize: '17px',
   fontWeight: '700' as const,
   color: '#991b1b',
   margin: '0 0 6px',
@@ -68,7 +68,7 @@ const headlineAlert = {
 };
 
 const body = {
-  fontSize: '13px',
+  fontSize: '15px',
   color: '#555555',
   lineHeight: '1.5',
   margin: '0',
