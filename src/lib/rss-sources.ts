@@ -127,6 +127,109 @@ export const RSS_FEEDS: RSSFeed[] = [
 
   // TEL AVIV
   { url: 'https://www.timesofisrael.com/feed/', name: 'Times of Israel', city: 'Tel Aviv', country: 'Israel', category: 'news' },
+
+  // THE HAMPTONS
+  { url: 'https://www.27east.com/feed/', name: '27east', city: 'The Hamptons', country: 'USA', category: 'news' },
+
+  // CONNECTICUT
+  { url: 'https://www.greenwichtime.com/feed/', name: 'Greenwich Time', city: 'Connecticut', country: 'USA', category: 'news' },
+
+  // BOSTON
+  { url: 'https://boston.eater.com/rss/index.xml', name: 'Eater Boston', city: 'Boston', country: 'USA', category: 'food' },
+  { url: 'https://www.bostonmagazine.com/feed/', name: 'Boston Magazine', city: 'Boston', country: 'USA', category: 'lifestyle' },
+
+  // ATLANTA
+  { url: 'https://atlanta.eater.com/rss/index.xml', name: 'Eater Atlanta', city: 'Atlanta', country: 'USA', category: 'food' },
+
+  // PHILADELPHIA
+  { url: 'https://philly.eater.com/rss/index.xml', name: 'Eater Philly', city: 'Philadelphia', country: 'USA', category: 'food' },
+
+  // MONTREAL
+  { url: 'https://montrealgazette.com/feed/', name: 'Montreal Gazette', city: 'Montreal', country: 'Canada', category: 'news' },
+
+  // VANCOUVER
+  { url: 'https://dailyhive.com/vancouver/feed', name: 'Daily Hive Vancouver', city: 'Vancouver', country: 'Canada', category: 'news' },
+
+  // DALLAS
+  { url: 'https://dallas.culturemap.com/feed/', name: 'CultureMap Dallas', city: 'Dallas', country: 'USA', category: 'lifestyle' },
+
+  // HOUSTON
+  { url: 'https://houston.culturemap.com/feed/', name: 'CultureMap Houston', city: 'Houston', country: 'USA', category: 'lifestyle' },
+
+  // AUSTIN
+  { url: 'https://austin.culturemap.com/feed/', name: 'CultureMap Austin', city: 'Austin', country: 'USA', category: 'lifestyle' },
+
+  // DENVER
+  { url: 'https://denver.eater.com/rss/index.xml', name: 'Eater Denver', city: 'Denver', country: 'USA', category: 'food' },
+
+  // SEATTLE
+  { url: 'https://seattle.eater.com/rss/index.xml', name: 'Eater Seattle', city: 'Seattle', country: 'USA', category: 'food' },
+
+  // MEXICO CITY
+  { url: 'https://mexiconewsdaily.com/feed/', name: 'Mexico News Daily', city: 'Mexico City', country: 'Mexico', category: 'news' },
+
+  // DUBLIN
+  { url: 'https://www.thejournal.ie/feed/', name: 'The Journal', city: 'Dublin', country: 'Ireland', category: 'news' },
+
+  // MONACO
+  { url: 'https://monacolife.net/feed/', name: 'Monaco Life', city: 'Monaco', country: 'Monaco', category: 'news' },
+
+  // MUNICH
+  { url: 'https://municheye.com/feed/', name: 'Munich Eye', city: 'Munich', country: 'Germany', category: 'news' },
+
+  // OSLO
+  { url: 'https://www.thelocal.no/feed/', name: 'The Local Norway', city: 'Oslo', country: 'Norway', category: 'news' },
+
+  // BRUSSELS
+  { url: 'https://www.brusselstimes.com/feed/', name: 'Brussels Times', city: 'Brussels', country: 'Belgium', category: 'news' },
+
+  // ZURICH
+  { url: 'https://www.thelocal.ch/feed/', name: 'The Local Switzerland', city: 'Zurich', country: 'Switzerland', category: 'news' },
+
+  // ROME
+  { url: 'https://www.wantedinrome.com/feed/', name: 'Wanted in Rome', city: 'Rome', country: 'Italy', category: 'news' },
+
+  // MADRID
+  { url: 'https://madridmetropolitan.com/feed/', name: 'Madrid Metropolitan', city: 'Madrid', country: 'Spain', category: 'news' },
+
+  // ATHENS
+  { url: 'https://www.ekathimerini.com/rss/', name: 'Kathimerini English', city: 'Athens', country: 'Greece', category: 'news' },
+
+  // SEOUL
+  { url: 'https://www.koreaherald.com/rss/', name: 'Korea Herald', city: 'Seoul', country: 'South Korea', category: 'news' },
+
+  // BANGKOK
+  { url: 'https://www.bangkokpost.com/rss/', name: 'Bangkok Post', city: 'Bangkok', country: 'Thailand', category: 'news' },
+
+  // JAKARTA
+  { url: 'https://www.thejakartapost.com/feed/', name: 'Jakarta Post', city: 'Jakarta', country: 'Indonesia', category: 'news' },
+
+  // AUCKLAND
+  { url: 'https://concreteplayground.com/auckland/feed', name: 'Concrete Playground Auckland', city: 'Auckland', country: 'New Zealand', category: 'lifestyle' },
+
+  // CAPE TOWN
+  { url: 'https://www.dailymaverick.co.za/feed/', name: 'Daily Maverick', city: 'Cape Town', country: 'South Africa', category: 'news' },
+
+  // RIYADH
+  { url: 'https://www.arabnews.com/rss.xml', name: 'Arab News', city: 'Riyadh', country: 'Saudi Arabia', category: 'news' },
+
+  // CAIRO
+  { url: 'https://www.egyptindependent.com/feed/', name: 'Egypt Independent', city: 'Cairo', country: 'Egypt', category: 'news' },
+
+  // SÃO PAULO
+  { url: 'https://www.riotimesonline.com/feed/', name: 'Rio Times Brazil', city: 'São Paulo', country: 'Brazil', category: 'news' },
+
+  // RIO DE JANEIRO
+  { url: 'https://www.riotimesonline.com/category/rio-de-janeiro/feed/', name: 'Rio Times', city: 'Rio de Janeiro', country: 'Brazil', category: 'news' },
+
+  // BUENOS AIRES
+  { url: 'https://www.batimes.com.ar/feed/', name: 'Buenos Aires Times', city: 'Buenos Aires', country: 'Argentina', category: 'news' },
+
+  // SANTIAGO
+  { url: 'https://santiagotimes.cl/feed/', name: 'Santiago Times', city: 'Santiago', country: 'Chile', category: 'news' },
+
+  // MEDELLÍN
+  { url: 'https://colombiareports.com/feed/', name: 'Colombia Reports', city: 'Medellín', country: 'Colombia', category: 'news' },
 ];
 
 /**
