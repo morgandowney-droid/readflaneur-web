@@ -248,6 +248,11 @@ export function resolveSearchQuery<T extends Searchable>(
     results.push({ item, matchType, score, matchDetail });
   };
 
+  // Pre-check: does the query match a country/region/state alias?
+  // If so, suppress loose substring matches (name-contains, city-contains)
+  // to avoid "US" matching "Justicia" or "Bogenhausen"
+  const hasAliasMatch = !!(findCountryForQuery(query) || findRegionForQuery(query) || findStateForQuery(query));
+
   // 1-3. Name matches
   for (const n of neighborhoods) {
     const nameLower = n.name.toLowerCase();
@@ -255,7 +260,7 @@ export function resolveSearchQuery<T extends Searchable>(
       addResult(n, 'name', 1);
     } else if (nameLower.startsWith(lower)) {
       addResult(n, 'name', 2);
-    } else if (nameLower.includes(lower)) {
+    } else if (!hasAliasMatch && nameLower.includes(lower)) {
       addResult(n, 'name', 3);
     }
   }
@@ -267,7 +272,7 @@ export function resolveSearchQuery<T extends Searchable>(
       addResult(n, 'city', 4);
     } else if (cityLower.startsWith(lower)) {
       addResult(n, 'city', 5);
-    } else if (cityLower.includes(lower)) {
+    } else if (!hasAliasMatch && cityLower.includes(lower)) {
       addResult(n, 'city', 5.5);
     }
   }
