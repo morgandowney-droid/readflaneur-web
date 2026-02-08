@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import Stripe from 'stripe';
 import { getBookingPrice } from '@/lib/PricingService';
 
 const BOOKING_LEAD_HOURS = 48;
@@ -179,36 +178,42 @@ export async function POST(request: NextRequest) {
       timeZone: 'UTC',
     });
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      typescript: true,
-      maxNetworkRetries: 3,
-      timeout: 20000,
-    });
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      customer_email: customerEmail,
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: `Flâneur — ${neighborhood.name}, ${neighborhood.city} — ${formattedDate}`,
-              description: `${displayName} placement`,
-            },
-            unit_amount: pricing.priceCents,
-          },
-          quantity: 1,
-        },
-      ],
-      metadata: {
-        ad_id: ad.id,
-        neighborhood_id: neighborhoodId,
-        placement_type: placementType,
-        date,
+    const productName = `Flâneur — ${neighborhood.name}, ${neighborhood.city} — ${formattedDate}`;
+    const params = new URLSearchParams();
+    params.append('mode', 'payment');
+    params.append('customer_email', customerEmail);
+    params.append('line_items[0][price_data][currency]', 'usd');
+    params.append('line_items[0][price_data][product_data][name]', productName);
+    params.append('line_items[0][price_data][product_data][description]', `${displayName} placement`);
+    params.append('line_items[0][price_data][unit_amount]', String(pricing.priceCents));
+    params.append('line_items[0][quantity]', '1');
+    params.append('metadata[ad_id]', ad.id);
+    params.append('metadata[neighborhood_id]', neighborhoodId);
+    params.append('metadata[placement_type]', placementType);
+    params.append('metadata[date]', date);
+    params.append('success_url', `${origin}/advertise/success?session_id={CHECKOUT_SESSION_ID}`);
+    params.append('cancel_url', `${origin}/advertise`);
+
+    const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      success_url: `${origin}/advertise/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/advertise`,
+      body: params.toString(),
     });
+
+    const session = await stripeRes.json();
+
+    if (!stripeRes.ok) {
+      console.error('Stripe session creation failed:', session);
+      // Clean up the pending_payment row
+      await supabase.from('ads').delete().eq('id', ad.id);
+      return NextResponse.json(
+        { error: 'Payment setup failed', details: session.error?.message },
+        { status: 502 }
+      );
+    }
 
     // Update ad row with stripe session ID
     await supabase
