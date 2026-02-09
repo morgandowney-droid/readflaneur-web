@@ -3,6 +3,30 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-09
+
+**Email Temperature Fixes:**
+- Sunday Edition data point: °C for non-US countries, °F only for USA (based on `neighborhoods.country`)
+- Fixed Gemini prompt for `environment` data point to explicitly specify unit and make JSON example consistent (prevents Gemini from using wrong unit)
+- Daily Brief: added "The Temperature" data point section (centered 36px bold value + weather description) between neighborhood title and weather story
+- Uses existing `useFahrenheit` flag from weather data - no extra API call
+
+**Article Source Attribution & Quality:**
+- RSS articles now save original source to `article_sources` table immediately on creation (sync-news cron)
+- `SourceAttribution` component: falls back to parsing `editor_notes` ("Source: Name - URL") for existing articles without `article_sources` entries
+- Sync-news prompt: Claude now replaces first-person entity language ("we/us/our") with actual entity name (e.g., "We are seeking" -> "Bukowskis is seeking")
+- Added "Never use em dashes" to sync-news system prompt
+
+**Citation Artifact Cleanup:**
+- Gemini enrichment (`brief-enricher-gemini.ts`): strips `.( ` citation artifacts, numbered citations `.(1)`, empty parens, orphaned `(`
+- Grok brief generation (`grok.ts`): same cleanup applied to response text
+- Fixes ".(" and odd parentheses appearing at end of paragraphs in enriched articles
+
+**Bug Fix: ArticleReactions Unhandled Rejection:**
+- `fetchReactions()` had no try/catch around `fetch()` call
+- On iOS (WebKit), network drops or ad blockers throw `TypeError: Load failed` as unhandled rejection
+- Wrapped in try/catch - reactions are non-critical UI, errors silently ignored
+
 ## 2026-02-08
 
 **Advertise Page — Interactive Navigation & Polish:**

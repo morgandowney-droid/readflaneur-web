@@ -12,9 +12,9 @@
 - **Sentry:** https://sentry.io/organizations/flaneur-vk/issues/
 - **200 neighborhoods** across 73 cities, 42 countries (the "Flaneur 200")
 
-## Last Updated: 2026-02-08
+## Last Updated: 2026-02-09
 
-Recent work: Advertise page interactive navigation (clickable strategy recommendations, example neighborhoods, Sunday pricing fix), RSS sources 100% coverage, enhanced search.
+Recent work: Temperature unit fix (°C for non-US, °F for USA), Daily Brief temperature section, RSS source attribution, citation artifact cleanup, article reactions error handling.
 
 ## Key Patterns
 
@@ -37,6 +37,7 @@ Recent work: Advertise page interactive navigation (clickable strategy recommend
 - **Sender:** `src/lib/email/sender.ts` — React Email via Resend
 - **Sunday Edition:** `src/lib/weekly-brief-service.ts` — Gemini + Grok
 - **Weather:** Pure logic in `src/lib/email/weather-story.ts` (no LLM)
+- **Temperature:** Daily Brief has "The Temperature" data point section (centered, 36px). Sunday Edition data point uses country-aware °C/°F.
 - **US neighborhoods:** °F primary. Determined by `neighborhoods.country`
 - **Instant resend:** `src/lib/email/instant-resend.ts` (3/day limit)
 - **Layout:** Primary stories use compact `StoryList variant="primary"` (19px/16px), no hero image
