@@ -43,12 +43,15 @@ export async function GET(request: NextRequest) {
 
   // Transform results with article URLs
   const results = (articles || []).map((article: any) => {
-    const neighborhood = article.neighborhood?.[0];
+    // Supabase returns a single object for foreign key relations, not an array
+    const neighborhood = Array.isArray(article.neighborhood)
+      ? article.neighborhood[0]
+      : article.neighborhood;
     let url = '#';
 
     if (neighborhood) {
       const citySlug = neighborhood.city.toLowerCase().replace(/\s+/g, '-');
-      const neighborhoodSlug = neighborhood.name.toLowerCase().replace(/\s+/g, '-');
+      const neighborhoodSlug = neighborhood.id.split('-').slice(1).join('-');
       url = `/${citySlug}/${neighborhoodSlug}/${article.slug || article.id}`;
     }
 
