@@ -35,7 +35,7 @@ Recent work: On-demand Sunday Edition for secondary neighborhoods (two-step conf
 - **Scheduler:** `src/lib/email/scheduler.ts` — 7 AM local time per recipient
 - **Assembler:** `src/lib/email/assembler.ts` — articles + weather, dateline in category labels
 - **Sender:** `src/lib/email/sender.ts` — React Email via Resend
-- **Sunday Edition:** `src/lib/weekly-brief-service.ts` — Gemini + Grok. Sections: The Letter, The Next Few Days, That Time of Year, Your Other Editions
+- **Sunday Edition:** `src/lib/weekly-brief-service.ts` — Gemini + Grok. Sections: The Letter, The Next Few Days, That Time of Year, Data Point, Your Other Editions
 - **Weather:** Pure logic in `src/lib/email/weather-story.ts` (no LLM)
 - **Hero block:** `{neighborhood} · {city}` (12px tracked caps) + temperature (48px Playfair Display) + weather description - merged as one centered visual thought, no label
 - **Temperature:** Single-unit: °F for USA, °C for everyone else. Sunday Edition data point same logic.
@@ -46,6 +46,7 @@ Recent work: On-demand Sunday Edition for secondary neighborhoods (two-step conf
 - **Section dividers:** `SectionDivider` component - centered wide-tracked uppercase `{name} · {city}` + 32px gold accent rule (`rgba(120, 53, 15, 0.4)`)
 - **Truncation:** `truncateAtWord()` helper (120 chars) + CSS `-webkit-line-clamp: 2` for preview text
 - **Typography:** Playfair Display via Google Fonts `@import` (Apple Mail renders; Gmail falls back to Georgia serif). All headlines, masthead, temperature use serif.
+- **Masthead:** "FLANEUR" is a clickable link to `readflaneur.com` in both Daily Brief (`Header.tsx`) and Sunday Edition templates. Styled to match surrounding text (no underline).
 - **Ad fallback:** `src/lib/email/ads.ts` - paid ads first, then random house ad from `house_ads` table. NativeAd supports body text, centered layout.
 - **Deduplication:** assembler.ts tracks seen article URLs in a Set - same story never appears in both primary and satellite sections
 - **On-demand secondary editions:** `src/app/api/email/sunday-edition-request/route.ts` - two-step confirmation (prevents email client prefetch). Template shows "Your Other Editions" links for secondary neighborhoods. Dedup index: `(recipient_id, neighborhood_id, week_date)`. Rate limit: 5 on-demand sends per week. On-demand emails do NOT include secondary neighborhood buttons (no recursion).
