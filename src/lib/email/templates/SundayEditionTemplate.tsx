@@ -80,6 +80,19 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
           <Hr style={ruleThick} />
           <Hr style={ruleThin} />
 
+          {/* Data Point (Weather) — hero position, like Daily Brief */}
+          {content.dataPoint.value !== 'Data unavailable this week' && (
+            <Section style={dataPointSection}>
+              <Link href={content.dataPoint.type === 'environment' ? weatherSearchUrl : '#'} style={dataPointLink}>
+                <Text style={dataPointLabel}>{content.dataPoint.label.toUpperCase()}</Text>
+                <Text style={dataPointValue}>{content.dataPoint.value}</Text>
+                {content.dataPoint.context && (
+                  <Text style={dataPointContext}>{content.dataPoint.context}</Text>
+                )}
+              </Link>
+            </Section>
+          )}
+
           {/* Hero Image */}
           {content.imageUrl && (
             <Section style={heroSection}>
@@ -209,23 +222,6 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
                     </Section>
                   );
                 })}
-              </Section>
-
-              <Hr style={divider} />
-            </>
-          )}
-
-          {/* Section 3: The Data Point */}
-          {content.dataPoint.value !== 'Data unavailable this week' && (
-            <>
-              <Section style={dataPointSection}>
-                <Link href={content.dataPoint.type === 'environment' ? weatherSearchUrl : '#'} style={dataPointLink}>
-                  <Text style={dataPointLabel}>{content.dataPoint.label.toUpperCase()}</Text>
-                  <Text style={dataPointValue}>{content.dataPoint.value}</Text>
-                  {content.dataPoint.context && (
-                    <Text style={dataPointContext}>{content.dataPoint.context}</Text>
-                  )}
-                </Link>
               </Section>
 
               <Hr style={divider} />
