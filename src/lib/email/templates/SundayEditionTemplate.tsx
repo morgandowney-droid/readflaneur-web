@@ -34,6 +34,9 @@ export interface SundayEditionContent {
   articleUrl: string | null;
   unsubscribeUrl: string;
   preferencesUrl: string;
+  secondaryNeighborhoods?: { id: string; name: string; cityName: string }[];
+  requestBaseUrl?: string;
+  requestToken?: string;
 }
 
 export function SundayEditionTemplate(content: SundayEditionContent) {
@@ -222,6 +225,28 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
                     </Section>
                   );
                 })}
+              </Section>
+
+              <Hr style={divider} />
+            </>
+          )}
+
+          {/* Your Other Editions */}
+          {content.secondaryNeighborhoods && content.secondaryNeighborhoods.length > 0 && content.requestBaseUrl && content.requestToken && (
+            <>
+              <Section style={otherEditionsSection}>
+                <Text style={sectionLabel}>YOUR OTHER EDITIONS</Text>
+                <Text style={otherEditionsSubtitle}>Request the Sunday Edition for your other neighborhoods.</Text>
+                {content.secondaryNeighborhoods.map((hood, i) => (
+                  <Text key={i} style={otherEditionItem}>
+                    <Link
+                      href={`${content.requestBaseUrl}?token=${content.requestToken}&neighborhood=${hood.id}`}
+                      style={otherEditionLink}
+                    >
+                      {hood.name}, {hood.cityName} &rarr;
+                    </Link>
+                  </Text>
+                ))}
               </Section>
 
               <Hr style={divider} />
@@ -584,6 +609,33 @@ const dataPointContext = {
   lineHeight: '1.6',
   margin: '0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+// ─── Other Editions ───
+
+const otherEditionsSection = {
+  padding: '28px 0',
+  textAlign: 'center' as const,
+};
+
+const otherEditionsSubtitle = {
+  fontSize: '14px',
+  color: '#999999',
+  margin: '0 0 16px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const otherEditionItem = {
+  fontSize: '16px',
+  margin: '0 0 10px',
+  textAlign: 'center' as const,
+  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
+};
+
+const otherEditionLink = {
+  color: '#C9A96E',
+  textDecoration: 'none' as const,
+  fontWeight: '600' as const,
 };
 
 // ─── Footer ───

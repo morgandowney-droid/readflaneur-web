@@ -89,13 +89,33 @@ export async function GET(request: Request) {
       });
     }
 
-    // Dedup: skip anyone who already got a Sunday edition this week
+    // Dedup: skip anyone who already got a Sunday edition for their primary neighborhood this week
     const { data: alreadySent } = await supabase
       .from('weekly_brief_sends')
-      .select('recipient_id')
+      .select('recipient_id, neighborhood_id')
       .eq('week_date', weekDate);
 
-    const sentSet = new Set((alreadySent || []).map(s => s.recipient_id));
+    const sentSet = new Set(
+      (alreadySent || []).map(s => `${s.recipient_id}:${s.neighborhood_id}`)
+    );
+
+    // Batch fetch all neighborhood names for secondary neighborhood links
+    const allSubscribedIds = new Set<string>();
+    for (const r of recipients) {
+      for (const nid of r.subscribedNeighborhoodIds) {
+        allSubscribedIds.add(nid);
+      }
+    }
+    const neighborhoodNameMap = new Map<string, { name: string; city: string }>();
+    if (allSubscribedIds.size > 0) {
+      const { data: allHoods } = await supabase
+        .from('neighborhoods')
+        .select('id, name, city')
+        .in('id', Array.from(allSubscribedIds));
+      for (const h of (allHoods || [])) {
+        neighborhoodNameMap.set(h.id, { name: h.name, city: h.city });
+      }
+    }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://readflaneur.com';
 
@@ -104,9 +124,12 @@ export async function GET(request: Request) {
     for (const recipient of recipients) {
       if (emailsSent >= MAX_EMAILS_PER_RUN) break;
 
-      if (!testEmail && sentSet.has(recipient.id)) {
+      // Get primary neighborhood ID early for dedup check
+      const primaryId = recipient.primaryNeighborhoodId || recipient.subscribedNeighborhoodIds[0];
+
+      if (!testEmail && primaryId && sentSet.has(`${recipient.id}:${primaryId}`)) {
         results.emails_skipped++;
-        results.errors.push(`skip:dedup:${recipient.id}`);
+        results.errors.push(`skip:dedup:${recipient.id}:${primaryId}`);
         continue;
       }
 
@@ -126,7 +149,6 @@ export async function GET(request: Request) {
       }
 
       // Get the primary neighborhood's weekly brief
-      const primaryId = recipient.primaryNeighborhoodId || recipient.subscribedNeighborhoodIds[0];
       if (!primaryId) {
         results.emails_skipped++;
         results.errors.push(`skip:no_primary_id:${recipient.id}`);
@@ -219,6 +241,15 @@ export async function GET(request: Request) {
         articleUrl,
         unsubscribeUrl: `${appUrl}/api/email/unsubscribe?token=${recipient.unsubscribeToken}`,
         preferencesUrl: `${appUrl}/email/preferences?token=${recipient.unsubscribeToken}`,
+        secondaryNeighborhoods: (recipient.subscribedNeighborhoodIds as string[])
+          .filter((nid: string) => nid !== primaryId)
+          .map((nid: string) => {
+            const info = neighborhoodNameMap.get(nid);
+            return info ? { id: nid, name: info.name, cityName: info.city } : null;
+          })
+          .filter((x: { id: string; name: string; cityName: string } | null): x is { id: string; name: string; cityName: string } => x !== null),
+        requestBaseUrl: `${appUrl}/api/email/sunday-edition-request`,
+        requestToken: recipient.unsubscribeToken,
       };
 
       // Resolve sponsor ad for this neighborhood
