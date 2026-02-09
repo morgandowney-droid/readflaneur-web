@@ -13,8 +13,10 @@
 - Single-unit temperature: °F for USA, °C for everyone else (no more dual "72°F / 22°C" format)
 - Removed WeatherWidget entirely (redundant with temperature data point); WeatherStoryCard now editorial only (headline + body, no temp line)
 - Weather story card: stripped blue border + grey background, now clean border-bottom only; alert variant keeps red left border without background
-- Smart geography in `SectionDivider`: 3-rule system - (1) redundancy: hide city if neighborhood name contains it, (2) familiarity: hide city if same as subscriber's primary city, (3) foreign: show city only when abroad (e.g., "MAYFAIR - London" for a NYC subscriber)
-- `SectionDivider` component: centered wide-tracked uppercase label + short 32px gold accent rule (`rgba(120, 53, 15, 0.4)`) below, used by satellite sections. Primary section uses inline hero block instead.
+- Section headers: always display `{neighborhood} · {city}` format (e.g., "TRIBECA · NEW YORK", "GREENWICH BACKCOUNTRY · CONNECTICUT"). City name rendered in muted `#b0b0b0`. No smart geography hiding - consistency over cleverness.
+- `SectionDivider` component: centered wide-tracked uppercase label + short 32px gold accent rule (`rgba(120, 53, 15, 0.4)`) below, used by satellite sections. Primary section uses inline hero block with same `{name} · {city}` format.
+- Native ad placement: moved from between stories 2-3 to between stories 1-2 for earlier visibility
+- House ad fallback: when no paid ads are booked, `ads.ts` pulls a random house ad from `house_ads` table for the native slot. NativeAd component now supports body text, fully centered layout (eyebrow, headline, body, sponsor).
 - Word-boundary truncation: `truncateAtWord()` helper prevents mid-word cuts in preview text (120 char limit) + CSS `-webkit-line-clamp: 2` for visual truncation in Apple Mail
 - Story headlines: Playfair Display serif across StoryList, SatelliteSection, NativeAd, HeroStory, WeatherStoryCard
 - Metadata: 10px with 0.15em letter-spacing, lightened to #b0b0b0
