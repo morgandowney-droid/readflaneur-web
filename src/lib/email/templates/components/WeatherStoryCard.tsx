@@ -10,11 +10,6 @@ export function WeatherStoryCard({ story }: WeatherStoryCardProps) {
 
   return (
     <Section style={isAlert ? containerAlert : container}>
-      <Text style={tempLine}>
-        {story.useFahrenheit
-          ? `${story.temperatureF}°F / ${story.temperatureC}°C`
-          : `${story.temperatureC}°C / ${story.temperatureF}°F`}
-      </Text>
       <Text style={isAlert ? headlineAlert : headline}>
         {story.headline}
       </Text>
@@ -36,14 +31,6 @@ const containerAlert = {
   marginBottom: '16px',
   borderBottom: '1px solid #eeeeee',
   borderLeft: '3px solid #dc2626',
-};
-
-const tempLine = {
-  fontSize: '13px',
-  fontWeight: '300' as const,
-  color: '#aaaaaa',
-  margin: '0 0 8px',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
 const headline = {

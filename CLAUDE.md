@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-09
 
-Recent work: Temperature unit fix (°C for non-US, °F for USA), Daily Brief temperature section, RSS source attribution, citation artifact cleanup, article reactions error handling.
+Recent work: "Quiet Luxury" email visual overhaul (Playfair Display serif, minimalist weather, magazine spacing), article deduplication across primary/satellite sections.
 
 ## Key Patterns
 
@@ -41,6 +41,8 @@ Recent work: Temperature unit fix (°C for non-US, °F for USA), Daily Brief tem
 - **US neighborhoods:** °F primary. Determined by `neighborhoods.country`
 - **Instant resend:** `src/lib/email/instant-resend.ts` (3/day limit)
 - **Layout:** Primary stories use compact `StoryList variant="primary"` (19px/16px), no hero image
+- **Typography:** Playfair Display via Google Fonts `@import` (Apple Mail renders; Gmail falls back to Georgia serif). All headlines, masthead, temperature use serif.
+- **Deduplication:** assembler.ts tracks seen article URLs in a Set - same story never appears in both primary and satellite sections
 
 ### Ad System
 - **Pricing:** `src/config/ad-tiers.ts`, `src/lib/PricingService.ts` — flat per-day rates (Tier 1: $500/$750, Tier 2: $200/$300, Tier 3: $100/$150)

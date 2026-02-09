@@ -5,6 +5,20 @@
 
 ## 2026-02-09
 
+**Daily Brief Email - "Quiet Luxury" Visual Overhaul:**
+- Replaced system sans-serif fonts with Playfair Display (Google Fonts `@import`) + Georgia/Times New Roman serif fallback for all headlines, masthead, temperature display, and section titles
+- Masthead: 28px Playfair Display with `0.25em` letter-spacing (was 32px system sans-serif)
+- Date line: smaller (12px), lighter (#b0b0b0), wider tracking
+- Temperature section: removed border-bottom, increased padding to 32px, Playfair Display for value
+- Weather widget: removed grey #f8f8f8 background, centered minimalist layout, lighter font weight (300)
+- Weather story card: stripped blue border + grey background, now clean border-bottom only; alert variant keeps red left border without background
+- Story headlines: Playfair Display serif across StoryList, SatelliteSection, NativeAd, HeroStory, WeatherStoryCard
+- Metadata: 10px with 0.15em letter-spacing, lightened to #b0b0b0
+- Preview text: #555555 with lineHeight 1.6 (was #666, 1.4)
+- Story spacing: 8px row gap (was 4px), 20px divider margin (was 12px)
+- Satellite section breaks: stronger divider (#e5e5e5) with 32px top margin for magazine section feel
+- Article deduplication: same article URL no longer appears in both primary and satellite sections (URL Set tracking in assembler.ts)
+
 **Email Temperature Fixes:**
 - Sunday Edition data point: °C for non-US countries, °F only for USA (based on `neighborhoods.country`)
 - Fixed Gemini prompt for `environment` data point to explicitly specify unit and make JSON example consistent (prevents Gemini from using wrong unit)

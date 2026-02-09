@@ -9,12 +9,12 @@ import {
 } from '@react-email/components';
 import { DailyBriefContent } from '../types';
 import { Header } from './components/Header';
-import { WeatherWidget } from './components/WeatherWidget';
 import { WeatherStoryCard } from './components/WeatherStoryCard';
 import { HeroStory } from './components/HeroStory';
 import { StoryList } from './components/StoryList';
 import { NativeAd } from './components/NativeAd';
 import { SatelliteSection } from './components/SatelliteSection';
+import { SectionDivider } from './components/SectionDivider';
 import { Footer } from './components/Footer';
 
 export function DailyBriefTemplate(content: DailyBriefContent) {
@@ -39,11 +39,7 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
 
           {primary && (
             <Section>
-              {/* Neighborhood title */}
-              <Text style={neighborhoodTitle}>
-                {primary.neighborhoodName}
-                <span style={citySubtitle}> &middot; {primary.cityName}</span>
-              </Text>
+              <SectionDivider name={primary.neighborhoodName} city={primary.cityName} />
 
               {/* The Temperature data point */}
               {(primary.weather || primary.weatherStory) && (() => {
@@ -55,22 +51,16 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
                 const tempValue = useF ? `${Math.round(tempF!)}°F` : `${Math.round(tempC!)}°C`;
                 return (
                   <Section style={tempSection}>
-                    <Text style={tempLabel}>THE TEMPERATURE</Text>
                     <Text style={tempValue_}>{tempValue}</Text>
                     {desc && <Text style={tempContext}>{desc}</Text>}
                   </Section>
                 );
               })()}
 
-              {/* Weather: story card replaces widget when available */}
-              {primary.weatherStory ? (
+              {/* Weather story card (editorial headline + body) */}
+              {primary.weatherStory && (
                 <WeatherStoryCard story={primary.weatherStory} />
-              ) : primary.weather ? (
-                <WeatherWidget
-                  weather={primary.weather}
-                  neighborhoodName={primary.neighborhoodName}
-                />
-              ) : null}
+              )}
 
               {/* First two stories (compact primary layout) */}
               {primary.stories.length > 0 && (
@@ -121,37 +111,10 @@ const container = {
   padding: '0 16px',
 };
 
-const neighborhoodTitle = {
-  fontSize: '22px',
-  fontWeight: '700' as const,
-  letterSpacing: '0.05em',
-  textTransform: 'uppercase' as const,
-  color: '#000000',
-  margin: '0 0 12px',
-  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
-};
-
-const citySubtitle = {
-  fontWeight: '400' as const,
-  color: '#b0b0b0',
-  textTransform: 'none' as const,
-  letterSpacing: '0',
-  fontSize: '15px',
-};
-
 const tempSection = {
   padding: '32px 0',
   textAlign: 'center' as const,
   marginBottom: '16px',
-};
-
-const tempLabel = {
-  fontSize: '10px',
-  letterSpacing: '0.2em',
-  textTransform: 'uppercase' as const,
-  color: '#999999',
-  margin: '0 0 4px',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
 const tempValue_ = {
