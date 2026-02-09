@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-09
 
-Recent work: On-demand Sunday Edition for secondary neighborhoods (two-step confirmation flow, "Your Other Editions" section in email template).
+Recent work: Cinematic dark mode hero section (radial gradient texture, extreme letterspacing tagline, staggered fade-in animations).
 
 ## Key Patterns
 
@@ -124,6 +124,13 @@ JSON examples override prose instructions. If prompt says "Don't use AQI" but ex
 
 ### No Em Dashes
 Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashes look AI-generated.
+
+### Homepage Hero
+- **Background:** `bg-black` base + `radial-gradient(ellipse at top, rgba(30,30,30,1), rgba(0,0,0,1) 70%)` overlay for tonal depth (CSS-only, no image asset)
+- **FLANEUR:** `text-6xl md:text-7xl lg:text-8xl` Cormorant Garamond serif, `tracking-[0.3em]`
+- **Tagline:** `tracking-[0.5em] uppercase`, `text-sm md:text-base`, neutral-400
+- **Animations:** Staggered `heroFadeIn` keyframes in `globals.css` - 1.5s ease-out with 0.3s delays between elements (logo, tagline, stats, rule)
+- **Padding:** `py-28 md:py-36 lg:py-48` for cinematic breathing room
 
 ### Font Sizes (17px iOS Baseline)
 - Body: 17px, Headlines: 20-22px, Metadata: 10-12px, Masthead: 30px
