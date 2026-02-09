@@ -31,16 +31,16 @@ export function ComboNeighborhoodCards({ components, citySlug }: ComboNeighborho
         return (
           <div
             key={component.id}
-            className="flex-shrink-0 bg-neutral-50 border border-neutral-200 rounded-lg p-3 min-w-[140px]"
+            className="flex-shrink-0 bg-surface border border-white/[0.08] rounded-lg p-3 min-w-[140px]"
           >
-            <p className="font-medium text-sm text-neutral-800 mb-2 text-center">
+            <p className="font-medium text-sm text-neutral-200 mb-2 text-center">
               {component.name}
             </p>
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-2 text-[10px] tracking-widest uppercase">
                 <a
                   href={`/${citySlug}/${slug}/guides`}
-                  className="text-neutral-500 hover:text-black transition-colors"
+                  className="text-neutral-500 hover:text-white transition-colors"
                 >
                   Places
                 </a>
@@ -48,7 +48,7 @@ export function ComboNeighborhoodCards({ components, citySlug }: ComboNeighborho
                   href={mapUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-neutral-500 hover:text-black transition-colors"
+                  className="text-neutral-500 hover:text-white transition-colors"
                 >
                   Map
                 </a>
@@ -57,7 +57,7 @@ export function ComboNeighborhoodCards({ components, citySlug }: ComboNeighborho
                 href={wikiUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[10px] tracking-widest uppercase text-neutral-500 hover:text-black transition-colors"
+                className="text-[10px] tracking-widest uppercase text-neutral-500 hover:text-white transition-colors"
               >
                 Wiki
               </a>

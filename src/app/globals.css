@@ -1,14 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #050505;
+  --foreground: #e5e5e5;
   --font-cormorant: 'Cormorant Garamond', serif;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-canvas: #050505;
+  --color-surface: #121212;
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-serif: var(--font-cormorant);
   --font-mono: var(--font-geist-mono);
@@ -32,23 +34,23 @@ main {
 /* Luxury button styles */
 .btn-primary {
   @apply inline-flex items-center justify-center px-8 py-3 text-sm tracking-[0.2em] uppercase font-medium rounded-lg;
-  @apply bg-neutral-900 text-white border border-neutral-900;
+  @apply bg-white text-neutral-900 border border-white;
   @apply transition-all duration-300 ease-out;
-  @apply hover:bg-white hover:text-neutral-900;
+  @apply hover:bg-amber-600 hover:text-white hover:border-amber-600;
 }
 
 .btn-secondary {
   @apply inline-flex items-center justify-center px-8 py-3 text-sm tracking-[0.2em] uppercase font-medium rounded-lg;
-  @apply bg-white text-neutral-900 border border-neutral-900;
+  @apply bg-transparent text-white border border-white/20;
   @apply transition-all duration-300 ease-out;
-  @apply hover:bg-neutral-900 hover:text-white;
+  @apply hover:bg-white hover:text-neutral-900;
 }
 
 .btn-ghost {
   @apply inline-flex items-center justify-center px-6 py-2 text-sm tracking-[0.15em] uppercase rounded-lg;
-  @apply text-neutral-600 border border-transparent;
+  @apply text-neutral-400 border border-transparent;
   @apply transition-all duration-300 ease-out;
-  @apply hover:text-neutral-900;
+  @apply hover:text-white;
 }
 
 /* Serif display font utility */
@@ -63,7 +65,7 @@ a {
 
 /* Custom selection color */
 ::selection {
-  background-color: #171717;
+  background-color: #d97706;
   color: #ffffff;
 }
 
@@ -123,5 +125,5 @@ a {
 /* Smooth scrolling and overscroll background */
 html {
   scroll-behavior: smooth;
-  background-color: #ffffff;
+  background-color: #050505;
 }

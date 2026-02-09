@@ -146,10 +146,10 @@ export function EnrichedNeighborhoodBrief({
                 {category.stories.map((story, storyIdx) => (
                   <div
                     key={storyIdx}
-                    className="bg-white/60 rounded-md p-3 border border-amber-100"
+                    className="bg-white/5 rounded-md p-3 border border-amber-900/30"
                   >
                     {/* Entity name */}
-                    <div className="font-medium text-sm text-neutral-900 mb-1">
+                    <div className="font-medium text-sm text-neutral-100 mb-1">
                       {story.entity}
                     </div>
 

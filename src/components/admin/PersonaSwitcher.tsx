@@ -134,8 +134,8 @@ export function PersonaSwitcher() {
       {/* Floating Switcher Button */}
       <div className="fixed bottom-4 right-4 z-50">
         {isOpen && (
-          <div className="absolute bottom-12 right-0 w-64 bg-white rounded-lg shadow-xl border border-neutral-200 overflow-hidden mb-2">
-            <div className="p-3 border-b border-neutral-100 bg-neutral-50">
+          <div className="absolute bottom-12 right-0 w-64 bg-surface rounded-lg shadow-xl border border-white/[0.08] overflow-hidden mb-2">
+            <div className="p-3 border-b border-white/[0.08] bg-canvas">
               <h3 className="text-xs font-medium uppercase tracking-wide text-neutral-500">
                 View As Persona
               </h3>
@@ -147,13 +147,13 @@ export function PersonaSwitcher() {
                   onClick={() => switchPersona(persona.id)}
                   className={`w-full text-left px-3 py-2 rounded-md flex items-center gap-3 transition-colors ${
                     currentPersona === persona.id
-                      ? 'bg-neutral-100'
-                      : 'hover:bg-neutral-50'
+                      ? 'bg-white/10'
+                      : 'hover:bg-white/5'
                   }`}
                 >
                   <span className="text-xl">{persona.icon}</span>
                   <div>
-                    <div className="text-sm font-medium">{persona.label}</div>
+                    <div className="text-sm font-medium text-neutral-100">{persona.label}</div>
                     <div className="text-xs text-neutral-500">{persona.description}</div>
                   </div>
                   {currentPersona === persona.id && (
@@ -162,7 +162,7 @@ export function PersonaSwitcher() {
                 </button>
               ))}
             </div>
-            <div className="p-2 border-t border-neutral-100 bg-neutral-50">
+            <div className="p-2 border-t border-white/[0.08] bg-canvas">
               <p className="text-xs text-neutral-400 text-center">
                 Press Ctrl+Shift+A to toggle admin mode
               </p>

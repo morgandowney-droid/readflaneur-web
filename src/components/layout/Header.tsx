@@ -263,7 +263,7 @@ export function Header() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 w-full border-b border-neutral-200 bg-white',
+        'sticky top-0 z-50 w-full border-b border-white/5 bg-black/80 backdrop-blur-xl',
         'transition-transform duration-300 ease-in-out',
         shouldHideHeader && '-translate-y-full'
       )}
@@ -278,8 +278,8 @@ export function Header() {
           <Link
             href="/search"
             className={cn(
-              'transition-colors hover:text-black min-w-[44px] min-h-[44px] flex items-center justify-center',
-              pathname === '/search' ? 'text-black' : 'text-neutral-400'
+              'transition-colors hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center',
+              pathname === '/search' ? 'text-white' : 'text-neutral-400'
             )}
             title="Search"
             aria-label="Search articles"
@@ -291,9 +291,9 @@ export function Header() {
           <button
             onClick={handleNeighborhoodsClick}
             className={cn(
-              'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center border-b-2',
+              'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center border-b-2',
               pathname === '/neighborhoods' || pathname === '/feed'
-                ? 'text-black font-medium border-black'
+                ? 'text-white font-medium border-amber-500'
                 : 'text-neutral-500 border-transparent'
             )}
           >
@@ -306,8 +306,8 @@ export function Header() {
                 <Link
                   href="/admin/ads"
                   className={cn(
-                    'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center border-b-2',
-                    pathname.startsWith('/admin') ? 'text-black font-medium border-black' : 'text-neutral-500 border-transparent'
+                    'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center border-b-2',
+                    pathname.startsWith('/admin') ? 'text-white font-medium border-amber-500' : 'text-neutral-500 border-transparent'
                   )}
                 >
                   Admin
@@ -316,8 +316,8 @@ export function Header() {
               <Link
                 href="/advertiser"
                 className={cn(
-                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center border-b-2',
-                  pathname.startsWith('/advertiser') ? 'text-black font-medium border-black' : 'text-neutral-500 border-transparent'
+                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center border-b-2',
+                  pathname.startsWith('/advertiser') ? 'text-white font-medium border-amber-500' : 'text-neutral-500 border-transparent'
                 )}
               >
                 Dashboard
@@ -325,15 +325,15 @@ export function Header() {
               <Link
                 href="/settings"
                 className={cn(
-                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center border-b-2',
-                  pathname === '/settings' ? 'text-black font-medium border-black' : 'text-neutral-500 border-transparent'
+                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center border-b-2',
+                  pathname === '/settings' ? 'text-white font-medium border-amber-500' : 'text-neutral-500 border-transparent'
                 )}
               >
                 Settings
               </Link>
               <button
                 onClick={handleSignOut}
-                className="text-[11px] tracking-[0.2em] uppercase text-neutral-500 hover:text-black transition-colors min-h-[44px]"
+                className="text-[11px] tracking-[0.2em] uppercase text-neutral-500 hover:text-white transition-colors min-h-[44px]"
               >
                 Sign Out
               </button>
@@ -343,8 +343,8 @@ export function Header() {
               <Link
                 href="/settings"
                 className={cn(
-                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center border-b-2',
-                  pathname === '/settings' ? 'text-black font-medium border-black' : 'text-neutral-500 border-transparent'
+                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center border-b-2',
+                  pathname === '/settings' ? 'text-white font-medium border-amber-500' : 'text-neutral-500 border-transparent'
                 )}
               >
                 Settings
@@ -352,8 +352,8 @@ export function Header() {
               <Link
                 href="/login"
                 className={cn(
-                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-black min-h-[44px] flex items-center',
-                  pathname === '/login' ? 'text-black font-medium' : 'text-neutral-500'
+                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center',
+                  pathname === '/login' ? 'text-white font-medium' : 'text-neutral-500'
                 )}
               >
                 Login
@@ -367,8 +367,8 @@ export function Header() {
           <Link
             href="/search"
             className={cn(
-              'transition-colors hover:text-black min-w-[44px] min-h-[44px] flex items-center justify-center',
-              pathname === '/search' ? 'text-black' : 'text-neutral-400'
+              'transition-colors hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center',
+              pathname === '/search' ? 'text-white' : 'text-neutral-400'
             )}
             aria-label="Search articles"
           >
@@ -378,7 +378,7 @@ export function Header() {
           </Link>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-neutral-600 hover:text-black"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-neutral-400 hover:text-white"
             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileMenuOpen}
           >
@@ -397,11 +397,11 @@ export function Header() {
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-neutral-200 bg-white">
+        <div className="md:hidden border-t border-white/[0.08] bg-surface">
           <nav className="flex flex-col px-4">
             {/* Selected Neighborhoods */}
             {selectedNeighborhoods.length > 0 && (
-              <div className="py-4 border-b border-neutral-100">
+              <div className="py-4 border-b border-white/[0.08]">
                 <p className="text-[10px] tracking-widest uppercase text-neutral-400 mb-3 text-right">
                   Your Neighborhoods
                 </p>
@@ -427,7 +427,7 @@ export function Header() {
                     handleNeighborhoodsClick({ preventDefault: () => {} } as React.MouseEvent);
                     setMobileMenuOpen(false);
                   }}
-                  className="mt-3 text-xs text-neutral-500 hover:text-black transition-colors block text-right w-full"
+                  className="mt-3 text-xs text-neutral-500 hover:text-white transition-colors block text-right w-full"
                 >
                   Edit selections
                 </button>
@@ -442,8 +442,8 @@ export function Header() {
                   setMobileMenuOpen(false);
                 }}
                 className={cn(
-                  'text-sm tracking-widest uppercase transition-colors hover:text-black text-right py-4 border-b border-neutral-100',
-                  pathname === '/neighborhoods' || pathname === '/feed' ? 'text-black font-medium' : 'text-neutral-600'
+                  'text-sm tracking-widest uppercase transition-colors hover:text-white text-right py-4 border-b border-white/[0.08]',
+                  pathname === '/neighborhoods' || pathname === '/feed' ? 'text-white font-medium' : 'text-neutral-400'
                 )}
               >
                 Choose Neighborhoods
@@ -452,7 +452,7 @@ export function Header() {
 
             {/* Browse by Section */}
             {sections.length > 0 && (
-              <div className="py-4 border-b border-neutral-100">
+              <div className="py-4 border-b border-white/[0.08]">
                 <p className="text-[10px] tracking-widest uppercase text-neutral-400 mb-3 text-right">
                   Browse by Section
                 </p>
@@ -462,7 +462,7 @@ export function Header() {
                       key={section.id}
                       href={`/feed?section=${section.slug}`}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-300 transition-colors"
                     >
                       {section.icon && <span>{section.icon}</span>}
                       <span>{section.name}</span>
@@ -478,8 +478,8 @@ export function Header() {
                     href="/admin/ads"
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
-                      'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 border-b border-neutral-100 block text-right',
-                      pathname.startsWith('/admin') ? 'text-black font-medium' : 'text-neutral-600'
+                      'text-sm tracking-widest uppercase transition-colors hover:text-white py-4 border-b border-white/[0.08] block text-right',
+                      pathname.startsWith('/admin') ? 'text-white font-medium' : 'text-neutral-400'
                     )}
                   >
                     Admin
@@ -489,8 +489,8 @@ export function Header() {
                   href="/advertiser"
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 border-b border-neutral-100 block text-right',
-                    pathname.startsWith('/advertiser') ? 'text-black font-medium' : 'text-neutral-600'
+                    'text-sm tracking-widest uppercase transition-colors hover:text-white py-4 border-b border-white/[0.08] block text-right',
+                    pathname.startsWith('/advertiser') ? 'text-white font-medium' : 'text-neutral-400'
                   )}
                 >
                   Dashboard
@@ -499,8 +499,8 @@ export function Header() {
                   href="/settings"
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 border-b border-neutral-100 block text-right',
-                    pathname === '/settings' ? 'text-black font-medium' : 'text-neutral-600'
+                    'text-sm tracking-widest uppercase transition-colors hover:text-white py-4 border-b border-white/[0.08] block text-right',
+                    pathname === '/settings' ? 'text-white font-medium' : 'text-neutral-400'
                   )}
                 >
                   Settings
@@ -510,7 +510,7 @@ export function Header() {
                     handleSignOut();
                     setMobileMenuOpen(false);
                   }}
-                  className="text-sm tracking-widest uppercase text-neutral-600 hover:text-black transition-colors text-right py-4 w-full"
+                  className="text-sm tracking-widest uppercase text-neutral-400 hover:text-white transition-colors text-right py-4 w-full"
                 >
                   Sign Out
                 </button>
@@ -521,8 +521,8 @@ export function Header() {
                   href="/settings"
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 border-b border-neutral-100 block text-right',
-                    pathname === '/settings' ? 'text-black font-medium' : 'text-neutral-600'
+                    'text-sm tracking-widest uppercase transition-colors hover:text-white py-4 border-b border-white/[0.08] block text-right',
+                    pathname === '/settings' ? 'text-white font-medium' : 'text-neutral-400'
                   )}
                 >
                   Settings
@@ -531,8 +531,8 @@ export function Header() {
                   href="/login"
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    'text-sm tracking-widest uppercase transition-colors hover:text-black py-4 block text-right',
-                    pathname === '/login' ? 'text-black font-medium' : 'text-neutral-600'
+                    'text-sm tracking-widest uppercase transition-colors hover:text-white py-4 block text-right',
+                    pathname === '/login' ? 'text-white font-medium' : 'text-neutral-400'
                   )}
                 >
                   Login

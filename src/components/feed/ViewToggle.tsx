@@ -17,7 +17,7 @@ export function ViewToggle({ view, onChange }: ViewToggleProps) {
         className={cn(
           'flex items-center justify-center w-8 h-8 transition-colors',
           view === 'compact'
-            ? 'text-neutral-900'
+            ? 'text-white'
             : 'text-neutral-300 hover:text-neutral-500'
         )}
         aria-label="Compact view"
@@ -32,7 +32,7 @@ export function ViewToggle({ view, onChange }: ViewToggleProps) {
         className={cn(
           'flex items-center justify-center w-8 h-8 transition-colors',
           view === 'gallery'
-            ? 'text-neutral-900'
+            ? 'text-white'
             : 'text-neutral-300 hover:text-neutral-500'
         )}
         aria-label="Gallery view"

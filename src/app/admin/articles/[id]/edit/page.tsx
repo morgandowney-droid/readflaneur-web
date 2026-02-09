@@ -195,7 +195,7 @@ export default function AdminEditArticlePage() {
           <h1 className="text-2xl font-light">Edit Article</h1>
           <Link
             href="/admin/articles"
-            className="text-sm text-neutral-500 hover:text-black"
+            className="text-sm text-neutral-500 hover:text-white"
           >
             &larr; Back to Articles
           </Link>
@@ -213,7 +213,7 @@ export default function AdminEditArticlePage() {
                     ? 'bg-orange-100 text-orange-800'
                     : formData.status === 'scheduled'
                       ? 'bg-blue-100 text-blue-800'
-                      : 'bg-neutral-100 text-neutral-600'
+                      : 'bg-neutral-800 text-neutral-400'
             }`}
           >
             {formData.status}
@@ -221,7 +221,7 @@ export default function AdminEditArticlePage() {
         </div>
 
         {error && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 mb-6">
+          <div className="p-3 text-sm text-red-600 bg-red-900/20 border border-red-800/30 mb-6">
             {error}
           </div>
         )}
@@ -235,7 +235,7 @@ export default function AdminEditArticlePage() {
             <select
               value={formData.neighborhoodId}
               onChange={(e) => setFormData({ ...formData, neighborhoodId: e.target.value })}
-              className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none bg-white"
+              className="w-full px-4 py-3 border border-white/[0.08] focus:border-amber-500 focus:outline-none bg-surface"
             >
               <option value="">Select a neighborhood</option>
               {Object.entries(neighborhoodsByCity).map(([city, hoods]) => (
@@ -260,7 +260,7 @@ export default function AdminEditArticlePage() {
               value={formData.headline}
               onChange={(e) => setFormData({ ...formData, headline: e.target.value })}
               maxLength={150}
-              className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none text-lg"
+              className="w-full px-4 py-3 border border-white/[0.08] focus:border-amber-500 focus:outline-none text-lg"
             />
             <p className="text-xs text-neutral-400 mt-1">
               {formData.headline.length}/150 characters
@@ -277,7 +277,7 @@ export default function AdminEditArticlePage() {
               onChange={(e) => setFormData({ ...formData, previewText: e.target.value })}
               rows={2}
               maxLength={200}
-              className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none resize-none"
+              className="w-full px-4 py-3 border border-white/[0.08] focus:border-amber-500 focus:outline-none resize-none"
               placeholder="1-2 sentences shown on hover..."
             />
             <p className="text-xs text-neutral-400 mt-1">
@@ -294,7 +294,7 @@ export default function AdminEditArticlePage() {
             {formData.images.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                 {formData.images.map((url, index) => (
-                  <div key={index} className="relative aspect-video bg-neutral-100">
+                  <div key={index} className="relative aspect-video bg-neutral-800">
                     <img
                       src={url}
                       alt={`Photo ${index + 1}`}
@@ -310,7 +310,7 @@ export default function AdminEditArticlePage() {
                         <button
                           type="button"
                           onClick={() => moveImage(index, 'up')}
-                          className="bg-white/90 hover:bg-white p-1 text-xs"
+                          className="bg-surface/90 hover:bg-surface p-1 text-xs"
                         >
                           &larr;
                         </button>
@@ -319,7 +319,7 @@ export default function AdminEditArticlePage() {
                         <button
                           type="button"
                           onClick={() => moveImage(index, 'down')}
-                          className="bg-white/90 hover:bg-white p-1 text-xs"
+                          className="bg-surface/90 hover:bg-surface p-1 text-xs"
                         >
                           &rarr;
                         </button>
@@ -350,7 +350,7 @@ export default function AdminEditArticlePage() {
                 />
                 <label
                   htmlFor="image-upload"
-                  className={`inline-block border border-neutral-200 px-6 py-3 text-sm tracking-widest uppercase cursor-pointer hover:border-black transition-colors ${
+                  className={`inline-block border border-white/[0.08] px-6 py-3 text-sm tracking-widest uppercase cursor-pointer hover:border-white/20 transition-colors ${
                     uploadingImage ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
@@ -369,7 +369,7 @@ export default function AdminEditArticlePage() {
               value={formData.bodyText}
               onChange={(e) => setFormData({ ...formData, bodyText: e.target.value })}
               rows={14}
-              className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none resize-none font-serif"
+              className="w-full px-4 py-3 border border-white/[0.08] focus:border-amber-500 focus:outline-none resize-none font-serif"
             />
             <div className="flex justify-between mt-1">
               <p className="text-xs text-neutral-400">
@@ -382,7 +382,7 @@ export default function AdminEditArticlePage() {
           </div>
 
           {/* Scheduling */}
-          <div className="bg-blue-50 border border-blue-200 p-4">
+          <div className="bg-blue-900/20 border border-blue-800/30 p-4">
             <label className="block text-xs tracking-widest uppercase text-blue-800 mb-2">
               Schedule Publication
             </label>
@@ -390,7 +390,7 @@ export default function AdminEditArticlePage() {
               type="datetime-local"
               value={formData.scheduledFor}
               onChange={(e) => setFormData({ ...formData, scheduledFor: e.target.value })}
-              className="w-full px-4 py-3 border border-blue-200 focus:border-blue-500 focus:outline-none bg-white"
+              className="w-full px-4 py-3 border border-blue-200 focus:border-blue-500 focus:outline-none bg-surface"
             />
             <p className="text-xs text-blue-600 mt-2">
               Leave empty to publish immediately, or set a future date/time to schedule.
@@ -398,12 +398,12 @@ export default function AdminEditArticlePage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-6 border-t border-neutral-200 space-y-4">
+          <div className="pt-6 border-t border-white/[0.08] space-y-4">
             <div className="flex gap-4">
               <button
                 onClick={() => handleSave()}
                 disabled={saving || uploadingImage}
-                className="flex-1 border border-black py-3 text-sm tracking-widest uppercase hover:bg-black hover:text-white transition-colors disabled:opacity-50"
+                className="flex-1 border border-white/[0.08] py-3 text-sm tracking-widest uppercase hover:bg-white/10 text-neutral-100 transition-colors disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>

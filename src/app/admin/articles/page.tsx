@@ -188,7 +188,7 @@ export default function AdminArticlesPage() {
           <div className="flex items-center gap-6">
             <Link
               href="/admin/ads"
-              className="text-sm text-neutral-500 hover:text-black"
+              className="text-sm text-neutral-500 hover:text-white"
             >
               &larr; Back to Admin
             </Link>
@@ -198,7 +198,7 @@ export default function AdminArticlesPage() {
                 className={`px-4 py-2 text-sm tracking-widest uppercase ${
                   filter === 'pending'
                     ? 'bg-black text-white'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                    : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
                 }`}
               >
                 Pending
@@ -208,7 +208,7 @@ export default function AdminArticlesPage() {
                 className={`px-4 py-2 text-sm tracking-widest uppercase ${
                   filter === 'all'
                     ? 'bg-black text-white'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                    : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
                 }`}
               >
                 All
@@ -219,15 +219,15 @@ export default function AdminArticlesPage() {
 
         {/* Articles */}
         {articles.length === 0 ? (
-          <div className="bg-white border border-neutral-200 p-12 text-center">
-            <p className="text-neutral-600">
+          <div className="bg-surface border border-white/[0.08] p-12 text-center">
+            <p className="text-neutral-400">
               {filter === 'pending' ? 'No articles pending review.' : 'No articles yet.'}
             </p>
           </div>
         ) : (
           <div className="space-y-6">
             {articles.map((article) => (
-              <div key={article.id} className="bg-white border border-neutral-200 p-6">
+              <div key={article.id} className="bg-surface border border-white/[0.08] p-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Preview */}
                   <div>
@@ -240,7 +240,7 @@ export default function AdminArticlesPage() {
                       className="w-full aspect-video object-cover mb-3"
                     />
                     <h3 className="font-medium mb-2">{article.headline}</h3>
-                    <p className="text-sm text-neutral-600 line-clamp-3">
+                    <p className="text-sm text-neutral-400 line-clamp-3">
                       {article.body_text}
                     </p>
                   </div>
@@ -276,7 +276,7 @@ export default function AdminArticlesPage() {
                                     ? 'bg-orange-100 text-orange-800'
                                     : article.status === 'scheduled'
                                       ? 'bg-blue-100 text-blue-800'
-                                      : 'bg-neutral-100 text-neutral-600'
+                                      : 'bg-neutral-800 text-neutral-400'
                           }`}
                         >
                           {article.status}
@@ -331,7 +331,7 @@ export default function AdminArticlesPage() {
                         </button>
                         <Link
                           href={`/admin/articles/${article.id}/edit`}
-                          className="block w-full border border-neutral-200 py-2 text-sm tracking-widest uppercase text-center hover:border-black transition-colors"
+                          className="block w-full border border-white/[0.08] py-2 text-sm tracking-widest uppercase text-center hover:border-white/20 transition-colors"
                         >
                           Edit
                         </Link>
@@ -348,7 +348,7 @@ export default function AdminArticlesPage() {
                         </button>
                         <Link
                           href={`/admin/articles/${article.id}/edit`}
-                          className="block w-full border border-neutral-200 py-2 text-sm tracking-widest uppercase text-center hover:border-black transition-colors"
+                          className="block w-full border border-white/[0.08] py-2 text-sm tracking-widest uppercase text-center hover:border-white/20 transition-colors"
                         >
                           Edit
                         </Link>
@@ -365,7 +365,7 @@ export default function AdminArticlesPage() {
                         </button>
                         <Link
                           href={`/admin/articles/${article.id}/edit`}
-                          className="block w-full border border-neutral-200 py-2 text-sm tracking-widest uppercase text-center hover:border-black transition-colors"
+                          className="block w-full border border-white/[0.08] py-2 text-sm tracking-widest uppercase text-center hover:border-white/20 transition-colors"
                         >
                           Edit
                         </Link>
@@ -375,7 +375,7 @@ export default function AdminArticlesPage() {
                       <div className="space-y-2">
                         <Link
                           href={`/admin/articles/${article.id}/edit`}
-                          className="block w-full border border-neutral-200 py-2 text-sm tracking-widest uppercase text-center hover:border-black transition-colors"
+                          className="block w-full border border-white/[0.08] py-2 text-sm tracking-widest uppercase text-center hover:border-white/20 transition-colors"
                         >
                           Edit
                         </Link>
@@ -391,11 +391,11 @@ export default function AdminArticlesPage() {
         {/* Review Modal */}
         {showReviewModal && reviewAction && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white p-6 max-w-md w-full">
+            <div className="bg-surface p-6 max-w-md w-full">
               <h2 className="text-lg font-medium mb-4">
                 {reviewAction === 'reject' ? 'Reject Article' : 'Request Changes'}
               </h2>
-              <p className="text-sm text-neutral-600 mb-4">
+              <p className="text-sm text-neutral-400 mb-4">
                 {reviewAction === 'reject'
                   ? 'Provide a reason for rejection (sent to the author).'
                   : 'What changes should the author make?'}
@@ -406,7 +406,7 @@ export default function AdminArticlesPage() {
                 placeholder={reviewAction === 'reject'
                   ? 'e.g., Content does not meet our guidelines...'
                   : 'e.g., Please add more detail about the location...'}
-                className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none mb-4"
+                className="w-full px-4 py-3 border border-white/[0.08] focus:border-amber-500 focus:outline-none mb-4"
                 rows={4}
               />
               <div className="flex gap-3">
@@ -431,7 +431,7 @@ export default function AdminArticlesPage() {
                     setReviewAction(null);
                     setReviewReason('');
                   }}
-                  className="px-6 py-2 border border-neutral-200 text-sm tracking-widest uppercase hover:border-black transition-colors"
+                  className="px-6 py-2 border border-white/[0.08] text-sm tracking-widest uppercase hover:border-white/20 transition-colors"
                 >
                   Cancel
                 </button>

@@ -53,7 +53,7 @@ export default async function HomePage() {
       </section>
 
       {/* Neighborhood Selection */}
-      <section className="bg-white py-16 md:py-20 px-6">
+      <section className="bg-canvas py-16 md:py-20 px-6">
         <div className="mx-auto max-w-2xl text-center">
           <HomeSignupEnhanced neighborhoods={neighborhoods} />
         </div>

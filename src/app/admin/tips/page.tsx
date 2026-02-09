@@ -142,19 +142,19 @@ export default function AdminTipsPage() {
           <div className="flex items-center gap-6">
             <Link
               href="/admin/ads"
-              className="text-sm text-neutral-500 hover:text-black"
+              className="text-sm text-neutral-500 hover:text-white"
             >
               Ads
             </Link>
             <Link
               href="/admin/articles"
-              className="text-sm text-neutral-500 hover:text-black"
+              className="text-sm text-neutral-500 hover:text-white"
             >
               Articles
             </Link>
             <Link
               href="/admin/comments"
-              className="text-sm text-neutral-500 hover:text-black"
+              className="text-sm text-neutral-500 hover:text-white"
             >
               Comments
             </Link>
@@ -170,7 +170,7 @@ export default function AdminTipsPage() {
               className={`px-4 py-2 text-sm tracking-widest uppercase ${
                 filter === status
                   ? 'bg-black text-white'
-                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                  : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
               }`}
             >
               {status.replace('_', ' ')}
@@ -180,8 +180,8 @@ export default function AdminTipsPage() {
         </div>
 
         {tips.length === 0 ? (
-          <div className="bg-white border border-neutral-200 p-12 text-center">
-            <p className="text-neutral-600">
+          <div className="bg-surface border border-white/[0.08] p-12 text-center">
+            <p className="text-neutral-400">
               {filter === 'pending'
                 ? 'No tips pending review.'
                 : `No ${filter === 'all' ? '' : filter.replace('_', ' ') + ' '}tips found.`}
@@ -192,7 +192,7 @@ export default function AdminTipsPage() {
             {tips.map((tip) => (
               <div
                 key={tip.id}
-                className="bg-white border border-neutral-200 p-6"
+                className="bg-surface border border-white/[0.08] p-6"
               >
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Tip Content */}
@@ -225,7 +225,7 @@ export default function AdminTipsPage() {
                       <h3 className="font-medium mb-2">{tip.headline}</h3>
                     )}
 
-                    <p className="text-sm text-neutral-700 whitespace-pre-wrap">
+                    <p className="text-sm text-neutral-300 whitespace-pre-wrap">
                       {expandedTip === tip.id
                         ? tip.content
                         : tip.content.length > 300
@@ -260,7 +260,7 @@ export default function AdminTipsPage() {
                               <img
                                 src={url}
                                 alt={`Photo ${index + 1}`}
-                                className="w-24 h-24 object-cover border border-neutral-200 hover:border-black transition-colors"
+                                className="w-24 h-24 object-cover border border-white/[0.08] hover:border-white/20 transition-colors"
                               />
                             </a>
                           ))}
@@ -269,7 +269,7 @@ export default function AdminTipsPage() {
                     )}
 
                     {/* Submitter Info */}
-                    <div className="mt-4 pt-4 border-t border-neutral-100">
+                    <div className="mt-4 pt-4 border-t border-white/[0.06]">
                       <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
                         Submitter
                       </p>
@@ -296,8 +296,8 @@ export default function AdminTipsPage() {
                     </div>
 
                     {/* Device/Location Info (collapsible) */}
-                    <details className="mt-4 pt-4 border-t border-neutral-100">
-                      <summary className="text-xs tracking-widest uppercase text-neutral-400 cursor-pointer hover:text-neutral-600">
+                    <details className="mt-4 pt-4 border-t border-white/[0.06]">
+                      <summary className="text-xs tracking-widest uppercase text-neutral-400 cursor-pointer hover:text-neutral-400">
                         Device & Location Data
                       </summary>
                       <div className="grid grid-cols-2 gap-2 text-sm mt-2">
@@ -349,7 +349,7 @@ export default function AdminTipsPage() {
                         )}
                         <div className="col-span-2">
                           <span className="text-neutral-400">IP Hash:</span>{' '}
-                          <code className="text-xs bg-neutral-100 px-1">
+                          <code className="text-xs bg-neutral-800 px-1">
                             {tip.ip_address_hash?.substring(0, 16)}...
                           </code>
                         </div>
@@ -358,16 +358,16 @@ export default function AdminTipsPage() {
 
                     {/* Review notes if any */}
                     {tip.reviewer_notes && (
-                      <div className="mt-4 pt-4 border-t border-neutral-100">
+                      <div className="mt-4 pt-4 border-t border-white/[0.06]">
                         <p className="text-xs tracking-widest uppercase text-neutral-400 mb-1">
                           Reviewer Notes
                         </p>
-                        <p className="text-sm text-neutral-600">{tip.reviewer_notes}</p>
+                        <p className="text-sm text-neutral-400">{tip.reviewer_notes}</p>
                       </div>
                     )}
 
                     {tip.rejection_reason && (
-                      <div className="mt-4 pt-4 border-t border-neutral-100">
+                      <div className="mt-4 pt-4 border-t border-white/[0.06]">
                         <p className="text-xs tracking-widest uppercase text-red-400 mb-1">
                           Rejection Reason
                         </p>
@@ -415,7 +415,7 @@ export default function AdminTipsPage() {
                         </button>
 
                         {/* Notes input */}
-                        <div className="pt-3 border-t border-neutral-200">
+                        <div className="pt-3 border-t border-white/[0.08]">
                           <label className="text-xs text-neutral-500 mb-1 block">
                             Add reviewer notes (optional)
                           </label>
@@ -423,7 +423,7 @@ export default function AdminTipsPage() {
                             value={reviewerNotes}
                             onChange={(e) => setReviewerNotes(e.target.value)}
                             placeholder="Internal notes..."
-                            className="w-full px-3 py-2 border border-neutral-200 text-sm focus:border-black focus:outline-none"
+                            className="w-full px-3 py-2 border border-white/[0.08] text-sm focus:border-amber-500 focus:outline-none"
                             rows={2}
                           />
                         </div>
@@ -438,27 +438,27 @@ export default function AdminTipsPage() {
                         )}
 
                         {/* Allow changing status even after review */}
-                        <div className="pt-3 border-t border-neutral-200">
+                        <div className="pt-3 border-t border-white/[0.08]">
                           <p className="text-xs text-neutral-400 mb-2">Change status:</p>
                           <div className="flex flex-wrap gap-2">
                             <button
                               onClick={() => handleAction(tip.id, 'pending')}
                               disabled={processingId === tip.id}
-                              className="px-3 py-1 text-xs border border-neutral-200 hover:border-black"
+                              className="px-3 py-1 text-xs border border-white/[0.08] hover:border-white/20"
                             >
                               Pending
                             </button>
                             <button
                               onClick={() => handleAction(tip.id, 'approved')}
                               disabled={processingId === tip.id}
-                              className="px-3 py-1 text-xs border border-neutral-200 hover:border-black"
+                              className="px-3 py-1 text-xs border border-white/[0.08] hover:border-white/20"
                             >
                               Approved
                             </button>
                             <button
                               onClick={() => handleAction(tip.id, 'converted')}
                               disabled={processingId === tip.id}
-                              className="px-3 py-1 text-xs border border-neutral-200 hover:border-black"
+                              className="px-3 py-1 text-xs border border-white/[0.08] hover:border-white/20"
                             >
                               Converted
                             </button>
@@ -476,16 +476,16 @@ export default function AdminTipsPage() {
         {/* Rejection Modal */}
         {showRejectModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white p-6 max-w-md w-full">
+            <div className="bg-surface p-6 max-w-md w-full">
               <h2 className="text-lg font-medium mb-4">Reject Tip</h2>
-              <p className="text-sm text-neutral-600 mb-4">
+              <p className="text-sm text-neutral-400 mb-4">
                 Please provide a reason for rejection. This will be sent to the submitter if they provided an email.
               </p>
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="e.g., Unable to verify information, Content doesn't meet our guidelines..."
-                className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none mb-4"
+                className="w-full px-4 py-3 border border-white/[0.08] focus:border-amber-500 focus:outline-none mb-4"
                 rows={3}
               />
               <div className="flex gap-3">
@@ -501,7 +501,7 @@ export default function AdminTipsPage() {
                     setShowRejectModal(null);
                     setRejectionReason('');
                   }}
-                  className="px-6 py-2 border border-neutral-200 text-sm tracking-widest uppercase hover:border-black transition-colors"
+                  className="px-6 py-2 border border-white/[0.08] text-sm tracking-widest uppercase hover:border-white/20 transition-colors"
                 >
                   Cancel
                 </button>

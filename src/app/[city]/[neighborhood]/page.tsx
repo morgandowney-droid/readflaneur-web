@@ -163,14 +163,14 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
       <div className="mx-auto max-w-2xl">
         {/* Category filter banner */}
         {category && categoryDisplayName && (
-          <div className="mb-6 p-4 bg-neutral-100 rounded-lg flex items-center justify-between">
+          <div className="mb-6 p-4 bg-neutral-800 rounded-lg flex items-center justify-between">
             <div>
               <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">Filtered by category</p>
-              <p className="font-medium text-neutral-800">{categoryDisplayName}</p>
+              <p className="font-medium text-neutral-200">{categoryDisplayName}</p>
             </div>
             <a
               href={`/${city}/${neighborhood}`}
-              className="text-sm text-neutral-500 hover:text-black underline"
+              className="text-sm text-neutral-500 hover:text-white underline"
             >
               Clear filter
             </a>

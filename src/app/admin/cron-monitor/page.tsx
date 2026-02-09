@@ -170,7 +170,7 @@ export default function CronMonitorPage() {
       resolved: 'bg-green-100 text-green-800',
       needs_manual: 'bg-red-100 text-red-800',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-gray-100 text-neutral-200';
   };
 
   const getIssueTypeBadge = (type: string) => {
@@ -182,9 +182,9 @@ export default function CronMonitorPage() {
       missing_brief: 'bg-cyan-100 text-cyan-800',
       job_failure: 'bg-red-100 text-red-800',
       api_rate_limit: 'bg-yellow-100 text-yellow-800',
-      external_service_down: 'bg-gray-100 text-gray-800',
+      external_service_down: 'bg-gray-100 text-neutral-200',
     };
-    return colors[type] || 'bg-gray-100 text-gray-800';
+    return colors[type] || 'bg-gray-100 text-neutral-200';
   };
 
   const formatIssueTypeName = (type: string) => {
@@ -216,13 +216,13 @@ export default function CronMonitorPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-canvas p-6">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-8" />
+            <div className="h-8 bg-neutral-800 rounded w-1/4 mb-8" />
             <div className="grid grid-cols-4 gap-4 mb-8">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-24 bg-gray-200 rounded" />
+                <div key={i} className="h-24 bg-neutral-800 rounded" />
               ))}
             </div>
           </div>
@@ -232,16 +232,16 @@ export default function CronMonitorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-canvas p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <Link href="/admin" className="text-sm text-gray-500 hover:text-gray-700 mb-2 block">
+            <Link href="/admin" className="text-sm text-neutral-500 hover:text-neutral-300 mb-2 block">
               &larr; Back to Admin
             </Link>
-            <h1 className="text-2xl font-semibold text-gray-900">Cron Job Monitor</h1>
-            <p className="text-gray-500 mt-1">Self-healing system for cron job issues</p>
+            <h1 className="text-2xl font-semibold text-neutral-100">Cron Job Monitor</h1>
+            <p className="text-neutral-500 mt-1">Self-healing system for cron job issues</p>
           </div>
           <button
             onClick={handleRunMonitor}
@@ -255,31 +255,31 @@ export default function CronMonitorPage() {
         {/* Stats Cards */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-sm text-gray-500">Open Issues</div>
+            <div className="bg-surface border border-white/[0.08] p-4">
+              <div className="text-sm text-neutral-500">Open Issues</div>
               <div className="text-2xl font-bold text-yellow-600">{stats.openIssues}</div>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-sm text-gray-500">Resolved Today</div>
+            <div className="bg-surface border border-white/[0.08] p-4">
+              <div className="text-sm text-neutral-500">Resolved Today</div>
               <div className="text-2xl font-bold text-green-600">{stats.resolvedToday}</div>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-sm text-gray-500">Jobs OK (24h)</div>
+            <div className="bg-surface border border-white/[0.08] p-4">
+              <div className="text-sm text-neutral-500">Jobs OK (24h)</div>
               <div className="text-2xl font-bold text-green-600">{stats.successfulJobs24h}</div>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-sm text-gray-500">Jobs Failed (24h)</div>
+            <div className="bg-surface border border-white/[0.08] p-4">
+              <div className="text-sm text-neutral-500">Jobs Failed (24h)</div>
               <div className="text-2xl font-bold text-red-600">{stats.failedJobs24h}</div>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-sm text-gray-500">Total Issues</div>
-              <div className="text-2xl font-bold text-gray-600">{stats.totalIssues}</div>
+            <div className="bg-surface border border-white/[0.08] p-4">
+              <div className="text-sm text-neutral-500">Total Issues</div>
+              <div className="text-2xl font-bold text-neutral-400">{stats.totalIssues}</div>
             </div>
           </div>
         )}
 
         {/* Tabs */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-surface border border-white/[0.08]">
           <div className="border-b">
             <div className="flex">
               {(['overview', 'issues', 'executions'] as const).map(tab => (
@@ -289,7 +289,7 @@ export default function CronMonitorPage() {
                   className={`px-6 py-3 text-sm font-medium ${
                     activeTab === tab
                       ? 'border-b-2 border-blue-500 text-blue-600'
-                      : 'text-gray-500 hover:text-gray-700'
+                      : 'text-neutral-500 hover:text-neutral-300'
                   }`}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -305,19 +305,19 @@ export default function CronMonitorPage() {
                 <div>
                   <h3 className="text-lg font-medium mb-4">Recent Open Issues</h3>
                   {issues.filter(i => i.status === 'open' || i.status === 'retrying').length === 0 ? (
-                    <p className="text-gray-500">No open issues</p>
+                    <p className="text-neutral-500">No open issues</p>
                   ) : (
                     <div className="space-y-2">
                       {issues
                         .filter(i => i.status === 'open' || i.status === 'retrying')
                         .slice(0, 5)
                         .map(issue => (
-                          <div key={issue.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                          <div key={issue.id} className="flex items-center justify-between p-3 bg-canvas rounded">
                             <div className="flex items-center gap-3">
                               <span className={`px-2 py-1 text-xs rounded ${getIssueTypeBadge(issue.issue_type)}`}>
                                 {formatIssueTypeName(issue.issue_type)}
                               </span>
-                              <span className="text-sm text-gray-700 truncate max-w-md">
+                              <span className="text-sm text-neutral-300 truncate max-w-md">
                                 {issue.issue_type === 'missed_email'
                                   ? (() => {
                                       const diag = parseEmailDiagnosis(issue.description);
@@ -330,7 +330,7 @@ export default function CronMonitorPage() {
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-neutral-500">
                                 Retry {issue.retry_count}/{issue.max_retries}
                               </span>
                               <button
@@ -350,7 +350,7 @@ export default function CronMonitorPage() {
                 <div>
                   <h3 className="text-lg font-medium mb-4">Recent Failed Jobs</h3>
                   {executions.filter(e => !e.success).length === 0 ? (
-                    <p className="text-gray-500">No recent failures</p>
+                    <p className="text-neutral-500">No recent failures</p>
                   ) : (
                     <div className="space-y-2">
                       {executions
@@ -359,8 +359,8 @@ export default function CronMonitorPage() {
                         .map(exec => (
                           <div key={exec.id} className="flex items-center justify-between p-3 bg-red-50 rounded">
                             <div>
-                              <span className="font-medium text-gray-900">{exec.job_name}</span>
-                              <span className="text-xs text-gray-500 ml-2">
+                              <span className="font-medium text-neutral-100">{exec.job_name}</span>
+                              <span className="text-xs text-neutral-500 ml-2">
                                 {formatDate(exec.started_at)}
                               </span>
                             </div>
@@ -382,7 +382,7 @@ export default function CronMonitorPage() {
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-3 py-2 border rounded-lg text-sm"
+                    className="px-3 py-2 bg-surface border border-white/[0.08] rounded-lg text-sm text-neutral-300"
                   >
                     <option value="all">All Status</option>
                     <option value="open">Open</option>
@@ -390,24 +390,24 @@ export default function CronMonitorPage() {
                     <option value="resolved">Resolved</option>
                     <option value="needs_manual">Needs Manual</option>
                   </select>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-neutral-500">
                     Showing {filteredIssues.length} issues
                   </span>
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-white/[0.08]">
+                    <thead className="bg-canvas">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Retries</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Type</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Description</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Retries</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Created</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-surface divide-y divide-white/[0.08]">
                       {filteredIssues.map(issue => (
                         <tr key={issue.id}>
                           <td className="px-4 py-3">
@@ -421,30 +421,30 @@ export default function CronMonitorPage() {
                               if (diag) {
                                 return (
                                   <div>
-                                    <div className="text-sm text-gray-900">{diag.email}</div>
+                                    <div className="text-sm text-neutral-100">{diag.email}</div>
                                     <div className="text-xs text-amber-700">
                                       Cause: {emailCauseLabels[diag.cause] || diag.cause}
                                     </div>
-                                    <div className="text-xs text-gray-500 truncate max-w-xs" title={diag.details}>
+                                    <div className="text-xs text-neutral-500 truncate max-w-xs" title={diag.details}>
                                       {diag.details}
                                     </div>
                                   </div>
                                 );
                               }
-                              return <div className="text-sm text-gray-900 truncate max-w-xs">{issue.description}</div>;
+                              return <div className="text-sm text-neutral-100 truncate max-w-xs">{issue.description}</div>;
                             })()}
                             {issue.issue_type !== 'missed_email' && (
-                              <div className="text-sm text-gray-900 truncate max-w-xs" title={issue.description}>
+                              <div className="text-sm text-neutral-100 truncate max-w-xs" title={issue.description}>
                                 {issue.description}
                               </div>
                             )}
                             {issue.article && (
-                              <div className="text-xs text-gray-500 truncate max-w-xs">
+                              <div className="text-xs text-neutral-500 truncate max-w-xs">
                                 Article: {issue.article.headline}
                               </div>
                             )}
                             {issue.fix_result && (
-                              <div className="text-xs text-gray-400 truncate max-w-xs">
+                              <div className="text-xs text-neutral-500 truncate max-w-xs">
                                 Result: {issue.fix_result}
                               </div>
                             )}
@@ -454,10 +454,10 @@ export default function CronMonitorPage() {
                               {issue.status}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-500">
+                          <td className="px-4 py-3 text-sm text-neutral-500">
                             {issue.retry_count}/{issue.max_retries}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-500">
+                          <td className="px-4 py-3 text-sm text-neutral-500">
                             {formatDate(issue.created_at)}
                           </td>
                           <td className="px-4 py-3">
@@ -483,7 +483,7 @@ export default function CronMonitorPage() {
                               {issue.article_id && (
                                 <Link
                                   href={`/admin/articles?id=${issue.article_id}`}
-                                  className="text-xs text-gray-600 hover:underline"
+                                  className="text-xs text-neutral-400 hover:underline"
                                 >
                                   View
                                 </Link>
@@ -501,25 +501,25 @@ export default function CronMonitorPage() {
             {/* Executions Tab */}
             {activeTab === 'executions' && (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-white/[0.08]">
+                  <thead className="bg-canvas">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Job</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Articles</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Started</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Job</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Articles</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Started</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Duration</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Details</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-surface divide-y divide-white/[0.08]">
                     {executions.map(exec => {
                       const duration = exec.completed_at
                         ? Math.round((new Date(exec.completed_at).getTime() - new Date(exec.started_at).getTime()) / 1000)
                         : null;
                       return (
                         <tr key={exec.id}>
-                          <td className="px-4 py-3 font-medium text-gray-900">{exec.job_name}</td>
+                          <td className="px-4 py-3 font-medium text-neutral-100">{exec.job_name}</td>
                           <td className="px-4 py-3">
                             <span
                               className={`px-2 py-1 text-xs rounded ${
@@ -529,19 +529,19 @@ export default function CronMonitorPage() {
                               {exec.success ? 'Success' : 'Failed'}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-500">{exec.articles_created}</td>
-                          <td className="px-4 py-3 text-sm text-gray-500">{formatDate(exec.started_at)}</td>
-                          <td className="px-4 py-3 text-sm text-gray-500">
+                          <td className="px-4 py-3 text-sm text-neutral-500">{exec.articles_created}</td>
+                          <td className="px-4 py-3 text-sm text-neutral-500">{formatDate(exec.started_at)}</td>
+                          <td className="px-4 py-3 text-sm text-neutral-500">
                             {duration !== null ? `${duration}s` : '-'}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-500">
+                          <td className="px-4 py-3 text-sm text-neutral-500">
                             {exec.errors && exec.errors.length > 0 && (
                               <span className="text-red-600 truncate max-w-xs block" title={exec.errors.join(', ')}>
                                 {exec.errors[0]}
                               </span>
                             )}
                             {exec.response_data && (
-                              <span className="text-gray-400 text-xs">
+                              <span className="text-neutral-500 text-xs">
                                 {JSON.stringify(exec.response_data).substring(0, 50)}...
                               </span>
                             )}

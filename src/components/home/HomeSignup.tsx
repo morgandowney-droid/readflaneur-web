@@ -166,8 +166,8 @@ export function HomeSignup({ neighborhoods }: HomeSignupProps) {
             type="button"
             className={`px-4 py-2.5 text-sm border transition-colors min-h-[44px] ${
               selected.includes(hood.id)
-                ? 'bg-black text-white border-black'
-                : 'bg-white text-neutral-600 border-neutral-300 hover:border-black'
+                ? 'bg-amber-600 text-white border-amber-600'
+                : 'bg-surface text-neutral-400 border-white/[0.08] hover:border-white/20'
             }`}
           >
             {hood.name}
@@ -175,7 +175,7 @@ export function HomeSignup({ neighborhoods }: HomeSignupProps) {
         ))}
         <a
           href="/suggest"
-          className="px-4 py-2.5 text-sm border border-dashed border-neutral-300 text-neutral-400 hover:border-black hover:text-neutral-600 transition-colors min-h-[44px] flex items-center"
+          className="px-4 py-2.5 text-sm border border-dashed border-white/[0.08] text-neutral-500 hover:border-white/20 hover:text-neutral-400 transition-colors min-h-[44px] flex items-center"
         >
           + Suggest
         </a>
@@ -185,7 +185,7 @@ export function HomeSignup({ neighborhoods }: HomeSignupProps) {
       <div className="pt-2">
         <button
           onClick={handleExplore}
-          className="inline-block border border-black px-8 py-3 text-sm tracking-widest uppercase hover:bg-black hover:text-white transition-colors"
+          className="inline-block border border-white/[0.08] text-neutral-100 px-8 py-3 text-sm tracking-widest uppercase hover:bg-white/10 hover:text-white transition-colors"
         >
           Explore Neighborhoods
         </button>
@@ -198,7 +198,7 @@ export function HomeSignup({ neighborhoods }: HomeSignupProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Enter your email"
-          className="px-4 py-2 border border-neutral-300 rounded-none text-center sm:text-left text-sm focus:outline-none focus:border-black w-full sm:w-64"
+          className="px-4 py-2 bg-surface border border-white/[0.08] text-neutral-100 rounded-none text-center sm:text-left text-sm focus:outline-none focus:border-amber-500 placeholder:text-neutral-500 w-full sm:w-64"
           disabled={status === 'loading'}
         />
         <button

@@ -101,17 +101,17 @@ export default function RegenerateImagesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 py-12">
+    <div className="min-h-screen bg-canvas py-12">
       <div className="max-w-2xl mx-auto px-4">
         <h1 className="text-2xl font-bold mb-2">Regenerate Article Images</h1>
-        <p className="text-neutral-600 mb-8">
+        <p className="text-neutral-400 mb-8">
           Generate AI images for articles based on their content using Google's Imagen model.
         </p>
 
-        <div className="bg-white rounded-lg border border-neutral-200 p-6 space-y-6">
+        <div className="bg-surface rounded-lg border border-white/[0.08] p-6 space-y-6">
           {/* Cron Secret */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium text-neutral-300 mb-2">
               Cron Secret
             </label>
             <input
@@ -119,20 +119,20 @@ export default function RegenerateImagesPage() {
               value={cronSecret}
               onChange={(e) => handleCronSecretChange(e.target.value)}
               placeholder="Enter cron secret for authentication"
-              className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900"
+              className="w-full px-3 py-2 border border-white/[0.08] bg-surface rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900"
             />
           </div>
 
           {/* Neighborhood */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium text-neutral-300 mb-2">
               Neighborhood
             </label>
             <select
               value={neighborhood}
               onChange={(e) => setNeighborhood(e.target.value)}
               disabled={loadingNeighborhoods}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900"
+              className="w-full px-3 py-2 border border-white/[0.08] bg-surface rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900"
             >
               {loadingNeighborhoods ? (
                 <option>Loading...</option>
@@ -148,7 +148,7 @@ export default function RegenerateImagesPage() {
 
           {/* Limit */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium text-neutral-300 mb-2">
               Number of Articles
             </label>
             <input
@@ -157,7 +157,7 @@ export default function RegenerateImagesPage() {
               max={20}
               value={limit}
               onChange={(e) => setLimit(parseInt(e.target.value) || 1)}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900"
+              className="w-full px-3 py-2 border border-white/[0.08] bg-surface rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900"
             />
             <p className="text-xs text-neutral-500 mt-1">
               Will regenerate images for all articles in this neighborhood

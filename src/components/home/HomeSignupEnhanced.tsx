@@ -163,7 +163,7 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
         {/* Add Neighborhoods Button - uses global modal */}
         <button
           onClick={openModal}
-          className="inline-flex items-center gap-2.5 px-5 py-2.5 border border-dashed border-neutral-300 text-neutral-600 text-sm tracking-wide hover:border-neutral-900 hover:text-neutral-900 transition-all duration-200 rounded-lg"
+          className="inline-flex items-center gap-2.5 px-5 py-2.5 border border-dashed border-white/[0.08] text-neutral-400 text-sm tracking-wide hover:border-white/20 hover:text-neutral-100 transition-all duration-200 rounded-lg"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
@@ -177,7 +177,7 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
         <div className="pt-4">
           <button
             onClick={handleExplore}
-            className="inline-block border border-neutral-900 px-10 py-3.5 text-[11px] tracking-[0.2em] uppercase font-medium hover:bg-neutral-900 hover:text-white transition-all duration-300 rounded-lg"
+            className="inline-block border border-white/[0.08] text-neutral-100 px-10 py-3.5 text-[11px] tracking-[0.2em] uppercase font-medium hover:bg-white/10 hover:text-white transition-all duration-300 rounded-lg"
           >
             Read Stories
           </button>

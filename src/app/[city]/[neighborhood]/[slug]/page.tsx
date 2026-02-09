@@ -123,7 +123,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         {/* Back link */}
         <Link
           href={neighborhoodUrl}
-          className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-neutral-400 hover:text-black mb-8"
+          className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-neutral-400 hover:text-white mb-8"
         >
           <span>&larr;</span>
           <span>{article.neighborhood?.name || 'Back'}</span>
@@ -271,7 +271,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         )}
 
         {/* Bottom Story Open Ad */}
-        <div className="mt-12 pt-8 border-t border-neutral-200">
+        <div className="mt-12 pt-8 border-t border-white/[0.08]">
           {bottomAd ? (
             <StoryOpenAd ad={bottomAd} position="bottom" />
           ) : (
@@ -283,10 +283,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         <ArticleReactions articleId={article.id} />
 
         {/* More from neighborhood */}
-        <div className="mt-12 pt-8 border-t border-neutral-200 text-center">
+        <div className="mt-12 pt-8 border-t border-white/[0.08] text-center">
           <Link
             href={neighborhoodUrl}
-            className="inline-block bg-black text-white px-8 py-3 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors"
+            className="inline-block bg-white text-neutral-900 px-8 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors"
           >
             More from {article.neighborhood?.name}
           </Link>
@@ -301,7 +301,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 <Link
                   key={n.id}
                   href={`/${city}/${neighborhoodToSlug(n.id)}`}
-                  className="px-3 py-1.5 text-xs border border-neutral-200 rounded-full text-neutral-600 hover:border-neutral-400 hover:text-black transition-colors"
+                  className="px-3 py-1.5 text-xs border border-white/[0.08] rounded-full text-neutral-400 hover:border-white/20 hover:text-white transition-colors"
                 >
                   {n.name}
                 </Link>

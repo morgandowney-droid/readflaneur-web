@@ -130,15 +130,15 @@ export default function AdminCommentsPage() {
     <div className="py-8 px-4">
       <div className="mx-auto max-w-4xl">
         {/* Admin Navigation */}
-        <nav className="flex flex-wrap gap-4 mb-8 pb-4 border-b border-neutral-200">
+        <nav className="flex flex-wrap gap-4 mb-8 pb-4 border-b border-white/[0.08]">
           {adminNavItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={`text-xs tracking-widest uppercase transition-colors ${
                 pathname === item.href
-                  ? 'text-black'
-                  : 'text-neutral-400 hover:text-black'
+                  ? 'text-neutral-100'
+                  : 'text-neutral-400 hover:text-white'
               }`}
             >
               {item.label}
@@ -157,7 +157,7 @@ export default function AdminCommentsPage() {
               className={`px-4 py-2 text-sm tracking-widest uppercase transition-colors ${
                 filter === f
                   ? 'bg-black text-white'
-                  : 'border border-neutral-200 hover:border-black'
+                  : 'border border-white/[0.08] hover:border-white/20'
               }`}
             >
               {f}
@@ -169,7 +169,7 @@ export default function AdminCommentsPage() {
         {loading ? (
           <p className="text-neutral-400">Loading...</p>
         ) : comments.length === 0 ? (
-          <div className="text-center py-12 bg-neutral-50">
+          <div className="text-center py-12 bg-canvas">
             <p className="text-neutral-500">No comments to review.</p>
           </div>
         ) : (
@@ -177,7 +177,7 @@ export default function AdminCommentsPage() {
             {comments.map((comment) => (
               <div
                 key={comment.id}
-                className="p-6 border border-neutral-200 bg-white"
+                className="p-6 border border-white/[0.08] bg-surface"
               >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
@@ -204,7 +204,7 @@ export default function AdminCommentsPage() {
                       {comment.status}
                     </span>
                     {comment.moderation_score !== null && comment.moderation_score > 0 && (
-                      <span className="px-2 py-1 text-xs bg-neutral-100 text-neutral-600">
+                      <span className="px-2 py-1 text-xs bg-neutral-800 text-neutral-400">
                         Score: {(comment.moderation_score * 100).toFixed(0)}%
                       </span>
                     )}
@@ -214,7 +214,7 @@ export default function AdminCommentsPage() {
                 {/* Article Link */}
                 {comment.article && (
                   <p className="text-xs text-neutral-400 mb-3">
-                    On: <span className="text-black">{comment.article.headline}</span>
+                    On: <span className="text-neutral-100">{comment.article.headline}</span>
                   </p>
                 )}
 
@@ -233,7 +233,7 @@ export default function AdminCommentsPage() {
                 )}
 
                 {/* Content */}
-                <div className="p-4 bg-neutral-50 mb-4">
+                <div className="p-4 bg-canvas mb-4">
                   <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
                 </div>
 

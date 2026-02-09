@@ -39,8 +39,8 @@ export function AdCard({ ad, variant = 'gallery' }: AdCardProps) {
       className={cn(
         'overflow-hidden cursor-pointer transition-all',
         variant === 'gallery'
-          ? 'bg-amber-50 border-2 border-amber-200 rounded-lg'
-          : 'bg-white'
+          ? 'bg-amber-950/30 border-2 border-amber-500/30 rounded-lg'
+          : 'bg-surface'
       )}
       onClick={handleClick}
     >

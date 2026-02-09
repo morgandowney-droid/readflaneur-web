@@ -86,7 +86,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
 
   return (
     <Link href={articleUrl}>
-      <article className="flex gap-4 py-4 border-b border-neutral-100 hover:bg-neutral-50 transition-colors">
+      <article className="flex gap-4 py-4 border-b border-white/[0.08] hover:bg-white/5 transition-colors">
         {article.image_url && (
           <div className="relative w-24 h-24 flex-shrink-0">
             <Image
@@ -134,14 +134,14 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
           <div className="flex items-center gap-3 mt-2">
             <button
               onClick={handleShare}
-              className="text-xs text-neutral-400 hover:text-black transition-colors"
+              className="text-xs text-neutral-400 hover:text-white transition-colors"
             >
               Share
             </button>
             <button
               onClick={handleBookmark}
               className={`text-xs transition-colors ${
-                isBookmarked ? 'text-black' : 'text-neutral-400 hover:text-black'
+                isBookmarked ? 'text-white' : 'text-neutral-400 hover:text-white'
               }`}
             >
               {isBookmarked ? 'Saved' : 'Save'}

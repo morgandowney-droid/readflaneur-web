@@ -203,7 +203,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-canvas">
       <div className="mx-auto max-w-3xl px-4 py-6">
         {/* Section filter indicator */}
         {sectionFilter && (
@@ -214,7 +214,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
             </div>
             <Link
               href={neighborhoodIds.length > 0 ? `/feed?neighborhoods=${neighborhoodIds.join(',')}` : '/feed'}
-              className="text-xs tracking-widest uppercase text-neutral-400 hover:text-black transition-colors"
+              className="text-xs tracking-widest uppercase text-neutral-400 hover:text-white transition-colors"
             >
               Clear Filter
             </Link>

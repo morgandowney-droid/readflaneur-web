@@ -859,7 +859,7 @@ export function NeighborhoodBrief({
   };
 
   return (
-    <div className="bg-neutral-50 p-8 md:p-10 mb-6">
+    <div className="bg-surface p-8 md:p-10 mb-6">
       {/* Eyebrow + Live Dot */}
       <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-amber-600/80 mb-3">
         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -869,7 +869,7 @@ export function NeighborhoodBrief({
       </div>
 
       {/* Headline */}
-      <h3 className="font-display text-2xl md:text-3xl text-neutral-900 leading-tight mb-4">
+      <h3 className="font-display text-2xl md:text-3xl text-neutral-100 leading-tight mb-4">
         {headline}
       </h3>
 
@@ -898,7 +898,7 @@ export function NeighborhoodBrief({
 
       {/* Source attribution - only show when expanded */}
       {isExpanded && (
-        <div className="mt-3 pt-3 border-t border-neutral-200">
+        <div className="mt-3 pt-3 border-t border-white/[0.08]">
           {hasEnrichedSources ? (
             <p className="text-[10px] text-neutral-400 leading-relaxed">
               <span className="italic">Synthesized from reporting by </span>
@@ -924,7 +924,7 @@ export function NeighborhoodBrief({
                         href={source.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-neutral-500 hover:text-neutral-900 underline decoration-neutral-300"
+                        className="text-neutral-500 hover:text-white underline decoration-neutral-600"
                       >
                         {source.name}
                       </a>
@@ -943,7 +943,7 @@ export function NeighborhoodBrief({
       )}
 
       {/* Newsletter signup */}
-      <div className="border-t border-neutral-200 pt-6 mt-6 max-w-md">
+      <div className="border-t border-white/[0.08] pt-6 mt-6 max-w-md">
         {isSubscribed ? (
           <p className="font-display text-base text-neutral-500 italic">
             You&apos;re on the list. See you tomorrow.
@@ -959,7 +959,7 @@ export function NeighborhoodBrief({
             </p>
             <button
               onClick={() => setSubscribeStatus('idle')}
-              className="text-sm text-neutral-400 underline hover:text-neutral-900"
+              className="text-sm text-neutral-400 underline hover:text-white"
             >
               Try again
             </button>
@@ -971,13 +971,13 @@ export function NeighborhoodBrief({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Your email address"
-              className="bg-transparent border-b border-neutral-300 focus:border-neutral-900 text-base py-2 pr-24 w-full font-serif italic text-neutral-400 placeholder-neutral-300 outline-none transition-colors"
+              className="bg-transparent border-b border-neutral-700 focus:border-amber-500 text-base py-2 pr-24 w-full font-serif italic text-neutral-400 placeholder-neutral-600 outline-none transition-colors"
               disabled={subscribeStatus === 'loading'}
             />
             <button
               type="submit"
               disabled={subscribeStatus === 'loading' || !email}
-              className="absolute right-0 bottom-2 text-xs font-bold uppercase tracking-widest text-neutral-900 hover:text-amber-600 disabled:text-neutral-300 disabled:cursor-not-allowed transition-colors"
+              className="absolute right-0 bottom-2 text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-white disabled:text-neutral-600 disabled:cursor-not-allowed transition-colors"
             >
               {subscribeStatus === 'loading' ? '...' : 'Subscribe'}
             </button>
@@ -990,16 +990,16 @@ export function NeighborhoodBrief({
 
 export function NeighborhoodBriefSkeleton() {
   return (
-    <div className="bg-neutral-50 p-8 md:p-10 mb-6 animate-pulse">
+    <div className="bg-surface p-8 md:p-10 mb-6 animate-pulse">
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-1.5 h-1.5 rounded-full bg-neutral-200" />
-        <div className="h-3 w-28 bg-neutral-200 rounded" />
+        <div className="w-1.5 h-1.5 rounded-full bg-neutral-800" />
+        <div className="h-3 w-28 bg-neutral-800 rounded" />
       </div>
-      <div className="h-7 w-3/4 bg-neutral-200 rounded mb-4" />
+      <div className="h-7 w-3/4 bg-neutral-800 rounded mb-4" />
       <div className="space-y-2 max-w-prose mb-8">
-        <div className="h-3 w-full bg-neutral-200 rounded" />
-        <div className="h-3 w-5/6 bg-neutral-200 rounded" />
-        <div className="h-3 w-4/6 bg-neutral-200 rounded" />
+        <div className="h-3 w-full bg-neutral-800 rounded" />
+        <div className="h-3 w-5/6 bg-neutral-800 rounded" />
+        <div className="h-3 w-4/6 bg-neutral-800 rounded" />
       </div>
     </div>
   );
@@ -1116,12 +1116,12 @@ function ArchivedBriefCard({
       </div>
 
       {/* Headline */}
-      <h4 className="font-medium text-sm text-neutral-800 mb-1">
+      <h4 className="font-medium text-sm text-neutral-200 mb-1">
         {brief.headline}
       </h4>
 
       {/* Content */}
-      <div className="text-xs text-neutral-600 leading-relaxed">
+      <div className="text-xs text-neutral-400 leading-relaxed">
         {isExpanded ? (
           <div className="space-y-2">
             {paragraphs.map((p, i) => (

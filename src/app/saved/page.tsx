@@ -68,18 +68,18 @@ export default function SavedPage() {
   return (
     <div className="py-8 px-4">
       <div className="mx-auto max-w-2xl">
-        <h1 className="text-2xl font-light mb-6">Saved Stories</h1>
+        <h1 className="text-2xl font-light text-neutral-100 mb-6">Saved Stories</h1>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-8 border-b border-neutral-200">
+        <div className="flex gap-1 mb-8 border-b border-white/[0.08]">
           {TABS.map((tab) => (
             <button
               key={tab.type}
               onClick={() => setActiveTab(tab.type)}
               className={`px-4 py-2 text-sm transition-colors border-b-2 -mb-px ${
                 activeTab === tab.type
-                  ? 'border-black text-black'
-                  : 'border-transparent text-neutral-400 hover:text-neutral-600'
+                  ? 'border-amber-600 text-neutral-100'
+                  : 'border-transparent text-neutral-400 hover:text-neutral-300'
               }`}
             >
               <span className="mr-1.5">{tab.icon}</span>
@@ -93,8 +93,8 @@ export default function SavedPage() {
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-4 bg-neutral-100 rounded w-3/4 mb-2" />
-                <div className="h-3 bg-neutral-50 rounded w-1/2" />
+                <div className="h-4 bg-neutral-800 rounded w-3/4 mb-2" />
+                <div className="h-3 bg-neutral-700 rounded w-1/2" />
               </div>
             ))}
           </div>
@@ -117,7 +117,7 @@ export default function SavedPage() {
                           {article.neighborhood.name} &middot; {article.neighborhood.city}
                         </p>
                       )}
-                      <h3 className="text-base font-medium text-neutral-900 group-hover:text-neutral-600 transition-colors leading-tight mb-1">
+                      <h3 className="text-base font-medium text-neutral-100 group-hover:text-neutral-300 transition-colors leading-tight mb-1">
                         {article.headline}
                       </h3>
                       <p className="text-xs text-neutral-400">

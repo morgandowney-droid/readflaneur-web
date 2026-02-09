@@ -103,7 +103,7 @@ function StarRating({ rating, reviewCount }: { rating: number | null; reviewCoun
                 ? 'text-yellow-400 fill-yellow-400'
                 : i === fullStars && hasHalfStar
                 ? 'text-yellow-400 fill-yellow-400/50'
-                : 'text-neutral-200 fill-neutral-200'
+                : 'text-neutral-600 fill-neutral-600'
             }`}
             viewBox="0 0 20 20"
           >
@@ -329,7 +329,7 @@ export function GuidesClient({
           <div className="mb-4">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs tracking-wide text-neutral-500 hover:text-black transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs tracking-wide text-neutral-500 hover:text-white transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -360,18 +360,18 @@ export function GuidesClient({
               <div className="flex items-center gap-2">
                 <Link
                   href={`/${city}/${neighborhood}`}
-                  className="text-xs tracking-widest uppercase text-neutral-500 hover:text-black transition-colors px-2 py-1"
+                  className="text-xs tracking-widest uppercase text-neutral-500 hover:text-white transition-colors px-2 py-1"
                 >
                   News
                 </Link>
-                <span className="text-xs tracking-widest uppercase text-black px-2 py-1 border-b border-black">
+                <span className="text-xs tracking-widest uppercase text-neutral-100 px-2 py-1 border-b border-neutral-100">
                   Places
                 </span>
                 <a
                   href={`https://www.google.com/maps/place/${encodeURIComponent(neighborhoodName + ', ' + formattedCity)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs tracking-widest uppercase text-neutral-500 hover:text-black transition-colors px-2 py-1"
+                  className="text-xs tracking-widest uppercase text-neutral-500 hover:text-white transition-colors px-2 py-1"
                 >
                   Map
                 </a>
@@ -379,7 +379,7 @@ export function GuidesClient({
                   href={getWikipediaUrl(neighborhoodId, neighborhoodName)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs tracking-widest uppercase text-neutral-500 hover:text-black transition-colors px-2 py-1"
+                  className="text-xs tracking-widest uppercase text-neutral-500 hover:text-white transition-colors px-2 py-1"
                 >
                   Wiki
                 </a>
@@ -391,11 +391,11 @@ export function GuidesClient({
               <div className="flex items-center gap-2">
                 <Link
                   href={`/${city}/${neighborhood}`}
-                  className="text-xs tracking-widest uppercase text-neutral-500 hover:text-black transition-colors px-2 py-1"
+                  className="text-xs tracking-widest uppercase text-neutral-500 hover:text-white transition-colors px-2 py-1"
                 >
                   News
                 </Link>
-                <span className="text-xs tracking-widest uppercase text-black px-2 py-1 border-b border-black">
+                <span className="text-xs tracking-widest uppercase text-neutral-100 px-2 py-1 border-b border-neutral-100">
                   Places
                 </span>
               </div>
@@ -421,8 +421,8 @@ export function GuidesClient({
               onClick={() => setSortBy('best')}
               className={`px-2.5 py-1.5 text-[11px] transition-colors ${
                 sortBy === 'best'
-                  ? 'bg-black text-white'
-                  : 'text-neutral-500 hover:text-black'
+                  ? 'bg-amber-600 text-white'
+                  : 'text-neutral-500 hover:text-white'
               }`}
             >
               Best
@@ -431,8 +431,8 @@ export function GuidesClient({
               onClick={() => setSortBy('rating')}
               className={`px-2.5 py-1.5 text-[11px] transition-colors ${
                 sortBy === 'rating'
-                  ? 'bg-black text-white'
-                  : 'text-neutral-500 hover:text-black'
+                  ? 'bg-amber-600 text-white'
+                  : 'text-neutral-500 hover:text-white'
               }`}
             >
               Stars
@@ -441,8 +441,8 @@ export function GuidesClient({
               onClick={() => setSortBy('reviews')}
               className={`px-2.5 py-1.5 text-[11px] transition-colors ${
                 sortBy === 'reviews'
-                  ? 'bg-black text-white'
-                  : 'text-neutral-500 hover:text-black'
+                  ? 'bg-amber-600 text-white'
+                  : 'text-neutral-500 hover:text-white'
               }`}
             >
               Review Count
@@ -457,8 +457,8 @@ export function GuidesClient({
               }}
               className={`px-2.5 py-1.5 text-[11px] transition-colors flex items-center gap-0.5 ${
                 sortBy === 'distance'
-                  ? 'bg-black text-white'
-                  : 'text-neutral-500 hover:text-black'
+                  ? 'bg-amber-600 text-white'
+                  : 'text-neutral-500 hover:text-white'
               }`}
             >
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -474,7 +474,7 @@ export function GuidesClient({
                 className={`px-2 py-1 text-[11px] transition-colors ${
                   filterStatus === 'new'
                     ? 'bg-green-600 text-white'
-                    : 'bg-green-50 text-green-700'
+                    : 'bg-green-900/30 text-green-400'
                 }`}
               >
                 New
@@ -486,7 +486,7 @@ export function GuidesClient({
                 className={`px-2 py-1 text-[11px] transition-colors ${
                   filterStatus === 'closed'
                     ? 'bg-red-600 text-white'
-                    : 'bg-red-50 text-red-700'
+                    : 'bg-red-900/30 text-red-400'
                 }`}
               >
                 Closed
@@ -499,7 +499,7 @@ export function GuidesClient({
                 className={`px-2 py-1 text-[11px] transition-colors flex items-center gap-1 ${
                   showMichelinOnly
                     ? 'bg-red-600 text-white'
-                    : 'bg-red-50 text-red-700'
+                    : 'bg-red-900/30 text-red-400'
                 }`}
               >
                 <span>★</span>
@@ -529,8 +529,8 @@ export function GuidesClient({
                   disabled={filterLoading}
                   className={`px-2.5 py-1.5 text-[11px] whitespace-nowrap transition-colors disabled:opacity-50 ${
                     selectedCategory === cat.slug && !showBookmarks
-                      ? 'bg-black text-white'
-                      : 'border border-neutral-200 hover:border-black'
+                      ? 'bg-amber-600 text-white'
+                      : 'border border-white/[0.08] hover:border-white/20'
                   }`}
                 >
                   {displayName}
@@ -542,8 +542,8 @@ export function GuidesClient({
               disabled={filterLoading}
               className={`px-2.5 py-1.5 text-[11px] whitespace-nowrap transition-colors disabled:opacity-50 flex items-center gap-1 ${
                 showBookmarks
-                  ? 'bg-black text-white'
-                  : 'border border-neutral-200 hover:border-black'
+                  ? 'bg-amber-600 text-white'
+                  : 'border border-white/[0.08] hover:border-white/20'
               }`}
             >
               <svg className="w-3 h-3" fill={showBookmarks ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -561,8 +561,8 @@ export function GuidesClient({
                 disabled={filterLoading}
                 className={`px-2.5 py-1 text-[11px] whitespace-nowrap transition-colors disabled:opacity-50 ${
                   !selectedSubcategory
-                    ? 'bg-neutral-800 text-white'
-                    : 'bg-neutral-50 border border-neutral-200 hover:border-neutral-400'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-surface border border-white/[0.08] hover:border-white/20'
                 }`}
               >
                 All Services
@@ -588,11 +588,11 @@ export function GuidesClient({
         {/* Listings */}
         {filterLoading ? (
           <div className="text-center py-12">
-            <div className="inline-block w-6 h-6 border-2 border-neutral-200 border-t-black rounded-full animate-spin" />
+            <div className="inline-block w-6 h-6 border-2 border-white/[0.08] border-t-white rounded-full animate-spin" />
           </div>
         ) : showBookmarks ? (
           bookmarks.size === 0 ? (
-            <div className="text-center py-12 bg-neutral-50">
+            <div className="text-center py-12 bg-surface">
               <p className="text-neutral-500 mb-2">No saved places yet.</p>
               <p className="text-sm text-neutral-400">Tap "Save" on any place to bookmark it.</p>
             </div>
@@ -652,9 +652,9 @@ function ListingCard({
   showRank: boolean;
 }) {
   return (
-    <div className="border border-neutral-200 bg-white overflow-hidden">
+    <div className="border border-white/[0.08] bg-surface overflow-hidden">
       {listing.google_photo_url && (
-        <div className="relative h-32 bg-neutral-100">
+        <div className="relative h-32 bg-neutral-800">
           {showRank && (
             <div className="absolute top-2 left-2 z-10 w-6 h-6 bg-black text-white text-xs font-medium flex items-center justify-center">
               {index + 1}
@@ -689,12 +689,12 @@ function ListingCard({
               <MichelinBadge stars={listing.michelin_stars} designation={listing.michelin_designation} />
             )}
             {listing.isNew && (
-              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 uppercase tracking-wide shrink-0">
+              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-900/30 text-green-400 uppercase tracking-wide shrink-0">
                 New
               </span>
             )}
             {listing.isClosed && (
-              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-red-100 text-red-700 uppercase tracking-wide shrink-0">
+              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-red-900/30 text-red-400 uppercase tracking-wide shrink-0">
                 Closed
               </span>
             )}
@@ -726,7 +726,7 @@ function ListingCard({
         </div>
 
         {listing.description && (
-          <p className="mt-2 text-xs text-neutral-600 line-clamp-2">{listing.description}</p>
+          <p className="mt-2 text-xs text-neutral-400 line-clamp-2">{listing.description}</p>
         )}
 
         <div className="mt-3 flex items-center gap-1 text-xs -ml-2">
@@ -735,7 +735,7 @@ function ListingCard({
               href={listing.website_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-neutral-400 hover:text-black transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
+              className="text-neutral-400 hover:text-white transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
             >
               Website
             </a>
@@ -743,7 +743,7 @@ function ListingCard({
           {listing.phone && (
             <a
               href={`tel:${listing.phone}`}
-              className="text-neutral-400 hover:text-black transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
+              className="text-neutral-400 hover:text-white transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
             >
               Call
             </a>
@@ -753,14 +753,14 @@ function ListingCard({
               href={getMapsUrl(listing)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-neutral-400 hover:text-black transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
+              className="text-neutral-400 hover:text-white transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
             >
               Directions
             </a>
           ) : null}
           <button
             onClick={() => shareListing(listing)}
-            className="text-neutral-400 hover:text-black transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
+            className="text-neutral-400 hover:text-white transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
           >
             Share
           </button>
@@ -768,8 +768,8 @@ function ListingCard({
             onClick={() => toggleBookmark(listing.id)}
             className={`transition-colors px-2 py-1.5 min-h-[44px] flex items-center ${
               bookmarks.has(listing.id)
-                ? 'text-black'
-                : 'text-neutral-400 hover:text-black'
+                ? 'text-white'
+                : 'text-neutral-400 hover:text-white'
             }`}
           >
             {bookmarks.has(listing.id) ? 'Saved' : 'Save'}

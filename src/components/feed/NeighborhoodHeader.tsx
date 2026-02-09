@@ -82,7 +82,7 @@ export function NeighborhoodHeader({
   const isCombo = comboInfo && comboInfo.components.length > 0;
   const componentNames = isCombo ? comboInfo.components.map(c => c.name) : [];
 
-  const linkClass = 'text-xs tracking-[0.2em] uppercase text-neutral-400 hover:text-neutral-900 transition-colors';
+  const linkClass = 'text-xs tracking-[0.2em] uppercase text-neutral-400 hover:text-white transition-colors';
 
   return (
     <header className="mb-6">
@@ -91,7 +91,7 @@ export function NeighborhoodHeader({
         {/* Back arrow - absolute top-left */}
         <Link
           href={backUrl}
-          className="absolute left-0 top-10 text-xs tracking-wide text-neutral-400 hover:text-black transition-colors"
+          className="absolute left-0 top-10 text-xs tracking-wide text-neutral-400 hover:text-white transition-colors"
         >
           &larr; {formatCityDisplay(citySlug)}
         </Link>
@@ -102,7 +102,7 @@ export function NeighborhoodHeader({
         </p>
 
         {/* Neighborhood name */}
-        <h1 className="font-display text-4xl md:text-5xl text-neutral-900 tracking-wide">
+        <h1 className="font-display text-4xl md:text-5xl text-neutral-100 tracking-wide">
           {neighborhoodName}
         </h1>
 
@@ -115,7 +115,7 @@ export function NeighborhoodHeader({
       </div>
 
       {/* ── CONTROL DECK ── */}
-      <div className="border-y border-neutral-200 py-4 mt-8 flex items-center justify-between" ref={dropdownRef}>
+      <div className="border-y border-white/10 py-4 mt-8 flex items-center justify-between" ref={dropdownRef}>
         {/* Left: Brief Archive */}
         <div className="flex-shrink-0">
           {briefArchive || <div />}
@@ -134,12 +134,12 @@ export function NeighborhoodHeader({
                   GUIDE
                 </button>
                 {openDropdown === 'guide' && (
-                  <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white border border-neutral-200 shadow-sm rounded py-2 min-w-[160px] z-10">
+                  <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px] z-10">
                     {comboInfo.components.map(c => (
                       <a
                         key={c.id}
                         href={`/${citySlug}/${getNeighborhoodSlug(c.id)}/guides`}
-                        className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-black hover:bg-neutral-50 w-full text-left"
+                        className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-white hover:bg-white/5 w-full text-left"
                       >
                         {c.name}
                       </a>
@@ -157,14 +157,14 @@ export function NeighborhoodHeader({
                   MAP
                 </button>
                 {openDropdown === 'map' && (
-                  <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white border border-neutral-200 shadow-sm rounded py-2 min-w-[160px] z-10">
+                  <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px] z-10">
                     {comboInfo.components.map(c => (
                       <a
                         key={c.id}
                         href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(c.id, c.name, c.city))}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-black hover:bg-neutral-50 w-full text-left"
+                        className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-white hover:bg-white/5 w-full text-left"
                       >
                         {c.name}
                       </a>
@@ -182,14 +182,14 @@ export function NeighborhoodHeader({
                   HISTORY
                 </button>
                 {openDropdown === 'history' && (
-                  <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white border border-neutral-200 shadow-sm rounded py-2 min-w-[160px] z-10">
+                  <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px] z-10">
                     {comboInfo.components.map(c => (
                       <a
                         key={c.id}
                         href={getWikipediaUrl(c.id, c.name)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-black hover:bg-neutral-50 w-full text-left"
+                        className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-white hover:bg-white/5 w-full text-left"
                       >
                         {c.name}
                       </a>

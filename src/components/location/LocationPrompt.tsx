@@ -149,11 +149,11 @@ export function LocationPrompt() {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50 animate-slide-up">
-      <div className="bg-white border border-neutral-200 rounded-lg shadow-lg p-4">
+      <div className="bg-surface border border-white/[0.08] rounded-lg shadow-lg p-4">
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-8 h-8 bg-neutral-100 rounded-full flex items-center justify-center">
+          <div className="flex-shrink-0 w-8 h-8 bg-neutral-800 rounded-full flex items-center justify-center">
             <svg
-              className="w-4 h-4 text-neutral-600"
+              className="w-4 h-4 text-neutral-400"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -173,7 +173,7 @@ export function LocationPrompt() {
             </svg>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-neutral-900 text-sm">
+            <p className="font-medium text-neutral-100 text-sm">
               It looks like you're in {detectedCity}
             </p>
             <p className="text-xs text-neutral-500 mt-0.5">
@@ -183,13 +183,13 @@ export function LocationPrompt() {
               <button
                 onClick={handleSetPrimary}
                 disabled={isSaving}
-                className="px-3 py-1.5 bg-black text-white text-xs font-medium rounded hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 bg-amber-600 text-white text-xs font-medium rounded hover:bg-amber-700 transition-colors disabled:opacity-50"
               >
                 {isSaving ? 'Saving...' : `Yes, set ${detectedCity}`}
               </button>
               <button
                 onClick={handleDismiss}
-                className="px-3 py-1.5 text-neutral-600 text-xs font-medium hover:text-neutral-900 transition-colors"
+                className="px-3 py-1.5 text-neutral-400 text-xs font-medium hover:text-neutral-100 transition-colors"
               >
                 Not now
               </button>
@@ -197,7 +197,7 @@ export function LocationPrompt() {
           </div>
           <button
             onClick={handleDismiss}
-            className="flex-shrink-0 text-neutral-400 hover:text-neutral-600 transition-colors"
+            className="flex-shrink-0 text-neutral-500 hover:text-neutral-300 transition-colors"
             aria-label="Close"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

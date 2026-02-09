@@ -193,17 +193,17 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
       <div className="mb-8">
-        <Link href="/" className="text-sm text-neutral-500 hover:text-black">
+        <Link href="/" className="text-sm text-neutral-500 hover:text-white">
           &larr; Back to Home
         </Link>
       </div>
 
-      <h1 className="text-3xl font-light mb-8">Settings</h1>
+      <h1 className="text-3xl font-light text-neutral-100 mb-8">Settings</h1>
 
       {/* Primary Location Section */}
       <section className="mb-12">
-        <h2 className="text-lg font-medium mb-4">Primary Location</h2>
-        <p className="text-sm text-neutral-600 mb-6">
+        <h2 className="text-lg font-medium text-neutral-100 mb-4">Primary Location</h2>
+        <p className="text-sm text-neutral-400 mb-6">
           Set your primary city to receive local updates and newsletters timed to your timezone.
         </p>
 
@@ -220,7 +220,7 @@ export default function SettingsPage() {
                 id="city"
                 value={primaryCity}
                 onChange={(e) => setPrimaryCity(e.target.value)}
-                className="flex-1 px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none bg-white"
+                className="flex-1 px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white"
               >
                 <option value="">Select a city...</option>
                 {cities.map((city) => (
@@ -233,7 +233,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={handleDetectLocation}
                 disabled={isDetecting}
-                className="px-4 py-3 border border-neutral-200 hover:border-black transition-colors disabled:opacity-50"
+                className="px-4 py-3 border border-white/20 hover:border-white/30 transition-colors disabled:opacity-50 text-white"
                 title="Detect my location"
               >
                 {isDetecting ? (
@@ -272,7 +272,7 @@ export default function SettingsPage() {
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-6 py-3 bg-black text-white text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+              className="px-6 py-3 bg-white text-neutral-900 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50"
             >
               {isSaving ? 'Saving...' : 'Save'}
             </button>
@@ -283,7 +283,7 @@ export default function SettingsPage() {
                   handleSave();
                 }}
                 disabled={isSaving}
-                className="px-6 py-3 border border-neutral-200 text-sm tracking-widest uppercase hover:border-black transition-colors disabled:opacity-50"
+                className="px-6 py-3 border border-white/20 text-sm tracking-widest uppercase text-neutral-300 hover:border-white/30 transition-colors disabled:opacity-50"
               >
                 Clear
               </button>
@@ -295,14 +295,14 @@ export default function SettingsPage() {
       {/* Account Section (only for logged in users) */}
       {isLoggedIn && profile && (
         <section className="mb-12">
-          <h2 className="text-lg font-medium mb-4">Account</h2>
+          <h2 className="text-lg font-medium text-neutral-100 mb-4">Account</h2>
           <div className="space-y-2 text-sm">
-            <p className="text-neutral-600">
-              <span className="text-neutral-400">Email:</span> {profile.email}
+            <p className="text-neutral-400">
+              <span className="text-neutral-500">Email:</span> {profile.email}
             </p>
             {profile.full_name && (
-              <p className="text-neutral-600">
-                <span className="text-neutral-400">Name:</span> {profile.full_name}
+              <p className="text-neutral-400">
+                <span className="text-neutral-500">Name:</span> {profile.full_name}
               </p>
             )}
           </div>
@@ -311,9 +311,9 @@ export default function SettingsPage() {
 
       {/* Not logged in notice */}
       {isLoggedIn === false && (
-        <section className="p-4 bg-neutral-50 border border-neutral-200">
-          <p className="text-sm text-neutral-600">
-            <Link href="/login" className="text-black hover:underline">Sign in</Link>
+        <section className="p-4 bg-surface border border-white/[0.08]">
+          <p className="text-sm text-neutral-400">
+            <Link href="/login" className="text-white hover:underline">Sign in</Link>
             {' '}to sync your settings across devices.
           </p>
         </section>

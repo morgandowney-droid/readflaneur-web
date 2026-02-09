@@ -204,7 +204,7 @@ export default function MichelinAdminPage() {
   const michelinCount = listings.filter(l => l.michelin_stars || l.michelin_designation).length;
 
   return (
-    <div className="min-h-screen bg-neutral-50 py-8 px-4">
+    <div className="min-h-screen bg-canvas py-8 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -235,7 +235,7 @@ export default function MichelinAdminPage() {
         )}
 
         {/* Filters */}
-        <div className="bg-white border border-neutral-200 p-4 mb-6 space-y-4">
+        <div className="bg-surface border border-white/[0.08] p-4 mb-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div>
@@ -247,7 +247,7 @@ export default function MichelinAdminPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Restaurant name..."
-                className="w-full border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:border-black"
+                className="w-full border border-white/[0.08] px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
               />
             </div>
 
@@ -262,7 +262,7 @@ export default function MichelinAdminPage() {
                   setSelectedCity(e.target.value);
                   setSelectedNeighborhood('');
                 }}
-                className="w-full border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:border-black"
+                className="w-full border border-white/[0.08] px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
               >
                 <option value="">All Cities</option>
                 {cities.map(city => (
@@ -279,7 +279,7 @@ export default function MichelinAdminPage() {
               <select
                 value={selectedNeighborhood}
                 onChange={(e) => setSelectedNeighborhood(e.target.value)}
-                className="w-full border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:border-black"
+                className="w-full border border-white/[0.08] px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
               >
                 <option value="">All Neighborhoods</option>
                 {filteredNeighborhoods.map(n => (
@@ -312,7 +312,7 @@ export default function MichelinAdminPage() {
           </div>
 
           {/* Stats */}
-          <div className="text-xs text-neutral-500 pt-2 border-t border-neutral-100">
+          <div className="text-xs text-neutral-500 pt-2 border-t border-white/[0.06]">
             Showing {filteredListings.length} of {listings.length} places
             {michelinCount > 0 && (
               <span className="ml-2 text-red-600">
@@ -325,17 +325,17 @@ export default function MichelinAdminPage() {
         {/* Listings Table */}
         {loading ? (
           <div className="text-center py-12">
-            <div className="inline-block w-8 h-8 border-2 border-neutral-200 border-t-black rounded-full animate-spin" />
+            <div className="inline-block w-8 h-8 border-2 border-neutral-700 border-t-neutral-200 rounded-full animate-spin" />
           </div>
         ) : filteredListings.length === 0 ? (
-          <div className="text-center py-12 bg-white border border-neutral-200">
+          <div className="text-center py-12 bg-surface border border-white/[0.08]">
             <p className="text-neutral-500">No restaurants found.</p>
             <p className="text-sm text-neutral-400 mt-1">Try adjusting your filters.</p>
           </div>
         ) : (
-          <div className="bg-white border border-neutral-200 overflow-hidden">
+          <div className="bg-surface border border-white/[0.08] overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-neutral-50 border-b border-neutral-200">
+              <thead className="bg-canvas border-b border-white/[0.08]">
                 <tr>
                   <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-neutral-500 font-medium">
                     Restaurant
@@ -354,9 +354,9 @@ export default function MichelinAdminPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-y divide-white/[0.06]">
                 {filteredListings.map(listing => (
-                  <tr key={listing.id} className="hover:bg-neutral-50">
+                  <tr key={listing.id} className="hover:bg-white/5">
                     {/* Restaurant Name */}
                     <td className="px-4 py-3">
                       <div className="font-medium">{listing.name}</div>
@@ -369,7 +369,7 @@ export default function MichelinAdminPage() {
 
                     {/* Location */}
                     <td className="px-4 py-3 hidden md:table-cell">
-                      <div className="text-neutral-600">
+                      <div className="text-neutral-400">
                         {listing.neighborhood?.name}
                       </div>
                       <div className="text-xs text-neutral-400">
@@ -427,7 +427,7 @@ export default function MichelinAdminPage() {
         )}
 
         {/* Legend */}
-        <div className="mt-6 p-4 bg-white border border-neutral-200">
+        <div className="mt-6 p-4 bg-surface border border-white/[0.08]">
           <h3 className="text-xs uppercase tracking-wide text-neutral-500 font-medium mb-3">
             Michelin Designations
           </h3>
@@ -436,31 +436,31 @@ export default function MichelinAdminPage() {
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-600 text-white text-[10px] font-semibold">
                 ★
               </span>
-              <span className="ml-2 text-neutral-600">1 Star - High quality</span>
+              <span className="ml-2 text-neutral-400">1 Star - High quality</span>
             </div>
             <div>
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-600 text-white text-[10px] font-semibold">
                 ★★
               </span>
-              <span className="ml-2 text-neutral-600">2 Stars - Excellent</span>
+              <span className="ml-2 text-neutral-400">2 Stars - Excellent</span>
             </div>
             <div>
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-600 text-white text-[10px] font-semibold">
                 ★★★
               </span>
-              <span className="ml-2 text-neutral-600">3 Stars - Exceptional</span>
+              <span className="ml-2 text-neutral-400">3 Stars - Exceptional</span>
             </div>
             <div>
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-600 text-white text-[10px] font-semibold">
                 BIB
               </span>
-              <span className="ml-2 text-neutral-600">Bib Gourmand - Great value</span>
+              <span className="ml-2 text-neutral-400">Bib Gourmand - Great value</span>
             </div>
             <div>
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-700 text-white text-[10px] font-semibold">
                 ★
               </span>
-              <span className="ml-2 text-neutral-600">Green Star - Sustainable</span>
+              <span className="ml-2 text-neutral-400">Green Star - Sustainable</span>
             </div>
           </div>
         </div>
@@ -523,7 +523,7 @@ function MichelinSelector({
           onChange(null, 'green_star');
         }
       }}
-      className="border border-neutral-200 px-2 py-1 text-xs focus:outline-none focus:border-black disabled:opacity-50"
+      className="border border-white/[0.08] px-2 py-1 text-xs focus:outline-none focus:border-amber-500 disabled:opacity-50"
       defaultValue=""
     >
       <option value="">Add rating...</option>

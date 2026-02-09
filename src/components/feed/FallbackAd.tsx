@@ -68,7 +68,7 @@ function BonusAdDisplay({ ad, variant }: { ad: NonNullable<FallbackData['bonusAd
   if (variant === 'story_open') {
     return (
       <div
-        className="bg-neutral-50 border border-neutral-200 overflow-hidden cursor-pointer hover:border-neutral-300 transition-colors"
+        className="bg-surface border border-white/[0.08] overflow-hidden cursor-pointer hover:border-white/20 transition-colors"
         onClick={handleClick}
       >
         <div className="flex flex-col sm:flex-row">
@@ -100,10 +100,10 @@ function BonusAdDisplay({ ad, variant }: { ad: NonNullable<FallbackData['bonusAd
   // Card variant
   return (
     <div
-      className="border border-neutral-200 bg-neutral-50 overflow-hidden cursor-pointer hover:border-neutral-300 transition-colors"
+      className="border border-white/[0.08] bg-surface overflow-hidden cursor-pointer hover:border-white/20 transition-colors"
       onClick={handleClick}
     >
-      <div className="px-3 py-2 border-b border-neutral-200">
+      <div className="px-3 py-2 border-b border-white/[0.08]">
         <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
           Sponsored by {ad.sponsor_label}
         </span>
@@ -133,7 +133,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
     return (
       <a
         href={houseAd.click_url}
-        className="block border border-neutral-200 bg-neutral-50 p-6 hover:border-black transition-colors"
+        className="block border border-white/[0.08] bg-surface p-6 hover:border-white/20 transition-colors"
       >
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
@@ -142,7 +142,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
             </p>
             <h3 className="font-semibold text-lg mb-1">{houseAd.headline}</h3>
             {houseAd.body && (
-              <p className="text-sm text-neutral-600">{houseAd.body}</p>
+              <p className="text-sm text-neutral-400">{houseAd.body}</p>
             )}
           </div>
           <span className="inline-block bg-black text-white px-6 py-2 text-sm tracking-widest uppercase whitespace-nowrap">
@@ -157,9 +157,9 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
   return (
     <a
       href={houseAd.click_url}
-      className="block border border-neutral-200 bg-neutral-50 hover:border-black transition-colors"
+      className="block border border-white/[0.08] bg-surface hover:border-white/20 transition-colors"
     >
-      <div className="px-3 py-2 border-b border-neutral-200">
+      <div className="px-3 py-2 border-b border-white/[0.08]">
         <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
           Flaneur
         </span>
@@ -167,7 +167,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
       <div className="p-4">
         <h3 className="font-semibold text-sm mb-2">{houseAd.headline}</h3>
         {houseAd.body && (
-          <p className="text-xs text-neutral-600 mb-3">{houseAd.body}</p>
+          <p className="text-xs text-neutral-400 mb-3">{houseAd.body}</p>
         )}
         <span className="inline-block bg-black text-white px-4 py-2 text-xs tracking-widest uppercase">
           Learn More
@@ -235,7 +235,7 @@ function NewsletterSignup({ variant }: { variant: 'card' | 'story_open' }) {
 
   if (variant === 'story_open') {
     return (
-      <div className="border border-neutral-200 bg-neutral-50 p-6">
+      <div className="border border-white/[0.08] bg-surface p-6">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
             <p className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-2">
@@ -244,7 +244,7 @@ function NewsletterSignup({ variant }: { variant: 'card' | 'story_open' }) {
             <h3 className="font-semibold text-lg mb-1">
               Get local stories delivered to your inbox
             </h3>
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-neutral-400">
               Weekly digest of the best stories from your neighborhood.
             </p>
           </div>
@@ -259,7 +259,7 @@ function NewsletterSignup({ variant }: { variant: 'card' | 'story_open' }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="px-4 py-2 border border-neutral-200 focus:border-black focus:outline-none text-sm w-48"
+                className="px-4 py-2 border border-white/[0.08] bg-transparent focus:border-white/30 focus:outline-none text-sm w-48 text-white"
                 disabled={status === 'loading'}
               />
               <button
@@ -278,8 +278,8 @@ function NewsletterSignup({ variant }: { variant: 'card' | 'story_open' }) {
 
   // Card variant
   return (
-    <div className="border border-neutral-200 bg-neutral-50">
-      <div className="px-3 py-2 border-b border-neutral-200">
+    <div className="border border-white/[0.08] bg-surface">
+      <div className="px-3 py-2 border-b border-white/[0.08]">
         <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
           Newsletter
         </span>
@@ -288,7 +288,7 @@ function NewsletterSignup({ variant }: { variant: 'card' | 'story_open' }) {
         <h3 className="font-semibold text-sm mb-2">
           Get local stories in your inbox
         </h3>
-        <p className="text-xs text-neutral-600 mb-4">
+        <p className="text-xs text-neutral-400 mb-4">
           Weekly digest from your neighborhood.
         </p>
         {status === 'success' ? (
@@ -302,7 +302,7 @@ function NewsletterSignup({ variant }: { variant: 'card' | 'story_open' }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
-              className="w-full px-3 py-2 border border-neutral-200 focus:border-black focus:outline-none text-sm"
+              className="w-full px-3 py-2 border border-white/[0.08] bg-transparent focus:border-white/30 focus:outline-none text-sm text-white"
               disabled={status === 'loading'}
             />
             <button
@@ -326,7 +326,7 @@ function StaticHouseAd({ variant }: { variant: 'card' | 'story_open' }) {
     return (
       <a
         href="/advertise"
-        className="block border border-neutral-200 bg-neutral-50 p-6 hover:border-black transition-colors"
+        className="block border border-white/[0.08] bg-surface p-6 hover:border-white/20 transition-colors"
       >
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
@@ -336,7 +336,7 @@ function StaticHouseAd({ variant }: { variant: 'card' | 'story_open' }) {
             <h3 className="font-semibold text-lg mb-1">
               Advertise with Flaneur
             </h3>
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-neutral-400">
               Connect with engaged readers in your neighborhood.
             </p>
           </div>
@@ -352,9 +352,9 @@ function StaticHouseAd({ variant }: { variant: 'card' | 'story_open' }) {
   return (
     <a
       href="/advertise"
-      className="block border border-neutral-200 bg-neutral-50 hover:border-black transition-colors"
+      className="block border border-white/[0.08] bg-surface hover:border-white/20 transition-colors"
     >
-      <div className="px-3 py-2 border-b border-neutral-200">
+      <div className="px-3 py-2 border-b border-white/[0.08]">
         <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
           Advertise
         </span>
@@ -363,7 +363,7 @@ function StaticHouseAd({ variant }: { variant: 'card' | 'story_open' }) {
         <h3 className="font-semibold text-sm mb-2">
           Reach local readers
         </h3>
-        <p className="text-xs text-neutral-600 mb-3">
+        <p className="text-xs text-neutral-400 mb-3">
           Connect with your neighborhood.
         </p>
         <span className="inline-block bg-black text-white px-4 py-2 text-xs tracking-widest uppercase">

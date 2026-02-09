@@ -138,14 +138,14 @@ function LoginForm() {
 
   return (
     <div className="w-full max-w-sm">
-      <h1 className="text-2xl font-light text-center mb-8">Sign In</h1>
+      <h1 className="text-2xl font-light text-center text-neutral-100 mb-8">Sign In</h1>
 
       <div className="space-y-3 mb-6">
         <button
           type="button"
           onClick={() => handleOAuthLogin('google')}
           disabled={isOAuthLoading !== null || isLoading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-neutral-200 hover:border-neutral-400 transition-colors disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-white/[0.08] hover:border-white/20 transition-colors disabled:opacity-50 text-neutral-200"
         >
           <GoogleIcon />
           <span className="text-sm">
@@ -157,7 +157,7 @@ function LoginForm() {
           type="button"
           onClick={() => handleOAuthLogin('apple')}
           disabled={isOAuthLoading !== null || isLoading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-black text-white hover:bg-neutral-800 transition-colors disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white text-neutral-900 hover:bg-neutral-200 transition-colors disabled:opacity-50"
         >
           <AppleIcon />
           <span className="text-sm">
@@ -168,22 +168,22 @@ function LoginForm() {
 
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-neutral-200"></div>
+          <div className="w-full border-t border-white/[0.08]"></div>
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-4 text-neutral-400">or</span>
+          <span className="bg-canvas px-4 text-neutral-400">or</span>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200">
+          <div className="p-3 text-sm text-red-400 bg-red-900/20 border border-red-800/30">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="p-3 text-sm text-green-600 bg-green-50 border border-green-200">
+          <div className="p-3 text-sm text-green-400 bg-green-900/20 border border-green-800/30">
             Login successful! Redirecting...
           </div>
         )}
@@ -201,7 +201,7 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none"
+            className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white"
             placeholder="you@example.com"
           />
         </div>
@@ -219,7 +219,7 @@ function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none"
+            className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white"
             placeholder="Your password"
           />
         </div>
@@ -227,7 +227,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={isLoading || success}
-          className="w-full bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+          className="w-full bg-white text-neutral-900 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50"
         >
           {isLoading ? 'Signing in...' : success ? 'Redirecting...' : 'Sign In'}
         </button>
@@ -235,13 +235,13 @@ function LoginForm() {
 
       <div className="text-center mt-6 space-y-2">
         <p className="text-sm text-neutral-500">
-          <Link href="/forgot-password" className="text-black hover:underline">
+          <Link href="/forgot-password" className="text-white hover:underline">
             Forgot your password?
           </Link>
         </p>
         <p className="text-sm text-neutral-500">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-black hover:underline">
+          <Link href="/signup" className="text-white hover:underline">
             Sign up
           </Link>
         </p>

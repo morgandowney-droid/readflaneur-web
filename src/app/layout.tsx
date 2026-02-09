@@ -50,7 +50,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${cormorant.variable} font-sans antialiased bg-neutral-50`}>
+      <body className={`${inter.variable} ${cormorant.variable} font-sans antialiased bg-canvas text-neutral-200`}>
         <NeighborhoodModalProvider>
           <Header />
           <main>{children}</main>

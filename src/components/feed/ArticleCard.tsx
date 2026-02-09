@@ -83,11 +83,11 @@ export function ArticleCard({ article }: ArticleCardProps) {
   return (
     <Link href={articleUrl}>
       <article
-        className="bg-white overflow-hidden transition-all cursor-pointer"
+        className="bg-surface overflow-hidden transition-all cursor-pointer"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div className="relative aspect-video w-full bg-neutral-100">
+        <div className="relative aspect-video w-full bg-neutral-800">
           {article.image_url ? (
             <Image
               src={article.image_url}
@@ -183,7 +183,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
               )}
             </div>
             <h2 className="text-xl font-semibold mb-3 line-clamp-3">{article.headline}</h2>
-            <p className="text-neutral-600 text-base leading-relaxed mb-4">
+            <p className="text-neutral-400 text-base leading-relaxed mb-4">
               {article.preview_text || article.body_text.substring(0, 200)}
             </p>
             <span className="text-xs tracking-widest uppercase hover:underline">

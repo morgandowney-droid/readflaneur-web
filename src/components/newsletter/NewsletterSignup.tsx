@@ -87,8 +87,8 @@ export function NewsletterSignup({
     return (
       <div className={getContainerClasses(variant)}>
         <div className="text-center py-4">
-          <p className="text-lg font-medium mb-1">You're in!</p>
-          <p className="text-sm text-neutral-600">
+          <p className="text-lg font-medium text-neutral-100 mb-1">You're in!</p>
+          <p className="text-sm text-neutral-400">
             {magicLinkSent
               ? 'Check your inbox for a magic link to complete your account.'
               : 'You\'re subscribed to neighborhood stories.'
@@ -142,11 +142,11 @@ export function NewsletterSignup({
 
   if (variant === 'sidebar') {
     return (
-      <div className="bg-neutral-100 p-6">
-        <h3 className="text-sm font-medium tracking-wide uppercase mb-3">
+      <div className="bg-surface p-6">
+        <h3 className="text-sm font-medium tracking-wide uppercase text-neutral-100 mb-3">
           Newsletter
         </h3>
-        <p className="text-sm text-neutral-600 mb-4">
+        <p className="text-sm text-neutral-400 mb-4">
           Get the latest stories delivered to your inbox twice weekly.
         </p>
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -155,7 +155,7 @@ export function NewsletterSignup({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Your email"
-            className="w-full px-3 py-2 text-sm border border-neutral-300 focus:outline-none focus:border-black"
+            className="w-full px-3 py-2 text-sm bg-canvas border border-white/[0.08] text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500"
             disabled={status === 'loading'}
           />
           <button
@@ -183,7 +183,7 @@ export function NewsletterSignup({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
-            className="px-4 py-2 border border-neutral-300 rounded-none text-center sm:text-left text-sm focus:outline-none focus:border-black w-full sm:w-64"
+            className="px-4 py-2 bg-surface border border-white/[0.08] text-neutral-100 rounded-none text-center sm:text-left text-sm focus:outline-none focus:border-amber-500 placeholder:text-neutral-500 w-full sm:w-64"
             disabled={status === 'loading'}
           />
           <button
@@ -206,13 +206,13 @@ export function NewsletterSignup({
     <div className={getContainerClasses(variant)}>
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         <div className="flex-1">
-          <h3 className="text-lg font-medium mb-1">
+          <h3 className="text-lg font-medium text-neutral-100 mb-1">
             {neighborhoodName
               ? `Get ${neighborhoodName} News`
               : 'Stay in the Loop'
             }
           </h3>
-          <p className="text-sm text-neutral-600">
+          <p className="text-sm text-neutral-400">
             Local stories delivered to your inbox twice weekly.
           </p>
         </div>
@@ -222,7 +222,7 @@ export function NewsletterSignup({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
-            className="px-4 py-2 border border-neutral-300 focus:outline-none focus:border-black min-w-[200px]"
+            className="px-4 py-2 bg-surface border border-white/[0.08] text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500 min-w-[200px]"
             disabled={status === 'loading'}
           />
           <button
@@ -250,6 +250,6 @@ function getContainerClasses(variant: string): string {
     case 'footer':
       return 'py-6';
     default:
-      return 'bg-neutral-50 border border-neutral-200 p-6';
+      return 'bg-surface border border-white/[0.08] p-6';
   }
 }

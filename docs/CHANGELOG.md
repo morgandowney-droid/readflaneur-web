@@ -5,6 +5,28 @@
 
 ## 2026-02-09
 
+**Obsidian Theme - Permanent Dark Mode (61 files):**
+- Entire site pivoted to permanent dark mode, inspired by Bloomberg Terminal / Linear.app
+- CSS vars: `--background: #050505` (canvas), `--foreground: #e5e5e5`, `--color-surface: #121212`
+- `html` bg `#050505` prevents white flash on page load
+- Selection color changed to amber `#d97706` on white
+- Button system: `.btn-primary` inverted to `bg-white text-neutral-900` with amber hover, `.btn-secondary` transparent with white border, `.btn-ghost` neutral-400 hover white
+- Header: `bg-black/80 backdrop-blur-xl border-white/5`, active nav borders `border-amber-500`
+- Footer: `bg-canvas`, `border-white/[0.08]`, neutral-400 links hover white
+- All cards/surfaces: `bg-surface` (#121212), borders `border-white/[0.08]`
+- Text hierarchy: Headlines `text-neutral-100`, body `text-neutral-400`, meta `text-neutral-500`
+- Hover states: `hover:text-white`, `hover:bg-white/5` throughout
+- Form inputs across all pages: `bg-neutral-900 border-white/20 text-white`, focus `border-amber-500`
+- Article prose: added `prose-invert` to ArticleBody and standards page
+- Feed components: NeighborhoodBrief `bg-surface`, dark skeleton shimmer (`bg-neutral-800`), subscribe input `border-neutral-700 focus:border-amber-500`
+- Ad components: gallery `bg-amber-950/30 border-amber-500/30`, compact `bg-surface`
+- 17 admin pages: uniform dark treatment with `bg-surface`, `bg-neutral-800` table headers
+- All page backgrounds: `bg-canvas` replacing `bg-white`/`bg-neutral-50`
+- Email templates intentionally untouched (must stay light for mail client compatibility)
+- NeighborhoodSelectorModal already dark (glassmorphism) - unchanged
+- Advertise page already `bg-neutral-950` - unchanged
+- WCAG AAA contrast: body text #a3a3a3 on #050505 = 8.7:1 ratio
+
 **NeighborhoodHeader Redesign - Masthead + Control Deck:**
 - Replaced scattered left-aligned header (back button, city/name, combo cards, view toggle in separate rows) with centered Masthead + bordered Control Deck toolbar
 - Masthead: centered city label (small caps `tracking-[0.3em]`), serif neighborhood name (`font-display text-4xl md:text-5xl`), italic combo sub-line ("Covering Tribeca and FiDi")

@@ -96,7 +96,7 @@ export function ArticleReactions({ articleId }: ArticleReactionsProps) {
   };
 
   return (
-    <div className="mt-8 pt-6 border-t border-neutral-200">
+    <div className="mt-8 pt-6 border-t border-white/[0.08]">
       <div className="flex items-center gap-4">
         {REACTIONS.map((reaction) => {
           const isActive = active.has(reaction.type);
@@ -108,8 +108,8 @@ export function ArticleReactions({ articleId }: ArticleReactionsProps) {
               onClick={() => toggle(reaction.type)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all ${
                 isActive
-                  ? 'border-neutral-300 bg-neutral-50'
-                  : 'border-neutral-200 hover:border-neutral-300'
+                  ? 'border-white/20 bg-white/5'
+                  : 'border-white/[0.08] hover:border-white/20'
               }`}
               title={reaction.label}
             >

@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-09
 
-Recent work: NeighborhoodHeader redesign - centered Masthead (serif title, city label, combo sub-line) + bordered Control Deck toolbar (BriefArchive left, GUIDE/MAP/HISTORY center with combo dropdowns, minimal ViewToggle right).
+Recent work: Obsidian Theme - permanent dark mode across entire site (61 files). Canvas #050505, Surface #121212, amber accents, no light mode toggle.
 
 ## Key Patterns
 
@@ -125,7 +125,22 @@ JSON examples override prose instructions. If prompt says "Don't use AQI" but ex
 ### No Em Dashes
 Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashes look AI-generated.
 
-### Homepage Hero
+### Obsidian Theme (Dark Mode)
+- **Permanent dark mode** - no light mode toggle, always dark
+- **CSS vars:** `--background: #050505`, `--foreground: #e5e5e5`, `--color-canvas: #050505`, `--color-surface: #121212`
+- **html bg:** `#050505` (prevents white flash on load)
+- **Selection:** amber `#d97706` on white
+- **Buttons:** `.btn-primary` = `bg-white text-neutral-900` hover amber-600, `.btn-secondary` = `bg-transparent text-white border-white/20`, `.btn-ghost` = `text-neutral-400` hover white
+- **Header:** `bg-black/80 backdrop-blur-xl border-white/5`, active borders `border-amber-500`
+- **Cards/surfaces:** `bg-surface` (#121212), borders `border-white/[0.08]`
+- **Text hierarchy:** Headlines `text-neutral-100`, body `text-neutral-400`, meta `text-neutral-500`
+- **Hover states:** `hover:text-white`, `hover:bg-white/5`
+- **Form inputs:** `bg-neutral-900 border-white/20 text-white`, focus `border-amber-500`
+- **Article prose:** `prose-invert` on all prose containers
+- **Admin pages:** uniform `bg-surface`, table headers `bg-neutral-800`
+- **DO NOT touch:** email templates (must stay light for mail clients)
+
+### Homepage Hero ("Cinematic Dark Mode")
 - **Background:** `bg-black` base + `radial-gradient(ellipse at top, rgba(30,30,30,1), rgba(0,0,0,1) 70%)` overlay for tonal depth (CSS-only, no image asset)
 - **FLANEUR:** `text-6xl md:text-7xl lg:text-8xl` Cormorant Garamond serif, `tracking-[0.3em]`
 - **Tagline:** `tracking-[0.5em] uppercase`, `text-sm md:text-base`, neutral-400
@@ -133,11 +148,11 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **Padding:** `py-28 md:py-36 lg:py-48` for cinematic breathing room
 
 ### NeighborhoodHeader (Feed Page)
-- **Masthead:** Centered `text-center py-10` with back arrow absolute top-left (`← NEW YORK`), city label (`text-[11px] tracking-[0.3em] uppercase`), serif neighborhood name (`font-display text-4xl md:text-5xl`), and italic combo sub-line ("Covering Tribeca and FiDi")
-- **Control Deck:** `border-y border-neutral-200 py-4` toolbar with three zones: BriefArchive toggle (left), GUIDE/MAP/HISTORY links (center), ViewToggle icons (right)
-- **Combo dropdowns:** GUIDE/MAP/HISTORY become dropdown buttons for combo neighborhoods, with click-outside-to-close. Dropdown panel: `bg-white border shadow-sm rounded py-2 min-w-[160px]`
-- **ViewToggle:** Minimal `w-8 h-8` icons, no pill background. Active: `text-neutral-900`, inactive: `text-neutral-300`
-- **BriefArchive toggle:** `text-neutral-400 hover:text-neutral-900`, small chevron indicators
+- **Masthead:** Centered `text-center py-10` with back arrow absolute top-left (`← NEW YORK`), city label (`text-[11px] tracking-[0.3em] uppercase text-neutral-400`), serif neighborhood name (`font-display text-4xl md:text-5xl text-neutral-100`), and italic combo sub-line
+- **Control Deck:** `border-y border-white/10 py-4` toolbar with three zones: BriefArchive toggle (left), GUIDE/MAP/HISTORY links (center), ViewToggle icons (right)
+- **Combo dropdowns:** Dropdown panel: `bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px]`, items `hover:text-white hover:bg-white/5`
+- **ViewToggle:** Minimal `w-8 h-8` icons, no pill background. Active: `text-white`, inactive: `text-neutral-300`
+- **BriefArchive toggle:** `text-neutral-400 hover:text-white`, small chevron indicators
 - **Back arrow:** Links to multi-feed if user has neighborhoods selected, otherwise home. Text: city slug uppercased.
 - **ComboNeighborhoodCards:** Still exists for GuidesClient.tsx but removed from feed header
 

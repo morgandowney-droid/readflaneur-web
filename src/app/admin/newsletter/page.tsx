@@ -88,7 +88,7 @@ export default function AdminNewsletterPage() {
             </button>
             <Link
               href="/admin/ads"
-              className="text-sm text-neutral-500 hover:text-black"
+              className="text-sm text-neutral-500 hover:text-white"
             >
               &larr; Back to Admin
             </Link>
@@ -96,7 +96,7 @@ export default function AdminNewsletterPage() {
         </div>
 
         {/* Subscribers Table */}
-        <div className="bg-white border border-neutral-200">
+        <div className="bg-surface border border-white/[0.08]">
           {subscribers.length === 0 ? (
             <p className="p-8 text-center text-neutral-400">
               No subscribers yet.
@@ -104,7 +104,7 @@ export default function AdminNewsletterPage() {
           ) : (
             <table className="w-full">
               <thead>
-                <tr className="border-b border-neutral-200">
+                <tr className="border-b border-white/[0.08]">
                   <th className="text-left p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">
                     Email
                   </th>
@@ -115,9 +115,9 @@ export default function AdminNewsletterPage() {
               </thead>
               <tbody>
                 {subscribers.map((subscriber) => (
-                  <tr key={subscriber.id} className="border-b border-neutral-100 last:border-0">
+                  <tr key={subscriber.id} className="border-b border-white/[0.06] last:border-0">
                     <td className="p-4">{subscriber.email}</td>
-                    <td className="p-4 text-right text-neutral-600">
+                    <td className="p-4 text-right text-neutral-400">
                       {new Date(subscriber.subscribed_at).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',

@@ -198,7 +198,7 @@ export default function TipSubmitForm({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-neutral-100 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -210,7 +210,7 @@ export default function TipSubmitForm({
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="px-4 py-2 text-sm border border-neutral-300 hover:border-black transition-colors"
+          className="px-4 py-2 text-sm text-neutral-400 border border-white/[0.08] hover:border-white/20 transition-colors"
         >
           Retry
         </button>
@@ -218,7 +218,7 @@ export default function TipSubmitForm({
           <button
             type="button"
             onClick={onCancel}
-            className="ml-2 px-4 py-2 text-sm text-neutral-500 hover:text-black"
+            className="ml-2 px-4 py-2 text-sm text-neutral-500 hover:text-white"
           >
             Close
           </button>
@@ -246,10 +246,10 @@ export default function TipSubmitForm({
                 w-8 h-8 rounded-full flex items-center justify-center
                 transition-colors
                 ${step === s
-                  ? 'bg-black text-white'
+                  ? 'bg-amber-600 text-white'
                   : i < ['content', 'photos', 'contact', 'terms'].indexOf(step)
-                    ? 'bg-neutral-200 text-black cursor-pointer hover:bg-neutral-300'
-                    : 'bg-neutral-100 text-neutral-400'
+                    ? 'bg-neutral-700 text-neutral-200 cursor-pointer hover:bg-neutral-600'
+                    : 'bg-neutral-800 text-neutral-500'
                 }
               `}
             >
@@ -258,8 +258,8 @@ export default function TipSubmitForm({
             {i < 3 && (
               <div className={`w-12 sm:w-20 h-0.5 mx-1 ${
                 i < ['content', 'photos', 'contact', 'terms'].indexOf(step)
-                  ? 'bg-black'
-                  : 'bg-neutral-200'
+                  ? 'bg-amber-600'
+                  : 'bg-neutral-700'
               }`} />
             )}
           </div>
@@ -268,7 +268,7 @@ export default function TipSubmitForm({
 
       {/* Error message */}
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded">
+        <div className="p-4 bg-red-900/20 border border-red-800/30 text-red-400 text-sm rounded">
           {error}
         </div>
       )}
@@ -276,16 +276,16 @@ export default function TipSubmitForm({
       {/* Step 1: Content */}
       {step === 'content' && (
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Oh, do spill some tea..</h3>
+          <h3 className="text-lg font-medium text-neutral-100">Oh, do spill some tea..</h3>
 
           <div>
-            <label className="block text-sm text-neutral-600 mb-1">
+            <label className="block text-sm text-neutral-400 mb-1">
               Neighborhood *
             </label>
             <select
               value={neighborhoodId}
               onChange={(e) => setNeighborhoodId(e.target.value)}
-              className="w-full px-3 py-2 border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-black"
+              className="w-full px-3 py-2 bg-canvas border border-white/[0.08] text-neutral-100 rounded placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             >
               <option value="">Select a neighborhood...</option>
               {Object.entries(neighborhoodsByCity).map(([city, hoods]) => (
@@ -301,7 +301,7 @@ export default function TipSubmitForm({
           </div>
 
           <div>
-            <label className="block text-sm text-neutral-600 mb-1">
+            <label className="block text-sm text-neutral-400 mb-1">
               A TLDR on what this is all about (optional)
             </label>
             <input
@@ -310,12 +310,12 @@ export default function TipSubmitForm({
               onChange={(e) => setHeadline(e.target.value)}
               placeholder="Brief summary of your tip"
               maxLength={200}
-              className="w-full px-3 py-2 border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-black"
+              className="w-full px-3 py-2 bg-canvas border border-white/[0.08] text-neutral-100 rounded placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-neutral-600 mb-1">
+            <label className="block text-sm text-neutral-400 mb-1">
               Your tip *
             </label>
             <textarea
@@ -323,7 +323,7 @@ export default function TipSubmitForm({
               onChange={(e) => setContent(e.target.value)}
               placeholder="Share what you know... The more detail, the better."
               rows={6}
-              className="w-full px-3 py-2 border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-black resize-none"
+              className="w-full px-3 py-2 bg-canvas border border-white/[0.08] text-neutral-100 rounded placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
             />
             <p className="text-xs text-neutral-500 mt-1">
               {content.length} characters
@@ -335,7 +335,7 @@ export default function TipSubmitForm({
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-4 py-2 text-sm text-neutral-600 hover:text-black"
+                className="px-4 py-2 text-sm text-neutral-400 hover:text-white"
               >
                 Cancel
               </button>
@@ -355,8 +355,8 @@ export default function TipSubmitForm({
       {/* Step 2: Photos */}
       {step === 'photos' && (
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Add photos (optional)</h3>
-          <p className="text-sm text-neutral-600">
+          <h3 className="text-lg font-medium text-neutral-100">Add photos (optional)</h3>
+          <p className="text-sm text-neutral-400">
             Photos help our journalists verify and illustrate your tip.
           </p>
 
@@ -371,7 +371,7 @@ export default function TipSubmitForm({
             <button
               type="button"
               onClick={() => goToStep('content')}
-              className="px-4 py-2 text-sm text-neutral-600 hover:text-black"
+              className="px-4 py-2 text-sm text-neutral-400 hover:text-white"
             >
               Back
             </button>
@@ -390,14 +390,14 @@ export default function TipSubmitForm({
       {/* Step 3: Contact */}
       {step === 'contact' && (
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Contact information (optional)</h3>
-          <p className="text-sm text-neutral-600">
+          <h3 className="text-lg font-medium text-neutral-100">Contact information (optional)</h3>
+          <p className="text-sm text-neutral-400">
             Providing contact info helps our journalists follow up if needed.
             Your information will not be published without your consent.
           </p>
 
           <div>
-            <label className="block text-sm text-neutral-600 mb-1">
+            <label className="block text-sm text-neutral-400 mb-1">
               Name
             </label>
             <input
@@ -405,12 +405,12 @@ export default function TipSubmitForm({
               value={submitterName}
               onChange={(e) => setSubmitterName(e.target.value)}
               placeholder="Your name"
-              className="w-full px-3 py-2 border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-black"
+              className="w-full px-3 py-2 bg-canvas border border-white/[0.08] text-neutral-100 rounded placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-neutral-600 mb-1">
+            <label className="block text-sm text-neutral-400 mb-1">
               Email
             </label>
             <input
@@ -418,12 +418,12 @@ export default function TipSubmitForm({
               value={submitterEmail}
               onChange={(e) => setSubmitterEmail(e.target.value)}
               placeholder="your@email.com"
-              className="w-full px-3 py-2 border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-black"
+              className="w-full px-3 py-2 bg-canvas border border-white/[0.08] text-neutral-100 rounded placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-neutral-600 mb-1">
+            <label className="block text-sm text-neutral-400 mb-1">
               Phone
             </label>
             <input
@@ -431,12 +431,12 @@ export default function TipSubmitForm({
               value={submitterPhone}
               onChange={(e) => setSubmitterPhone(e.target.value)}
               placeholder="(555) 555-5555"
-              className="w-full px-3 py-2 border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-black"
+              className="w-full px-3 py-2 bg-canvas border border-white/[0.08] text-neutral-100 rounded placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
           </div>
 
           <div className="pt-2">
-            <label className="block text-sm text-neutral-600 mb-2">
+            <label className="block text-sm text-neutral-400 mb-2">
               How should we credit you if we publish your tip?
             </label>
             <div className="space-y-2">
@@ -481,7 +481,7 @@ export default function TipSubmitForm({
                 onChange={(e) => setAllowCredit(e.target.checked)}
                 className="mr-2 mt-0.5"
               />
-              <span className="text-sm text-neutral-600">
+              <span className="text-sm text-neutral-400">
                 I consent to being credited in published content
               </span>
             </label>
@@ -491,7 +491,7 @@ export default function TipSubmitForm({
             <button
               type="button"
               onClick={() => goToStep('photos')}
-              className="px-4 py-2 text-sm text-neutral-600 hover:text-black"
+              className="px-4 py-2 text-sm text-neutral-400 hover:text-white"
             >
               Back
             </button>
@@ -512,14 +512,14 @@ export default function TipSubmitForm({
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Review and submit</h3>
 
-          <div className="bg-neutral-50 p-4 rounded text-sm space-y-2">
+          <div className="bg-canvas p-4 rounded text-sm text-neutral-300 space-y-2">
             <p><strong>Neighborhood:</strong> {neighborhoods.find(n => n.id === neighborhoodId)?.name}</p>
             {headline && <p><strong>Headline:</strong> {headline}</p>}
             <p><strong>Photos:</strong> {photos.length} attached</p>
             <p><strong>Contact:</strong> {submitterEmail || submitterName || 'Anonymous'}</p>
           </div>
 
-          <div className="border border-neutral-200 rounded p-4">
+          <div className="border border-white/[0.08] rounded p-4">
             <label className="flex items-start">
               <input
                 type="checkbox"
@@ -527,9 +527,9 @@ export default function TipSubmitForm({
                 onChange={(e) => setTermsAccepted(e.target.checked)}
                 className="mr-3 mt-0.5"
               />
-              <span className="text-sm text-neutral-700">
+              <span className="text-sm text-neutral-300">
                 I agree to the{' '}
-                <a href="/terms" target="_blank" className="underline hover:text-black">
+                <a href="/terms" target="_blank" className="underline hover:text-white">
                   Tip Submission Terms
                 </a>{' '}
                 and grant Flâneur the right to use, edit, and publish my submitted content.
@@ -549,7 +549,7 @@ export default function TipSubmitForm({
               type="button"
               onClick={() => goToStep('contact')}
               disabled={submitting}
-              className="px-4 py-2 text-sm text-neutral-600 hover:text-black disabled:opacity-50"
+              className="px-4 py-2 text-sm text-neutral-400 hover:text-white disabled:opacity-50"
             >
               Back
             </button>

@@ -33,7 +33,7 @@ export default async function NeighborhoodsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-canvas">
       <div className="mx-auto max-w-6xl px-4 py-12">
         <EnhancedNeighborhoodSelector
           neighborhoods={(neighborhoods || []) as Neighborhood[]}

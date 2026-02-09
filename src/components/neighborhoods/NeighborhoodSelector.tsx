@@ -241,10 +241,10 @@ export function NeighborhoodSelector({
       disabled={saving || hood.is_coming_soon}
       className={`px-3 py-1.5 text-sm border transition-colors ${
         hood.is_coming_soon
-          ? 'bg-neutral-100 text-neutral-400 border-neutral-200 cursor-not-allowed'
+          ? 'bg-neutral-800 text-neutral-500 border-white/[0.08] cursor-not-allowed'
           : selected.includes(hood.id)
-          ? 'bg-black text-white border-black'
-          : 'bg-white text-neutral-600 border-neutral-300 hover:border-black'
+          ? 'bg-amber-600 text-white border-amber-600'
+          : 'bg-surface text-neutral-400 border-white/[0.08] hover:border-white/20'
       } disabled:opacity-50`}
     >
       {hood.name}
@@ -265,7 +265,7 @@ export function NeighborhoodSelector({
       <button
         onClick={() => allSelected ? deselectAll(ids) : selectAll(ids)}
         disabled={saving}
-        className="text-xs text-neutral-500 hover:text-black underline ml-2 disabled:opacity-50"
+        className="text-xs text-neutral-500 hover:text-white underline ml-2 disabled:opacity-50"
       >
         {allSelected ? 'Deselect all' : 'Select all'}
       </button>
@@ -287,13 +287,13 @@ export function NeighborhoodSelector({
   }) => {
     const isExpanded = expandedSections.has(sectionKey) || searchQuery.length > 0;
     const textSizes = ['text-base font-semibold', 'text-sm font-medium', 'text-xs tracking-widest uppercase'];
-    const textColors = ['text-neutral-800', 'text-neutral-700', 'text-neutral-400'];
+    const textColors = ['text-neutral-200', 'text-neutral-300', 'text-neutral-500'];
 
     return (
       <div className="flex items-center gap-2 mb-2">
         <button
           onClick={() => toggleSection(sectionKey)}
-          className={`flex items-center gap-2 ${textSizes[level]} ${textColors[level]} hover:text-black`}
+          className={`flex items-center gap-2 ${textSizes[level]} ${textColors[level]} hover:text-white`}
         >
           <svg
             className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
@@ -334,10 +334,10 @@ export function NeighborhoodSelector({
               disabled={saving || hood.is_coming_soon}
               className={`px-3 py-2 text-sm border transition-colors ${
                 hood.is_coming_soon
-                  ? 'bg-neutral-100 text-neutral-400 border-neutral-200 cursor-not-allowed'
+                  ? 'bg-neutral-800 text-neutral-500 border-white/[0.08] cursor-not-allowed'
                   : selected.includes(hood.id)
-                  ? 'bg-black text-white border-black'
-                  : 'bg-white text-neutral-600 border-neutral-300 hover:border-black'
+                  ? 'bg-amber-600 text-white border-amber-600'
+                  : 'bg-surface text-neutral-400 border-white/[0.08] hover:border-white/20'
               } disabled:opacity-50`}
             >
               <span className="font-medium">{hood.name}</span>
@@ -530,12 +530,12 @@ export function NeighborhoodSelector({
             placeholder="Search neighborhoods, cities, or countries..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm border border-neutral-300 rounded focus:outline-none focus:border-black"
+            className="w-full pl-10 pr-4 py-2 text-sm bg-surface border border-white/[0.08] text-neutral-100 rounded placeholder:text-neutral-500 focus:outline-none focus:border-amber-500"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-black"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -551,7 +551,7 @@ export function NeighborhoodSelector({
               <button
                 key={city}
                 onClick={() => setSearchQuery(city)}
-                className="px-2 py-1 text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-600 rounded transition-colors"
+                className="px-2 py-1 text-xs bg-neutral-800 hover:bg-white/10 text-neutral-400 rounded transition-colors"
               >
                 {city}
               </button>
@@ -571,7 +571,7 @@ export function NeighborhoodSelector({
             <select
               value={groupBy}
               onChange={(e) => setGroupBy(e.target.value as GroupBy)}
-              className="text-sm border border-neutral-300 rounded px-2 py-1 bg-white"
+              className="text-sm border border-white/[0.08] rounded px-2 py-1 bg-surface text-neutral-100"
             >
               <option value="region">Region</option>
               <option value="country">Country</option>
@@ -579,7 +579,7 @@ export function NeighborhoodSelector({
             </select>
             <button
               onClick={() => setExpandedSections(new Set())}
-              className="text-xs text-neutral-500 hover:text-black underline ml-2"
+              className="text-xs text-neutral-500 hover:text-white underline ml-2"
             >
               Collapse all
             </button>
@@ -589,14 +589,14 @@ export function NeighborhoodSelector({
 
       {/* Selected count */}
       {selected.length > 0 && (
-        <div className="flex items-center gap-2 py-2 px-3 bg-neutral-50 rounded">
-          <span className="text-sm font-medium">
+        <div className="flex items-center gap-2 py-2 px-3 bg-surface rounded">
+          <span className="text-sm font-medium text-neutral-100">
             {selected.length} neighborhood{selected.length !== 1 ? 's' : ''} selected
           </span>
           <button
             onClick={() => deselectAll(selected)}
             disabled={saving}
-            className="text-xs text-neutral-500 hover:text-black underline ml-auto disabled:opacity-50"
+            className="text-xs text-neutral-500 hover:text-white underline ml-auto disabled:opacity-50"
           >
             Clear all
           </button>

@@ -72,16 +72,16 @@ export default function TipSubmitModal({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg max-h-[90vh] bg-white rounded-lg shadow-xl overflow-hidden mx-4">
+      <div className="relative w-full max-w-lg max-h-[90vh] bg-surface rounded-lg shadow-xl overflow-hidden mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
-          <h2 className="text-lg font-medium">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08]">
+          <h2 className="text-lg font-medium text-neutral-100">
             {showSuccess ? 'Thank You!' : 'Share a Tip or Suggestion'}
           </h2>
           <button
             type="button"
             onClick={handleClose}
-            className="p-1 text-neutral-400 hover:text-black transition-colors"
+            className="p-1 text-neutral-400 hover:text-white transition-colors"
             aria-label="Close"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,15 +94,15 @@ export default function TipSubmitModal({
         <div className="px-6 py-4 overflow-y-auto max-h-[calc(90vh-80px)]">
           {showSuccess ? (
             <div className="text-center py-8 space-y-4">
-              <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-16 h-16 mx-auto bg-green-900/30 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
 
-              <h3 className="text-xl font-medium">Submitted Successfully</h3>
+              <h3 className="text-xl font-medium text-neutral-100">Submitted Successfully</h3>
 
-              <p className="text-neutral-600 text-sm">
+              <p className="text-neutral-400 text-sm">
                 Thank you for contributing to local journalism. Our editorial team
                 will review your submission and may reach out if we have questions.
               </p>
@@ -132,10 +132,10 @@ export default function TipSubmitModal({
 
         {/* Footer with email contact */}
         {!showSuccess && (
-          <div className="px-6 py-3 border-t border-neutral-100 bg-neutral-50">
+          <div className="px-6 py-3 border-t border-white/[0.08] bg-canvas">
             <p className="text-xs text-neutral-500 text-center">
               If you feel like emailing us instead:{' '}
-              <a href="mailto:contact@readflaneur.com" className="text-black hover:underline">
+              <a href="mailto:contact@readflaneur.com" className="text-neutral-100 hover:underline">
                 contact@readflaneur.com
               </a>
             </p>

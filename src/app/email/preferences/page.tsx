@@ -349,11 +349,11 @@ function PreferencesContent() {
   const hasChanges = JSON.stringify(selectedIds.sort()) !== JSON.stringify(data.neighborhood_ids.sort());
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-canvas">
       {/* Header */}
-      <div className="border-b border-neutral-200 px-4 py-4">
+      <div className="border-b border-white/[0.08] px-4 py-4">
         <div className="max-w-lg mx-auto flex items-center justify-between">
-          <Link href="/" className="text-lg font-light tracking-[0.15em]">
+          <Link href="/" className="text-lg font-light tracking-[0.15em] text-neutral-100">
             FLANEUR
           </Link>
           <span className="text-xs text-neutral-400">{data.email}</span>
@@ -361,7 +361,7 @@ function PreferencesContent() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-8">
-        <h1 className="text-xl font-semibold mb-1">Email Preferences</h1>
+        <h1 className="text-xl font-semibold text-neutral-100 mb-1">Email Preferences</h1>
         <p className="text-sm text-neutral-500 mb-8">
           Manage your Daily Brief neighborhoods and email settings.
         </p>
@@ -372,29 +372,29 @@ function PreferencesContent() {
             Email Frequency
           </h2>
           <div className="space-y-2">
-            <label className="flex items-center gap-3 p-3 border border-neutral-200 rounded-lg cursor-pointer hover:border-neutral-400 transition-colors">
+            <label className="flex items-center gap-3 p-3 border border-white/[0.08] rounded-lg cursor-pointer hover:border-white/20 transition-colors">
               <input
                 type="radio"
                 name="frequency"
                 checked={data.daily_email_enabled === true}
                 onChange={() => handleToggleEmail(true)}
-                className="accent-black"
+                className="accent-amber-600"
               />
               <div>
-                <div className="text-sm font-medium">Daily Brief</div>
+                <div className="text-sm font-medium text-neutral-200">Daily Brief</div>
                 <div className="text-xs text-neutral-500">Every morning at 7 AM your time</div>
               </div>
             </label>
-            <label className="flex items-center gap-3 p-3 border border-neutral-200 rounded-lg cursor-pointer hover:border-neutral-400 transition-colors">
+            <label className="flex items-center gap-3 p-3 border border-white/[0.08] rounded-lg cursor-pointer hover:border-white/20 transition-colors">
               <input
                 type="radio"
                 name="frequency"
                 checked={data.daily_email_enabled === false}
                 onChange={() => handleToggleEmail(false)}
-                className="accent-black"
+                className="accent-amber-600"
               />
               <div>
-                <div className="text-sm font-medium">Paused</div>
+                <div className="text-sm font-medium text-neutral-200">Paused</div>
                 <div className="text-xs text-neutral-500">No emails (you can re-enable anytime)</div>
               </div>
             </label>
@@ -413,29 +413,29 @@ function PreferencesContent() {
             A weekly digest every Sunday at 7 AM with the past week in review and the week ahead.
           </p>
           <div className="space-y-2">
-            <label className="flex items-center gap-3 p-3 border border-neutral-200 rounded-lg cursor-pointer hover:border-neutral-400 transition-colors">
+            <label className="flex items-center gap-3 p-3 border border-white/[0.08] rounded-lg cursor-pointer hover:border-white/20 transition-colors">
               <input
                 type="radio"
                 name="sunday_edition"
                 checked={data.sunday_edition_enabled === true}
                 onChange={() => handleToggleSundayEdition(true)}
-                className="accent-black"
+                className="accent-amber-600"
               />
               <div>
-                <div className="text-sm font-medium">Enabled</div>
+                <div className="text-sm font-medium text-neutral-200">Enabled</div>
                 <div className="text-xs text-neutral-500">Receive The Sunday Edition weekly</div>
               </div>
             </label>
-            <label className="flex items-center gap-3 p-3 border border-neutral-200 rounded-lg cursor-pointer hover:border-neutral-400 transition-colors">
+            <label className="flex items-center gap-3 p-3 border border-white/[0.08] rounded-lg cursor-pointer hover:border-white/20 transition-colors">
               <input
                 type="radio"
                 name="sunday_edition"
                 checked={data.sunday_edition_enabled === false}
                 onChange={() => handleToggleSundayEdition(false)}
-                className="accent-black"
+                className="accent-amber-600"
               />
               <div>
-                <div className="text-sm font-medium">Paused</div>
+                <div className="text-sm font-medium text-neutral-200">Paused</div>
                 <div className="text-xs text-neutral-500">No Sunday Edition emails</div>
               </div>
             </label>
@@ -453,14 +453,14 @@ function PreferencesContent() {
             </h2>
             <button
               onClick={() => setShowAddModal(true)}
-              className="text-xs bg-black text-white px-3 py-1.5 tracking-wider uppercase hover:bg-neutral-800 transition-colors rounded-lg"
+              className="text-xs bg-white text-neutral-900 px-3 py-1.5 tracking-wider uppercase hover:bg-neutral-200 transition-colors rounded-lg"
             >
               + Add
             </button>
           </div>
 
           {selectedNeighborhoods.length === 0 ? (
-            <p className="text-sm text-neutral-400 py-4 text-center border border-dashed border-neutral-200 rounded-lg">
+            <p className="text-sm text-neutral-400 py-4 text-center border border-dashed border-white/[0.08] rounded-lg">
               No neighborhoods selected. Add some to get stories in your Daily Brief.
             </p>
           ) : (
@@ -468,10 +468,10 @@ function PreferencesContent() {
               {selectedNeighborhoods.map(n => (
                 <div
                   key={n.id}
-                  className="flex items-center justify-between p-3 border border-neutral-200 rounded-lg"
+                  className="flex items-center justify-between p-3 border border-white/[0.08] rounded-lg"
                 >
                   <div>
-                    <span className="text-sm font-medium">{n.name}</span>
+                    <span className="text-sm font-medium text-neutral-200">{n.name}</span>
                     <span className="text-xs text-neutral-400 ml-2">{n.city}</span>
                     {n.combo_component_names && n.combo_component_names.length > 0 && (
                       <div className="text-xs text-neutral-300 mt-0.5">
@@ -495,7 +495,7 @@ function PreferencesContent() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-black text-white px-6 py-2 text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50 rounded-lg"
+                className="bg-white text-neutral-900 px-6 py-2 text-xs tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50 rounded-lg"
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
@@ -534,12 +534,12 @@ function PreferencesContent() {
                       onClick={() => toggleTopic(topic.label)}
                       className={`w-full flex items-center justify-between p-3 border rounded-lg transition-colors text-left ${
                         isPaused
-                          ? 'border-neutral-200 bg-neutral-50 text-neutral-400'
-                          : 'border-neutral-200 hover:border-neutral-400'
+                          ? 'border-white/[0.08] bg-white/5 text-neutral-500'
+                          : 'border-white/[0.08] hover:border-white/20'
                       }`}
                     >
                       <div className="min-w-0">
-                        <div className={`text-sm font-medium ${isPaused ? 'text-neutral-400 line-through' : ''}`}>
+                        <div className={`text-sm font-medium ${isPaused ? 'text-neutral-500 line-through' : 'text-neutral-200'}`}>
                           {topic.label}
                         </div>
                         <div className="text-xs text-neutral-400">{topic.description}</div>
@@ -559,7 +559,7 @@ function PreferencesContent() {
               <button
                 onClick={handleSaveTopics}
                 disabled={topicsSaving}
-                className="bg-black text-white px-6 py-2 text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50 rounded-lg"
+                className="bg-white text-neutral-900 px-6 py-2 text-xs tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50 rounded-lg"
               >
                 {topicsSaving ? 'Saving...' : 'Save Topics'}
               </button>
@@ -588,13 +588,13 @@ function PreferencesContent() {
               value={suggestion}
               onChange={e => setSuggestion(e.target.value)}
               placeholder="What topic would you like to see?"
-              className="flex-1 px-3 py-2 border border-neutral-200 rounded-lg focus:border-black focus:outline-none text-sm"
+              className="flex-1 px-3 py-2 border border-white/20 rounded-lg focus:border-amber-500 focus:outline-none text-sm bg-neutral-900 text-white"
               maxLength={200}
             />
             <button
               onClick={handleSuggestTopic}
               disabled={suggestionSending || !suggestion.trim()}
-              className="bg-black text-white px-4 py-2 text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50 rounded-lg"
+              className="bg-white text-neutral-900 px-4 py-2 text-xs tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50 rounded-lg"
             >
               {suggestionSending ? '...' : 'Send'}
             </button>
@@ -605,8 +605,8 @@ function PreferencesContent() {
         </section>
 
         {/* Back link */}
-        <div className="border-t border-neutral-200 pt-6">
-          <Link href="/" className="text-sm text-neutral-500 hover:text-black transition-colors">
+        <div className="border-t border-white/[0.08] pt-6">
+          <Link href="/" className="text-sm text-neutral-500 hover:text-white transition-colors">
             &larr; Back to Flaneur
           </Link>
         </div>
@@ -615,23 +615,23 @@ function PreferencesContent() {
       {/* Add neighborhood modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
-          <div className="bg-white w-full sm:max-w-md sm:rounded-lg max-h-[80vh] flex flex-col">
-            <div className="p-4 border-b border-neutral-200 flex items-center justify-between">
-              <h3 className="font-semibold text-sm">Add Neighborhood</h3>
+          <div className="bg-surface w-full sm:max-w-md sm:rounded-lg max-h-[80vh] flex flex-col">
+            <div className="p-4 border-b border-white/[0.08] flex items-center justify-between">
+              <h3 className="font-semibold text-sm text-neutral-100">Add Neighborhood</h3>
               <button
                 onClick={() => { setShowAddModal(false); setSearch(''); }}
-                className="text-neutral-400 hover:text-black text-lg"
+                className="text-neutral-400 hover:text-white text-lg"
               >
                 &times;
               </button>
             </div>
-            <div className="p-4 border-b border-neutral-200">
+            <div className="p-4 border-b border-white/[0.08]">
               <input
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search neighborhoods..."
-                className="w-full px-3 py-2 border border-neutral-200 rounded-lg focus:border-black focus:outline-none text-sm"
+                className="w-full px-3 py-2 border border-white/20 rounded-lg focus:border-amber-500 focus:outline-none text-sm bg-neutral-900 text-white"
                 autoFocus
               />
             </div>
@@ -648,7 +648,7 @@ function PreferencesContent() {
                         <button
                           key={n.id}
                           onClick={() => handleAdd(n.id)}
-                          className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 border border-transparent hover:border-neutral-200 rounded-lg transition-colors"
+                          className="w-full text-left px-3 py-2 text-sm text-neutral-300 hover:bg-white/5 border border-transparent hover:border-white/[0.08] rounded-lg transition-colors"
                         >
                           {n.name}
                           {n.combo_component_names && n.combo_component_names.length > 0 && (

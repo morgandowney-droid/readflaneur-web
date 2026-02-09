@@ -136,7 +136,7 @@ export default function AdminAnalyticsPage() {
           </div>
           <Link
             href="/admin/ads"
-            className="text-sm text-neutral-500 hover:text-black"
+            className="text-sm text-neutral-500 hover:text-white"
           >
             &larr; Back to Ad Review
           </Link>
@@ -149,7 +149,7 @@ export default function AdminAnalyticsPage() {
             className={`px-4 py-2 text-sm tracking-widest uppercase ${
               activeTab === 'revenue'
                 ? 'bg-black text-white'
-                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
             }`}
           >
             Revenue
@@ -159,7 +159,7 @@ export default function AdminAnalyticsPage() {
             className={`px-4 py-2 text-sm tracking-widest uppercase ${
               activeTab === 'content'
                 ? 'bg-black text-white'
-                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
             }`}
           >
             Content
@@ -174,43 +174,43 @@ export default function AdminAnalyticsPage() {
                 Revenue by Time Period
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                <div className="bg-white p-6 border border-neutral-200">
+                <div className="bg-surface p-6 border border-white/[0.08]">
                   <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
                     This Month
                   </p>
                   <p className="text-2xl font-light">{formatCurrency(analytics.revenueByPeriod.thisMonth)}</p>
                 </div>
-                <div className="bg-white p-6 border border-neutral-200">
+                <div className="bg-surface p-6 border border-white/[0.08]">
                   <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
                     Last 3 Months
                   </p>
                   <p className="text-2xl font-light">{formatCurrency(analytics.revenueByPeriod.last3Months)}</p>
                 </div>
-                <div className="bg-white p-6 border border-neutral-200">
+                <div className="bg-surface p-6 border border-white/[0.08]">
                   <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
                     Last 6 Months
                   </p>
                   <p className="text-2xl font-light">{formatCurrency(analytics.revenueByPeriod.last6Months)}</p>
                 </div>
-                <div className="bg-white p-6 border border-neutral-200">
+                <div className="bg-surface p-6 border border-white/[0.08]">
                   <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
                     Last 9 Months
                   </p>
                   <p className="text-2xl font-light">{formatCurrency(analytics.revenueByPeriod.last9Months)}</p>
                 </div>
-                <div className="bg-white p-6 border border-neutral-200">
+                <div className="bg-surface p-6 border border-white/[0.08]">
                   <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
                     Last 12 Months
                   </p>
                   <p className="text-2xl font-light">{formatCurrency(analytics.revenueByPeriod.last12Months)}</p>
                 </div>
-                <div className="bg-white p-6 border border-neutral-200">
+                <div className="bg-surface p-6 border border-white/[0.08]">
                   <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
                     Last 24 Months
                   </p>
                   <p className="text-2xl font-light">{formatCurrency(analytics.revenueByPeriod.last24Months)}</p>
                 </div>
-                <div className="bg-white p-6 border border-black">
+                <div className="bg-surface p-6 border border-amber-600">
                   <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
                     All Time
                   </p>
@@ -225,13 +225,13 @@ export default function AdminAnalyticsPage() {
                 <h2 className="text-xs tracking-widest uppercase text-neutral-400 mb-4">
                   Revenue by Advertiser
                 </h2>
-                <div className="bg-white border border-neutral-200">
+                <div className="bg-surface border border-white/[0.08]">
                   {analytics.topAdvertisers.length === 0 ? (
                     <p className="p-6 text-neutral-400">No advertisers yet</p>
                   ) : (
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-neutral-200">
+                        <tr className="border-b border-white/[0.08]">
                           <th className="text-left p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Advertiser</th>
                           <th className="text-right p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Orders</th>
                           <th className="text-right p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Revenue</th>
@@ -239,12 +239,12 @@ export default function AdminAnalyticsPage() {
                       </thead>
                       <tbody>
                         {analytics.topAdvertisers.slice(0, 10).map((advertiser) => (
-                          <tr key={advertiser.id} className="border-b border-neutral-100 last:border-0">
+                          <tr key={advertiser.id} className="border-b border-white/[0.06] last:border-0">
                             <td className="p-4">
                               <p className="font-medium">{advertiser.name || advertiser.email}</p>
                               {advertiser.name && <p className="text-xs text-neutral-400">{advertiser.email}</p>}
                             </td>
-                            <td className="p-4 text-right text-neutral-600">{advertiser.orderCount}</td>
+                            <td className="p-4 text-right text-neutral-400">{advertiser.orderCount}</td>
                             <td className="p-4 text-right font-medium">{formatCurrency(advertiser.total)}</td>
                           </tr>
                         ))}
@@ -259,13 +259,13 @@ export default function AdminAnalyticsPage() {
                 <h2 className="text-xs tracking-widest uppercase text-neutral-400 mb-4">
                   Revenue by Neighborhood
                 </h2>
-                <div className="bg-white border border-neutral-200">
+                <div className="bg-surface border border-white/[0.08]">
                   {analytics.topNeighborhoods.length === 0 ? (
                     <p className="p-6 text-neutral-400">No revenue data yet</p>
                   ) : (
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-neutral-200">
+                        <tr className="border-b border-white/[0.08]">
                           <th className="text-left p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Neighborhood</th>
                           <th className="text-right p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Ads</th>
                           <th className="text-right p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Revenue</th>
@@ -273,12 +273,12 @@ export default function AdminAnalyticsPage() {
                       </thead>
                       <tbody>
                         {analytics.topNeighborhoods.slice(0, 10).map((neighborhood) => (
-                          <tr key={neighborhood.id} className="border-b border-neutral-100 last:border-0">
+                          <tr key={neighborhood.id} className="border-b border-white/[0.06] last:border-0">
                             <td className="p-4">
                               <p className="font-medium">{neighborhood.name}</p>
                               {neighborhood.city && <p className="text-xs text-neutral-400">{neighborhood.city}</p>}
                             </td>
-                            <td className="p-4 text-right text-neutral-600">{neighborhood.orderCount}</td>
+                            <td className="p-4 text-right text-neutral-400">{neighborhood.orderCount}</td>
                             <td className="p-4 text-right font-medium">{formatCurrency(neighborhood.total)}</td>
                           </tr>
                         ))}
@@ -294,13 +294,13 @@ export default function AdminAnalyticsPage() {
               <h2 className="text-xs tracking-widest uppercase text-neutral-400 mb-4">
                 Recent Orders
               </h2>
-              <div className="bg-white border border-neutral-200">
+              <div className="bg-surface border border-white/[0.08]">
                 {analytics.recentOrders.length === 0 ? (
                   <p className="p-6 text-neutral-400">No orders yet</p>
                 ) : (
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-neutral-200">
+                      <tr className="border-b border-white/[0.08]">
                         <th className="text-left p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Date</th>
                         <th className="text-left p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Advertiser</th>
                         <th className="text-left p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Ad</th>
@@ -310,11 +310,11 @@ export default function AdminAnalyticsPage() {
                     </thead>
                     <tbody>
                       {analytics.recentOrders.map((order) => (
-                        <tr key={order.id} className="border-b border-neutral-100 last:border-0">
-                          <td className="p-4 text-neutral-600">{formatDate(order.paidAt)}</td>
+                        <tr key={order.id} className="border-b border-white/[0.06] last:border-0">
+                          <td className="p-4 text-neutral-400">{formatDate(order.paidAt)}</td>
                           <td className="p-4">{order.advertiser}</td>
                           <td className="p-4 max-w-xs truncate">{order.adHeadline}</td>
-                          <td className="p-4 text-neutral-600">{order.neighborhood}</td>
+                          <td className="p-4 text-neutral-400">{order.neighborhood}</td>
                           <td className="p-4 text-right font-medium">{formatCurrency(order.amount)}</td>
                         </tr>
                       ))}
@@ -334,13 +334,13 @@ export default function AdminAnalyticsPage() {
                 <h2 className="text-xs tracking-widest uppercase text-neutral-400 mb-4">
                   Views by Neighborhood
                 </h2>
-                <div className="bg-white border border-neutral-200">
+                <div className="bg-surface border border-white/[0.08]">
                   {analytics.neighborhoodViews.length === 0 ? (
                     <p className="p-6 text-neutral-400">No view data yet</p>
                   ) : (
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-neutral-200">
+                        <tr className="border-b border-white/[0.08]">
                           <th className="text-left p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Neighborhood</th>
                           <th className="text-right p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Articles</th>
                           <th className="text-right p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Views</th>
@@ -348,12 +348,12 @@ export default function AdminAnalyticsPage() {
                       </thead>
                       <tbody>
                         {analytics.neighborhoodViews.slice(0, 10).map((neighborhood) => (
-                          <tr key={neighborhood.id} className="border-b border-neutral-100 last:border-0">
+                          <tr key={neighborhood.id} className="border-b border-white/[0.06] last:border-0">
                             <td className="p-4">
                               <p className="font-medium">{neighborhood.name}</p>
                               <p className="text-xs text-neutral-400">{neighborhood.city}</p>
                             </td>
-                            <td className="p-4 text-right text-neutral-600">{neighborhood.articleCount}</td>
+                            <td className="p-4 text-right text-neutral-400">{neighborhood.articleCount}</td>
                             <td className="p-4 text-right font-medium">{neighborhood.views.toLocaleString()}</td>
                           </tr>
                         ))}
@@ -368,13 +368,13 @@ export default function AdminAnalyticsPage() {
                 <h2 className="text-xs tracking-widest uppercase text-neutral-400 mb-4">
                   Views by Journalist
                 </h2>
-                <div className="bg-white border border-neutral-200">
+                <div className="bg-surface border border-white/[0.08]">
                   {analytics.authorViews.length === 0 ? (
                     <p className="p-6 text-neutral-400">No view data yet</p>
                   ) : (
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-neutral-200">
+                        <tr className="border-b border-white/[0.08]">
                           <th className="text-left p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Journalist</th>
                           <th className="text-right p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Articles</th>
                           <th className="text-right p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Views</th>
@@ -382,12 +382,12 @@ export default function AdminAnalyticsPage() {
                       </thead>
                       <tbody>
                         {analytics.authorViews.slice(0, 10).map((author) => (
-                          <tr key={author.id} className="border-b border-neutral-100 last:border-0">
+                          <tr key={author.id} className="border-b border-white/[0.06] last:border-0">
                             <td className="p-4">
                               <p className="font-medium">{author.name}</p>
                               <p className="text-xs text-neutral-400">{author.email}</p>
                             </td>
-                            <td className="p-4 text-right text-neutral-600">{author.articleCount}</td>
+                            <td className="p-4 text-right text-neutral-400">{author.articleCount}</td>
                             <td className="p-4 text-right font-medium">{author.views.toLocaleString()}</td>
                           </tr>
                         ))}
@@ -403,13 +403,13 @@ export default function AdminAnalyticsPage() {
               <h2 className="text-xs tracking-widest uppercase text-neutral-400 mb-4">
                 Top Articles by Views
               </h2>
-              <div className="bg-white border border-neutral-200">
+              <div className="bg-surface border border-white/[0.08]">
                 {analytics.topArticles.length === 0 ? (
                   <p className="p-6 text-neutral-400">No articles yet</p>
                 ) : (
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-neutral-200">
+                      <tr className="border-b border-white/[0.08]">
                         <th className="text-left p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Article</th>
                         <th className="text-left p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Neighborhood</th>
                         <th className="text-left p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">Author</th>
@@ -419,13 +419,13 @@ export default function AdminAnalyticsPage() {
                     </thead>
                     <tbody>
                       {analytics.topArticles.slice(0, 20).map((article) => (
-                        <tr key={article.id} className="border-b border-neutral-100 last:border-0">
+                        <tr key={article.id} className="border-b border-white/[0.06] last:border-0">
                           <td className="p-4 max-w-xs">
                             <p className="font-medium truncate">{article.headline}</p>
                           </td>
-                          <td className="p-4 text-neutral-600">{article.neighborhood}</td>
-                          <td className="p-4 text-neutral-600">{article.author}</td>
-                          <td className="p-4 text-neutral-600">{formatDate(article.publishedAt)}</td>
+                          <td className="p-4 text-neutral-400">{article.neighborhood}</td>
+                          <td className="p-4 text-neutral-400">{article.author}</td>
+                          <td className="p-4 text-neutral-400">{formatDate(article.publishedAt)}</td>
                           <td className="p-4 text-right font-medium">{article.views.toLocaleString()}</td>
                         </tr>
                       ))}

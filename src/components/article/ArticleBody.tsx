@@ -290,13 +290,13 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
   }
 
   return (
-    <article className="prose prose-lg prose-neutral max-w-none">
+    <article className="prose prose-lg prose-neutral prose-invert max-w-none">
       {paragraphs.map((paragraph, index) => {
         // Check if this is a section header (wrapped in [[ ]])
         const headerMatch = paragraph.match(/^\[\[([^\]]+)\]\]$/);
         if (headerMatch) {
           return (
-            <h3 key={index} className="text-lg font-semibold text-neutral-800 mt-8 mb-4">
+            <h3 key={index} className="text-lg font-semibold text-neutral-200 mt-8 mb-4">
               {headerMatch[1]}
             </h3>
           );
@@ -368,7 +368,7 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
         // If there are links or bold text, use the custom renderer
         if (links.length > 0 || processedParagraph.includes('<strong>')) {
           return (
-            <p key={index} className="text-neutral-700 leading-relaxed mb-6">
+            <p key={index} className="text-neutral-300 leading-relaxed mb-6">
               {renderWithLineBreaks(processedParagraph, renderParts)}
             </p>
           );
@@ -376,7 +376,7 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
 
         // Regular paragraph with entity linking
         return (
-          <p key={index} className="text-neutral-700 leading-relaxed mb-6">
+          <p key={index} className="text-neutral-300 leading-relaxed mb-6">
             {renderWithLineBreaks(paragraph, (text) => renderWithSearchableEntities(text, neighborhoodName, city))}
           </p>
         );

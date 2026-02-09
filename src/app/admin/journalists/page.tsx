@@ -144,7 +144,7 @@ export default function AdminJournalistsPage() {
           <div className="flex items-center gap-6">
             <Link
               href="/admin/ads"
-              className="text-sm text-neutral-500 hover:text-black"
+              className="text-sm text-neutral-500 hover:text-white"
             >
               &larr; Back to Admin
             </Link>
@@ -154,7 +154,7 @@ export default function AdminJournalistsPage() {
                 className={`px-4 py-2 text-sm tracking-widest uppercase ${
                   filter === 'pending'
                     ? 'bg-black text-white'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                    : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
                 }`}
               >
                 Pending
@@ -164,7 +164,7 @@ export default function AdminJournalistsPage() {
                 className={`px-4 py-2 text-sm tracking-widest uppercase ${
                   filter === 'all'
                     ? 'bg-black text-white'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                    : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
                 }`}
               >
                 All
@@ -175,15 +175,15 @@ export default function AdminJournalistsPage() {
 
         {/* Applications */}
         {filteredApplications.length === 0 ? (
-          <div className="bg-white border border-neutral-200 p-12 text-center">
-            <p className="text-neutral-600">
+          <div className="bg-surface border border-white/[0.08] p-12 text-center">
+            <p className="text-neutral-400">
               {filter === 'pending' ? 'No pending applications.' : 'No applications yet.'}
             </p>
           </div>
         ) : (
           <div className="space-y-6">
             {filteredApplications.map((app) => (
-              <div key={app.id} className="bg-white border border-neutral-200 p-6">
+              <div key={app.id} className="bg-surface border border-white/[0.08] p-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Applicant Info */}
                   <div>
@@ -239,12 +239,12 @@ export default function AdminJournalistsPage() {
                     <div className="space-y-4 text-sm">
                       <div>
                         <p className="text-neutral-400 mb-1">Bio:</p>
-                        <p className="text-neutral-700">{app.bio}</p>
+                        <p className="text-neutral-300">{app.bio}</p>
                       </div>
                       {app.why_interested && (
                         <div>
                           <p className="text-neutral-400 mb-1">Why interested:</p>
-                          <p className="text-neutral-700">{app.why_interested}</p>
+                          <p className="text-neutral-300">{app.why_interested}</p>
                         </div>
                       )}
                     </div>
@@ -308,16 +308,16 @@ export default function AdminJournalistsPage() {
         {/* Rejection Modal */}
         {showRejectModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white p-6 max-w-md w-full">
+            <div className="bg-surface p-6 max-w-md w-full">
               <h2 className="text-lg font-medium mb-4">Reject Application</h2>
-              <p className="text-sm text-neutral-600 mb-4">
+              <p className="text-sm text-neutral-400 mb-4">
                 Optionally provide a reason for rejection.
               </p>
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="e.g., Location too far from neighborhood..."
-                className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none mb-4"
+                className="w-full px-4 py-3 border border-white/[0.08] focus:border-amber-500 focus:outline-none mb-4"
                 rows={3}
               />
               <div className="flex gap-3">
@@ -333,7 +333,7 @@ export default function AdminJournalistsPage() {
                     setShowRejectModal(null);
                     setRejectionReason('');
                   }}
-                  className="px-6 py-2 border border-neutral-200 text-sm tracking-widest uppercase hover:border-black transition-colors"
+                  className="px-6 py-2 border border-white/[0.08] text-sm tracking-widest uppercase hover:border-white/20 transition-colors"
                 >
                   Cancel
                 </button>
