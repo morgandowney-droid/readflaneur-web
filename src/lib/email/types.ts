@@ -71,6 +71,7 @@ export interface EmailAd {
   id: string;
   imageUrl: string;
   headline: string;
+  body?: string;
   clickUrl: string;
   sponsorLabel: string;
   impressionUrl: string;

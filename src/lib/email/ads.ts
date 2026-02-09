@@ -39,7 +39,9 @@ export async function getEmailAds(
     .order('created_at', { ascending: false });
 
   if (!paidAds || paidAds.length === 0) {
-    return { headerAd: null, nativeAd: null };
+    // Fallback: show a house ad in the native slot
+    const houseAd = await getHouseAd(supabase, appUrl);
+    return { headerAd: null, nativeAd: houseAd };
   }
 
   const toEmailAd = (ad: typeof paidAds[0]): EmailAd => ({
@@ -58,4 +60,36 @@ export async function getEmailAds(
   const nativeAd = paidAds.length > 1 ? toEmailAd(paidAds[1]) : null;
 
   return { headerAd, nativeAd };
+}
+
+/**
+ * Fetch a random house ad from the database as a fallback
+ * when no paid ads are booked for today.
+ */
+async function getHouseAd(
+  supabase: SupabaseClient,
+  appUrl: string
+): Promise<EmailAd | null> {
+  const { data: houseAds } = await supabase
+    .from('house_ads')
+    .select('id, image_url, headline, body, click_url, type')
+    .eq('active', true)
+    .limit(10);
+
+  if (!houseAds || houseAds.length === 0) {
+    return null;
+  }
+
+  // Pick a random house ad
+  const ad = houseAds[Math.floor(Math.random() * houseAds.length)];
+
+  return {
+    id: `house-${ad.id}`,
+    imageUrl: ad.image_url || '',
+    headline: ad.headline || '',
+    body: ad.body || undefined,
+    clickUrl: ad.click_url || appUrl,
+    sponsorLabel: 'Flaneur',
+    impressionUrl: '',
+  };
 }

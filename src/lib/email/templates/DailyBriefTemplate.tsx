@@ -10,11 +10,9 @@ import {
 import { DailyBriefContent } from '../types';
 import { Header } from './components/Header';
 import { WeatherStoryCard } from './components/WeatherStoryCard';
-import { HeroStory } from './components/HeroStory';
 import { StoryList } from './components/StoryList';
 import { NativeAd } from './components/NativeAd';
 import { SatelliteSection } from './components/SatelliteSection';
-import { SectionDivider } from './components/SectionDivider';
 import { Footer } from './components/Footer';
 
 export function DailyBriefTemplate(content: DailyBriefContent) {
@@ -26,7 +24,6 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
   const previewText = `Your morning brief from ${primaryName}`;
 
   const primary = content.primarySection;
-  const primaryCity = primary?.cityName || '';
 
   return (
     <Html>
@@ -42,7 +39,12 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
             <Section>
               {/* Location + Weather as one grouped thought */}
               <Section style={heroBlock}>
-                <Text style={locationLabel}>{primary.neighborhoodName}</Text>
+                <Text style={locationLabel}>
+                  {primary.neighborhoodName}
+                  {primary.cityName && (
+                    <span style={locationCity}> &middot; {primary.cityName}</span>
+                  )}
+                </Text>
                 {(primary.weather || primary.weatherStory) && (() => {
                   const tempC = primary.weatherStory?.temperatureC ?? primary.weather?.temperatureC ?? null;
                   const tempF = primary.weatherStory?.temperatureF ?? primary.weather?.temperatureF ?? null;
@@ -64,17 +66,17 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
                 <WeatherStoryCard story={primary.weatherStory} />
               )}
 
-              {/* First two stories (compact primary layout) */}
+              {/* First story */}
               {primary.stories.length > 0 && (
-                <StoryList stories={primary.stories.slice(0, 2)} variant="primary" />
+                <StoryList stories={primary.stories.slice(0, 1)} variant="primary" />
               )}
 
-              {/* Native ad injected at position 2 */}
+              {/* Native ad injected between story 1 and 2 */}
               {content.nativeAd && <NativeAd ad={content.nativeAd} />}
 
               {/* Remaining stories */}
-              {primary.stories.length > 2 && (
-                <StoryList stories={primary.stories.slice(2)} variant="primary" />
+              {primary.stories.length > 1 && (
+                <StoryList stories={primary.stories.slice(1)} variant="primary" />
               )}
             </Section>
           )}
@@ -89,7 +91,7 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
 
           {/* Satellite neighborhoods */}
           {content.satelliteSections.map((section, i) => (
-            <SatelliteSection key={i} section={section} primaryCity={primaryCity} />
+            <SatelliteSection key={i} section={section} />
           ))}
 
           <Footer
@@ -114,7 +116,7 @@ const container = {
 };
 
 const heroBlock = {
-  padding: '32px 0 24px',
+  padding: '24px 0 24px',
   textAlign: 'center' as const,
 };
 
@@ -126,6 +128,11 @@ const locationLabel = {
   color: '#1a1a1a',
   margin: '0 0 8px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const locationCity = {
+  color: '#b0b0b0',
+  letterSpacing: '0.15em',
 };
 
 const tempHero = {

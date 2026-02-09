@@ -21,8 +21,13 @@ export function NativeAd({ ad }: NativeAdProps) {
       <Link href={ad.clickUrl} style={headlineLink}>
         <Text style={headline}>{ad.headline}</Text>
       </Link>
+      {ad.body && (
+        <Text style={body}>{ad.body}</Text>
+      )}
       <Text style={sponsor}>{ad.sponsorLabel}</Text>
-      <Img src={ad.impressionUrl} width="1" height="1" alt="" />
+      {ad.impressionUrl && (
+        <Img src={ad.impressionUrl} width="1" height="1" alt="" />
+      )}
       <Hr style={divider} />
     </Section>
   );
@@ -40,17 +45,18 @@ const divider = {
 const sponsoredLabel = {
   fontSize: '10px',
   fontWeight: '600' as const,
-  letterSpacing: '0.1em',
+  letterSpacing: '0.15em',
   textTransform: 'uppercase' as const,
   color: '#bbbbbb',
   margin: '0 0 8px',
+  textAlign: 'center' as const,
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
 const image = {
   width: '100%',
   borderRadius: '4px',
-  marginBottom: '8px',
+  marginBottom: '12px',
 };
 
 const headlineLink = {
@@ -58,17 +64,28 @@ const headlineLink = {
 };
 
 const headline = {
-  fontSize: '16px',
-  fontWeight: '500' as const,
-  color: '#333333',
-  margin: '0 0 4px',
+  fontSize: '18px',
+  fontWeight: '600' as const,
+  color: '#1a1a1a',
+  margin: '0 0 6px',
   lineHeight: '1.3',
+  textAlign: 'center' as const,
   fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
 };
 
+const body = {
+  fontSize: '15px',
+  color: '#555555',
+  lineHeight: '1.6',
+  margin: '0 0 8px',
+  textAlign: 'center' as const,
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
 const sponsor = {
-  fontSize: '12px',
+  fontSize: '11px',
   color: '#999999',
-  margin: '0',
+  margin: '0 0 8px',
+  textAlign: 'center' as const,
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };

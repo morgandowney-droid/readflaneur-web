@@ -3,28 +3,15 @@ import { Section, Text, Hr } from '@react-email/components';
 interface SectionDividerProps {
   name: string;
   city?: string;
-  primaryCity?: string;
   showRule?: boolean;
 }
 
-export function SectionDivider({ name, city, primaryCity, showRule = true }: SectionDividerProps) {
-  const shouldShowCity = (() => {
-    if (!city) return false;
-    const n = name.toLowerCase();
-    const c = city.toLowerCase();
-    // Rule 1: Redundancy — neighborhood contains city name
-    if (n.includes(c) || c === n) return false;
-    // Rule 2: Familiarity — same as primary/home city
-    if (primaryCity && c === primaryCity.toLowerCase()) return false;
-    // Rule 3: Foreign — show city only when abroad
-    return true;
-  })();
-
+export function SectionDivider({ name, city, showRule = true }: SectionDividerProps) {
   return (
     <Section style={container}>
       <Text style={label}>
         {name}
-        {shouldShowCity && <span style={cityText}> &middot; {city}</span>}
+        {city && <span style={cityText}> &middot; {city}</span>}
       </Text>
       {showRule && <Hr style={rule} />}
     </Section>
