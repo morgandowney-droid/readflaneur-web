@@ -106,6 +106,7 @@ export async function GET(request: Request) {
 
       if (!testEmail && sentSet.has(recipient.id)) {
         results.emails_skipped++;
+        results.errors.push(`skip:dedup:${recipient.id}`);
         continue;
       }
 
@@ -119,6 +120,7 @@ export async function GET(request: Request) {
           .single();
         if (pref && pref.sunday_edition_enabled === false) {
           results.emails_skipped++;
+          results.errors.push(`skip:opted_out:${recipient.id}`);
           continue;
         }
       }
@@ -127,10 +129,11 @@ export async function GET(request: Request) {
       const primaryId = recipient.primaryNeighborhoodId || recipient.subscribedNeighborhoodIds[0];
       if (!primaryId) {
         results.emails_skipped++;
+        results.errors.push(`skip:no_primary_id:${recipient.id}`);
         continue;
       }
 
-      // In test mode, also check yesterday's date as fallback (sync may have run the day before)
+      // In test mode, also check yesterday's date and most recent brief as fallback
       let brief;
       const { data: todayBrief } = await supabase
         .from('weekly_briefs')
@@ -142,20 +145,20 @@ export async function GET(request: Request) {
       brief = todayBrief;
 
       if (!brief && testEmail) {
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayDate = yesterday.toISOString().split('T')[0];
-        const { data: fallbackBrief } = await supabase
+        // Try the most recent brief for this neighborhood (regardless of date)
+        const { data: recentBrief } = await supabase
           .from('weekly_briefs')
           .select('*, neighborhoods(name, city, lat, lng, country), articles(slug)')
           .eq('neighborhood_id', primaryId)
-          .eq('week_date', yesterdayDate)
+          .order('week_date', { ascending: false })
+          .limit(1)
           .single();
-        brief = fallbackBrief;
+        brief = recentBrief;
       }
 
       if (!brief) {
         results.emails_skipped++;
+        results.errors.push(`skip:no_brief:${primaryId}:${weekDate}`);
         continue;
       }
 
