@@ -72,7 +72,7 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
         <Container style={containerStyle}>
           {/* Masthead — Letterhead style */}
           <Section style={mastheadSection}>
-            <Text style={mastheadBrand}>FLANEUR</Text>
+            <Text style={mastheadBrand}><Link href="https://readflaneur.com" style={mastheadBrandLink}>FLANEUR</Link></Text>
             <Text style={mastheadSubhead}>
               The Sunday Edition: {content.neighborhoodName}
             </Text>
@@ -309,6 +309,11 @@ const mastheadBrand = {
   margin: '0 0 6px',
   fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
   textTransform: 'uppercase' as const,
+};
+
+const mastheadBrandLink = {
+  color: '#1a1a1a',
+  textDecoration: 'none' as const,
 };
 
 const mastheadSubhead = {

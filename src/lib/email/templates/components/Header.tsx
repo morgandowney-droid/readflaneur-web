@@ -4,12 +4,14 @@ import { EmailAd } from '../../types';
 interface HeaderProps {
   date: string;
   headerAd: EmailAd | null;
+  homeUrl?: string;
 }
 
-export function Header({ date, headerAd }: HeaderProps) {
+export function Header({ date, headerAd, homeUrl }: HeaderProps) {
+  const href = homeUrl || 'https://readflaneur.com';
   return (
     <Section>
-      <Text style={masthead}>FLANEUR</Text>
+      <Text style={masthead}><Link href={href} style={mastheadLink}>FLANEUR</Link></Text>
       <Text style={dateLine}>{date}</Text>
       <Hr style={divider} />
       {headerAd && (
@@ -44,6 +46,11 @@ const masthead = {
   margin: '0',
   color: '#000000',
   fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
+};
+
+const mastheadLink = {
+  color: '#000000',
+  textDecoration: 'none' as const,
 };
 
 const dateLine = {
