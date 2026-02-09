@@ -1224,12 +1224,12 @@ export function BriefArchive({
   };
 
   return (
-    <div className="mb-4">
+    <div>
       <button
         onClick={handleToggle}
-        className="flex items-center gap-2 text-xs text-amber-700 hover:text-amber-900 transition-colors"
+        className="flex items-center gap-2 text-xs text-neutral-400 hover:text-neutral-900 transition-colors"
       >
-        <span>{isVisible ? '▼' : '▶'}</span>
+        <span className="text-[10px]">{isVisible ? '▼' : '▶'}</span>
         <span>Previous days</span>
       </button>
 
@@ -1245,13 +1245,13 @@ export function BriefArchive({
           ))}
 
           {isLoading && (
-            <div className="text-xs text-amber-600 py-2">Loading...</div>
+            <div className="text-xs text-neutral-400 py-2">Loading...</div>
           )}
 
           {!isLoading && hasMore && briefs.length > 0 && (
             <button
               onClick={loadBriefs}
-              className="text-xs text-amber-700 hover:text-amber-900 py-1"
+              className="text-xs text-neutral-400 hover:text-neutral-900 py-1"
             >
               Load more briefs
             </button>

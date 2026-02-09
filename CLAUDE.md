@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-09
 
-Recent work: DailyBriefWidget architectural redesign (neutral-50 palette, pulsing live dot eyebrow, serif headline, underlined guest-book subscribe input).
+Recent work: NeighborhoodHeader redesign - centered Masthead (serif title, city label, combo sub-line) + bordered Control Deck toolbar (BriefArchive left, GUIDE/MAP/HISTORY center with combo dropdowns, minimal ViewToggle right).
 
 ## Key Patterns
 
@@ -131,6 +131,15 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **Tagline:** `tracking-[0.5em] uppercase`, `text-sm md:text-base`, neutral-400
 - **Animations:** Staggered `heroFadeIn` keyframes in `globals.css` - 1.5s ease-out with 0.3s delays between elements (logo, tagline, stats, rule)
 - **Padding:** `py-28 md:py-36 lg:py-48` for cinematic breathing room
+
+### NeighborhoodHeader (Feed Page)
+- **Masthead:** Centered `text-center py-10` with back arrow absolute top-left (`← NEW YORK`), city label (`text-[11px] tracking-[0.3em] uppercase`), serif neighborhood name (`font-display text-4xl md:text-5xl`), and italic combo sub-line ("Covering Tribeca and FiDi")
+- **Control Deck:** `border-y border-neutral-200 py-4` toolbar with three zones: BriefArchive toggle (left), GUIDE/MAP/HISTORY links (center), ViewToggle icons (right)
+- **Combo dropdowns:** GUIDE/MAP/HISTORY become dropdown buttons for combo neighborhoods, with click-outside-to-close. Dropdown panel: `bg-white border shadow-sm rounded py-2 min-w-[160px]`
+- **ViewToggle:** Minimal `w-8 h-8` icons, no pill background. Active: `text-neutral-900`, inactive: `text-neutral-300`
+- **BriefArchive toggle:** `text-neutral-400 hover:text-neutral-900`, small chevron indicators
+- **Back arrow:** Links to multi-feed if user has neighborhoods selected, otherwise home. Text: city slug uppercased.
+- **ComboNeighborhoodCards:** Still exists for GuidesClient.tsx but removed from feed header
 
 ### Font Sizes (17px iOS Baseline)
 - Body: 17px, Headlines: 20-22px, Metadata: 10-12px, Masthead: 30px

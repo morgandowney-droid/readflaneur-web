@@ -5,6 +5,17 @@
 
 ## 2026-02-09
 
+**NeighborhoodHeader Redesign - Masthead + Control Deck:**
+- Replaced scattered left-aligned header (back button, city/name, combo cards, view toggle in separate rows) with centered Masthead + bordered Control Deck toolbar
+- Masthead: centered city label (small caps `tracking-[0.3em]`), serif neighborhood name (`font-display text-4xl md:text-5xl`), italic combo sub-line ("Covering Tribeca and FiDi")
+- Back arrow: absolute top-left `← NEW YORK` (city slug uppercased), links to multi-feed or home
+- Control Deck: `border-y border-neutral-200 py-4` toolbar with BriefArchive toggle (left), GUIDE/MAP/HISTORY links (center), ViewToggle icons (right)
+- Combo neighborhoods: GUIDE/MAP/HISTORY become dropdown menus listing each component neighborhood, with click-outside-to-close
+- ViewToggle: stripped pill background (`bg-neutral-100 rounded-lg p-1` + `bg-white shadow-sm`), now minimal `w-8 h-8` icons with `text-neutral-900`/`text-neutral-300`
+- BriefArchive moved from standalone position between brief and header into Control Deck left zone via ReactNode prop threading (page.tsx → NeighborhoodFeed → NeighborhoodHeader)
+- BriefArchive toggle restyled from amber to `text-neutral-400 hover:text-neutral-900`
+- ComboNeighborhoodCards removed from feed header (kept for GuidesClient.tsx)
+
 **DailyBriefWidget Architectural Redesign:**
 - Replaced amber gradient box (`from-amber-50 to-orange-50`) with minimal `bg-neutral-50` container, no border/rounded corners, generous `p-8 md:p-10` padding
 - Eyebrow: monospace `MON DAILY BRIEF` with pulsing amber dot (`animate-pulse`), removed AI-Synthesized badge and time/update text

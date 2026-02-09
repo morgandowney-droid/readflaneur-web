@@ -11,14 +11,14 @@ interface ViewToggleProps {
 
 export function ViewToggle({ view, onChange }: ViewToggleProps) {
   return (
-    <div className="flex items-center gap-1 bg-neutral-100 rounded-lg p-1">
+    <div className="flex items-center gap-1">
       <button
         onClick={() => onChange('compact')}
         className={cn(
-          'flex items-center justify-center w-9 h-9 rounded-md transition-colors',
+          'flex items-center justify-center w-8 h-8 transition-colors',
           view === 'compact'
-            ? 'bg-white shadow-sm text-black'
-            : 'text-neutral-400 hover:text-neutral-600'
+            ? 'text-neutral-900'
+            : 'text-neutral-300 hover:text-neutral-500'
         )}
         aria-label="Compact view"
         title="Compact view"
@@ -30,10 +30,10 @@ export function ViewToggle({ view, onChange }: ViewToggleProps) {
       <button
         onClick={() => onChange('gallery')}
         className={cn(
-          'flex items-center justify-center w-9 h-9 rounded-md transition-colors',
+          'flex items-center justify-center w-8 h-8 transition-colors',
           view === 'gallery'
-            ? 'bg-white shadow-sm text-black'
-            : 'text-neutral-400 hover:text-neutral-600'
+            ? 'text-neutral-900'
+            : 'text-neutral-300 hover:text-neutral-500'
         )}
         aria-label="Gallery view"
         title="Gallery view"

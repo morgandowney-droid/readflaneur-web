@@ -198,16 +198,6 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
           />
         )}
 
-        {/* Brief Archive - shows previous briefs (only when brief exists and not filtering) */}
-        {!category && brief && (
-          <BriefArchive
-            neighborhoodId={neighborhoodId}
-            neighborhoodName={neighborhoodData.name}
-            city={neighborhoodData.city}
-            currentBriefId={brief?.id}
-          />
-        )}
-
         <NeighborhoodFeed
           items={feedItems}
           city={neighborhoodData.city}
@@ -217,6 +207,14 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
           neighborhoodId={neighborhoodId}
           defaultView="compact"
           comboInfo={comboInfo}
+          briefArchive={!category && brief ? (
+            <BriefArchive
+              neighborhoodId={neighborhoodId}
+              neighborhoodName={neighborhoodData.name}
+              city={neighborhoodData.city}
+              currentBriefId={brief.id}
+            />
+          ) : undefined}
         />
 
         {hasMoreArticles && (

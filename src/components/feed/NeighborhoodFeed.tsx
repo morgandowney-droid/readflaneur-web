@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { FeedItem } from '@/types';
 import { FeedList } from './FeedList';
 import { ViewToggle, FeedView } from './ViewToggle';
@@ -19,6 +19,7 @@ interface NeighborhoodFeedProps {
   neighborhoodId: string;
   defaultView?: FeedView;
   comboInfo?: ComboInfo | null;
+  briefArchive?: ReactNode;
 }
 
 export function NeighborhoodFeed({
@@ -30,6 +31,7 @@ export function NeighborhoodFeed({
   neighborhoodId,
   defaultView = 'compact',
   comboInfo,
+  briefArchive,
 }: NeighborhoodFeedProps) {
   const [view, setView] = useState<FeedView>(defaultView);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -68,6 +70,7 @@ export function NeighborhoodFeed({
         neighborhoodSlug={neighborhoodSlug}
         neighborhoodId={neighborhoodId}
         viewToggle={viewToggle}
+        briefArchive={briefArchive}
         comboInfo={comboInfo}
       />
       <FeedList items={items} view={currentView} />
