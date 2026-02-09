@@ -122,6 +122,14 @@ a {
   animation: backdropFadeIn 0.2s ease-out forwards;
 }
 
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.animate-pulse-slow {
+  animation: pulseSlow 2s ease-in-out infinite;
+}
+
 /* Smooth scrolling and overscroll background */
 html {
   scroll-behavior: smooth;

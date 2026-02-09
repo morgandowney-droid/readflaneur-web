@@ -20,6 +20,10 @@ interface NeighborhoodFeedProps {
   defaultView?: FeedView;
   comboInfo?: ComboInfo | null;
   briefArchive?: ReactNode;
+  timezone?: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export function NeighborhoodFeed({
@@ -32,6 +36,10 @@ export function NeighborhoodFeed({
   defaultView = 'compact',
   comboInfo,
   briefArchive,
+  timezone,
+  country,
+  latitude,
+  longitude,
 }: NeighborhoodFeedProps) {
   const [view, setView] = useState<FeedView>(defaultView);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -72,6 +80,10 @@ export function NeighborhoodFeed({
         viewToggle={viewToggle}
         briefArchive={briefArchive}
         comboInfo={comboInfo}
+        timezone={timezone}
+        country={country}
+        latitude={latitude}
+        longitude={longitude}
       />
       <FeedList items={items} view={currentView} />
     </div>

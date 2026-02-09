@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ReactNode, useState, useEffect, useRef } from 'react';
 import { getWikipediaUrl, getMapLocation } from '@/lib/neighborhood-utils';
 import { ComboInfo } from '@/lib/combo-utils';
+import { NeighborhoodLiveStatus } from './NeighborhoodLiveStatus';
 
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
 
@@ -16,6 +17,10 @@ interface NeighborhoodHeaderProps {
   viewToggle?: ReactNode;
   briefArchive?: ReactNode;
   comboInfo?: ComboInfo | null;
+  timezone?: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 /** Format city slug to display name: "new-york" -> "NEW YORK" */
@@ -48,6 +53,10 @@ export function NeighborhoodHeader({
   viewToggle,
   briefArchive,
   comboInfo,
+  timezone,
+  country,
+  latitude,
+  longitude,
 }: NeighborhoodHeaderProps) {
   const [backUrl, setBackUrl] = useState<string>('/');
   const [openDropdown, setOpenDropdown] = useState<DropdownKey | null>(null);
@@ -111,6 +120,16 @@ export function NeighborhoodHeader({
           <p className="font-serif italic text-base text-neutral-500 mt-2">
             Covering {joinWithAnd(componentNames)}
           </p>
+        )}
+
+        {/* Live local time + weather */}
+        {timezone && (
+          <NeighborhoodLiveStatus
+            timezone={timezone}
+            country={country}
+            latitude={latitude}
+            longitude={longitude}
+          />
         )}
       </div>
 

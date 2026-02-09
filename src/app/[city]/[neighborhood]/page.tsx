@@ -207,6 +207,10 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
           neighborhoodId={neighborhoodId}
           defaultView="compact"
           comboInfo={comboInfo}
+          timezone={neighborhoodData.timezone}
+          country={neighborhoodData.country}
+          latitude={neighborhoodData.latitude}
+          longitude={neighborhoodData.longitude}
         />
 
         {hasMoreArticles && (
