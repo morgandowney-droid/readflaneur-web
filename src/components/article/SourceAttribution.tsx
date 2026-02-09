@@ -4,15 +4,43 @@ import { ArticleSource } from '@/types';
 
 interface SourceAttributionProps {
   sources?: ArticleSource[];
+  editorNotes?: string | null;
   isAIGenerated?: boolean;
 }
 
-export function SourceAttribution({ sources, isAIGenerated }: SourceAttributionProps) {
+/** Parse "Source: Name - https://url" from editor_notes */
+function parseEditorNotesSource(notes: string | null | undefined): { name: string; url: string } | null {
+  if (!notes) return null;
+  const match = notes.match(/^Source:\s*(.+?)\s*-\s*(https?:\/\/.+)$/);
+  if (match) return { name: match[1].trim(), url: match[2].trim() };
+  return null;
+}
+
+export function SourceAttribution({ sources, editorNotes, isAIGenerated }: SourceAttributionProps) {
   // Only show for AI-generated content
   if (!isAIGenerated) return null;
 
-  // If no specific sources, show generic attribution
+  // If no specific sources, try to extract from editor_notes (RSS source fallback)
   if (!sources || sources.length === 0) {
+    const rssSource = parseEditorNotesSource(editorNotes);
+    if (rssSource) {
+      return (
+        <div className="mt-8 pt-6 border-t border-neutral-200">
+          <p className="text-xs text-neutral-400">
+            <span className="italic">Source: </span>
+            <a
+              href={rssSource.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              {rssSource.name}
+            </a>
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className="mt-8 pt-6 border-t border-neutral-200">
         <p className="text-xs text-neutral-400 italic">

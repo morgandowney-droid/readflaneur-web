@@ -260,6 +260,12 @@ LINK CANDIDATES RULES:
       .replace(/^#+\s+/gm, '')             // Remove heading markers
       .replace(/\{\s*"?categories"?[\s\S]*$/i, '')  // Remove trailing JSON
       .replace(/\{\s*categories[\s\S]*$/i, '')     // Remove unquoted JSON variant
+      // Clean Gemini Google Search grounding citation artifacts
+      .replace(/\.\(/g, '.')               // .( -> . (citation artifact, never valid English)
+      .replace(/\.\s*\(\d+\)/g, '.')       // . (1) or .(2) -> . (numbered citations)
+      .replace(/\s*\(\d+\)/g, '')          // inline (1) (2) citation numbers
+      .replace(/\(\s*\)/g, '')             // () empty parens
+      .replace(/\(\s*$/gm, '')             // Orphaned ( at end of line
       .replace(/\n{3,}/g, '\n\n')          // Collapse multiple newlines
       .trim();
 

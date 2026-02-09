@@ -236,6 +236,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         {/* Source Attribution for AI-generated content */}
         <SourceAttribution
           sources={article.sources}
+          editorNotes={article.editor_notes}
           isAIGenerated={
             article.article_type === 'community_news' ||
             article.article_type === 'brief_summary' ||

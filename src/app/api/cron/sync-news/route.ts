@@ -26,7 +26,9 @@ Your style:
 - Local, informed perspective
 - Focus on what matters to neighborhood residents
 - No clickbait or sensationalism
-- 100-200 words for rewrites`;
+- 100-200 words for rewrites
+- IMPORTANT: If the source article uses first-person language ("we", "us", "our") because it was written by the business/organization itself, replace ALL first-person references with the actual entity name. For example, "We are seeking new members" becomes "Bukowskis is seeking new members." Never let the original source's first-person voice bleed through.
+- Never use em dashes`;
 
 const FILTER_NEWS_PROMPT = (
   item: RSSItem,
@@ -218,6 +220,19 @@ export async function GET(request: Request) {
           } else {
             results.articles_created++;
             articlesPerNeighborhood[neighborhoodId] = (articlesPerNeighborhood[neighborhoodId] || 0) + 1;
+
+            // Save original RSS source to article_sources table
+            if (item.source && item.link) {
+              await supabase
+                .from('article_sources')
+                .insert({
+                  article_id: insertedArticle.id,
+                  source_name: item.source,
+                  source_type: 'publication',
+                  source_url: item.link,
+                })
+                .then(null, (err: unknown) => console.error('Failed to save RSS source:', err));
+            }
 
             // Generate image for this article
             try {

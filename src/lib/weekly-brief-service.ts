@@ -556,8 +556,12 @@ const DATA_POINT_PROMPTS: Record<DataPointType, (n: string, c: string, co: strin
     `What is the current average residential listing price in ${n}, ${c}? Compare to last month. Provide one number and one sentence of context. If exact data unavailable, give the best available indicator. VOICE: Write as a local insider using "we/our" - e.g., "Our median listing is holding at $4.2M" or "${n} is seeing steady demand." NEVER say "Residents are" - that sounds like a third party. NEVER use em dashes.`,
   safety: (n, c) =>
     `What are the recent crime or safety statistics for ${n}, ${c}? Compare to last year same period. Provide one key metric and one sentence of context. VOICE: Write as a local insider using "we/our" - e.g., "We're seeing a 12% drop in incidents" or "${n} is holding steady." NEVER say "Residents are." NEVER use em dashes.`,
-  environment: (n, c) =>
-    `What is the current temperature in ${n}, ${c}? Provide the temperature as the value (e.g., "12°F" or "28°C") and one sentence of context about current weather conditions. Do NOT use AQI or air quality index. VOICE: Write as a local insider using "we/our" - e.g., "We're staying indoors today" or "${n} is dealing with a cold snap." NEVER say "Residents are." NEVER use em dashes.`,
+  environment: (n, c, co) => {
+    const useF = co === 'USA' || co === 'US' || co === 'United States';
+    const unit = useF ? '°F' : '°C';
+    const example = useF ? '45°F' : '12°C';
+    return `What is the current temperature in ${n}, ${c}? Provide the temperature in ${unit} ONLY as the value (e.g., "${example}") and one sentence of context about current weather conditions. Do NOT use AQI or air quality index. Do NOT include both °F and °C - use ${unit} only. VOICE: Write as a local insider using "we/our" - e.g., "We're staying indoors today" or "${n} is dealing with a cold snap." NEVER say "Residents are." NEVER use em dashes.`;
+  },
   flaneur_index: (n, c, co) => {
     const currency = co === 'USA' ? 'USD' : co === 'UK' ? 'GBP' : co === 'Sweden' ? 'SEK' : co === 'Australia' ? 'AUD' : 'local currency';
     return `What is the average price of a latte at premium cafes in ${n}, ${c}? Give the price in ${currency} and compare to the city average. This is our "Flaneur Index" - a lighthearted cost-of-living indicator. VOICE: Write as a local insider - e.g., "Our morning latte runs about $6.50" or "We're paying a premium." NEVER say "Residents are." NEVER use em dashes.`;
@@ -586,7 +590,7 @@ async function generateDataPoint(
 Respond with ONLY this JSON:
 \`\`\`json
 {
-  "value": "The key number or metric (e.g., '$4.2M', '12% decrease', '28°C / 82°F')",
+  "value": "The key number or metric (e.g., '$4.2M', '12% decrease')",
   "context": "One sentence explaining what this means for residents."
 }
 \`\`\``;

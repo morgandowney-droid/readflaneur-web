@@ -43,6 +43,23 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
                 <span style={citySubtitle}> &middot; {primary.cityName}</span>
               </Text>
 
+              {/* The Temperature data point */}
+              {(primary.weather || primary.weatherStory) && (() => {
+                const tempC = primary.weatherStory?.temperatureC ?? primary.weather?.temperatureC ?? null;
+                const tempF = primary.weatherStory?.temperatureF ?? primary.weather?.temperatureF ?? null;
+                const useF = primary.weatherStory?.useFahrenheit ?? primary.weather?.useFahrenheit ?? false;
+                const desc = primary.weather?.description || '';
+                if (tempC === null && tempF === null) return null;
+                const tempValue = useF ? `${Math.round(tempF!)}°F` : `${Math.round(tempC!)}°C`;
+                return (
+                  <Section style={tempSection}>
+                    <Text style={tempLabel}>THE TEMPERATURE</Text>
+                    <Text style={tempValue_}>{tempValue}</Text>
+                    {desc && <Text style={tempContext}>{desc}</Text>}
+                  </Section>
+                );
+              })()}
+
               {/* Weather: story card replaces widget when available */}
               {primary.weatherStory ? (
                 <WeatherStoryCard story={primary.weatherStory} />
@@ -118,6 +135,37 @@ const citySubtitle = {
   textTransform: 'none' as const,
   letterSpacing: '0',
   fontSize: '15px',
+};
+
+const tempSection = {
+  padding: '20px 0',
+  textAlign: 'center' as const,
+  borderBottom: '1px solid #eeeeee',
+  marginBottom: '16px',
+};
+
+const tempLabel = {
+  fontSize: '10px',
+  letterSpacing: '0.2em',
+  textTransform: 'uppercase' as const,
+  color: '#999999',
+  margin: '0 0 4px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const tempValue_ = {
+  fontSize: '36px',
+  fontWeight: '700' as const,
+  color: '#1a1a1a',
+  margin: '4px 0',
+  fontFamily: 'Georgia, "Times New Roman", serif',
+};
+
+const tempContext = {
+  fontSize: '14px',
+  color: '#666666',
+  margin: '0',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
 const emptyState = {

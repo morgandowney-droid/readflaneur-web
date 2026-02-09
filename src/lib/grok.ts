@@ -175,7 +175,16 @@ Writing style rules:
     const contentMatch = responseText.match(/CONTENT:\s*([\s\S]+)/i);
 
     const headline = headlineMatch?.[1]?.trim() || `What's Happening in ${neighborhoodName}`;
-    const content = contentMatch?.[1]?.trim() || responseText;
+    // Clean citation artifacts from Grok response
+    const rawContent = contentMatch?.[1]?.trim() || responseText;
+    const content = rawContent
+      .replace(/\.\(/g, '.')               // .( -> .
+      .replace(/\.\s*\(\d+\)/g, '.')       // . (1) -> .
+      .replace(/\s*\(\d+\)/g, '')          // inline (1) citation numbers
+      .replace(/\(\s*\)/g, '')             // () empty parens
+      .replace(/\(\s*$/gm, '')             // Orphaned ( at end of line
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
 
     // Extract citations/sources
     const sources: XSearchResult[] = (data.citations || []).map((c: { title?: string; url?: string }) => ({
