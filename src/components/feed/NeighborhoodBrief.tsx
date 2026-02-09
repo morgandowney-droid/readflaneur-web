@@ -859,36 +859,22 @@ export function NeighborhoodBrief({
   };
 
   return (
-    <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-3 mb-4">
-      {/* Header */}
-        <div className="flex items-center justify-between mb-1.5">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-amber-700">
-              {new Date(generatedAt).toLocaleDateString('en-US', { weekday: 'short' })} Daily Brief
-            </span>
-            {isExpanded && (
-              <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
-                AI-Synthesized
-              </span>
-            )}
-          </div>
-          <div className="text-right">
-            <span className="text-xs text-amber-600 block">
-              {formatTime(generatedAt)}
-            </span>
-            <span className="text-[9px] text-amber-400 block">
-              Updated daily at 7 AM
-            </span>
-          </div>
-        </div>
+    <div className="bg-neutral-50 p-8 md:p-10 mb-6">
+      {/* Eyebrow + Live Dot */}
+      <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-amber-600/80 mb-3">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+        <span>
+          {new Date(generatedAt).toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()} DAILY BRIEF
+        </span>
+      </div>
 
       {/* Headline */}
-      <h3 className="font-semibold text-lg mb-1.5 text-neutral-900">
+      <h3 className="font-display text-2xl md:text-3xl text-neutral-900 leading-tight mb-4">
         {headline}
       </h3>
 
       {/* Content */}
-      <div className="text-base text-neutral-700 leading-relaxed">
+      <div className="text-sm text-neutral-500 leading-relaxed max-w-prose mb-8">
         {isExpanded ? (
           <div className="space-y-4">
             {paragraphs.map((p, i) => (
@@ -904,7 +890,7 @@ export function NeighborhoodBrief({
       {hasMore && (
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="mt-2 text-xs font-medium text-amber-700 hover:text-amber-900 transition-colors"
+          className="text-xs text-neutral-400 hover:text-neutral-900 transition-colors"
         >
           {isExpanded ? 'Show less' : 'Read more'}
         </button>
@@ -912,9 +898,9 @@ export function NeighborhoodBrief({
 
       {/* Source attribution - only show when expanded */}
       {isExpanded && (
-        <div className="mt-2 pt-2 border-t border-amber-200">
+        <div className="mt-3 pt-3 border-t border-neutral-200">
           {hasEnrichedSources ? (
-            <p className="text-[10px] text-amber-600 leading-relaxed">
+            <p className="text-[10px] text-neutral-400 leading-relaxed">
               <span className="italic">Synthesized from reporting by </span>
               {(() => {
                 // Collect unique sources with URLs from enriched categories
@@ -938,7 +924,7 @@ export function NeighborhoodBrief({
                         href={source.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-amber-700 hover:text-amber-900 underline decoration-amber-300 hover:decoration-amber-500"
+                        className="text-neutral-500 hover:text-neutral-900 underline decoration-neutral-300"
                       >
                         {source.name}
                       </a>
@@ -949,63 +935,52 @@ export function NeighborhoodBrief({
               <span className="italic">.</span>
             </p>
           ) : (
-            <p className="text-[10px] text-amber-600 italic">
+            <p className="text-[10px] text-neutral-400 italic">
               Synthesized from public news sources and social media via AI-powered search and analysis.
             </p>
           )}
         </div>
       )}
 
-      {/* Newsletter signup CTA */}
-      <div className="mt-3 pt-3 border-t border-amber-200">
+      {/* Newsletter signup */}
+      <div className="border-t border-neutral-200 pt-6 mt-6 max-w-md">
         {isSubscribed ? (
-          <p className="text-[10px] text-amber-600 flex items-center gap-1.5">
-            <svg className="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            <span>You&apos;re subscribed to daily briefs</span>
+          <p className="font-display text-base text-neutral-500 italic">
+            You&apos;re on the list. See you tomorrow.
           </p>
         ) : subscribeStatus === 'success' ? (
-          <p className="text-[10px] text-emerald-700 flex items-center gap-1.5">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            <span>Check your email for a verification link to complete signup.</span>
+          <p className="font-display text-base text-neutral-500 italic">
+            Check your email to confirm. See you tomorrow.
           </p>
         ) : subscribeStatus === 'error' ? (
           <div className="flex flex-col gap-1.5">
-            <p className="text-[10px] text-red-600">
-              Something went wrong. Please try again.
+            <p className="text-sm text-neutral-400">
+              Something went wrong.
             </p>
             <button
               onClick={() => setSubscribeStatus('idle')}
-              className="text-[10px] text-amber-700 underline hover:text-amber-900"
+              className="text-sm text-neutral-400 underline hover:text-neutral-900"
             >
               Try again
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubscribe}>
-            <p className="text-[11px] text-amber-800 mb-1.5 font-medium">
-              Get this brief in your inbox each morning
-            </p>
-            <div className="flex gap-2 max-w-sm">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="w-48 px-3 py-1.5 text-xs border border-amber-300 rounded-md focus:outline-none focus:border-amber-500 bg-white/80"
-                disabled={subscribeStatus === 'loading'}
-              />
-              <button
-                type="submit"
-                disabled={subscribeStatus === 'loading' || !email}
-                className="px-4 py-1.5 text-[10px] tracking-wider uppercase font-medium bg-amber-700 text-white rounded-md hover:bg-amber-800 disabled:bg-amber-400 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-              >
-                {subscribeStatus === 'loading' ? '...' : 'Subscribe'}
-              </button>
-            </div>
+          <form onSubmit={handleSubscribe} className="relative">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Your email address"
+              className="bg-transparent border-b border-neutral-300 focus:border-neutral-900 text-base py-2 pr-24 w-full font-serif italic text-neutral-400 placeholder-neutral-300 outline-none transition-colors"
+              disabled={subscribeStatus === 'loading'}
+            />
+            <button
+              type="submit"
+              disabled={subscribeStatus === 'loading' || !email}
+              className="absolute right-0 bottom-2 text-xs font-bold uppercase tracking-widest text-neutral-900 hover:text-amber-600 disabled:text-neutral-300 disabled:cursor-not-allowed transition-colors"
+            >
+              {subscribeStatus === 'loading' ? '...' : 'Subscribe'}
+            </button>
           </form>
         )}
       </div>
@@ -1015,16 +990,16 @@ export function NeighborhoodBrief({
 
 export function NeighborhoodBriefSkeleton() {
   return (
-    <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4 mb-6 animate-pulse">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="h-3 w-20 bg-amber-200 rounded" />
-        <div className="h-3 w-24 bg-amber-100 rounded" />
+    <div className="bg-neutral-50 p-8 md:p-10 mb-6 animate-pulse">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-1.5 h-1.5 rounded-full bg-neutral-200" />
+        <div className="h-3 w-28 bg-neutral-200 rounded" />
       </div>
-      <div className="h-5 w-3/4 bg-amber-200 rounded mb-2" />
-      <div className="space-y-2">
-        <div className="h-3 w-full bg-amber-100 rounded" />
-        <div className="h-3 w-5/6 bg-amber-100 rounded" />
-        <div className="h-3 w-4/6 bg-amber-100 rounded" />
+      <div className="h-7 w-3/4 bg-neutral-200 rounded mb-4" />
+      <div className="space-y-2 max-w-prose mb-8">
+        <div className="h-3 w-full bg-neutral-200 rounded" />
+        <div className="h-3 w-5/6 bg-neutral-200 rounded" />
+        <div className="h-3 w-4/6 bg-neutral-200 rounded" />
       </div>
     </div>
   );
