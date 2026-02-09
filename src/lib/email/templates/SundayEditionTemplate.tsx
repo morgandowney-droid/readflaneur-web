@@ -184,7 +184,7 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
           {content.horizonEvents.length > 0 && (
             <>
               <Section style={sectionContainer}>
-                <Text style={sectionLabel}>THE HORIZON</Text>
+                <Text style={sectionLabel}>THE NEXT FEW DAYS</Text>
                 <Text style={sectionSubtitle}>Your week ahead, curated.</Text>
 
                 {content.horizonEvents.map((event, i) => {
