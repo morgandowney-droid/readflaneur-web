@@ -103,7 +103,7 @@ export async function GET(request: Request) {
     for (const recipient of recipients) {
       if (emailsSent >= MAX_EMAILS_PER_RUN) break;
 
-      if (sentSet.has(recipient.id)) {
+      if (!testEmail && sentSet.has(recipient.id)) {
         results.emails_skipped++;
         continue;
       }
