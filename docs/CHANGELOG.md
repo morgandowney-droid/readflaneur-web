@@ -9,11 +9,13 @@
 - Replaced system sans-serif fonts with Playfair Display (Google Fonts `@import`) + Georgia/Times New Roman serif fallback for all headlines, masthead, temperature display, and section titles
 - Masthead: 28px Playfair Display with `0.25em` letter-spacing (was 32px system sans-serif)
 - Date line: smaller (12px), lighter (#b0b0b0), wider tracking
-- Temperature: centered 36px Playfair Display number only (no "THE TEMPERATURE" label - the number speaks for itself)
+- Hero weather block: neighborhood name (12px tracked caps) + temperature (48px Playfair Display) + weather description merged as one centered visual thought. No "THE TEMPERATURE" label - the number speaks for itself.
 - Single-unit temperature: °F for USA, °C for everyone else (no more dual "72°F / 22°C" format)
 - Removed WeatherWidget entirely (redundant with temperature data point); WeatherStoryCard now editorial only (headline + body, no temp line)
 - Weather story card: stripped blue border + grey background, now clean border-bottom only; alert variant keeps red left border without background
-- New `SectionDivider` component: centered wide-tracked uppercase label (`T R I B E C A`) + short horizontal rule below, used by both primary and satellite sections
+- Smart geography in `SectionDivider`: 3-rule system - (1) redundancy: hide city if neighborhood name contains it, (2) familiarity: hide city if same as subscriber's primary city, (3) foreign: show city only when abroad (e.g., "MAYFAIR - London" for a NYC subscriber)
+- `SectionDivider` component: centered wide-tracked uppercase label + short 32px gold accent rule (`rgba(120, 53, 15, 0.4)`) below, used by satellite sections. Primary section uses inline hero block instead.
+- Word-boundary truncation: `truncateAtWord()` helper prevents mid-word cuts in preview text (120 char limit) + CSS `-webkit-line-clamp: 2` for visual truncation in Apple Mail
 - Story headlines: Playfair Display serif across StoryList, SatelliteSection, NativeAd, HeroStory, WeatherStoryCard
 - Metadata: 10px with 0.15em letter-spacing, lightened to #b0b0b0
 - Preview text: #555555 with lineHeight 1.6 (was #666, 1.4)

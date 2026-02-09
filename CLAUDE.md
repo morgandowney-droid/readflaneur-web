@@ -37,11 +37,14 @@ Recent work: "Quiet Luxury" email visual overhaul (Playfair Display serif, minim
 - **Sender:** `src/lib/email/sender.ts` — React Email via Resend
 - **Sunday Edition:** `src/lib/weekly-brief-service.ts` — Gemini + Grok
 - **Weather:** Pure logic in `src/lib/email/weather-story.ts` (no LLM)
-- **Temperature:** Centered 36px number, no label. Single-unit: °F for USA, °C for everyone else. Sunday Edition data point same logic.
+- **Hero block:** Neighborhood name (12px tracked caps) + temperature (48px Playfair Display) + weather description - merged as one centered visual thought, no label
+- **Temperature:** Single-unit: °F for USA, °C for everyone else. Sunday Edition data point same logic.
 - **US neighborhoods:** °F only. Determined by `neighborhoods.country`
 - **Instant resend:** `src/lib/email/instant-resend.ts` (3/day limit)
 - **Layout:** Primary stories use compact `StoryList variant="primary"` (19px/16px), no hero image
-- **Section dividers:** `SectionDivider` component - centered wide-tracked uppercase name + short rule below (used by primary + satellite sections)
+- **Smart geography:** `SectionDivider` hides city when redundant (name contains city), familiar (same as primary), shows only for foreign neighborhoods
+- **Section dividers:** `SectionDivider` component - centered wide-tracked uppercase name + 32px gold accent rule (`rgba(120, 53, 15, 0.4)`), accepts `primaryCity` for smart geography
+- **Truncation:** `truncateAtWord()` helper (120 chars) + CSS `-webkit-line-clamp: 2` for preview text
 - **Typography:** Playfair Display via Google Fonts `@import` (Apple Mail renders; Gmail falls back to Georgia serif). All headlines, masthead, temperature use serif.
 - **Deduplication:** assembler.ts tracks seen article URLs in a Set - same story never appears in both primary and satellite sections
 
