@@ -146,14 +146,13 @@ export async function GET(request: Request) {
 
       if (!brief && testEmail) {
         // Try the most recent brief for this neighborhood (regardless of date)
-        const { data: recentBrief } = await supabase
+        const { data: recentBriefs } = await supabase
           .from('weekly_briefs')
           .select('*, neighborhoods(name, city, lat, lng, country), articles(slug)')
           .eq('neighborhood_id', primaryId)
           .order('week_date', { ascending: false })
-          .limit(1)
-          .single();
-        brief = recentBrief;
+          .limit(1);
+        brief = recentBriefs?.[0] || null;
       }
 
       if (!brief) {
