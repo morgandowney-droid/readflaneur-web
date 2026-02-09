@@ -129,12 +129,29 @@ export async function GET(request: Request) {
         continue;
       }
 
-      const { data: brief } = await supabase
+      // In test mode, also check yesterday's date as fallback (sync may have run the day before)
+      let brief;
+      const { data: todayBrief } = await supabase
         .from('weekly_briefs')
         .select('*, neighborhoods(name, city), articles(slug)')
         .eq('neighborhood_id', primaryId)
         .eq('week_date', weekDate)
         .single();
+
+      brief = todayBrief;
+
+      if (!brief && testEmail) {
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayDate = yesterday.toISOString().split('T')[0];
+        const { data: fallbackBrief } = await supabase
+          .from('weekly_briefs')
+          .select('*, neighborhoods(name, city), articles(slug)')
+          .eq('neighborhood_id', primaryId)
+          .eq('week_date', yesterdayDate)
+          .single();
+        brief = fallbackBrief;
+      }
 
       if (!brief) {
         results.emails_skipped++;
