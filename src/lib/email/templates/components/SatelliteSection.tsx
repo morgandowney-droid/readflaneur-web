@@ -4,12 +4,17 @@ import { SectionDivider } from './SectionDivider';
 
 interface SatelliteSectionProps {
   section: SatelliteSectionData;
+  primaryCity?: string;
 }
 
-export function SatelliteSection({ section }: SatelliteSectionProps) {
+export function SatelliteSection({ section, primaryCity }: SatelliteSectionProps) {
   return (
     <Section style={container}>
-      <SectionDivider name={section.neighborhoodName} city={section.cityName} />
+      <SectionDivider
+        name={section.neighborhoodName}
+        city={section.cityName}
+        primaryCity={primaryCity}
+      />
       {section.stories.map((story, i) => (
         <Section key={i} style={storyRow}>
           <Link href={story.articleUrl} style={headlineLink}>

@@ -1,6 +1,13 @@
 import { Section, Text, Link, Hr } from '@react-email/components';
 import { EmailStory } from '../../types';
 
+function truncateAtWord(text: string, max: number): string {
+  if (text.length <= max) return text;
+  const truncated = text.slice(0, max);
+  const lastSpace = truncated.lastIndexOf(' ');
+  return (lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated) + '...';
+}
+
 interface StoryListProps {
   stories: EmailStory[];
   variant?: 'primary' | 'default';
@@ -26,9 +33,7 @@ export function StoryList({ stories, variant = 'default' }: StoryListProps) {
           </Link>
           {story.previewText && (
             <Text style={isPrimary ? previewPrimary : preview}>
-              {story.previewText.length > 120
-                ? story.previewText.slice(0, 120) + '...'
-                : story.previewText}
+              {truncateAtWord(story.previewText, 120)}
             </Text>
           )}
         </Section>
@@ -78,12 +83,20 @@ const headlinePrimary = {
   fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
 };
 
+const previewClamp = {
+  overflow: 'hidden' as const,
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical' as const,
+};
+
 const preview = {
   fontSize: '15px',
   color: '#555555',
   lineHeight: '1.6',
   margin: '0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
+  ...previewClamp,
 };
 
 const previewPrimary = {
@@ -92,6 +105,7 @@ const previewPrimary = {
   lineHeight: '1.6',
   margin: '0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
+  ...previewClamp,
 };
 
 const locationTag = {

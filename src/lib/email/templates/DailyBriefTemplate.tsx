@@ -26,6 +26,7 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
   const previewText = `Your morning brief from ${primaryName}`;
 
   const primary = content.primarySection;
+  const primaryCity = primary?.cityName || '';
 
   return (
     <Html>
@@ -39,23 +40,24 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
 
           {primary && (
             <Section>
-              <SectionDivider name={primary.neighborhoodName} city={primary.cityName} />
-
-              {/* The Temperature data point */}
-              {(primary.weather || primary.weatherStory) && (() => {
-                const tempC = primary.weatherStory?.temperatureC ?? primary.weather?.temperatureC ?? null;
-                const tempF = primary.weatherStory?.temperatureF ?? primary.weather?.temperatureF ?? null;
-                const useF = primary.weatherStory?.useFahrenheit ?? primary.weather?.useFahrenheit ?? false;
-                const desc = primary.weather?.description || '';
-                if (tempC === null && tempF === null) return null;
-                const tempValue = useF ? `${Math.round(tempF!)}°F` : `${Math.round(tempC!)}°C`;
-                return (
-                  <Section style={tempSection}>
-                    <Text style={tempValue_}>{tempValue}</Text>
-                    {desc && <Text style={tempContext}>{desc}</Text>}
-                  </Section>
-                );
-              })()}
+              {/* Location + Weather as one grouped thought */}
+              <Section style={heroBlock}>
+                <Text style={locationLabel}>{primary.neighborhoodName}</Text>
+                {(primary.weather || primary.weatherStory) && (() => {
+                  const tempC = primary.weatherStory?.temperatureC ?? primary.weather?.temperatureC ?? null;
+                  const tempF = primary.weatherStory?.temperatureF ?? primary.weather?.temperatureF ?? null;
+                  const useF = primary.weatherStory?.useFahrenheit ?? primary.weather?.useFahrenheit ?? false;
+                  const desc = primary.weather?.description || '';
+                  if (tempC === null && tempF === null) return null;
+                  const tempValue = useF ? `${Math.round(tempF!)}°F` : `${Math.round(tempC!)}°C`;
+                  return (
+                    <>
+                      <Text style={tempHero}>{tempValue}</Text>
+                      {desc && <Text style={tempDesc}>{desc}</Text>}
+                    </>
+                  );
+                })()}
+              </Section>
 
               {/* Weather story card (editorial headline + body) */}
               {primary.weatherStory && (
@@ -87,7 +89,7 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
 
           {/* Satellite neighborhoods */}
           {content.satelliteSections.map((section, i) => (
-            <SatelliteSection key={i} section={section} />
+            <SatelliteSection key={i} section={section} primaryCity={primaryCity} />
           ))}
 
           <Footer
@@ -111,24 +113,35 @@ const container = {
   padding: '0 16px',
 };
 
-const tempSection = {
-  padding: '32px 0',
+const heroBlock = {
+  padding: '32px 0 24px',
   textAlign: 'center' as const,
-  marginBottom: '16px',
 };
 
-const tempValue_ = {
-  fontSize: '36px',
+const locationLabel = {
+  fontSize: '12px',
+  fontWeight: '400' as const,
+  letterSpacing: '0.2em',
+  textTransform: 'uppercase' as const,
+  color: '#1a1a1a',
+  margin: '0 0 8px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const tempHero = {
+  fontSize: '48px',
   fontWeight: '700' as const,
   color: '#1a1a1a',
-  margin: '4px 0',
+  margin: '0',
+  lineHeight: '1',
   fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
 };
 
-const tempContext = {
+const tempDesc = {
   fontSize: '13px',
   color: '#999999',
-  margin: '0',
+  margin: '4px 0 0',
+  textTransform: 'capitalize' as const,
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 

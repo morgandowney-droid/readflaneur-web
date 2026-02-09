@@ -3,18 +3,30 @@ import { Section, Text, Hr } from '@react-email/components';
 interface SectionDividerProps {
   name: string;
   city?: string;
+  primaryCity?: string;
+  showRule?: boolean;
 }
 
-export function SectionDivider({ name, city }: SectionDividerProps) {
-  const showCity = city && city.toLowerCase() !== name.toLowerCase();
+export function SectionDivider({ name, city, primaryCity, showRule = true }: SectionDividerProps) {
+  const shouldShowCity = (() => {
+    if (!city) return false;
+    const n = name.toLowerCase();
+    const c = city.toLowerCase();
+    // Rule 1: Redundancy — neighborhood contains city name
+    if (n.includes(c) || c === n) return false;
+    // Rule 2: Familiarity — same as primary/home city
+    if (primaryCity && c === primaryCity.toLowerCase()) return false;
+    // Rule 3: Foreign — show city only when abroad
+    return true;
+  })();
 
   return (
     <Section style={container}>
       <Text style={label}>
         {name}
-        {showCity && <span style={cityText}> &middot; {city}</span>}
+        {shouldShowCity && <span style={cityText}> &middot; {city}</span>}
       </Text>
-      <Hr style={rule} />
+      {showRule && <Hr style={rule} />}
     </Section>
   );
 }
@@ -27,7 +39,7 @@ const container = {
 const label = {
   fontSize: '13px',
   fontWeight: '400' as const,
-  letterSpacing: '0.3em',
+  letterSpacing: '0.2em',
   textTransform: 'uppercase' as const,
   color: '#1a1a1a',
   margin: '0 0 12px',
@@ -40,7 +52,7 @@ const cityText = {
 };
 
 const rule = {
-  borderTop: '1px solid #e5e5e5',
+  borderTop: '1px solid rgba(120, 53, 15, 0.4)',
   margin: '0 auto',
-  maxWidth: '60px',
+  maxWidth: '32px',
 };
