@@ -9,14 +9,15 @@
 - Replaced system sans-serif fonts with Playfair Display (Google Fonts `@import`) + Georgia/Times New Roman serif fallback for all headlines, masthead, temperature display, and section titles
 - Masthead: 28px Playfair Display with `0.25em` letter-spacing (was 32px system sans-serif)
 - Date line: smaller (12px), lighter (#b0b0b0), wider tracking
-- Temperature section: removed border-bottom, increased padding to 32px, Playfair Display for value
-- Weather widget: removed grey #f8f8f8 background, centered minimalist layout, lighter font weight (300)
+- Temperature: centered 36px Playfair Display number only (no "THE TEMPERATURE" label - the number speaks for itself)
+- Single-unit temperature: °F for USA, °C for everyone else (no more dual "72°F / 22°C" format)
+- Removed WeatherWidget entirely (redundant with temperature data point); WeatherStoryCard now editorial only (headline + body, no temp line)
 - Weather story card: stripped blue border + grey background, now clean border-bottom only; alert variant keeps red left border without background
+- New `SectionDivider` component: centered wide-tracked uppercase label (`T R I B E C A`) + short horizontal rule below, used by both primary and satellite sections
 - Story headlines: Playfair Display serif across StoryList, SatelliteSection, NativeAd, HeroStory, WeatherStoryCard
 - Metadata: 10px with 0.15em letter-spacing, lightened to #b0b0b0
 - Preview text: #555555 with lineHeight 1.6 (was #666, 1.4)
 - Story spacing: 8px row gap (was 4px), 20px divider margin (was 12px)
-- Satellite section breaks: stronger divider (#e5e5e5) with 32px top margin for magazine section feel
 - Article deduplication: same article URL no longer appears in both primary and satellite sections (URL Set tracking in assembler.ts)
 
 **Email Temperature Fixes:**

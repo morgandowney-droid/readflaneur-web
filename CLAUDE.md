@@ -37,10 +37,11 @@ Recent work: "Quiet Luxury" email visual overhaul (Playfair Display serif, minim
 - **Sender:** `src/lib/email/sender.ts` — React Email via Resend
 - **Sunday Edition:** `src/lib/weekly-brief-service.ts` — Gemini + Grok
 - **Weather:** Pure logic in `src/lib/email/weather-story.ts` (no LLM)
-- **Temperature:** Daily Brief has "The Temperature" data point section (centered, 36px). Sunday Edition data point uses country-aware °C/°F.
-- **US neighborhoods:** °F primary. Determined by `neighborhoods.country`
+- **Temperature:** Centered 36px number, no label. Single-unit: °F for USA, °C for everyone else. Sunday Edition data point same logic.
+- **US neighborhoods:** °F only. Determined by `neighborhoods.country`
 - **Instant resend:** `src/lib/email/instant-resend.ts` (3/day limit)
 - **Layout:** Primary stories use compact `StoryList variant="primary"` (19px/16px), no hero image
+- **Section dividers:** `SectionDivider` component - centered wide-tracked uppercase name + short rule below (used by primary + satellite sections)
 - **Typography:** Playfair Display via Google Fonts `@import` (Apple Mail renders; Gmail falls back to Georgia serif). All headlines, masthead, temperature use serif.
 - **Deduplication:** assembler.ts tracks seen article URLs in a Set - same story never appears in both primary and satellite sections
 
