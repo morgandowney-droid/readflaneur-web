@@ -5,11 +5,11 @@ import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 /**
  * Auto-enrich Neighborhood Briefs + RSS Articles with Gemini
  *
- * Runs 15 minutes after the hour to enrich briefs that were just generated
+ * Runs every 30 minutes to enrich briefs that were just generated
  * and RSS-sourced articles that haven't been enriched yet.
  * Uses Gemini with Google Search grounding to verify and add sources.
  *
- * Schedule: 15 * * * * (15 minutes past each hour)
+ * Schedule: 15,45 * * * * (every 30 minutes)
  *
  * Time budget: 280s max (leaves 20s buffer before 300s maxDuration)
  * Phase 1 (briefs): up to 120s
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const testBriefId = url.searchParams.get('test');
   const testArticleId = url.searchParams.get('test-article');
-  const batchSize = parseInt(url.searchParams.get('batch') || '5');
+  const batchSize = parseInt(url.searchParams.get('batch') || '30');
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -197,7 +197,7 @@ export async function GET(request: Request) {
     // ─── Phase 2: Enrich RSS-sourced articles ───
     // No time window — enriched_at IS NULL + batch size limit prevents reprocessing
     // Newest articles enriched first (published_at DESC)
-    const articleBatchSize = parseInt(url.searchParams.get('article-batch') || '10');
+    const articleBatchSize = parseInt(url.searchParams.get('article-batch') || '30');
 
     let articleQuery = supabase
       .from('articles')
