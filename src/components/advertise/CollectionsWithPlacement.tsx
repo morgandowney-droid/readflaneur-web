@@ -184,12 +184,12 @@ function CollectionCard({
           </p>
         </button>
       </div>
-      <a
-        href="#book"
-        className="block text-center bg-white text-black py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-neutral-200 transition-colors"
+      <button
+        onClick={scrollToBookAndFocus}
+        className="block w-full text-center bg-white text-black py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
       >
         Book Now
-      </a>
+      </button>
     </div>
   );
 }

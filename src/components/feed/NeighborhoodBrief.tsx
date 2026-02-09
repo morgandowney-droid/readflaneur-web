@@ -1,9 +1,6 @@
 'use client';
 
-import { useState, useEffect, ReactNode } from 'react';
-import { useSearchParams } from 'next/navigation';
-
-const SUBSCRIBED_KEY = 'flaneur-newsletter-subscribed';
+import { useState, ReactNode } from 'react';
 
 interface BriefSource {
   title?: string;
@@ -689,49 +686,6 @@ export function NeighborhoodBrief({
   enrichedCategories,
 }: NeighborhoodBriefProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [email, setEmail] = useState('');
-  const [subscribeStatus, setSubscribeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [isSubscribed, setIsSubscribed] = useState(false);
-  const searchParams = useSearchParams();
-
-  // Check if already subscribed on mount or arriving from email
-  useEffect(() => {
-    const subscribed = localStorage.getItem(SUBSCRIBED_KEY);
-    if (subscribed === 'true') {
-      setIsSubscribed(true);
-    }
-    if (searchParams.get('ref') === 'email') {
-      setIsSubscribed(true);
-    }
-  }, [searchParams]);
-
-  const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !email.includes('@')) return;
-
-    setSubscribeStatus('loading');
-    try {
-      const response = await fetch('/api/newsletter/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          neighborhoodIds: neighborhoodId ? [neighborhoodId] : [],
-        }),
-      });
-
-      if (response.ok) {
-        setSubscribeStatus('success');
-        setEmail('');
-        localStorage.setItem(SUBSCRIBED_KEY, 'true');
-        setIsSubscribed(true);
-      } else {
-        setSubscribeStatus('error');
-      }
-    } catch {
-      setSubscribeStatus('error');
-    }
-  };
 
   // Use enriched content if available, otherwise fall back to original
   const displayContent = enrichedContent || content;
@@ -942,48 +896,6 @@ export function NeighborhoodBrief({
         </div>
       )}
 
-      {/* Newsletter signup */}
-      <div className="border-t border-white/[0.08] pt-6 mt-6 max-w-md">
-        {isSubscribed ? (
-          <p className="font-display text-base text-neutral-500 italic">
-            You&apos;re on the list. See you tomorrow.
-          </p>
-        ) : subscribeStatus === 'success' ? (
-          <p className="font-display text-base text-neutral-500 italic">
-            Check your email to confirm. See you tomorrow.
-          </p>
-        ) : subscribeStatus === 'error' ? (
-          <div className="flex flex-col gap-1.5">
-            <p className="text-sm text-neutral-400">
-              Something went wrong.
-            </p>
-            <button
-              onClick={() => setSubscribeStatus('idle')}
-              className="text-sm text-neutral-400 underline hover:text-white"
-            >
-              Try again
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubscribe} className="relative">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Your email address"
-              className="bg-transparent border-b border-neutral-700 focus:border-amber-500 text-base py-2 pr-24 w-full font-serif italic text-neutral-400 placeholder-neutral-600 outline-none transition-colors"
-              disabled={subscribeStatus === 'loading'}
-            />
-            <button
-              type="submit"
-              disabled={subscribeStatus === 'loading' || !email}
-              className="absolute right-0 bottom-2 text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-white disabled:text-neutral-600 disabled:cursor-not-allowed transition-colors"
-            >
-              {subscribeStatus === 'loading' ? '...' : 'Subscribe'}
-            </button>
-          </form>
-        )}
-      </div>
     </div>
   );
 }

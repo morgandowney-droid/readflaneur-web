@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { NeighborhoodFeed } from '@/components/feed/NeighborhoodFeed';
-import { NeighborhoodBrief, BriefArchive } from '@/components/feed/NeighborhoodBrief';
+import { NeighborhoodBrief } from '@/components/feed/NeighborhoodBrief';
 import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { injectAds } from '@/lib/ad-engine';
 import { Article, Ad } from '@/types';
@@ -207,14 +207,6 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
           neighborhoodId={neighborhoodId}
           defaultView="compact"
           comboInfo={comboInfo}
-          briefArchive={!category && brief ? (
-            <BriefArchive
-              neighborhoodId={neighborhoodId}
-              neighborhoodName={neighborhoodData.name}
-              city={neighborhoodData.city}
-              currentBriefId={brief.id}
-            />
-          ) : undefined}
         />
 
         {hasMoreArticles && (

@@ -547,9 +547,34 @@ function GlobalNeighborhoodModal({
         {/* Modal Header */}
         <div className="px-6 py-5 border-b border-white/10">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-2xl font-light tracking-wide text-white">
-              City Index
-            </h2>
+            <div>
+              <h2 className="font-display text-2xl font-light tracking-wide text-white">
+                City Index
+              </h2>
+              <div className="flex items-center gap-2 mt-1.5">
+                {/* Sort by Nearest */}
+                <button
+                  onClick={handleSortByNearest}
+                  disabled={locationLoading}
+                  className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded-full border transition-all whitespace-nowrap ${
+                    sortBy === 'nearest'
+                      ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
+                      : 'border-white/20 text-neutral-400 hover:text-white hover:border-white/40'
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {locationLoading ? '...' : 'Nearest'}
+                </button>
+                {/* Selection counter */}
+                {selected.size > 0 && (
+                  <span className="text-xs font-mono text-amber-400 tabular-nums">
+                    {selected.size}
+                  </span>
+                )}
+              </div>
+            </div>
             <button
               onClick={onClose}
               className="p-2 -m-2 text-neutral-500 hover:text-white transition-colors"
@@ -561,15 +586,15 @@ function GlobalNeighborhoodModal({
             </button>
           </div>
 
-          {/* Search and Sort */}
-          <div className="mt-4 flex gap-3 items-center">
-            <div className="relative flex-1">
+          {/* Search */}
+          <div className="mt-4 max-w-xs">
+            <div className="relative">
               <input
                 type="text"
-                placeholder="Search cities or neighborhoods..."
+                placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent border-b border-white/20 text-lg text-white placeholder-neutral-600 py-2 focus:outline-none focus:border-amber-500/50 transition-colors"
+                className="w-full bg-transparent border-b border-white/20 text-sm text-white placeholder-neutral-600 py-2 focus:outline-none focus:border-amber-500/50 transition-colors"
                 autoFocus
               />
               {searchQuery && (
@@ -583,29 +608,6 @@ function GlobalNeighborhoodModal({
                 </button>
               )}
             </div>
-
-            {/* Sort by Nearest */}
-            <button
-              onClick={handleSortByNearest}
-              disabled={locationLoading}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full border transition-all whitespace-nowrap ${
-                sortBy === 'nearest'
-                  ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
-                  : 'border-white/20 text-neutral-400 hover:text-white hover:border-white/40'
-              }`}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {locationLoading ? '...' : 'Nearest'}
-            </button>
-
-            {/* Selection counter */}
-            {selected.size > 0 && (
-              <span className="text-xs font-mono text-amber-400 tabular-nums">
-                {selected.size}
-              </span>
-            )}
           </div>
         </div>
 

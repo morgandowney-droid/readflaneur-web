@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { MagicLinkReminder } from '@/components/feed/MagicLinkReminder';
 import { NeighborhoodFeed } from '@/components/feed/NeighborhoodFeed';
-import { NeighborhoodBrief, BriefArchive } from '@/components/feed/NeighborhoodBrief';
+import { NeighborhoodBrief } from '@/components/feed/NeighborhoodBrief';
 import { MultiFeed } from '@/components/feed/MultiFeed';
 import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { MultiLoadMoreButton } from '@/components/feed/MultiLoadMoreButton';
@@ -238,14 +238,6 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
                 enrichedAt={brief.enriched_at || undefined}
               />
             )}
-
-            {/* Brief Archive */}
-            <BriefArchive
-              neighborhoodId={singleNeighborhood.id}
-              neighborhoodName={singleNeighborhood.name}
-              city={singleNeighborhood.city}
-              currentBriefId={brief?.id}
-            />
 
             <NeighborhoodFeed
               items={feedItems}

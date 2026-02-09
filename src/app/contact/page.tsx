@@ -1,12 +1,6 @@
-'use client';
-
 import Link from 'next/link';
-import { useState } from 'react';
-import TipSubmitModal from '@/components/tips/TipSubmitModal';
 
 export default function ContactPage() {
-  const [isTipModalOpen, setIsTipModalOpen] = useState(false);
-
   return (
     <div className="py-12 px-4">
       <div className="mx-auto max-w-2xl">
@@ -33,14 +27,7 @@ export default function ContactPage() {
               Know something happening in your neighborhood? Have an idea for a story? We&apos;re all ears.
             </p>
             <p className="text-sm text-neutral-400">
-              Use our{' '}
-              <button
-                onClick={() => setIsTipModalOpen(true)}
-                className="text-neutral-100 underline decoration-neutral-600 hover:text-white"
-              >
-                submission form
-              </button>{' '}
-              or email us at{' '}
+              Email us at{' '}
               <a href="mailto:tips@readflaneur.com" className="text-neutral-100 underline decoration-neutral-600 hover:text-white">
                 tips@readflaneur.com
               </a>
@@ -63,12 +50,6 @@ export default function ContactPage() {
 
         </div>
       </div>
-
-      {/* Tip Submission Modal */}
-      <TipSubmitModal
-        isOpen={isTipModalOpen}
-        onClose={() => setIsTipModalOpen(false)}
-      />
     </div>
   );
 }

@@ -108,7 +108,7 @@ export function MultiFeed({
                 <Link
                   key={hood.id}
                   href={`/${getCitySlug(hood.id)}/${getNeighborhoodSlug(hood.id)}`}
-                  className="text-xs tracking-widest uppercase border border-neutral-200 px-3 py-1.5 hover:border-black transition-colors"
+                  className="text-xs tracking-widest uppercase border border-white/[0.08] px-3 py-1.5 hover:border-white/20 transition-colors"
                   title={hasComboComponents ? `Includes: ${hood.combo_component_names!.join(', ')}` : undefined}
                 >
                   {hood.name}
@@ -118,7 +118,7 @@ export function MultiFeed({
             {hasOverflow && !showAllNeighborhoods && (
               <button
                 onClick={() => setShowAllNeighborhoods(true)}
-                className="text-xs tracking-widest uppercase border border-neutral-200 px-3 py-1.5 hover:border-black transition-colors bg-neutral-50"
+                className="text-xs tracking-widest uppercase border border-white/[0.08] px-3 py-1.5 hover:border-white/20 transition-colors text-neutral-400 hover:text-white"
               >
                 +{hiddenCount} more
               </button>
@@ -126,7 +126,7 @@ export function MultiFeed({
             {showAllNeighborhoods && hasOverflow && (
               <button
                 onClick={() => setShowAllNeighborhoods(false)}
-                className="text-xs tracking-widest uppercase text-neutral-400 px-2 py-1.5 hover:text-black transition-colors"
+                className="text-xs tracking-widest uppercase text-neutral-400 px-2 py-1.5 hover:text-white transition-colors"
               >
                 Show less
               </button>

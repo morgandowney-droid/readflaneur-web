@@ -116,10 +116,8 @@ export function NeighborhoodHeader({
 
       {/* ── CONTROL DECK ── */}
       <div className="border-y border-white/10 py-4 mt-8 flex items-center justify-between" ref={dropdownRef}>
-        {/* Left: Brief Archive */}
-        <div className="flex-shrink-0">
-          {briefArchive || <div />}
-        </div>
+        {/* Left spacer */}
+        <div className="flex-shrink-0" />
 
         {/* Center: GUIDE / MAP / HISTORY */}
         <div className="flex items-center gap-6">
