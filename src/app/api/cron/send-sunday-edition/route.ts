@@ -5,6 +5,7 @@ import { SundayEditionTemplate, SundayEditionContent } from '@/lib/email/templat
 import { sendEmail } from '@/lib/email';
 import { resolveRecipients } from '@/lib/email/scheduler';
 import { resolveSundayAd } from '@/lib/email/sunday-ad-resolver';
+import { fetchWeather } from '@/lib/email/weather';
 
 /**
  * Send "The Sunday Edition" weekly email to subscribers.
@@ -133,7 +134,7 @@ export async function GET(request: Request) {
       let brief;
       const { data: todayBrief } = await supabase
         .from('weekly_briefs')
-        .select('*, neighborhoods(name, city), articles(slug)')
+        .select('*, neighborhoods(name, city, lat, lng, country), articles(slug)')
         .eq('neighborhood_id', primaryId)
         .eq('week_date', weekDate)
         .single();
@@ -146,7 +147,7 @@ export async function GET(request: Request) {
         const yesterdayDate = yesterday.toISOString().split('T')[0];
         const { data: fallbackBrief } = await supabase
           .from('weekly_briefs')
-          .select('*, neighborhoods(name, city), articles(slug)')
+          .select('*, neighborhoods(name, city, lat, lng, country), articles(slug)')
           .eq('neighborhood_id', primaryId)
           .eq('week_date', yesterdayDate)
           .single();
@@ -158,7 +159,7 @@ export async function GET(request: Request) {
         continue;
       }
 
-      const hood = brief.neighborhoods as unknown as { name: string; city: string };
+      const hood = brief.neighborhoods as unknown as { name: string; city: string; lat: number | null; lng: number | null; country: string | null };
       const articleSlug = (brief.articles as unknown as { slug: string } | null)?.slug;
 
       // Format the date nicely
@@ -185,16 +186,29 @@ export async function GET(request: Request) {
         rearviewNarrative: brief.rearview_narrative || '',
         rearviewStories: (brief.rearview_stories || []) as SundayEditionContent['rearviewStories'],
         horizonEvents: (brief.horizon_events || []) as SundayEditionContent['horizonEvents'],
-        dataPoint: (() => {
+        dataPoint: await (async () => {
           const dp = (brief.data_point || {
             type: 'real_estate',
             label: 'The Market',
             value: 'Data unavailable this week',
             context: '',
           }) as SundayEditionContent['dataPoint'];
-          // Fix legacy label: environment type must always show "The Temperature"
-          if (dp.type === 'environment') {
-            dp.label = 'The Temperature';
+          // Fix legacy briefs that stored AQI instead of temperature
+          if (dp.type === 'environment' && /AQI/i.test(dp.value)) {
+            if (hood.lat && hood.lng) {
+              const weather = await fetchWeather(
+                hood.lat, hood.lng,
+                recipient.timezone || 'America/New_York',
+                hood.country || 'USA'
+              );
+              if (weather) {
+                const temp = weather.useFahrenheit
+                  ? `${weather.temperatureF}°F`
+                  : `${weather.temperatureC}°C`;
+                dp.value = temp;
+                dp.context = weather.description;
+              }
+            }
           }
           return dp;
         })(),

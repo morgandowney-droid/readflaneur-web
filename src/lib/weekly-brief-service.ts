@@ -571,7 +571,7 @@ const DATA_POINT_PROMPTS: Record<DataPointType, (n: string, c: string, co: strin
 const DATA_POINT_LABELS: Record<DataPointType, string> = {
   real_estate: 'The Market',
   safety: 'The Safety Index',
-  environment: 'The Temperature',
+  environment: 'The Air We Breathe',
   flaneur_index: 'The Flaneur Index',
 };
 
