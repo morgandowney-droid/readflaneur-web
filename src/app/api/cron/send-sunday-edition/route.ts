@@ -137,7 +137,7 @@ export async function GET(request: Request) {
       let brief;
       const { data: todayBrief } = await supabase
         .from('weekly_briefs')
-        .select('*, neighborhoods(name, city, lat, lng, country), articles(slug)')
+        .select('*, neighborhoods(name, city, latitude, longitude, country), articles(slug)')
         .eq('neighborhood_id', primaryId)
         .eq('week_date', weekDate)
         .single();
@@ -148,7 +148,7 @@ export async function GET(request: Request) {
         // Try the most recent brief for this neighborhood (regardless of date)
         const { data: recentBriefs } = await supabase
           .from('weekly_briefs')
-          .select('*, neighborhoods(name, city, lat, lng, country), articles(slug)')
+          .select('*, neighborhoods(name, city, latitude, longitude, country), articles(slug)')
           .eq('neighborhood_id', primaryId)
           .order('week_date', { ascending: false })
           .limit(1);
@@ -161,7 +161,7 @@ export async function GET(request: Request) {
         continue;
       }
 
-      const hood = brief.neighborhoods as unknown as { name: string; city: string; lat: number | null; lng: number | null; country: string | null };
+      const hood = brief.neighborhoods as unknown as { name: string; city: string; latitude: number | null; longitude: number | null; country: string | null };
       const articleSlug = (brief.articles as unknown as { slug: string } | null)?.slug;
 
       // Format the date nicely
@@ -197,9 +197,9 @@ export async function GET(request: Request) {
           }) as SundayEditionContent['dataPoint'];
           // Fix legacy briefs that stored AQI instead of temperature
           if (dp.type === 'environment' && /AQI/i.test(dp.value)) {
-            if (hood.lat && hood.lng) {
+            if (hood.latitude && hood.longitude) {
               const weather = await fetchWeather(
-                hood.lat, hood.lng,
+                hood.latitude, hood.longitude,
                 recipient.timezone || 'America/New_York',
                 hood.country || 'USA'
               );
