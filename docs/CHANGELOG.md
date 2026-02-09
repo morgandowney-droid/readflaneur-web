@@ -5,6 +5,16 @@
 
 ## 2026-02-09
 
+**DailyBriefWidget Architectural Redesign:**
+- Replaced amber gradient box (`from-amber-50 to-orange-50`) with minimal `bg-neutral-50` container, no border/rounded corners, generous `p-8 md:p-10` padding
+- Eyebrow: monospace `MON DAILY BRIEF` with pulsing amber dot (`animate-pulse`), removed AI-Synthesized badge and time/update text
+- Headline: upgraded to `font-display text-2xl md:text-3xl` (Cormorant Garamond serif)
+- Content: `text-sm text-neutral-500 max-w-prose` with subtle Read more link
+- Source attribution: neutral palette (`text-neutral-400`, `decoration-neutral-300`)
+- Subscribe form: full-width underlined input (`border-b border-neutral-300`) with absolute-positioned text-only SUBSCRIBE button, serif italic placeholder
+- Success states: serif italic messages ("You're on the list. See you tomorrow." / "Check your email to confirm.")
+- Skeleton updated to match neutral-50 container with neutral-200 shimmer bars
+
 **Daily Brief Email - "Quiet Luxury" Visual Overhaul:**
 - Replaced system sans-serif fonts with Playfair Display (Google Fonts `@import`) + Georgia/Times New Roman serif fallback for all headlines, masthead, temperature display, and section titles
 - Masthead: 28px Playfair Display with `0.25em` letter-spacing (was 32px system sans-serif)

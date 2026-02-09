@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-09
 
-Recent work: Editorial City Index modal refactor (dark glassmorphism, CSS columns masonry, text-based items with amber accents, toggle select/deselect per city).
+Recent work: DailyBriefWidget architectural redesign (neutral-50 palette, pulsing live dot eyebrow, serif headline, underlined guest-book subscribe input).
 
 ## Key Patterns
 
