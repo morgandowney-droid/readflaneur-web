@@ -12,16 +12,16 @@ export default function ContactPage() {
       <div className="mx-auto max-w-2xl">
         <h1 className="text-2xl font-light tracking-wide mb-8">Contact Us</h1>
 
-        <p className="text-neutral-700 mb-8">
+        <p className="text-neutral-400 mb-8">
           We&apos;d love to hear from you. Whether you have a question, feedback, or just want to say hello.
         </p>
 
         <div className="space-y-8">
           <section>
             <h2 className="text-lg font-medium mb-3">General Inquiries</h2>
-            <p className="text-sm text-neutral-700">
+            <p className="text-sm text-neutral-400">
               For general questions and feedback:{' '}
-              <a href="mailto:contact@readflaneur.com" className="text-black underline hover:no-underline">
+              <a href="mailto:contact@readflaneur.com" className="text-neutral-100 underline decoration-neutral-600 hover:text-white">
                 contact@readflaneur.com
               </a>
             </p>
@@ -29,19 +29,19 @@ export default function ContactPage() {
 
           <section>
             <h2 className="text-lg font-medium mb-3">Tips & Suggestions</h2>
-            <p className="text-sm text-neutral-700 mb-3">
+            <p className="text-sm text-neutral-400 mb-3">
               Know something happening in your neighborhood? Have an idea for a story? We&apos;re all ears.
             </p>
-            <p className="text-sm text-neutral-700">
+            <p className="text-sm text-neutral-400">
               Use our{' '}
               <button
                 onClick={() => setIsTipModalOpen(true)}
-                className="text-black underline hover:no-underline"
+                className="text-neutral-100 underline decoration-neutral-600 hover:text-white"
               >
                 submission form
               </button>{' '}
               or email us at{' '}
-              <a href="mailto:tips@readflaneur.com" className="text-black underline hover:no-underline">
+              <a href="mailto:tips@readflaneur.com" className="text-neutral-100 underline decoration-neutral-600 hover:text-white">
                 tips@readflaneur.com
               </a>
             </p>
@@ -49,13 +49,13 @@ export default function ContactPage() {
 
           <section>
             <h2 className="text-lg font-medium mb-3">Advertising</h2>
-            <p className="text-sm text-neutral-700">
+            <p className="text-sm text-neutral-400">
               Interested in reaching our readers?{' '}
-              <Link href="/advertise" className="text-black underline hover:no-underline">
+              <Link href="/advertise" className="text-neutral-100 underline decoration-neutral-600 hover:text-white">
                 Learn about advertising
               </Link>{' '}
               or contact{' '}
-              <a href="mailto:ads@readflaneur.com" className="text-black underline hover:no-underline">
+              <a href="mailto:ads@readflaneur.com" className="text-neutral-100 underline decoration-neutral-600 hover:text-white">
                 ads@readflaneur.com
               </a>
             </p>
