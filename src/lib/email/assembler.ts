@@ -333,6 +333,14 @@ export async function assembleDailyBrief(
     };
   }
 
+  // Collect article URLs from primary section for deduplication
+  const seenArticleUrls = new Set<string>();
+  if (primarySection) {
+    for (const story of primarySection.stories) {
+      seenArticleUrls.add(story.articleUrl);
+    }
+  }
+
   // Build satellite sections
   const satelliteSections: SatelliteNeighborhoodSection[] = [];
   for (const satId of satelliteIds) {
@@ -356,12 +364,18 @@ export async function assembleDailyBrief(
       }
     }
 
-    if (emailStories.length > 0) {
+    // Deduplicate: remove stories already shown in primary or earlier satellites
+    const dedupedStories = emailStories.filter(s => !seenArticleUrls.has(s.articleUrl));
+    for (const s of dedupedStories) {
+      seenArticleUrls.add(s.articleUrl);
+    }
+
+    if (dedupedStories.length > 0) {
       satelliteSections.push({
         neighborhoodId: neighborhood.id,
         neighborhoodName: neighborhood.name,
         cityName: neighborhood.city,
-        stories: emailStories,
+        stories: dedupedStories,
       });
     }
   }

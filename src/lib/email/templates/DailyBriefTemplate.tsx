@@ -29,7 +29,9 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
 
   return (
     <Html>
-      <Head />
+      <Head>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap');`}</style>
+      </Head>
       <Preview>{previewText}</Preview>
       <Body style={main}>
         <Container style={container}>
@@ -120,27 +122,26 @@ const container = {
 };
 
 const neighborhoodTitle = {
-  fontSize: '20px',
+  fontSize: '22px',
   fontWeight: '700' as const,
   letterSpacing: '0.05em',
   textTransform: 'uppercase' as const,
   color: '#000000',
   margin: '0 0 12px',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
+  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
 };
 
 const citySubtitle = {
   fontWeight: '400' as const,
-  color: '#999999',
+  color: '#b0b0b0',
   textTransform: 'none' as const,
   letterSpacing: '0',
   fontSize: '15px',
 };
 
 const tempSection = {
-  padding: '20px 0',
+  padding: '32px 0',
   textAlign: 'center' as const,
-  borderBottom: '1px solid #eeeeee',
   marginBottom: '16px',
 };
 
@@ -158,12 +159,12 @@ const tempValue_ = {
   fontWeight: '700' as const,
   color: '#1a1a1a',
   margin: '4px 0',
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
 };
 
 const tempContext = {
-  fontSize: '14px',
-  color: '#666666',
+  fontSize: '13px',
+  color: '#999999',
   margin: '0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };

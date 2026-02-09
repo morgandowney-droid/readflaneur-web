@@ -34,7 +34,7 @@ const container = {
 
 const divider = {
   borderTop: '1px solid #eeeeee',
-  margin: '0 0 12px',
+  margin: '0 0 20px',
 };
 
 const sponsoredLabel = {
@@ -63,7 +63,7 @@ const headline = {
   color: '#333333',
   margin: '0 0 4px',
   lineHeight: '1.3',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
+  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
 };
 
 const sponsor = {

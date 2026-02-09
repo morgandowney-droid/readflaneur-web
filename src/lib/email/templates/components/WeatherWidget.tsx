@@ -21,15 +21,14 @@ export function WeatherWidget({ weather }: WeatherWidgetProps) {
 }
 
 const container = {
-  backgroundColor: '#f8f8f8',
-  borderRadius: '4px',
-  padding: '12px 16px',
-  marginBottom: '20px',
+  padding: '20px 0',
+  textAlign: 'center' as const,
+  marginBottom: '16px',
 };
 
 const tempText = {
-  fontSize: '16px',
-  fontWeight: '500' as const,
+  fontSize: '18px',
+  fontWeight: '300' as const,
   color: '#333333',
   margin: '0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
@@ -37,11 +36,12 @@ const tempText = {
 
 const descText = {
   fontWeight: '400' as const,
-  color: '#666666',
+  color: '#aaaaaa',
+  fontSize: '13px',
 };
 
 const timeText = {
   fontWeight: '400' as const,
-  color: '#999999',
-  fontSize: '13px',
+  color: '#cccccc',
+  fontSize: '11px',
 };

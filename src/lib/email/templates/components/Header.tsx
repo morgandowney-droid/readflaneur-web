@@ -36,28 +36,30 @@ export function Header({ date, headerAd }: HeaderProps) {
 }
 
 const masthead = {
-  fontSize: '32px',
-  fontWeight: '300' as const,
-  letterSpacing: '0.15em',
+  fontSize: '28px',
+  fontWeight: '400' as const,
+  letterSpacing: '0.25em',
   textAlign: 'center' as const,
-  margin: '24px 0 4px',
+  padding: '32px 0 8px',
+  margin: '0',
   color: '#000000',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
+  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
 };
 
 const dateLine = {
-  fontSize: '14px',
-  color: '#666666',
+  fontSize: '12px',
+  color: '#b0b0b0',
   textAlign: 'center' as const,
   margin: '0 0 16px',
-  letterSpacing: '0.05em',
+  letterSpacing: '0.08em',
   textTransform: 'uppercase' as const,
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
 const divider = {
-  borderTop: '1px solid #e5e5e5',
-  margin: '0 0 16px',
+  borderTop: '1px solid #eeeeee',
+  marginTop: '16px',
+  marginBottom: '16px',
 };
 
 const adBanner = {

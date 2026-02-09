@@ -38,20 +38,20 @@ export function StoryList({ stories, variant = 'default' }: StoryListProps) {
 }
 
 const storyRow = {
-  marginBottom: '4px',
+  marginBottom: '8px',
 };
 
 const divider = {
   borderTop: '1px solid #eeeeee',
-  margin: '0 0 12px',
+  margin: '0 0 20px',
 };
 
 const category = {
-  fontSize: '11px',
+  fontSize: '10px',
   fontWeight: '600' as const,
-  letterSpacing: '0.1em',
+  letterSpacing: '0.15em',
   textTransform: 'uppercase' as const,
-  color: '#999999',
+  color: '#b0b0b0',
   margin: '0 0 2px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
@@ -63,33 +63,33 @@ const headlineLink = {
 const headline = {
   fontSize: '17px',
   fontWeight: '600' as const,
-  color: '#000000',
+  color: '#1a1a1a',
   margin: '0 0 4px',
   lineHeight: '1.3',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
+  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
 };
 
 const headlinePrimary = {
   fontSize: '19px',
   fontWeight: '600' as const,
-  color: '#000000',
+  color: '#1a1a1a',
   margin: '0 0 4px',
   lineHeight: '1.3',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
+  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
 };
 
 const preview = {
   fontSize: '15px',
-  color: '#666666',
-  lineHeight: '1.4',
+  color: '#555555',
+  lineHeight: '1.6',
   margin: '0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
 const previewPrimary = {
   fontSize: '16px',
-  color: '#666666',
-  lineHeight: '1.4',
+  color: '#555555',
+  lineHeight: '1.6',
   margin: '0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };

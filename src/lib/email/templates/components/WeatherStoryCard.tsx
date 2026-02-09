@@ -26,25 +26,22 @@ export function WeatherStoryCard({ story }: WeatherStoryCardProps) {
 }
 
 const container = {
-  backgroundColor: '#f0f4f8',
-  borderRadius: '4px',
-  padding: '16px',
-  marginBottom: '20px',
-  borderLeft: '3px solid #4a90d9',
+  padding: '16px 0',
+  marginBottom: '16px',
+  borderBottom: '1px solid #eeeeee',
 };
 
 const containerAlert = {
-  backgroundColor: '#fef2f2',
-  borderRadius: '4px',
-  padding: '16px',
-  marginBottom: '20px',
+  padding: '16px 0 16px 16px',
+  marginBottom: '16px',
+  borderBottom: '1px solid #eeeeee',
   borderLeft: '3px solid #dc2626',
 };
 
 const tempLine = {
-  fontSize: '12px',
-  fontWeight: '500' as const,
-  color: '#666666',
+  fontSize: '13px',
+  fontWeight: '300' as const,
+  color: '#aaaaaa',
   margin: '0 0 8px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
@@ -55,7 +52,7 @@ const headline = {
   color: '#1a1a1a',
   margin: '0 0 6px',
   lineHeight: '1.3',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
+  fontFamily: "'Playfair Display', Georgia, serif",
 };
 
 const headlineAlert = {
@@ -64,13 +61,13 @@ const headlineAlert = {
   color: '#991b1b',
   margin: '0 0 6px',
   lineHeight: '1.3',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
+  fontFamily: "'Playfair Display', Georgia, serif",
 };
 
 const body = {
   fontSize: '15px',
   color: '#555555',
-  lineHeight: '1.5',
+  lineHeight: '1.6',
   margin: '0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };

@@ -69,7 +69,7 @@ const headline = {
   color: '#000000',
   margin: '0 0 8px',
   lineHeight: '1.3',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
+  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
 };
 
 const preview = {

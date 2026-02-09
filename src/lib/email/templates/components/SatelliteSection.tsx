@@ -39,8 +39,9 @@ const container = {
 };
 
 const divider = {
-  borderTop: '1px solid #eeeeee',
-  margin: '0 0 16px',
+  borderTop: '1px solid #e5e5e5',
+  marginTop: '32px',
+  marginBottom: '20px',
 };
 
 const sectionTitle = {
@@ -50,19 +51,19 @@ const sectionTitle = {
   textTransform: 'uppercase' as const,
   color: '#000000',
   margin: '0 0 12px',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
+  fontFamily: "'Playfair Display', Georgia, serif",
 };
 
 const cityLabel = {
   fontWeight: '400' as const,
-  color: '#999999',
+  color: '#b0b0b0',
   textTransform: 'none' as const,
   letterSpacing: '0',
   fontSize: '14px',
 };
 
 const storyRow = {
-  marginBottom: '8px',
+  marginBottom: '16px',
 };
 
 const headlineLink = {
@@ -75,7 +76,7 @@ const headline = {
   color: '#333333',
   margin: '0 0 2px',
   lineHeight: '1.4',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
+  fontFamily: "'Playfair Display', Georgia, serif",
 };
 
 const categoryLine = {
@@ -83,7 +84,7 @@ const categoryLine = {
   fontWeight: '600' as const,
   letterSpacing: '0.08em',
   textTransform: 'uppercase' as const,
-  color: '#999999',
+  color: '#b0b0b0',
   margin: '0 0 2px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
