@@ -49,7 +49,6 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
   let remainingParagraphs = paragraphs.slice(1);
 
   if (paragraphs.length === 1 && teaserParagraph.length > 200) {
-    // Split single block into teaser + rest at first sentence boundary after 120 chars
     const sentenceBreak = teaserParagraph.indexOf('. ', 120);
     if (sentenceBreak > 0 && sentenceBreak < teaserParagraph.length - 50) {
       remainingParagraphs = [teaserParagraph.slice(sentenceBreak + 2)];
@@ -62,22 +61,24 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
 
   return (
     <Html>
-      <Head />
+      <Head>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap');`}</style>
+      </Head>
       <Preview>{preview}</Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
-          {/* Masthead */}
+          {/* Masthead — Letterhead style */}
           <Section style={mastheadSection}>
             <Text style={mastheadBrand}>FLANEUR</Text>
-            <Text style={mastheadTitle}>The Sunday Edition</Text>
-            <Text style={mastheadNeighborhood}>
-              {content.neighborhoodName.toUpperCase()}
-              <span style={mastheadCity}> &middot; {content.cityName}</span>
+            <Text style={mastheadSubhead}>
+              The Sunday Edition: {content.neighborhoodName}
             </Text>
             <Text style={mastheadDate}>{content.date}</Text>
           </Section>
 
-          <Hr style={divider} />
+          {/* Double rule divider */}
+          <Hr style={ruleThick} />
+          <Hr style={ruleThin} />
 
           {/* Hero Image */}
           {content.imageUrl && (
@@ -91,15 +92,13 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
             </Section>
           )}
 
-          {/* Section 1: The Rearview */}
+          {/* Section 1: The Letter */}
           <Section style={sectionContainer}>
-            <Text style={sectionLabel}>THE REARVIEW</Text>
+            <Text style={sectionLabel}>THE LETTER</Text>
             <Text style={sectionSubtitle}>The past seven days, distilled.</Text>
 
-            {/* Teaser paragraph */}
             <Text style={narrativeText}>{teaserParagraph}</Text>
 
-            {/* Continue reading link (shown when there's more content) */}
             {(remainingParagraphs.length > 0 || content.articleUrl) && content.articleUrl && (
               <Text style={continueReadingText}>
                 <Link href={content.articleUrl} style={continueReadingLink}>
@@ -137,13 +136,11 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
 
           <Hr style={divider} />
 
-          {/* Presenting Sponsor */}
+          {/* Presenting Sponsor — NativeAd style */}
           {content.sponsorAd && (
             <>
               <Section style={sponsorSection}>
-                <Text style={sponsorLabel}>
-                  PRESENTED BY {content.sponsorAd.sponsorLabel.toUpperCase()}
-                </Text>
+                <Text style={sponsorEyebrow}>Sponsored</Text>
                 {content.sponsorAd.imageUrl && (
                   <Link href={content.sponsorAd.clickUrl}>
                     <Img
@@ -154,15 +151,13 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
                     />
                   </Link>
                 )}
-                <Text style={sponsorHeadline}>{content.sponsorAd.headline}</Text>
+                <Link href={content.sponsorAd.clickUrl} style={sponsorHeadlineLink}>
+                  <Text style={sponsorHeadline}>{content.sponsorAd.headline}</Text>
+                </Link>
                 {content.sponsorAd.body && (
                   <Text style={sponsorBody}>{content.sponsorAd.body}</Text>
                 )}
-                <Text style={sponsorCta}>
-                  <Link href={content.sponsorAd.clickUrl} style={sponsorCtaLink}>
-                    Learn more &rarr;
-                  </Link>
-                </Text>
+                <Text style={sponsorLabel}>{content.sponsorAd.sponsorLabel}</Text>
               </Section>
 
               <Hr style={divider} />
@@ -185,7 +180,6 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
                         <Link href={searchUrl} style={eventNameLink}>{event.name}</Link>
                       </Text>
                       <Text style={eventWhy}>{event.whyItMatters}</Text>
-                      <Text style={eventCategory}>{event.category}</Text>
                     </Section>
                   );
                 })}
@@ -221,12 +215,12 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
             </>
           )}
 
-          {/* Section 3: The Data Point (clickable for weather) */}
+          {/* Section 3: The Data Point */}
           {content.dataPoint.value !== 'Data unavailable this week' && (
             <>
               <Section style={dataPointSection}>
                 <Link href={content.dataPoint.type === 'environment' ? weatherSearchUrl : '#'} style={dataPointLink}>
-                  <Text style={sectionLabel}>{content.dataPoint.label.toUpperCase()}</Text>
+                  <Text style={dataPointLabel}>{content.dataPoint.label.toUpperCase()}</Text>
                   <Text style={dataPointValue}>{content.dataPoint.value}</Text>
                   {content.dataPoint.context && (
                     <Text style={dataPointContext}>{content.dataPoint.context}</Text>
@@ -254,7 +248,7 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
               </Link>
             </Text>
             <Text style={copyrightText}>
-              &copy; Flaneur {new Date().getFullYear()}
+              &copy; FLANEUR {new Date().getFullYear()}
             </Text>
           </Section>
         </Container>
@@ -263,11 +257,11 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
   );
 }
 
-// ─── Styles ───
+// ─── Global ───
 
 const bodyStyle = {
-  backgroundColor: '#FDF8F0',
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  backgroundColor: '#FDFBF7',
+  fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
   margin: '0',
   padding: '0',
 };
@@ -275,64 +269,67 @@ const bodyStyle = {
 const containerStyle = {
   maxWidth: '600px',
   margin: '0 auto',
-  padding: '0',
-  backgroundColor: '#FFFFFF',
+  padding: '0 16px',
+  backgroundColor: '#FDFBF7',
 };
+
+// ─── Masthead ───
 
 const mastheadSection = {
   textAlign: 'center' as const,
-  padding: '40px 30px 20px',
-  backgroundColor: '#1a1a1a',
+  padding: '40px 0 16px',
 };
 
 const mastheadBrand = {
-  fontSize: '12px',
+  fontSize: '28px',
   fontWeight: '400' as const,
-  letterSpacing: '4px',
-  color: '#C9A96E',
-  margin: '0 0 4px',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
+  letterSpacing: '0.25em',
+  color: '#1a1a1a',
+  margin: '0 0 6px',
+  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
   textTransform: 'uppercase' as const,
 };
 
-const mastheadTitle = {
-  fontSize: '30px',
+const mastheadSubhead = {
+  fontSize: '11px',
   fontWeight: '400' as const,
-  letterSpacing: '1px',
-  color: '#FFFFFF',
-  margin: '0 0 12px',
-  fontFamily: 'Georgia, "Times New Roman", serif',
-};
-
-const mastheadNeighborhood = {
-  fontSize: '15px',
-  fontWeight: '600' as const,
-  letterSpacing: '2px',
-  color: '#FFFFFF',
+  letterSpacing: '0.2em',
+  textTransform: 'uppercase' as const,
+  color: '#999999',
   margin: '0 0 4px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
-const mastheadCity = {
-  fontWeight: '400' as const,
-  color: '#999999',
-};
-
 const mastheadDate = {
-  fontSize: '13px',
-  color: '#888888',
-  margin: '8px 0 0',
+  fontSize: '11px',
+  color: '#b0b0b0',
+  margin: '4px 0 0',
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase' as const,
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
+// ─── Double rule ───
+
+const ruleThick = {
+  borderTop: '2px solid #1a1a1a',
+  margin: '0',
+};
+
+const ruleThin = {
+  borderTop: '1px solid #1a1a1a',
+  margin: '2px 0 0',
+};
+
+// ─── Shared ───
+
 const divider = {
-  borderColor: '#E8E0D4',
-  borderWidth: '1px',
+  borderTop: '1px solid #e8e0d4',
   margin: '0',
 };
 
 const heroSection = {
-  padding: '0',
+  padding: '24px 0 0',
 };
 
 const heroImage = {
@@ -343,39 +340,41 @@ const heroImage = {
 };
 
 const sectionContainer = {
-  padding: '30px',
+  padding: '28px 0',
 };
 
 const sectionLabel = {
-  fontSize: '15px',
-  fontWeight: '700' as const,
-  letterSpacing: '3px',
+  fontSize: '12px',
+  fontWeight: '600' as const,
+  letterSpacing: '0.2em',
   color: '#C9A96E',
-  margin: '0 0 6px',
+  margin: '0 0 4px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
   textTransform: 'uppercase' as const,
 };
 
 const sectionSubtitle = {
-  fontSize: '15px',
+  fontSize: '14px',
   fontStyle: 'italic' as const,
-  color: '#888888',
+  color: '#999999',
   margin: '0 0 20px',
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
 };
 
+// ─── The Letter ───
+
 const narrativeText = {
-  fontSize: '18px',
-  lineHeight: '1.7',
-  color: '#2a2a2a',
+  fontSize: '17px',
+  lineHeight: '1.75',
+  color: '#333333',
   margin: '0 0 16px',
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
 const continueReadingText = {
-  fontSize: '17px',
+  fontSize: '15px',
   margin: '0 0 24px',
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
 const continueReadingLink = {
@@ -384,140 +383,56 @@ const continueReadingLink = {
   fontWeight: '600' as const,
 };
 
+// ─── Three Stories ───
+
 const storiesBox = {
-  backgroundColor: '#FAF7F2',
-  borderLeft: '3px solid #C9A96E',
-  padding: '16px 20px',
+  borderLeft: '2px solid rgba(201, 169, 110, 0.5)',
+  padding: '0 0 0 20px',
   marginTop: '16px',
 };
 
 const storiesBoxTitle = {
-  fontSize: '12px',
+  fontSize: '11px',
   fontWeight: '600' as const,
-  letterSpacing: '2px',
+  letterSpacing: '0.15em',
   color: '#999999',
   margin: '0 0 12px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
+  textTransform: 'uppercase' as const,
 };
 
 const storyItem = {
-  fontSize: '17px',
-  lineHeight: '1.5',
+  fontSize: '16px',
+  lineHeight: '1.6',
   color: '#333333',
-  margin: '0 0 12px',
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  margin: '0 0 14px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
 const storyNumber = {
   fontWeight: '700' as const,
   color: '#C9A96E',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
 const storyHeadlineLink = {
-  fontWeight: '600' as const,
+  fontWeight: '700' as const,
   color: '#1a1a1a',
-  textDecoration: 'underline' as const,
-  textDecorationColor: '#C9A96E',
-  textUnderlineOffset: '3px',
+  textDecoration: 'none' as const,
+  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
 };
 
 const storySignificance = {
   fontWeight: '400' as const,
-  color: '#555555',
+  color: '#666666',
 };
 
-const eventItem = {
-  marginBottom: '20px',
-  paddingLeft: '16px',
-  borderLeft: '2px solid #E8E0D4',
-};
-
-const eventDay = {
-  fontSize: '12px',
-  fontWeight: '700' as const,
-  letterSpacing: '2px',
-  color: '#C9A96E',
-  margin: '0 0 2px',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
-};
-
-const eventName = {
-  fontSize: '17px',
-  fontWeight: '600' as const,
-  color: '#1a1a1a',
-  margin: '0 0 4px',
-  fontFamily: 'Georgia, "Times New Roman", serif',
-};
-
-const eventNameLink = {
-  color: '#1a1a1a',
-  textDecoration: 'underline' as const,
-  textDecorationColor: '#C9A96E',
-  textUnderlineOffset: '3px',
-};
-
-const eventWhy = {
-  fontSize: '17px',
-  color: '#444444',
-  lineHeight: '1.5',
-  margin: '0 0 2px',
-  fontFamily: 'Georgia, "Times New Roman", serif',
-};
-
-const eventCategory = {
-  fontSize: '12px',
-  fontWeight: '500' as const,
-  letterSpacing: '1px',
-  color: '#999999',
-  margin: '0',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
-  textTransform: 'uppercase' as const,
-};
-
-const holidayNameStyle = {
-  fontSize: '24px',
-  fontWeight: '600' as const,
-  color: '#1a1a1a',
-  margin: '0 0 4px',
-  fontFamily: 'Georgia, "Times New Roman", serif',
-};
-
-const holidayDateStyle = {
-  fontSize: '16px',
-  color: '#888888',
-  margin: '0 0 20px',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
-};
-
-const dataPointSection = {
-  padding: '30px',
-  textAlign: 'center' as const,
-};
-
-const dataPointLink = {
-  textDecoration: 'none' as const,
-};
-
-const dataPointValue = {
-  fontSize: '36px',
-  fontWeight: '700' as const,
-  color: '#1a1a1a',
-  margin: '8px 0',
-  fontFamily: 'Georgia, "Times New Roman", serif',
-};
-
-const dataPointContext = {
-  fontSize: '17px',
-  color: '#555555',
-  lineHeight: '1.5',
-  margin: '0',
-  fontFamily: 'Georgia, "Times New Roman", serif',
-};
+// ─── Read More ───
 
 const readMoreText = {
-  fontSize: '17px',
+  fontSize: '15px',
   margin: '20px 0 0',
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
 const readMoreLink = {
@@ -526,9 +441,159 @@ const readMoreLink = {
   fontWeight: '600' as const,
 };
 
+// ─── Sponsor (NativeAd style) ───
+
+const sponsorSection = {
+  padding: '28px 0',
+  textAlign: 'center' as const,
+};
+
+const sponsorEyebrow = {
+  fontSize: '10px',
+  fontWeight: '600' as const,
+  letterSpacing: '0.15em',
+  textTransform: 'uppercase' as const,
+  color: '#bbbbbb',
+  margin: '0 0 10px',
+  textAlign: 'center' as const,
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const sponsorImage = {
+  display: 'block' as const,
+  width: '100%',
+  borderRadius: '4px',
+  marginBottom: '12px',
+};
+
+const sponsorHeadlineLink = {
+  textDecoration: 'none' as const,
+};
+
+const sponsorHeadline = {
+  fontSize: '18px',
+  fontWeight: '600' as const,
+  color: '#1a1a1a',
+  margin: '0 0 6px',
+  lineHeight: '1.3',
+  textAlign: 'center' as const,
+  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
+};
+
+const sponsorBody = {
+  fontSize: '15px',
+  color: '#555555',
+  lineHeight: '1.6',
+  margin: '0 0 8px',
+  textAlign: 'center' as const,
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const sponsorLabel = {
+  fontSize: '11px',
+  color: '#999999',
+  margin: '0',
+  textAlign: 'center' as const,
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+// ─── Events (Horizon + Holiday) ───
+
+const eventItem = {
+  marginBottom: '20px',
+  paddingLeft: '16px',
+  borderLeft: '2px solid #E8E0D4',
+};
+
+const eventDay = {
+  fontSize: '10px',
+  fontWeight: '600' as const,
+  letterSpacing: '0.2em',
+  color: '#C9A96E',
+  margin: '0 0 2px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+  textTransform: 'uppercase' as const,
+};
+
+const eventName = {
+  fontSize: '17px',
+  fontWeight: '600' as const,
+  color: '#1a1a1a',
+  margin: '0 0 4px',
+  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
+};
+
+const eventNameLink = {
+  color: '#1a1a1a',
+  textDecoration: 'none' as const,
+};
+
+const eventWhy = {
+  fontSize: '16px',
+  color: '#555555',
+  lineHeight: '1.6',
+  margin: '0',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+// ─── Holiday ───
+
+const holidayNameStyle = {
+  fontSize: '22px',
+  fontWeight: '600' as const,
+  color: '#1a1a1a',
+  margin: '0 0 4px',
+  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
+};
+
+const holidayDateStyle = {
+  fontSize: '13px',
+  color: '#999999',
+  margin: '0 0 20px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+// ─── Data Point ───
+
+const dataPointSection = {
+  padding: '28px 0',
+  textAlign: 'center' as const,
+};
+
+const dataPointLink = {
+  textDecoration: 'none' as const,
+};
+
+const dataPointLabel = {
+  fontSize: '12px',
+  fontWeight: '600' as const,
+  letterSpacing: '0.2em',
+  color: '#C9A96E',
+  margin: '0 0 4px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+  textTransform: 'uppercase' as const,
+};
+
+const dataPointValue = {
+  fontSize: '36px',
+  fontWeight: '700' as const,
+  color: '#1a1a1a',
+  margin: '8px 0',
+  fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
+};
+
+const dataPointContext = {
+  fontSize: '15px',
+  color: '#555555',
+  lineHeight: '1.6',
+  margin: '0',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+// ─── Footer ───
+
 const footerSection = {
-  padding: '24px 30px',
-  backgroundColor: '#FAF7F2',
+  padding: '24px 0',
   textAlign: 'center' as const,
 };
 
@@ -552,66 +617,11 @@ const footerLink = {
 };
 
 const copyrightText = {
-  fontSize: '12px',
+  fontSize: '11px',
   color: '#cccccc',
   textAlign: 'center' as const,
   margin: '16px 0 0',
-  letterSpacing: '0.1em',
+  letterSpacing: '0.15em',
   textTransform: 'uppercase' as const,
   fontFamily: 'system-ui, -apple-system, sans-serif',
-};
-
-// ─── Sponsor Styles ───
-
-const sponsorSection = {
-  padding: '30px',
-  backgroundColor: '#FAF7F2',
-  textAlign: 'center' as const,
-};
-
-const sponsorLabel = {
-  fontSize: '11px',
-  fontWeight: '600' as const,
-  letterSpacing: '3px',
-  color: '#C9A96E',
-  margin: '0 0 16px',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
-  textTransform: 'uppercase' as const,
-};
-
-const sponsorImage = {
-  display: 'block' as const,
-  width: '100%',
-  maxHeight: '250px',
-  objectFit: 'cover' as const,
-  marginBottom: '16px',
-};
-
-const sponsorHeadline = {
-  fontSize: '22px',
-  fontWeight: '700' as const,
-  color: '#1a1a1a',
-  margin: '0 0 8px',
-  fontFamily: 'Georgia, "Times New Roman", serif',
-};
-
-const sponsorBody = {
-  fontSize: '17px',
-  fontStyle: 'italic' as const,
-  color: '#555555',
-  lineHeight: '1.6',
-  margin: '0 0 12px',
-  fontFamily: 'Georgia, "Times New Roman", serif',
-};
-
-const sponsorCta = {
-  fontSize: '15px',
-  margin: '0',
-  fontFamily: 'Georgia, "Times New Roman", serif',
-};
-
-const sponsorCtaLink = {
-  color: '#C9A96E',
-  textDecoration: 'none' as const,
-  fontWeight: '600' as const,
 };
