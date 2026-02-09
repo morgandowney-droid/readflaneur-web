@@ -38,12 +38,16 @@ export function ArticleReactions({ articleId }: ArticleReactionsProps) {
   const [loading, setLoading] = useState<Set<string>>(new Set());
 
   const fetchReactions = useCallback(async () => {
-    const anonymousId = getAnonymousId();
-    const res = await fetch(`/api/reactions?articleId=${articleId}&anonymousId=${anonymousId}`);
-    if (res.ok) {
-      const data = await res.json();
-      setCounts(data.counts);
-      setActive(new Set(data.userReactions));
+    try {
+      const anonymousId = getAnonymousId();
+      const res = await fetch(`/api/reactions?articleId=${articleId}&anonymousId=${anonymousId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCounts(data.counts);
+        setActive(new Set(data.userReactions));
+      }
+    } catch {
+      // Network error (common on mobile) - silently ignore, reactions are non-critical
     }
   }, [articleId]);
 
