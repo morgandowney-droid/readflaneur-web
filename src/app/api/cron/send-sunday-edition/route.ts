@@ -185,12 +185,19 @@ export async function GET(request: Request) {
         rearviewNarrative: brief.rearview_narrative || '',
         rearviewStories: (brief.rearview_stories || []) as SundayEditionContent['rearviewStories'],
         horizonEvents: (brief.horizon_events || []) as SundayEditionContent['horizonEvents'],
-        dataPoint: (brief.data_point || {
-          type: 'real_estate',
-          label: 'The Market',
-          value: 'Data unavailable this week',
-          context: '',
-        }) as SundayEditionContent['dataPoint'],
+        dataPoint: (() => {
+          const dp = (brief.data_point || {
+            type: 'real_estate',
+            label: 'The Market',
+            value: 'Data unavailable this week',
+            context: '',
+          }) as SundayEditionContent['dataPoint'];
+          // Fix legacy label: environment type must always show "The Temperature"
+          if (dp.type === 'environment') {
+            dp.label = 'The Temperature';
+          }
+          return dp;
+        })(),
         holidaySection: brief.holiday_section || null,
         imageUrl: null,
         articleUrl,
