@@ -12,9 +12,9 @@
 - **Sentry:** https://sentry.io/organizations/flaneur-vk/issues/
 - **200 neighborhoods** across 73 cities, 42 countries (the "Flaneur 200")
 
-## Last Updated: 2026-02-09
+## Last Updated: 2026-02-10
 
-Recent work: Obsidian Theme - permanent dark mode across entire site (61 files). Canvas #050505, Surface #121212, amber accents, no light mode toggle.
+Recent work: UI polish - removed subscribe form and Previous Days archive from daily brief, narrowed modal search, fixed dark mode on multi-feed +N MORE button and footer pages.
 
 ## Key Patterns
 
@@ -149,10 +149,10 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 
 ### NeighborhoodHeader (Feed Page)
 - **Masthead:** Centered `text-center py-10` with back arrow absolute top-left (`← NEW YORK`), city label (`text-[11px] tracking-[0.3em] uppercase text-neutral-400`), serif neighborhood name (`font-display text-4xl md:text-5xl text-neutral-100`), and italic combo sub-line
-- **Control Deck:** `border-y border-white/10 py-4` toolbar with three zones: BriefArchive toggle (left), GUIDE/MAP/HISTORY links (center), ViewToggle icons (right)
+- **Control Deck:** `border-y border-white/10 py-4` toolbar with two zones: GUIDE/MAP/HISTORY links (center), ViewToggle icons (right). Left zone is empty spacer.
 - **Combo dropdowns:** Dropdown panel: `bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px]`, items `hover:text-white hover:bg-white/5`
 - **ViewToggle:** Minimal `w-8 h-8` icons, no pill background. Active: `text-white`, inactive: `text-neutral-300`
-- **BriefArchive toggle:** `text-neutral-400 hover:text-white`, small chevron indicators
+- **BriefArchive:** Removed from control deck (prop still accepted but no longer passed)
 - **Back arrow:** Links to multi-feed if user has neighborhoods selected, otherwise home. Text: city slug uppercased.
 - **ComboNeighborhoodCards:** Still exists for GuidesClient.tsx but removed from feed header
 

@@ -3,6 +3,25 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-10
+
+**UI Polish & Cleanup:**
+- Removed email subscribe form from DailyBriefWidget (newsletter signup handled elsewhere)
+- Removed Previous Days / BriefArchive dropdown from neighborhood feed header control deck
+- Narrowed neighborhood modal search field (`max-w-xs`), moved Nearest button under City Index title
+- Book Now buttons on advertise page now scroll to neighborhood search and auto-focus the input
+- Fixed +N MORE button on multi-feed page (was `bg-neutral-50` - illegible on dark canvas)
+- Fixed neighborhood pills and "Show less" button dark mode on multi-feed
+- Simplified contact page: removed tip submission form, replaced with direct email link
+- Cleaned up unused imports (`useSearchParams`, `useEffect`, `useState`, `TipSubmitModal`)
+
+**Dark Mode Fix - Footer Pages:**
+- Fixed 4 footer pages (about, careers, contact, legal) missed in initial Obsidian Theme sweep
+- About: `text-neutral-700` → `text-neutral-400`, buttons `border-black` → `border-white/20`, email links styled
+- Careers: quote card `bg-neutral-50` → `bg-surface`, bullet dots `bg-black` → `bg-white`, Apply Now inverted
+- Contact: body text and links fixed for dark backgrounds
+- Legal: tabs `border-black` → `border-amber-500`, added `prose-invert` for content readability
+
 ## 2026-02-09
 
 **Obsidian Theme - Permanent Dark Mode (61 files):**
