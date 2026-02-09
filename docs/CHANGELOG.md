@@ -12,6 +12,7 @@
 - Fixed Sunday pricing labels: changed "/day per individual neighborhood" to "/Sunday per individual neighborhood" on all three collection cards
 - Removed em dashes from Global Takeover copy (general rule: never use em dashes in user-facing text)
 - Homepage "252 neighborhoods, 92 cities" stat line now clickable and centered - opens the NeighborhoodSelectorModal (via new `HeroStats.tsx` client component)
+- Copy updates: Metropolitan description removed "gallery owners", Discovery tagline changed to "Target accelerating hubs in smart global cities", Discovery description streamlined
 
 **RSS Sources — Global Expansion (100% City Coverage):**
 - Expanded from 23 cities to 92 cities (100% of active neighborhoods now have RSS feeds)
