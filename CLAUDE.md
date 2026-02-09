@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-09
 
-Recent work: Cinematic dark mode hero section (radial gradient texture, extreme letterspacing tagline, staggered fade-in animations).
+Recent work: Editorial City Index modal refactor (dark glassmorphism, CSS columns masonry, text-based items with amber accents, toggle select/deselect per city).
 
 ## Key Patterns
 
@@ -76,7 +76,7 @@ Recent work: Cinematic dark mode hero section (radial gradient texture, extreme 
 - **Shared search:** `src/lib/search-aliases.ts` — country/region/state aliases + `resolveSearchQuery()` with priority scoring
 - **Geo utils:** `src/lib/geo-utils.ts` — Haversine distance, `sortByDistance()`, `formatDistance()`
 - **Advertise page:** `AdBookingCalendar.tsx` — searches by name/city/component/country/region/state, "Near me" geolocation, grouped city headers for broad queries, "Select all in city"
-- **Header modal:** `NeighborhoodSelectorModal.tsx` — dynamic city coordinates (computed from neighborhood lat/lng, not hardcoded), country/region/state search filtering
+- **Header modal:** `NeighborhoodSelectorModal.tsx` — "Editorial City Index" dark glassmorphism UI (`bg-neutral-900/90 backdrop-blur-md`), CSS columns masonry layout, text-based items (not pills), amber accent system for selected/vacation/enclave, toggle select/deselect per city, "Clear all" in footer, slide-up + backdrop-fade animations
 - **Alias suppression:** when query matches a country/region/state alias, loose substring matches are suppressed (prevents "US" matching "Justicia")
 
 ### Combo Neighborhoods
