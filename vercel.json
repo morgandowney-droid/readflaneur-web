@@ -58,7 +58,7 @@
     },
     {
       "path": "/api/cron/sync-neighborhood-briefs",
-      "schedule": "0 * * * *"
+      "schedule": "*/15 * * * *"
     },
     {
       "path": "/api/cron/enrich-briefs",

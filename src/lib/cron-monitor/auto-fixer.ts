@@ -144,6 +144,107 @@ export async function fixMissingBrief(
 }
 
 /**
+ * Batch-fix all missing briefs by generating them directly via Grok.
+ * Much faster than individual HTTP calls since it avoids round-trip overhead
+ * and Vercel gateway timeouts. Returns count of successes/failures.
+ */
+export async function batchFixMissingBriefs(
+  supabase: SupabaseClient,
+  neighborhoodIds: string[],
+  timeBudgetMs: number = 90_000,
+): Promise<{ generated: number; failed: number; errors: string[] }> {
+  const { generateNeighborhoodBrief, isGrokConfigured } = await import('@/lib/grok');
+  const { getComboInfo } = await import('@/lib/combo-utils');
+
+  const result = { generated: 0, failed: 0, errors: [] as string[] };
+
+  if (!isGrokConfigured()) {
+    result.errors.push('Grok API not configured');
+    return result;
+  }
+
+  if (neighborhoodIds.length === 0) return result;
+
+  // Fetch neighborhood details in one query
+  const { data: neighborhoods, error: fetchErr } = await supabase
+    .from('neighborhoods')
+    .select('id, name, city, country, is_combo')
+    .in('id', neighborhoodIds);
+
+  if (fetchErr || !neighborhoods) {
+    result.errors.push(fetchErr?.message || 'Failed to fetch neighborhoods');
+    return result;
+  }
+
+  const startTime = Date.now();
+
+  for (const hood of neighborhoods) {
+    // Check time budget
+    if (Date.now() - startTime > timeBudgetMs) {
+      console.log(`[BatchBrief] Time budget exhausted after ${result.generated} briefs`);
+      break;
+    }
+
+    try {
+      // Build search name for combo neighborhoods
+      let searchName = hood.name;
+      if (hood.is_combo) {
+        const comboInfo = await getComboInfo(supabase, hood.id);
+        if (comboInfo && comboInfo.components.length > 0) {
+          searchName = comboInfo.components.map((c: { name: string }) => c.name).join(', ');
+        }
+      }
+
+      const brief = await generateNeighborhoodBrief(
+        searchName,
+        hood.city,
+        hood.country,
+      );
+
+      if (!brief) {
+        result.failed++;
+        result.errors.push(`${hood.name}: Brief returned null`);
+        continue;
+      }
+
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      const { error: insertError } = await supabase
+        .from('neighborhood_briefs')
+        .insert({
+          neighborhood_id: hood.id,
+          headline: brief.headline,
+          content: brief.content,
+          sources: brief.sources,
+          source_count: brief.sourceCount,
+          model: brief.model,
+          search_query: brief.searchQuery,
+          generated_at: new Date().toISOString(),
+          expires_at: expiresAt.toISOString(),
+        });
+
+      if (insertError) {
+        result.failed++;
+        result.errors.push(`${hood.name}: ${insertError.message}`);
+        continue;
+      }
+
+      result.generated++;
+      console.log(`[BatchBrief] Generated brief for ${hood.name} (${result.generated}/${neighborhoods.length})`);
+
+      // Rate limit between Grok calls
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (err) {
+      result.failed++;
+      result.errors.push(`${hood.name}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  return result;
+}
+
+/**
  * Fix thin content by generating Grok articles AND a fresh brief.
  * 1. Generates 3 Grok news articles inserted directly into `articles` table
  * 2. Triggers image generation for each article

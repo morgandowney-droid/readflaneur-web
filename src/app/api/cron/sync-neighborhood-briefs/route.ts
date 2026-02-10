@@ -9,31 +9,32 @@ import { LiquorLicense } from '@/lib/nyc-liquor';
 /**
  * Neighborhood Briefs Sync Cron Job
  *
- * Runs every hour and generates briefs ONLY for neighborhoods where it's
- * currently 6-7am local time. This ensures briefs feel like fresh
+ * Runs every 15 minutes and generates briefs ONLY for neighborhoods where it's
+ * currently 4-8am local time. This ensures briefs feel like fresh
  * morning updates for each neighborhood globally.
  *
- * Schedule: 0 * * * * (every hour)
+ * Schedule: *\/15 * * * * (every 15 minutes)
  * Brief expiration: 24 hours (one per day per neighborhood)
  * Archive: All briefs are kept for history
  *
  * Daily generation: Each neighborhood gets ONE brief per day during its
  * morning window, regardless of previous day's brief status.
  *
- * Cost estimate: ~$0.02 per run (avg 2-5 neighborhoods in 6-7am window)
- * Daily cost: ~$0.50 (24 runs x ~$0.02)
+ * The 4-hour window (4-8 AM) combined with 15-minute frequency gives
+ * 16 chances per timezone to generate a brief, making Vercel cron
+ * misses much less impactful.
  */
 
 /**
- * Check if it's currently between 5-7am in a given timezone
- * Widened from 6-7am to catch more timezone groups per hourly cron tick
+ * Check if it's currently between 4-8am in a given timezone
+ * Widened from 5-7am to give more retry opportunities when Vercel drops cron invocations
  */
 function isMorningWindow(timezone: string): boolean {
   try {
     const now = new Date();
     const localTime = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
     const hour = localTime.getHours();
-    return hour >= 5 && hour < 7;
+    return hour >= 4 && hour < 8;
   } catch (e) {
     console.error(`Invalid timezone: ${timezone}`, e);
     return false;
@@ -167,7 +168,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       message: skippedTimeWindow > 0
-        ? `No neighborhoods in 6-7am window right now (${skippedTimeWindow} waiting for morning, ${alreadyHaveBrief} already have today's brief)`
+        ? `No neighborhoods in 4-8am window right now (${skippedTimeWindow} waiting for morning, ${alreadyHaveBrief} already have today's brief)`
         : `All neighborhoods already have today's brief (${alreadyHaveBrief} total)`,
       neighborhoods_processed: 0,
       briefs_generated: 0,

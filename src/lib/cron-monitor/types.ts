@@ -104,7 +104,8 @@ export const FIX_CONFIG = {
   MAX_IMAGES_PER_RUN: 5,
 
   // Rate limit: max brief regenerations per monitor run
-  MAX_BRIEFS_PER_RUN: 10,
+  // Raised from 10 to handle full timezone blocks (CET = 75 neighborhoods)
+  MAX_BRIEFS_PER_RUN: 50,
 
   // Rate limit: max email resends per monitor run
   MAX_EMAILS_PER_RUN: 10,

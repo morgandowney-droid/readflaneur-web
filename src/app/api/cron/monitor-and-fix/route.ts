@@ -9,6 +9,7 @@ import {
   createIssues,
   getRetryableIssues,
   attemptFix,
+  batchFixMissingBriefs,
   canRetry,
   FIX_CONFIG,
   MonitorRunResult,
@@ -28,7 +29,7 @@ import {
  */
 
 export const runtime = 'nodejs';
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -110,17 +111,103 @@ export async function GET(request: Request) {
 
     // Step 4: Attempt fixes (with rate limiting)
     let imageFixCount = 0;
-    let briefFixCount = 0;
     let thinContentFixCount = 0;
     let emailFixCount = 0;
 
+    // Collect missing brief issues for batch processing
+    const briefIssuesToFix: CronIssue[] = [];
+    const nonBriefIssues: CronIssue[] = [];
+
     for (const issue of retryableIssues) {
-      // Check if can retry
       if (!canRetry(issue)) {
         result.issues_skipped++;
         continue;
       }
+      if (issue.issue_type === 'missing_brief' && issue.neighborhood_id) {
+        if (briefIssuesToFix.length < FIX_CONFIG.MAX_BRIEFS_PER_RUN) {
+          briefIssuesToFix.push(issue);
+        } else {
+          result.issues_skipped++;
+        }
+      } else {
+        nonBriefIssues.push(issue);
+      }
+    }
 
+    // Step 4a: Batch-fix missing briefs directly via Grok (no HTTP round-trips)
+    if (briefIssuesToFix.length > 0) {
+      console.log(`[Monitor] Batch-fixing ${briefIssuesToFix.length} missing briefs directly via Grok...`);
+
+      // Mark all as retrying
+      const briefIssueIds = briefIssuesToFix.map(i => i.id);
+      await supabase
+        .from('cron_issues')
+        .update({ status: 'retrying', fix_attempted_at: new Date().toISOString() })
+        .in('id', briefIssueIds);
+
+      const neighborhoodIds = briefIssuesToFix.map(i => i.neighborhood_id!);
+      // Time budget: 240s (leave 60s for other fixes + logging)
+      const batchResult = await batchFixMissingBriefs(supabase, neighborhoodIds, 240_000);
+
+      console.log(`[Monitor] Batch brief result: ${batchResult.generated} generated, ${batchResult.failed} failed`);
+
+      // Build a set of neighborhoods that got briefs
+      const todayStart = new Date();
+      todayStart.setUTCHours(0, 0, 0, 0);
+      const { data: newBriefs } = await supabase
+        .from('neighborhood_briefs')
+        .select('neighborhood_id')
+        .in('neighborhood_id', neighborhoodIds)
+        .gte('created_at', todayStart.toISOString());
+
+      const generatedIds = new Set((newBriefs || []).map(b => b.neighborhood_id));
+
+      // Update each issue based on whether its neighborhood got a brief
+      for (const issue of briefIssuesToFix) {
+        const succeeded = generatedIds.has(issue.neighborhood_id!);
+        const newRetryCount = issue.retry_count + 1;
+        const isExhausted = newRetryCount >= issue.max_retries;
+
+        if (succeeded) {
+          await supabase.from('cron_issues').update({
+            status: 'resolved',
+            fix_result: 'Brief generated via batch fix',
+            resolved_at: new Date().toISOString(),
+            retry_count: newRetryCount,
+          }).eq('id', issue.id);
+          result.issues_fixed++;
+        } else if (isExhausted) {
+          await supabase.from('cron_issues').update({
+            status: 'needs_manual',
+            fix_result: 'Batch brief generation failed - retries exhausted',
+            retry_count: newRetryCount,
+          }).eq('id', issue.id);
+          result.issues_failed++;
+        } else {
+          const nextRetry = new Date();
+          nextRetry.setMinutes(nextRetry.getMinutes() + 15);
+          await supabase.from('cron_issues').update({
+            status: 'open',
+            fix_result: 'Batch brief generation failed - will retry',
+            retry_count: newRetryCount,
+            next_retry_at: nextRetry.toISOString(),
+          }).eq('id', issue.id);
+          result.issues_failed++;
+        }
+
+        result.details.fix_attempts.push({
+          issue_id: issue.id,
+          issue_type: 'missing_brief',
+          result: {
+            success: succeeded,
+            message: succeeded ? 'Brief generated via batch fix' : 'Batch brief generation failed',
+          },
+        });
+      }
+    }
+
+    // Step 4b: Handle non-brief issues one at a time
+    for (const issue of nonBriefIssues) {
       // Handle image issues
       if (issue.issue_type === 'missing_image' || issue.issue_type === 'placeholder_image') {
         if (imageFixCount >= FIX_CONFIG.MAX_IMAGES_PER_RUN) {
@@ -148,34 +235,6 @@ export async function GET(request: Request) {
 
         imageFixCount++;
         await delay(FIX_CONFIG.IMAGE_GEN_DELAY_MS);
-      }
-      // Handle brief issues
-      else if (issue.issue_type === 'missing_brief') {
-        if (briefFixCount >= FIX_CONFIG.MAX_BRIEFS_PER_RUN) {
-          result.issues_skipped++;
-          console.log(`[Monitor] Brief rate limit reached`);
-          continue;
-        }
-
-        console.log(`[Monitor] Attempting brief fix for issue ${issue.id}`);
-        const fixResult = await attemptFix(supabase, issue, baseUrl, cronSecret!);
-
-        result.details.fix_attempts.push({
-          issue_id: issue.id,
-          issue_type: issue.issue_type,
-          result: fixResult,
-        });
-
-        if (fixResult.success) {
-          result.issues_fixed++;
-          console.log(`[Monitor] Fixed: ${fixResult.message}`);
-        } else {
-          result.issues_failed++;
-          console.log(`[Monitor] Failed: ${fixResult.message}`);
-        }
-
-        briefFixCount++;
-        await delay(FIX_CONFIG.BRIEF_GEN_DELAY_MS);
       }
       // Handle thin content issues
       else if (issue.issue_type === 'thin_content') {
