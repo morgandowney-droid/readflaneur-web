@@ -24,11 +24,10 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 
+import { AI_MODELS } from '@/config/ai-models';
+
 // NYC Open Data - DOB NOW: Build Job Application Filings
 const NYC_DOB_FILINGS_API = 'https://data.cityofnewyork.us/resource/w9ak-ipjd.json';
-
-// Gemini model for story generation
-const GEMINI_MODEL = 'gemini-2.0-flash';
 
 // Landmark facade/restoration keywords (Trigger B)
 const LANDMARK_KEYWORDS = [
@@ -398,7 +397,7 @@ Include 1-3 link candidates for key entities mentioned in the body (building nam
 
   try {
     const response = await genAI.models.generateContent({
-      model: GEMINI_MODEL,
+      model: AI_MODELS.GEMINI_FLASH,
       contents: `${systemPrompt}\n\n${prompt}`,
       config: {
         temperature: 0.7,

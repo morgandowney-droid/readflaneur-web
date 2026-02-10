@@ -155,6 +155,7 @@ Your writing style:
 TONE AND VOCABULARY:
 - Do NOT use lowbrow or overly casual words like "ya", "folks", "eats", "grub", "spot" (for restaurant)
 - Use "food" instead of "eats", use "you" instead of "ya", use "people" or "locals" instead of "folks"
+- NEVER use em dashes (\u2014). Use commas, periods, or hyphens (-) instead.
 - The reader is well-educated and prefers polished language without slang
 - The final sentence or paragraph must NOT be a question or seek a response from the reader
 - End with a statement, not an invitation for feedback or engagement
@@ -175,6 +176,7 @@ Your writing style:
 TONE AND VOCABULARY:
 - Do NOT use lowbrow or overly casual words like "ya", "folks", "eats", "grub", "spot" (for restaurant)
 - Use "food" instead of "eats", use "you" instead of "ya", use "people" or "locals" instead of "folks"
+- NEVER use em dashes (\u2014). Use commas, periods, or hyphens (-) instead.
 - The reader is well-educated and prefers polished language without slang
 
 This is a weekly community recap - straight news, no fluff.`;
@@ -266,6 +268,9 @@ LINK CANDIDATES RULES:
       .replace(/\s*\(\d+\)/g, '')          // inline (1) (2) citation numbers
       .replace(/\(\s*\)/g, '')             // () empty parens
       .replace(/\(\s*$/gm, '')             // Orphaned ( at end of line
+      // Replace em dashes with hyphens (em dashes look AI-generated)
+      .replace(/\u2014/g, ' - ')           // — (em dash) -> space-hyphen-space
+      .replace(/\u2013/g, '-')             // – (en dash) -> hyphen
       .replace(/\n{3,}/g, '\n\n')          // Collapse multiple newlines
       .trim();
 

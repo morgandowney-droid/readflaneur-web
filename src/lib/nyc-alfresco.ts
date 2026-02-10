@@ -27,11 +27,10 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 
+import { AI_MODELS } from '@/config/ai-models';
+
 // NYC Open Data - Open Restaurants Applications endpoint
 const NYC_OPEN_RESTAURANTS_API = 'https://data.cityofnewyork.us/resource/pitm-atqc.json';
-
-// Gemini model for story generation
-const GEMINI_MODEL = 'gemini-2.0-flash';
 
 // Chain restaurant patterns to exclude (keep the feed premium)
 const CHAIN_PATTERNS = [
@@ -410,7 +409,7 @@ Include 1-3 link candidates for key entities mentioned in the body (restaurant n
 
   try {
     const response = await genAI.models.generateContent({
-      model: GEMINI_MODEL,
+      model: AI_MODELS.GEMINI_FLASH,
       contents: `${systemPrompt}\n\n${prompt}`,
       config: {
         temperature: 0.7,

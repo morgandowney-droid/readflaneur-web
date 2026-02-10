@@ -152,7 +152,7 @@ export async function GET(request: Request) {
             status: 'published',
             published_at: new Date().toISOString(),
             author_type: 'ai',
-            ai_model: 'gemini-2.0-flash',
+            ai_model: 'gemini-2.5-flash',
             ai_prompt: `Set Life: ${event.projectName} on ${dateStr}`,
             category_label: 'Set Life',
           });
@@ -170,7 +170,7 @@ export async function GET(request: Request) {
                 status: 'published',
                 published_at: new Date().toISOString(),
                 author_type: 'ai',
-                ai_model: 'gemini-2.0-flash',
+                ai_model: 'gemini-2.5-flash',
                 ai_prompt: `Set Life: ${event.projectName} on ${dateStr}`,
                 category_label: 'Set Life',
               });

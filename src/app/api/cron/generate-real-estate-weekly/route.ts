@@ -157,7 +157,7 @@ export async function GET(request: Request) {
           status: 'published',
           published_at: new Date().toISOString(),
           article_type: 'real-estate-weekly',
-          ai_model: 'gemini-2.0-flash',
+          ai_model: 'gemini-2.5-flash',
           author_type: 'ai',
         });
 

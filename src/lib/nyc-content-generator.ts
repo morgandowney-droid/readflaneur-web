@@ -14,9 +14,7 @@ import {
 import { NYCPermit, categorizePermit } from './nyc-permits';
 import { LiquorLicense, categorizeLicense, isNewLicense } from './nyc-liquor';
 import { CrimeStats, summarizeCrimeStats } from './nyc-crime';
-
-// Gemini configuration
-const GEMINI_MODEL = 'gemini-3-pro-preview';
+import { AI_MODELS } from '@/config/ai-models';
 
 export interface StoryInput {
   neighborhoodKey: string;
@@ -187,7 +185,7 @@ Return your response in this JSON format:
 
   try {
     const response = await genAI.models.generateContent({
-      model: GEMINI_MODEL,
+      model: AI_MODELS.GEMINI_PRO,
       contents: `${systemPrompt}\n\n${prompt}`,
       config: {
         temperature: 0.7,
@@ -306,7 +304,7 @@ Return JSON:
 
   try {
     const response = await genAI.models.generateContent({
-      model: GEMINI_MODEL,
+      model: AI_MODELS.GEMINI_PRO,
       contents: `${systemPrompt}\n\n${prompt}`,
       config: {
         temperature: 0.6,

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 // Extend timeout for Gemini API calls
 export const maxDuration = 120;
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 interface GeminiResponse {
   candidates?: Array<{
@@ -117,7 +117,7 @@ export async function GET(request: Request) {
       neighborhood: searchName,
       queryType,
       query,
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       ...result
     }, { status: 200 });
   } catch (e) {
@@ -125,7 +125,7 @@ export async function GET(request: Request) {
       neighborhood: searchName,
       queryType,
       query,
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       error: String(e)
     }, { status: 500 });
   }

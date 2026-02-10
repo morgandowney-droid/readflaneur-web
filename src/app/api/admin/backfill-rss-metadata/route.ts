@@ -84,7 +84,7 @@ async function handleBackfill(request: NextRequest, dryRun: boolean) {
     // Filter to only those missing the metadata we want to set
     const needsUpdate = articlesToFix.filter(a =>
       a.author_type !== 'ai' ||
-      a.ai_model !== 'claude-sonnet-4' ||
+      a.ai_model !== 'claude-sonnet-4-5' ||
       a.category_label !== 'News Brief'
     );
 
@@ -113,7 +113,7 @@ async function handleBackfill(request: NextRequest, dryRun: boolean) {
         .from('articles')
         .update({
           author_type: 'ai',
-          ai_model: 'claude-sonnet-4',
+          ai_model: 'claude-sonnet-4-5',
           category_label: 'News Brief',
         })
         .eq('id', article.id);

@@ -17,13 +17,11 @@ import {
   injectHyperlinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
+import { AI_MODELS } from '@/config/ai-models';
 
 // External APIs
 const OPEN_METEO_API = 'https://api.open-meteo.com/v1/forecast';
 const ESKOM_SE_PUSH_API = 'https://developer.sepush.co.za/business/2.0';
-
-// Gemini model
-const GEMINI_MODEL = 'gemini-2.0-flash';
 
 // Cape Town coordinates (Camps Bay)
 const CAPE_TOWN_LAT = -33.9505;
@@ -275,7 +273,7 @@ Return JSON:
 
   try {
     const response = await genAI.models.generateContent({
-      model: GEMINI_MODEL,
+      model: AI_MODELS.GEMINI_FLASH,
       contents: `${systemPrompt}\n\n${prompt}`,
       config: { temperature: 0.8 },
     });
@@ -366,7 +364,7 @@ Return JSON:
 
   try {
     const response = await genAI.models.generateContent({
-      model: GEMINI_MODEL,
+      model: AI_MODELS.GEMINI_FLASH,
       contents: `${systemPrompt}\n\n${prompt}`,
       config: { temperature: 0.6 },
     });

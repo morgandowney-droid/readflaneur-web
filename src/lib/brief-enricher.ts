@@ -11,6 +11,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { AI_MODELS } from '@/config/ai-models';
 
 export interface EnrichedStoryItem {
   entity: string;           // "PopUp Bagels (Opens Feb 6)"
@@ -80,7 +81,7 @@ export async function enrichBrief(
   console.log(`Enriching brief for ${neighborhoodName}...`);
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: AI_MODELS.CLAUDE_SONNET,
     max_tokens: 4096,
     messages: [
       {
@@ -224,7 +225,7 @@ Set "source": null if no source found. Now search and output JSON:`,
     neighborhood: neighborhoodName,
     categories: enrichedData.categories,
     processedAt: new Date().toISOString(),
-    model: 'claude-sonnet-4-20250514',
+    model: AI_MODELS.CLAUDE_SONNET,
     blockedDomains,
   };
 }

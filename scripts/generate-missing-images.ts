@@ -41,7 +41,7 @@ IMPORTANT: Do NOT include any text, words, letters, signs, logos, or writing in 
 
   try {
     const response = await genai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: 'gemini-3-pro-image-preview',
       contents: [
         {
           role: 'user',

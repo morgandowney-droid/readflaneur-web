@@ -206,7 +206,7 @@ export async function GET(request: Request) {
             status: 'published',
             published_at: new Date().toISOString(),
             author_type: 'ai',
-            ai_model: 'gemini-2.0-flash',
+            ai_model: 'gemini-2.5-flash',
             ai_prompt: `NIMBY Alert: ${story.alert.board.name} - ${story.alert.meeting.meetingType} (${story.alert.meeting.meetingDate.toLocaleDateString()})`,
             category_label: story.categoryLabel,
           });

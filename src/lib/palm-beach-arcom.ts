@@ -18,13 +18,11 @@ import {
   injectHyperlinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
+import { AI_MODELS } from '@/config/ai-models';
 
 // Town of Palm Beach agenda URLs
 const ARCOM_AGENDA_URL =
   'https://www.townofpalmbeach.com/AgendaCenter/Architectural-Commission-5';
-
-// Gemini model
-const GEMINI_MODEL = 'gemini-2.0-flash';
 
 // ARCOM keywords that indicate significant changes
 const ARCOM_KEYWORDS = [
@@ -444,7 +442,7 @@ Return JSON:
 
   try {
     const response = await genAI.models.generateContent({
-      model: GEMINI_MODEL,
+      model: AI_MODELS.GEMINI_FLASH,
       contents: `${systemPrompt}\n\n${prompt}`,
       config: { temperature: 0.7 },
     });

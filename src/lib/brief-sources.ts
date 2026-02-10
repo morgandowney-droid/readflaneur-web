@@ -8,6 +8,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { AI_MODELS } from '@/config/ai-models';
 
 export interface StorySource {
   title: string;
@@ -228,7 +229,7 @@ async function findSourcesForStory(
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: AI_MODELS.CLAUDE_SONNET,
       max_tokens: 1024,
       messages: [
         {
@@ -363,7 +364,7 @@ export async function findSourcesForBrief(
   return {
     stories: enrichedStories,
     processedAt: new Date().toISOString(),
-    model: 'claude-sonnet-4-20250514',
+    model: AI_MODELS.CLAUDE_SONNET,
   };
 }
 

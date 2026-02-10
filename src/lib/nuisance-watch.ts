@@ -20,9 +20,7 @@ import {
   injectHyperlinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
-
-// Gemini model for story generation
-const GEMINI_MODEL = 'gemini-2.0-flash';
+import { AI_MODELS } from '@/config/ai-models';
 
 /**
  * Nuisance thresholds
@@ -524,7 +522,7 @@ Include 1-2 link candidates for key locations mentioned in the body (streets, bl
 
   try {
     const response = await genAI.models.generateContent({
-      model: GEMINI_MODEL,
+      model: AI_MODELS.GEMINI_FLASH,
       contents: `${systemPrompt}\n\n${prompt}`,
       config: {
         temperature: 0.6, // Slightly lower for factual reporting

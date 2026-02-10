@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
+import { AI_MODELS } from '@/config/ai-models';
 
 /**
  * Generate a simple SVG placeholder image with neighborhood name
@@ -226,7 +227,7 @@ The image should be beautiful and evocative, not literal or photographic.`;
       // Generate with Gemini 2.5 Flash Image
       // Per readflaneur.com/standards: stylized artistic renderings, not photorealistic
       const response = await genai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+        model: AI_MODELS.GEMINI_IMAGE,
         contents: [
           {
             role: 'user',

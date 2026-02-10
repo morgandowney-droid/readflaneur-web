@@ -217,7 +217,7 @@ export async function GET(request: Request) {
             status: 'published',
             published_at: new Date().toISOString(),
             author_type: 'ai',
-            ai_model: 'gemini-2.0-flash',
+            ai_model: 'gemini-2.5-flash',
             ai_prompt: `Archive Alert: ${story.item.brand} ${story.item.name} at ${story.item.storeLocation.name} ($${story.item.price.toLocaleString()})`,
             category_label: story.categoryLabel,
           });

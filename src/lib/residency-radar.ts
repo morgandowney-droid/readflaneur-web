@@ -21,6 +21,7 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { AI_MODELS } from '@/config/ai-models';
 import {
   LinkCandidate,
   injectHyperlinks,
@@ -558,7 +559,7 @@ export async function generateResidencyStory(
   announcement: ResidencyAnnouncement
 ): Promise<ResidencyStory | null> {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: AI_MODELS.GEMINI_FLASH });
 
     const season = announcement.location.season;
     const targetNeighborhoods = getTargetNeighborhoods(announcement);

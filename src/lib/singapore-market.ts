@@ -21,15 +21,13 @@ import {
   injectHyperlinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
+import { AI_MODELS } from '@/config/ai-models';
 
 // LTA DataMall API
 const LTA_DATAMALL_API = 'https://datamall2.mytransport.sg/ltaodataservice';
 
 // URA API
 const URA_API = 'https://www.ura.gov.sg/uraDataService';
-
-// Gemini model
-const GEMINI_MODEL = 'gemini-2.0-flash';
 
 // COE thresholds
 const COE_DROP_THRESHOLD = 5000; // SGD - significant drop
@@ -432,7 +430,7 @@ Return JSON:
 
   try {
     const response = await genAI.models.generateContent({
-      model: GEMINI_MODEL,
+      model: AI_MODELS.GEMINI_FLASH,
       contents: `${systemPrompt}\n\n${prompt}`,
       config: { temperature: 0.7 },
     });
@@ -525,7 +523,7 @@ Return JSON:
 
   try {
     const response = await genAI.models.generateContent({
-      model: GEMINI_MODEL,
+      model: AI_MODELS.GEMINI_FLASH,
       contents: `${systemPrompt}\n\n${prompt}`,
       config: { temperature: 0.7 },
     });

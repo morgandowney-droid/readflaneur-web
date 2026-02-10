@@ -24,9 +24,7 @@ import {
   injectHyperlinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
-
-// Gemini model
-const GEMINI_MODEL = 'gemini-2.0-flash';
+import { AI_MODELS } from '@/config/ai-models';
 
 // Open-Meteo API for weather fallback
 const OPEN_METEO_API = 'https://api.open-meteo.com/v1/forecast';
@@ -248,7 +246,7 @@ Return JSON:
 
   try {
     const response = await genAI.models.generateContent({
-      model: GEMINI_MODEL,
+      model: AI_MODELS.GEMINI_FLASH,
       contents: `${systemPrompt}\n\n${prompt}`,
       config: {
         temperature: 0.8,
@@ -341,7 +339,7 @@ Return JSON:
 
   try {
     const response = await genAI.models.generateContent({
-      model: GEMINI_MODEL,
+      model: AI_MODELS.GEMINI_FLASH,
       contents: `${systemPrompt}\n\n${prompt}`,
       config: { temperature: 0.85 },
     });

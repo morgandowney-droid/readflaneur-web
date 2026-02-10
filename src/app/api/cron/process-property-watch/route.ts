@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
+import { AI_MODELS } from '@/config/ai-models';
 
 /**
  * Property Watch Processing Cron Job
@@ -133,7 +134,7 @@ export async function GET(request: Request) {
         );
 
         const message = await anthropic!.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: AI_MODELS.CLAUDE_SONNET,
         max_tokens: 200,
         system: PROPERTY_WATCH_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: prompt }],
@@ -186,7 +187,7 @@ export async function GET(request: Request) {
         const prompt = STOREFRONT_PROMPT(storefront, neighborhood?.name || storefront.neighborhood_id);
 
         const message = await anthropic!.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: AI_MODELS.CLAUDE_SONNET,
           max_tokens: 200,
           system: PROPERTY_WATCH_SYSTEM_PROMPT,
           messages: [{ role: 'user', content: prompt }],
@@ -238,7 +239,7 @@ export async function GET(request: Request) {
         const prompt = PROJECT_PROMPT(project, neighborhood?.name || project.neighborhood_id);
 
         const message = await anthropic!.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: AI_MODELS.CLAUDE_SONNET,
           max_tokens: 200,
           system: PROPERTY_WATCH_SYSTEM_PROMPT,
           messages: [{ role: 'user', content: prompt }],

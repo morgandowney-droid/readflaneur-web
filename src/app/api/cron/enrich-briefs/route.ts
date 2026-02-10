@@ -215,7 +215,7 @@ export async function GET(request: Request) {
           country
         )
       `)
-      .eq('ai_model', 'claude-sonnet-4')
+      .eq('ai_model', 'claude-sonnet-4-5')
       .eq('status', 'published')
       .is('enriched_at', null);
 

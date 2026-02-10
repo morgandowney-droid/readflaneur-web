@@ -17,6 +17,7 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
+import { AI_MODELS } from '@/config/ai-models';
 
 // ============================================================================
 // CATEGORY DEFINITIONS
@@ -274,7 +275,7 @@ async function generateAndCacheImage(
     console.log(`Generating cached image for category: ${category}`);
 
     const response = await genai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: AI_MODELS.GEMINI_IMAGE,
       contents: [
         {
           role: 'user',

@@ -211,7 +211,7 @@ export async function GET(request: Request) {
             status: 'published',
             published_at: new Date().toISOString(),
             author_type: 'ai',
-            ai_model: 'gemini-2.0-flash',
+            ai_model: 'gemini-2.5-flash',
             ai_prompt: `Flight Check: ${story.announcement.airline.name} ${story.announcement.originAirport.code}-${story.announcement.destination.code}`,
             category_label: story.categoryLabel,
           });

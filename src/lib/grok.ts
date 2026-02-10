@@ -9,9 +9,10 @@
  */
 
 import { getSearchLocation } from '@/lib/neighborhood-utils';
+import { AI_MODELS } from '@/config/ai-models';
 
 const GROK_API_URL = 'https://api.x.ai/v1';
-const GROK_MODEL = 'grok-4-1-fast'; // Best for tool calling
+const GROK_MODEL = AI_MODELS.GROK_FAST;
 
 interface XSearchResult {
   title?: string;
@@ -183,6 +184,8 @@ Writing style rules:
       .replace(/\s*\(\d+\)/g, '')          // inline (1) citation numbers
       .replace(/\(\s*\)/g, '')             // () empty parens
       .replace(/\(\s*$/gm, '')             // Orphaned ( at end of line
+      .replace(/\u2014/g, ' - ')           // — (em dash) -> space-hyphen-space
+      .replace(/\u2013/g, '-')             // – (en dash) -> hyphen
       .replace(/\n{3,}/g, '\n\n')
       .trim();
 
@@ -298,11 +301,13 @@ Format each story clearly separated by "---"`
       const bodyMatch = block.match(/BODY:\s*([\s\S]+?)(?:---|$)/i);
 
       if (headlineMatch && bodyMatch) {
+        // Strip em/en dashes from all text fields
+        const stripDashes = (s: string) => s.replace(/\u2014/g, ' - ').replace(/\u2013/g, '-');
         stories.push({
-          headline: headlineMatch[1].trim(),
+          headline: stripDashes(headlineMatch[1].trim()),
           category: categoryMatch?.[1]?.trim().toLowerCase() || 'community',
-          previewText: previewMatch?.[1]?.trim() || '',
-          body: bodyMatch[1].trim(),
+          previewText: stripDashes(previewMatch?.[1]?.trim() || ''),
+          body: stripDashes(bodyMatch[1].trim()),
           sources: [],
         });
       }

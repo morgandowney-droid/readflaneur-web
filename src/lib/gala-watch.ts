@@ -15,6 +15,7 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { AI_MODELS } from '@/config/ai-models';
 import {
   LinkCandidate,
   injectHyperlinks,
@@ -834,7 +835,7 @@ export async function generateGalaStory(event: GalaEvent): Promise<GalaStory | n
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model = genAI.getGenerativeModel({ model: AI_MODELS.GEMINI_FLASH });
 
   const config = GALA_HUBS[event.hub];
   const cityName = event.hub.replace(/_/g, ' ');

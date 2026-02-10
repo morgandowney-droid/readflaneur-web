@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import { fetchAllEvents, getActiveNeighborhoods, RawEvent } from '@/lib/event-sources';
+import { AI_MODELS } from '@/config/ai-models';
 
 /**
  * Tonight Picks Sync Cron Job
@@ -138,7 +139,7 @@ export async function GET(request: Request) {
 
           // AI curation
           const message = await anthropic!.messages.create({
-            model: 'claude-sonnet-4-20250514',
+            model: AI_MODELS.CLAUDE_SONNET,
             max_tokens: 300,
             system: TONIGHT_SYSTEM_PROMPT,
             messages: [{ role: 'user', content: CURATE_EVENT_PROMPT(event, neighborhoodName) }],

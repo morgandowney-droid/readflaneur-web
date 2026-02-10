@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import { fetchCityFeeds, RSSItem } from '@/lib/rss-sources';
 import { generateGrokNewsStories, isGrokConfigured } from '@/lib/grok';
+import { AI_MODELS } from '@/config/ai-models';
 
 // Image generation - use local API if GEMINI_API_KEY is set, otherwise fallback to flaneur-azure
 const USE_LOCAL_IMAGE_GEN = !!process.env.GEMINI_API_KEY;
@@ -160,7 +161,7 @@ export async function GET(request: Request) {
 
           // Use AI to determine relevance and rewrite
           const message = await anthropic.messages.create({
-            model: 'claude-sonnet-4-20250514',
+            model: AI_MODELS.CLAUDE_SONNET,
             max_tokens: 800,
             system: NEWS_SYSTEM_PROMPT,
             messages: [{
@@ -208,7 +209,7 @@ export async function GET(request: Request) {
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
               author_type: 'ai',
-              ai_model: 'claude-sonnet-4',
+              ai_model: 'claude-sonnet-4-5',
               category_label: 'News Brief',
               editor_notes: `Source: ${item.source} - ${item.link}`,
             })

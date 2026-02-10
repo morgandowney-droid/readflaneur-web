@@ -24,11 +24,10 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 
+import { AI_MODELS } from '@/config/ai-models';
+
 // NYC Open Data Film Permits endpoint
 const NYC_FILM_PERMITS_API = 'https://data.cityofnewyork.us/resource/tg4x-b46p.json';
-
-// Gemini model for story generation
-const GEMINI_MODEL = 'gemini-2.0-flash';
 
 // Known major productions (for prioritization)
 const KNOWN_PRODUCTIONS = [
@@ -424,7 +423,7 @@ Include 1-3 link candidates for key entities mentioned in the body (production n
 
   try {
     const response = await genAI.models.generateContent({
-      model: GEMINI_MODEL,
+      model: AI_MODELS.GEMINI_FLASH,
       contents: `${systemPrompt}\n\n${prompt}`,
       config: {
         temperature: 0.7,

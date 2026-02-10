@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
+import { AI_MODELS } from '@/config/ai-models';
 
 /**
  * Weekly Digest Generation Cron Job
@@ -233,7 +234,7 @@ export async function GET(request: Request) {
       });
 
       const message = await anthropic!.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: AI_MODELS.CLAUDE_SONNET,
         max_tokens: 300,
         system: DIGEST_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: prompt }],

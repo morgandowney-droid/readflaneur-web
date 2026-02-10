@@ -19,9 +19,7 @@ import {
   injectHyperlinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
-
-// Gemini model for story generation
-const GEMINI_MODEL = 'gemini-2.0-flash';
+import { AI_MODELS } from '@/config/ai-models';
 
 /**
  * Auction house identifiers
@@ -591,7 +589,7 @@ Include 2-4 link candidates for key entities mentioned in the body (auction hous
 
   try {
     const response = await genAI.models.generateContent({
-      model: GEMINI_MODEL,
+      model: AI_MODELS.GEMINI_FLASH,
       contents: `${systemPrompt}\n\n${prompt}`,
       config: {
         temperature: 0.7,

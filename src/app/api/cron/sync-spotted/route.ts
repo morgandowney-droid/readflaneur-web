@@ -7,6 +7,7 @@ import {
   getNeighborhoodKeywordsFromDB,
   RawSocialPost,
 } from '@/lib/social-sources';
+import { AI_MODELS } from '@/config/ai-models';
 
 /**
  * Spotted Items Sync Cron Job
@@ -151,7 +152,7 @@ export async function GET(request: Request) {
 
           // AI processing
           const message = await anthropic!.messages.create({
-            model: 'claude-sonnet-4-20250514',
+            model: AI_MODELS.CLAUDE_SONNET,
             max_tokens: 300,
             system: SPOTTED_SYSTEM_PROMPT,
             messages: [{ role: 'user', content: REWRITE_SPOTTED_PROMPT(post, neighborhoodName) }],
