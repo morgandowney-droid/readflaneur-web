@@ -102,7 +102,7 @@ export function NeighborhoodHeader({
           href={backUrl}
           className="absolute left-0 top-10 text-xs tracking-wide text-neutral-400 hover:text-white transition-colors"
         >
-          &larr; {formatCityDisplay(citySlug)}
+          &larr; My Neighborhoods
         </Link>
 
         {/* City label */}
