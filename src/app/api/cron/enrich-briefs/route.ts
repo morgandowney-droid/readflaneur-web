@@ -9,7 +9,7 @@ import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
  * and RSS-sourced articles that haven't been enriched yet.
  * Uses Gemini with Google Search grounding to verify and add sources.
  *
- * Schedule: */10 * * * * (every 10 minutes)
+ * Schedule: every 10 minutes
  *
  * Time budget: 280s max (leaves 20s buffer before 300s maxDuration)
  * Phase 1 (briefs): up to 200s, 3 concurrent enrichments
