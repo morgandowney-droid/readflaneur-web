@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-10
 
-Recent work: NeighborhoodLiveStatus - terminal-chic local time + weather display in masthead (Open-Meteo, animated colon, 12h/24h by country).
+Recent work: DailyBriefWidget relocated below control deck (between header and feed list) - "Context before Content" visual hierarchy.
 
 ## Key Patterns
 
@@ -153,6 +153,7 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **Control Deck:** `border-y border-white/10 py-4` toolbar with two zones: GUIDE/MAP/HISTORY links (center), ViewToggle icons (right). Left zone is empty spacer.
 - **Combo dropdowns:** Dropdown panel: `bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px]`, items `hover:text-white hover:bg-white/5`
 - **ViewToggle:** Minimal `w-8 h-8` icons, no pill background. Active: `text-white`, inactive: `text-neutral-300`
+- **DailyBriefWidget:** Renders between Control Deck and FeedList (passed as `dailyBrief` ReactNode prop to `NeighborhoodFeed`). Spacing: `mt-8 mb-12`. Always full-width, outside grid/list toggle logic. Visual hierarchy: Masthead -> Control Deck -> Daily Brief -> Story Feed.
 - **BriefArchive:** Removed from control deck (prop still accepted but no longer passed)
 - **Back arrow:** Links to multi-feed if user has neighborhoods selected, otherwise home. Text: city slug uppercased.
 - **ComboNeighborhoodCards:** Still exists for GuidesClient.tsx but removed from feed header

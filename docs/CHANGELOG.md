@@ -5,6 +5,14 @@
 
 ## 2026-02-10
 
+**DailyBriefWidget Relocation:**
+- Moved DailyBriefWidget from above NeighborhoodFeed to between NeighborhoodHeader (control deck) and FeedList
+- "Context before Content" principle: Masthead → Control Deck → Daily Brief → Story Feed
+- Brief passed as `dailyBrief` ReactNode prop through NeighborhoodFeed component
+- Spacing: `mt-8 mb-12` wrapper around brief slot
+- Brief sits outside grid/list toggle logic - always full width at top
+- Combo brief attribution preserved ("From {comboName} daily brief")
+
 **NeighborhoodLiveStatus Component:**
 - New `NeighborhoodLiveStatus` component in masthead showing local time + current weather
 - Typography: `font-mono text-sm tracking-widest text-amber-500/90` (terminal chic)

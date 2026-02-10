@@ -177,27 +177,6 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
           </div>
         )}
 
-        {/* What's Happening Today brief - only show when not filtering */}
-        {!category && brief && comboBriefAttribution && (
-          <p className="text-[10px] text-amber-600 italic mb-1">
-            From {comboBriefAttribution} daily brief
-          </p>
-        )}
-        {!category && brief && (
-          <NeighborhoodBrief
-            headline={brief.headline}
-            content={brief.content}
-            generatedAt={brief.generated_at}
-            neighborhoodName={neighborhoodData.name}
-            neighborhoodId={neighborhoodData.id}
-            city={neighborhoodData.city}
-            sources={brief.sources || []}
-            enrichedContent={brief.enriched_content || undefined}
-            enrichedCategories={brief.enriched_categories || undefined}
-            enrichedAt={brief.enriched_at || undefined}
-          />
-        )}
-
         <NeighborhoodFeed
           items={feedItems}
           city={neighborhoodData.city}
@@ -211,6 +190,27 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
           country={neighborhoodData.country}
           latitude={neighborhoodData.latitude}
           longitude={neighborhoodData.longitude}
+          dailyBrief={!category && brief ? (
+            <>
+              {comboBriefAttribution && (
+                <p className="text-[10px] text-amber-600 italic mb-1">
+                  From {comboBriefAttribution} daily brief
+                </p>
+              )}
+              <NeighborhoodBrief
+                headline={brief.headline}
+                content={brief.content}
+                generatedAt={brief.generated_at}
+                neighborhoodName={neighborhoodData.name}
+                neighborhoodId={neighborhoodData.id}
+                city={neighborhoodData.city}
+                sources={brief.sources || []}
+                enrichedContent={brief.enriched_content || undefined}
+                enrichedCategories={brief.enriched_categories || undefined}
+                enrichedAt={brief.enriched_at || undefined}
+              />
+            </>
+          ) : undefined}
         />
 
         {hasMoreArticles && (
