@@ -23,11 +23,6 @@ interface NeighborhoodHeaderProps {
   longitude?: number;
 }
 
-/** Format city slug to display name: "new-york" -> "NEW YORK" */
-function formatCityDisplay(slug: string): string {
-  return slug.split('-').map(w => w.toUpperCase()).join(' ');
-}
-
 /** Join names with commas and "and": ["A", "B", "C"] -> "A, B, and C" */
 function joinWithAnd(names: string[]): string {
   if (names.length === 0) return '';
@@ -96,27 +91,27 @@ export function NeighborhoodHeader({
   return (
     <header className="mb-6">
       {/* ── MASTHEAD ── */}
-      <div className="text-center pt-32 md:pt-40">
+      <div className="text-center pt-20 md:pt-24">
         {/* City label */}
         <p className="text-[11px] tracking-[0.3em] uppercase text-neutral-400 mb-2">
           {city}
         </p>
 
         {/* Neighborhood name */}
-        <h1 className="font-display text-4xl md:text-5xl text-neutral-100 tracking-wide mb-4">
+        <h1 className="font-display text-4xl md:text-5xl text-neutral-100 tracking-wide mb-3">
           {neighborhoodName}
         </h1>
 
         {/* Combo sub-line */}
         {isCombo && (
-          <p className="font-serif italic text-base text-neutral-500 mt-2 mb-4">
+          <p className="font-serif italic text-base text-neutral-500 mb-3">
             Covering {joinWithAnd(componentNames)}
           </p>
         )}
 
         {/* Live local time + weather */}
         {timezone && (
-          <div className="mb-12">
+          <div className="mb-8">
             <NeighborhoodLiveStatus
               timezone={timezone}
               country={country}
@@ -127,23 +122,24 @@ export function NeighborhoodHeader({
             />
           </div>
         )}
-        {!timezone && <div className="mb-12" />}
+        {!timezone && <div className="mb-8" />}
       </div>
 
-      {/* ── CONTROL DECK ── */}
-      <div className="border-y border-white/10 py-4 flex items-center justify-between" ref={dropdownRef}>
-        {/* Left: Back navigation */}
-        <div className="flex-shrink-0">
+      {/* ── CONTROL DECK (CSS Grid for true centering) ── */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center border-y border-white/10 py-4" ref={dropdownRef}>
+        {/* Col 1: Back navigation */}
+        <div className="justify-self-start">
           <Link
             href={backUrl}
             className="text-xs tracking-[0.2em] uppercase text-neutral-500 hover:text-white transition-colors"
           >
-            &larr; All Neighborhoods
+            <span className="md:hidden">&larr;</span>
+            <span className="hidden md:inline">&larr; All Neighborhoods</span>
           </Link>
         </div>
 
-        {/* Center: GUIDE / MAP / HISTORY */}
-        <div className="flex items-center gap-6">
+        {/* Col 2: GUIDE / MAP / HISTORY (true center) */}
+        <div className="justify-self-center flex items-center gap-6">
           {isCombo ? (
             <>
               {/* GUIDE dropdown */}
@@ -244,8 +240,8 @@ export function NeighborhoodHeader({
           )}
         </div>
 
-        {/* Right: View Toggle */}
-        <div className="flex-shrink-0">
+        {/* Col 3: View Toggle */}
+        <div className="justify-self-end">
           {viewToggle || <div />}
         </div>
       </div>
