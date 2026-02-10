@@ -804,7 +804,7 @@ function GlobalNeighborhoodModal({
                           {showSetPrimary && (
                             <button
                               onClick={(e) => { e.stopPropagation(); makePrimary(hood.id); }}
-                              className="text-[9px] tracking-wider uppercase text-neutral-600 hover:text-amber-400 opacity-0 group-hover/item:opacity-100 transition-opacity shrink-0 py-0.5"
+                              className="text-[10px] tracking-wider uppercase font-medium text-emerald-500/80 hover:text-emerald-400 opacity-0 group-hover/item:opacity-100 transition-opacity shrink-0 py-0.5"
                               title="Set as primary"
                             >
                               Set primary
