@@ -143,7 +143,7 @@ export function NeighborhoodLiveStatus({
       {/* Separator + Weather */}
       {weather && (
         <>
-          <span className="mx-2 text-amber-500/40">&mdash;</span>
+          <span className="mx-2 text-amber-500/40">|</span>
           <span>{temp} {weather.description}</span>
         </>
       )}
