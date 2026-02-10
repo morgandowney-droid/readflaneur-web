@@ -533,7 +533,7 @@ function renderWithSearchableEntities(
           href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-amber-800 underline decoration-amber-300 decoration-1 underline-offset-2 hover:decoration-amber-500 hover:text-amber-900 transition-colors"
+          className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all"
           onClick={(e) => e.stopPropagation()}
         >
           {item.text}
@@ -556,7 +556,7 @@ function renderWithSearchableEntities(
             href={filteredUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-amber-800 underline decoration-amber-500 decoration-1 underline-offset-2 hover:decoration-amber-700 hover:text-amber-900 transition-colors"
+            className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all"
             onClick={(e) => e.stopPropagation()}
             title={isFiltered ? `Search: ${item.text} ${neighborhoodName}` : `Source: ${enrichedSource.name}`}
           >
@@ -572,7 +572,7 @@ function renderWithSearchableEntities(
             href={`https://www.google.com/search?q=${searchQuery}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-amber-800 underline decoration-amber-300 decoration-1 underline-offset-2 hover:decoration-amber-500 hover:text-amber-900 transition-colors"
+            className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all"
             onClick={(e) => e.stopPropagation()}
           >
             {item.text}
@@ -608,7 +608,7 @@ function renderWithSearchableEntities(
           href={moreUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-amber-600 hover:text-amber-800 text-xs"
+          className="text-neutral-500 hover:text-neutral-300 text-xs underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid transition-all"
           onClick={(e) => e.stopPropagation()}
         >
           (more)
@@ -878,7 +878,7 @@ export function NeighborhoodBrief({
                         href={source.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-neutral-500 hover:text-white underline decoration-neutral-600"
+                        className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all"
                       >
                         {source.name}
                       </a>
@@ -1077,7 +1077,7 @@ function ArchivedBriefCard({
                       href={source.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-amber-600 hover:text-amber-700 underline"
+                      className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all"
                     >
                       {source.name}
                     </a>

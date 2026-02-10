@@ -160,7 +160,7 @@ export function EnrichedNeighborhoodBrief({
                           href={story.source.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-amber-700 hover:text-amber-900 underline decoration-amber-300 hover:decoration-amber-500"
+                          className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all"
                           onClick={(e) => e.stopPropagation()}
                         >
                           📎 {story.source.name}

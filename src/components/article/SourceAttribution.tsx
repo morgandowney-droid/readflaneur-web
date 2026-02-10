@@ -25,14 +25,14 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated }: Sourc
     const rssSource = parseEditorNotesSource(editorNotes);
     if (rssSource) {
       return (
-        <div className="mt-8 pt-6 border-t border-neutral-200">
+        <div className="mt-8 pt-6 border-t border-white/[0.08]">
           <p className="text-xs text-neutral-400">
             <span className="italic">Source: </span>
             <a
               href={rssSource.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all"
             >
               {rssSource.name}
             </a>
@@ -42,7 +42,7 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated }: Sourc
     }
 
     return (
-      <div className="mt-8 pt-6 border-t border-neutral-200">
+      <div className="mt-8 pt-6 border-t border-white/[0.08]">
         <p className="text-xs text-neutral-400 italic">
           Synthesized from public news sources and social media via AI-powered search and analysis.
         </p>
@@ -78,7 +78,7 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated }: Sourc
             href={source.source_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
+            className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all"
           >
             {displayName}
           </a>
@@ -96,7 +96,7 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated }: Sourc
   };
 
   return (
-    <div className="mt-8 pt-6 border-t border-neutral-200">
+    <div className="mt-8 pt-6 border-t border-white/[0.08]">
       <p className="text-xs text-neutral-400">
         <span className="italic">Synthesized from reporting by </span>
         {sources.map((source, index) => formatSource(source, index))}
