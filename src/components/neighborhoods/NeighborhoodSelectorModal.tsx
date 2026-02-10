@@ -204,6 +204,7 @@ function GlobalNeighborhoodModal({
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [primaryId, setPrimaryId] = useState<string | null>(null);
 
@@ -533,6 +534,8 @@ function GlobalNeighborhoodModal({
           .from('user_neighborhood_preferences')
           .insert({ user_id: userId, neighborhood_id: id });
       }
+      // Also sync to localStorage so other components stay in sync
+      saveToLocalStorage(newSelected, newPrimary);
     } else {
       saveToLocalStorage(newSelected, newPrimary);
     }
@@ -579,6 +582,8 @@ function GlobalNeighborhoodModal({
             .upsert(toAdd.map(id => ({ user_id: userId, neighborhood_id: id })));
         }
       }
+      // Also sync to localStorage so other components stay in sync
+      saveToLocalStorage(newSelected, newPrimary);
     } else {
       saveToLocalStorage(newSelected, newPrimary);
     }
@@ -597,13 +602,12 @@ function GlobalNeighborhoodModal({
     setConfirmClear(false);
     setSelected(new Set());
     setPrimaryId(null);
+    localStorage.removeItem(PREFS_KEY);
     if (userId) {
       const supabase = createClient();
       Promise.resolve(
         supabase.from('user_neighborhood_preferences').delete().eq('user_id', userId)
       ).then(null, () => {});
-    } else {
-      localStorage.removeItem(PREFS_KEY);
     }
   };
 
@@ -619,6 +623,15 @@ function GlobalNeighborhoodModal({
     } catch { /* ignore */ }
   };
 
+  const scrollToPrimary = () => {
+    if (!primaryId || !bodyRef.current) return;
+    const el = bodyRef.current.querySelector(`[data-neighborhood-id="${primaryId}"]`) as HTMLElement | null;
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('ring-1', 'ring-amber-500/60', 'rounded');
+    setTimeout(() => el.classList.remove('ring-1', 'ring-amber-500/60', 'rounded'), 2000);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -632,21 +645,31 @@ function GlobalNeighborhoodModal({
       {/* Modal Content */}
       <div
         ref={modalRef}
-        className="absolute inset-4 sm:inset-8 md:inset-12 lg:inset-y-12 lg:inset-x-24 xl:inset-y-16 xl:inset-x-32 bg-neutral-900/90 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl overflow-hidden flex flex-col animate-modal-slide-up"
+        className="absolute inset-x-0 top-2 bottom-0 sm:inset-8 md:inset-12 lg:inset-y-12 lg:inset-x-24 xl:inset-y-16 xl:inset-x-32 bg-neutral-900/90 backdrop-blur-md border border-white/10 rounded-t-xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col animate-modal-slide-up"
       >
         {/* Modal Header */}
         <div className="px-6 py-5 border-b border-white/10">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-display text-2xl font-light tracking-wide text-white">
-                City Index
+                City Search
               </h2>
-              {/* Selection counter */}
-              {selected.size > 0 && (
-                <span className="text-xs font-mono text-amber-400 tabular-nums mt-1.5">
-                  {selected.size} selected
-                </span>
-              )}
+              {/* Selection counter + change primary */}
+              <div className="flex items-center gap-3 mt-1.5">
+                {selected.size > 0 && (
+                  <span className="text-xs font-mono text-amber-400 tabular-nums">
+                    {selected.size} selected
+                  </span>
+                )}
+                {primaryId && selected.size > 1 && (
+                  <button
+                    onClick={scrollToPrimary}
+                    className="text-xs text-neutral-500 hover:text-amber-400 transition-colors"
+                  >
+                    Change Primary
+                  </button>
+                )}
+              </div>
             </div>
             <button
               onClick={onClose}
@@ -703,8 +726,8 @@ function GlobalNeighborhoodModal({
           </div>
         </div>
 
-        {/* Modal Body - Masonry City Index */}
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        {/* Modal Body - Masonry City Search */}
+        <div ref={bodyRef} className="flex-1 overflow-y-auto px-6 py-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="w-8 h-8 border-2 border-neutral-700 border-t-amber-400 rounded-full animate-spin" />
@@ -755,7 +778,7 @@ function GlobalNeighborhoodModal({
                       const showSetPrimary = isSelected && !isPrimary && selected.size > 1;
 
                       return (
-                        <div key={hood.id} className="flex items-center gap-1 group/item">
+                        <div key={hood.id} data-neighborhood-id={hood.id} className="flex items-center gap-1 group/item">
                           <button
                             onClick={() => toggleNeighborhood(hood.id)}
                             className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${
@@ -913,7 +936,7 @@ function GlobalNeighborhoodModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-4 border-t border-white/10 bg-neutral-900/80 backdrop-blur-sm flex items-center justify-between">
+        <div className="px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-white/10 bg-neutral-900/80 backdrop-blur-sm flex items-center justify-between">
           <div className="text-sm text-neutral-500">
             {selected.size > 0 ? (
               confirmClear ? (

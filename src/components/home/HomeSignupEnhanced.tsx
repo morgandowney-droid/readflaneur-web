@@ -41,6 +41,25 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
 
         if (data && data.length > 0) {
           setSelected(new Set(data.map(p => p.neighborhood_id)));
+        } else {
+          // Fallback to localStorage (user may have selected before logging in)
+          const stored = localStorage.getItem(PREFS_KEY);
+          if (stored) {
+            try {
+              const ids = JSON.parse(stored) as string[];
+              setSelected(new Set(ids));
+              // Migrate to DB (fire and forget)
+              if (ids.length > 0) {
+                Promise.resolve(
+                  supabase
+                    .from('user_neighborhood_preferences')
+                    .upsert(ids.map(id => ({ user_id: session.user.id, neighborhood_id: id })))
+                ).then(null, () => {});
+              }
+            } catch {
+              // Invalid stored data
+            }
+          }
         }
       } else {
         const stored = localStorage.getItem(PREFS_KEY);
@@ -72,8 +91,14 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
             .select('neighborhood_id')
             .eq('user_id', session.user.id);
 
-          if (data) {
+          if (data && data.length > 0) {
             setSelected(new Set(data.map(p => p.neighborhood_id)));
+          } else {
+            // Fallback to localStorage
+            const stored = localStorage.getItem(PREFS_KEY);
+            if (stored) {
+              try { setSelected(new Set(JSON.parse(stored))); } catch { /* ignore */ }
+            }
           }
         } else {
           const stored = localStorage.getItem(PREFS_KEY);
@@ -182,9 +207,12 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
           );
         })}
         {selectedNeighborhoods.length > 5 && (
-          <span className="text-sm text-neutral-500">
+          <button
+            onClick={handleExplore}
+            className="text-sm text-neutral-500 hover:text-white transition-colors"
+          >
             +{selectedNeighborhoods.length - 5} more
-          </span>
+          </button>
         )}
 
         {/* Add Neighborhoods Button - uses global modal */}

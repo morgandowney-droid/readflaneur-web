@@ -7,6 +7,8 @@ import { ViewToggle, FeedView } from './ViewToggle';
 import { BackToTopButton } from './BackToTopButton';
 import { NeighborhoodHeader } from './NeighborhoodHeader';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
+import { createClient } from '@/lib/supabase/client';
+import { NeighborhoodBrief, NeighborhoodBriefSkeleton } from './NeighborhoodBrief';
 
 const VIEW_PREF_KEY = 'flaneur-feed-view';
 
@@ -36,6 +38,19 @@ export function MultiFeed({
   const [view, setView] = useState<FeedView>(defaultView);
   const [isHydrated, setIsHydrated] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [fetchedBrief, setFetchedBrief] = useState<{
+    headline: string;
+    content: string;
+    generated_at: string;
+    sources: any[];
+    enriched_content?: string;
+    enriched_categories?: any[];
+    enriched_at?: string;
+    neighborhoodName: string;
+    neighborhoodId: string;
+    city: string;
+  } | null>(null);
+  const [briefLoading, setBriefLoading] = useState(false);
   const { openModal } = useNeighborhoodModal();
 
   useEffect(() => {
@@ -45,6 +60,55 @@ export function MultiFeed({
     }
     setIsHydrated(true);
   }, []);
+
+  // Fetch brief for filtered neighborhood
+  useEffect(() => {
+    if (activeFilter === null) {
+      setFetchedBrief(null);
+      setBriefLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setBriefLoading(true);
+    setFetchedBrief(null);
+
+    const hood = neighborhoods.find(n => n.id === activeFilter);
+
+    const supabase = createClient();
+    const now = new Date().toISOString();
+    Promise.resolve(
+      supabase
+        .from('neighborhood_briefs')
+        .select('id, headline, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
+        .eq('neighborhood_id', activeFilter)
+        .gt('expires_at', now)
+        .order('generated_at', { ascending: false })
+        .limit(1)
+        .single()
+    ).then(({ data }) => {
+      if (cancelled) return;
+      if (data) {
+        setFetchedBrief({
+          headline: data.headline,
+          content: data.content,
+          generated_at: data.generated_at,
+          sources: data.sources || [],
+          enriched_content: data.enriched_content || undefined,
+          enriched_categories: data.enriched_categories || undefined,
+          enriched_at: data.enriched_at || undefined,
+          neighborhoodName: hood?.name || '',
+          neighborhoodId: activeFilter,
+          city: hood?.city || '',
+        });
+      }
+      setBriefLoading(false);
+    }).then(null, () => {
+      if (!cancelled) setBriefLoading(false);
+    });
+
+    return () => { cancelled = true; };
+  }, [activeFilter, neighborhoods]);
 
   const handleViewChange = (newView: FeedView) => {
     setView(newView);
@@ -153,11 +217,32 @@ export function MultiFeed({
       )}
 
       {/* ── DAILY BRIEF ── */}
-      {dailyBrief && (
+      {activeFilter === null ? (
+        dailyBrief && (
+          <div className="mt-8 mb-12">
+            {dailyBrief}
+          </div>
+        )
+      ) : briefLoading ? (
         <div className="mt-8 mb-12">
-          {dailyBrief}
+          <NeighborhoodBriefSkeleton />
         </div>
-      )}
+      ) : fetchedBrief ? (
+        <div className="mt-8 mb-12">
+          <NeighborhoodBrief
+            headline={fetchedBrief.headline}
+            content={fetchedBrief.content}
+            generatedAt={fetchedBrief.generated_at}
+            neighborhoodName={fetchedBrief.neighborhoodName}
+            neighborhoodId={fetchedBrief.neighborhoodId}
+            city={fetchedBrief.city}
+            sources={fetchedBrief.sources}
+            enrichedContent={fetchedBrief.enriched_content}
+            enrichedCategories={fetchedBrief.enriched_categories}
+            enrichedAt={fetchedBrief.enriched_at}
+          />
+        </div>
+      ) : null}
 
       {/* ── EMPTY STATE ── */}
       {isEmpty && (

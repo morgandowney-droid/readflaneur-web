@@ -76,7 +76,7 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
         onClick={() => setOpen(!open)}
         className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-neutral-400 hover:text-white transition-colors min-w-0"
       >
-        <span className="truncate max-w-[120px] md:max-w-[200px]">{currentLabel}</span>
+        <span className="truncate max-w-[80px] md:max-w-[200px]">{currentLabel}</span>
         <svg
           width="8"
           height="5"
