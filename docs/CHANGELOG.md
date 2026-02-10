@@ -5,9 +5,16 @@
 
 ## 2026-02-10
 
+**Final Layout Polish:**
+- Hero spacing tightened: `pt-32/pt-40` -> `pt-20/pt-24`, title `mb-3`, live status `mb-8`
+- Control Deck switched from flexbox to CSS Grid `grid-cols-[1fr_auto_1fr]` for true mathematical centering
+- Back button responsive: arrow-only on mobile, "← ALL NEIGHBORHOODS" on desktop
+- NeighborhoodLiveStatus color matched to Daily Brief label: `text-amber-600/80`
+- Removed unused `formatCityDisplay` helper
+
 **Neighborhood Page Layout Refinement:**
 - Back button moved from floating above H1 into Control Deck toolbar (far left), renamed "← ALL NEIGHBORHOODS"
-- NeighborhoodLiveStatus toned down: `text-amber-700 text-xs font-medium tracking-[0.2em]` (matches Daily Brief label)
+- NeighborhoodLiveStatus toned down: `text-xs font-medium tracking-[0.2em]` (matches Daily Brief label)
 - Luxury spacing: masthead `pt-32 md:pt-40`, H1 `mb-4`, live status `mb-12` before control deck
 - Removed `mt-8` from control deck (spacing now handled by masthead bottom margin)
 
