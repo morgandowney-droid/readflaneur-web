@@ -143,7 +143,7 @@ export function NeighborhoodLiveStatus({
       href={weatherSearchUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center justify-center gap-1 font-mono text-sm tracking-widest text-amber-500/90 mt-3 hover:text-amber-400 transition-colors cursor-pointer"
+      className="flex items-center justify-center gap-1 font-mono text-xs font-medium tracking-[0.2em] text-amber-700 hover:text-amber-600 transition-colors cursor-pointer"
     >
       {/* Time with animated colon */}
       <span>{time.hours}</span>
@@ -154,7 +154,7 @@ export function NeighborhoodLiveStatus({
       {/* Separator + Weather */}
       {weather && (
         <>
-          <span className="mx-2 text-amber-500/40">|</span>
+          <span className="mx-2 text-amber-700/40">|</span>
           <span>{temp} {weather.description}</span>
         </>
       )}

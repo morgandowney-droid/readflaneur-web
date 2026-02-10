@@ -96,49 +96,51 @@ export function NeighborhoodHeader({
   return (
     <header className="mb-6">
       {/* ── MASTHEAD ── */}
-      <div className="relative text-center py-10">
-        {/* Back arrow - absolute top-left */}
-        <Link
-          href={backUrl}
-          className="absolute left-0 top-10 text-xs tracking-wide text-neutral-400 hover:text-white transition-colors"
-        >
-          &larr; My Neighborhoods
-        </Link>
-
+      <div className="text-center pt-32 md:pt-40">
         {/* City label */}
         <p className="text-[11px] tracking-[0.3em] uppercase text-neutral-400 mb-2">
           {city}
         </p>
 
         {/* Neighborhood name */}
-        <h1 className="font-display text-4xl md:text-5xl text-neutral-100 tracking-wide">
+        <h1 className="font-display text-4xl md:text-5xl text-neutral-100 tracking-wide mb-4">
           {neighborhoodName}
         </h1>
 
         {/* Combo sub-line */}
         {isCombo && (
-          <p className="font-serif italic text-base text-neutral-500 mt-2">
+          <p className="font-serif italic text-base text-neutral-500 mt-2 mb-4">
             Covering {joinWithAnd(componentNames)}
           </p>
         )}
 
         {/* Live local time + weather */}
         {timezone && (
-          <NeighborhoodLiveStatus
-            timezone={timezone}
-            country={country}
-            latitude={latitude}
-            longitude={longitude}
-            neighborhoodName={neighborhoodName}
-            city={city}
-          />
+          <div className="mb-12">
+            <NeighborhoodLiveStatus
+              timezone={timezone}
+              country={country}
+              latitude={latitude}
+              longitude={longitude}
+              neighborhoodName={neighborhoodName}
+              city={city}
+            />
+          </div>
         )}
+        {!timezone && <div className="mb-12" />}
       </div>
 
       {/* ── CONTROL DECK ── */}
-      <div className="border-y border-white/10 py-4 mt-8 flex items-center justify-between" ref={dropdownRef}>
-        {/* Left spacer */}
-        <div className="flex-shrink-0" />
+      <div className="border-y border-white/10 py-4 flex items-center justify-between" ref={dropdownRef}>
+        {/* Left: Back navigation */}
+        <div className="flex-shrink-0">
+          <Link
+            href={backUrl}
+            className="text-xs tracking-[0.2em] uppercase text-neutral-500 hover:text-white transition-colors"
+          >
+            &larr; All Neighborhoods
+          </Link>
+        </div>
 
         {/* Center: GUIDE / MAP / HISTORY */}
         <div className="flex items-center gap-6">
