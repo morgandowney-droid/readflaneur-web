@@ -5,6 +5,22 @@
 
 ## 2026-02-10
 
+**Global Font-Size Bump (Feed Components):**
+- DailyBriefWidget body: `text-sm text-neutral-500` -> `text-lg text-neutral-400`, read more `text-sm font-medium`
+- CompactArticleCard headline: `text-base` -> `text-lg md:text-xl`, preview `text-xs` -> `text-[1.05rem] leading-7`
+- CompactArticleCard actions: `text-xs` -> `text-sm font-medium uppercase tracking-wide text-neutral-500`
+- ArticleCard (gallery): headline `text-xl` -> `text-xl md:text-2xl`, preview `text-[1.05rem] leading-7`
+- ArticleCard Read More: `text-xs` -> `text-sm font-bold tracking-wider text-amber-500`
+
+**Horizontal Scrollable Pill Bar (Multi-Feed):**
+- Replaced expandable grid with horizontal scroll + rounded pills (`rounded-full`)
+- Sticky below nav (`sticky top-[60px]`) with `bg-[#050505]/95 backdrop-blur-md`
+- "All Stories" default pill + per-neighborhood filter pills with client-side filtering
+- Active: `bg-white text-black`, Inactive: `border-neutral-800 text-neutral-400`
+- Manage button (sliders icon) opens NeighborhoodSelectorModal
+- Right-edge mask gradient, hidden scrollbar (`no-scrollbar` utility)
+- Removed "Your Stories" header and expand/collapse logic
+
 **Editorial Article Body Typography:**
 - Added Merriweather font (Google Fonts, screen-optimized serif) via `--font-body-serif` CSS variable
 - Article body upsized: mobile `text-[1.2rem]` (~19px), desktop `text-[1.35rem]` (~22px)

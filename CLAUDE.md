@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-10
 
-Recent work: Editorial serif typography for article body - Merriweather font, 19px/22px, leading-loose, amber links.
+Recent work: Global font-size bump - brief body text-lg, story card headlines text-lg/xl, previews text-[1.05rem], action links text-sm uppercase.
 
 ## Key Patterns
 
