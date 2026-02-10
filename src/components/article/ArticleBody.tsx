@@ -202,7 +202,7 @@ function renderWithSearchableEntities(
           href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-amber-600/80 hover:text-amber-500 underline decoration-amber-600/30 underline-offset-2"
+          className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all"
         >
           {item.text}
         </a>
@@ -215,7 +215,7 @@ function renderWithSearchableEntities(
           href={`https://www.google.com/search?q=${searchQuery}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-amber-600/80 hover:text-amber-500 underline decoration-amber-600/30 underline-offset-2"
+          className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all"
         >
           {item.text}
         </a>
@@ -290,7 +290,7 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
   }
 
   const pClass = 'text-neutral-200 text-[1.2rem] md:text-[1.35rem] leading-loose mb-8';
-  const linkClass = 'text-amber-600/80 hover:text-amber-500 underline decoration-amber-600/30 underline-offset-2 font-medium';
+  const linkClass = 'text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all';
 
   return (
     <article className="max-w-none" style={{ fontFamily: 'var(--font-body-serif)' }}>
