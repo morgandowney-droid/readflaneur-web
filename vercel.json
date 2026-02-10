@@ -203,6 +203,10 @@
     {
       "path": "/api/cron/send-sunday-edition",
       "schedule": "0 * * * 0"
+    },
+    {
+      "path": "/api/cron/check-ai-models",
+      "schedule": "0 9 1 * *"
     }
   ]
 }

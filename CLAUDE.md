@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-10
 
-Recent work: Primary neighborhood indicator across all lists, accent-insensitive search, NativeAd conditional image fix, MagicLinkReminder dark mode rewrite, masthead padding reduction.
+Recent work: Automated AI model update checker cron (monthly Gemini API + Grok web search), primary neighborhood indicator, accent-insensitive search, NativeAd conditional image fix.
 
 ## Key Patterns
 
@@ -27,7 +27,7 @@ Recent work: Primary neighborhood indicator across all lists, accent-insensitive
 
 ### Image Generation
 - Endpoint: `/api/internal/generate-image`
-- Model: `gemini-2.5-flash-image`
+- Model: `gemini-3-pro-image-preview` (via `AI_MODELS.GEMINI_IMAGE`)
 - Style: Watercolor/gouache illustrations, NOT photographs
 - Cached images: `src/lib/cron-images.ts` (22 categories)
 
@@ -100,6 +100,18 @@ Recent work: Primary neighborhood indicator across all lists, accent-insensitive
 - **Tunnel:** `/monitoring` route (bypasses ad blockers)
 - **Trace rate:** 20% on all configs, session replays off, error replays 100%
 - **API token:** `SENTRY_AUTH_TOKEN` in `.env.local` (read scope for issue queries)
+
+### AI Model Management
+- **Central config:** `src/config/ai-models.ts` - all model IDs in one place
+- **Automated checker:** `src/app/api/cron/check-ai-models/route.ts` - monthly cron (1st at 9 AM UTC)
+  - Phase 1: Gemini `models.list` API - checks our models exist + finds newer versions
+  - Phase 2: Grok web search (3 queries, one per provider) for releases/deprecations
+  - Creates `model_update_available` issues in `cron_issues` for admin review
+  - Cost: ~$0.015/month
+- **Provider docs:** [Anthropic](https://docs.anthropic.com/en/docs/about-claude/models), [Gemini](https://ai.google.dev/gemini-api/docs/models), [xAI/Grok](https://docs.x.ai/developers/models)
+- **Current models:** Claude Sonnet 4.5, Gemini 2.5 Flash, Gemini 3 Pro (image), Grok 4.1 Fast
+- **Import pattern:** `import { AI_MODELS } from '@/config/ai-models'` then use `AI_MODELS.GEMINI_FLASH` etc.
+- **Cron metadata:** DB `ai_model` fields use short names (`'gemini-2.5-flash'`, `'claude-sonnet-4-5'`) not full version IDs
 
 ## Critical Gotchas
 

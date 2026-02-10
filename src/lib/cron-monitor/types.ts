@@ -10,7 +10,8 @@ export type IssueType =
   | 'thin_content'
   | 'job_failure'
   | 'api_rate_limit'
-  | 'external_service_down';
+  | 'external_service_down'
+  | 'model_update_available';
 
 export type EmailFailureCause =
   | 'missing_timezone'
