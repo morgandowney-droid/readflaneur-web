@@ -202,7 +202,7 @@ function renderWithSearchableEntities(
           href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-600 hover:underline"
+          className="text-amber-600/80 hover:text-amber-500 underline decoration-amber-600/30 underline-offset-2"
         >
           {item.text}
         </a>
@@ -215,7 +215,7 @@ function renderWithSearchableEntities(
           href={`https://www.google.com/search?q=${searchQuery}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-600 hover:underline"
+          className="text-amber-600/80 hover:text-amber-500 underline decoration-amber-600/30 underline-offset-2"
         >
           {item.text}
         </a>
@@ -289,14 +289,17 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
     paragraphs = newParagraphs;
   }
 
+  const pClass = 'text-neutral-200 text-[1.2rem] md:text-[1.35rem] leading-loose mb-8';
+  const linkClass = 'text-amber-600/80 hover:text-amber-500 underline decoration-amber-600/30 underline-offset-2 font-medium';
+
   return (
-    <article className="prose prose-lg prose-neutral prose-invert max-w-none">
+    <article className="max-w-none" style={{ fontFamily: 'var(--font-body-serif)' }}>
       {paragraphs.map((paragraph, index) => {
         // Check if this is a section header (wrapped in [[ ]])
         const headerMatch = paragraph.match(/^\[\[([^\]]+)\]\]$/);
         if (headerMatch) {
           return (
-            <h3 key={index} className="text-lg font-semibold text-neutral-200 mt-8 mb-4">
+            <h3 key={index} className="text-xl font-semibold text-neutral-100 mt-10 mb-6" style={{ fontFamily: 'var(--font-body-serif)' }}>
               {headerMatch[1]}
             </h3>
           );
@@ -326,7 +329,7 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
             const linkMatch = part.match(/\{\{LINKREF:(\d+)\}\}/);
 
             if (strongMatch) {
-              result.push(<strong key={`strong-${partIdx}`}>{strongMatch[1]}</strong>);
+              result.push(<strong key={`strong-${partIdx}`} className="font-bold text-neutral-100">{strongMatch[1]}</strong>);
             } else if (linkMatch) {
               const linkIdx = parseInt(linkMatch[1]);
               const link = links[linkIdx];
@@ -337,7 +340,7 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline font-medium"
+                    className={linkClass}
                   >
                     {link.text}
                   </a>
@@ -368,7 +371,7 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
         // If there are links or bold text, use the custom renderer
         if (links.length > 0 || processedParagraph.includes('<strong>')) {
           return (
-            <p key={index} className="text-neutral-300 leading-relaxed mb-6">
+            <p key={index} className={pClass}>
               {renderWithLineBreaks(processedParagraph, renderParts)}
             </p>
           );
@@ -376,7 +379,7 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
 
         // Regular paragraph with entity linking
         return (
-          <p key={index} className="text-neutral-300 leading-relaxed mb-6">
+          <p key={index} className={pClass}>
             {renderWithLineBreaks(paragraph, (text) => renderWithSearchableEntities(text, neighborhoodName, city))}
           </p>
         );

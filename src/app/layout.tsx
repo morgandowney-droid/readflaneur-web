@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Cormorant_Garamond } from 'next/font/google';
+import { Inter, Cormorant_Garamond, Merriweather } from 'next/font/google';
 import './globals.css';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -16,6 +16,12 @@ const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600'],
   variable: '--font-cormorant',
+});
+
+const merriweather = Merriweather({
+  subsets: ['latin'],
+  weight: ['300', '400', '700'],
+  variable: '--font-merriweather',
 });
 
 export const metadata: Metadata = {
@@ -50,7 +56,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${cormorant.variable} font-sans antialiased bg-canvas text-neutral-200`}>
+      <body className={`${inter.variable} ${cormorant.variable} ${merriweather.variable} font-sans antialiased bg-canvas text-neutral-200`}>
         <NeighborhoodModalProvider>
           <Header />
           <main>{children}</main>
