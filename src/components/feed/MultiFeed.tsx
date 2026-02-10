@@ -6,8 +6,7 @@ import { FeedItem } from '@/types';
 import { FeedList } from './FeedList';
 import { ViewToggle, FeedView } from './ViewToggle';
 import { BackToTopButton } from './BackToTopButton';
-
-const MAX_VISIBLE_CHIPS = 2;
+import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 
 const VIEW_PREF_KEY = 'flaneur-feed-view';
 
@@ -53,6 +52,8 @@ export function MultiFeed({
 }: MultiFeedProps) {
   const [view, setView] = useState<FeedView>(defaultView);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const { openModal } = useNeighborhoodModal();
 
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_PREF_KEY) as FeedView | null;
@@ -76,66 +77,93 @@ export function MultiFeed({
     />
   );
 
-  const [showAllNeighborhoods, setShowAllNeighborhoods] = useState(false);
   const isMultiple = neighborhoods.length > 1;
   const isEmpty = neighborhoods.length === 0;
-  const hasOverflow = neighborhoods.length > MAX_VISIBLE_CHIPS;
-  const visibleNeighborhoods = showAllNeighborhoods
-    ? neighborhoods
-    : neighborhoods.slice(0, MAX_VISIBLE_CHIPS);
-  const hiddenCount = neighborhoods.length - MAX_VISIBLE_CHIPS;
+
+  // Filter items by active neighborhood
+  const filteredItems = activeFilter
+    ? items.filter(item => {
+        if (item.type === 'article') {
+          return item.data.neighborhood_id === activeFilter;
+        }
+        return true; // Show ads regardless
+      })
+    : items;
 
   return (
     <div>
       <BackToTopButton showAfter={400} />
-      <header className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h1 className="text-xl font-light tracking-wide">Your Stories</h1>
-            {isEmpty && (
-              <p className="text-sm text-neutral-500">
-                Select neighborhoods to see local stories
-              </p>
-            )}
-          </div>
-          {viewToggle}
-        </div>
-        {isMultiple && (
-          <div className="flex items-center gap-2 flex-wrap mt-2">
-            {visibleNeighborhoods.map((hood) => {
-              const hasComboComponents = hood.combo_component_names && hood.combo_component_names.length > 0;
-              return (
-                <Link
+
+      {/* ── PILL BAR ── */}
+      {isMultiple && (
+        <div className="sticky top-[60px] z-20 bg-[#050505]/95 backdrop-blur-md">
+          <div className="flex items-center gap-2 py-4">
+            {/* Scrollable pills */}
+            <div
+              className="flex items-center gap-2 overflow-x-auto no-scrollbar flex-1"
+              style={{ maskImage: 'linear-gradient(to right, black 90%, transparent 100%)' }}
+            >
+              {/* "All" pill */}
+              <button
+                onClick={() => setActiveFilter(null)}
+                className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors ${
+                  activeFilter === null
+                    ? 'bg-white text-black'
+                    : 'bg-transparent text-neutral-400 border border-neutral-800 hover:border-neutral-500 hover:text-white'
+                }`}
+              >
+                All Stories
+              </button>
+
+              {neighborhoods.map((hood) => (
+                <button
                   key={hood.id}
-                  href={`/${getCitySlug(hood.id)}/${getNeighborhoodSlug(hood.id)}`}
-                  className="text-xs tracking-widest uppercase border border-white/[0.08] px-3 py-1.5 hover:border-white/20 transition-colors"
-                  title={hasComboComponents ? `Includes: ${hood.combo_component_names!.join(', ')}` : undefined}
+                  onClick={() => setActiveFilter(activeFilter === hood.id ? null : hood.id)}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors ${
+                    activeFilter === hood.id
+                      ? 'bg-white text-black'
+                      : 'bg-transparent text-neutral-400 border border-neutral-800 hover:border-neutral-500 hover:text-white'
+                  }`}
+                  title={hood.combo_component_names?.length ? `Includes: ${hood.combo_component_names.join(', ')}` : undefined}
                 >
                   {hood.name}
-                </Link>
-              );
-            })}
-            {hasOverflow && !showAllNeighborhoods && (
+                </button>
+              ))}
+            </div>
+
+            {/* Divider + Manage button */}
+            <div className="shrink-0 flex items-center gap-2 pl-2 border-l border-neutral-800">
               <button
-                onClick={() => setShowAllNeighborhoods(true)}
-                className="text-xs tracking-widest uppercase border border-white/[0.08] px-3 py-1.5 hover:border-white/20 transition-colors text-neutral-400 hover:text-white"
+                onClick={() => openModal()}
+                className="text-neutral-500 hover:text-white transition-colors p-1.5"
+                title="Manage neighborhoods"
               >
-                +{hiddenCount} more
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <circle cx="5" cy="4" r="1.5" fill="currentColor" />
+                  <circle cx="11" cy="8" r="1.5" fill="currentColor" />
+                  <circle cx="7" cy="12" r="1.5" fill="currentColor" />
+                </svg>
               </button>
-            )}
-            {showAllNeighborhoods && hasOverflow && (
-              <button
-                onClick={() => setShowAllNeighborhoods(false)}
-                className="text-xs tracking-widest uppercase text-neutral-400 px-2 py-1.5 hover:text-white transition-colors"
-              >
-                Show less
-              </button>
-            )}
+            </div>
           </div>
-        )}
-        {reminder}
-      </header>
-      <FeedList items={items} view={currentView} />
+        </div>
+      )}
+
+      {/* ── HEADER ── */}
+      <div className="flex items-center justify-between py-4">
+        <div>
+          {isEmpty && (
+            <p className="text-sm text-neutral-500">
+              Select neighborhoods to see local stories
+            </p>
+          )}
+        </div>
+        {viewToggle}
+      </div>
+
+      {reminder}
+      <FeedList items={filteredItems} view={currentView} />
     </div>
   );
 }

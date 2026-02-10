@@ -59,6 +59,15 @@ main {
   font-family: var(--font-cormorant);
 }
 
+/* Hide scrollbar but keep scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Refined link styles */
 a {
   transition: color 0.2s ease;
