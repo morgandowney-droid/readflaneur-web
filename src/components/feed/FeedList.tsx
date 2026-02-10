@@ -50,11 +50,12 @@ export function FeedList({ items, view = 'gallery' }: FeedListProps) {
           );
         }
         return (
-          <AdCard
-            key={`ad-${item.data.id}-${index}`}
-            ad={item.data as Ad}
-            variant={view}
-          />
+          <div key={`ad-${item.data.id}-${index}`} className="py-6 border-t border-white/[0.08]">
+            <AdCard
+              ad={item.data as Ad}
+              variant={view}
+            />
+          </div>
         );
       })}
     </div>

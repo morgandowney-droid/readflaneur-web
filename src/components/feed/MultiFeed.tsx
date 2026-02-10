@@ -209,13 +209,6 @@ export function MultiFeed({
 
   const currentView = isHydrated ? view : defaultView;
 
-  const viewToggle = (
-    <ViewToggle
-      view={currentView}
-      onChange={isHydrated ? handleViewChange : () => {}}
-    />
-  );
-
   const isMultiple = neighborhoods.length > 1;
   const isEmpty = neighborhoods.length === 0;
 
@@ -263,7 +256,7 @@ export function MultiFeed({
     <div>
       <BackToTopButton showAfter={400} />
 
-      {/* ── MASTHEAD + CONTROL DECK ── */}
+      {/* ── MASTHEAD ── */}
       <NeighborhoodHeader
         mode="all"
         city={activeHood?.city || ''}
@@ -271,7 +264,7 @@ export function MultiFeed({
         neighborhoodName={activeHood?.name || 'My Neighborhoods'}
         neighborhoodSlug=""
         neighborhoodId={activeHood?.id || ''}
-        viewToggle={viewToggle}
+        hideControlDeck
         neighborhoodCount={activeHood ? undefined : neighborhoods.length}
         timezone={activeHood?.timezone}
         country={activeHood?.country}
@@ -341,8 +334,8 @@ export function MultiFeed({
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
 
-            {/* Divider + Manage button */}
-            <div className="shrink-0 flex items-center gap-2 pl-2 border-l border-neutral-800">
+            {/* Divider + Manage button + View Toggle */}
+            <div className="shrink-0 flex items-center gap-1 pl-2 border-l border-neutral-800">
               <button
                 onClick={() => openModal()}
                 className="text-neutral-500 hover:text-white transition-colors p-1.5"
@@ -355,6 +348,10 @@ export function MultiFeed({
                   <circle cx="7" cy="12" r="1.5" fill="currentColor" />
                 </svg>
               </button>
+              <ViewToggle
+                view={currentView}
+                onChange={isHydrated ? handleViewChange : () => {}}
+              />
             </div>
           </div>
         </div>
@@ -363,16 +360,16 @@ export function MultiFeed({
       {/* ── DAILY BRIEF ── */}
       {activeFilter === null ? (
         dailyBrief && (
-          <div className="mt-8 mb-12">
+          <div className="mt-4 mb-6">
             {dailyBrief}
           </div>
         )
       ) : briefLoading ? (
-        <div className="mt-8 mb-12">
+        <div className="mt-4 mb-6">
           <NeighborhoodBriefSkeleton />
         </div>
       ) : fetchedBrief ? (
-        <div className="mt-8 mb-12">
+        <div className="mt-4 mb-6">
           <NeighborhoodBrief
             headline={fetchedBrief.headline}
             content={fetchedBrief.content}

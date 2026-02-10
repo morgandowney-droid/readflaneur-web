@@ -1,12 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Article } from '@/types';
-import { cityToSlug, neighborhoodToSlug, categoryLabelToSlug } from '@/lib/utils';
-
-const ARTICLE_BOOKMARKS_KEY = 'flaneur-article-bookmarks';
+import { cityToSlug, neighborhoodToSlug } from '@/lib/utils';
 
 interface CompactArticleCardProps {
   article: Article;
@@ -17,72 +14,31 @@ function formatDate(dateString: string) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export function CompactArticleCard({ article }: CompactArticleCardProps) {
-  const [isBookmarked, setIsBookmarked] = useState(false);
+/** Truncate text at the last full sentence boundary within maxLen chars */
+function truncateAtSentence(text: string, maxLen: number): string {
+  if (text.length <= maxLen) return text;
+  const slice = text.slice(0, maxLen);
+  // Find the last sentence-ending punctuation
+  const lastPeriod = slice.lastIndexOf('.');
+  const lastExcl = slice.lastIndexOf('!');
+  const lastQuestion = slice.lastIndexOf('?');
+  const lastEnd = Math.max(lastPeriod, lastExcl, lastQuestion);
+  if (lastEnd > 0) {
+    return text.slice(0, lastEnd + 1);
+  }
+  // No sentence boundary found - fall back to word boundary
+  const lastSpace = slice.lastIndexOf(' ');
+  return lastSpace > 0 ? text.slice(0, lastSpace) : slice;
+}
 
+export function CompactArticleCard({ article }: CompactArticleCardProps) {
   const citySlug = article.neighborhood?.city
     ? cityToSlug(article.neighborhood.city)
     : 'unknown';
   const neighborhoodSlug = neighborhoodToSlug(article.neighborhood_id);
   const articleUrl = `/${citySlug}/${neighborhoodSlug}/${article.slug || article.id}`;
 
-  useEffect(() => {
-    const stored = localStorage.getItem(ARTICLE_BOOKMARKS_KEY);
-    if (stored) {
-      try {
-        const bookmarks = JSON.parse(stored) as string[];
-        setIsBookmarked(bookmarks.includes(article.id));
-      } catch {
-        // Invalid stored data
-      }
-    }
-  }, [article.id]);
-
-  const handleShare = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const shareData = {
-      title: article.headline,
-      text: article.preview_text || article.headline,
-      url: window.location.origin + articleUrl,
-    };
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch {
-        // User cancelled or error
-      }
-    } else {
-      await navigator.clipboard.writeText(window.location.origin + articleUrl);
-      alert('Link copied to clipboard');
-    }
-  };
-
-  const handleBookmark = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const stored = localStorage.getItem(ARTICLE_BOOKMARKS_KEY);
-    let bookmarks: string[] = [];
-    if (stored) {
-      try {
-        bookmarks = JSON.parse(stored);
-      } catch {
-        // Invalid stored data
-      }
-    }
-
-    if (isBookmarked) {
-      bookmarks = bookmarks.filter(id => id !== article.id);
-    } else {
-      bookmarks.push(article.id);
-    }
-
-    localStorage.setItem(ARTICLE_BOOKMARKS_KEY, JSON.stringify(bookmarks));
-    setIsBookmarked(!isBookmarked);
-  };
+  const blurb = article.preview_text ? truncateAtSentence(article.preview_text, 200) : '';
 
   return (
     <Link href={articleUrl}>
@@ -125,28 +81,11 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
           <h2 className="font-semibold text-lg md:text-xl leading-tight mb-1.5 line-clamp-2">
             {article.headline}
           </h2>
-          {article.preview_text && (
-            <p className="text-[1.05rem] text-neutral-400 leading-7 line-clamp-2">
-              {article.preview_text}
+          {blurb && (
+            <p className="text-[1.05rem] text-neutral-400 leading-7">
+              {blurb}
             </p>
           )}
-          {/* Action buttons */}
-          <div className="flex items-center gap-4 mt-2 py-1">
-            <button
-              onClick={handleShare}
-              className="text-sm font-medium uppercase tracking-wide text-neutral-500 hover:text-white transition-colors"
-            >
-              Share
-            </button>
-            <button
-              onClick={handleBookmark}
-              className={`text-sm font-medium uppercase tracking-wide transition-colors ${
-                isBookmarked ? 'text-white' : 'text-neutral-500 hover:text-white'
-              }`}
-            >
-              {isBookmarked ? 'Saved' : 'Save'}
-            </button>
-          </div>
         </div>
       </article>
     </Link>

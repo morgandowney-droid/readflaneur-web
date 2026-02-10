@@ -91,7 +91,7 @@ export function NeighborhoodFeed({
         longitude={longitude}
       />
       {dailyBrief && (
-        <div className="mt-8 mb-12">
+        <div className="mt-4 mb-6">
           {dailyBrief}
         </div>
       )}

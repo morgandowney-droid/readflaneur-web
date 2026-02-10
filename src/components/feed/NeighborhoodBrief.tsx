@@ -813,7 +813,7 @@ export function NeighborhoodBrief({
   };
 
   return (
-    <div className="bg-surface p-8 md:p-10 mb-6">
+    <div className="bg-surface p-5 md:p-6 mb-3">
       {/* Eyebrow + Live Dot */}
       <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-amber-600/80 mb-3">
         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -828,27 +828,36 @@ export function NeighborhoodBrief({
       </h3>
 
       {/* Content */}
-      <div className="text-lg text-neutral-400 leading-relaxed max-w-prose mb-8">
+      <div className="text-lg text-neutral-400 leading-relaxed max-w-prose">
         {isExpanded ? (
           <div className="space-y-4">
             {paragraphs.map((p, i) => (
               <p key={i}>{renderParagraph(p, i === paragraphs.length - 1)}</p>
             ))}
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="inline text-sm font-medium text-neutral-400 hover:text-white transition-colors"
+            >
+              Show less
+            </button>
           </div>
         ) : (
-          <p>{renderParagraph(previewText, paragraphs.length === 1)}</p>
+          <p>
+            {renderParagraph(previewText, paragraphs.length === 1)}
+            {hasMore && (
+              <>
+                {' '}
+                <button
+                  onClick={() => setIsExpanded(true)}
+                  className="inline text-sm font-medium text-neutral-400 hover:text-white transition-colors"
+                >
+                  Read more &rsaquo;
+                </button>
+              </>
+            )}
+          </p>
         )}
       </div>
-
-      {/* Expand/Collapse button */}
-      {hasMore && (
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="text-sm font-medium text-neutral-400 hover:text-white transition-colors"
-        >
-          {isExpanded ? 'Show less' : 'Read more'}
-        </button>
-      )}
 
       {/* Source attribution - only show when expanded */}
       {isExpanded && (
@@ -902,13 +911,13 @@ export function NeighborhoodBrief({
 
 export function NeighborhoodBriefSkeleton() {
   return (
-    <div className="bg-surface p-8 md:p-10 mb-6 animate-pulse">
+    <div className="bg-surface p-5 md:p-6 mb-3 animate-pulse">
       <div className="flex items-center gap-2 mb-3">
         <div className="w-1.5 h-1.5 rounded-full bg-neutral-800" />
         <div className="h-3 w-28 bg-neutral-800 rounded" />
       </div>
       <div className="h-7 w-3/4 bg-neutral-800 rounded mb-4" />
-      <div className="space-y-2 max-w-prose mb-8">
+      <div className="space-y-2 max-w-prose">
         <div className="h-3 w-full bg-neutral-800 rounded" />
         <div className="h-3 w-5/6 bg-neutral-800 rounded" />
         <div className="h-3 w-4/6 bg-neutral-800 rounded" />
