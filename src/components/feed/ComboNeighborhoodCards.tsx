@@ -1,7 +1,7 @@
 'use client';
 
 import { ComboComponent } from '@/lib/combo-utils';
-import { getWikipediaUrl, getMapLocation } from '@/lib/neighborhood-utils';
+import { getWikipediaUrl, getMapLocation, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 
 interface ComboNeighborhoodCardsProps {
   components: ComboComponent[];
@@ -13,17 +13,10 @@ interface ComboNeighborhoodCardsProps {
  * Each card shows: component name + Places/Map/Wiki links
  */
 export function ComboNeighborhoodCards({ components, citySlug }: ComboNeighborhoodCardsProps) {
-  // Convert neighborhood ID to URL slug (e.g., 'nyc-park-slope' -> 'park-slope')
-  const getNeighborhoodSlug = (id: string): string => {
-    // Remove the city prefix (e.g., 'nyc-', 'sf-', etc.)
-    const parts = id.split('-');
-    return parts.slice(1).join('-');
-  };
-
   return (
     <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
       {components.map((component) => {
-        const slug = getNeighborhoodSlug(component.id);
+        const slug = getNeighborhoodSlugFromId(component.id);
         const mapLocation = getMapLocation(component.id, component.name, component.city);
         const mapUrl = `https://www.google.com/maps/place/${encodeURIComponent(mapLocation)}`;
         const wikiUrl = getWikipediaUrl(component.id, component.name);

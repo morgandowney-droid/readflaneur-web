@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-10
 
-Recent work: Global font-size bump - brief body text-lg, story card headlines text-lg/xl, previews text-[1.05rem], action links text-sm uppercase.
+Recent work: Context Switcher - unified feed navigation dropdown replacing back button, shared NeighborhoodHeader for single + multi-feed, primary brief in multi-feed.
 
 ## Key Patterns
 
@@ -148,14 +148,18 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **Padding:** `py-28 md:py-36 lg:py-48` for cinematic breathing room
 
 ### NeighborhoodHeader (Feed Page)
-- **Masthead:** Centered `text-center pt-20 md:pt-24`. City label (`text-[11px] tracking-[0.3em] uppercase text-neutral-400 mb-2`), serif neighborhood name (`font-display text-4xl md:text-5xl text-neutral-100 mb-3`), italic combo sub-line (`mb-3`), then `NeighborhoodLiveStatus` with `mb-8` before control deck.
-- **NeighborhoodLiveStatus:** `font-mono text-xs font-medium tracking-[0.2em] text-amber-600/80` - matches Daily Brief label color exactly. Clickable - opens Google search for `{neighborhood} {city} weather`. Pipe separator. Weather from Open-Meteo (client-side, silent fail). Props: `timezone`, `country`, `latitude`, `longitude`, `neighborhoodName`, `city`.
-- **Control Deck:** CSS Grid `grid-cols-[1fr_auto_1fr]` for true mathematical centering. Three zones: back link (left, `justify-self-start`), GUIDE/MAP/HISTORY (center, `justify-self-center`), ViewToggle (right, `justify-self-end`).
-- **Back button:** Arrow-only (`←`) on mobile, full `← ALL NEIGHBORHOODS` on desktop (`md:hidden`/`hidden md:inline`). `text-neutral-500 hover:text-white`.
-- **Combo dropdowns:** Dropdown panel: `bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px]`, items `hover:text-white hover:bg-white/5`
+- **Mode prop:** `mode: 'single' | 'all'` (default `'single'`). Controls masthead content and control deck layout.
+- **Masthead (single):** Centered `text-center pt-20 md:pt-24`. City label, serif neighborhood name, italic combo sub-line, `NeighborhoodLiveStatus` with `mb-8`.
+- **Masthead (all):** "My Neighborhoods" heading, "{N} locations" subtitle. No city label, no LiveStatus.
+- **NeighborhoodLiveStatus:** `font-mono text-xs font-medium tracking-[0.2em] text-amber-600/80`. Clickable - Google weather. Only rendered in single mode.
+- **Control Deck:** CSS Grid `grid-cols-[1fr_auto_1fr]`. Left: `<ContextSwitcher>`, Center: GUIDE/MAP/HISTORY (single) or empty (all), Right: ViewToggle.
+- **ContextSwitcher:** `src/components/feed/ContextSwitcher.tsx` - dropdown trigger (`{LABEL} ▾`) + popover (`bg-[#121212] border-white/10 w-64 z-30`). Sections: "All Neighborhoods" (layers icon), neighborhood list (dot + name + city), "Customize List..." (opens modal). Click-outside + Escape close.
+- **useNeighborhoodPreferences:** `src/hooks/useNeighborhoodPreferences.ts` - reads localStorage IDs, fetches name/city from Supabase, cross-tab sync via `storage` event.
+- **Combo dropdowns:** `bg-surface border-white/[0.08]`, items `hover:text-white hover:bg-white/5`
 - **ViewToggle:** Minimal `w-8 h-8` icons, no pill background. Active: `text-white`, inactive: `text-neutral-300`
-- **DailyBriefWidget:** Renders between Control Deck and FeedList (passed as `dailyBrief` ReactNode prop to `NeighborhoodFeed`). Spacing: `mt-8 mb-12`. Always full-width, outside grid/list toggle logic.
-- **Back link:** In control deck grid col 1. Links to multi-feed if user has neighborhoods selected, otherwise home.
+- **DailyBriefWidget:** Renders between Control Deck and FeedList (passed as `dailyBrief` ReactNode prop to `NeighborhoodFeed` or `MultiFeed`). Spacing: `mt-8 mb-12`.
+- **MultiFeed integration:** `MultiFeed` now uses `<NeighborhoodHeader mode="all">` instead of standalone header. Accepts `dailyBrief` prop (primary neighborhood brief).
+- **Shared slug utils:** `getCitySlugFromId()` and `getNeighborhoodSlugFromId()` in `neighborhood-utils.ts` replace duplicate helpers in MultiFeed, ComboNeighborhoodCards, feed/page.
 - **ComboNeighborhoodCards:** Still exists for GuidesClient.tsx but removed from feed header
 
 ### Article Body Typography ("Effortless Legibility")

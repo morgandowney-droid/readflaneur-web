@@ -58,6 +58,30 @@ export function buildNeighborhoodId(city: string, neighborhood: string): string 
   return `${prefix}-${neighborhood}`;
 }
 
+// Reverse map: prefix → city slug (built from CITY_PREFIX_MAP)
+const PREFIX_TO_CITY_SLUG: Record<string, string> = Object.fromEntries(
+  Object.entries(CITY_PREFIX_MAP).map(([slug, prefix]) => [prefix, slug])
+);
+
+/**
+ * Get URL city slug from a neighborhood ID
+ * @param neighborhoodId - e.g. 'nyc-west-village'
+ * @returns City slug e.g. 'new-york'
+ */
+export function getCitySlugFromId(neighborhoodId: string): string {
+  const prefix = neighborhoodId.split('-')[0];
+  return PREFIX_TO_CITY_SLUG[prefix] || prefix;
+}
+
+/**
+ * Get URL neighborhood slug from a neighborhood ID
+ * @param neighborhoodId - e.g. 'nyc-west-village'
+ * @returns Neighborhood slug e.g. 'west-village'
+ */
+export function getNeighborhoodSlugFromId(neighborhoodId: string): string {
+  return neighborhoodId.split('-').slice(1).join('-');
+}
+
 /**
  * Format neighborhood name from URL slug
  * @param slug - URL slug (e.g., 'west-village')

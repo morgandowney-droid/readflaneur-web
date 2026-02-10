@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { ReactNode, useState, useEffect, useRef } from 'react';
-import { getWikipediaUrl, getMapLocation } from '@/lib/neighborhood-utils';
+import { getWikipediaUrl, getMapLocation, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { ComboInfo } from '@/lib/combo-utils';
 import { NeighborhoodLiveStatus } from './NeighborhoodLiveStatus';
-
-const PREFS_KEY = 'flaneur-neighborhood-preferences';
+import { ContextSwitcher } from './ContextSwitcher';
 
 interface NeighborhoodHeaderProps {
+  mode?: 'single' | 'all';
   city: string;
   citySlug: string;
   neighborhoodName: string;
@@ -21,6 +21,7 @@ interface NeighborhoodHeaderProps {
   country?: string;
   latitude?: number;
   longitude?: number;
+  neighborhoodCount?: number;
 }
 
 /** Join names with commas and "and": ["A", "B", "C"] -> "A, B, and C" */
@@ -31,15 +32,10 @@ function joinWithAnd(names: string[]): string {
   return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
 }
 
-/** Get slug from component neighborhood ID: "nyc-park-slope" -> "park-slope" */
-function getNeighborhoodSlug(id: string): string {
-  const parts = id.split('-');
-  return parts.slice(1).join('-');
-}
-
 type DropdownKey = 'guide' | 'map' | 'history';
 
 export function NeighborhoodHeader({
+  mode = 'single',
   city,
   citySlug,
   neighborhoodName,
@@ -52,24 +48,10 @@ export function NeighborhoodHeader({
   country,
   latitude,
   longitude,
+  neighborhoodCount,
 }: NeighborhoodHeaderProps) {
-  const [backUrl, setBackUrl] = useState<string>('/');
   const [openDropdown, setOpenDropdown] = useState<DropdownKey | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(PREFS_KEY);
-    if (stored) {
-      try {
-        const neighborhoods = JSON.parse(stored) as string[];
-        if (neighborhoods.length >= 2) {
-          setBackUrl(`/feed?neighborhoods=${neighborhoods.join(',')}`);
-        }
-      } catch {
-        // Invalid stored data
-      }
-    }
-  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -85,6 +67,7 @@ export function NeighborhoodHeader({
 
   const isCombo = comboInfo && comboInfo.components.length > 0;
   const componentNames = isCombo ? comboInfo.components.map(c => c.name) : [];
+  const isAll = mode === 'all';
 
   const linkClass = 'text-xs tracking-[0.2em] uppercase text-neutral-400 hover:text-white transition-colors';
 
@@ -92,25 +75,33 @@ export function NeighborhoodHeader({
     <header className="mb-6">
       {/* ── MASTHEAD ── */}
       <div className="text-center pt-20 md:pt-24">
-        {/* City label */}
-        <p className="text-[11px] tracking-[0.3em] uppercase text-neutral-400 mb-2">
-          {city}
-        </p>
-
-        {/* Neighborhood name */}
-        <h1 className="font-display text-4xl md:text-5xl text-neutral-100 tracking-wide mb-3">
-          {neighborhoodName}
-        </h1>
-
-        {/* Combo sub-line */}
-        {isCombo && (
-          <p className="font-serif italic text-base text-neutral-500 mb-3">
-            Covering {joinWithAnd(componentNames)}
+        {/* City label - hidden in all mode */}
+        {!isAll && (
+          <p className="text-[11px] tracking-[0.3em] uppercase text-neutral-400 mb-2">
+            {city}
           </p>
         )}
 
-        {/* Live local time + weather */}
-        {timezone && (
+        {/* Heading */}
+        <h1 className="font-display text-4xl md:text-5xl text-neutral-100 tracking-wide mb-3">
+          {isAll ? 'My Neighborhoods' : neighborhoodName}
+        </h1>
+
+        {/* Subtitle */}
+        {isAll ? (
+          <p className="text-sm text-neutral-500 mb-3">
+            Your curated feed from {neighborhoodCount ?? 0} locations
+          </p>
+        ) : (
+          isCombo && (
+            <p className="font-serif italic text-base text-neutral-500 mb-3">
+              Covering {joinWithAnd(componentNames)}
+            </p>
+          )
+        )}
+
+        {/* Live local time + weather - only in single mode */}
+        {!isAll && timezone && (
           <div className="mb-8">
             <NeighborhoodLiveStatus
               timezone={timezone}
@@ -122,25 +113,25 @@ export function NeighborhoodHeader({
             />
           </div>
         )}
-        {!timezone && <div className="mb-8" />}
+        {!isAll && !timezone && <div className="mb-8" />}
+        {isAll && <div className="mb-8" />}
       </div>
 
       {/* ── CONTROL DECK (CSS Grid for true centering) ── */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center border-y border-white/10 py-4" ref={dropdownRef}>
-        {/* Col 1: Back navigation */}
+        {/* Col 1: Context Switcher */}
         <div className="justify-self-start">
-          <Link
-            href={backUrl}
-            className="text-xs tracking-[0.2em] uppercase text-neutral-500 hover:text-white transition-colors"
-          >
-            <span className="md:hidden">&larr;</span>
-            <span className="hidden md:inline">&larr; All Neighborhoods</span>
-          </Link>
+          <ContextSwitcher
+            currentContext={isAll ? 'all' : neighborhoodId}
+            currentLabel={isAll ? 'ALL' : neighborhoodName.toUpperCase()}
+          />
         </div>
 
-        {/* Col 2: GUIDE / MAP / HISTORY (true center) */}
+        {/* Col 2: GUIDE / MAP / HISTORY (single mode only) */}
         <div className="justify-self-center flex items-center gap-6">
-          {isCombo ? (
+          {isAll ? (
+            <div />
+          ) : isCombo ? (
             <>
               {/* GUIDE dropdown */}
               <div className="relative">
@@ -155,7 +146,7 @@ export function NeighborhoodHeader({
                     {comboInfo.components.map(c => (
                       <a
                         key={c.id}
-                        href={`/${citySlug}/${getNeighborhoodSlug(c.id)}/guides`}
+                        href={`/${citySlug}/${getNeighborhoodSlugFromId(c.id)}/guides`}
                         className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-white hover:bg-white/5 w-full text-left"
                       >
                         {c.name}

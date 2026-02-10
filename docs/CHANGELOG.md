@@ -5,6 +5,15 @@
 
 ## 2026-02-10
 
+**Context Switcher - Unified Feed Architecture:**
+- Replaced "← All Neighborhoods" back button with `ContextSwitcher` dropdown in Control Deck
+- New `ContextSwitcher` component: trigger shows `{LABEL} ▾`, popover lists "All Neighborhoods", user's subscribed neighborhoods (name + city), and "Customize List..." action
+- New `useNeighborhoodPreferences` hook: reads localStorage IDs, fetches name/city from Supabase, cross-tab sync via `storage` event
+- `NeighborhoodHeader` now supports `mode: 'single' | 'all'` - "all" mode shows "My Neighborhoods" heading with count subtitle, hides city label and LiveStatus, empties GUIDE/MAP/HISTORY center slot
+- `MultiFeed` now uses shared `NeighborhoodHeader` (mode="all") instead of standalone header/ViewToggle, accepts `dailyBrief` prop
+- `feed/page.tsx` fetches primary neighborhood brief for multi-feed and passes as `dailyBrief` to `MultiFeed`
+- Added `getCitySlugFromId()` and `getNeighborhoodSlugFromId()` to `neighborhood-utils.ts`, removed duplicate helpers from MultiFeed, ComboNeighborhoodCards, feed/page.tsx
+
 **Global Font-Size Bump (Feed Components):**
 - DailyBriefWidget body: `text-sm text-neutral-500` -> `text-lg text-neutral-400`, read more `text-sm font-medium`
 - CompactArticleCard headline: `text-base` -> `text-lg md:text-xl`, preview `text-xs` -> `text-[1.05rem] leading-7`

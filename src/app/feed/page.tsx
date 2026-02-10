@@ -8,6 +8,7 @@ import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { MultiLoadMoreButton } from '@/components/feed/MultiLoadMoreButton';
 import { FeedItem, Article, Ad } from '@/types';
 import { injectAds } from '@/lib/ad-engine';
+import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,15 +17,6 @@ const INITIAL_PAGE_SIZE = 10;
 interface FeedPageProps {
   searchParams: Promise<{ neighborhoods?: string; section?: string }>;
 }
-
-// Map neighborhood prefix to city slug for URLs
-const prefixToCitySlug: Record<string, string> = {
-  'nyc': 'new-york',
-  'sf': 'san-francisco',
-  'london': 'london',
-  'sydney': 'sydney',
-  'stockholm': 'stockholm',
-};
 
 export default async function FeedPage({ searchParams }: FeedPageProps) {
   const params = await searchParams;
@@ -169,28 +161,18 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     neighborhoodIds
   );
 
-  // Helper to get city slug from neighborhood ID
-  const getCitySlug = (neighborhoodId: string) => {
-    const prefix = neighborhoodId.split('-')[0];
-    return prefixToCitySlug[prefix] || prefix;
-  };
-
-  // Helper to get neighborhood slug from neighborhood ID
-  const getNeighborhoodSlug = (neighborhoodId: string) => {
-    const parts = neighborhoodId.split('-');
-    return parts.slice(1).join('-');
-  };
-
   // Single neighborhood selected - show full header
   const singleNeighborhood = neighborhoodIds.length === 1 && neighborhoodsWithCombo?.[0];
 
   // Multiple neighborhoods - show combined header
   const multipleNeighborhoods = neighborhoodIds.length > 1 && neighborhoodsWithCombo;
 
-  // Fetch the latest neighborhood brief for single neighborhood
+  // Fetch the latest neighborhood brief
   let brief = null;
+  let multiBrief = null;
+  const now = new Date().toISOString();
+
   if (singleNeighborhood) {
-    const now = new Date().toISOString();
     const { data: briefData } = await supabase
       .from('neighborhood_briefs')
       .select('id, headline, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
@@ -200,6 +182,23 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       .limit(1)
       .single();
     brief = briefData;
+  } else if (multipleNeighborhoods && neighborhoodIds.length > 0) {
+    // Fetch brief for first (primary) neighborhood in multi-feed
+    const primaryId = neighborhoodIds[0];
+    const primaryHood = neighborhoodsWithCombo.find((n: any) => n.id === primaryId);
+    if (primaryHood) {
+      const { data: briefData } = await supabase
+        .from('neighborhood_briefs')
+        .select('id, headline, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
+        .eq('neighborhood_id', primaryId)
+        .gt('expires_at', now)
+        .order('generated_at', { ascending: false })
+        .limit(1)
+        .single();
+      if (briefData) {
+        multiBrief = { ...briefData, neighborhood: primaryHood };
+      }
+    }
   }
 
   return (
@@ -242,9 +241,9 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
             <NeighborhoodFeed
               items={feedItems}
               city={singleNeighborhood.city}
-              citySlug={getCitySlug(singleNeighborhood.id)}
+              citySlug={getCitySlugFromId(singleNeighborhood.id)}
               neighborhoodName={singleNeighborhood.name}
-              neighborhoodSlug={getNeighborhoodSlug(singleNeighborhood.id)}
+              neighborhoodSlug={getNeighborhoodSlugFromId(singleNeighborhood.id)}
               neighborhoodId={singleNeighborhood.id}
               defaultView="compact"
             />
@@ -272,6 +271,20 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               neighborhoods={neighborhoodsWithCombo || []}
               defaultView="compact"
               reminder={<MagicLinkReminder />}
+              dailyBrief={multiBrief ? (
+                <NeighborhoodBrief
+                  headline={multiBrief.headline}
+                  content={multiBrief.content}
+                  generatedAt={multiBrief.generated_at}
+                  neighborhoodName={multiBrief.neighborhood.name}
+                  neighborhoodId={multiBrief.neighborhood.id}
+                  city={multiBrief.neighborhood.city}
+                  sources={multiBrief.sources || []}
+                  enrichedContent={multiBrief.enriched_content || undefined}
+                  enrichedCategories={multiBrief.enriched_categories || undefined}
+                  enrichedAt={multiBrief.enriched_at || undefined}
+                />
+              ) : undefined}
             />
             {hasMoreArticles && neighborhoodIds.length > 0 && (
               <MultiLoadMoreButton

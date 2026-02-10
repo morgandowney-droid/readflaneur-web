@@ -18,6 +18,7 @@ interface NeighborhoodFeedProps {
   neighborhoodSlug: string;
   neighborhoodId: string;
   defaultView?: FeedView;
+  mode?: 'single' | 'all';
   comboInfo?: ComboInfo | null;
   briefArchive?: ReactNode;
   dailyBrief?: ReactNode;
@@ -35,6 +36,7 @@ export function NeighborhoodFeed({
   neighborhoodSlug,
   neighborhoodId,
   defaultView = 'compact',
+  mode = 'single',
   comboInfo,
   briefArchive,
   dailyBrief,
@@ -74,6 +76,7 @@ export function NeighborhoodFeed({
     <div>
       <BackToTopButton showAfter={400} />
       <NeighborhoodHeader
+        mode={mode}
         city={city}
         citySlug={citySlug}
         neighborhoodName={neighborhoodName}

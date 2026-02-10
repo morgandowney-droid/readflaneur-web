@@ -1,33 +1,14 @@
 'use client';
 
 import { useState, useEffect, ReactNode } from 'react';
-import Link from 'next/link';
 import { FeedItem } from '@/types';
 import { FeedList } from './FeedList';
 import { ViewToggle, FeedView } from './ViewToggle';
 import { BackToTopButton } from './BackToTopButton';
+import { NeighborhoodHeader } from './NeighborhoodHeader';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 
 const VIEW_PREF_KEY = 'flaneur-feed-view';
-
-// Map neighborhood prefix to city slug for URLs
-const prefixToCitySlug: Record<string, string> = {
-  'nyc': 'new-york',
-  'sf': 'san-francisco',
-  'london': 'london',
-  'sydney': 'sydney',
-  'stockholm': 'stockholm',
-};
-
-function getCitySlug(neighborhoodId: string): string {
-  const prefix = neighborhoodId.split('-')[0];
-  return prefixToCitySlug[prefix] || prefix;
-}
-
-function getNeighborhoodSlug(neighborhoodId: string): string {
-  const parts = neighborhoodId.split('-');
-  return parts.slice(1).join('-');
-}
 
 interface Neighborhood {
   id: string;
@@ -42,6 +23,7 @@ interface MultiFeedProps {
   neighborhoods: Neighborhood[];
   defaultView?: FeedView;
   reminder?: ReactNode;
+  dailyBrief?: ReactNode;
 }
 
 export function MultiFeed({
@@ -49,6 +31,7 @@ export function MultiFeed({
   neighborhoods,
   defaultView = 'compact',
   reminder,
+  dailyBrief,
 }: MultiFeedProps) {
   const [view, setView] = useState<FeedView>(defaultView);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -93,6 +76,18 @@ export function MultiFeed({
   return (
     <div>
       <BackToTopButton showAfter={400} />
+
+      {/* ── MASTHEAD + CONTROL DECK ── */}
+      <NeighborhoodHeader
+        mode="all"
+        city=""
+        citySlug=""
+        neighborhoodName="My Neighborhoods"
+        neighborhoodSlug=""
+        neighborhoodId=""
+        viewToggle={viewToggle}
+        neighborhoodCount={neighborhoods.length}
+      />
 
       {/* ── PILL BAR ── */}
       {isMultiple && (
@@ -150,17 +145,21 @@ export function MultiFeed({
         </div>
       )}
 
-      {/* ── HEADER ── */}
-      <div className="flex items-center justify-between py-4">
-        <div>
-          {isEmpty && (
-            <p className="text-sm text-neutral-500">
-              Select neighborhoods to see local stories
-            </p>
-          )}
+      {/* ── DAILY BRIEF ── */}
+      {dailyBrief && (
+        <div className="mt-8 mb-12">
+          {dailyBrief}
         </div>
-        {viewToggle}
-      </div>
+      )}
+
+      {/* ── EMPTY STATE ── */}
+      {isEmpty && (
+        <div className="py-4">
+          <p className="text-sm text-neutral-500">
+            Select neighborhoods to see local stories
+          </p>
+        </div>
+      )}
 
       {reminder}
       <FeedList items={filteredItems} view={currentView} />
