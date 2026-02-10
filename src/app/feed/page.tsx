@@ -107,7 +107,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   // Get full neighborhood data for display (including combo info)
   const { data: neighborhoodsRaw } = await supabase
     .from('neighborhoods')
-    .select('id, name, city, is_combo, timezone, country')
+    .select('id, name, city, is_combo, timezone, country, latitude, longitude')
     .in('id', neighborhoodIds);
 
   // Fetch combo component names for combo neighborhoods

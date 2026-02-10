@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, ReactNode } from 'react';
-import { FeedItem, Article } from '@/types';
+import { FeedItem, Article, Ad } from '@/types';
 import { FeedList } from './FeedList';
 import { ViewToggle, FeedView } from './ViewToggle';
 import { BackToTopButton } from './BackToTopButton';
 import { NeighborhoodHeader } from './NeighborhoodHeader';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
-import { createClient } from '@/lib/supabase/client';
+import { injectAds } from '@/lib/ad-engine';
 import { NeighborhoodBrief, NeighborhoodBriefSkeleton } from './NeighborhoodBrief';
 
 const VIEW_PREF_KEY = 'flaneur-feed-view';
@@ -20,6 +20,8 @@ interface Neighborhood {
   combo_component_names?: string[];
   timezone?: string;
   country?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface MultiFeedProps {
@@ -95,7 +97,7 @@ export function MultiFeed({
     setIsHydrated(true);
   }, []);
 
-  // Fetch brief for filtered neighborhood
+  // Fetch brief for filtered neighborhood (REST API - bypasses Supabase client issues)
   useEffect(() => {
     if (activeFilter === null) {
       setFetchedBrief(null);
@@ -108,43 +110,46 @@ export function MultiFeed({
     setFetchedBrief(null);
 
     const hood = neighborhoods.find(n => n.id === activeFilter);
-
-    const supabase = createClient();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
     const now = new Date().toISOString();
-    Promise.resolve(
-      supabase
-        .from('neighborhood_briefs')
-        .select('id, headline, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
-        .eq('neighborhood_id', activeFilter)
-        .gt('expires_at', now)
-        .order('generated_at', { ascending: false })
-        .limit(1)
-        .single()
-    ).then(({ data }) => {
-      if (cancelled) return;
-      if (data) {
-        setFetchedBrief({
-          headline: data.headline,
-          content: data.content,
-          generated_at: data.generated_at,
-          sources: data.sources || [],
-          enriched_content: data.enriched_content || undefined,
-          enriched_categories: data.enriched_categories || undefined,
-          enriched_at: data.enriched_at || undefined,
-          neighborhoodName: hood?.name || '',
-          neighborhoodId: activeFilter,
-          city: hood?.city || '',
-        });
-      }
-      setBriefLoading(false);
-    }).then(null, () => {
-      if (!cancelled) setBriefLoading(false);
-    });
+
+    const url = `${supabaseUrl}/rest/v1/neighborhood_briefs?select=id,headline,content,generated_at,sources,enriched_content,enriched_categories,enriched_at&neighborhood_id=eq.${encodeURIComponent(activeFilter)}&expires_at=gt.${encodeURIComponent(now)}&order=generated_at.desc&limit=1`;
+
+    fetch(url, {
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (cancelled) return;
+        const brief = Array.isArray(data) && data.length > 0 ? data[0] : null;
+        if (brief) {
+          setFetchedBrief({
+            headline: brief.headline,
+            content: brief.content,
+            generated_at: brief.generated_at,
+            sources: brief.sources || [],
+            enriched_content: brief.enriched_content || undefined,
+            enriched_categories: brief.enriched_categories || undefined,
+            enriched_at: brief.enriched_at || undefined,
+            neighborhoodName: hood?.name || '',
+            neighborhoodId: activeFilter,
+            city: hood?.city || '',
+          });
+        }
+        setBriefLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) setBriefLoading(false);
+      });
 
     return () => { cancelled = true; };
   }, [activeFilter, neighborhoods]);
 
-  // Fetch articles for filtered neighborhood (client-side via REST API)
+  // Fetch articles + ads for filtered neighborhood (client-side via REST API)
   useEffect(() => {
     if (activeFilter === null) {
       setFetchedArticles(null);
@@ -159,22 +164,28 @@ export function MultiFeed({
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    const url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city)&status=eq.published&neighborhood_id=eq.${encodeURIComponent(activeFilter)}&order=published_at.desc.nullsfirst&limit=20`;
+    const headers = {
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${supabaseKey}`,
+    };
 
-    fetch(url, {
-      headers: {
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`,
-      },
-    })
-      .then(res => res.json())
-      .then(data => {
+    const articlesUrl = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city)&status=eq.published&neighborhood_id=eq.${encodeURIComponent(activeFilter)}&order=published_at.desc.nullsfirst&limit=20`;
+    const adsUrl = `${supabaseUrl}/rest/v1/ads?select=*&or=(is_global.eq.true,neighborhood_id.eq.${encodeURIComponent(activeFilter)})`;
+
+    Promise.all([
+      fetch(articlesUrl, { headers }).then(r => r.json()),
+      fetch(adsUrl, { headers }).then(r => r.json()),
+    ])
+      .then(([articlesData, adsData]) => {
         if (cancelled) return;
-        if (Array.isArray(data) && data.length > 0) {
-          setFetchedArticles(data.map((article: any) => ({ type: 'article' as const, data: article as Article })));
-          setHasMoreFiltered(data.length >= 20);
+        const articles = Array.isArray(articlesData) ? articlesData : [];
+        const ads = Array.isArray(adsData) ? adsData : [];
+
+        if (articles.length > 0) {
+          const feedItems = injectAds(articles as Article[], ads as Ad[], [activeFilter]);
+          setFetchedArticles(feedItems);
+          setHasMoreFiltered(articles.length >= 20);
         } else {
-          console.warn('No articles returned for', activeFilter, data);
           setFetchedArticles([]);
           setHasMoreFiltered(false);
         }
@@ -220,10 +231,11 @@ export function MultiFeed({
     if (!activeFilter || !fetchedArticles) return;
     setMoreLoading(true);
     try {
-      const currentCount = fetchedArticles.filter(i => i.type === 'article').length;
+      // Count only articles (not injected ads) for the offset
+      const articleCount = fetchedArticles.filter(i => i.type === 'article').length;
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-      const url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city)&status=eq.published&neighborhood_id=eq.${encodeURIComponent(activeFilter)}&order=published_at.desc.nullsfirst&offset=${currentCount}&limit=20`;
+      const url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city)&status=eq.published&neighborhood_id=eq.${encodeURIComponent(activeFilter)}&order=published_at.desc.nullsfirst&offset=${articleCount}&limit=20`;
 
       const res = await fetch(url, {
         headers: {
@@ -234,7 +246,7 @@ export function MultiFeed({
       const data = await res.json();
 
       if (Array.isArray(data) && data.length > 0) {
-        const newItems = data.map((article: any) => ({ type: 'article' as const, data: article as Article }));
+        const newItems: FeedItem[] = data.map((article: any) => ({ type: 'article' as const, data: article as Article }));
         setFetchedArticles(prev => [...(prev || []), ...newItems]);
         if (data.length < 20) setHasMoreFiltered(false);
       } else {
@@ -253,7 +265,7 @@ export function MultiFeed({
 
       {/* ── MASTHEAD + CONTROL DECK ── */}
       <NeighborhoodHeader
-        mode={activeHood ? 'single' : 'all'}
+        mode="all"
         city={activeHood?.city || ''}
         citySlug=""
         neighborhoodName={activeHood?.name || 'My Neighborhoods'}
@@ -263,6 +275,8 @@ export function MultiFeed({
         neighborhoodCount={activeHood ? undefined : neighborhoods.length}
         timezone={activeHood?.timezone}
         country={activeHood?.country}
+        latitude={activeHood?.latitude}
+        longitude={activeHood?.longitude}
       />
 
       {/* ── PILL BAR ── */}

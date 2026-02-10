@@ -75,46 +75,73 @@ export function NeighborhoodHeader({
     <header className="mb-6">
       {/* ── MASTHEAD ── */}
       <div className="text-center pt-8">
-        {/* City label - hidden in all mode */}
-        {!isAll && (
-          <p className="text-[11px] tracking-[0.3em] uppercase text-neutral-400 mb-2">
-            {city}
-          </p>
-        )}
-
-        {/* Heading */}
-        <h1 className="font-display text-4xl md:text-5xl text-neutral-100 tracking-wide mb-3">
-          {isAll ? 'My Neighborhoods' : neighborhoodName}
-        </h1>
-
-        {/* Subtitle */}
         {isAll ? (
-          <p className="text-sm text-neutral-500 mb-3">
-            Your curated feed from {neighborhoodCount ?? 0} locations
-          </p>
-        ) : (
-          isCombo && (
-            <p className="font-serif italic text-base text-neutral-500 mb-3">
-              Covering {joinWithAnd(componentNames)}
+          <>
+            {/* City label - always rendered for consistent height */}
+            <p className={`text-[11px] tracking-[0.3em] uppercase text-neutral-400 mb-2 h-4 ${city ? '' : 'opacity-0'}`}>
+              {city || '\u00A0'}
             </p>
-          )
-        )}
 
-        {/* Live local time + weather - only in single mode */}
-        {!isAll && timezone && (
-          <div className="mb-8">
-            <NeighborhoodLiveStatus
-              timezone={timezone}
-              country={country}
-              latitude={latitude}
-              longitude={longitude}
-              neighborhoodName={neighborhoodName}
-              city={city}
-            />
-          </div>
+            {/* Heading */}
+            <h1 className="font-display text-4xl md:text-5xl text-neutral-100 tracking-wide mb-3">
+              {neighborhoodName}
+            </h1>
+
+            {/* Subtitle - always rendered for consistent height */}
+            <p className={`text-sm text-neutral-500 mb-3 h-5 ${neighborhoodCount !== undefined ? '' : 'opacity-0'}`}>
+              {neighborhoodCount !== undefined ? `Your curated feed from ${neighborhoodCount} locations` : '\u00A0'}
+            </p>
+
+            {/* Live status - always rendered container for consistent height */}
+            <div className="mb-8 h-5">
+              {timezone && (
+                <NeighborhoodLiveStatus
+                  timezone={timezone}
+                  country={country}
+                  latitude={latitude}
+                  longitude={longitude}
+                  neighborhoodName={neighborhoodName}
+                  city={city}
+                />
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* City label */}
+            <p className="text-[11px] tracking-[0.3em] uppercase text-neutral-400 mb-2">
+              {city}
+            </p>
+
+            {/* Heading */}
+            <h1 className="font-display text-4xl md:text-5xl text-neutral-100 tracking-wide mb-3">
+              {neighborhoodName}
+            </h1>
+
+            {/* Combo subtitle */}
+            {isCombo && (
+              <p className="font-serif italic text-base text-neutral-500 mb-3">
+                Covering {joinWithAnd(componentNames)}
+              </p>
+            )}
+
+            {/* Live local time + weather */}
+            {timezone ? (
+              <div className="mb-8">
+                <NeighborhoodLiveStatus
+                  timezone={timezone}
+                  country={country}
+                  latitude={latitude}
+                  longitude={longitude}
+                  neighborhoodName={neighborhoodName}
+                  city={city}
+                />
+              </div>
+            ) : (
+              <div className="mb-8" />
+            )}
+          </>
         )}
-        {!isAll && !timezone && <div className="mb-8" />}
-        {isAll && <div className="mb-8" />}
       </div>
 
       {/* ── CONTROL DECK (CSS Grid for true centering) ── */}
