@@ -207,6 +207,7 @@ function GlobalNeighborhoodModal({
   const [hasInitialized, setHasInitialized] = useState(false);
 
   // Suggestion feature state
+  const [confirmClear, setConfirmClear] = useState(false);
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [suggestionText, setSuggestionText] = useState('');
   const [suggestionStatus, setSuggestionStatus] = useState<'idle' | 'success'>('idle');
@@ -262,6 +263,11 @@ function GlobalNeighborhoodModal({
       { timeout: 5000 }
     );
   };
+
+  // Reset confirm state when modal opens
+  useEffect(() => {
+    if (isOpen) setConfirmClear(false);
+  }, [isOpen]);
 
   // Use prefetched data if available, otherwise fetch on open
   useEffect(() => {
@@ -518,6 +524,7 @@ function GlobalNeighborhoodModal({
   };
 
   const clearAll = async () => {
+    setConfirmClear(false);
     setSelected(new Set());
     if (userId) {
       const supabase = createClient();
@@ -808,12 +815,30 @@ function GlobalNeighborhoodModal({
         <div className="px-6 py-4 border-t border-white/10 bg-neutral-900/80 backdrop-blur-sm flex items-center justify-between">
           <div className="text-sm text-neutral-500">
             {selected.size > 0 ? (
-              <button
-                onClick={clearAll}
-                className="text-neutral-500 hover:text-white transition-colors"
-              >
-                Clear all
-              </button>
+              confirmClear ? (
+                <span className="flex items-center gap-2">
+                  <span className="text-neutral-400">Are you sure?</span>
+                  <button
+                    onClick={() => { clearAll(); setConfirmClear(false); }}
+                    className="text-red-400 hover:text-red-300 font-medium transition-colors"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    onClick={() => setConfirmClear(false)}
+                    className="text-neutral-500 hover:text-white transition-colors"
+                  >
+                    No
+                  </button>
+                </span>
+              ) : (
+                <button
+                  onClick={() => setConfirmClear(true)}
+                  className="text-neutral-500 hover:text-white transition-colors"
+                >
+                  Clear all
+                </button>
+              )
             ) : (
               'Select at least one neighborhood'
             )}
