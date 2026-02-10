@@ -53,6 +53,8 @@ export function MultiFeed({
   const [briefLoading, setBriefLoading] = useState(false);
   const [fetchedArticles, setFetchedArticles] = useState<FeedItem[] | null>(null);
   const [articlesLoading, setArticlesLoading] = useState(false);
+  const [moreLoading, setMoreLoading] = useState(false);
+  const [hasMoreFiltered, setHasMoreFiltered] = useState(true);
   const { openModal } = useNeighborhoodModal();
 
   // Pill bar scroll state
@@ -151,35 +153,35 @@ export function MultiFeed({
     let cancelled = false;
     setArticlesLoading(true);
     setFetchedArticles(null);
+    setHasMoreFiltered(true);
 
-    const supabase = createClient();
-    Promise.resolve(
-      supabase
-        .from('articles')
-        .select('*, neighborhood:neighborhoods(id, name, city)')
-        .eq('status', 'published')
-        .eq('neighborhood_id', activeFilter)
-        .order('published_at', { ascending: false, nullsFirst: false })
-        .limit(20)
-    ).then(({ data }) => {
-      if (cancelled) return;
-      if (data && data.length > 0) {
-        // Build feed items with ads every 3 articles
-        const feedItems: FeedItem[] = [];
-        (data as Article[]).forEach((article) => {
-          feedItems.push({ type: 'article', data: article });
-        });
-        setFetchedArticles(feedItems);
-      } else {
-        setFetchedArticles([]);
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('articles')
+          .select('*, neighborhood:neighborhoods(id, name, city)')
+          .eq('status', 'published')
+          .eq('neighborhood_id', activeFilter)
+          .order('published_at', { ascending: false, nullsFirst: false })
+          .limit(20);
+
+        if (cancelled) return;
+        if (error) {
+          console.error('Error fetching articles for', activeFilter, error);
+          setFetchedArticles([]);
+        } else if (data && data.length > 0) {
+          setFetchedArticles(data.map((article: any) => ({ type: 'article' as const, data: article as Article })));
+        } else {
+          setFetchedArticles([]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch articles:', err);
+        if (!cancelled) setFetchedArticles([]);
+      } finally {
+        if (!cancelled) setArticlesLoading(false);
       }
-      setArticlesLoading(false);
-    }).then(null, () => {
-      if (!cancelled) {
-        setFetchedArticles([]);
-        setArticlesLoading(false);
-      }
-    });
+    })();
 
     return () => { cancelled = true; };
   }, [activeFilter]);
@@ -206,20 +208,53 @@ export function MultiFeed({
     ? (fetchedArticles || [])
     : items;
 
+  // Get active neighborhood info for header
+  const activeHood = activeFilter ? neighborhoods.find(n => n.id === activeFilter) : null;
+
+  const loadMoreFiltered = async () => {
+    if (!activeFilter || !fetchedArticles) return;
+    setMoreLoading(true);
+    try {
+      const supabase = createClient();
+      const currentCount = fetchedArticles.filter(i => i.type === 'article').length;
+      const { data, error } = await supabase
+        .from('articles')
+        .select('*, neighborhood:neighborhoods(id, name, city)')
+        .eq('status', 'published')
+        .eq('neighborhood_id', activeFilter)
+        .order('published_at', { ascending: false, nullsFirst: false })
+        .range(currentCount, currentCount + 19);
+
+      if (error) {
+        console.error('Error loading more:', error);
+      } else if (data && data.length > 0) {
+        const newItems = data.map((article: any) => ({ type: 'article' as const, data: article as Article }));
+        setFetchedArticles(prev => [...(prev || []), ...newItems]);
+        if (data.length < 20) setHasMoreFiltered(false);
+      } else {
+        setHasMoreFiltered(false);
+      }
+    } catch (err) {
+      console.error('Failed to load more:', err);
+    } finally {
+      setMoreLoading(false);
+    }
+  };
+
   return (
     <div>
       <BackToTopButton showAfter={400} />
 
       {/* ── MASTHEAD + CONTROL DECK ── */}
       <NeighborhoodHeader
-        mode="all"
-        city=""
+        mode={activeHood ? 'single' : 'all'}
+        city={activeHood?.city || ''}
         citySlug=""
-        neighborhoodName="My Neighborhoods"
+        neighborhoodName={activeHood?.name || 'My Neighborhoods'}
         neighborhoodSlug=""
-        neighborhoodId=""
+        neighborhoodId={activeHood?.id || ''}
         viewToggle={viewToggle}
-        neighborhoodCount={neighborhoods.length}
+        neighborhoodCount={activeHood ? undefined : neighborhoods.length}
       />
 
       {/* ── PILL BAR ── */}
@@ -356,6 +391,19 @@ export function MultiFeed({
         </div>
       ) : (
         <FeedList items={filteredItems} view={currentView} />
+      )}
+
+      {/* Load More for filtered view */}
+      {activeFilter && fetchedArticles && fetchedArticles.length > 0 && hasMoreFiltered && (
+        <div className="mt-4">
+          <button
+            onClick={loadMoreFiltered}
+            disabled={moreLoading}
+            className="w-full py-3 text-sm tracking-wide uppercase text-neutral-500 hover:text-white border border-white/[0.08] hover:border-white/20 transition-colors disabled:opacity-50"
+          >
+            {moreLoading ? 'Loading...' : 'Load More Stories'}
+          </button>
+        </div>
       )}
     </div>
   );
