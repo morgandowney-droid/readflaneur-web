@@ -214,17 +214,22 @@ export function MultiFeed({
   // Drag-to-reorder state
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const didDragRef = useRef(false);
 
-  const handleDragStart = (index: number) => {
+  const handleDragStart = (e: React.DragEvent, index: number) => {
     setDragIndex(index);
+    didDragRef.current = true;
+    e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
     setOverIndex(index);
   };
 
-  const handleDrop = (targetIndex: number) => {
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
     if (dragIndex === null || dragIndex === targetIndex) {
       setDragIndex(null);
       setOverIndex(null);
@@ -249,6 +254,8 @@ export function MultiFeed({
   const handleDragEnd = () => {
     setDragIndex(null);
     setOverIndex(null);
+    // Reset drag flag after a tick so onClick can check it
+    setTimeout(() => { didDragRef.current = false; }, 0);
   };
 
   const currentView = isHydrated ? view : defaultView;
@@ -334,11 +341,11 @@ export function MultiFeed({
                 <button
                   key={hood.id}
                   draggable
-                  onDragStart={() => handleDragStart(i)}
+                  onDragStart={(e) => handleDragStart(e, i)}
                   onDragOver={(e) => handleDragOver(e, i)}
-                  onDrop={() => handleDrop(i)}
+                  onDrop={(e) => handleDrop(e, i)}
                   onDragEnd={handleDragEnd}
-                  onClick={() => setActiveFilter(activeFilter === hood.id ? null : hood.id)}
+                  onClick={() => { if (didDragRef.current) return; setActiveFilter(activeFilter === hood.id ? null : hood.id); }}
                   className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors flex items-center gap-1.5 cursor-grab active:cursor-grabbing ${
                     dragIndex === i ? 'opacity-50' : ''
                   } ${
