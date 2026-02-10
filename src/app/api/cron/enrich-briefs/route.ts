@@ -12,7 +12,7 @@ import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
  * Schedule: 15,45 * * * * (every 30 minutes)
  *
  * Time budget: 280s max (leaves 20s buffer before 300s maxDuration)
- * Phase 1 (briefs): up to 120s
+ * Phase 1 (briefs): up to 200s
  * Phase 2 (articles): remaining budget
  */
 
@@ -20,7 +20,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const TIME_BUDGET_MS = 280_000; // 280s — leave 20s for logging + response
-const PHASE1_BUDGET_MS = 120_000; // 120s max for briefs
+const PHASE1_BUDGET_MS = 200_000; // 200s max for briefs
 
 export async function GET(request: Request) {
   const functionStart = Date.now();
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const testBriefId = url.searchParams.get('test');
   const testArticleId = url.searchParams.get('test-article');
-  const batchSize = parseInt(url.searchParams.get('batch') || '30');
+  const batchSize = parseInt(url.searchParams.get('batch') || '50');
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -81,8 +81,8 @@ export async function GET(request: Request) {
       // Find briefs that need enrichment:
       // - Generated in the last 2 hours (recent)
       // - Don't have enriched_content yet
-      const twoHoursAgo = new Date();
-      twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
+      const lookbackWindow = new Date();
+      lookbackWindow.setHours(lookbackWindow.getHours() - 26);
 
       let query = supabase
         .from('neighborhood_briefs')
@@ -100,7 +100,7 @@ export async function GET(request: Request) {
           )
         `)
         .is('enriched_content', null)
-        .gt('generated_at', twoHoursAgo.toISOString())
+        .gt('generated_at', lookbackWindow.toISOString())
         .order('generated_at', { ascending: false })
         .limit(batchSize);
 
@@ -184,7 +184,7 @@ export async function GET(request: Request) {
           console.log(`Successfully enriched brief for ${hood.name}`);
 
           // Rate limiting - avoid hitting Gemini API limits
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise(resolve => setTimeout(resolve, 1000));
 
         } catch (err) {
           results.briefs_failed++;
