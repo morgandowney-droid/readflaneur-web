@@ -18,6 +18,8 @@ interface Neighborhood {
   city: string;
   is_combo?: boolean;
   combo_component_names?: string[];
+  timezone?: string;
+  country?: string;
 }
 
 interface MultiFeedProps {
@@ -142,7 +144,7 @@ export function MultiFeed({
     return () => { cancelled = true; };
   }, [activeFilter, neighborhoods]);
 
-  // Fetch articles for filtered neighborhood (client-side)
+  // Fetch articles for filtered neighborhood (client-side via REST API)
   useEffect(() => {
     if (activeFilter === null) {
       setFetchedArticles(null);
@@ -155,33 +157,36 @@ export function MultiFeed({
     setFetchedArticles(null);
     setHasMoreFiltered(true);
 
-    (async () => {
-      try {
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .from('articles')
-          .select('*, neighborhood:neighborhoods(id, name, city)')
-          .eq('status', 'published')
-          .eq('neighborhood_id', activeFilter)
-          .order('published_at', { ascending: false, nullsFirst: false })
-          .limit(20);
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city)&status=eq.published&neighborhood_id=eq.${encodeURIComponent(activeFilter)}&order=published_at.desc.nullsfirst&limit=20`;
 
+    fetch(url, {
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
         if (cancelled) return;
-        if (error) {
-          console.error('Error fetching articles for', activeFilter, error);
-          setFetchedArticles([]);
-        } else if (data && data.length > 0) {
+        if (Array.isArray(data) && data.length > 0) {
           setFetchedArticles(data.map((article: any) => ({ type: 'article' as const, data: article as Article })));
+          setHasMoreFiltered(data.length >= 20);
         } else {
+          console.warn('No articles returned for', activeFilter, data);
           setFetchedArticles([]);
+          setHasMoreFiltered(false);
         }
-      } catch (err) {
+        setArticlesLoading(false);
+      })
+      .catch(err => {
         console.error('Failed to fetch articles:', err);
-        if (!cancelled) setFetchedArticles([]);
-      } finally {
-        if (!cancelled) setArticlesLoading(false);
-      }
-    })();
+        if (!cancelled) {
+          setFetchedArticles([]);
+          setArticlesLoading(false);
+        }
+      });
 
     return () => { cancelled = true; };
   }, [activeFilter]);
@@ -215,19 +220,20 @@ export function MultiFeed({
     if (!activeFilter || !fetchedArticles) return;
     setMoreLoading(true);
     try {
-      const supabase = createClient();
       const currentCount = fetchedArticles.filter(i => i.type === 'article').length;
-      const { data, error } = await supabase
-        .from('articles')
-        .select('*, neighborhood:neighborhoods(id, name, city)')
-        .eq('status', 'published')
-        .eq('neighborhood_id', activeFilter)
-        .order('published_at', { ascending: false, nullsFirst: false })
-        .range(currentCount, currentCount + 19);
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+      const url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city)&status=eq.published&neighborhood_id=eq.${encodeURIComponent(activeFilter)}&order=published_at.desc.nullsfirst&offset=${currentCount}&limit=20`;
 
-      if (error) {
-        console.error('Error loading more:', error);
-      } else if (data && data.length > 0) {
+      const res = await fetch(url, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+      });
+      const data = await res.json();
+
+      if (Array.isArray(data) && data.length > 0) {
         const newItems = data.map((article: any) => ({ type: 'article' as const, data: article as Article }));
         setFetchedArticles(prev => [...(prev || []), ...newItems]);
         if (data.length < 20) setHasMoreFiltered(false);
@@ -255,6 +261,8 @@ export function MultiFeed({
         neighborhoodId={activeHood?.id || ''}
         viewToggle={viewToggle}
         neighborhoodCount={activeHood ? undefined : neighborhoods.length}
+        timezone={activeHood?.timezone}
+        country={activeHood?.country}
       />
 
       {/* ── PILL BAR ── */}
