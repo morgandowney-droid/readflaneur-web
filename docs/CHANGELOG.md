@@ -8,11 +8,13 @@
 **NeighborhoodLiveStatus Component:**
 - New `NeighborhoodLiveStatus` component in masthead showing local time + current weather
 - Typography: `font-mono text-sm tracking-widest text-amber-500/90` (terminal chic)
-- Format: `16:30 -- 12°C Overcast` (24h + Celsius) or `4:30 PM -- 54°F Clear` (12h + Fahrenheit for US)
+- Format: `16:30 | 12°C Overcast` (24h + Celsius) or `4:30 PM | 54°F Clear` (12h + Fahrenheit for US)
+- Pipe `|` separator instead of em dash (avoids confusion with negative temperatures)
+- Clickable: entire line links to Google search for `{neighborhood} {city} weather` (new tab)
 - Animated colon: custom `animate-pulse-slow` keyframe (2s ease-in-out, opacity 1→0.4→1)
 - Weather fetched client-side from Open-Meteo free API (no auth), AbortController cleanup, silent fail
 - Time updates every 10s via `Intl.DateTimeFormat` with neighborhood timezone
-- Props threaded: `timezone`, `country`, `latitude`, `longitude` from page.tsx → NeighborhoodFeed → NeighborhoodHeader
+- Props: `timezone`, `country`, `latitude`, `longitude`, `neighborhoodName`, `city`
 - SSR safe: returns null until client hydration
 
 **UI Polish & Cleanup:**
