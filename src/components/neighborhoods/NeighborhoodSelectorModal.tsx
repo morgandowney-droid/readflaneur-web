@@ -648,7 +648,7 @@ function GlobalNeighborhoodModal({
         className="absolute inset-x-0 top-2 bottom-0 sm:inset-8 md:inset-12 lg:inset-y-12 lg:inset-x-24 xl:inset-y-16 xl:inset-x-32 bg-neutral-900/90 backdrop-blur-md border border-white/10 rounded-t-xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col animate-modal-slide-up"
       >
         {/* Modal Header */}
-        <div className="px-6 py-5 border-b border-white/10">
+        <div className="flex-shrink-0 px-6 py-5 border-b border-white/10">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-display text-2xl font-light tracking-wide text-white">
@@ -936,7 +936,7 @@ function GlobalNeighborhoodModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-white/10 bg-neutral-900/80 backdrop-blur-sm flex items-center justify-between">
+        <div className="flex-shrink-0 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-white/10 bg-neutral-900/80 backdrop-blur-sm flex items-center justify-between">
           <div className="text-sm text-neutral-500">
             {selected.size > 0 ? (
               confirmClear ? (
