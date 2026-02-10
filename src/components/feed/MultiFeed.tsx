@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, ReactNode } from 'react';
-import { FeedItem } from '@/types';
+import { FeedItem, Article } from '@/types';
 import { FeedList } from './FeedList';
 import { ViewToggle, FeedView } from './ViewToggle';
 import { BackToTopButton } from './BackToTopButton';
@@ -51,6 +51,8 @@ export function MultiFeed({
     city: string;
   } | null>(null);
   const [briefLoading, setBriefLoading] = useState(false);
+  const [fetchedArticles, setFetchedArticles] = useState<FeedItem[] | null>(null);
+  const [articlesLoading, setArticlesLoading] = useState(false);
   const { openModal } = useNeighborhoodModal();
 
   // Pill bar scroll state
@@ -138,6 +140,50 @@ export function MultiFeed({
     return () => { cancelled = true; };
   }, [activeFilter, neighborhoods]);
 
+  // Fetch articles for filtered neighborhood (client-side)
+  useEffect(() => {
+    if (activeFilter === null) {
+      setFetchedArticles(null);
+      setArticlesLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setArticlesLoading(true);
+    setFetchedArticles(null);
+
+    const supabase = createClient();
+    Promise.resolve(
+      supabase
+        .from('articles')
+        .select('*, neighborhood:neighborhoods(id, name, city)')
+        .eq('status', 'published')
+        .eq('neighborhood_id', activeFilter)
+        .order('published_at', { ascending: false, nullsFirst: false })
+        .limit(20)
+    ).then(({ data }) => {
+      if (cancelled) return;
+      if (data && data.length > 0) {
+        // Build feed items with ads every 3 articles
+        const feedItems: FeedItem[] = [];
+        (data as Article[]).forEach((article) => {
+          feedItems.push({ type: 'article', data: article });
+        });
+        setFetchedArticles(feedItems);
+      } else {
+        setFetchedArticles([]);
+      }
+      setArticlesLoading(false);
+    }).then(null, () => {
+      if (!cancelled) {
+        setFetchedArticles([]);
+        setArticlesLoading(false);
+      }
+    });
+
+    return () => { cancelled = true; };
+  }, [activeFilter]);
+
   const handleViewChange = (newView: FeedView) => {
     setView(newView);
     localStorage.setItem(VIEW_PREF_KEY, newView);
@@ -155,14 +201,9 @@ export function MultiFeed({
   const isMultiple = neighborhoods.length > 1;
   const isEmpty = neighborhoods.length === 0;
 
-  // Filter items by active neighborhood
+  // Use client-fetched articles when a pill is active, otherwise show all server-rendered items
   const filteredItems = activeFilter
-    ? items.filter(item => {
-        if (item.type === 'article') {
-          return item.data.neighborhood_id === activeFilter;
-        }
-        return true; // Show ads regardless
-      })
+    ? (fetchedArticles || [])
     : items;
 
   return (
@@ -300,7 +341,22 @@ export function MultiFeed({
       )}
 
       {reminder}
-      <FeedList items={filteredItems} view={currentView} />
+      {activeFilter && articlesLoading ? (
+        <div className="space-y-4 py-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-4 bg-neutral-800 rounded w-3/4 mb-2" />
+              <div className="h-3 bg-neutral-800 rounded w-1/2" />
+            </div>
+          ))}
+        </div>
+      ) : activeFilter && fetchedArticles?.length === 0 ? (
+        <div className="py-8 text-center">
+          <p className="text-sm text-neutral-500">No articles yet for this neighborhood.</p>
+        </div>
+      ) : (
+        <FeedList items={filteredItems} view={currentView} />
+      )}
     </div>
   );
 }

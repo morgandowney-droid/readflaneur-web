@@ -2,7 +2,7 @@ import { Article, Ad, FeedItem, AdPlacement } from '@/types';
 
 // Ad frequency: show one ad every N articles
 // This constant is also referenced in the advertise pricing page
-export const AD_FREQUENCY = 6;
+export const AD_FREQUENCY = 3;
 
 interface InjectAdsOptions {
   sectionIds?: string[];

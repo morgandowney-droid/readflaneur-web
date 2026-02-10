@@ -181,7 +181,7 @@ export function MultiLoadMoreButton({
         <button
           onClick={loadMore}
           disabled={loading}
-          className="w-full py-3 text-sm tracking-wide uppercase text-neutral-500 hover:text-neutral-900 border border-neutral-200 hover:border-neutral-400 transition-colors disabled:opacity-50"
+          className="w-full py-3 text-sm tracking-wide uppercase text-neutral-500 hover:text-white border border-white/[0.08] hover:border-white/20 transition-colors disabled:opacity-50"
         >
           {loading ? 'Loading...' : 'Load More Stories'}
         </button>
