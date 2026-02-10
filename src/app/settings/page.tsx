@@ -200,9 +200,9 @@ export default function SettingsPage() {
 
       <h1 className="text-3xl font-light text-neutral-100 mb-8">Settings</h1>
 
-      {/* Primary Location Section */}
+      {/* Primary Timezone Section */}
       <section className="mb-12">
-        <h2 className="text-lg font-medium text-neutral-100 mb-4">Primary Location</h2>
+        <h2 className="text-lg font-medium text-neutral-100 mb-4">Primary Timezone</h2>
         <p className="text-sm text-neutral-400 mb-6">
           Set your primary city to receive local updates and newsletters timed to your timezone.
         </p>
