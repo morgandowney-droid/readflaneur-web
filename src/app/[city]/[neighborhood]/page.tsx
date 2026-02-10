@@ -7,6 +7,7 @@ import { injectAds } from '@/lib/ad-engine';
 import { Article, Ad } from '@/types';
 import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
 import { getNeighborhoodIdsForQuery, getComboInfo, getComboForComponent } from '@/lib/combo-utils';
+import { fetchCurrentWeather } from '@/lib/weather';
 
 const INITIAL_PAGE_SIZE = 10;
 
@@ -146,6 +147,11 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
     }
   }
 
+  // Fetch weather server-side for instant render
+  const initialWeather = neighborhoodData.latitude && neighborhoodData.longitude && neighborhoodData.timezone
+    ? await fetchCurrentWeather(neighborhoodData.latitude, neighborhoodData.longitude, neighborhoodData.timezone)
+    : null;
+
   // Inject ads into feed
   const feedItems = injectAds(
     (articles || []) as Article[],
@@ -190,6 +196,7 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
           country={neighborhoodData.country}
           latitude={neighborhoodData.latitude}
           longitude={neighborhoodData.longitude}
+          initialWeather={initialWeather || undefined}
           dailyBrief={!category && brief ? (
             <>
               {comboBriefAttribution && (

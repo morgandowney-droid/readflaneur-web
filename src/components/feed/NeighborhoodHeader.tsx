@@ -23,6 +23,8 @@ interface NeighborhoodHeaderProps {
   longitude?: number;
   neighborhoodCount?: number;
   hideControlDeck?: boolean;
+  comboComponentNames?: string[];
+  initialWeather?: { tempC: number; weatherCode: number };
 }
 
 /** Join names with commas and "and": ["A", "B", "C"] -> "A, B, and C" */
@@ -51,6 +53,8 @@ export function NeighborhoodHeader({
   longitude,
   neighborhoodCount,
   hideControlDeck,
+  comboComponentNames,
+  initialWeather,
 }: NeighborhoodHeaderProps) {
   const [openDropdown, setOpenDropdown] = useState<DropdownKey | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -89,6 +93,35 @@ export function NeighborhoodHeader({
               {neighborhoodName}
             </h1>
 
+            {/* Combo subtitle (when a specific combo neighborhood is active) */}
+            {comboComponentNames && comboComponentNames.length > 0 && (
+              <p className="font-serif italic text-base text-neutral-500 mb-3">
+                Covering {joinWithAnd(comboComponentNames)}
+              </p>
+            )}
+
+            {/* Maps & History links (only when a specific neighborhood pill is active) */}
+            {neighborhoodId && (
+              <p className="flex items-center justify-center gap-3 mb-3">
+                <a
+                  href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(neighborhoodId, neighborhoodName, city))}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-neutral-500 underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60 hover:text-neutral-300 transition-colors"
+                >
+                  Maps
+                </a>
+                <a
+                  href={getWikipediaUrl(neighborhoodId, neighborhoodName)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-neutral-500 underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60 hover:text-neutral-300 transition-colors"
+                >
+                  History
+                </a>
+              </p>
+            )}
+
             {/* Subtitle - always rendered for consistent height */}
             <p className={`text-sm text-neutral-500 mb-3 h-5 ${neighborhoodCount !== undefined ? '' : 'opacity-0'}`}>
               {neighborhoodCount !== undefined ? `Your curated feed from ${neighborhoodCount} locations` : '\u00A0'}
@@ -104,6 +137,7 @@ export function NeighborhoodHeader({
                   longitude={longitude}
                   neighborhoodName={neighborhoodName}
                   city={city}
+                  initialWeather={initialWeather}
                 />
               )}
             </div>
@@ -137,6 +171,7 @@ export function NeighborhoodHeader({
                   longitude={longitude}
                   neighborhoodName={neighborhoodName}
                   city={city}
+                  initialWeather={initialWeather}
                 />
               </div>
             ) : (

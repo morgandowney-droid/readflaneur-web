@@ -26,6 +26,7 @@ interface NeighborhoodFeedProps {
   country?: string;
   latitude?: number;
   longitude?: number;
+  initialWeather?: { tempC: number; weatherCode: number };
 }
 
 export function NeighborhoodFeed({
@@ -44,6 +45,7 @@ export function NeighborhoodFeed({
   country,
   latitude,
   longitude,
+  initialWeather,
 }: NeighborhoodFeedProps) {
   const [view, setView] = useState<FeedView>(defaultView);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -89,6 +91,7 @@ export function NeighborhoodFeed({
         country={country}
         latitude={latitude}
         longitude={longitude}
+        initialWeather={initialWeather}
       />
       {dailyBrief && (
         <div className="mt-4 mb-6">

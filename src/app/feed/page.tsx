@@ -9,6 +9,7 @@ import { MultiLoadMoreButton } from '@/components/feed/MultiLoadMoreButton';
 import { FeedItem, Article, Ad } from '@/types';
 import { injectAds } from '@/lib/ad-engine';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
+import { fetchCurrentWeather } from '@/lib/weather';
 
 export const dynamic = 'force-dynamic';
 
@@ -201,6 +202,12 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     }
   }
 
+  // Fetch weather for primary neighborhood (used in both single + multi mode)
+  const primaryHoodForWeather = singleNeighborhood || (multipleNeighborhoods ? neighborhoodsWithCombo[0] : null);
+  const initialWeather = primaryHoodForWeather?.latitude && primaryHoodForWeather?.longitude && primaryHoodForWeather?.timezone
+    ? await fetchCurrentWeather(primaryHoodForWeather.latitude, primaryHoodForWeather.longitude, primaryHoodForWeather.timezone)
+    : null;
+
   return (
     <div className="bg-canvas">
       <div className="mx-auto max-w-3xl px-4 py-6">
@@ -246,6 +253,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               neighborhoodSlug={getNeighborhoodSlugFromId(singleNeighborhood.id)}
               neighborhoodId={singleNeighborhood.id}
               defaultView="compact"
+              initialWeather={initialWeather || undefined}
             />
             {hasMoreArticles && (
               <LoadMoreButton
@@ -271,6 +279,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               neighborhoods={neighborhoodsWithCombo || []}
               defaultView="compact"
               reminder={<MagicLinkReminder />}
+              initialWeather={initialWeather || undefined}
               dailyBrief={multiBrief ? (
                 <NeighborhoodBrief
                   headline={multiBrief.headline}

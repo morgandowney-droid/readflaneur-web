@@ -9,6 +9,7 @@ interface NeighborhoodLiveStatusProps {
   longitude?: number;
   neighborhoodName: string;
   city: string;
+  initialWeather?: { tempC: number; weatherCode: number };
 }
 
 /** Countries that use 12-hour time and Fahrenheit */
@@ -79,10 +80,21 @@ export function NeighborhoodLiveStatus({
   longitude,
   neighborhoodName,
   city,
+  initialWeather,
 }: NeighborhoodLiveStatusProps) {
   const { use12Hour, useFahrenheit } = getLocalFormat(country);
   const [time, setTime] = useState<{ hours: string; minutes: string; period?: string } | null>(null);
-  const [weather, setWeather] = useState<WeatherState | null>(null);
+  const [weather, setWeather] = useState<WeatherState | null>(() => {
+    if (initialWeather) {
+      const tempC = initialWeather.tempC;
+      return {
+        tempC,
+        tempF: Math.round(tempC * 9 / 5 + 32),
+        description: WEATHER_DESCRIPTIONS[initialWeather.weatherCode] || 'Variable',
+      };
+    }
+    return null;
+  });
 
   // Update time every 10 seconds
   useEffect(() => {
@@ -93,8 +105,9 @@ export function NeighborhoodLiveStatus({
     return () => clearInterval(interval);
   }, [timezone, use12Hour]);
 
-  // Fetch weather once on mount
+  // Fetch weather once on mount (skip if server-side weather was provided)
   useEffect(() => {
+    if (initialWeather) return;
     if (!latitude || !longitude) return;
     const controller = new AbortController();
 
@@ -127,7 +140,7 @@ export function NeighborhoodLiveStatus({
     })();
 
     return () => controller.abort();
-  }, [latitude, longitude, timezone]);
+  }, [latitude, longitude, timezone, initialWeather]);
 
   // Don't render until client-side hydration completes
   if (!time) return null;

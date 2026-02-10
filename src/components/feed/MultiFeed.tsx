@@ -30,6 +30,7 @@ interface MultiFeedProps {
   defaultView?: FeedView;
   reminder?: ReactNode;
   dailyBrief?: ReactNode;
+  initialWeather?: { tempC: number; weatherCode: number };
 }
 
 export function MultiFeed({
@@ -38,6 +39,7 @@ export function MultiFeed({
   defaultView = 'compact',
   reminder,
   dailyBrief,
+  initialWeather,
 }: MultiFeedProps) {
   const [view, setView] = useState<FeedView>(defaultView);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -270,6 +272,8 @@ export function MultiFeed({
         country={activeHood?.country}
         latitude={activeHood?.latitude}
         longitude={activeHood?.longitude}
+        comboComponentNames={activeHood?.combo_component_names}
+        initialWeather={!activeFilter ? initialWeather : undefined}
       />
 
       {/* ── PILL BAR ── */}
