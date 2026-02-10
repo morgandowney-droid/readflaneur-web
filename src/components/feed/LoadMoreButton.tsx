@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { Article, Ad, FeedItem } from '@/types';
 import { ArticleCard } from './ArticleCard';
 import { CompactArticleCard } from './CompactArticleCard';
@@ -37,6 +36,13 @@ export function LoadMoreButton({
   const [ads, setAds] = useState<Ad[]>([]);
   const [sectionArticleIds, setSectionArticleIds] = useState<string[] | null>(null);
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const headers = {
+    'apikey': supabaseKey,
+    'Authorization': `Bearer ${supabaseKey}`,
+  };
+
   // Listen for view preference changes and fetch ads once
   useEffect(() => {
     const updateView = () => {
@@ -47,46 +53,38 @@ export function LoadMoreButton({
     };
     updateView();
 
-    // Fetch ads once on mount
-    const fetchAds = async () => {
-      const supabase = createClient();
-      const adsFilter = allIds.map(id => `neighborhood_id.eq.${id}`).join(',');
-      const { data } = await supabase
-        .from('ads')
-        .select('*')
-        .or(`is_global.eq.true,${adsFilter}`);
-      if (data) {
-        setAds(data as Ad[]);
-      }
-    };
-    fetchAds();
+    // Fetch ads once on mount via REST API
+    const adsFilter = allIds.map(id => `neighborhood_id.eq.${id}`).join(',');
+    const adsUrl = `${supabaseUrl}/rest/v1/ads?select=*&or=(is_global.eq.true,${adsFilter})`;
+
+    fetch(adsUrl, { headers })
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) setAds(data as Ad[]);
+      })
+      .catch(() => {});
 
     // If section filter is specified, get article IDs for this section
-    const fetchSectionArticleIds = async () => {
-      if (!sectionSlug) {
-        setSectionArticleIds(null);
-        return;
-      }
-      const supabase = createClient();
-      // Get section ID first
-      const { data: sectionData } = await supabase
-        .from('sections')
-        .select('id')
-        .eq('slug', sectionSlug)
-        .eq('is_active', true)
-        .single();
-
-      if (sectionData) {
-        const { data: articleSections } = await supabase
-          .from('article_sections')
-          .select('article_id')
-          .eq('section_id', sectionData.id);
-        setSectionArticleIds(articleSections?.map(as => as.article_id) || []);
-      } else {
-        setSectionArticleIds([]);
-      }
-    };
-    fetchSectionArticleIds();
+    if (sectionSlug) {
+      const sectionUrl = `${supabaseUrl}/rest/v1/sections?select=id&slug=eq.${encodeURIComponent(sectionSlug)}&is_active=eq.true&limit=1`;
+      fetch(sectionUrl, { headers })
+        .then(r => r.json())
+        .then(data => {
+          const section = Array.isArray(data) && data.length > 0 ? data[0] : null;
+          if (!section) {
+            setSectionArticleIds([]);
+            return;
+          }
+          const artSecUrl = `${supabaseUrl}/rest/v1/article_sections?select=article_id&section_id=eq.${section.id}`;
+          return fetch(artSecUrl, { headers }).then(r => r.json());
+        })
+        .then(data => {
+          if (Array.isArray(data)) {
+            setSectionArticleIds(data.map((as: any) => as.article_id));
+          }
+        })
+        .catch(() => setSectionArticleIds([]));
+    }
 
     // Listen for storage changes (when view toggle is clicked)
     window.addEventListener('storage', updateView);
@@ -102,52 +100,48 @@ export function LoadMoreButton({
   const loadMore = async () => {
     setLoading(true);
 
-    const supabase = createClient();
-
-    let query = supabase
-      .from('articles')
-      .select('*, neighborhood:neighborhoods(id, name, city)')
-      .in('neighborhood_id', allIds)
-      .eq('status', 'published')
-      .order('published_at', { ascending: false, nullsFirst: false });
-
-    // Apply section filter if specified
-    if (sectionArticleIds !== null) {
-      if (sectionArticleIds.length === 0) {
+    try {
+      // Apply section filter if specified
+      if (sectionArticleIds !== null && sectionArticleIds.length === 0) {
         setHasMore(false);
         setLoading(false);
         return;
       }
-      query = query.in('id', sectionArticleIds);
-    }
 
-    // Apply category filter if specified
-    if (categoryFilter) {
-      const categoryPattern = categoryFilter.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-      query = query.ilike('category_label', `%${categoryPattern}%`);
-    }
+      // Build articles URL
+      let url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city)&status=eq.published&order=published_at.desc.nullsfirst&offset=${offset}&limit=${pageSize}`;
 
-    const { data: articles, error } = await query.range(offset, offset + pageSize - 1);
+      url += `&neighborhood_id=in.(${allIds.join(',')})`;
 
-    if (error) {
-      console.error('Error loading more articles:', error);
+      if (sectionArticleIds !== null && sectionArticleIds.length > 0) {
+        url += `&id=in.(${sectionArticleIds.join(',')})`;
+      }
+
+      if (categoryFilter) {
+        const categoryPattern = categoryFilter.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        url += `&category_label=ilike.*${encodeURIComponent(categoryPattern)}*`;
+      }
+
+      const res = await fetch(url, { headers });
+      const articles = await res.json();
+
+      if (!Array.isArray(articles) || articles.length === 0) {
+        setHasMore(false);
+        setLoading(false);
+        return;
+      }
+
+      // Inject ads into the new articles
+      const newItems = injectAds(articles as Article[], ads, allIds);
+
+      setItems((prev) => [...prev, ...newItems]);
+      setOffset((prev) => prev + articles.length);
+      setHasMore(articles.length === pageSize);
+    } catch (err) {
+      console.error('Error loading more articles:', err);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    if (!articles || articles.length === 0) {
-      setHasMore(false);
-      setLoading(false);
-      return;
-    }
-
-    // Inject ads into the new articles
-    const newItems = injectAds(articles as Article[], ads, allIds);
-
-    setItems((prev) => [...prev, ...newItems]);
-    setOffset((prev) => prev + articles.length);
-    setHasMore(articles.length === pageSize);
-    setLoading(false);
   };
 
   return (
