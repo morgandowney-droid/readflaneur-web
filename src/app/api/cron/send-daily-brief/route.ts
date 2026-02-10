@@ -54,6 +54,7 @@ export async function GET(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  const startedAt = new Date().toISOString();
   const results = {
     success: true,
     recipients_found: 0,
@@ -63,6 +64,7 @@ export async function GET(request: Request) {
     errors: [] as string[],
     dry_run: dryRun,
     test_mode: !!testEmail,
+    started_at: startedAt,
     timestamp: new Date().toISOString(),
     preview: null as any,
   };
@@ -247,22 +249,20 @@ async function buildTestRecipient(
  * Log cron execution for monitoring
  */
 async function logCronExecution(supabase: any, results: any) {
-  try {
-    await supabase.from('cron_executions').insert({
-      job_name: 'send-daily-brief',
-      status: results.success ? 'success' : 'error',
-      duration_ms: 0, // We don't track precise duration here
-      items_processed: results.recipients_found,
-      items_created: results.emails_sent,
-      items_failed: results.emails_failed,
-      error_message: results.errors.length > 0 ? results.errors.join('; ') : null,
-      metadata: {
-        emails_skipped: results.emails_skipped,
-        dry_run: results.dry_run,
-        test_mode: results.test_mode,
-      },
-    });
-  } catch (e) {
-    console.error('Failed to log cron execution:', e);
-  }
+  await supabase.from('cron_executions').insert({
+    job_name: 'send-daily-brief',
+    started_at: results.started_at || results.timestamp,
+    completed_at: new Date().toISOString(),
+    success: results.success,
+    articles_created: results.emails_sent,
+    errors: results.errors.length > 0 ? results.errors.slice(0, 10) : null,
+    response_data: {
+      recipients_found: results.recipients_found,
+      emails_sent: results.emails_sent,
+      emails_failed: results.emails_failed,
+      emails_skipped: results.emails_skipped,
+      dry_run: results.dry_run,
+      test_mode: results.test_mode,
+    },
+  }).then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
 }

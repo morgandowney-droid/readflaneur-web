@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-10
 
-Recent work: drag-to-reorder pills, pills-above-masthead for vertical stability, Settings merged into neighborhood modal, login page polish, daily brief eyebrow date format, primary navigation fix.
+Recent work: cron monitoring fixes (sync-news, generate-brief-articles, send-daily-brief logging), broadened Gemini enrichment to all articles, Google Places API paused ($80/day savings).
 
 ### Auth (Pre-Launch)
 - **OAuth hidden:** Google & Apple login buttons hidden on `/login` and `/signup` pages. Code is fully implemented and ready to re-enable (just uncomment the OAuth button sections).

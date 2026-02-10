@@ -5,6 +5,14 @@
 
 ## 2026-02-10
 
+**Cron Monitoring + Enrichment Fixes:**
+- Added `cron_executions` logging to `sync-news` (had zero logging - wrapped in try/finally with correct schema)
+- Added `cron_executions` logging to `generate-brief-articles` (had zero logging - same pattern)
+- Fixed `send-daily-brief` logging: was using wrong column names (`status` string instead of `success` boolean, plus non-existent columns `duration_ms`, `items_processed`, `error_message`). Every insert silently failed. Fixed to match working schema.
+- Fixed `generate-brief-articles` base URL: was using `VERCEL_URL` directly instead of `NEXT_PUBLIC_APP_URL` first
+- Broadened `enrich-briefs` Phase 2 from `ai_model = 'claude-sonnet-4-5'` to all published articles. Only 4 articles matched the old filter; 1,198 unenriched articles were stranded with older model strings.
+- Paused Google Places API crons (`sync-guides`, `generate-opening-closing-news`) - $80/day savings vs $10/day for Gemini
+
 **Feed UX Fixes + Login Polish (7 Changes):**
 - Primary neighborhood navigation fix: modal `handleExplore()` now uses localStorage order (primary-first) instead of Set insertion order; ContextSwitcher `handleSetPrimary` now navigates with reordered IDs
 - Drag-to-reorder neighborhood pills: HTML5 drag-and-drop on MultiFeed pill bar. On drop, reorders localStorage and navigates. Visual: dragged pill `opacity-50`, drop target amber left border, `cursor-grab`/`cursor-grabbing`

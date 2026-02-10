@@ -92,6 +92,7 @@ export async function GET(request: Request) {
 
   const anthropic = new Anthropic({ apiKey: anthropicApiKey });
 
+  const startedAt = new Date().toISOString();
   const results = {
     cities_processed: 0,
     articles_fetched: 0,
@@ -106,6 +107,7 @@ export async function GET(request: Request) {
   // Track articles created per neighborhood for Grok fallback
   const articlesPerNeighborhood: Record<string, number> = {};
 
+  try {
   // Get time threshold (last 24 hours)
   const oneDayAgo = new Date();
   oneDayAgo.setDate(oneDayAgo.getDate() - 1);
@@ -407,6 +409,28 @@ export async function GET(request: Request) {
     ...results,
     timestamp: new Date().toISOString(),
   });
+
+  } finally {
+    // Always log cron execution for monitoring
+    const totalCreated = results.articles_created + results.grok_articles_created;
+    await supabase.from('cron_executions').insert({
+      job_name: 'sync-news',
+      started_at: startedAt,
+      completed_at: new Date().toISOString(),
+      success: results.errors.length === 0 || totalCreated > 0,
+      articles_created: totalCreated,
+      errors: results.errors.length > 0 ? results.errors.slice(0, 10) : null,
+      response_data: {
+        cities_processed: results.cities_processed,
+        articles_fetched: results.articles_fetched,
+        articles_created: results.articles_created,
+        grok_articles_created: results.grok_articles_created,
+        grok_neighborhoods_filled: results.grok_neighborhoods_filled,
+        skipped_irrelevant: results.skipped_irrelevant,
+        skipped_duplicate: results.skipped_duplicate,
+      },
+    }).then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
+  }
 }
 
 /**

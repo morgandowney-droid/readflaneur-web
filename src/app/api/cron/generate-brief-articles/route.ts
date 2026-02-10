@@ -144,12 +144,15 @@ export async function GET(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  const startedAt = new Date().toISOString();
   const results = {
     briefs_processed: 0,
     articles_created: 0,
     articles_failed: 0,
     errors: [] as string[],
   };
+
+  try {
 
   // Find briefs that have enriched content but no linked article
   let query = supabase
@@ -293,9 +296,8 @@ export async function GET(request: Request) {
   if (results.articles_created > 0) {
     try {
       // Call the internal image generation endpoint
-      const baseUrl = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/[\n\r]+$/, '').replace(/\/$/, '')
+        || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
       const imageResponse = await fetch(`${baseUrl}/api/internal/generate-image`, {
         method: 'POST',
@@ -327,4 +329,21 @@ export async function GET(request: Request) {
     images_failed: imagesFailed,
     timestamp: new Date().toISOString(),
   });
+
+  } finally {
+    // Always log cron execution for monitoring
+    await supabase.from('cron_executions').insert({
+      job_name: 'generate-brief-articles',
+      started_at: startedAt,
+      completed_at: new Date().toISOString(),
+      success: results.articles_failed === 0 || results.articles_created > 0,
+      articles_created: results.articles_created,
+      errors: results.errors.length > 0 ? results.errors.slice(0, 10) : null,
+      response_data: {
+        briefs_processed: results.briefs_processed,
+        articles_created: results.articles_created,
+        articles_failed: results.articles_failed,
+      },
+    }).then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
+  }
 }

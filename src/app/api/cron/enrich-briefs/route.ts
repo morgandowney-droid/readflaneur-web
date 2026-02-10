@@ -198,7 +198,7 @@ export async function GET(request: Request) {
       }
     } // end if (!isBackfill)
 
-    // ─── Phase 2: Enrich RSS-sourced articles ───
+    // ─── Phase 2: Enrich all published articles ───
     // No time window — enriched_at IS NULL + batch size limit prevents reprocessing
     // Newest articles enriched first (published_at DESC)
     const articleBatchSize = parseInt(url.searchParams.get('article-batch') || '30');
@@ -219,7 +219,6 @@ export async function GET(request: Request) {
           country
         )
       `)
-      .eq('ai_model', 'claude-sonnet-4-5')
       .eq('status', 'published')
       .is('enriched_at', null);
 
