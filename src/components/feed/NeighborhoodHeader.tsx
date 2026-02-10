@@ -129,6 +129,8 @@ export function NeighborhoodHeader({
             country={country}
             latitude={latitude}
             longitude={longitude}
+            neighborhoodName={neighborhoodName}
+            city={city}
           />
         )}
       </div>

@@ -7,6 +7,8 @@ interface NeighborhoodLiveStatusProps {
   country?: string;
   latitude?: number;
   longitude?: number;
+  neighborhoodName: string;
+  city: string;
 }
 
 /** Countries that use 12-hour time and Fahrenheit */
@@ -75,6 +77,8 @@ export function NeighborhoodLiveStatus({
   country,
   latitude,
   longitude,
+  neighborhoodName,
+  city,
 }: NeighborhoodLiveStatusProps) {
   const { use12Hour, useFahrenheit } = getLocalFormat(country);
   const [time, setTime] = useState<{ hours: string; minutes: string; period?: string } | null>(null);
@@ -132,8 +136,15 @@ export function NeighborhoodLiveStatus({
     ? `${useFahrenheit ? weather.tempF : weather.tempC}${useFahrenheit ? '°F' : '°C'}`
     : null;
 
+  const weatherSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`${neighborhoodName} ${city} weather`)}`;
+
   return (
-    <div className="flex items-center justify-center gap-1 font-mono text-sm tracking-widest text-amber-500/90 mt-3">
+    <a
+      href={weatherSearchUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-center gap-1 font-mono text-sm tracking-widest text-amber-500/90 mt-3 hover:text-amber-400 transition-colors cursor-pointer"
+    >
       {/* Time with animated colon */}
       <span>{time.hours}</span>
       <span className="animate-pulse-slow">:</span>
@@ -147,6 +158,6 @@ export function NeighborhoodLiveStatus({
           <span>{temp} {weather.description}</span>
         </>
       )}
-    </div>
+    </a>
   );
 }
