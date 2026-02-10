@@ -5,8 +5,14 @@
 
 ## 2026-02-10
 
+**Neighborhood Page Layout Refinement:**
+- Back button moved from floating above H1 into Control Deck toolbar (far left), renamed "← ALL NEIGHBORHOODS"
+- NeighborhoodLiveStatus toned down: `text-amber-700 text-xs font-medium tracking-[0.2em]` (matches Daily Brief label)
+- Luxury spacing: masthead `pt-32 md:pt-40`, H1 `mb-4`, live status `mb-12` before control deck
+- Removed `mt-8` from control deck (spacing now handled by masthead bottom margin)
+
 **Back Button & Load More Fix:**
-- Back button renamed from "← NEW YORK" (city slug) to "← My Neighborhoods"
+- Back button renamed from "← NEW YORK" (city slug) to "← All Neighborhoods"
 - LoadMoreButton now accepts `queryIds` prop for combo neighborhoods
 - Previously server-side count used all combo+component IDs but client LoadMore only queried single ID
 - Caused phantom "Load More" button that hung on "Loading..." with no results

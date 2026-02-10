@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-10
 
-Recent work: Back button renamed "My Neighborhoods", LoadMoreButton fixed for combo neighborhoods (queryIds).
+Recent work: Neighborhood page layout refinement - luxury spacing, back button in control deck, toned-down live status.
 
 ## Key Patterns
 
@@ -148,14 +148,13 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **Padding:** `py-28 md:py-36 lg:py-48` for cinematic breathing room
 
 ### NeighborhoodHeader (Feed Page)
-- **Masthead:** Centered `text-center py-10` with back arrow absolute top-left (`← My Neighborhoods`), city label (`text-[11px] tracking-[0.3em] uppercase text-neutral-400`), serif neighborhood name (`font-display text-4xl md:text-5xl text-neutral-100`), italic combo sub-line, and `NeighborhoodLiveStatus` (local time + weather)
-- **NeighborhoodLiveStatus:** `font-mono text-sm tracking-widest text-amber-500/90` centered below H1. Format: `[Time] | [Temp Description]`. US = 12h + °F, rest = 24h + °C. Animated colon (`animate-pulse-slow` 2s). Clickable - opens Google search for `{neighborhood} {city} weather`. Pipe separator (not em dash - avoids negative temp confusion). Weather from Open-Meteo (client-side, silent fail). Props: `timezone`, `country`, `latitude`, `longitude`, `neighborhoodName`, `city`.
-- **Control Deck:** `border-y border-white/10 py-4` toolbar with two zones: GUIDE/MAP/HISTORY links (center), ViewToggle icons (right). Left zone is empty spacer.
+- **Masthead:** Centered `text-center pt-32 md:pt-40` (luxury spacing). City label (`text-[11px] tracking-[0.3em] uppercase text-neutral-400`), serif neighborhood name (`font-display text-4xl md:text-5xl text-neutral-100 mb-4`), italic combo sub-line, then `NeighborhoodLiveStatus` with `mb-12` before control deck.
+- **NeighborhoodLiveStatus:** `font-mono text-xs font-medium tracking-[0.2em] text-amber-700` - toned down to match Daily Brief label color. Clickable - opens Google search for `{neighborhood} {city} weather`. Pipe separator. Weather from Open-Meteo (client-side, silent fail). Props: `timezone`, `country`, `latitude`, `longitude`, `neighborhoodName`, `city`.
+- **Control Deck:** `border-y border-white/10 py-4` toolbar with three zones: "← ALL NEIGHBORHOODS" back link (left, `text-neutral-500 hover:text-white`), GUIDE/MAP/HISTORY links (center), ViewToggle icons (right).
 - **Combo dropdowns:** Dropdown panel: `bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px]`, items `hover:text-white hover:bg-white/5`
 - **ViewToggle:** Minimal `w-8 h-8` icons, no pill background. Active: `text-white`, inactive: `text-neutral-300`
-- **DailyBriefWidget:** Renders between Control Deck and FeedList (passed as `dailyBrief` ReactNode prop to `NeighborhoodFeed`). Spacing: `mt-8 mb-12`. Always full-width, outside grid/list toggle logic. Visual hierarchy: Masthead -> Control Deck -> Daily Brief -> Story Feed.
-- **BriefArchive:** Removed from control deck (prop still accepted but no longer passed)
-- **Back arrow:** "← My Neighborhoods" - links to multi-feed if user has neighborhoods selected, otherwise home.
+- **DailyBriefWidget:** Renders between Control Deck and FeedList (passed as `dailyBrief` ReactNode prop to `NeighborhoodFeed`). Spacing: `mt-8 mb-12`. Always full-width, outside grid/list toggle logic.
+- **Back arrow:** "← ALL NEIGHBORHOODS" in control deck (far left). Links to multi-feed if user has neighborhoods selected, otherwise home.
 - **ComboNeighborhoodCards:** Still exists for GuidesClient.tsx but removed from feed header
 
 ### Font Sizes (17px iOS Baseline)
