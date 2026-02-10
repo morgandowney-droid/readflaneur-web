@@ -283,8 +283,19 @@ function GlobalNeighborhoodModal({
       return;
     }
 
-    // If already initialized with data, don't refetch
-    if (hasInitialized && neighborhoods.length > 0) return;
+    // If already initialized with data, just re-sync the selected set
+    // (another component may have changed localStorage since last open)
+    if (hasInitialized && neighborhoods.length > 0) {
+      const stored = localStorage.getItem(PREFS_KEY);
+      if (stored) {
+        try {
+          setSelected(new Set(JSON.parse(stored)));
+        } catch { /* ignore */ }
+      } else {
+        setSelected(new Set());
+      }
+      return;
+    }
 
     // Fallback: fetch data if not prefetched or prefetch failed
     const loadData = async () => {
