@@ -742,9 +742,7 @@ function GlobalNeighborhoodModal({
                 <div key={city} className="break-inside-avoid mb-6">
                   {/* City Header */}
                   <div className="flex items-baseline gap-2 mb-1.5">
-                    <h3 className={`font-display text-base ${
-                      isVacation ? 'text-amber-500' : isEnclave ? 'text-amber-300' : 'text-white'
-                    }`}>
+                    <h3 className="font-display text-base text-white">
                       {city}
                     </h3>
                     <button
