@@ -140,40 +140,7 @@ function LoginForm() {
     <div className="w-full max-w-sm">
       <h1 className="text-2xl font-light text-center text-neutral-100 mb-8">Sign In</h1>
 
-      <div className="space-y-3 mb-6">
-        <button
-          type="button"
-          onClick={() => handleOAuthLogin('google')}
-          disabled={isOAuthLoading !== null || isLoading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-white/[0.08] hover:border-white/20 transition-colors disabled:opacity-50 text-neutral-200"
-        >
-          <GoogleIcon />
-          <span className="text-sm">
-            {isOAuthLoading === 'google' ? 'Connecting...' : 'Continue with Google'}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleOAuthLogin('apple')}
-          disabled={isOAuthLoading !== null || isLoading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white text-neutral-900 hover:bg-neutral-200 transition-colors disabled:opacity-50"
-        >
-          <AppleIcon />
-          <span className="text-sm">
-            {isOAuthLoading === 'apple' ? 'Connecting...' : 'Continue with Apple'}
-          </span>
-        </button>
-      </div>
-
-      <div className="relative mb-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-white/[0.08]"></div>
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-canvas px-4 text-neutral-400">or</span>
-        </div>
-      </div>
+      {/* OAuth buttons hidden pre-launch — Google & Apple login fully implemented and ready to re-enable */}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (

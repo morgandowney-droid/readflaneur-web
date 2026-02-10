@@ -16,6 +16,11 @@
 
 Recent work: ContextSwitcher mobile overflow fix, MultiFeed dynamic brief on pill switch, modal mobile footer fix, authenticated user preference sync, "City Search" rename.
 
+### Auth (Pre-Launch)
+- **OAuth hidden:** Google & Apple login buttons hidden on `/login` and `/signup` pages. Code is fully implemented and ready to re-enable (just uncomment the OAuth button sections).
+- **Current auth:** Email/password only via Supabase Auth
+- **OAuth callback routes:** Both `/auth/callback` and `/api/auth/callback` are intact and working
+
 ## Key Patterns
 
 ### Cron Jobs
