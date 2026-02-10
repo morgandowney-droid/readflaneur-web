@@ -43,28 +43,31 @@ export function MagicLinkReminder() {
   }
 
   return (
-    <div className="text-xs text-neutral-400 mt-2">
+    <div className="text-center py-6 mb-4">
       {status === 'sent' ? (
-        <p className="text-green-600">Magic link sent! Check your inbox.</p>
+        <p className="text-sm text-green-400">Check your inbox - a sign-in link is on the way.</p>
       ) : status === 'error' ? (
-        <p className="text-red-600">Failed to send. Please try again.</p>
+        <p className="text-sm text-red-400">Something went wrong. Please try again.</p>
       ) : (
-        <div className="flex flex-col items-center gap-2">
-          <p>Haven't received your magic link?</p>
-          <div className="flex gap-2 items-center">
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-sm text-neutral-400">
+            Get fresh neighborhood daily briefs every morning
+          </p>
+          <div className="flex items-center gap-2">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleResend()}
               placeholder="Enter your email"
-              className="px-2 py-1 border border-neutral-300 text-xs rounded w-40"
+              className="px-3 py-2 bg-neutral-900 border border-white/20 text-sm text-white placeholder-neutral-600 rounded-lg w-56 focus:outline-none focus:border-amber-500/50 transition-colors"
             />
             <button
               onClick={handleResend}
               disabled={status === 'sending' || !email}
-              className="text-black underline hover:no-underline disabled:opacity-50"
+              className="px-4 py-2 text-xs tracking-wider uppercase font-medium bg-white text-neutral-900 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors rounded-lg"
             >
-              {status === 'sending' ? 'Sending...' : 'Resend'}
+              {status === 'sending' ? '...' : 'Subscribe'}
             </button>
           </div>
         </div>

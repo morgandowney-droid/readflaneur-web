@@ -110,11 +110,11 @@ export function MultiFeed({
                 All Stories
               </button>
 
-              {neighborhoods.map((hood) => (
+              {neighborhoods.map((hood, i) => (
                 <button
                   key={hood.id}
                   onClick={() => setActiveFilter(activeFilter === hood.id ? null : hood.id)}
-                  className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors ${
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors flex items-center gap-1.5 ${
                     activeFilter === hood.id
                       ? 'bg-white text-black'
                       : 'bg-transparent text-neutral-400 border border-neutral-800 hover:border-neutral-500 hover:text-white'
@@ -122,6 +122,13 @@ export function MultiFeed({
                   title={hood.combo_component_names?.length ? `Includes: ${hood.combo_component_names.join(', ')}` : undefined}
                 >
                   {hood.name}
+                  {i === 0 && neighborhoods.length > 1 && (
+                    <span className={`text-[8px] tracking-wider font-bold ${
+                      activeFilter === hood.id ? 'text-amber-600' : 'text-amber-500/60'
+                    }`}>
+                      PRIMARY
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

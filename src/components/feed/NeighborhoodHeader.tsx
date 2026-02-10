@@ -74,7 +74,7 @@ export function NeighborhoodHeader({
   return (
     <header className="mb-6">
       {/* ── MASTHEAD ── */}
-      <div className="text-center pt-20 md:pt-24">
+      <div className="text-center pt-8">
         {/* City label - hidden in all mode */}
         {!isAll && (
           <p className="text-[11px] tracking-[0.3em] uppercase text-neutral-400 mb-2">
@@ -118,9 +118,9 @@ export function NeighborhoodHeader({
       </div>
 
       {/* ── CONTROL DECK (CSS Grid for true centering) ── */}
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center border-y border-white/10 py-4" ref={dropdownRef}>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-y border-white/10 py-4" ref={dropdownRef}>
         {/* Col 1: Context Switcher */}
-        <div className="justify-self-start">
+        <div className="justify-self-start min-w-0">
           <ContextSwitcher
             currentContext={isAll ? 'all' : neighborhoodId}
             currentLabel={isAll ? 'ALL' : neighborhoodName.toUpperCase()}
@@ -128,7 +128,7 @@ export function NeighborhoodHeader({
         </div>
 
         {/* Col 2: GUIDE / MAP / HISTORY (single mode only) */}
-        <div className="justify-self-center flex items-center gap-6">
+        <div className="justify-self-center flex items-center gap-4 md:gap-6 shrink-0">
           {isAll ? (
             <div />
           ) : isCombo ? (

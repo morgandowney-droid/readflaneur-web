@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
@@ -13,7 +13,9 @@ export interface NeighborhoodPref {
 
 export function useNeighborhoodPreferences(): {
   neighborhoods: NeighborhoodPref[];
+  primaryId: string | null;
   isLoading: boolean;
+  setPrimary: (id: string) => void;
 } {
   const [neighborhoods, setNeighborhoods] = useState<NeighborhoodPref[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,6 +26,7 @@ export function useNeighborhoodPreferences(): {
     async function load() {
       const stored = localStorage.getItem(PREFS_KEY);
       if (!stored) {
+        setNeighborhoods([]);
         setIsLoading(false);
         return;
       }
@@ -37,6 +40,7 @@ export function useNeighborhoodPreferences(): {
       }
 
       if (!ids.length) {
+        setNeighborhoods([]);
         setIsLoading(false);
         return;
       }
@@ -52,7 +56,7 @@ export function useNeighborhoodPreferences(): {
       if (cancelled) return;
 
       if (data) {
-        // Sort to match localStorage order
+        // Sort to match localStorage order (first = primary)
         const orderMap = new Map(ids.map((id, i) => [id, i]));
         const sorted = [...data].sort(
           (a, b) => (orderMap.get(a.id) ?? 999) - (orderMap.get(b.id) ?? 999)
@@ -78,5 +82,30 @@ export function useNeighborhoodPreferences(): {
     };
   }, []);
 
-  return { neighborhoods, isLoading };
+  const primaryId = neighborhoods.length > 0 ? neighborhoods[0].id : null;
+
+  const setPrimary = useCallback((id: string) => {
+    const stored = localStorage.getItem(PREFS_KEY);
+    if (!stored) return;
+
+    try {
+      const ids = JSON.parse(stored) as string[];
+      if (!ids.includes(id)) return;
+
+      // Move id to front
+      const reordered = [id, ...ids.filter(i => i !== id)];
+      localStorage.setItem(PREFS_KEY, JSON.stringify(reordered));
+
+      // Reorder in-memory list to match
+      setNeighborhoods(prev => {
+        const target = prev.find(n => n.id === id);
+        if (!target) return prev;
+        return [target, ...prev.filter(n => n.id !== id)];
+      });
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  return { neighborhoods, primaryId, isLoading, setPrimary };
 }

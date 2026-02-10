@@ -5,6 +5,33 @@
 
 ## 2026-02-10
 
+**Primary Neighborhood Indicator:**
+- Added primary neighborhood concept: first item in localStorage array is primary
+- `useNeighborhoodPreferences` hook exposes `primaryId` and `setPrimary(id)` for reordering
+- ContextSwitcher: amber dot + "PRIMARY" label on first neighborhood, "Set primary" on hover for others
+- MultiFeed pill bar: "PRIMARY" badge on first pill when multiple neighborhoods selected
+- HomeSignupEnhanced: "Primary" badge on first chip, star button on others to set primary
+- NeighborhoodSelectorModal: "Primary" badge on first selected item, "Set primary" on hover
+
+**Neighborhood Modal Improvements:**
+- "Clear all" now requires two-tap confirmation ("Are you sure?" Yes/No) to prevent accidental clears
+- Modal re-syncs selections from localStorage on reopen (fixes stale selections after homepage changes)
+- Accent-insensitive search via NFD normalization - "ostermalm" matches "Östermalm"
+- "Nearest" renamed to "Sort by nearest to me" and moved below search input
+
+**Feed Header Fixes:**
+- Long neighborhood names no longer overlap GUIDE/MAP/HISTORY - grid uses `minmax(0,1fr)` columns
+- ContextSwitcher trigger truncates at `max-w-[120px] md:max-w-[200px]` with `min-w-0`
+- Masthead top padding reduced from `pt-20 md:pt-24` to `pt-8` to match `mb-8` bottom spacing
+
+**MagicLinkReminder Dark Mode Rewrite:**
+- Rewritten text: "Get fresh neighborhood daily briefs every morning"
+- Centered layout with dark-mode input (`bg-neutral-900 border-white/20`)
+- Visible "Subscribe" button (`bg-white text-neutral-900`), Enter key support
+
+**NativeAd Email Fix:**
+- Image `<Img>` wrapped in conditional `{ad.imageUrl && (...)}` to prevent alt text rendering as blue link when no image URL exists (common for house ads)
+
 **Context Switcher - Unified Feed Architecture:**
 - Replaced "← All Neighborhoods" back button with `ContextSwitcher` dropdown in Control Deck
 - New `ContextSwitcher` component: trigger shows `{LABEL} ▾`, popover lists "All Neighborhoods", user's subscribed neighborhoods (name + city), and "Customize List..." action

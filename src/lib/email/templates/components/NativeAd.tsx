@@ -10,14 +10,16 @@ export function NativeAd({ ad }: NativeAdProps) {
     <Section style={container}>
       <Hr style={divider} />
       <Text style={sponsoredLabel}>Sponsored</Text>
-      <Link href={ad.clickUrl}>
-        <Img
-          src={ad.imageUrl}
-          alt={ad.headline}
-          width="100%"
-          style={image}
-        />
-      </Link>
+      {ad.imageUrl && (
+        <Link href={ad.clickUrl}>
+          <Img
+            src={ad.imageUrl}
+            alt={ad.headline}
+            width="100%"
+            style={image}
+          />
+        </Link>
+      )}
       <Link href={ad.clickUrl} style={headlineLink}>
         <Text style={headline}>{ad.headline}</Text>
       </Link>

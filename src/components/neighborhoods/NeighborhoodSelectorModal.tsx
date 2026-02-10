@@ -205,6 +205,7 @@ function GlobalNeighborhoodModal({
   const [locationLoading, setLocationLoading] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [primaryId, setPrimaryId] = useState<string | null>(null);
 
   // Suggestion feature state
   const [confirmClear, setConfirmClear] = useState(false);
@@ -278,6 +279,11 @@ function GlobalNeighborhoodModal({
       setNeighborhoods(prefetchedData.neighborhoods);
       setSelected(prefetchedData.selected);
       setUserId(prefetchedData.userId);
+      // Read primary from localStorage order
+      const stored = localStorage.getItem(PREFS_KEY);
+      if (stored) {
+        try { setPrimaryId((JSON.parse(stored) as string[])[0] || null); } catch { /* ignore */ }
+      }
       setLoading(false);
       setHasInitialized(true);
       return;
@@ -289,10 +295,13 @@ function GlobalNeighborhoodModal({
       const stored = localStorage.getItem(PREFS_KEY);
       if (stored) {
         try {
-          setSelected(new Set(JSON.parse(stored)));
+          const ids = JSON.parse(stored) as string[];
+          setSelected(new Set(ids));
+          setPrimaryId(ids[0] || null);
         } catch { /* ignore */ }
       } else {
         setSelected(new Set());
+        setPrimaryId(null);
       }
       return;
     }
@@ -305,6 +314,11 @@ function GlobalNeighborhoodModal({
         setNeighborhoods(data.neighborhoods);
         setSelected(data.selected);
         setUserId(data.userId);
+        // Read primary from localStorage order
+        const stored = localStorage.getItem(PREFS_KEY);
+        if (stored) {
+          try { setPrimaryId((JSON.parse(stored) as string[])[0] || null); } catch { /* ignore */ }
+        }
         setHasInitialized(true);
       } catch (err) {
         console.error('Error loading neighborhood data:', err);
@@ -429,7 +443,9 @@ function GlobalNeighborhoodModal({
   // Filter based on search (includes combo component names + country/region/state)
   const filteredCities = useMemo(() => {
     if (!searchQuery.trim()) return citiesWithNeighborhoods;
-    const query = searchQuery.toLowerCase();
+    // Normalize: strip accents and lowercase for accent-insensitive search
+    const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const query = normalize(searchQuery);
 
     // Check for country/region/state matches
     const matchedCountry = findCountryForQuery(searchQuery);
@@ -441,11 +457,11 @@ function GlobalNeighborhoodModal({
       .map(c => ({
         ...c,
         neighborhoods: c.neighborhoods.filter(n => {
-          // Direct name/city/component match
-          if (n.name.toLowerCase().includes(query)) return true;
-          if (n.city.toLowerCase().includes(query)) return true;
+          // Direct name/city/component match (accent-insensitive)
+          if (normalize(n.name).includes(query)) return true;
+          if (normalize(n.city).includes(query)) return true;
           if (n.combo_component_names && n.combo_component_names.some(
-            comp => comp.toLowerCase().includes(query)
+            comp => normalize(comp).includes(query)
           )) return true;
           // Country match
           if (matchedCountry && n.country?.toLowerCase() === matchedCountry.toLowerCase()) return true;
@@ -459,10 +475,23 @@ function GlobalNeighborhoodModal({
       .filter(c => c.neighborhoods.length > 0);
   }, [citiesWithNeighborhoods, searchQuery]);
 
+  // Helper: save selected set to localStorage preserving primary-first order
+  const saveToLocalStorage = (ids: Set<string>, currentPrimary: string | null) => {
+    const arr = Array.from(ids);
+    // Keep primary at front
+    if (currentPrimary && ids.has(currentPrimary)) {
+      const reordered = [currentPrimary, ...arr.filter(i => i !== currentPrimary)];
+      localStorage.setItem(PREFS_KEY, JSON.stringify(reordered));
+    } else {
+      localStorage.setItem(PREFS_KEY, JSON.stringify(arr));
+    }
+  };
+
   const toggleNeighborhood = async (id: string) => {
     const newSelected = new Set(selected);
+    const wasSelected = newSelected.has(id);
 
-    if (newSelected.has(id)) {
+    if (wasSelected) {
       newSelected.delete(id);
     } else {
       newSelected.add(id);
@@ -470,9 +499,30 @@ function GlobalNeighborhoodModal({
 
     setSelected(newSelected);
 
+    // Update primary: if first selection, it becomes primary.
+    // If primary was deselected, pick first remaining.
+    let newPrimary = primaryId;
+    if (newSelected.size === 0) {
+      newPrimary = null;
+    } else if (!wasSelected && newSelected.size === 1) {
+      newPrimary = id;
+    } else if (wasSelected && id === primaryId) {
+      // Primary was deselected - pick next from localStorage order
+      const stored = localStorage.getItem(PREFS_KEY);
+      if (stored) {
+        try {
+          const ids = (JSON.parse(stored) as string[]).filter(i => newSelected.has(i));
+          newPrimary = ids[0] || Array.from(newSelected)[0] || null;
+        } catch { newPrimary = Array.from(newSelected)[0] || null; }
+      } else {
+        newPrimary = Array.from(newSelected)[0] || null;
+      }
+    }
+    setPrimaryId(newPrimary);
+
     if (userId) {
       const supabase = createClient();
-      if (selected.has(id)) {
+      if (wasSelected) {
         await supabase
           .from('user_neighborhood_preferences')
           .delete()
@@ -484,7 +534,7 @@ function GlobalNeighborhoodModal({
           .insert({ user_id: userId, neighborhood_id: id });
       }
     } else {
-      localStorage.setItem(PREFS_KEY, JSON.stringify(Array.from(newSelected)));
+      saveToLocalStorage(newSelected, newPrimary);
     }
   };
 
@@ -504,6 +554,15 @@ function GlobalNeighborhoodModal({
 
     setSelected(newSelected);
 
+    // Update primary if needed
+    let newPrimary = primaryId;
+    if (newSelected.size === 0) {
+      newPrimary = null;
+    } else if (!primaryId || !newSelected.has(primaryId)) {
+      newPrimary = Array.from(newSelected)[0] || null;
+    }
+    setPrimaryId(newPrimary);
+
     if (userId) {
       const supabase = createClient();
       if (allSelected) {
@@ -521,7 +580,7 @@ function GlobalNeighborhoodModal({
         }
       }
     } else {
-      localStorage.setItem(PREFS_KEY, JSON.stringify(Array.from(newSelected)));
+      saveToLocalStorage(newSelected, newPrimary);
     }
   };
 
@@ -537,6 +596,7 @@ function GlobalNeighborhoodModal({
   const clearAll = async () => {
     setConfirmClear(false);
     setSelected(new Set());
+    setPrimaryId(null);
     if (userId) {
       const supabase = createClient();
       Promise.resolve(
@@ -545,6 +605,18 @@ function GlobalNeighborhoodModal({
     } else {
       localStorage.removeItem(PREFS_KEY);
     }
+  };
+
+  const makePrimary = (id: string) => {
+    const stored = localStorage.getItem(PREFS_KEY);
+    if (!stored) return;
+    try {
+      const ids = JSON.parse(stored) as string[];
+      if (!ids.includes(id)) return;
+      const reordered = [id, ...ids.filter(i => i !== id)];
+      localStorage.setItem(PREFS_KEY, JSON.stringify(reordered));
+      setPrimaryId(id);
+    } catch { /* ignore */ }
   };
 
   if (!isOpen) return null;
@@ -569,29 +641,12 @@ function GlobalNeighborhoodModal({
               <h2 className="font-display text-2xl font-light tracking-wide text-white">
                 City Index
               </h2>
-              <div className="flex items-center gap-2 mt-1.5">
-                {/* Sort by Nearest */}
-                <button
-                  onClick={handleSortByNearest}
-                  disabled={locationLoading}
-                  className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded-full border transition-all whitespace-nowrap ${
-                    sortBy === 'nearest'
-                      ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
-                      : 'border-white/20 text-neutral-400 hover:text-white hover:border-white/40'
-                  }`}
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {locationLoading ? '...' : 'Nearest'}
-                </button>
-                {/* Selection counter */}
-                {selected.size > 0 && (
-                  <span className="text-xs font-mono text-amber-400 tabular-nums">
-                    {selected.size}
-                  </span>
-                )}
-              </div>
+              {/* Selection counter */}
+              {selected.size > 0 && (
+                <span className="text-xs font-mono text-amber-400 tabular-nums mt-1.5">
+                  {selected.size} selected
+                </span>
+              )}
             </div>
             <button
               onClick={onClose}
@@ -626,6 +681,25 @@ function GlobalNeighborhoodModal({
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Sort by nearest */}
+          <div className="mt-3">
+            <button
+              onClick={handleSortByNearest}
+              disabled={locationLoading}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full border transition-all whitespace-nowrap ${
+                sortBy === 'nearest'
+                  ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
+                  : 'border-white/20 text-neutral-400 hover:text-white hover:border-white/40'
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {locationLoading ? 'Locating...' : 'Sort by nearest to me'}
+            </button>
           </div>
         </div>
 
@@ -677,27 +751,43 @@ function GlobalNeighborhoodModal({
                         );
                       }
 
+                      const isPrimary = hood.id === primaryId && selected.size > 1;
+                      const showSetPrimary = isSelected && !isPrimary && selected.size > 1;
+
                       return (
-                        <button
-                          key={hood.id}
-                          onClick={() => toggleNeighborhood(hood.id)}
-                          className={`block w-full text-left text-sm py-0.5 transition-colors ${
-                            isSelected
-                              ? 'text-amber-400 font-medium'
-                              : 'text-neutral-400 hover:text-white'
-                          }`}
-                          title={hasComboComponents ? `Includes: ${hood.combo_component_names!.join(', ')}` : undefined}
-                        >
-                          {isSelected && (
-                            <svg className="w-3 h-3 inline-block mr-1.5 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                            </svg>
+                        <div key={hood.id} className="flex items-center gap-1 group/item">
+                          <button
+                            onClick={() => toggleNeighborhood(hood.id)}
+                            className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${
+                              isSelected
+                                ? 'text-amber-400 font-medium'
+                                : 'text-neutral-400 hover:text-white'
+                            }`}
+                            title={hasComboComponents ? `Includes: ${hood.combo_component_names!.join(', ')}` : undefined}
+                          >
+                            {isSelected && (
+                              <svg className="w-3 h-3 shrink-0 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                            {hood.name}
+                            {hasComboComponents && (
+                              <span className="text-[11px] text-neutral-600">({hood.combo_component_names!.length} areas)</span>
+                            )}
+                            {isPrimary && (
+                              <span className="text-[9px] tracking-wider uppercase text-amber-500/70 font-medium ml-1">Primary</span>
+                            )}
+                          </button>
+                          {showSetPrimary && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); makePrimary(hood.id); }}
+                              className="text-[9px] tracking-wider uppercase text-neutral-600 hover:text-amber-400 opacity-0 group-hover/item:opacity-100 transition-opacity shrink-0 py-0.5"
+                              title="Set as primary"
+                            >
+                              Set primary
+                            </button>
                           )}
-                          {hood.name}
-                          {hasComboComponents && (
-                            <span className="ml-1 text-[11px] text-neutral-600">({hood.combo_component_names!.length} areas)</span>
-                          )}
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
