@@ -5,6 +5,16 @@
 
 ## 2026-02-10
 
+**NeighborhoodLiveStatus Component:**
+- New `NeighborhoodLiveStatus` component in masthead showing local time + current weather
+- Typography: `font-mono text-sm tracking-widest text-amber-500/90` (terminal chic)
+- Format: `16:30 -- 12°C Overcast` (24h + Celsius) or `4:30 PM -- 54°F Clear` (12h + Fahrenheit for US)
+- Animated colon: custom `animate-pulse-slow` keyframe (2s ease-in-out, opacity 1→0.4→1)
+- Weather fetched client-side from Open-Meteo free API (no auth), AbortController cleanup, silent fail
+- Time updates every 10s via `Intl.DateTimeFormat` with neighborhood timezone
+- Props threaded: `timezone`, `country`, `latitude`, `longitude` from page.tsx → NeighborhoodFeed → NeighborhoodHeader
+- SSR safe: returns null until client hydration
+
 **UI Polish & Cleanup:**
 - Removed email subscribe form from DailyBriefWidget (newsletter signup handled elsewhere)
 - Removed Previous Days / BriefArchive dropdown from neighborhood feed header control deck

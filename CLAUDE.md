@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-10
 
-Recent work: UI polish - removed subscribe form and Previous Days archive from daily brief, narrowed modal search, fixed dark mode on multi-feed +N MORE button and footer pages.
+Recent work: NeighborhoodLiveStatus - terminal-chic local time + weather display in masthead (Open-Meteo, animated colon, 12h/24h by country).
 
 ## Key Patterns
 
@@ -148,7 +148,8 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **Padding:** `py-28 md:py-36 lg:py-48` for cinematic breathing room
 
 ### NeighborhoodHeader (Feed Page)
-- **Masthead:** Centered `text-center py-10` with back arrow absolute top-left (`← NEW YORK`), city label (`text-[11px] tracking-[0.3em] uppercase text-neutral-400`), serif neighborhood name (`font-display text-4xl md:text-5xl text-neutral-100`), and italic combo sub-line
+- **Masthead:** Centered `text-center py-10` with back arrow absolute top-left (`← NEW YORK`), city label (`text-[11px] tracking-[0.3em] uppercase text-neutral-400`), serif neighborhood name (`font-display text-4xl md:text-5xl text-neutral-100`), italic combo sub-line, and `NeighborhoodLiveStatus` (local time + weather)
+- **NeighborhoodLiveStatus:** `font-mono text-sm tracking-widest text-amber-500/90` centered below H1. Format: `[Time] -- [Temp Description]`. US = 12h + °F, rest = 24h + °C. Animated colon (`animate-pulse-slow` 2s). Weather from Open-Meteo (client-side, silent fail). Props threaded: page.tsx → NeighborhoodFeed → NeighborhoodHeader.
 - **Control Deck:** `border-y border-white/10 py-4` toolbar with two zones: GUIDE/MAP/HISTORY links (center), ViewToggle icons (right). Left zone is empty spacer.
 - **Combo dropdowns:** Dropdown panel: `bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px]`, items `hover:text-white hover:bg-white/5`
 - **ViewToggle:** Minimal `w-8 h-8` icons, no pill background. Active: `text-white`, inactive: `text-neutral-300`
