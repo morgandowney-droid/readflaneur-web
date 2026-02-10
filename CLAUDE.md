@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-10
 
-Recent work: ContextSwitcher mobile overflow fix, MultiFeed dynamic brief on pill switch, modal mobile footer fix, authenticated user preference sync, "City Search" rename.
+Recent work: combo subtitle + Maps/History links in MultiFeed, server-side weather for instant render, ContextSwitcher mobile overflow fix, MultiFeed dynamic brief on pill switch.
 
 ### Auth (Pre-Launch)
 - **OAuth hidden:** Google & Apple login buttons hidden on `/login` and `/signup` pages. Code is fully implemented and ready to re-enable (just uncomment the OAuth button sections).
@@ -169,8 +169,9 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 ### NeighborhoodHeader (Feed Page)
 - **Mode prop:** `mode: 'single' | 'all'` (default `'single'`). Controls masthead content and control deck layout.
 - **Masthead (single):** Centered `text-center pt-8`. City label, serif neighborhood name, italic combo sub-line, `NeighborhoodLiveStatus` with `mb-8`.
-- **Masthead (all):** "My Neighborhoods" heading, "{N} locations" subtitle. No city label, no LiveStatus.
-- **NeighborhoodLiveStatus:** `font-mono text-xs font-medium tracking-[0.2em] text-amber-600/80`. Clickable - Google weather. Only rendered in single mode.
+- **Masthead (all):** "My Neighborhoods" heading, "{N} locations" subtitle when no pill active. When a pill is active: city label, neighborhood name, combo subtitle (if combo), Maps/History links, LiveStatus.
+- **Maps/History links (all mode):** Small grey dotted-underline links (`text-xs text-neutral-500 decoration-dotted`) under neighborhood name. Only shown when a specific pill is active. Same URLs as single-mode MAP/HISTORY.
+- **NeighborhoodLiveStatus:** `font-mono text-xs font-medium tracking-[0.2em] text-amber-600/80`. Clickable - Google weather. Accepts `initialWeather` prop for server-side pre-fetch (skips client fetch when provided).
 - **Control Deck:** CSS Grid `grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]` for overflow-safe centering. Left: `<ContextSwitcher>` (truncates long names), Center: GUIDE/MAP/HISTORY with `shrink-0` (single) or empty (all), Right: ViewToggle.
 - **ContextSwitcher:** `src/components/feed/ContextSwitcher.tsx` - dropdown trigger (`{LABEL} ▾`, truncated `max-w-[80px] md:max-w-[200px]`) + popover (`bg-[#121212] border-white/10 w-64 z-30`). Sections: "All Neighborhoods" (layers icon), neighborhood list (dot + name + city + primary badge + "Set primary" on hover), "Customize List..." (opens modal). Click-outside + Escape close.
 - **useNeighborhoodPreferences:** `src/hooks/useNeighborhoodPreferences.ts` - reads localStorage IDs, fetches name/city from Supabase, cross-tab sync via `storage` event. Exposes `primaryId` and `setPrimary(id)` to reorder localStorage array.
@@ -178,7 +179,7 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **Combo dropdowns:** `bg-surface border-white/[0.08]`, items `hover:text-white hover:bg-white/5`
 - **ViewToggle:** Minimal `w-8 h-8` icons, no pill background. Active: `text-white`, inactive: `text-neutral-300`
 - **DailyBriefWidget:** Renders between Control Deck and FeedList (passed as `dailyBrief` ReactNode prop to `NeighborhoodFeed` or `MultiFeed`). Spacing: `mt-8 mb-12`.
-- **MultiFeed integration:** `MultiFeed` now uses `<NeighborhoodHeader mode="all">` instead of standalone header. Accepts `dailyBrief` prop (primary neighborhood brief). Pill filter switches the daily brief dynamically - fetches brief from `neighborhood_briefs` table client-side per neighborhood, with skeleton loading state.
+- **MultiFeed integration:** `MultiFeed` now uses `<NeighborhoodHeader mode="all">` instead of standalone header. Accepts `dailyBrief` and `initialWeather` props. Passes `comboComponentNames` for combo subtitle. Pill filter switches the daily brief dynamically - fetches brief from `neighborhood_briefs` table client-side per neighborhood, with skeleton loading state.
 - **Shared slug utils:** `getCitySlugFromId()` and `getNeighborhoodSlugFromId()` in `neighborhood-utils.ts` replace duplicate helpers in MultiFeed, ComboNeighborhoodCards, feed/page.
 - **ComboNeighborhoodCards:** Still exists for GuidesClient.tsx but removed from feed header
 
@@ -233,7 +234,8 @@ src/
     ├── grok.ts                    # Grok X Search integration
     ├── brief-enricher-gemini.ts   # Gemini enrichment pipeline
     ├── weekly-brief-service.ts    # Sunday Edition generation
-    └── ad-quality-service.ts      # AI ad review pipeline
+    ├── ad-quality-service.ts      # AI ad review pipeline
+    └── weather.ts                 # Server-side Open-Meteo weather fetch (10-min cache)
 ```
 
 ## Environment Variables

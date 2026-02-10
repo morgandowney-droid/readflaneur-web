@@ -5,6 +5,17 @@
 
 ## 2026-02-10
 
+**Combo Subtitle + Maps/History in MultiFeed:**
+- Combo neighborhoods now show "Covering X, Y, and Z" subtitle in MultiFeed header when their pill is active
+- Added small grey dotted-underline "Maps" and "History" links below neighborhood name in MultiFeed (only when a specific pill is active, not "All Stories")
+- Links use same URLs as single-neighborhood MAP/HISTORY buttons (Google Maps + Wikipedia)
+
+**Server-Side Weather (Instant Render):**
+- New `src/lib/weather.ts` helper fetches from Open-Meteo API server-side with 10-min `revalidate` cache
+- `NeighborhoodLiveStatus` accepts `initialWeather` prop - initializes weather state from server data, skips client-side fetch
+- Both `[city]/[neighborhood]/page.tsx` and `feed/page.tsx` fetch weather server-side and pass through props
+- Eliminates visible weather pop-in on initial page load (time + temp render together)
+
 **Primary Neighborhood Indicator:**
 - Added primary neighborhood concept: first item in localStorage array is primary
 - `useNeighborhoodPreferences` hook exposes `primaryId` and `setPrimary(id)` for reordering
