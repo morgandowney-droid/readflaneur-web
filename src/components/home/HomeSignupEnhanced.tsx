@@ -26,9 +26,16 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
     return neighborhoods.filter(n => selected.has(n.id));
   }, [neighborhoods, selected]);
 
-  // Load preferences on mount
+  // Load preferences on mount — always merge DB + localStorage to prevent split-brain
   useEffect(() => {
     const loadData = async () => {
+      // Always read localStorage first (instant, works for all users)
+      let localIds: string[] = [];
+      const stored = localStorage.getItem(PREFS_KEY);
+      if (stored) {
+        try { localIds = JSON.parse(stored) as string[]; } catch { /* ignore */ }
+      }
+
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
 
@@ -39,36 +46,27 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
           .select('neighborhood_id')
           .eq('user_id', session.user.id);
 
-        if (data && data.length > 0) {
-          setSelected(new Set(data.map(p => p.neighborhood_id)));
-        } else {
-          // Fallback to localStorage (user may have selected before logging in)
-          const stored = localStorage.getItem(PREFS_KEY);
-          if (stored) {
-            try {
-              const ids = JSON.parse(stored) as string[];
-              setSelected(new Set(ids));
-              // Migrate to DB (fire and forget)
-              if (ids.length > 0) {
-                Promise.resolve(
-                  supabase
-                    .from('user_neighborhood_preferences')
-                    .upsert(ids.map(id => ({ user_id: session.user.id, neighborhood_id: id })))
-                ).then(null, () => {});
-              }
-            } catch {
-              // Invalid stored data
-            }
-          }
+        const dbIds = data?.map(p => p.neighborhood_id) || [];
+        // Union both sources — prevents blank homepage after OAuth login
+        const merged = new Set([...dbIds, ...localIds]);
+        setSelected(merged);
+
+        // Sync localStorage IDs to DB if DB was missing any
+        const missingFromDb = localIds.filter(id => !dbIds.includes(id));
+        if (missingFromDb.length > 0) {
+          Promise.resolve(
+            supabase
+              .from('user_neighborhood_preferences')
+              .upsert(missingFromDb.map(id => ({ user_id: session.user.id, neighborhood_id: id })))
+          ).then(null, () => {});
+        }
+        // Sync DB IDs to localStorage if localStorage was missing any
+        if (merged.size > 0) {
+          localStorage.setItem(PREFS_KEY, JSON.stringify(Array.from(merged)));
         }
       } else {
-        const stored = localStorage.getItem(PREFS_KEY);
-        if (stored) {
-          try {
-            setSelected(new Set(JSON.parse(stored)));
-          } catch {
-            // Invalid stored data
-          }
+        if (localIds.length > 0) {
+          setSelected(new Set(localIds));
         }
       }
     };
@@ -85,29 +83,28 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
+        // Always read localStorage first
+        let localIds: string[] = [];
+        const stored = localStorage.getItem(PREFS_KEY);
+        if (stored) {
+          try { localIds = JSON.parse(stored) as string[]; } catch { /* ignore */ }
+        }
+
         if (session?.user) {
           const { data } = await supabase
             .from('user_neighborhood_preferences')
             .select('neighborhood_id')
             .eq('user_id', session.user.id);
 
-          if (data && data.length > 0) {
-            setSelected(new Set(data.map(p => p.neighborhood_id)));
-          } else {
-            // Fallback to localStorage
-            const stored = localStorage.getItem(PREFS_KEY);
-            if (stored) {
-              try { setSelected(new Set(JSON.parse(stored))); } catch { /* ignore */ }
-            }
+          const dbIds = data?.map(p => p.neighborhood_id) || [];
+          const merged = new Set([...dbIds, ...localIds]);
+          setSelected(merged);
+          if (merged.size > 0) {
+            localStorage.setItem(PREFS_KEY, JSON.stringify(Array.from(merged)));
           }
         } else {
-          const stored = localStorage.getItem(PREFS_KEY);
-          if (stored) {
-            try {
-              setSelected(new Set(JSON.parse(stored)));
-            } catch {
-              // Invalid stored data
-            }
+          if (localIds.length > 0) {
+            setSelected(new Set(localIds));
           }
         }
       };
@@ -122,15 +119,18 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
     newSelected.delete(id);
     setSelected(newSelected);
 
+    // Always sync localStorage
+    localStorage.setItem(PREFS_KEY, JSON.stringify(Array.from(newSelected)));
+
     if (userId) {
       const supabase = createClient();
-      await supabase
-        .from('user_neighborhood_preferences')
-        .delete()
-        .eq('user_id', userId)
-        .eq('neighborhood_id', id);
-    } else {
-      localStorage.setItem(PREFS_KEY, JSON.stringify(Array.from(newSelected)));
+      Promise.resolve(
+        supabase
+          .from('user_neighborhood_preferences')
+          .delete()
+          .eq('user_id', userId)
+          .eq('neighborhood_id', id)
+      ).then(null, () => {});
     }
   };
 
@@ -140,9 +140,8 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
     const newSelected = new Set(reordered);
     setSelected(newSelected);
 
-    if (!userId) {
-      localStorage.setItem(PREFS_KEY, JSON.stringify(reordered));
-    }
+    // Always sync localStorage
+    localStorage.setItem(PREFS_KEY, JSON.stringify(reordered));
   };
 
   const handleExplore = () => {

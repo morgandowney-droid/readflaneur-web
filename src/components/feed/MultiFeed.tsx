@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { FeedItem } from '@/types';
 import { FeedList } from './FeedList';
 import { ViewToggle, FeedView } from './ViewToggle';
@@ -52,6 +52,34 @@ export function MultiFeed({
   } | null>(null);
   const [briefLoading, setBriefLoading] = useState(false);
   const { openModal } = useNeighborhoodModal();
+
+  // Pill bar scroll state
+  const pillsRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = pillsRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const el = pillsRef.current;
+    if (!el) return;
+    checkScroll();
+    el.addEventListener('scroll', checkScroll, { passive: true });
+    const ro = new ResizeObserver(checkScroll);
+    ro.observe(el);
+    return () => { el.removeEventListener('scroll', checkScroll); ro.disconnect(); };
+  }, [checkScroll, neighborhoods.length]);
+
+  const scrollPills = (direction: 'left' | 'right') => {
+    const el = pillsRef.current;
+    if (!el) return;
+    el.scrollBy({ left: direction === 'left' ? -160 : 160, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_PREF_KEY) as FeedView | null;
@@ -156,11 +184,20 @@ export function MultiFeed({
       {/* ── PILL BAR ── */}
       {isMultiple && (
         <div className="sticky top-[60px] z-20 bg-[#050505]/95 backdrop-blur-md">
-          <div className="flex items-center gap-2 py-4">
+          <div className="flex items-center gap-1 py-4">
+            {/* Left scroll arrow */}
+            <button
+              onClick={() => scrollPills('left')}
+              className={`shrink-0 p-1 transition-opacity ${canScrollLeft ? 'opacity-100 text-neutral-400 hover:text-white' : 'opacity-0 pointer-events-none'}`}
+              aria-label="Scroll left"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 3L5 7l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+
             {/* Scrollable pills */}
             <div
+              ref={pillsRef}
               className="flex items-center gap-2 overflow-x-auto no-scrollbar flex-1"
-              style={{ maskImage: 'linear-gradient(to right, black 90%, transparent 100%)' }}
             >
               {/* "All" pill */}
               <button
@@ -196,6 +233,15 @@ export function MultiFeed({
                 </button>
               ))}
             </div>
+
+            {/* Right scroll arrow */}
+            <button
+              onClick={() => scrollPills('right')}
+              className={`shrink-0 p-1 transition-opacity ${canScrollRight ? 'opacity-100 text-neutral-400 hover:text-white' : 'opacity-0 pointer-events-none'}`}
+              aria-label="Scroll right"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
 
             {/* Divider + Manage button */}
             <div className="shrink-0 flex items-center gap-2 pl-2 border-l border-neutral-800">
