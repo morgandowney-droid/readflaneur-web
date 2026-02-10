@@ -5,6 +5,15 @@
 
 ## 2026-02-10
 
+**Feed UX Fixes + Login Polish (7 Changes):**
+- Primary neighborhood navigation fix: modal `handleExplore()` now uses localStorage order (primary-first) instead of Set insertion order; ContextSwitcher `handleSetPrimary` now navigates with reordered IDs
+- Drag-to-reorder neighborhood pills: HTML5 drag-and-drop on MultiFeed pill bar. On drop, reorders localStorage and navigates. Visual: dragged pill `opacity-50`, drop target amber left border, `cursor-grab`/`cursor-grabbing`
+- Settings merged into neighborhood modal: city dropdown + detect button + save button in compact row above footer. Settings links removed from Header (desktop + mobile, both auth states). `/settings` page still accessible via direct URL
+- Login page polish: `rounded-lg` on inputs, button, error div. Title margin `mb-10`, form spacing `space-y-5`
+- Login success message: replaced green banner with subtle centered "Welcome back. Redirecting..." in `text-neutral-400`
+- Pill bar vertical stability: pills render BEFORE masthead in MultiFeed, so `sticky top-[60px]` pills don't jump when masthead height changes between "My Neighborhoods" and specific neighborhood details
+- Daily brief eyebrow: changed from "TUE DAILY BRIEF" to "TUE FEB 10 | DAILY BRIEF" format
+
 **Combo Subtitle + Maps/History in MultiFeed:**
 - Combo neighborhoods now show "Covering X, Y, and Z" subtitle in MultiFeed header when their pill is active
 - Added small grey dotted-underline "Maps" and "History" links below neighborhood name in MultiFeed (only when a specific pill is active, not "All Stories")

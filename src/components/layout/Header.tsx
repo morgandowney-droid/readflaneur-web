@@ -322,15 +322,6 @@ export function Header() {
               >
                 Dashboard
               </Link>
-              <Link
-                href="/settings"
-                className={cn(
-                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center border-b-2',
-                  pathname === '/settings' ? 'text-white font-medium border-amber-500' : 'text-neutral-500 border-transparent'
-                )}
-              >
-                Settings
-              </Link>
               <button
                 onClick={handleSignOut}
                 className="text-[11px] tracking-[0.2em] uppercase text-neutral-500 hover:text-white transition-colors min-h-[44px]"
@@ -340,15 +331,6 @@ export function Header() {
             </div>
           ) : (
             <>
-              <Link
-                href="/settings"
-                className={cn(
-                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center border-b-2',
-                  pathname === '/settings' ? 'text-white font-medium border-amber-500' : 'text-neutral-500 border-transparent'
-                )}
-              >
-                Settings
-              </Link>
               <Link
                 href="/login"
                 className={cn(
@@ -495,16 +477,6 @@ export function Header() {
                 >
                   Dashboard
                 </Link>
-                <Link
-                  href="/settings"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    'text-sm tracking-widest uppercase transition-colors hover:text-white py-4 border-b border-white/[0.08] block text-right',
-                    pathname === '/settings' ? 'text-white font-medium' : 'text-neutral-400'
-                  )}
-                >
-                  Settings
-                </Link>
                 <button
                   onClick={() => {
                     handleSignOut();
@@ -517,16 +489,6 @@ export function Header() {
               </>
             ) : (
               <>
-                <Link
-                  href="/settings"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    'text-sm tracking-widest uppercase transition-colors hover:text-white py-4 border-b border-white/[0.08] block text-right',
-                    pathname === '/settings' ? 'text-white font-medium' : 'text-neutral-400'
-                  )}
-                >
-                  Settings
-                </Link>
                 <Link
                   href="/login"
                   onClick={() => setMobileMenuOpen(false)}

@@ -60,6 +60,15 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
   const handleSetPrimary = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     setPrimary(id);
+    // Navigate with reordered IDs so MultiFeed reflects new primary
+    const stored = localStorage.getItem('flaneur-neighborhood-preferences');
+    if (stored) {
+      try {
+        const ids = JSON.parse(stored) as string[];
+        router.push(`/feed?neighborhoods=${ids.join(',')}`);
+      } catch { /* ignore */ }
+    }
+    setOpen(false);
   };
 
   const handleCustomize = () => {

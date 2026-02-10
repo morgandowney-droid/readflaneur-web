@@ -818,7 +818,13 @@ export function NeighborhoodBrief({
       <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-amber-600/80 mb-3">
         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
         <span>
-          {new Date(generatedAt).toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()} DAILY BRIEF
+          {(() => {
+            const d = new Date(generatedAt);
+            const weekday = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+            const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+            const date = d.getDate();
+            return `${weekday} ${month} ${date} | DAILY BRIEF`;
+          })()}
         </span>
       </div>
 

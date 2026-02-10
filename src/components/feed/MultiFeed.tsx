@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { FeedItem, Article, Ad } from '@/types';
 import { FeedList } from './FeedList';
 import { ViewToggle, FeedView } from './ViewToggle';
@@ -41,6 +42,7 @@ export function MultiFeed({
   dailyBrief,
   initialWeather,
 }: MultiFeedProps) {
+  const router = useRouter();
   const [view, setView] = useState<FeedView>(defaultView);
   const [isHydrated, setIsHydrated] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
@@ -209,6 +211,46 @@ export function MultiFeed({
     localStorage.setItem(VIEW_PREF_KEY, newView);
   };
 
+  // Drag-to-reorder state
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+
+  const handleDragStart = (index: number) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setOverIndex(index);
+  };
+
+  const handleDrop = (targetIndex: number) => {
+    if (dragIndex === null || dragIndex === targetIndex) {
+      setDragIndex(null);
+      setOverIndex(null);
+      return;
+    }
+
+    // Reorder neighborhoods
+    const ids = neighborhoods.map(n => n.id);
+    const [movedId] = ids.splice(dragIndex, 1);
+    ids.splice(targetIndex, 0, movedId);
+
+    // Save to localStorage (first item = primary)
+    localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(ids));
+
+    setDragIndex(null);
+    setOverIndex(null);
+
+    // Navigate with new order
+    router.push(`/feed?neighborhoods=${ids.join(',')}`);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setOverIndex(null);
+  };
+
   const currentView = isHydrated ? view : defaultView;
 
   const isMultiple = neighborhoods.length > 1;
@@ -258,25 +300,7 @@ export function MultiFeed({
     <div>
       <BackToTopButton showAfter={400} />
 
-      {/* ── MASTHEAD ── */}
-      <NeighborhoodHeader
-        mode="all"
-        city={activeHood?.city || ''}
-        citySlug=""
-        neighborhoodName={activeHood?.name || 'My Neighborhoods'}
-        neighborhoodSlug=""
-        neighborhoodId={activeHood?.id || ''}
-        hideControlDeck
-        neighborhoodCount={activeHood ? undefined : neighborhoods.length}
-        timezone={activeHood?.timezone}
-        country={activeHood?.country}
-        latitude={activeHood?.latitude}
-        longitude={activeHood?.longitude}
-        comboComponentNames={activeHood?.combo_component_names}
-        initialWeather={!activeFilter ? initialWeather : undefined}
-      />
-
-      {/* ── PILL BAR ── */}
+      {/* ── PILL BAR (above masthead for vertical stability) ── */}
       {isMultiple && (
         <div className="sticky top-[60px] z-20 bg-[#050505]/95 backdrop-blur-md">
           <div className="flex items-center gap-1 py-4">
@@ -309,8 +333,17 @@ export function MultiFeed({
               {neighborhoods.map((hood, i) => (
                 <button
                   key={hood.id}
+                  draggable
+                  onDragStart={() => handleDragStart(i)}
+                  onDragOver={(e) => handleDragOver(e, i)}
+                  onDrop={() => handleDrop(i)}
+                  onDragEnd={handleDragEnd}
                   onClick={() => setActiveFilter(activeFilter === hood.id ? null : hood.id)}
-                  className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors flex items-center gap-1.5 ${
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors flex items-center gap-1.5 cursor-grab active:cursor-grabbing ${
+                    dragIndex === i ? 'opacity-50' : ''
+                  } ${
+                    overIndex === i && dragIndex !== i ? 'border-l-2 border-l-amber-500' : ''
+                  } ${
                     activeFilter === hood.id
                       ? 'bg-white text-black'
                       : 'bg-transparent text-neutral-400 border border-neutral-800 hover:border-neutral-500 hover:text-white'
@@ -360,6 +393,24 @@ export function MultiFeed({
           </div>
         </div>
       )}
+
+      {/* ── MASTHEAD (below pills so pills stay vertically stable) ── */}
+      <NeighborhoodHeader
+        mode="all"
+        city={activeHood?.city || ''}
+        citySlug=""
+        neighborhoodName={activeHood?.name || 'My Neighborhoods'}
+        neighborhoodSlug=""
+        neighborhoodId={activeHood?.id || ''}
+        hideControlDeck
+        neighborhoodCount={activeHood ? undefined : neighborhoods.length}
+        timezone={activeHood?.timezone}
+        country={activeHood?.country}
+        latitude={activeHood?.latitude}
+        longitude={activeHood?.longitude}
+        comboComponentNames={activeHood?.combo_component_names}
+        initialWeather={!activeFilter ? initialWeather : undefined}
+      />
 
       {/* ── DAILY BRIEF ── */}
       {activeFilter === null ? (

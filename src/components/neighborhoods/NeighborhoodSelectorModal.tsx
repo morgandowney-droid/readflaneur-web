@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Neighborhood, GlobalRegion } from '@/types';
 import { getDistance } from '@/lib/geo-utils';
 import { findCountryForQuery, findRegionForQuery, findStateForQuery } from '@/lib/search-aliases';
+import { getAllCityNames, getTimezoneForCity, getStoredLocation, saveStoredLocation } from '@/lib/location';
 
 // Extend Neighborhood type to include combo info for display
 interface NeighborhoodWithCombo extends Neighborhood {
@@ -208,6 +209,12 @@ function GlobalNeighborhoodModal({
   const [hasInitialized, setHasInitialized] = useState(false);
   const [primaryId, setPrimaryId] = useState<string | null>(null);
 
+  // Settings state (city/timezone)
+  const [settingsCity, setSettingsCity] = useState('');
+  const [settingsDetecting, setSettingsDetecting] = useState(false);
+  const [settingsSaved, setSettingsSaved] = useState(false);
+  const allCityNames = useMemo(() => getAllCityNames(), []);
+
   // Suggestion feature state
   const [confirmClear, setConfirmClear] = useState(false);
   const [showSuggestion, setShowSuggestion] = useState(false);
@@ -266,9 +273,14 @@ function GlobalNeighborhoodModal({
     );
   };
 
-  // Reset confirm state when modal opens
+  // Reset confirm state and load settings when modal opens
   useEffect(() => {
-    if (isOpen) setConfirmClear(false);
+    if (isOpen) {
+      setConfirmClear(false);
+      setSettingsSaved(false);
+      const stored = getStoredLocation();
+      if (stored?.city) setSettingsCity(stored.city);
+    }
   }, [isOpen]);
 
   // Use prefetched data if available, otherwise fetch on open
@@ -591,7 +603,10 @@ function GlobalNeighborhoodModal({
 
   const handleExplore = () => {
     if (selected.size > 0) {
-      router.push(`/feed?neighborhoods=${Array.from(selected).join(',')}`);
+      // Use localStorage order (primary-first) instead of Set insertion order
+      const stored = localStorage.getItem(PREFS_KEY);
+      const orderedIds = stored ? JSON.parse(stored) as string[] : Array.from(selected);
+      router.push(`/feed?neighborhoods=${orderedIds.join(',')}`);
     } else {
       router.push('/neighborhoods');
     }
@@ -931,6 +946,67 @@ function GlobalNeighborhoodModal({
               </div>
             </div>
           )}
+        </div>
+
+        {/* Settings Section */}
+        <div className="flex-shrink-0 px-6 py-3 border-t border-white/10">
+          <div className="flex items-center gap-3">
+            <label className="text-[11px] tracking-[0.15em] uppercase text-neutral-500 shrink-0">City</label>
+            <select
+              value={settingsCity}
+              onChange={(e) => {
+                setSettingsCity(e.target.value);
+                setSettingsSaved(false);
+              }}
+              className="flex-1 bg-transparent border-b border-white/20 text-sm text-white py-1.5 focus:outline-none focus:border-amber-500/50 appearance-none cursor-pointer max-w-[200px]"
+            >
+              <option value="" className="bg-neutral-900">Select city...</option>
+              {allCityNames.map(c => (
+                <option key={c} value={c} className="bg-neutral-900">{c}</option>
+              ))}
+            </select>
+            <button
+              onClick={async () => {
+                setSettingsDetecting(true);
+                try {
+                  const res = await fetch('/api/location');
+                  const data = await res.json();
+                  if (data.location?.city) {
+                    setSettingsCity(data.location.city);
+                    setSettingsSaved(false);
+                  }
+                } catch { /* silent */ }
+                setSettingsDetecting(false);
+              }}
+              disabled={settingsDetecting}
+              className="text-neutral-500 hover:text-white transition-colors p-1.5 shrink-0"
+              title="Detect my city"
+            >
+              {settingsDetecting ? (
+                <div className="w-4 h-4 border border-neutral-600 border-t-amber-400 rounded-full animate-spin" />
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              )}
+            </button>
+            <button
+              onClick={() => {
+                if (!settingsCity) return;
+                const tz = getTimezoneForCity(settingsCity);
+                if (tz) {
+                  saveStoredLocation(settingsCity, tz);
+                  setSettingsSaved(true);
+                  setTimeout(() => setSettingsSaved(false), 2000);
+                }
+              }}
+              disabled={!settingsCity || settingsSaved}
+              className="text-[11px] tracking-[0.1em] uppercase text-amber-400 hover:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+            >
+              {settingsSaved ? 'Saved' : 'Save'}
+            </button>
+          </div>
         </div>
 
         {/* Modal Footer */}

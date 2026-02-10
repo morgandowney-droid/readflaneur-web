@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-10
 
-Recent work: combo subtitle + Maps/History links in MultiFeed, server-side weather for instant render, ContextSwitcher mobile overflow fix, MultiFeed dynamic brief on pill switch.
+Recent work: drag-to-reorder pills, pills-above-masthead for vertical stability, Settings merged into neighborhood modal, login page polish, daily brief eyebrow date format, primary navigation fix.
 
 ### Auth (Pre-Launch)
 - **OAuth hidden:** Google & Apple login buttons hidden on `/login` and `/signup` pages. Code is fully implemented and ready to re-enable (just uncomment the OAuth button sections).
@@ -81,7 +81,8 @@ Recent work: combo subtitle + Maps/History links in MultiFeed, server-side weath
 - **Shared search:** `src/lib/search-aliases.ts` — country/region/state aliases + `resolveSearchQuery()` with priority scoring
 - **Geo utils:** `src/lib/geo-utils.ts` — Haversine distance, `sortByDistance()`, `formatDistance()`
 - **Advertise page:** `AdBookingCalendar.tsx` — searches by name/city/component/country/region/state, "Near me" geolocation, grouped city headers for broad queries, "Select all in city"
-- **Header modal:** `NeighborhoodSelectorModal.tsx` — "City Search" dark glassmorphism UI (`bg-neutral-900/90 backdrop-blur-md`), CSS columns masonry layout, text-based items (not pills), amber accent system for selected/vacation/enclave, toggle select/deselect per city, "Change Primary" link in header (scrolls to + highlights primary), "Clear all" with two-tap confirmation in footer, slide-up + backdrop-fade animations. Mobile: `inset-x-0 top-2 bottom-0` (full-bleed bottom) with `pb-[max(1rem,env(safe-area-inset-bottom))]` on footer for iOS safe area.
+- **Header modal:** `NeighborhoodSelectorModal.tsx` — "City Search" dark glassmorphism UI (`bg-neutral-900/90 backdrop-blur-md`), CSS columns masonry layout, text-based items (not pills), amber accent system for selected/vacation/enclave, toggle select/deselect per city, "Change Primary" link in header (scrolls to + highlights primary), "Clear all" with two-tap confirmation in footer, slide-up + backdrop-fade animations. Mobile: `inset-x-0 top-2 bottom-0` (full-bleed bottom) with `pb-[max(1rem,env(safe-area-inset-bottom))]` on footer for iOS safe area. Settings section (city dropdown + detect + save) above footer. `handleExplore()` uses localStorage order (primary-first).
+- **Settings in modal:** City/timezone settings merged into neighborhood modal (compact row above footer). Settings links removed from Header nav (desktop + mobile). `/settings` page still accessible via direct URL.
 - **Accent-insensitive search:** NFD normalization strips diacritical marks — "ostermalm" matches "Östermalm"
 - **Alias suppression:** when query matches a country/region/state alias, loose substring matches are suppressed (prevents "US" matching "Justicia")
 - **Sort by nearest:** "Sort by nearest to me" button below search input (renamed from "Nearest"), geolocation-based sorting
@@ -180,6 +181,9 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **ViewToggle:** Minimal `w-8 h-8` icons, no pill background. Active: `text-white`, inactive: `text-neutral-300`
 - **DailyBriefWidget:** Renders between Control Deck and FeedList (passed as `dailyBrief` ReactNode prop to `NeighborhoodFeed` or `MultiFeed`). Spacing: `mt-8 mb-12`.
 - **MultiFeed integration:** `MultiFeed` now uses `<NeighborhoodHeader mode="all">` instead of standalone header. Accepts `dailyBrief` and `initialWeather` props. Passes `comboComponentNames` for combo subtitle. Pill filter switches the daily brief dynamically - fetches brief from `neighborhood_briefs` table client-side per neighborhood, with skeleton loading state.
+- **MultiFeed render order:** Pills render BEFORE masthead for vertical stability. Sticky `top-[60px]` pills no longer jump when masthead height changes between "My Neighborhoods" and specific neighborhood details.
+- **Drag-to-reorder pills:** Neighborhood pills are `draggable` with HTML5 drag-and-drop. On drop: reorders localStorage, navigates with new URL order. First pill = primary. Visual: dragged pill `opacity-50`, drop target amber left border, `cursor-grab`/`cursor-grabbing`.
+- **ContextSwitcher setPrimary navigation:** `handleSetPrimary` now navigates with reordered IDs after calling `setPrimary()`, so MultiFeed reflects new primary immediately.
 - **Shared slug utils:** `getCitySlugFromId()` and `getNeighborhoodSlugFromId()` in `neighborhood-utils.ts` replace duplicate helpers in MultiFeed, ComboNeighborhoodCards, feed/page.
 - **ComboNeighborhoodCards:** Still exists for GuidesClient.tsx but removed from feed header
 

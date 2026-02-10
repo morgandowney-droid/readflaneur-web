@@ -138,20 +138,20 @@ function LoginForm() {
 
   return (
     <div className="w-full max-w-sm">
-      <h1 className="text-2xl font-light text-center text-neutral-100 mb-8">Sign In</h1>
+      <h1 className="text-2xl font-light text-center text-neutral-100 mb-10">Sign In</h1>
 
       {/* OAuth buttons hidden pre-launch — Google & Apple login fully implemented and ready to re-enable */}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="p-3 text-sm text-red-400 bg-red-900/20 border border-red-800/30">
+          <div className="p-3 text-sm text-red-400 bg-red-900/20 border border-red-800/30 rounded-lg">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="p-3 text-sm text-green-400 bg-green-900/20 border border-green-800/30">
-            Login successful! Redirecting...
+          <div className="text-center py-3">
+            <p className="text-sm text-neutral-400 tracking-wide">Welcome back. Redirecting...</p>
           </div>
         )}
 
@@ -168,7 +168,7 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white"
+            className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white rounded-lg"
             placeholder="you@example.com"
           />
         </div>
@@ -186,7 +186,7 @@ function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white"
+            className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white rounded-lg"
             placeholder="Your password"
           />
         </div>
@@ -194,7 +194,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={isLoading || success}
-          className="w-full bg-white text-neutral-900 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50"
+          className="w-full bg-white text-neutral-900 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50 rounded-lg"
         >
           {isLoading ? 'Signing in...' : success ? 'Redirecting...' : 'Sign In'}
         </button>
