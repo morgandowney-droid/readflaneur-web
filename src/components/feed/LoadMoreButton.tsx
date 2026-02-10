@@ -13,6 +13,7 @@ const VIEW_PREF_KEY = 'flaneur-feed-view';
 
 interface LoadMoreButtonProps {
   neighborhoodId: string;
+  queryIds?: string[];
   initialOffset: number;
   pageSize?: number;
   sectionSlug?: string;
@@ -21,11 +22,13 @@ interface LoadMoreButtonProps {
 
 export function LoadMoreButton({
   neighborhoodId,
+  queryIds,
   initialOffset,
   pageSize = 10,
   sectionSlug,
   categoryFilter
 }: LoadMoreButtonProps) {
+  const allIds = queryIds && queryIds.length > 0 ? queryIds : [neighborhoodId];
   const [items, setItems] = useState<FeedItem[]>([]);
   const [offset, setOffset] = useState(initialOffset);
   const [loading, setLoading] = useState(false);
@@ -47,10 +50,11 @@ export function LoadMoreButton({
     // Fetch ads once on mount
     const fetchAds = async () => {
       const supabase = createClient();
+      const adsFilter = allIds.map(id => `neighborhood_id.eq.${id}`).join(',');
       const { data } = await supabase
         .from('ads')
         .select('*')
-        .or(`is_global.eq.true,neighborhood_id.eq.${neighborhoodId}`);
+        .or(`is_global.eq.true,${adsFilter}`);
       if (data) {
         setAds(data as Ad[]);
       }
@@ -103,7 +107,7 @@ export function LoadMoreButton({
     let query = supabase
       .from('articles')
       .select('*, neighborhood:neighborhoods(id, name, city)')
-      .eq('neighborhood_id', neighborhoodId)
+      .in('neighborhood_id', allIds)
       .eq('status', 'published')
       .order('published_at', { ascending: false, nullsFirst: false });
 
@@ -138,7 +142,7 @@ export function LoadMoreButton({
     }
 
     // Inject ads into the new articles
-    const newItems = injectAds(articles as Article[], ads, [neighborhoodId]);
+    const newItems = injectAds(articles as Article[], ads, allIds);
 
     setItems((prev) => [...prev, ...newItems]);
     setOffset((prev) => prev + articles.length);

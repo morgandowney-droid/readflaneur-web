@@ -216,6 +216,7 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
         {hasMoreArticles && (
           <LoadMoreButton
             neighborhoodId={neighborhoodId}
+            queryIds={queryIds}
             initialOffset={INITIAL_PAGE_SIZE}
             pageSize={INITIAL_PAGE_SIZE}
             categoryFilter={category}
