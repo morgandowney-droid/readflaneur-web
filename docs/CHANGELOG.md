@@ -5,6 +5,13 @@
 
 ## 2026-02-10
 
+**Back Button & Load More Fix:**
+- Back button renamed from "← NEW YORK" (city slug) to "← My Neighborhoods"
+- LoadMoreButton now accepts `queryIds` prop for combo neighborhoods
+- Previously server-side count used all combo+component IDs but client LoadMore only queried single ID
+- Caused phantom "Load More" button that hung on "Loading..." with no results
+- Ads fetch and injection in LoadMore also updated to use full queryIds array
+
 **DailyBriefWidget Relocation:**
 - Moved DailyBriefWidget from above NeighborhoodFeed to between NeighborhoodHeader (control deck) and FeedList
 - "Context before Content" principle: Masthead → Control Deck → Daily Brief → Story Feed
