@@ -828,7 +828,7 @@ export function NeighborhoodBrief({
       </h3>
 
       {/* Content */}
-      <div className="text-sm text-neutral-500 leading-relaxed max-w-prose mb-8">
+      <div className="text-lg text-neutral-400 leading-relaxed max-w-prose mb-8">
         {isExpanded ? (
           <div className="space-y-4">
             {paragraphs.map((p, i) => (
@@ -844,7 +844,7 @@ export function NeighborhoodBrief({
       {hasMore && (
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-xs text-neutral-400 hover:text-neutral-900 transition-colors"
+          className="text-sm font-medium text-neutral-400 hover:text-white transition-colors"
         >
           {isExpanded ? 'Show less' : 'Read more'}
         </button>

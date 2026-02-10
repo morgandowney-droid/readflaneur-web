@@ -122,26 +122,26 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
               </>
             )}
           </div>
-          <h2 className="font-semibold text-base leading-tight mb-1 line-clamp-2">
+          <h2 className="font-semibold text-lg md:text-xl leading-tight mb-1.5 line-clamp-2">
             {article.headline}
           </h2>
           {article.preview_text && (
-            <p className="text-xs text-neutral-500 line-clamp-2">
+            <p className="text-[1.05rem] text-neutral-400 leading-7 line-clamp-2">
               {article.preview_text}
             </p>
           )}
           {/* Action buttons */}
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex items-center gap-4 mt-2 py-1">
             <button
               onClick={handleShare}
-              className="text-xs text-neutral-400 hover:text-white transition-colors"
+              className="text-sm font-medium uppercase tracking-wide text-neutral-500 hover:text-white transition-colors"
             >
               Share
             </button>
             <button
               onClick={handleBookmark}
-              className={`text-xs transition-colors ${
-                isBookmarked ? 'text-white' : 'text-neutral-400 hover:text-white'
+              className={`text-sm font-medium uppercase tracking-wide transition-colors ${
+                isBookmarked ? 'text-white' : 'text-neutral-500 hover:text-white'
               }`}
             >
               {isBookmarked ? 'Saved' : 'Save'}

@@ -182,11 +182,11 @@ export function ArticleCard({ article }: ArticleCardProps) {
                 </>
               )}
             </div>
-            <h2 className="text-xl font-semibold mb-3 line-clamp-3">{article.headline}</h2>
-            <p className="text-neutral-400 text-base leading-relaxed mb-4">
+            <h2 className="text-xl md:text-2xl font-semibold mb-3 line-clamp-3">{article.headline}</h2>
+            <p className="text-neutral-400 text-[1.05rem] leading-7 mb-4">
               {article.preview_text || article.body_text.substring(0, 200)}
             </p>
-            <span className="text-xs tracking-widest uppercase hover:underline">
+            <span className="text-sm font-bold tracking-wider uppercase text-amber-500 hover:text-amber-400">
               Read More
             </span>
           </div>
