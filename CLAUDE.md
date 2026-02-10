@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-10
 
-Recent work: Automated AI model update checker cron (monthly Gemini API + Grok web search), primary neighborhood indicator, accent-insensitive search, NativeAd conditional image fix.
+Recent work: Academic dotted-underline link style (replacing amber/blue), automated AI model update checker cron, primary neighborhood indicator, accent-insensitive search.
 
 ## Key Patterns
 
@@ -183,7 +183,7 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **Line height:** `leading-loose` (2x) - white on black needs more space to avoid bloom
 - **Color:** `text-neutral-200` (off-white, never pure #FFFFFF on dark)
 - **Paragraph spacing:** `mb-8` between paragraphs
-- **Links:** `text-amber-600/80 hover:text-amber-500` with subtle `decoration-amber-600/30 underline-offset-2`
+- **Links:** Academic "invisible link" style - `text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4`, hover: `decoration-solid decoration-neutral-300/60`. Applied globally: ArticleBody, NeighborhoodBrief, EnrichedNeighborhoodBrief, SourceAttribution. No amber/blue link colors anywhere.
 - **Bold:** `font-bold text-neutral-100`
 - **Section headers:** `text-xl font-semibold text-neutral-100 mt-10 mb-6` in Merriweather
 
