@@ -5,6 +5,16 @@
 
 ## 2026-02-10
 
+**Editorial Article Body Typography:**
+- Added Merriweather font (Google Fonts, screen-optimized serif) via `--font-body-serif` CSS variable
+- Article body upsized: mobile `text-[1.2rem]` (~19px), desktop `text-[1.35rem]` (~22px)
+- `leading-loose` (2x line height) for dark mode legibility
+- `text-neutral-200` (off-white) instead of pure white to reduce eye strain
+- `mb-8` paragraph spacing for breathing room
+- Links switched from `text-blue-600` to amber accent (`text-amber-600/80`) with subtle underline
+- Bold text: `font-bold text-neutral-100`
+- Section headers: `text-xl` with `mt-10 mb-6` in Merriweather
+
 **Final Layout Polish:**
 - Hero spacing tightened: `pt-32/pt-40` -> `pt-20/pt-24`, title `mb-3`, live status `mb-8`
 - Control Deck switched from flexbox to CSS Grid `grid-cols-[1fr_auto_1fr]` for true mathematical centering

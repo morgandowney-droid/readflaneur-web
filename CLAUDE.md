@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-10
 
-Recent work: Final layout polish - tighter hero spacing (pt-20/pt-24), CSS Grid control deck for true centering, responsive back button.
+Recent work: Editorial serif typography for article body - Merriweather font, 19px/22px, leading-loose, amber links.
 
 ## Key Patterns
 
@@ -158,9 +158,19 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **Back link:** In control deck grid col 1. Links to multi-feed if user has neighborhoods selected, otherwise home.
 - **ComboNeighborhoodCards:** Still exists for GuidesClient.tsx but removed from feed header
 
-### Font Sizes (17px iOS Baseline)
-- Body: 17px, Headlines: 20-22px, Metadata: 10-12px, Masthead: 30px
-- Website: `text-base`/`text-lg` body, `prose prose-lg` for articles
+### Article Body Typography ("Effortless Legibility")
+- **Font:** Merriweather (Google Fonts, screen-optimized serif) via `--font-body-serif` CSS variable, fallback Georgia/Times New Roman
+- **Size:** Mobile `text-[1.2rem]` (~19px), Desktop `text-[1.35rem]` (~22px) - WSJ/New Yorker scale
+- **Line height:** `leading-loose` (2x) - white on black needs more space to avoid bloom
+- **Color:** `text-neutral-200` (off-white, never pure #FFFFFF on dark)
+- **Paragraph spacing:** `mb-8` between paragraphs
+- **Links:** `text-amber-600/80 hover:text-amber-500` with subtle `decoration-amber-600/30 underline-offset-2`
+- **Bold:** `font-bold text-neutral-100`
+- **Section headers:** `text-xl font-semibold text-neutral-100 mt-10 mb-6` in Merriweather
+
+### Font Sizes (General)
+- Feed body: 17px, Feed headlines: 20-22px, Metadata: 10-12px, Masthead: 30px
+- Article body: 19-22px Merriweather serif
 
 ## Project Structure
 
