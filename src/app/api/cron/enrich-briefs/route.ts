@@ -12,16 +12,18 @@ import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
  * Schedule: every 10 minutes
  *
  * Time budget: 280s max (leaves 20s buffer before 300s maxDuration)
- * Phase 1 (briefs): up to 200s, 3 concurrent enrichments
- * Phase 2 (articles): remaining budget, 3 concurrent enrichments
+ * Phase 1 (briefs): up to 120s, 5 concurrent enrichments
+ * Phase 2 (articles): remaining budget, 5 concurrent enrichments
+ *
+ * Schedule: every 5 minutes
  */
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const TIME_BUDGET_MS = 280_000; // 280s — leave 20s for logging + response
-const PHASE1_BUDGET_MS = 200_000; // 200s max for briefs
-const CONCURRENCY = 3; // parallel Gemini calls per batch
+const PHASE1_BUDGET_MS = 120_000; // 120s max for briefs (leaves more for articles)
+const CONCURRENCY = 5; // parallel Gemini calls per batch
 
 export async function GET(request: Request) {
   const functionStart = Date.now();
@@ -198,10 +200,12 @@ export async function GET(request: Request) {
       }
     } // end if (!isBackfill)
 
-    // ─── Phase 2: Enrich all published articles ───
-    // No time window — enriched_at IS NULL + batch size limit prevents reprocessing
+    // ─── Phase 2: Enrich recent published articles ───
+    // Only enrich articles from the last 4 days (older unenriched content is skipped)
     // Newest articles enriched first (published_at DESC)
-    const articleBatchSize = parseInt(url.searchParams.get('article-batch') || '30');
+    const articleBatchSize = parseInt(url.searchParams.get('article-batch') || '50');
+    const fourDaysAgo = new Date();
+    fourDaysAgo.setDate(fourDaysAgo.getDate() - 4);
 
     let articleQuery = supabase
       .from('articles')
@@ -220,7 +224,8 @@ export async function GET(request: Request) {
         )
       `)
       .eq('status', 'published')
-      .is('enriched_at', null);
+      .is('enriched_at', null)
+      .gt('published_at', fourDaysAgo.toISOString());
 
     articleQuery = articleQuery
       .order('published_at', { ascending: false })
