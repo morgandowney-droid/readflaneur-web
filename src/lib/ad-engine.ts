@@ -57,6 +57,33 @@ export function injectAds(
   return feed;
 }
 
+// Inject email capture prompt after the 5th article in the feed.
+// The prompt is client-rendered and checks localStorage for read count/subscription.
+const EMAIL_PROMPT_POSITION = 5;
+
+export function injectEmailPrompt(
+  feed: FeedItem[],
+  neighborhoodName?: string
+): FeedItem[] {
+  // Count articles to find the right position
+  let articleCount = 0;
+  for (let i = 0; i < feed.length; i++) {
+    if (feed[i].type === 'article') {
+      articleCount++;
+    }
+    if (articleCount === EMAIL_PROMPT_POSITION) {
+      const prompt: FeedItem = {
+        type: 'email-prompt',
+        data: { id: 'email-prompt', neighborhoodName },
+      };
+      const result = [...feed];
+      result.splice(i + 1, 0, prompt);
+      return result;
+    }
+  }
+  return feed;
+}
+
 export function getStoryOpenAds(ads: Ad[], neighborhoodId: string): Ad[] {
   const today = new Date().toISOString().split('T')[0];
 

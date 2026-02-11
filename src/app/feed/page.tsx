@@ -8,7 +8,7 @@ import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { MultiLoadMoreButton } from '@/components/feed/MultiLoadMoreButton';
 import { WelcomeBanner } from '@/components/feed/WelcomeBanner';
 import { FeedItem, Article, Ad } from '@/types';
-import { injectAds } from '@/lib/ad-engine';
+import { injectAds, injectEmailPrompt } from '@/lib/ad-engine';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { fetchCurrentWeather } from '@/lib/weather';
 
@@ -159,12 +159,16 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
         .select('*')
         .eq('is_global', true);
 
-  // Transform articles to FeedItems with ads injected
-  const feedItems: FeedItem[] = injectAds(
+  // Transform articles to FeedItems with ads + email prompt injected
+  const feedItemsWithAds: FeedItem[] = injectAds(
     (articles || []) as Article[],
     (ads || []) as Ad[],
     neighborhoodIds
   );
+
+  // Inject email capture prompt after 5th article (client-side visibility check)
+  const primaryName = neighborhoodsRaw?.[0]?.name;
+  const feedItems = injectEmailPrompt(feedItemsWithAds, primaryName);
 
   // Single neighborhood selected - show full header
   const singleNeighborhood = neighborhoodIds.length === 1 && neighborhoodsWithCombo?.[0];

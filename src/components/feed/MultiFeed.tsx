@@ -8,7 +8,7 @@ import { ViewToggle, FeedView } from './ViewToggle';
 import { BackToTopButton } from './BackToTopButton';
 import { NeighborhoodHeader } from './NeighborhoodHeader';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
-import { injectAds } from '@/lib/ad-engine';
+import { injectAds, injectEmailPrompt } from '@/lib/ad-engine';
 import { NeighborhoodBrief, NeighborhoodBriefSkeleton } from './NeighborhoodBrief';
 
 const VIEW_PREF_KEY = 'flaneur-feed-view';
@@ -186,7 +186,9 @@ export function MultiFeed({
         const ads = Array.isArray(adsData) ? adsData : [];
 
         if (articles.length > 0) {
-          const feedItems = injectAds(articles as Article[], ads as Ad[], [activeFilter]);
+          const feedWithAds = injectAds(articles as Article[], ads as Ad[], [activeFilter]);
+          const hoodName = neighborhoods.find(n => n.id === activeFilter)?.name;
+          const feedItems = injectEmailPrompt(feedWithAds, hoodName);
           setFetchedArticles(feedItems);
           setHasMoreFiltered(articles.length >= 20);
         } else {

@@ -129,11 +129,16 @@ export interface AdOrder {
   created_at: string;
 }
 
-export type FeedItemType = 'article' | 'ad';
+export type FeedItemType = 'article' | 'ad' | 'email-prompt';
+
+export interface EmailPromptData {
+  id: 'email-prompt';
+  neighborhoodName?: string;
+}
 
 export interface FeedItem {
   type: FeedItemType;
-  data: Article | Ad;
+  data: Article | Ad | EmailPromptData;
 }
 
 // Tips system types

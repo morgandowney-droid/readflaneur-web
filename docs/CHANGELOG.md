@@ -5,6 +5,16 @@
 
 ## 2026-02-11
 
+**Engagement-Triggered Email Capture:**
+- Article read counter: `ArticleViewTracker` increments `flaneur-article-reads` in localStorage on each article view (skips if already subscribed)
+- Feed inline prompt: `EmailCaptureCard` injected after 5th article via `injectEmailPrompt()` in `ad-engine.ts`. Shows "Get {neighborhood} stories in your inbox" with email input + subscribe button. Dismissible via X (stores `flaneur-email-prompt-dismissed`).
+- Article page prompt: `PostReadEmailCapture` after `ArticleReactions` - compact one-liner "Enjoying {neighborhood} stories? Get them daily." with inline email input
+- Return visit toast: `ReturnVisitPrompt` in global `layout.tsx` - slide-up toast on 2nd+ session with 3+ reads. Auto-dismisses after 10s unless user focuses input. Session counting via `flaneur-session-count` with sessionStorage dedup guard.
+- All prompts gated by: 3+ reads, not subscribed (`flaneur-newsletter-subscribed`), not dismissed. Posts to existing `/api/newsletter/subscribe`.
+- `FeedItemType` extended with `'email-prompt'`, `FeedList` renders `EmailCaptureCard` for that type
+- `MultiFeed` client-side filtered articles also get email prompt injected
+- New localStorage keys: `flaneur-article-reads`, `flaneur-email-prompt-dismissed`, `flaneur-session-count`
+
 **Smart Auto-Redirect for New Visitors:**
 - Inline `<script>` in `layout.tsx` redirects returning users (with localStorage preferences) to `/feed` before React hydration - no homepage flash
 - `SmartRedirect` component for new users: calls `/api/location/detect-and-match`, saves 4 nearest neighborhoods to localStorage, redirects to `/feed?welcome={city}`

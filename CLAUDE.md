@@ -14,7 +14,15 @@
 
 ## Last Updated: 2026-02-11
 
-Recent work: smart auto-redirect for new visitors (IP detection → nearest neighborhoods → feed), welcome banner, `/discover` page, admin dark mode, clickable NeighborhoodBrief.
+Recent work: engagement-triggered email capture (3 placements), smart auto-redirect, welcome banner, `/discover` page, admin dark mode.
+
+### Email Capture (Engagement-Triggered)
+- **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
+- **Placement 1 - Feed inline:** `EmailCaptureCard` injected after 5th article via `injectEmailPrompt()` in `ad-engine.ts`. "Get {neighborhood} stories in your inbox" + email input. Dismiss stores `flaneur-email-prompt-dismissed`.
+- **Placement 2 - Article page:** `PostReadEmailCapture` after `ArticleReactions`. Compact inline: "Enjoying {neighborhood} stories? Get them daily."
+- **Placement 3 - Return visit:** `ReturnVisitPrompt` in global layout. `flaneur-session-count` incremented once per session (sessionStorage guard). Shows slide-up toast on 2nd+ session with 3+ reads. Auto-dismisses after 10s unless interacted.
+- **All prompts:** Hidden when `flaneur-newsletter-subscribed` = `'true'` or `flaneur-email-prompt-dismissed` = `'true'`. Posts to `/api/newsletter/subscribe` with neighborhoodIds from localStorage.
+- **New localStorage keys:** `flaneur-article-reads` (number), `flaneur-email-prompt-dismissed` ('true'), `flaneur-session-count` (number)
 
 ### Smart Redirect (New Visitor Flow)
 - **Returning users:** Inline `<script>` in `layout.tsx` reads localStorage and redirects to `/feed` before React hydration (no homepage flash)

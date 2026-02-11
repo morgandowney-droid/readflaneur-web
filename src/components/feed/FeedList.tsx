@@ -4,6 +4,7 @@ import { FeedItem, Article, Ad } from '@/types';
 import { ArticleCard } from './ArticleCard';
 import { CompactArticleCard } from './CompactArticleCard';
 import { AdCard } from './AdCard';
+import { EmailCaptureCard } from './EmailCaptureCard';
 import { FeedView } from './ViewToggle';
 
 interface FeedListProps {
@@ -36,6 +37,15 @@ export function FeedList({ items, view = 'gallery' }: FeedListProps) {
   return (
     <div className={view === 'compact' ? 'space-y-0' : 'space-y-4'}>
       {items.map((item, index) => {
+        if (item.type === 'email-prompt') {
+          return (
+            <div key="email-prompt" className="py-4">
+              <EmailCaptureCard
+                neighborhoodName={(item.data as any).neighborhoodName}
+              />
+            </div>
+          );
+        }
         if (item.type === 'article') {
           return view === 'compact' ? (
             <CompactArticleCard

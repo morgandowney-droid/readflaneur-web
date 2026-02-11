@@ -6,6 +6,7 @@ import { Footer } from '@/components/layout/Footer';
 import { PersonaSwitcher } from '@/components/admin/PersonaSwitcher';
 import { NeighborhoodModalProvider } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 import { LocationPrompt } from '@/components/location/LocationPrompt';
+import { ReturnVisitPrompt } from '@/components/feed/ReturnVisitPrompt';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -65,6 +66,7 @@ export default function RootLayout({
           <Footer />
           <PersonaSwitcher />
           <LocationPrompt />
+          <ReturnVisitPrompt />
         </NeighborhoodModalProvider>
       </body>
     </html>

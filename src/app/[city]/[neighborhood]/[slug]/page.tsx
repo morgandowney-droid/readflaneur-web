@@ -7,6 +7,7 @@ import { StoryOpenAd } from '@/components/feed/StoryOpenAd';
 import { FallbackAd } from '@/components/feed/FallbackAd';
 import { ArticleViewTracker } from '@/components/tracking/ArticleViewTracker';
 import { ArticleReactions } from '@/components/article/ArticleReactions';
+import { PostReadEmailCapture } from '@/components/article/PostReadEmailCapture';
 import { ArticleBody } from '@/components/article/ArticleBody';
 import { AIImageDisclaimer, AIImageBadge } from '@/components/article/AIImageDisclaimer';
 import { SourceAttribution } from '@/components/article/SourceAttribution';
@@ -281,6 +282,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
         {/* Reactions */}
         <ArticleReactions articleId={article.id} />
+
+        {/* Email capture for engaged readers */}
+        <PostReadEmailCapture neighborhoodName={article.neighborhood?.name || 'neighborhood'} />
 
         {/* More from neighborhood */}
         <div className="mt-12 pt-8 border-t border-white/[0.08] text-center">
