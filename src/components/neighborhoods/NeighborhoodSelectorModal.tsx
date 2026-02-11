@@ -40,6 +40,35 @@ function isEnclaveRegion(region?: string): boolean {
   return region ? region.includes('enclaves') : false;
 }
 
+// Geographic region order and labels for region sort
+const GEO_REGION_ORDER: { key: string; label: string }[] = [
+  { key: 'north-america', label: 'North America' },
+  { key: 'south-america', label: 'South America' },
+  { key: 'europe', label: 'Europe' },
+  { key: 'middle-east', label: 'Middle East' },
+  { key: 'asia-pacific', label: 'Asia & Pacific' },
+  { key: 'africa', label: 'Africa' },
+  { key: 'other', label: 'Other' },
+];
+
+const GEO_REGION_INDEX: Record<string, number> = Object.fromEntries(
+  GEO_REGION_ORDER.map((r, i) => [r.key, i])
+);
+
+/** Map any region (including vacation/enclave) to its geographic parent */
+function getGeoRegion(region?: string): string {
+  if (!region) return 'other';
+  if (region === 'us-vacation' || region === 'caribbean-vacation') return 'north-america';
+  if (region === 'europe-vacation') return 'europe';
+  if (region === 'test') return 'other';
+  if (region.includes('enclaves')) {
+    if (region.startsWith('nyc')) return 'north-america';
+    if (region.startsWith('stockholm')) return 'europe';
+    return 'other';
+  }
+  return region;
+}
+
 // Modal Context
 interface NeighborhoodModalContextType {
   isOpen: boolean;
@@ -203,7 +232,7 @@ function GlobalNeighborhoodModal({
   const [userId, setUserId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<'name' | 'nearest'>('name');
+  const [sortBy, setSortBy] = useState<'name' | 'nearest' | 'region'>('name');
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -276,6 +305,10 @@ function GlobalNeighborhoodModal({
       },
       { timeout: 5000 }
     );
+  };
+
+  const handleSortByRegion = () => {
+    setSortBy(sortBy === 'region' ? 'name' : 'region');
   };
 
   // Reset confirm state and load settings when modal opens
@@ -443,14 +476,22 @@ function GlobalNeighborhoodModal({
       neighborhoods: data.neighborhoods,
       isVacation: data.isVacation,
       isEnclave: data.isEnclave,
+      geoRegion: getGeoRegion(data.neighborhoods[0]?.region),
       distance: userLocation && cityCoordinates[city]
         ? getDistance(userLocation[0], userLocation[1], cityCoordinates[city][0], cityCoordinates[city][1])
         : Infinity,
     }));
 
-    // Sort by distance if sorting by nearest, otherwise alphabetically
+    // Sort by distance, region, or alphabetically
     if (sortBy === 'nearest' && userLocation) {
       cities = cities.sort((a, b) => a.distance - b.distance);
+    } else if (sortBy === 'region') {
+      cities = cities.sort((a, b) => {
+        const orderA = GEO_REGION_INDEX[a.geoRegion] ?? 99;
+        const orderB = GEO_REGION_INDEX[b.geoRegion] ?? 99;
+        if (orderA !== orderB) return orderA - orderB;
+        return a.city.localeCompare(b.city);
+      });
     } else {
       cities = cities.sort((a, b) => a.city.localeCompare(b.city));
     }
@@ -802,8 +843,8 @@ function GlobalNeighborhoodModal({
             </div>
           </div>
 
-          {/* Sort by nearest */}
-          <div className="mt-3">
+          {/* Sort buttons */}
+          <div className="mt-3 flex items-center gap-2">
             <button
               onClick={handleSortByNearest}
               disabled={locationLoading}
@@ -819,6 +860,19 @@ function GlobalNeighborhoodModal({
               </svg>
               {locationLoading ? 'Locating...' : 'Sort by nearest to me'}
             </button>
+            <button
+              onClick={handleSortByRegion}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full border transition-all whitespace-nowrap ${
+                sortBy === 'region'
+                  ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
+                  : 'border-white/20 text-neutral-400 hover:text-white hover:border-white/40'
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {sortBy === 'region' ? 'Sort alphabetically' : 'Sort by region'}
+            </button>
           </div>
         </div>
 
@@ -828,9 +882,97 @@ function GlobalNeighborhoodModal({
             <div className="flex items-center justify-center py-12">
               <div className="w-8 h-8 border-2 border-neutral-700 border-t-amber-400 rounded-full animate-spin" />
             </div>
+          ) : sortBy === 'region' ? (
+            /* Region-grouped layout: separate masonry per region */
+            (() => {
+              const regionGroups = new Map<string, typeof filteredCities>();
+              filteredCities.forEach(c => {
+                const geo = c.geoRegion;
+                if (!regionGroups.has(geo)) regionGroups.set(geo, []);
+                regionGroups.get(geo)!.push(c);
+              });
+              const orderedRegions = GEO_REGION_ORDER
+                .filter(r => regionGroups.has(r.key))
+                .map(r => ({ ...r, cities: regionGroups.get(r.key)! }));
+
+              return orderedRegions.map(({ key, label, cities: regionCities }) => (
+                <div key={key} className="mb-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <h3 className="text-xs tracking-[0.2em] uppercase text-neutral-500 shrink-0">{label}</h3>
+                    <div className="flex-1 h-px bg-white/5" />
+                  </div>
+                  <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-x-8">
+                    {regionCities.map(({ city, neighborhoods: cityHoods }) => {
+                      const selectableIds = cityHoods.filter(n => !n.is_coming_soon).map(n => n.id);
+                      const allInCitySelected = selectableIds.length > 0 && selectableIds.every(id => selected.has(id));
+                      return (
+                        <div key={city} className="break-inside-avoid mb-6">
+                          <div className="flex items-baseline gap-2 mb-1.5">
+                            <h3 className="font-display text-base text-white">{city}</h3>
+                            <button
+                              onClick={() => selectAllInCity(cityHoods)}
+                              className={`text-[11px] transition-colors ${allInCitySelected ? 'text-amber-400 hover:text-amber-300' : 'text-neutral-600 hover:text-amber-400'}`}
+                            >
+                              {allInCitySelected ? 'Deselect' : 'Select all'}
+                            </button>
+                          </div>
+                          <div className="space-y-0.5">
+                            {cityHoods.map(hood => {
+                              const isSelected = selected.has(hood.id);
+                              const hasComboComponents = hood.combo_component_names && hood.combo_component_names.length > 0;
+                              if (hood.is_coming_soon) {
+                                return (
+                                  <div key={hood.id} className="text-sm text-neutral-700 py-0.5 cursor-default">
+                                    {hood.name} <span className="text-[11px]">(Soon)</span>
+                                  </div>
+                                );
+                              }
+                              const isPrimary = hood.id === primaryId && selected.size > 1;
+                              const showSetPrimary = isSelected && !isPrimary && selected.size > 1;
+                              return (
+                                <div key={hood.id} data-neighborhood-id={hood.id} className="flex items-center gap-1 group/item">
+                                  <button
+                                    onClick={() => toggleNeighborhood(hood.id)}
+                                    className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${isSelected ? 'text-amber-400 font-medium' : 'text-neutral-400 hover:text-white'}`}
+                                    title={hasComboComponents ? `Includes: ${hood.combo_component_names!.join(', ')}` : undefined}
+                                  >
+                                    {isSelected && (
+                                      <svg className="w-3 h-3 shrink-0 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    )}
+                                    {hood.name}
+                                    {hasComboComponents && (
+                                      <span className="text-[11px] text-neutral-600">({hood.combo_component_names!.length} areas)</span>
+                                    )}
+                                    {isPrimary && (
+                                      <span className="text-[9px] tracking-wider uppercase text-amber-500/70 font-medium ml-1">Primary</span>
+                                    )}
+                                  </button>
+                                  {showSetPrimary && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); makePrimary(hood.id); }}
+                                      className="text-[10px] tracking-wider uppercase font-medium text-emerald-500/80 hover:text-emerald-400 opacity-0 group-hover/item:opacity-100 transition-opacity shrink-0 py-0.5"
+                                      title="Set as primary"
+                                    >
+                                      Set as Primary
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ));
+            })()
           ) : (
+            /* Flat masonry layout (alphabetical or nearest) */
             <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-x-8">
-              {filteredCities.map(({ city, neighborhoods: cityHoods, distance, isVacation, isEnclave }) => {
+              {filteredCities.map(({ city, neighborhoods: cityHoods, distance }) => {
                 const selectableIds = cityHoods.filter(n => !n.is_coming_soon).map(n => n.id);
                 const allInCitySelected = selectableIds.length > 0 && selectableIds.every(id => selected.has(id));
 
