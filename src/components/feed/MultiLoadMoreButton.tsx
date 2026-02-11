@@ -117,10 +117,30 @@ export function MultiLoadMoreButton({
       }
 
       const res = await fetch(url, { headers });
-      const articles = await res.json();
+      const articlesRaw = await res.json();
 
-      if (!Array.isArray(articles) || articles.length === 0) {
+      if (!Array.isArray(articlesRaw) || articlesRaw.length === 0) {
         setHasMore(false);
+        setLoading(false);
+        return;
+      }
+
+      // Deduplicate articles with identical headlines (same story across neighborhoods)
+      const existingHeadlines = new Set(
+        items
+          .filter(i => i.type === 'article')
+          .map(i => (i.data as Article).headline)
+      );
+      const seenHeadlines = new Set(existingHeadlines);
+      const articles = articlesRaw.filter((a: any) => {
+        if (seenHeadlines.has(a.headline)) return false;
+        seenHeadlines.add(a.headline);
+        return true;
+      });
+
+      if (articles.length === 0) {
+        setHasMore(articlesRaw.length === pageSize); // May be more unique articles in next batch
+        setOffset((prev) => prev + articlesRaw.length);
         setLoading(false);
         return;
       }
@@ -129,8 +149,8 @@ export function MultiLoadMoreButton({
       const newItems = injectAds(articles as Article[], ads, neighborhoodIds);
 
       setItems((prev) => [...prev, ...newItems]);
-      setOffset((prev) => prev + articles.length);
-      setHasMore(articles.length === pageSize);
+      setOffset((prev) => prev + articlesRaw.length);
+      setHasMore(articlesRaw.length === pageSize);
     } catch (err) {
       console.error('Error loading more articles:', err);
     } finally {

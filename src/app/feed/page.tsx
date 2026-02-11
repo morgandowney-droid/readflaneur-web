@@ -82,7 +82,15 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     }
   }
 
-  const { data: articles } = await query;
+  const { data: articlesRaw } = await query;
+
+  // Deduplicate articles with identical headlines (same story syndicated to multiple neighborhoods)
+  const seenHeadlines = new Set<string>();
+  const articles = (articlesRaw || []).filter((a: any) => {
+    if (seenHeadlines.has(a.headline)) return false;
+    seenHeadlines.add(a.headline);
+    return true;
+  });
 
   // Count total articles for pagination
   let countQuery = supabase
