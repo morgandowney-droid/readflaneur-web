@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-11
 
-Recent work: Gemini model switch (2.5-pro), feed article dedup, region sort in modal, clickable "My Neighborhoods" heading, feed header spacing/sticky fix, engagement-triggered email capture, smart auto-redirect.
+Recent work: Article page back link to /feed, primary neighborhood sync to email scheduler, Gemini model switch (2.5-pro), feed article dedup, region sort in modal, clickable "My Neighborhoods" heading, engagement-triggered email capture, smart auto-redirect.
 
 ### Email Capture (Engagement-Triggered)
 - **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
@@ -230,6 +230,11 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **ContextSwitcher setPrimary navigation:** `handleSetPrimary` now navigates with reordered IDs after calling `setPrimary()`, so MultiFeed reflects new primary immediately.
 - **Shared slug utils:** `getCitySlugFromId()` and `getNeighborhoodSlugFromId()` in `neighborhood-utils.ts` replace duplicate helpers in MultiFeed, ComboNeighborhoodCards, feed/page.
 - **ComboNeighborhoodCards:** Still exists for GuidesClient.tsx but removed from feed header
+
+### Article Page Navigation
+- **Back link:** `← ALL STORIES` at top, links to `/feed` (user's neighborhoods loaded from localStorage)
+- **Bottom CTA:** `MORE STORIES` button, also links to `/feed`
+- **No neighborhood-specific links:** Article pages are entry points from shared links too - `/feed` loads the user's own neighborhood set regardless of which neighborhood the article belongs to
 
 ### Article Body Typography ("Effortless Legibility")
 - **Font:** Merriweather (Google Fonts, screen-optimized serif) via `--font-body-serif` CSS variable, fallback Georgia/Times New Roman
