@@ -51,8 +51,10 @@ const NeighborhoodModalContext = createContext<NeighborhoodModalContextType | nu
 
 export function useNeighborhoodModal() {
   const context = useContext(NeighborhoodModalContext);
+  // Return safe no-op defaults during SSR or if provider is missing
+  // (modal interactions are client-only, so no-ops are correct)
   if (!context) {
-    throw new Error('useNeighborhoodModal must be used within NeighborhoodModalProvider');
+    return { isOpen: false, openModal: () => {}, closeModal: () => {} };
   }
   return context;
 }
