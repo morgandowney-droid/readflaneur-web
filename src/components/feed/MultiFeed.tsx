@@ -329,7 +329,7 @@ export function MultiFeed({
       {/* ── PILL BAR (above masthead for vertical stability) ── */}
       {isMultiple && (
         <div className="sticky top-[60px] z-20 bg-[#050505]/95 backdrop-blur-md">
-          <div className="flex items-center gap-1 py-1.5">
+          <div className="flex items-center gap-1 py-3">
             {/* Left scroll arrow */}
             <button
               onClick={() => scrollPills('left')}
