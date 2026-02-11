@@ -124,7 +124,9 @@ Recent work: feed header spacing/sticky fix, hydration error fix, article duplic
 - **Settings in modal:** City/timezone settings merged into neighborhood modal (compact row above footer). Settings links removed from Header nav (desktop + mobile). `/settings` page still accessible via direct URL.
 - **Accent-insensitive search:** NFD normalization strips diacritical marks — "ostermalm" matches "Östermalm"
 - **Alias suppression:** when query matches a country/region/state alias, loose substring matches are suppressed (prevents "US" matching "Justicia")
-- **Sort by nearest:** "Sort by nearest to me" button below search input (renamed from "Nearest"), geolocation-based sorting
+- **Sort by nearest:** "Sort by nearest to me" button below search input, geolocation-based sorting
+- **Sort by region:** "Sort by region" button next to nearest — groups cities into geographic sections (North America, South America, Europe, Middle East, Asia & Pacific) with headers. Toggles to "Sort alphabetically" when active. Vacation/enclave regions mapped to geographic parent.
+- **Timezone tooltip:** "Change my Timezone" button shows hover tooltip explaining it controls 7am email delivery time
 
 ### Combo Neighborhoods
 - `src/lib/combo-utils.ts` — `getNeighborhoodIdsForQuery()`, `getComboInfo()`, `getComboForComponent()`
@@ -212,7 +214,7 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 ### NeighborhoodHeader (Feed Page)
 - **Mode prop:** `mode: 'single' | 'all'` (default `'single'`). Controls masthead content and control deck layout.
 - **Masthead (single):** Centered `text-center pt-8`. City label, serif neighborhood name, italic combo sub-line, `NeighborhoodLiveStatus` with `mb-8`.
-- **Masthead (all):** Centered `text-center pt-6`. "My Neighborhoods" heading + "{N} locations" subtitle when no pill active. When a pill is active: city + combo components on one line (dot separator), Maps/History links, LiveStatus. Subtitle conditionally rendered (not fixed-height invisible).
+- **Masthead (all):** Centered `text-center pt-6`. "My Neighborhoods" heading (clickable - opens NeighborhoodSelectorModal) + "{N} locations" subtitle when no pill active. When a pill is active: city + combo components on one line (dot separator), Maps/History links, LiveStatus. Subtitle conditionally rendered (not fixed-height invisible).
 - **Maps/History links (all mode):** Small grey dotted-underline links (`text-xs text-neutral-500 decoration-dotted`) under neighborhood name. Only shown when a specific pill is active. Same URLs as single-mode MAP/HISTORY.
 - **NeighborhoodLiveStatus:** `font-mono text-xs font-medium tracking-[0.2em] text-amber-600/80`. Clickable - Google weather. Accepts `initialWeather` prop for server-side pre-fetch (skips client fetch when provided).
 - **Control Deck:** CSS Grid `grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]` for overflow-safe centering. Left: `<ContextSwitcher>` (truncates long names), Center: GUIDE/MAP/HISTORY with `shrink-0` (single) or empty (all), Right: ViewToggle.
