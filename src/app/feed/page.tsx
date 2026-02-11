@@ -138,11 +138,14 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     }
   }
 
-  // Add combo_component_names to neighborhoods
-  const neighborhoodsWithCombo = (neighborhoodsRaw || []).map((n: any) => ({
-    ...n,
-    combo_component_names: comboComponentNames[n.id] || undefined,
-  }));
+  // Add combo_component_names to neighborhoods, sorted to match URL parameter order
+  const neighborhoodOrder = new Map(neighborhoodIds.map((id, i) => [id, i]));
+  const neighborhoodsWithCombo = (neighborhoodsRaw || [])
+    .map((n: any) => ({
+      ...n,
+      combo_component_names: comboComponentNames[n.id] || undefined,
+    }))
+    .sort((a: any, b: any) => (neighborhoodOrder.get(a.id) ?? 999) - (neighborhoodOrder.get(b.id) ?? 999));
 
   // Fetch ads (global or for selected neighborhoods)
   const { data: ads } = neighborhoodIds.length > 0
