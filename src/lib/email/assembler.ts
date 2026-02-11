@@ -130,15 +130,16 @@ async function fetchBriefAsStory(
   neighborhoodName: string,
   cityName: string
 ): Promise<EmailStory | null> {
-  // First: check for a brief article in the articles table
-  const since48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  // First: check for a brief article in the articles table (14h window = today's brief only)
+  // Using 14h instead of 48h prevents stale briefs from blocking fresh ones
+  const since14h = new Date(Date.now() - 14 * 60 * 60 * 1000).toISOString();
   const { data: briefArticle } = await supabase
     .from('articles')
     .select('headline, preview_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
     .eq('status', 'published')
     .eq('neighborhood_id', neighborhoodId)
     .ilike('category_label', '%daily brief%')
-    .gte('published_at', since48h)
+    .gte('published_at', since14h)
     .order('published_at', { ascending: false })
     .limit(1)
     .single();
@@ -310,16 +311,16 @@ export async function assembleDailyBrief(
 
     const emailStories = stories.map(s => toEmailStory(s, primaryNeighborhood.name, primaryNeighborhood.city));
 
-    // If no Daily Brief article exists, pull from neighborhood_briefs table
-    const hasBrief = emailStories.some(s => s.categoryLabel?.toLowerCase().includes('daily brief'));
-    if (!hasBrief) {
-      const briefStory = await fetchBriefAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city);
-      if (briefStory) {
-        emailStories.unshift(briefStory);
-        // Keep within limit
-        if (emailStories.length > PRIMARY_STORY_COUNT) {
-          emailStories.length = PRIMARY_STORY_COUNT;
-        }
+    // Always try to fetch today's fresh brief (not just check if any brief exists)
+    // Old briefs from previous days should be replaced by today's fresh one
+    const briefStory = await fetchBriefAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city);
+    if (briefStory) {
+      // Remove any stale brief articles from the stories list, then prepend today's
+      const withoutOldBriefs = emailStories.filter(s => !s.categoryLabel?.toLowerCase().includes('daily brief'));
+      emailStories.length = 0;
+      emailStories.push(briefStory, ...withoutOldBriefs);
+      if (emailStories.length > PRIMARY_STORY_COUNT) {
+        emailStories.length = PRIMARY_STORY_COUNT;
       }
     }
 
@@ -351,16 +352,14 @@ export async function assembleDailyBrief(
     const stories = await fetchStories(supabase, queryIds, SATELLITE_STORY_COUNT, pausedTopics);
     const emailStories = stories.map(s => toEmailStory(s, neighborhood.name, neighborhood.city));
 
-    // If no Daily Brief article exists, pull from neighborhood_briefs table
-    const hasBrief = emailStories.some(s => s.categoryLabel?.toLowerCase().includes('daily brief'));
-    if (!hasBrief) {
-      const briefStory = await fetchBriefAsStory(supabase, satId, neighborhood.name, neighborhood.city);
-      if (briefStory) {
-        emailStories.unshift(briefStory);
-        // Keep within limit + 1 (brief is always included)
-        if (emailStories.length > SATELLITE_STORY_COUNT + 1) {
-          emailStories.length = SATELLITE_STORY_COUNT + 1;
-        }
+    // Always try to fetch today's fresh brief (replace stale briefs from previous days)
+    const briefStory = await fetchBriefAsStory(supabase, satId, neighborhood.name, neighborhood.city);
+    if (briefStory) {
+      const withoutOldBriefs = emailStories.filter(s => !s.categoryLabel?.toLowerCase().includes('daily brief'));
+      emailStories.length = 0;
+      emailStories.push(briefStory, ...withoutOldBriefs);
+      if (emailStories.length > SATELLITE_STORY_COUNT + 1) {
+        emailStories.length = SATELLITE_STORY_COUNT + 1;
       }
     }
 
