@@ -241,6 +241,9 @@ export async function GET(request: Request) {
         articleUrl,
         unsubscribeUrl: `${appUrl}/api/email/unsubscribe?token=${recipient.unsubscribeToken}`,
         preferencesUrl: `${appUrl}/email/preferences?token=${recipient.unsubscribeToken}`,
+        referralUrl: recipient.referralCode
+          ? `${appUrl}/invite?ref=${recipient.referralCode}`
+          : undefined,
         secondaryNeighborhoods: (recipient.subscribedNeighborhoodIds as string[])
           .filter((nid: string) => nid !== primaryId)
           .map((nid: string) => {
@@ -343,7 +346,7 @@ async function buildTestRecipient(supabase: SupabaseClient, email: string) {
   // Try profile first
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, email, primary_timezone, primary_city, email_unsubscribe_token')
+    .select('id, email, primary_timezone, primary_city, email_unsubscribe_token, referral_code')
     .eq('email', email)
     .single();
 
@@ -363,13 +366,14 @@ async function buildTestRecipient(supabase: SupabaseClient, email: string) {
       subscribedNeighborhoodIds: neighborhoodIds,
       unsubscribeToken: profile.email_unsubscribe_token || profile.id,
       pausedTopics: [],
+      referralCode: profile.referral_code || undefined,
     }];
   }
 
   // Try newsletter subscriber
   const { data: sub } = await supabase
     .from('newsletter_subscribers')
-    .select('id, email, timezone, neighborhood_ids, unsubscribe_token')
+    .select('id, email, timezone, neighborhood_ids, unsubscribe_token, referral_code')
     .eq('email', email)
     .single();
 
@@ -384,6 +388,7 @@ async function buildTestRecipient(supabase: SupabaseClient, email: string) {
       subscribedNeighborhoodIds: ids,
       unsubscribeToken: sub.unsubscribe_token || sub.id,
       pausedTopics: [],
+      referralCode: sub.referral_code || undefined,
     }];
   }
 

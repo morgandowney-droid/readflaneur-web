@@ -3,9 +3,10 @@ import { Section, Text, Link, Hr } from '@react-email/components';
 interface FooterProps {
   unsubscribeUrl: string;
   preferencesUrl: string;
+  referralUrl?: string;
 }
 
-export function Footer({ unsubscribeUrl, preferencesUrl }: FooterProps) {
+export function Footer({ unsubscribeUrl, preferencesUrl, referralUrl }: FooterProps) {
   return (
     <Section style={container}>
       <Hr style={divider} />
@@ -15,6 +16,12 @@ export function Footer({ unsubscribeUrl, preferencesUrl }: FooterProps) {
       </Text>
       <Text style={footerText}>
         <Link href={preferencesUrl} style={link}>Manage preferences</Link>
+        {referralUrl && (
+          <>
+            {' '}&middot;{' '}
+            <Link href={referralUrl} style={link}>Share Flaneur</Link>
+          </>
+        )}
         {' '}&middot;{' '}
         <Link href={unsubscribeUrl} style={link}>Unsubscribe</Link>
       </Text>

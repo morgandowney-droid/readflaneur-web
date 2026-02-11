@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useNeighborhoodPreferences } from '@/hooks/useNeighborhoodPreferences';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
+import { ShareWidget } from '@/components/referral/ShareWidget';
 
 interface ContextSwitcherProps {
   currentContext: 'all' | string; // 'all' or neighborhood ID
@@ -77,6 +78,11 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
   };
 
   const showPrimary = neighborhoods.length > 1;
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  useEffect(() => {
+    setIsSubscribed(localStorage.getItem('flaneur-newsletter-subscribed') === 'true');
+  }, []);
 
   return (
     <div className="relative" ref={ref}>
@@ -170,7 +176,7 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
             )}
           </div>
 
-          {/* Section 3: Action */}
+          {/* Section 3: Actions */}
           <div className="border-t border-white/10 py-2">
             <button
               onClick={handleCustomize}
@@ -184,6 +190,9 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
               </svg>
               <span className="text-xs text-neutral-400">Customize List...</span>
             </button>
+            {isSubscribed && (
+              <ShareWidget compact onDone={() => setOpen(false)} />
+            )}
           </div>
         </div>
       )}

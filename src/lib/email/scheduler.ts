@@ -49,7 +49,8 @@ export async function resolveRecipients(
       primary_timezone,
       email_unsubscribe_token,
       daily_email_enabled,
-      paused_topics
+      paused_topics,
+      referral_code
     `)
     .eq('daily_email_enabled', true)
     .not('primary_timezone', 'is', null)
@@ -86,6 +87,19 @@ export async function resolveRecipients(
         primaryId = neighborhoodIds[0];
       }
 
+      // Lazy-generate referral code if missing
+      let referralCode = profile.referral_code;
+      if (!referralCode) {
+        const { data: codeResult } = await supabase.rpc('generate_referral_code');
+        if (codeResult) {
+          referralCode = codeResult;
+          await supabase
+            .from('profiles')
+            .update({ referral_code: codeResult })
+            .eq('id', profile.id);
+        }
+      }
+
       seenEmails.add(profile.email.toLowerCase());
       recipients.push({
         id: profile.id,
@@ -96,6 +110,7 @@ export async function resolveRecipients(
         subscribedNeighborhoodIds: neighborhoodIds,
         unsubscribeToken: profile.email_unsubscribe_token,
         pausedTopics: profile.paused_topics || [],
+        referralCode: referralCode || undefined,
       });
     }
   }
@@ -111,7 +126,8 @@ export async function resolveRecipients(
       unsubscribe_token,
       daily_email_enabled,
       email_verified,
-      paused_topics
+      paused_topics,
+      referral_code
     `)
     .eq('daily_email_enabled', true)
     .eq('email_verified', true)
@@ -124,6 +140,19 @@ export async function resolveRecipients(
       if (!sub.neighborhood_ids || sub.neighborhood_ids.length === 0) continue;
       if (!isTargetHour(sub.timezone, targetHour)) continue;
 
+      // Lazy-generate referral code if missing
+      let subReferralCode = sub.referral_code;
+      if (!subReferralCode) {
+        const { data: codeResult } = await supabase.rpc('generate_referral_code');
+        if (codeResult) {
+          subReferralCode = codeResult;
+          await supabase
+            .from('newsletter_subscribers')
+            .update({ referral_code: codeResult })
+            .eq('id', sub.id);
+        }
+      }
+
       seenEmails.add(sub.email.toLowerCase());
       recipients.push({
         id: sub.id,
@@ -134,6 +163,7 @@ export async function resolveRecipients(
         subscribedNeighborhoodIds: sub.neighborhood_ids,
         unsubscribeToken: sub.unsubscribe_token,
         pausedTopics: sub.paused_topics || [],
+        referralCode: subReferralCode || undefined,
       });
     }
   }

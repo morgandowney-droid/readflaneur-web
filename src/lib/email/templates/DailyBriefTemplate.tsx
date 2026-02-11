@@ -19,6 +19,9 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://readflaneur.com';
   const unsubscribeUrl = `${appUrl}/api/email/unsubscribe?token=${content.recipient.unsubscribeToken}`;
   const preferencesUrl = `${appUrl}/email/preferences?token=${content.recipient.unsubscribeToken}`;
+  const referralUrl = content.recipient.referralCode
+    ? `${appUrl}/invite?ref=${content.recipient.referralCode}`
+    : undefined;
 
   const primaryName = content.primarySection?.neighborhoodName || 'your neighborhoods';
   const previewText = `Your morning brief from ${primaryName}`;
@@ -97,6 +100,7 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
           <Footer
             unsubscribeUrl={unsubscribeUrl}
             preferencesUrl={preferencesUrl}
+            referralUrl={referralUrl}
           />
         </Container>
       </Body>

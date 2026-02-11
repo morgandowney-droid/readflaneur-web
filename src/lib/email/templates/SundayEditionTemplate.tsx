@@ -34,6 +34,7 @@ export interface SundayEditionContent {
   articleUrl: string | null;
   unsubscribeUrl: string;
   preferencesUrl: string;
+  referralUrl?: string;
   secondaryNeighborhoods?: { id: string; name: string; cityName: string }[];
   requestBaseUrl?: string;
   requestToken?: string;
@@ -263,6 +264,14 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
               <Link href={content.preferencesUrl} style={footerLink}>
                 Manage preferences
               </Link>
+              {content.referralUrl && (
+                <>
+                  {' · '}
+                  <Link href={content.referralUrl} style={footerLink}>
+                    Share Flaneur
+                  </Link>
+                </>
+              )}
               {' · '}
               <Link href={content.unsubscribeUrl} style={footerLink}>
                 Unsubscribe

@@ -11,6 +11,7 @@ export interface EmailRecipient {
   subscribedNeighborhoodIds: string[];
   unsubscribeToken: string;
   pausedTopics: string[]; // category_labels to exclude from email
+  referralCode?: string;
 }
 
 export interface DailyBriefContent {

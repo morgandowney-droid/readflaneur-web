@@ -40,13 +40,13 @@ export async function GET(request: Request) {
   // Look up recipient by token (newsletter_subscribers first, then profiles)
   const { data: subscriber } = await supabase
     .from('newsletter_subscribers')
-    .select('id, email, timezone, neighborhood_ids, unsubscribe_token')
+    .select('id, email, timezone, neighborhood_ids, unsubscribe_token, referral_code')
     .eq('unsubscribe_token', token)
     .single();
 
   const { data: profile } = !subscriber ? await supabase
     .from('profiles')
-    .select('id, email, primary_timezone, email_unsubscribe_token')
+    .select('id, email, primary_timezone, email_unsubscribe_token, referral_code')
     .eq('email_unsubscribe_token', token)
     .single() : { data: null };
 
@@ -233,6 +233,9 @@ export async function GET(request: Request) {
     articleUrl,
     unsubscribeUrl: `${appUrl}/api/email/unsubscribe?token=${token}`,
     preferencesUrl: `${appUrl}/email/preferences?token=${token}`,
+    referralUrl: (subscriber?.referral_code || profile?.referral_code)
+      ? `${appUrl}/invite?ref=${subscriber?.referral_code || profile?.referral_code}`
+      : undefined,
     // No secondary neighborhoods in on-demand emails (no recursion)
   };
 
