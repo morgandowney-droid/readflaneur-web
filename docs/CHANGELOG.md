@@ -3,6 +3,25 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-11
+
+**Smart Auto-Redirect for New Visitors:**
+- Inline `<script>` in `layout.tsx` redirects returning users (with localStorage preferences) to `/feed` before React hydration - no homepage flash
+- `SmartRedirect` component for new users: calls `/api/location/detect-and-match`, saves 4 nearest neighborhoods to localStorage, redirects to `/feed?welcome={city}`
+- New API route `GET /api/location/detect-and-match`: IP geolocation via ipinfo.io → latitude/longitude → Haversine sort against all active non-combo neighborhoods → returns nearest 4
+- `WelcomeBanner` component on feed: "Viewing stories near {city}. Customize" with dismiss X, strips `welcome` param, stores dismissal in localStorage
+- `/discover` page: full homepage without auto-redirect for direct browsing
+- `DetectedLocation` interface extended with `latitude`/`longitude` fields from ipinfo.io `loc` field
+- Session guard (`sessionStorage` flag) prevents detection retry loops on failure; 5s AbortController timeout
+
+**Admin Dark Mode:**
+- All 12 admin pages converted from light-mode colors (blue-50, yellow-100, green-100, etc.) to Obsidian-compatible dark variants (blue-500/10, yellow-500/15, green-500/15, etc.)
+
+**UX Polish:**
+- `NeighborhoodBrief` whole card clickable to expand/collapse (stopPropagation on inner buttons)
+- `getMapLocation()` now strips "Enclaves" suffix and diacritical marks for better Google Maps resolution
+- `sync-news` cron logs to `cron_executions` even when ANTHROPIC_API_KEY is missing (was silently failing)
+
 ## 2026-02-10
 
 **Feed Pill Bar + Modal Polish:**

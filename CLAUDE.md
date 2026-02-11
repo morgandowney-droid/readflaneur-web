@@ -12,9 +12,18 @@
 - **Sentry:** https://sentry.io/organizations/flaneur-vk/issues/
 - **200 neighborhoods** across 73 cities, 42 countries (the "Flaneur 200")
 
-## Last Updated: 2026-02-10
+## Last Updated: 2026-02-11
 
-Recent work: drag-to-reorder pills (pointer events), pill order matches URL params, modal primary navigates feed, modal UX polish (separators, timezone toggle, narrower search).
+Recent work: smart auto-redirect for new visitors (IP detection → nearest neighborhoods → feed), welcome banner, `/discover` page, admin dark mode, clickable NeighborhoodBrief.
+
+### Smart Redirect (New Visitor Flow)
+- **Returning users:** Inline `<script>` in `layout.tsx` reads localStorage and redirects to `/feed` before React hydration (no homepage flash)
+- **New users:** `SmartRedirect` component on homepage calls `/api/location/detect-and-match` → IP geolocation → 4 nearest neighborhoods → saves to localStorage → redirects to `/feed?welcome={city}`
+- **API:** `src/app/api/location/detect-and-match/route.ts` — uses `detectLocationFromIP()` + Haversine sort against all active non-combo neighborhoods
+- **WelcomeBanner:** `src/components/feed/WelcomeBanner.tsx` — "Viewing stories near {city}. Customize" with dismiss X. Strips `welcome` param on dismiss. Stores dismissal in localStorage.
+- **Discover page:** `/discover` — full homepage experience without auto-redirect, for direct browsing
+- **Session guard:** `sessionStorage` flag prevents detection loops on failure
+- **5s timeout:** AbortController on fetch, silent fail shows normal homepage
 
 ### Auth (Pre-Launch)
 - **OAuth hidden:** Google & Apple login buttons hidden on `/login` and `/signup` pages. Code is fully implemented and ready to re-enable (just uncomment the OAuth button sections).
@@ -207,6 +216,7 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 src/
 ├── app/
 │   ├── [city]/[neighborhood]/     # Feed, articles, guides
+│   ├── discover/                   # Homepage without auto-redirect
 │   ├── admin/                     # Cron monitor, ads, news-coverage, images
 │   ├── saved/                     # Saved/bookmarked stories page
 │   ├── settings/                  # User location preferences
@@ -219,6 +229,7 @@ src/
 │       ├── ads/                   # Availability, checkout, upload, booking-info
 │       ├── reactions/             # Emoji reactions API + saved articles
 │       ├── email/                 # Unsubscribe, preferences, sunday-edition-request
+│       ├── location/              # IP detect-and-match (nearest neighborhoods)
 │       ├── internal/              # Image generation, resend
 │       └── webhooks/              # Resend inbound
 ├── config/
