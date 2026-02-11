@@ -37,7 +37,8 @@ export interface FallbackResult {
  */
 export async function getFallback(
   supabase: SupabaseClient,
-  neighborhoodId: string
+  neighborhoodId: string,
+  options?: { isAuthenticated?: boolean }
 ): Promise<FallbackResult> {
   // ─── Priority 1: Bonus Ad (cross-sell from Tier 1 neighborhoods) ───
   try {
@@ -77,10 +78,17 @@ export async function getFallback(
 
   // ─── Priority 2: House Ad (weighted random) ───
   try {
-    const { data: houseAds } = await supabase
+    let query = supabase
       .from('house_ads')
       .select('*')
       .eq('active', true);
+
+    // Newsletter signup ad only shown to non-authenticated visitors
+    if (options?.isAuthenticated) {
+      query = query.neq('type', 'newsletter');
+    }
+
+    const { data: houseAds } = await query;
 
     if (houseAds && houseAds.length > 0) {
       const picked = weightedRandom(houseAds);

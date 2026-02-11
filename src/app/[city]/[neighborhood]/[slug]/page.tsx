@@ -101,7 +101,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   // Resolve fallback when no paid ads exist
   let fallbackData: FallbackData | undefined;
   if (ads.length === 0) {
-    fallbackData = await getFallback(supabase, neighborhoodId);
+    const { data: { session } } = await supabase.auth.getSession();
+    fallbackData = await getFallback(supabase, neighborhoodId, {
+      isAuthenticated: !!session?.user,
+    });
   }
 
   // Fetch nearby neighborhoods in the same city for exploration

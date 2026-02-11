@@ -74,6 +74,7 @@ async function getHouseAd(
     .from('house_ads')
     .select('id, image_url, headline, body, click_url, type')
     .eq('active', true)
+    .neq('type', 'newsletter') // Email recipients are already subscribed
     .limit(10);
 
   if (!houseAds || houseAds.length === 0) {

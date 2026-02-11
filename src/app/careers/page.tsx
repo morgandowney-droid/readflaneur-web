@@ -1,5 +1,3 @@
-import Link from 'next/link';
-
 export const metadata = {
   title: 'Write for Flâneur | Neighborhood Editor',
   description: 'Join Flâneur as a Neighborhood Editor. Be the eyes and ears of your neighborhood.',
@@ -148,30 +146,17 @@ export default function CareersPage() {
             To Apply
           </h2>
           <p className="text-neutral-400 leading-relaxed mb-6">
-            Send a short email with:
+            Send a short email to{' '}
+            <a href="mailto:editors@readflaneur.com?subject=Neighborhood Editor Application" className="text-neutral-200 underline decoration-neutral-600 hover:text-white">
+              editors@readflaneur.com
+            </a>
+            {' '}with the subject line: "Neighborhood Editor Application" and:
           </p>
-          <ol className="list-decimal list-inside space-y-2 text-neutral-400 mb-8">
+          <ol className="list-decimal list-inside space-y-2 text-neutral-400">
             <li>One paragraph about yourself</li>
             <li>Which neighborhood you want to cover</li>
             <li><strong>The Test:</strong> Attach 2 photos of your neighborhood taken today</li>
           </ol>
-
-          <a
-            href="mailto:editors@readflaneur.com?subject=Neighborhood Editor Application"
-            className="inline-block bg-white text-neutral-900 px-8 py-3 text-sm tracking-widest uppercase hover:bg-amber-600 hover:text-white transition-colors"
-          >
-            Apply Now
-          </a>
-
-          <p className="text-sm text-neutral-400 mt-6">
-            Or apply directly if you already have an account:
-          </p>
-          <Link
-            href="/journalist/apply"
-            className="inline-block mt-2 text-sm text-neutral-400 hover:text-white underline decoration-neutral-600"
-          >
-            Apply through your Flâneur account →
-          </Link>
         </section>
       </div>
     </div>
