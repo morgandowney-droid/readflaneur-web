@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-11
 
-Recent work: pipeline reliability fixes (article dedup, Gemini quota, APAC briefs, primary neighborhood sync), engagement-triggered email capture, smart auto-redirect.
+Recent work: feed header spacing/sticky fix, hydration error fix, article duplicate cleanup, pipeline reliability fixes, engagement-triggered email capture, smart auto-redirect.
 
 ### Email Capture (Engagement-Triggered)
 - **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
@@ -144,7 +144,7 @@ Recent work: pipeline reliability fixes (article dedup, Gemini quota, APAC brief
 - **SDK:** `@sentry/nextjs` v10 — client via `src/instrumentation-client.ts`, server/edge via `sentry.{server,edge}.config.ts`
 - **Tunnel:** `/monitoring` route (bypasses ad blockers)
 - **Trace rate:** 20% on all configs, session replays off, error replays 100%
-- **API token:** `SENTRY_AUTH_TOKEN` in `.env.local` (read scope for issue queries)
+- **API token:** `SENTRY_AUTH_TOKEN` in `.env.local` (read-only scope — can query issues but cannot resolve them; needs `event:write` for mutations)
 
 ### AI Model Management
 - **Central config:** `src/config/ai-models.ts` - all model IDs in one place
@@ -181,6 +181,9 @@ No `.catch()` on query builder. Use `.then(null, errorHandler)` or `Promise.reso
 ### Gemini Prompts
 JSON examples override prose instructions. If prompt says "Don't use AQI" but example shows `"AQI 42"`, Gemini follows the example.
 
+### overflow-x: hidden Breaks Sticky Positioning
+CSS spec: setting `overflow-x: hidden` forces `overflow-y: auto` (can't mix `hidden` with `visible`). This creates a scrolling context that captures `position: sticky` elements, breaking their viewport-relative behavior. **Use `overflow-x: clip` instead** — clips without creating a scrolling context. Applied in `globals.css` on `<main>`.
+
 ### No Em Dashes
 Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashes look AI-generated.
 
@@ -209,7 +212,7 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 ### NeighborhoodHeader (Feed Page)
 - **Mode prop:** `mode: 'single' | 'all'` (default `'single'`). Controls masthead content and control deck layout.
 - **Masthead (single):** Centered `text-center pt-8`. City label, serif neighborhood name, italic combo sub-line, `NeighborhoodLiveStatus` with `mb-8`.
-- **Masthead (all):** "My Neighborhoods" heading, "{N} locations" subtitle when no pill active. When a pill is active: city label, neighborhood name, combo subtitle (if combo), Maps/History links, LiveStatus.
+- **Masthead (all):** Centered `text-center pt-6`. "My Neighborhoods" heading + "{N} locations" subtitle when no pill active. When a pill is active: city + combo components on one line (dot separator), Maps/History links, LiveStatus. Subtitle conditionally rendered (not fixed-height invisible).
 - **Maps/History links (all mode):** Small grey dotted-underline links (`text-xs text-neutral-500 decoration-dotted`) under neighborhood name. Only shown when a specific pill is active. Same URLs as single-mode MAP/HISTORY.
 - **NeighborhoodLiveStatus:** `font-mono text-xs font-medium tracking-[0.2em] text-amber-600/80`. Clickable - Google weather. Accepts `initialWeather` prop for server-side pre-fetch (skips client fetch when provided).
 - **Control Deck:** CSS Grid `grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]` for overflow-safe centering. Left: `<ContextSwitcher>` (truncates long names), Center: GUIDE/MAP/HISTORY with `shrink-0` (single) or empty (all), Right: ViewToggle.
@@ -255,7 +258,7 @@ src/
 │   ├── proofs/[token]/            # Customer ad proof page
 │   └── api/
 │       ├── cron/                  # 30+ automated cron jobs
-│       ├── admin/                 # Admin APIs
+│       ├── admin/                 # Admin APIs (includes cleanup-duplicates endpoint)
 │       ├── ads/                   # Availability, checkout, upload, booking-info
 │       ├── reactions/             # Emoji reactions API + saved articles
 │       ├── email/                 # Unsubscribe, preferences, sunday-edition-request
