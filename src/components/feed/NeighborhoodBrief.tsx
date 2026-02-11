@@ -627,6 +627,9 @@ function renderWithSearchableEntities(
  */
 function cleanContent(text: string): string {
   return text
+    // Strip raw search result objects leaked from AI tool output
+    // Matches patterns like: {'title': '...', 'url': '...', 'snippet': ...}
+    .replace(/\{['"](?:title|url|snippet|author|published_at)['"]:[^}]*(?:\}|$)/gm, '')
     // Strip HTML <a> tags but keep the link text
     .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/gi, '$2')
     // Strip other common HTML tags

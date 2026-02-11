@@ -179,6 +179,9 @@ Writing style rules:
     // Clean citation artifacts from Grok response
     const rawContent = contentMatch?.[1]?.trim() || responseText;
     const content = rawContent
+      // Strip raw search result objects leaked from Grok tool output
+      // Matches patterns like: {'title': '...', 'url': '...', 'snippet': ...}
+      .replace(/\{['"](?:title|url|snippet|author|published_at)['"]:[^}]*(?:\}|$)/gm, '')
       .replace(/\.\(/g, '.')               // .( -> .
       .replace(/\.\s*\(\d+\)/g, '.')       // . (1) -> .
       .replace(/\s*\(\d+\)/g, '')          // inline (1) citation numbers
