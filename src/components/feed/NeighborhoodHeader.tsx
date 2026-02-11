@@ -80,7 +80,7 @@ export function NeighborhoodHeader({
   return (
     <header className="mb-6">
       {/* ── MASTHEAD ── */}
-      <div className="text-center pt-12">
+      <div className="text-center pt-6">
         {isAll ? (
           <>
             {/* Heading */}
@@ -88,18 +88,21 @@ export function NeighborhoodHeader({
               {neighborhoodName}
             </h1>
 
-            {/* City label - muted, below the neighborhood name */}
-            <p className={`text-sm text-neutral-500 mb-3 h-5 ${city ? '' : 'opacity-0'}`}>
-              {city || '\u00A0'}
-            </p>
-
-            {/* Combo subtitle - fixed height container for layout stability */}
-            <p className={`font-serif italic text-base text-neutral-500 mb-3 h-6 ${comboComponentNames && comboComponentNames.length > 0 ? '' : 'invisible'}`}>
-              {comboComponentNames && comboComponentNames.length > 0 ? `Covering ${joinWithAnd(comboComponentNames)}` : '\u00A0'}
+            {/* City + combo components on one line */}
+            <p className={`text-sm text-neutral-500 mb-1.5 h-5 ${city ? '' : 'opacity-0'}`}>
+              {comboComponentNames && comboComponentNames.length > 0 ? (
+                <>
+                  {city}
+                  <span className="mx-2 text-neutral-600">·</span>
+                  <span className="font-serif italic">{`Covering ${joinWithAnd(comboComponentNames)}`}</span>
+                </>
+              ) : (
+                city || '\u00A0'
+              )}
             </p>
 
             {/* Maps & History links - fixed height container for layout stability */}
-            <p className={`flex items-center justify-center gap-3 mb-3 h-5 ${neighborhoodId ? '' : 'invisible'}`}>
+            <p className={`flex items-center justify-center gap-3 mb-1.5 h-5 ${neighborhoodId ? '' : 'invisible'}`}>
               {neighborhoodId ? (
                 <>
                   <a
@@ -123,12 +126,12 @@ export function NeighborhoodHeader({
             </p>
 
             {/* Subtitle - always rendered for consistent height */}
-            <p className={`text-sm text-neutral-500 mb-3 h-5 ${neighborhoodCount !== undefined ? '' : 'opacity-0'}`}>
+            <p className={`text-sm text-neutral-500 mb-1.5 h-5 ${neighborhoodCount !== undefined ? '' : 'opacity-0'}`}>
               {neighborhoodCount !== undefined ? `Your curated feed from ${neighborhoodCount} locations` : '\u00A0'}
             </p>
 
             {/* Live status - always rendered container for consistent height */}
-            <div className="mb-4 h-5">
+            <div className="mb-2 h-5">
               {timezone && (
                 <NeighborhoodLiveStatus
                   timezone={timezone}
