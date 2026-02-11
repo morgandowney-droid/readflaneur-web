@@ -743,6 +743,7 @@ function GlobalNeighborhoodModal({
                   className={`text-xs transition-colors ${
                     showTimezone ? 'text-amber-400' : 'text-neutral-500 hover:text-amber-400'
                   }`}
+                  title="This will update the time at which you will receive daily or weekly 7am emails"
                 >
                   Change my Timezone
                 </button>
