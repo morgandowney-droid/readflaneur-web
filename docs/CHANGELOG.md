@@ -5,6 +5,15 @@
 
 ## 2026-02-10
 
+**Feed Pill Bar + Modal Polish:**
+- Drag-to-reorder pills: replaced HTML5 DnD (unreliable) with pointer events (`pointerdown`/`move`/`up`). 8px threshold, `setPointerCapture` on `currentTarget` (not `target`), refs for drag/over indices to avoid stale closures.
+- Pill order now matches URL parameter order: `feed/page.tsx` sorts `neighborhoodsWithCombo` by `neighborhoodIds` index (Supabase `.in()` returns DB order).
+- Modal "Set as Primary" now navigates feed page with reordered URL so pills update immediately.
+- Modal header: `6 selected | Change my Primary Neighborhood | Change my Timezone` with pipe separators.
+- Timezone selector moved from bottom settings section to header, toggled by "Change my Timezone" link.
+- Search input narrowed to `max-w-[15rem]` (75% of previous `max-w-xs`).
+- City label in NeighborhoodHeader all-mode bumped from `text-[11px]` to `text-xs` for visibility.
+
 **Cron Monitoring + Enrichment Fixes:**
 - Added `cron_executions` logging to `sync-news` (had zero logging - wrapped in try/finally with correct schema)
 - Added `cron_executions` logging to `generate-brief-articles` (had zero logging - same pattern)
