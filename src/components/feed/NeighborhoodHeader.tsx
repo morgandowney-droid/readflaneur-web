@@ -6,6 +6,7 @@ import { getWikipediaUrl, getMapLocation, getNeighborhoodSlugFromId } from '@/li
 import { ComboInfo } from '@/lib/combo-utils';
 import { NeighborhoodLiveStatus } from './NeighborhoodLiveStatus';
 import { ContextSwitcher } from './ContextSwitcher';
+import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 
 interface NeighborhoodHeaderProps {
   mode?: 'single' | 'all';
@@ -58,6 +59,7 @@ export function NeighborhoodHeader({
 }: NeighborhoodHeaderProps) {
   const [openDropdown, setOpenDropdown] = useState<DropdownKey | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { openModal } = useNeighborhoodModal();
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -83,8 +85,12 @@ export function NeighborhoodHeader({
       <div className="text-center pt-6">
         {isAll ? (
           <>
-            {/* Heading */}
-            <h1 className="font-display text-4xl md:text-5xl text-neutral-100 tracking-wide mb-1">
+            {/* Heading — clickable to open selector when showing "My Neighborhoods" */}
+            <h1
+              className={`font-display text-4xl md:text-5xl text-neutral-100 tracking-wide mb-1${!neighborhoodId ? ' cursor-pointer hover:text-white transition-colors' : ''}`}
+              onClick={!neighborhoodId ? openModal : undefined}
+              role={!neighborhoodId ? 'button' : undefined}
+            >
               {neighborhoodName}
             </h1>
 
