@@ -78,9 +78,9 @@ export function NeighborhoodHeader({
   const linkClass = 'text-xs tracking-[0.2em] uppercase text-neutral-400 hover:text-white transition-colors';
 
   return (
-    <header className="mb-6">
+    <header className="mb-2">
       {/* ── MASTHEAD ── */}
-      <div className="text-center pt-6">
+      <div className="text-center pt-8">
         {isAll ? (
           <>
             {/* Heading */}
@@ -125,10 +125,12 @@ export function NeighborhoodHeader({
               ) : '\u00A0'}
             </p>
 
-            {/* Subtitle - always rendered for consistent height */}
-            <p className={`text-sm text-neutral-500 mb-1.5 h-5 ${neighborhoodCount !== undefined ? '' : 'opacity-0'}`}>
-              {neighborhoodCount !== undefined ? `Your curated feed from ${neighborhoodCount} locations` : '\u00A0'}
-            </p>
+            {/* Subtitle - only rendered when showing "all" view */}
+            {neighborhoodCount !== undefined && (
+              <p className="text-sm text-neutral-500 mb-1.5">
+                {`Your curated feed from ${neighborhoodCount} locations`}
+              </p>
+            )}
 
             {/* Live status - always rendered container for consistent height */}
             <div className="mb-2 h-5">

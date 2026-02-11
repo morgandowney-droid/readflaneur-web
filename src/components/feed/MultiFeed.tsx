@@ -442,16 +442,16 @@ export function MultiFeed({
       {/* ── DAILY BRIEF ── */}
       {activeFilter === null ? (
         dailyBrief && (
-          <div className="mt-4 mb-6">
+          <div className="mt-2 mb-6">
             {dailyBrief}
           </div>
         )
       ) : briefLoading ? (
-        <div className="mt-4 mb-6">
+        <div className="mt-2 mb-6">
           <NeighborhoodBriefSkeleton />
         </div>
       ) : fetchedBrief ? (
-        <div className="mt-4 mb-6">
+        <div className="mt-2 mb-6">
           <NeighborhoodBrief
             headline={fetchedBrief.headline}
             content={fetchedBrief.content}
