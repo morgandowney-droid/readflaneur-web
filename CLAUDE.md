@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-11
 
-Recent work: Article page back link to /feed, primary neighborhood sync to email scheduler, Gemini model switch (2.5-pro), feed article dedup, region sort in modal, clickable "My Neighborhoods" heading, engagement-triggered email capture, smart auto-redirect.
+Recent work: Tracked referral system (/invite page, share surfaces, email footer links), article page back link to /feed, primary neighborhood sync to email scheduler, Gemini model switch (2.5-pro), feed article dedup, region sort in modal, clickable "My Neighborhoods" heading, engagement-triggered email capture, smart auto-redirect.
 
 ### Email Capture (Engagement-Triggered)
 - **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
@@ -37,6 +37,25 @@ Recent work: Article page back link to /feed, primary neighborhood sync to email
 - **OAuth hidden:** Google & Apple login buttons hidden on `/login` and `/signup` pages. Code is fully implemented and ready to re-enable (just uncomment the OAuth button sections).
 - **Current auth:** Email/password only via Supabase Auth
 - **OAuth callback routes:** Both `/auth/callback` and `/api/auth/callback` are intact and working
+
+### Tracked Referral System
+- **Invite page:** `/invite` - mirrors homepage hero + `HomeSignupEnhanced` + `InviteEmailCapture`. No `SmartRedirect` (visitors must see the page).
+- **Referral link:** `/invite?ref=CODE` - hero shows "A friend invited you to" above FLANEUR. Code stored in `sessionStorage` (`flaneur-referral-code`).
+- **Referral codes:** 8-char alphanumeric (no ambiguous chars), lazy-generated on first access via `generate_referral_code()` Postgres function. Unique across `profiles.referral_code` and `newsletter_subscribers.referral_code`.
+- **API endpoints:**
+  - `GET /api/referral/code` - get or generate code (session auth or email+token)
+  - `POST /api/referral/track` - record click (fire-and-forget, IP hash dedup within 24h)
+  - `POST /api/referral/convert` - record conversion (fire-and-forget, self-referral prevention)
+  - `GET /api/referral/stats` - return `{ code, clicks, conversions }` for share widget
+- **Conversion flow:** Subscribe on invite page -> `POST /api/newsletter/subscribe` -> `POST /api/referral/convert` (fire-and-forget). Updates existing click row to `converted` status, or creates direct conversion if no click row exists.
+- **Share surfaces:**
+  - Email footer: "Share Flaneur" link (between "Manage preferences" and "Unsubscribe") in Daily Brief (`Footer.tsx`) and Sunday Edition (inline footer). Only shown when recipient has a referral code.
+  - ContextSwitcher: "Invite a Friend" item at bottom of dropdown (via `ShareWidget` compact mode). Only shown if `flaneur-newsletter-subscribed` is set.
+  - `ShareWidget` (`src/components/referral/ShareWidget.tsx`): Fetches code from `/api/referral/code`, caches in localStorage (`flaneur-referral-code`). Uses `navigator.share()` on mobile, clipboard copy on desktop.
+- **Scheduler integration:** `src/lib/email/scheduler.ts` fetches `referral_code` from both `profiles` and `newsletter_subscribers`, lazy-generates if null. Passed via `EmailRecipient.referralCode` to templates.
+- **Database:** `referrals` table (referral_code, referrer_type/id, referred_email/type/id, status clicked/converted, ip_hash, timestamps). RLS: service_role only. Unique index on `(referral_code, referred_email) WHERE status = 'converted'`.
+- **localStorage keys:** `flaneur-referral-code` (user's own code, cached by ShareWidget)
+- **sessionStorage keys:** `flaneur-referral-code` (incoming referral code from `?ref=` param, consumed on conversion)
 
 ## Key Patterns
 
@@ -218,7 +237,7 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **Maps/History links (all mode):** Small grey dotted-underline links (`text-xs text-neutral-500 decoration-dotted`) under neighborhood name. Only shown when a specific pill is active. Same URLs as single-mode MAP/HISTORY.
 - **NeighborhoodLiveStatus:** `font-mono text-xs font-medium tracking-[0.2em] text-amber-600/80`. Clickable - Google weather. Accepts `initialWeather` prop for server-side pre-fetch (skips client fetch when provided).
 - **Control Deck:** CSS Grid `grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]` for overflow-safe centering. Left: `<ContextSwitcher>` (truncates long names), Center: GUIDE/MAP/HISTORY with `shrink-0` (single) or empty (all), Right: ViewToggle.
-- **ContextSwitcher:** `src/components/feed/ContextSwitcher.tsx` - dropdown trigger (`{LABEL} ▾`, truncated `max-w-[80px] md:max-w-[200px]`) + popover (`bg-[#121212] border-white/10 w-64 z-30`). Sections: "All Neighborhoods" (layers icon), neighborhood list (dot + name + city + primary badge + "Set primary" on hover), "Customize List..." (opens modal). Click-outside + Escape close.
+- **ContextSwitcher:** `src/components/feed/ContextSwitcher.tsx` - dropdown trigger (`{LABEL} ▾`, truncated `max-w-[80px] md:max-w-[200px]`) + popover (`bg-[#121212] border-white/10 w-64 z-30`). Sections: "All Neighborhoods" (layers icon), neighborhood list (dot + name + city + primary badge + "Set primary" on hover), "Customize List..." (opens modal), "Invite a Friend" (via ShareWidget, shown only to subscribers). Click-outside + Escape close.
 - **useNeighborhoodPreferences:** `src/hooks/useNeighborhoodPreferences.ts` - reads localStorage IDs, fetches name/city from Supabase, cross-tab sync via `storage` event. Exposes `primaryId` and `setPrimary(id)` to reorder localStorage array.
 - **Primary neighborhood:** First item in localStorage array. Indicated across ContextSwitcher (amber dot + "PRIMARY" label), MultiFeed pill bar, HomeSignupEnhanced chips, and NeighborhoodSelectorModal. Users can change primary via "Set primary" actions.
 - **Combo dropdowns:** `bg-surface border-white/[0.08]`, items `hover:text-white hover:bg-white/5`
@@ -257,6 +276,7 @@ src/
 ├── app/
 │   ├── [city]/[neighborhood]/     # Feed, articles, guides
 │   ├── discover/                   # Homepage without auto-redirect
+│   ├── invite/                    # Referral invite landing page
 │   ├── admin/                     # Cron monitor, ads, news-coverage, images
 │   ├── saved/                     # Saved/bookmarked stories page
 │   ├── settings/                  # User location preferences
@@ -270,6 +290,7 @@ src/
 │       ├── reactions/             # Emoji reactions API + saved articles
 │       ├── email/                 # Unsubscribe, preferences, sunday-edition-request
 │       ├── location/              # IP detect-and-match (nearest neighborhoods)
+│       ├── referral/              # Referral code, track, convert, stats
 │       ├── internal/              # Image generation, resend
 │       └── webhooks/              # Resend inbound
 ├── config/
@@ -310,8 +331,9 @@ src/
 - `article_reactions` — emoji reactions (bookmark/heart/fire), anonymous + authenticated
 - `cron_executions` / `cron_issues` — monitoring & self-healing
 - `daily_brief_sends` / `weekly_brief_sends` — email dedup (weekly: unique on `recipient_id, neighborhood_id, week_date`)
-- `profiles` — user prefs (primary_city, primary_timezone, paused_topics)
-- `newsletter_subscribers` — timezone, paused_topics
+- `referrals` — click/conversion tracking (referral_code, referrer_type/id, referred_email, status, ip_hash)
+- `profiles` — user prefs (primary_city, primary_timezone, paused_topics, referral_code)
+- `newsletter_subscribers` — timezone, paused_topics, referral_code
 - `rss_sources` — RSS feed URLs by city (192 feeds across 92 cities, 100% coverage)
 
 ## Deployment
