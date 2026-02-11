@@ -146,11 +146,11 @@ export default function CareersPage() {
             To Apply
           </h2>
           <p className="text-neutral-400 leading-relaxed mb-6">
-            Send a short email to{' '}
+            Email{' '}
             <a href="mailto:editors@readflaneur.com?subject=Neighborhood Editor Application" className="text-neutral-200 underline decoration-neutral-600 hover:text-white">
               editors@readflaneur.com
             </a>
-            {' '}with the subject line: "Neighborhood Editor Application" and:
+            {' '}with subject: "Neighborhood Editor Application" and:
           </p>
           <ol className="list-decimal list-inside space-y-2 text-neutral-400">
             <li>One paragraph about yourself</li>
