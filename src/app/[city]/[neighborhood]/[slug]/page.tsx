@@ -121,13 +121,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       <ArticleViewTracker articleId={article.id} />
 
       <div className="mx-auto max-w-2xl">
-        {/* Back link */}
+        {/* Back link — goes to main feed (user's neighborhoods loaded from localStorage) */}
         <Link
-          href={neighborhoodUrl}
+          href="/feed"
           className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-neutral-400 hover:text-white mb-8"
         >
           <span>&larr;</span>
-          <span>{article.neighborhood?.name || 'Back'}</span>
+          <span>All Stories</span>
         </Link>
 
         {/* Top Story Open Ad */}
@@ -286,13 +286,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         {/* Email capture for engaged readers */}
         <PostReadEmailCapture neighborhoodName={article.neighborhood?.name || 'neighborhood'} />
 
-        {/* More from neighborhood */}
+        {/* More stories */}
         <div className="mt-12 pt-8 border-t border-white/[0.08] text-center">
           <Link
-            href={neighborhoodUrl}
+            href="/feed"
             className="inline-block bg-white text-neutral-900 px-8 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors"
           >
-            More from {article.neighborhood?.name}
+            More Stories
           </Link>
         </div>
 
