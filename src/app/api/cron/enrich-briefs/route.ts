@@ -9,13 +9,13 @@ import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
  * and RSS-sourced articles that haven't been enriched yet.
  * Uses Gemini with Google Search grounding to verify and add sources.
  *
- * Schedule: every 10 minutes
+ * Schedule: every 15 minutes
  *
  * Time budget: 280s max (leaves 20s buffer before 300s maxDuration)
- * Phase 1 (briefs): up to 120s, 5 concurrent enrichments
- * Phase 2 (articles): remaining budget, 5 concurrent enrichments
+ * Phase 1 (briefs): up to 120s, 2 concurrent enrichments
+ * Phase 2 (articles): remaining budget, 2 concurrent enrichments
  *
- * Schedule: every 5 minutes
+ * Reduced from */5 to */15 and concurrency 5->2 to stay within Gemini quota.
  */
 
 export const runtime = 'nodejs';
@@ -23,7 +23,7 @@ export const maxDuration = 300;
 
 const TIME_BUDGET_MS = 280_000; // 280s — leave 20s for logging + response
 const PHASE1_BUDGET_MS = 120_000; // 120s max for briefs (leaves more for articles)
-const CONCURRENCY = 5; // parallel Gemini calls per batch
+const CONCURRENCY = 2; // parallel Gemini calls per batch (reduced from 5 to avoid quota exhaustion)
 
 export async function GET(request: Request) {
   const functionStart = Date.now();
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const testBriefId = url.searchParams.get('test');
   const testArticleId = url.searchParams.get('test-article');
-  const batchSize = parseInt(url.searchParams.get('batch') || '50');
+  const batchSize = parseInt(url.searchParams.get('batch') || '15');
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -194,8 +194,20 @@ export async function GET(request: Request) {
             results.briefs_enriched++;
           } else {
             results.briefs_failed++;
-            results.errors.push(r.reason?.message || String(r.reason));
+            const errorMsg = r.reason?.message || String(r.reason);
+            results.errors.push(errorMsg);
+
+            // If any call in this batch hit quota, stop Phase 1 early
+            if (errorMsg.includes('RESOURCE_EXHAUSTED') || errorMsg.includes('429')) {
+              console.warn('Gemini quota exhausted, stopping Phase 1 early');
+              briefQueue.length = 0; // drain the queue
+            }
           }
+        }
+
+        // Small delay between batches to avoid burst quota hits
+        if (briefQueue.length > 0) {
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
     } // end if (!isBackfill)
@@ -203,7 +215,7 @@ export async function GET(request: Request) {
     // ─── Phase 2: Enrich recent published articles ───
     // Only enrich articles from the last 4 days (older unenriched content is skipped)
     // Newest articles enriched first (published_at DESC)
-    const articleBatchSize = parseInt(url.searchParams.get('article-batch') || '50');
+    const articleBatchSize = parseInt(url.searchParams.get('article-batch') || '15');
     const fourDaysAgo = new Date();
     fourDaysAgo.setDate(fourDaysAgo.getDate() - 4);
 
@@ -370,8 +382,20 @@ export async function GET(request: Request) {
           results.articles_enriched++;
         } else {
           results.articles_failed++;
-          results.errors.push(r.reason?.message || String(r.reason));
+          const errorMsg = r.reason?.message || String(r.reason);
+          results.errors.push(errorMsg);
+
+          // If any call in this batch hit quota, stop Phase 2 early
+          if (errorMsg.includes('RESOURCE_EXHAUSTED') || errorMsg.includes('429')) {
+            console.warn('Gemini quota exhausted, stopping Phase 2 early');
+            articleQueue.length = 0;
+          }
         }
+      }
+
+      // Small delay between batches to avoid burst quota hits
+      if (articleQueue.length > 0) {
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
   } finally {

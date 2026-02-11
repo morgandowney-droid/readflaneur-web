@@ -96,6 +96,13 @@ export function useNeighborhoodPreferences(): {
       const reordered = [id, ...ids.filter(i => i !== id)];
       localStorage.setItem(PREFS_KEY, JSON.stringify(reordered));
 
+      // Sync to DB for email scheduler (fire-and-forget)
+      fetch('/api/location/sync-primary-neighborhood', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ neighborhoodId: id }),
+      }).catch(() => {});
+
       // Reorder in-memory list to match
       setNeighborhoods(prev => {
         const target = prev.find(n => n.id === id);

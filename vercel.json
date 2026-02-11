@@ -54,7 +54,7 @@
     },
     {
       "path": "/api/cron/enrich-briefs",
-      "schedule": "*/5 * * * *"
+      "schedule": "*/15 * * * *"
     },
     {
       "path": "/api/cron/generate-brief-articles",

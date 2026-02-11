@@ -10,7 +10,7 @@ import { LiquorLicense } from '@/lib/nyc-liquor';
  * Neighborhood Briefs Sync Cron Job
  *
  * Runs every 15 minutes and generates briefs ONLY for neighborhoods where it's
- * currently 4-8am local time. This ensures briefs feel like fresh
+ * currently 3-9am local time. This ensures briefs feel like fresh
  * morning updates for each neighborhood globally.
  *
  * Schedule: *\/15 * * * * (every 15 minutes)
@@ -19,22 +19,25 @@ import { LiquorLicense } from '@/lib/nyc-liquor';
  *
  * Daily generation: Each neighborhood gets ONE brief per day during its
  * morning window, regardless of previous day's brief status.
+ * The "already covered" check uses each neighborhood's local timezone
+ * to determine what "today" means (not UTC midnight).
  *
- * The 4-hour window (4-8 AM) combined with 15-minute frequency gives
- * 16 chances per timezone to generate a brief, making Vercel cron
- * misses much less impactful.
+ * The 6-hour window (3-9 AM) combined with 15-minute frequency gives
+ * 24 chances per timezone to generate a brief, surviving Vercel cron
+ * gaps up to ~5 hours.
  */
 
 /**
- * Check if it's currently between 4-8am in a given timezone
- * Widened from 5-7am to give more retry opportunities when Vercel drops cron invocations
+ * Check if it's currently between 3-9am in a given timezone.
+ * 6-hour window (24 chances at */15) survives Vercel cron gaps up to ~5 hours.
+ * Widened from 4-8am after observing 4-hour Vercel cron gaps during APAC windows.
  */
 function isMorningWindow(timezone: string): boolean {
   try {
     const now = new Date();
     const localTime = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
     const hour = localTime.getHours();
-    return hour >= 4 && hour < 8;
+    return hour >= 3 && hour < 9;
   } catch (e) {
     console.error(`Invalid timezone: ${timezone}`, e);
     return false;
@@ -100,17 +103,46 @@ export async function GET(request: Request) {
     errors: [] as string[],
   };
 
-  // Get neighborhoods that already have a brief created TODAY (local date based on UTC)
-  // This ensures one brief per day per neighborhood, regardless of previous brief expiration
-  const todayStart = new Date();
-  todayStart.setUTCHours(0, 0, 0, 0);
+  // Get recent briefs (last 36h) to check per-neighborhood local date coverage.
+  // We fetch a wide window because "today" in UTC+12 starts 12h before UTC midnight.
+  const recentCutoff = new Date(Date.now() - 36 * 60 * 60 * 1000);
 
-  const { data: existingBriefs } = await supabase
+  const { data: recentBriefs } = await supabase
     .from('neighborhood_briefs')
-    .select('neighborhood_id')
-    .gte('created_at', todayStart.toISOString());
+    .select('neighborhood_id, created_at')
+    .gte('created_at', recentCutoff.toISOString());
 
-  const coveredIds = new Set((existingBriefs || []).map(b => b.neighborhood_id));
+  // Build map of neighborhood_id -> brief timestamps for local-date checking
+  const briefsByNeighborhood = new Map<string, string[]>();
+  for (const b of recentBriefs || []) {
+    const existing = briefsByNeighborhood.get(b.neighborhood_id) || [];
+    existing.push(b.created_at);
+    briefsByNeighborhood.set(b.neighborhood_id, existing);
+  }
+
+  /**
+   * Check if a neighborhood already has a brief for its local "today".
+   * Uses the neighborhood's timezone to determine what "today" means,
+   * fixing the UTC date boundary bug that caused APAC neighborhoods
+   * (UTC+8 to +12) to be missed when their morning window straddles midnight UTC.
+   */
+  function hasBriefForLocalToday(neighborhoodId: string, timezone: string | null): boolean {
+    const timestamps = briefsByNeighborhood.get(neighborhoodId);
+    if (!timestamps || timestamps.length === 0) return false;
+
+    const tz = timezone || 'UTC';
+    const now = new Date();
+    // 'en-CA' locale gives YYYY-MM-DD format
+    const localToday = now.toLocaleDateString('en-CA', { timeZone: tz });
+
+    return timestamps.some(ts => {
+      const briefLocalDate = new Date(ts).toLocaleDateString('en-CA', { timeZone: tz });
+      return briefLocalDate === localToday;
+    });
+  }
+
+  // For backward compat in the "no neighborhoods" response, count covered
+  const coveredCount = (recentBriefs || []).length;
 
   // Fetch active neighborhoods WITH timezone (includes combo neighborhoods)
   let query = supabase
@@ -127,14 +159,14 @@ export async function GET(request: Request) {
   const { data: allNeighborhoods, error: fetchError } = await query;
 
   // Filter neighborhoods:
-  // 1. Don't already have a brief created today
-  // 2. It's currently 6-7am local time (unless force=true or testing)
+  // 1. Don't already have a brief for their local "today"
+  // 2. It's currently 3-9am local time (unless force=true or testing)
   const neighborhoods = (allNeighborhoods || []).filter(n => {
     // Always process if testing specific neighborhood
     if (testNeighborhoodId) return true;
 
-    // Skip if already has a brief created today
-    if (coveredIds.has(n.id)) {
+    // Skip if already has a brief for this neighborhood's local "today"
+    if (hasBriefForLocalToday(n.id, n.timezone)) {
       return false;
     }
 
@@ -161,14 +193,16 @@ export async function GET(request: Request) {
   if (!neighborhoods || neighborhoods.length === 0) {
     // Count how many were skipped due to time window vs already having today's brief
     const skippedTimeWindow = (allNeighborhoods || []).filter(n =>
-      !coveredIds.has(n.id) && n.timezone && !isMorningWindow(n.timezone)
+      !hasBriefForLocalToday(n.id, n.timezone) && n.timezone && !isMorningWindow(n.timezone)
     ).length;
-    const alreadyHaveBrief = coveredIds.size;
+    const alreadyHaveBrief = (allNeighborhoods || []).filter(n =>
+      hasBriefForLocalToday(n.id, n.timezone)
+    ).length;
 
     return NextResponse.json({
       success: true,
       message: skippedTimeWindow > 0
-        ? `No neighborhoods in 4-8am window right now (${skippedTimeWindow} waiting for morning, ${alreadyHaveBrief} already have today's brief)`
+        ? `No neighborhoods in 3-9am window right now (${skippedTimeWindow} waiting for morning, ${alreadyHaveBrief} already have today's brief)`
         : `All neighborhoods already have today's brief (${alreadyHaveBrief} total)`,
       neighborhoods_processed: 0,
       briefs_generated: 0,

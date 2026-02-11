@@ -151,6 +151,14 @@ export async function GET(request: Request) {
       const items = await fetchCityFeeds(city);
       results.articles_fetched += items.length;
 
+      // Update RSS source tracking - mark all feeds for this city as fetched (fire-and-forget)
+      supabase
+        .from('rss_sources')
+        .update({ last_fetched_at: new Date().toISOString() })
+        .eq('city', city)
+        .eq('is_active', true)
+        .then(null, () => {});
+
       // Filter to recent items only
       const recentItems = items.filter(item => {
         const pubDate = new Date(item.pubDate);
@@ -160,14 +168,28 @@ export async function GET(request: Request) {
       // Process each item (limit to prevent timeout)
       for (const item of recentItems.slice(0, 15)) {
         try {
-          // Check if we already processed this URL
-          const { data: existing } = await supabase
+          // Check if we already processed this URL (slug is deterministic on source URL)
+          const slug = generateSlug(item.link);
+          const { data: existingBySlug } = await supabase
             .from('articles')
             .select('id')
-            .eq('slug', generateSlug(item.link))
+            .eq('slug', slug)
             .single();
 
-          if (existing) {
+          if (existingBySlug) {
+            results.skipped_duplicate++;
+            continue;
+          }
+
+          // Also check editor_notes for the source URL (catches old non-deterministic slugs)
+          const { data: existingByUrl } = await supabase
+            .from('articles')
+            .select('id')
+            .eq('neighborhood_id', cityNeighborhoods[0]?.id || '')
+            .ilike('editor_notes', `%${item.link}%`)
+            .limit(1);
+
+          if (existingByUrl && existingByUrl.length > 0) {
             results.skipped_duplicate++;
             continue;
           }
@@ -204,9 +226,8 @@ export async function GET(request: Request) {
           const neighborhoodId = result.neighborhood_id || cityNeighborhoods[0]?.id;
           if (!neighborhoodId) continue;
 
-          // Create article first
+          // Create article
           const headline = result.rewritten_headline || item.title;
-          const slug = generateSlug(item.link);
 
           const { data: insertedArticle, error: insertError } = await supabase
             .from('articles')
@@ -350,8 +371,23 @@ export async function GET(request: Request) {
         );
 
         for (const story of stories) {
-          // Create article
-          const slug = `grok-${hood.id}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+          // Dedup: check for similar headline in this neighborhood from last 24h
+          const { data: similarArticle } = await supabase
+            .from('articles')
+            .select('id')
+            .eq('neighborhood_id', hood.id)
+            .ilike('headline', `%${story.headline.slice(0, 40).replace(/[%_]/g, '')}%`)
+            .gte('created_at', oneDayAgo.toISOString())
+            .limit(1);
+
+          if (similarArticle && similarArticle.length > 0) {
+            results.skipped_duplicate++;
+            continue;
+          }
+
+          // Deterministic slug from neighborhood + headline hash
+          const grokHash = story.headline.split('').reduce((acc: number, c: string) => ((acc << 5) + acc + c.charCodeAt(0)) | 0, 5381);
+          const slug = `grok-${hood.id}-${Math.abs(grokHash).toString(36)}`;
 
           const { data: insertedArticle, error: insertError } = await supabase
             .from('articles')
@@ -445,13 +481,14 @@ export async function GET(request: Request) {
 }
 
 /**
- * Generate a URL-safe slug from a URL or title
+ * Generate a deterministic URL-safe slug from a URL.
+ * Must be stable across calls so dedup lookup finds existing articles.
  */
 function generateSlug(input: string): string {
-  // Use URL hash to create unique but consistent slug
-  const hash = input.split('').reduce((acc, char) => {
-    return ((acc << 5) - acc) + char.charCodeAt(0);
-  }, 0);
-
-  return `news-${Math.abs(hash).toString(36)}-${Date.now().toString(36)}`;
+  // djb2 hash - deterministic for the same input
+  let hash = 5381;
+  for (let i = 0; i < input.length; i++) {
+    hash = ((hash << 5) + hash + input.charCodeAt(i)) | 0;
+  }
+  return `news-${Math.abs(hash).toString(36)}`;
 }

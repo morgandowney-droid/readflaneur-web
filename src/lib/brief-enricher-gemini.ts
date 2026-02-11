@@ -240,14 +240,40 @@ LINK CANDIDATES RULES:
   try {
     // Use gemini-3-pro with Google Search grounding
     const modelId = 'gemini-3-pro-preview';
-    const response = await genAI.models.generateContent({
-      model: modelId,
-      contents: `${systemInstruction}\n\n${prompt}`,
-      config: {
-        tools: [{ googleSearch: {} }],
-        temperature: 0.6,
-      },
-    });
+
+    // Retry with exponential backoff on quota errors (429 RESOURCE_EXHAUSTED)
+    const RETRY_DELAYS = [2000, 5000, 15000]; // 2s, 5s, 15s
+    let response;
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
+      try {
+        response = await genAI.models.generateContent({
+          model: modelId,
+          contents: `${systemInstruction}\n\n${prompt}`,
+          config: {
+            tools: [{ googleSearch: {} }],
+            temperature: 0.6,
+          },
+        });
+        break; // Success - exit retry loop
+      } catch (err: unknown) {
+        lastError = err;
+        const errMsg = err instanceof Error ? err.message : String(err);
+        const isQuotaError = errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('429');
+
+        if (!isQuotaError || attempt >= RETRY_DELAYS.length) {
+          throw err; // Non-quota error or exhausted retries
+        }
+
+        console.warn(`Gemini quota hit (attempt ${attempt + 1}/${RETRY_DELAYS.length + 1}), retrying in ${RETRY_DELAYS[attempt]}ms...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt]));
+      }
+    }
+
+    if (!response) {
+      throw lastError || new Error('Gemini enrichment failed after retries');
+    }
 
     const rawText = response.text || '';
 

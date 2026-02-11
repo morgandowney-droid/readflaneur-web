@@ -545,24 +545,34 @@ export async function generateFashionWeekStory(
 
     const venues = [...new Set(neighborhoodShows.map((s) => s.venue))];
 
+    // Determine day phase for unique daily angle
+    const totalDays = summary.fashionWeek.durationDays;
+    const dayPhase = summary.dayNumber <= 2 ? 'opening days'
+      : summary.dayNumber >= totalDays - 1 ? 'final stretch'
+      : 'midweek';
+
+    const dateStr = summary.date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+
     const prompt = `You are the Style Editor for Flâneur in ${neighborhoodName}.
 
-Event: ${summary.fashionWeek.name} - Day ${summary.dayNumber}
+Event: ${summary.fashionWeek.name} - Day ${summary.dayNumber} of ${totalDays} (${dayPhase})
+Date: ${dateStr}
 Neighborhood Vibe: ${summary.fashionWeek.vibe}
 
 Today's Schedule in ${neighborhoodName}:
 - Total shows: ${showCount}
 - Venues: ${venues.join(', ')}
-${highProfileDesigners.length > 0 ? `- Major designers showing: ${highProfileDesigners.join(', ')}` : ''}
+${highProfileDesigners.length > 0 ? `- Major designers showing: ${highProfileDesigners.join(', ')}` : '- No headline designers today - focus on emerging talent and venue atmosphere'}
 ${summary.trafficAlerts.length > 0 ? `- Alerts: ${summary.trafficAlerts.join('; ')}` : ''}
 
 Context:
 - It is ${summary.fashionWeek.shortName} - one of the Big Four fashion weeks
 - Residents care about: 1) Spotting celebrities, 2) Avoiding the traffic mess
 - Tone: 'Chaotic Chic'
+- This is Day ${summary.dayNumber} - make the headline UNIQUE to today. Do NOT reuse yesterday's angle.
 
 Task: Write a 35-word blurb for ${neighborhoodName} residents.
-Headline format: 'Runway Watch: ${summary.fashionWeek.shortName} takes over [Location]'
+Headline: MUST include "Day ${summary.dayNumber}" and reference something specific to today (a designer, venue, the ${dayPhase} energy, or the day's vibe). Never just "takes over [Location]" - that's too generic.
 
 Return JSON: { "headline": "...", "body": "...", "link_candidates": [{"text": "exact text from body"}] }
 
