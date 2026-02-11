@@ -22,8 +22,8 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const TIME_BUDGET_MS = 280_000; // 280s — leave 20s for logging + response
-const PHASE1_BUDGET_MS = 120_000; // 120s max for briefs (leaves more for articles)
-const CONCURRENCY = 2; // parallel Gemini calls per batch (reduced from 5 to avoid quota exhaustion)
+const PHASE1_BUDGET_MS = 200_000; // 200s for briefs, 80s for articles
+const CONCURRENCY = 4; // parallel Gemini calls per batch (gemini-2.5-pro has generous quota)
 
 export async function GET(request: Request) {
   const functionStart = Date.now();
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const testBriefId = url.searchParams.get('test');
   const testArticleId = url.searchParams.get('test-article');
-  const batchSize = parseInt(url.searchParams.get('batch') || '15');
+  const batchSize = parseInt(url.searchParams.get('batch') || '30');
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
