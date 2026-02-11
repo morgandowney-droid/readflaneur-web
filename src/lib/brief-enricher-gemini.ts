@@ -238,8 +238,8 @@ LINK CANDIDATES RULES:
 - Only include entities that readers would want to learn more about`;
 
   try {
-    // Use gemini-3-pro with Google Search grounding
-    const modelId = 'gemini-3-pro-preview';
+    // Use gemini-2.5-pro with Google Search grounding (gemini-3-pro-preview quota is 0)
+    const modelId = 'gemini-2.5-pro';
 
     // Retry with exponential backoff on quota errors (429 RESOURCE_EXHAUSTED)
     const RETRY_DELAYS = [2000, 5000, 15000]; // 2s, 5s, 15s

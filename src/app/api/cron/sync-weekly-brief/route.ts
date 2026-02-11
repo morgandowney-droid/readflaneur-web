@@ -142,7 +142,7 @@ export async function GET(request: Request) {
             published_at: new Date().toISOString(),
             category_label: 'The Sunday Edition',
             author_type: 'ai',
-            ai_model: 'gemini-3-pro-preview',
+            ai_model: 'gemini-2.5-pro',
             image_url: imageUrl,
           })
           .select('id')

@@ -173,7 +173,7 @@ export async function GET(request: Request) {
           status: 'published',
           published_at: new Date().toISOString(),
           author_type: 'ai',
-          ai_model: 'gemini-3-pro-preview',
+          ai_model: 'gemini-2.5-pro',
           ai_prompt: `NYC Weekly Digest: ${permits.length} permits, ${licenses.length} licenses, ${crimeStats?.total_incidents || 0} incidents`,
           category_label: 'Civic Data',
         });
