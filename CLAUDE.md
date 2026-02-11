@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-11
 
-Recent work: engagement-triggered email capture (3 placements), smart auto-redirect, welcome banner, `/discover` page, admin dark mode.
+Recent work: pipeline reliability fixes (article dedup, Gemini quota, APAC briefs, primary neighborhood sync), engagement-triggered email capture, smart auto-redirect.
 
 ### Email Capture (Engagement-Triggered)
 - **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
@@ -40,12 +40,34 @@ Recent work: engagement-triggered email capture (3 placements), smart auto-redir
 
 ## Key Patterns
 
+### Primary Neighborhood Sync
+- **Endpoint:** `POST /api/location/sync-primary-neighborhood` - syncs primary neighborhood change to DB for email scheduler
+- **Called from:** `useNeighborhoodPreferences.setPrimary()` (fire-and-forget, covers ContextSwitcher, modal, drag-reorder)
+- **Logic:** Uses `getSession()` (not `getUser()`), looks up neighborhood city, updates `profiles.primary_city`/`primary_timezone`, triggers instant resend if city changed
+- **Anonymous users:** Silent no-op (returns success)
+
 ### Cron Jobs
 - All in `src/app/api/cron/[job-name]/route.ts`
 - Auth: `x-vercel-cron` header or `CRON_SECRET`
 - **MUST** log to `cron_executions` table
 - Use `maxDuration = 300` for long-running jobs
 - Use time budgets to ensure logging completes in `try/finally`
+
+### Article Deduplication (sync-news)
+- **RSS articles:** Deterministic `generateSlug()` (djb2 hash, no timestamp) + source URL check in `editor_notes`
+- **Grok articles:** Headline similarity check (first 40 chars, same neighborhood, last 24h) + deterministic slug
+- **Fashion week:** Slug includes day number; prompt requires "Day N" in headline with day-specific angle
+
+### Gemini Enrichment (enrich-briefs)
+- **Schedule:** `*/15` (was `*/5`), batch size 15 (was 50), concurrency 2 (was 5)
+- **Backoff:** Exponential retry on 429/RESOURCE_EXHAUSTED (2s, 5s, 15s delays)
+- **Early termination:** Drains queue if any batch call hits quota
+- **Est. daily calls:** ~2,880 (was ~21,600)
+
+### Brief Generation Timezone Handling (sync-neighborhood-briefs)
+- **Morning window:** 3-9 AM local time (24 chances at `*/15`, survives 5h cron gaps)
+- **Dedup:** `hasBriefForLocalToday()` uses `toLocaleDateString('en-CA', { timeZone })` per neighborhood
+- **NOT UTC midnight:** Fetches last 36h of briefs, checks each against its local "today"
 
 ### Image Generation
 - Endpoint: `/api/internal/generate-image`

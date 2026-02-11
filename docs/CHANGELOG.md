@@ -5,6 +5,14 @@
 
 ## 2026-02-11
 
+**Pipeline Reliability Fixes:**
+- Article deduplication: `generateSlug()` made deterministic (removed `Date.now()`), added source URL fallback check, Grok headline similarity dedup, deterministic Grok slugs
+- Gemini quota: `enrich-briefs` reduced from `*/5` to `*/15`, batch 50→15, concurrency 5→2, exponential backoff on 429, early termination on quota hit. Daily calls ~21,600→~2,880.
+- APAC brief generation: replaced UTC midnight boundary with per-neighborhood local date check (`hasBriefForLocalToday`), widened morning window 4-8am→3-9am
+- Primary neighborhood sync: new `POST /api/location/sync-primary-neighborhood` endpoint called fire-and-forget from `useNeighborhoodPreferences.setPrimary()`, updates `profiles.primary_city`/`primary_timezone`, triggers instant resend
+- Fashion week headlines: prompt now requires "Day N" with day-specific angle (opening/midweek/final stretch), no more identical daily headlines
+- RSS feed tracking: `sync-news` now updates `rss_sources.last_fetched_at` after each city fetch
+
 **Engagement-Triggered Email Capture:**
 - Article read counter: `ArticleViewTracker` increments `flaneur-article-reads` in localStorage on each article view (skips if already subscribed)
 - Feed inline prompt: `EmailCaptureCard` injected after 5th article via `injectEmailPrompt()` in `ad-engine.ts`. Shows "Get {neighborhood} stories in your inbox" with email input + subscribe button. Dismissible via X (stores `flaneur-email-prompt-dismissed`).
