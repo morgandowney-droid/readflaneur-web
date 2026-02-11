@@ -211,51 +211,59 @@ export function MultiFeed({
     localStorage.setItem(VIEW_PREF_KEY, newView);
   };
 
-  // Drag-to-reorder state
+  // Drag-to-reorder state (pointer events for reliable cross-browser support)
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
-  const didDragRef = useRef(false);
+  const dragStartX = useRef(0);
+  const isDragging = useRef(false);
+  const pillRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  const handleDragStart = (e: React.DragEvent, index: number) => {
+  const handlePointerDown = (e: React.PointerEvent, index: number) => {
+    // Only left mouse / primary touch
+    if (e.button !== 0) return;
+    dragStartX.current = e.clientX;
+    isDragging.current = false;
     setDragIndex(index);
-    didDragRef.current = true;
-    e.dataTransfer.effectAllowed = 'move';
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setOverIndex(index);
-  };
-
-  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
-    e.preventDefault();
-    if (dragIndex === null || dragIndex === targetIndex) {
-      setDragIndex(null);
-      setOverIndex(null);
-      return;
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (dragIndex === null) return;
+    // Require 8px movement to start drag (prevents accidental drags on click)
+    if (!isDragging.current && Math.abs(e.clientX - dragStartX.current) > 8) {
+      isDragging.current = true;
     }
+    if (!isDragging.current) return;
 
-    // Reorder neighborhoods
-    const ids = neighborhoods.map(n => n.id);
-    const [movedId] = ids.splice(dragIndex, 1);
-    ids.splice(targetIndex, 0, movedId);
-
-    // Save to localStorage (first item = primary)
-    localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(ids));
-
-    setDragIndex(null);
-    setOverIndex(null);
-
-    // Navigate with new order
-    router.push(`/feed?neighborhoods=${ids.join(',')}`);
+    // Find which pill the pointer is over
+    for (let i = 0; i < pillRefs.current.length; i++) {
+      const pill = pillRefs.current[i];
+      if (!pill) continue;
+      const rect = pill.getBoundingClientRect();
+      if (e.clientX >= rect.left && e.clientX <= rect.right) {
+        setOverIndex(i);
+        return;
+      }
+    }
   };
 
-  const handleDragEnd = () => {
+  const handlePointerUp = () => {
+    if (isDragging.current && dragIndex !== null && overIndex !== null && dragIndex !== overIndex) {
+      // Reorder neighborhoods
+      const ids = neighborhoods.map(n => n.id);
+      const [movedId] = ids.splice(dragIndex, 1);
+      ids.splice(overIndex, 0, movedId);
+
+      // Save to localStorage (first item = primary)
+      localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(ids));
+
+      // Navigate with new order
+      router.push(`/feed?neighborhoods=${ids.join(',')}`);
+    }
     setDragIndex(null);
     setOverIndex(null);
-    // Reset drag flag after a tick so onClick can check it
-    setTimeout(() => { didDragRef.current = false; }, 0);
+    // Clear drag flag after a tick so onClick can check it
+    setTimeout(() => { isDragging.current = false; }, 0);
   };
 
   const currentView = isHydrated ? view : defaultView;
@@ -340,16 +348,15 @@ export function MultiFeed({
               {neighborhoods.map((hood, i) => (
                 <button
                   key={hood.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, i)}
-                  onDragOver={(e) => handleDragOver(e, i)}
-                  onDrop={(e) => handleDrop(e, i)}
-                  onDragEnd={handleDragEnd}
-                  onClick={() => { if (didDragRef.current) return; setActiveFilter(activeFilter === hood.id ? null : hood.id); }}
-                  className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors flex items-center gap-1.5 cursor-grab active:cursor-grabbing ${
-                    dragIndex === i ? 'opacity-50' : ''
+                  ref={(el) => { pillRefs.current[i] = el; }}
+                  onPointerDown={(e) => handlePointerDown(e, i)}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                  onClick={() => { if (isDragging.current) return; setActiveFilter(activeFilter === hood.id ? null : hood.id); }}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors flex items-center gap-1.5 cursor-grab active:cursor-grabbing select-none touch-none ${
+                    dragIndex === i && isDragging.current ? 'opacity-50' : ''
                   } ${
-                    overIndex === i && dragIndex !== i ? 'border-l-2 border-l-amber-500' : ''
+                    overIndex === i && dragIndex !== null && dragIndex !== i ? 'border-l-2 border-l-amber-500' : ''
                   } ${
                     activeFilter === hood.id
                       ? 'bg-white text-black'

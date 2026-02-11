@@ -84,7 +84,7 @@ export function NeighborhoodHeader({
         {isAll ? (
           <>
             {/* City label - always rendered for consistent height */}
-            <p className={`text-[11px] tracking-[0.3em] uppercase text-neutral-400 mb-2 h-4 ${city ? '' : 'opacity-0'}`}>
+            <p className={`text-xs tracking-[0.25em] uppercase text-neutral-500 mb-2 h-4 ${city ? '' : 'opacity-0'}`}>
               {city || '\u00A0'}
             </p>
 
