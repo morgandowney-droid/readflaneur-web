@@ -26,10 +26,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ensure main content doesn't cause horizontal overflow */
+/* Ensure main content doesn't cause horizontal overflow.
+   Use 'clip' not 'hidden' — hidden forces overflow-y:auto per CSS spec,
+   which creates a scrolling context that breaks sticky positioning. */
 main {
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Luxury button styles */

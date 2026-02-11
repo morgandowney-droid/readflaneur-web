@@ -80,7 +80,7 @@ export function NeighborhoodHeader({
   return (
     <header className="mb-2">
       {/* ── MASTHEAD ── */}
-      <div className="text-center pt-8">
+      <div className="text-center pt-6">
         {isAll ? (
           <>
             {/* Heading */}
