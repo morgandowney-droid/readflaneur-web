@@ -195,10 +195,10 @@ export default function AdminCommentsPage() {
                     <span
                       className={`px-2 py-1 text-xs uppercase tracking-wider ${
                         comment.status === 'flagged'
-                          ? 'bg-orange-100 text-orange-700'
+                          ? 'bg-orange-500/15 text-orange-400'
                           : comment.status === 'rejected'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-yellow-100 text-yellow-700'
+                          ? 'bg-red-500/15 text-red-400'
+                          : 'bg-yellow-500/15 text-yellow-400'
                       }`}
                     >
                       {comment.status}
@@ -224,7 +224,7 @@ export default function AdminCommentsPage() {
                     {getFlaggedCategories(comment.moderation_categories).map((cat) => (
                       <span
                         key={cat}
-                        className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded"
+                        className="px-2 py-1 text-xs bg-red-500/10 text-red-400 rounded"
                       >
                         {cat}
                       </span>

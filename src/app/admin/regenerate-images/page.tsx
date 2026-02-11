@@ -182,19 +182,19 @@ export default function RegenerateImagesPage() {
 
         {/* Error */}
         {error && (
-          <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800 font-medium">Error</p>
-            <p className="text-red-600 text-sm">{error}</p>
+          <div className="mt-6 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+            <p className="text-red-400 font-medium">Error</p>
+            <p className="text-red-400 text-sm">{error}</p>
           </div>
         )}
 
         {/* Result */}
         {result && (
-          <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
-            <p className="text-green-800 font-medium mb-2">
+          <div className="mt-6 bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+            <p className="text-green-400 font-medium mb-2">
               {result.message}
             </p>
-            <p className="text-green-600 text-sm mb-4">
+            <p className="text-green-400 text-sm mb-4">
               Successful: {result.successful} | Failed: {result.failed}
             </p>
 
@@ -204,7 +204,7 @@ export default function RegenerateImagesPage() {
                   <div
                     key={r.id}
                     className={`p-3 rounded-md ${
-                      r.success ? 'bg-green-100' : 'bg-yellow-100'
+                      r.success ? 'bg-green-500/15' : 'bg-yellow-500/15'
                     }`}
                   >
                     <p className="font-medium text-sm">{r.headline}</p>

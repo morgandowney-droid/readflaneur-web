@@ -244,12 +244,12 @@ export default function AdminAdsPage() {
         </div>
 
         {/* Metrics Legend */}
-        <div className="bg-blue-50 border border-blue-200 p-4 mb-8">
-          <p className="text-sm font-medium text-blue-900 mb-2">Advertiser Metrics Guide</p>
-          <p className="text-xs text-blue-800 mb-3">
+        <div className="bg-blue-500/10 border border-blue-500/20 p-4 mb-8">
+          <p className="text-sm font-medium text-blue-300 mb-2">Advertiser Metrics Guide</p>
+          <p className="text-xs text-blue-400 mb-3">
             Advertisers see qualitative labels instead of raw numbers. Here&apos;s what they mean:
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs text-blue-800">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs text-blue-400">
             <div><span className="font-medium">Gathering data</span> = &lt;10 impressions</div>
             <div><span className="font-medium">Reaching readers</span> = &lt;0.2% CTR</div>
             <div><span className="font-medium">Building awareness</span> = 0.2-0.5% CTR</div>
@@ -291,7 +291,7 @@ export default function AdminAdsPage() {
                 {/* Badges row */}
                 <div className="flex items-center gap-2 mb-4">
                   {ad.passionfroot_order_id && (
-                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-purple-100 text-purple-800">
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-purple-500/15 text-purple-400">
                       Passionfroot
                     </span>
                   )}
@@ -301,23 +301,23 @@ export default function AdminAdsPage() {
                     </span>
                   )}
                   {ad.placement_type === 'sunday_edition' && (
-                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-violet-100 text-violet-800 font-medium">
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-violet-500/15 text-violet-400 font-medium">
                       Sunday
                     </span>
                   )}
                   {ad.needs_design_service && (
-                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-amber-100 text-amber-800 font-medium">
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-amber-500/15 text-amber-400 font-medium">
                       Needs Design
                     </span>
                   )}
                   <span
                     className={`inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase ${
                       ad.status === 'pending_review'
-                        ? 'bg-yellow-100 text-yellow-800'
+                        ? 'bg-yellow-500/15 text-yellow-400'
                         : ad.status === 'active'
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-green-500/15 text-green-400'
                           : ad.status === 'rejected'
-                            ? 'bg-red-100 text-red-800'
+                            ? 'bg-red-500/15 text-red-400'
                             : 'bg-neutral-800 text-neutral-400'
                     }`}
                   >
@@ -325,31 +325,31 @@ export default function AdminAdsPage() {
                   </span>
                   {/* Approval status badges */}
                   {ad.approval_status === 'pending_ai' && (
-                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-blue-100 text-blue-800">
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-blue-500/15 text-blue-400">
                       AI Processing
                     </span>
                   )}
                   {ad.approval_status === 'pending_approval' && (
-                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-amber-100 text-amber-800">
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-amber-500/15 text-amber-400">
                       Awaiting Client
                     </span>
                   )}
                   {ad.approval_status === 'approved' && ad.status !== 'active' && (
-                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-green-100 text-green-800">
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-green-500/15 text-green-400">
                       Client Approved
                     </span>
                   )}
                   {ad.approval_status === 'changes_requested' && (
-                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-orange-100 text-orange-800">
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-orange-500/15 text-orange-400">
                       Changes Requested
                     </span>
                   )}
                   {/* AI quality score */}
                   {ad.ai_quality_score != null && (
                     <span className={`inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase ${
-                      ad.ai_quality_score >= 70 ? 'bg-green-50 text-green-700' :
-                      ad.ai_quality_score >= 40 ? 'bg-amber-50 text-amber-700' :
-                      'bg-red-50 text-red-700'
+                      ad.ai_quality_score >= 70 ? 'bg-green-500/10 text-green-400' :
+                      ad.ai_quality_score >= 40 ? 'bg-amber-500/10 text-amber-400' :
+                      'bg-red-500/10 text-red-400'
                     }`}>
                       AI: {ad.ai_quality_score}/100
                     </span>
@@ -533,9 +533,9 @@ export default function AdminAdsPage() {
 
                     {/* Customer change request message */}
                     {ad.customer_change_request && (
-                      <div className="bg-orange-50 border border-orange-200 p-3 mb-3">
-                        <p className="text-[10px] tracking-widest uppercase text-orange-600 mb-1">Customer Feedback</p>
-                        <p className="text-sm text-orange-800 whitespace-pre-wrap">{ad.customer_change_request}</p>
+                      <div className="bg-orange-500/10 border border-orange-500/20 p-3 mb-3">
+                        <p className="text-[10px] tracking-widest uppercase text-orange-400 mb-1">Customer Feedback</p>
+                        <p className="text-sm text-orange-400 whitespace-pre-wrap">{ad.customer_change_request}</p>
                       </div>
                     )}
 
@@ -560,7 +560,7 @@ export default function AdminAdsPage() {
                         <button
                           onClick={() => handleRunAiCheck(ad.id)}
                           disabled={aiProcessingId === ad.id}
-                          className="w-full border border-blue-300 text-blue-700 py-2 text-sm tracking-widest uppercase hover:bg-blue-50 transition-colors disabled:opacity-50"
+                          className="w-full border border-blue-500/30 text-blue-400 py-2 text-sm tracking-widest uppercase hover:bg-blue-500/10 transition-colors disabled:opacity-50"
                         >
                           {aiProcessingId === ad.id ? 'Running AI...' : 'Run AI Check'}
                         </button>
@@ -570,7 +570,7 @@ export default function AdminAdsPage() {
                           <button
                             onClick={() => handleSendProof(ad)}
                             disabled={proofSendingId === ad.id}
-                            className="w-full border border-amber-300 text-amber-700 py-2 text-sm tracking-widest uppercase hover:bg-amber-50 transition-colors disabled:opacity-50"
+                            className="w-full border border-amber-500/30 text-amber-400 py-2 text-sm tracking-widest uppercase hover:bg-amber-500/10 transition-colors disabled:opacity-50"
                           >
                             {proofSendingId === ad.id ? 'Sending...' : 'Send Proof to Client'}
                           </button>

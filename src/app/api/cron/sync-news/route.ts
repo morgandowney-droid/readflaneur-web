@@ -81,8 +81,21 @@ export async function GET(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  const startedAt = new Date().toISOString();
+
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
   if (!anthropicApiKey) {
+    // Log to cron_executions so monitoring can see the failure
+    await supabase.from('cron_executions').insert({
+      job_name: 'sync-news',
+      started_at: startedAt,
+      completed_at: new Date().toISOString(),
+      success: false,
+      articles_created: 0,
+      errors: ['ANTHROPIC_API_KEY not configured'],
+      response_data: { dry_run: true },
+    }).then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
+
     return NextResponse.json({
       success: false,
       error: 'ANTHROPIC_API_KEY not configured',
@@ -91,8 +104,6 @@ export async function GET(request: Request) {
   }
 
   const anthropic = new Anthropic({ apiKey: anthropicApiKey });
-
-  const startedAt = new Date().toISOString();
   const results = {
     cities_processed: 0,
     articles_fetched: 0,

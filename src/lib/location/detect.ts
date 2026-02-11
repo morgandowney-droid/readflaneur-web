@@ -16,6 +16,10 @@ export interface DetectedLocation {
   timezone: string;
   /** Our supported city if matched */
   matchedCity: CityTimezoneInfo | null;
+  /** Latitude from IP geolocation */
+  latitude: number | null;
+  /** Longitude from IP geolocation */
+  longitude: number | null;
   /** Detection confidence */
   confidence: 'high' | 'medium' | 'low';
   /** Detection method used */
@@ -50,6 +54,17 @@ export async function detectLocationFromIP(ipAddress?: string): Promise<Detected
     const country = data.country || null;
     const timezone = data.timezone || 'UTC';
 
+    // Parse lat/lng from ipinfo.io "loc" field (format: "37.3860,-122.0838")
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+    if (data.loc) {
+      const [lat, lng] = data.loc.split(',').map(Number);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        latitude = lat;
+        longitude = lng;
+      }
+    }
+
     // Try to match to a supported city
     let matchedCity: CityTimezoneInfo | null = null;
     let confidence: DetectedLocation['confidence'] = 'low';
@@ -80,6 +95,8 @@ export async function detectLocationFromIP(ipAddress?: string): Promise<Detected
       country,
       timezone,
       matchedCity,
+      latitude,
+      longitude,
       confidence,
       method: 'ip',
     };
@@ -91,6 +108,8 @@ export async function detectLocationFromIP(ipAddress?: string): Promise<Detected
       country: null,
       timezone: 'UTC',
       matchedCity: null,
+      latitude: null,
+      longitude: null,
       confidence: 'low',
       method: 'fallback',
     };
@@ -122,6 +141,8 @@ export function detectLocationFromTimezone(browserTimezone?: string): DetectedLo
     country: matchedCity?.country || null,
     timezone,
     matchedCity,
+    latitude: null,
+    longitude: null,
     confidence,
     method: 'timezone',
   };

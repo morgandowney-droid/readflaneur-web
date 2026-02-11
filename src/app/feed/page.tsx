@@ -6,6 +6,7 @@ import { NeighborhoodBrief } from '@/components/feed/NeighborhoodBrief';
 import { MultiFeed } from '@/components/feed/MultiFeed';
 import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { MultiLoadMoreButton } from '@/components/feed/MultiLoadMoreButton';
+import { WelcomeBanner } from '@/components/feed/WelcomeBanner';
 import { FeedItem, Article, Ad } from '@/types';
 import { injectAds } from '@/lib/ad-engine';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
@@ -16,7 +17,7 @@ export const dynamic = 'force-dynamic';
 const INITIAL_PAGE_SIZE = 10;
 
 interface FeedPageProps {
-  searchParams: Promise<{ neighborhoods?: string; section?: string }>;
+  searchParams: Promise<{ neighborhoods?: string; section?: string; welcome?: string }>;
 }
 
 export default async function FeedPage({ searchParams }: FeedPageProps) {
@@ -214,6 +215,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   return (
     <div className="bg-canvas">
       <div className="mx-auto max-w-3xl px-4 pt-1 pb-4">
+        <WelcomeBanner />
         {/* Section filter indicator */}
         {sectionFilter && (
           <div className="mb-6 flex items-center justify-between">

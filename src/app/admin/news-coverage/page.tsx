@@ -240,17 +240,17 @@ export default function NewsCoveragePage() {
             <div className="text-2xl font-light">{stats.total}</div>
             <div className="text-xs text-neutral-500 uppercase tracking-wide">Total Active</div>
           </div>
-          <div className="bg-green-50 border border-green-200 p-4">
-            <div className="text-2xl font-light text-green-700">{stats.good}</div>
-            <div className="text-xs text-green-600 uppercase tracking-wide">Good (1+/day)</div>
+          <div className="bg-green-500/10 border border-green-500/20 p-4">
+            <div className="text-2xl font-light text-green-400">{stats.good}</div>
+            <div className="text-xs text-green-400 uppercase tracking-wide">Good (1+/day)</div>
           </div>
-          <div className="bg-yellow-50 border border-yellow-200 p-4">
-            <div className="text-2xl font-light text-yellow-700">{stats.low}</div>
-            <div className="text-xs text-yellow-600 uppercase tracking-wide">Low (&lt;1/day)</div>
+          <div className="bg-yellow-500/10 border border-yellow-500/20 p-4">
+            <div className="text-2xl font-light text-yellow-400">{stats.low}</div>
+            <div className="text-xs text-yellow-400 uppercase tracking-wide">Low (&lt;1/day)</div>
           </div>
-          <div className="bg-red-50 border border-red-200 p-4">
-            <div className="text-2xl font-light text-red-700">{stats.none}</div>
-            <div className="text-xs text-red-600 uppercase tracking-wide">None (7 days)</div>
+          <div className="bg-red-500/10 border border-red-500/20 p-4">
+            <div className="text-2xl font-light text-red-400">{stats.none}</div>
+            <div className="text-xs text-red-400 uppercase tracking-wide">None (7 days)</div>
           </div>
         </div>
 
@@ -308,7 +308,7 @@ export default function NewsCoveragePage() {
           <div className="bg-surface border border-white/[0.08] p-4 mb-6">
             <h3 className="text-sm font-medium mb-3">Add New RSS Feed</h3>
             {feedError && (
-              <div className="text-xs text-red-600 bg-red-50 border border-red-200 p-2 mb-3">
+              <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 p-2 mb-3">
                 {feedError}
               </div>
             )}
@@ -394,7 +394,7 @@ export default function NewsCoveragePage() {
                     <td className="px-4 py-3 text-right">{n.article_count_7d}</td>
                     <td className="px-4 py-3 text-right">{n.article_count_30d}</td>
                     <td className="px-4 py-3 text-right">
-                      <span className={n.avg_per_day < 1 ? 'text-red-600' : ''}>
+                      <span className={n.avg_per_day < 1 ? 'text-red-400' : ''}>
                         {n.avg_per_day.toFixed(1)}
                       </span>
                     </td>
@@ -431,7 +431,7 @@ export default function NewsCoveragePage() {
                       <button
                         onClick={() => handleToggleFeed(source.id, source.is_active)}
                         className={`w-8 h-5 rounded-full relative transition-colors ${
-                          source.is_active ? 'bg-green-500' : 'bg-neutral-300'
+                          source.is_active ? 'bg-green-500' : 'bg-neutral-700'
                         }`}
                       >
                         <span
@@ -456,7 +456,7 @@ export default function NewsCoveragePage() {
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => handleDeleteFeed(source.id, source.name)}
-                        className="text-xs text-red-600 hover:text-red-800"
+                        className="text-xs text-red-400 hover:text-red-400"
                       >
                         Delete
                       </button>

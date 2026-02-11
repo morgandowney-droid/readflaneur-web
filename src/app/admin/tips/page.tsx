@@ -201,14 +201,14 @@ export default function AdminTipsPage() {
                       <div>
                         <span className={`inline-block px-2 py-1 text-xs tracking-widest uppercase mr-2 ${
                           tip.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-800'
+                            ? 'bg-yellow-500/15 text-yellow-400'
                             : tip.status === 'under_review'
-                              ? 'bg-blue-100 text-blue-800'
+                              ? 'bg-blue-500/15 text-blue-400'
                               : tip.status === 'approved'
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-500/15 text-green-400'
                                 : tip.status === 'rejected'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-purple-100 text-purple-800'
+                                  ? 'bg-red-500/15 text-red-400'
+                                  : 'bg-purple-500/15 text-purple-400'
                         }`}>
                           {tip.status.replace('_', ' ')}
                         </span>

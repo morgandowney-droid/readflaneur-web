@@ -219,10 +219,10 @@ export default function AdminJournalistsPage() {
                         <span
                           className={`inline-block px-2 py-1 text-xs tracking-widest uppercase ${
                             app.status === 'pending'
-                              ? 'bg-yellow-100 text-yellow-800'
+                              ? 'bg-yellow-500/15 text-yellow-400'
                               : app.status === 'approved'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
+                                ? 'bg-green-500/15 text-green-400'
+                                : 'bg-red-500/15 text-red-400'
                           }`}
                         >
                           {app.status}

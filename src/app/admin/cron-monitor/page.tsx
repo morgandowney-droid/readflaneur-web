@@ -165,26 +165,26 @@ export default function CronMonitorPage() {
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      open: 'bg-yellow-100 text-yellow-800',
-      retrying: 'bg-blue-100 text-blue-800',
-      resolved: 'bg-green-100 text-green-800',
-      needs_manual: 'bg-red-100 text-red-800',
+      open: 'bg-yellow-500/15 text-yellow-400',
+      retrying: 'bg-blue-500/15 text-blue-400',
+      resolved: 'bg-green-500/15 text-green-400',
+      needs_manual: 'bg-red-500/15 text-red-400',
     };
-    return colors[status] || 'bg-gray-100 text-neutral-200';
+    return colors[status] || 'bg-neutral-800 text-neutral-400';
   };
 
   const getIssueTypeBadge = (type: string) => {
     const colors: Record<string, string> = {
-      missing_image: 'bg-orange-100 text-orange-800',
-      placeholder_image: 'bg-purple-100 text-purple-800',
-      missed_email: 'bg-amber-100 text-amber-800',
-      thin_content: 'bg-rose-100 text-rose-800',
-      missing_brief: 'bg-cyan-100 text-cyan-800',
-      job_failure: 'bg-red-100 text-red-800',
-      api_rate_limit: 'bg-yellow-100 text-yellow-800',
-      external_service_down: 'bg-gray-100 text-neutral-200',
+      missing_image: 'bg-orange-500/15 text-orange-400',
+      placeholder_image: 'bg-purple-500/15 text-purple-400',
+      missed_email: 'bg-amber-500/15 text-amber-400',
+      thin_content: 'bg-rose-500/15 text-rose-400',
+      missing_brief: 'bg-cyan-500/15 text-cyan-400',
+      job_failure: 'bg-red-500/15 text-red-400',
+      api_rate_limit: 'bg-yellow-500/15 text-yellow-400',
+      external_service_down: 'bg-neutral-800 text-neutral-400',
     };
-    return colors[type] || 'bg-gray-100 text-neutral-200';
+    return colors[type] || 'bg-neutral-800 text-neutral-400';
   };
 
   const formatIssueTypeName = (type: string) => {
@@ -357,7 +357,7 @@ export default function CronMonitorPage() {
                         .filter(e => !e.success)
                         .slice(0, 5)
                         .map(exec => (
-                          <div key={exec.id} className="flex items-center justify-between p-3 bg-red-50 rounded">
+                          <div key={exec.id} className="flex items-center justify-between p-3 bg-red-500/10 rounded">
                             <div>
                               <span className="font-medium text-neutral-100">{exec.job_name}</span>
                               <span className="text-xs text-neutral-500 ml-2">
@@ -422,7 +422,7 @@ export default function CronMonitorPage() {
                                 return (
                                   <div>
                                     <div className="text-sm text-neutral-100">{diag.email}</div>
-                                    <div className="text-xs text-amber-700">
+                                    <div className="text-xs text-amber-400">
                                       Cause: {emailCauseLabels[diag.cause] || diag.cause}
                                     </div>
                                     <div className="text-xs text-neutral-500 truncate max-w-xs" title={diag.details}>
@@ -523,7 +523,7 @@ export default function CronMonitorPage() {
                           <td className="px-4 py-3">
                             <span
                               className={`px-2 py-1 text-xs rounded ${
-                                exec.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                exec.success ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'
                               }`}
                             >
                               {exec.success ? 'Success' : 'Failed'}

@@ -267,15 +267,15 @@ export default function AdminArticlesPage() {
                         <span
                           className={`inline-block px-2 py-1 text-xs tracking-widest uppercase ${
                             article.status === 'pending'
-                              ? 'bg-yellow-100 text-yellow-800'
+                              ? 'bg-yellow-500/15 text-yellow-400'
                               : article.status === 'published'
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-500/15 text-green-400'
                                 : article.status === 'rejected'
-                                  ? 'bg-red-100 text-red-800'
+                                  ? 'bg-red-500/15 text-red-400'
                                   : article.status === 'suspended'
-                                    ? 'bg-orange-100 text-orange-800'
+                                    ? 'bg-orange-500/15 text-orange-400'
                                     : article.status === 'scheduled'
-                                      ? 'bg-blue-100 text-blue-800'
+                                      ? 'bg-blue-500/15 text-blue-400'
                                       : 'bg-neutral-800 text-neutral-400'
                           }`}
                         >

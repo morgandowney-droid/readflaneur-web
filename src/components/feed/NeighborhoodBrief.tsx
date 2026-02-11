@@ -813,7 +813,10 @@ export function NeighborhoodBrief({
   };
 
   return (
-    <div className="bg-surface p-5 md:p-6 mb-3">
+    <div
+      className="bg-surface p-5 md:p-6 mb-3 cursor-pointer"
+      onClick={() => { if (hasMore) setIsExpanded(!isExpanded); }}
+    >
       {/* Eyebrow + Live Dot */}
       <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-amber-600/80 mb-3">
         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -841,7 +844,7 @@ export function NeighborhoodBrief({
               <p key={i}>{renderParagraph(p, i === paragraphs.length - 1)}</p>
             ))}
             <button
-              onClick={() => setIsExpanded(false)}
+              onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
               className="inline text-sm font-medium text-neutral-400 hover:text-white transition-colors"
             >
               Show less
@@ -854,7 +857,7 @@ export function NeighborhoodBrief({
               <>
                 {' '}
                 <button
-                  onClick={() => setIsExpanded(true)}
+                  onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}
                   className="inline text-sm font-medium text-neutral-400 hover:text-white transition-colors"
                 >
                   Read more &rsaquo;

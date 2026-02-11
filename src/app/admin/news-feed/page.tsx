@@ -164,11 +164,11 @@ export default function NewsFeedAdmin() {
               Across {stats?.totalActiveNeighborhoods || 0} neighborhoods
             </div>
           </div>
-          <div className="bg-surface border border-red-200 p-4">
+          <div className="bg-surface border border-red-500/20 p-4">
             <div className="text-3xl font-light text-red-600">{stats?.neighborhoodsWithNoContent.length || 0}</div>
             <div className="text-xs text-neutral-500 uppercase tracking-wide">No Content (24h)</div>
           </div>
-          <div className="bg-surface border border-amber-200 p-4">
+          <div className="bg-surface border border-amber-500/20 p-4">
             <div className="text-3xl font-light text-amber-600">{stats?.neighborhoodsWithoutRss?.length || 0}</div>
             <div className="text-xs text-neutral-500 uppercase tracking-wide">No RSS Stories (24h)</div>
           </div>
@@ -183,14 +183,14 @@ export default function NewsFeedAdmin() {
 
         {/* Thin Content Box */}
         {stats && stats.neighborhoodsWithNoContent.length > 0 && (
-          <div className="bg-red-50 border-2 border-red-300 p-5 mb-6">
+          <div className="bg-red-500/10 border border-red-500/20 p-5 mb-6">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-red-900 uppercase tracking-wide">
+              <h3 className="text-sm font-semibold text-red-300 uppercase tracking-wide">
                 Thin Content — No Articles in 24h ({stats.neighborhoodsWithNoContent.length} neighborhoods)
               </h3>
               <button
                 onClick={() => setShowNoContent(!showNoContent)}
-                className="text-xs text-red-600 hover:text-red-800 underline"
+                className="text-xs text-red-400 hover:text-red-300 underline"
               >
                 {showNoContent ? 'Collapse' : 'Expand'}
               </button>
@@ -201,14 +201,14 @@ export default function NewsFeedAdmin() {
                   <button
                     key={n.id}
                     onClick={() => setFilter({ ...filter, neighborhood: n.id, category: '', storyType: '', source: '' })}
-                    className="text-xs bg-surface px-2 py-1 border border-red-200 text-red-700 hover:bg-red-100 transition-colors cursor-pointer"
+                    className="text-xs bg-surface px-2 py-1 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer"
                   >
                     {n.name}, {n.city}
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="text-xs text-red-600">
+              <div className="text-xs text-red-400">
                 {stats.neighborhoodsWithNoContent.slice(0, 8).map(n => n.name).join(', ')}
                 {stats.neighborhoodsWithNoContent.length > 8 && ` and ${stats.neighborhoodsWithNoContent.length - 8} more...`}
               </div>
@@ -218,14 +218,14 @@ export default function NewsFeedAdmin() {
 
         {/* No RSS Stories Box */}
         {stats && stats.neighborhoodsWithoutRss && stats.neighborhoodsWithoutRss.length > 0 && (
-          <div className="bg-amber-50 border-2 border-amber-300 p-5 mb-6">
+          <div className="bg-amber-500/10 border border-amber-500/20 p-5 mb-6">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-amber-900 uppercase tracking-wide">
+              <h3 className="text-sm font-semibold text-amber-300 uppercase tracking-wide">
                 No RSS Feed Stories in 24h ({stats.neighborhoodsWithoutRss.length} neighborhoods)
               </h3>
               <button
                 onClick={() => setShowNoContent(!showNoContent)}
-                className="text-xs text-amber-600 hover:text-amber-800 underline"
+                className="text-xs text-amber-400 hover:text-amber-300 underline"
               >
                 {showNoContent ? 'Collapse' : 'Expand'}
               </button>
@@ -236,14 +236,14 @@ export default function NewsFeedAdmin() {
                   <button
                     key={n.id}
                     onClick={() => setFilter({ ...filter, neighborhood: n.id, category: '', storyType: '', source: 'rss' })}
-                    className="text-xs bg-surface px-2 py-1 border border-amber-200 text-amber-700 hover:bg-amber-100 transition-colors cursor-pointer"
+                    className="text-xs bg-surface px-2 py-1 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-colors cursor-pointer"
                   >
                     {n.name}, {n.city}
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="text-xs text-amber-600">
+              <div className="text-xs text-amber-400">
                 {stats.neighborhoodsWithoutRss.slice(0, 8).map(n => n.name).join(', ')}
                 {stats.neighborhoodsWithoutRss.length > 8 && ` and ${stats.neighborhoodsWithoutRss.length - 8} more...`}
               </div>
@@ -253,13 +253,13 @@ export default function NewsFeedAdmin() {
 
         {/* Overwhelmed Expanded */}
         {showOverwhelmed && stats && stats.neighborhoodsOverwhelmed.length > 0 && (
-          <div className="bg-yellow-50 border border-yellow-200 p-4 mb-6">
-            <h3 className="text-sm font-medium text-yellow-800 mb-2">
+          <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 mb-6">
+            <h3 className="text-sm font-medium text-yellow-300 mb-2">
               Overwhelmed Neighborhoods (&gt;5 articles/day)
             </h3>
             <div className="flex flex-wrap gap-2">
               {stats.neighborhoodsOverwhelmed.map(n => (
-                <span key={n.id} className="text-xs bg-surface px-2 py-1 border border-yellow-200 text-yellow-700">
+                <span key={n.id} className="text-xs bg-surface px-2 py-1 border border-yellow-500/20 text-yellow-400">
                   {n.name}, {n.city} ({n.count})
                 </span>
               ))}
@@ -401,11 +401,11 @@ export default function NewsFeedAdmin() {
                   </td>
                   <td className="px-4 py-2">
                     {article.category_label === 'News Brief' ? (
-                      <span className="text-xs bg-blue-100 px-2 py-0.5 text-blue-700">RSS</span>
+                      <span className="text-xs bg-blue-500/15 px-2 py-0.5 text-blue-400">RSS</span>
                     ) : article.ai_model?.toLowerCase().includes('grok') ? (
-                      <span className="text-xs bg-purple-100 px-2 py-0.5 text-purple-700">Grok</span>
+                      <span className="text-xs bg-purple-500/15 px-2 py-0.5 text-purple-400">Grok</span>
                     ) : article.ai_model?.toLowerCase().includes('gemini') ? (
-                      <span className="text-xs bg-green-100 px-2 py-0.5 text-green-700">Gemini</span>
+                      <span className="text-xs bg-green-500/15 px-2 py-0.5 text-green-400">Gemini</span>
                     ) : article.author_type === 'ai' ? (
                       <span className="text-xs bg-neutral-800 px-2 py-0.5 text-neutral-400">AI</span>
                     ) : (

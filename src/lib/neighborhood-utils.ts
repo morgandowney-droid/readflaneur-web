@@ -437,7 +437,16 @@ const MAP_LOCATIONS: Record<string, string> = {
  * @returns Location string for Google Maps
  */
 export function getMapLocation(neighborhoodId: string, neighborhoodName: string, city: string): string {
-  return MAP_LOCATIONS[neighborhoodId] || `${neighborhoodName}, ${city}`;
+  if (MAP_LOCATIONS[neighborhoodId]) return MAP_LOCATIONS[neighborhoodId];
+
+  // Strip descriptors from city names (e.g. "Stockholm Enclaves" -> "Stockholm")
+  const cleanCity = city.replace(/\s+Enclaves$/i, '').trim();
+
+  // Strip diacritical marks for better Google Maps resolution
+  // e.g. "Bromma Trädgårdsstad" -> "Bromma Tradgardsstad"
+  const cleanName = neighborhoodName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  return `${cleanName}, ${cleanCity}`;
 }
 
 /**
