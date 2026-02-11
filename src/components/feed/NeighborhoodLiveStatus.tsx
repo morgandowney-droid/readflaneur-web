@@ -110,13 +110,32 @@ export function NeighborhoodLiveStatus({
         tempF: Math.round(tempC * 9 / 5 + 32),
         description: WEATHER_DESCRIPTIONS[initialWeather.weatherCode] || 'Variable',
       };
-      if (cacheKey) weatherCache.set(cacheKey, { data: w, fetchedAt: Date.now() });
       return w;
     }
-    // Check module-level cache (survives pill switches)
-    if (cacheKey) return getCachedWeather(cacheKey);
+    // Don't check module cache here — it only exists on the client and would
+    // cause a hydration mismatch when the server renders null.  Cache is
+    // checked in the useEffect below instead.
     return null;
   });
+
+  // Seed module cache from initialWeather + hydrate from cache for pill switches
+  useEffect(() => {
+    if (initialWeather && cacheKey) {
+      const tempC = initialWeather.tempC;
+      weatherCache.set(cacheKey, {
+        data: {
+          tempC,
+          tempF: Math.round(tempC * 9 / 5 + 32),
+          description: WEATHER_DESCRIPTIONS[initialWeather.weatherCode] || 'Variable',
+        },
+        fetchedAt: Date.now(),
+      });
+    } else if (!weather && cacheKey) {
+      const cached = getCachedWeather(cacheKey);
+      if (cached) setWeather(cached);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cacheKey]);
 
   // Update time every 10 seconds
   useEffect(() => {
