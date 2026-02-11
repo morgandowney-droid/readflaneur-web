@@ -82,10 +82,10 @@ export async function GET(request: Request) {
 
     if (!isBackfill) {
       // Find briefs that need enrichment:
-      // - Generated in the last 2 hours (recent)
+      // - Generated in the last 10 days (wide window to clear backlog from Feb 4-10)
       // - Don't have enriched_content yet
       const lookbackWindow = new Date();
-      lookbackWindow.setHours(lookbackWindow.getHours() - 26);
+      lookbackWindow.setDate(lookbackWindow.getDate() - 10);
 
       let query = supabase
         .from('neighborhood_briefs')
