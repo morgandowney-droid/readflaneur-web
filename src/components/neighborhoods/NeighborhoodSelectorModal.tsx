@@ -638,6 +638,8 @@ function GlobalNeighborhoodModal({
       const reordered = [id, ...ids.filter(i => i !== id)];
       localStorage.setItem(PREFS_KEY, JSON.stringify(reordered));
       setPrimaryId(id);
+      // Navigate so the feed page reflects the new primary order
+      router.push(`/feed?neighborhoods=${reordered.join(',')}`);
     } catch { /* ignore */ }
   };
 
@@ -673,19 +675,25 @@ function GlobalNeighborhoodModal({
                 City Search
               </h2>
               {/* Selection counter + change primary + change timezone */}
-              <div className="flex items-center gap-3 mt-1.5">
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 {selected.size > 0 && (
-                  <span className="text-xs font-mono text-amber-400 tabular-nums">
-                    {selected.size} selected
-                  </span>
+                  <>
+                    <span className="text-xs font-mono text-amber-400 tabular-nums">
+                      {selected.size} selected
+                    </span>
+                    <span className="text-neutral-600 text-xs">|</span>
+                  </>
                 )}
                 {primaryId && selected.size > 1 && (
-                  <button
-                    onClick={scrollToPrimary}
-                    className="text-xs text-neutral-500 hover:text-amber-400 transition-colors"
-                  >
-                    Change my Primary Neighborhood
-                  </button>
+                  <>
+                    <button
+                      onClick={scrollToPrimary}
+                      className="text-xs text-neutral-500 hover:text-amber-400 transition-colors"
+                    >
+                      Change my Primary Neighborhood
+                    </button>
+                    <span className="text-neutral-600 text-xs">|</span>
+                  </>
                 )}
                 <button
                   onClick={() => setShowTimezone(!showTimezone)}

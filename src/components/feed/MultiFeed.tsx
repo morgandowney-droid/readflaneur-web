@@ -216,6 +216,8 @@ export function MultiFeed({
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const dragStartX = useRef(0);
   const isDragging = useRef(false);
+  const dragIndexRef = useRef<number | null>(null);
+  const overIndexRef = useRef<number | null>(null);
   const pillRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const handlePointerDown = (e: React.PointerEvent, index: number) => {
@@ -223,12 +225,15 @@ export function MultiFeed({
     if (e.button !== 0) return;
     dragStartX.current = e.clientX;
     isDragging.current = false;
+    dragIndexRef.current = index;
+    overIndexRef.current = null;
     setDragIndex(index);
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    // Use currentTarget (the button) not target (could be child span)
+    e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (dragIndex === null) return;
+    if (dragIndexRef.current === null) return;
     // Require 8px movement to start drag (prevents accidental drags on click)
     if (!isDragging.current && Math.abs(e.clientX - dragStartX.current) > 8) {
       isDragging.current = true;
@@ -241,6 +246,7 @@ export function MultiFeed({
       if (!pill) continue;
       const rect = pill.getBoundingClientRect();
       if (e.clientX >= rect.left && e.clientX <= rect.right) {
+        overIndexRef.current = i;
         setOverIndex(i);
         return;
       }
@@ -248,11 +254,14 @@ export function MultiFeed({
   };
 
   const handlePointerUp = () => {
-    if (isDragging.current && dragIndex !== null && overIndex !== null && dragIndex !== overIndex) {
+    const from = dragIndexRef.current;
+    const to = overIndexRef.current;
+
+    if (isDragging.current && from !== null && to !== null && from !== to) {
       // Reorder neighborhoods
       const ids = neighborhoods.map(n => n.id);
-      const [movedId] = ids.splice(dragIndex, 1);
-      ids.splice(overIndex, 0, movedId);
+      const [movedId] = ids.splice(from, 1);
+      ids.splice(to, 0, movedId);
 
       // Save to localStorage (first item = primary)
       localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(ids));
@@ -260,6 +269,8 @@ export function MultiFeed({
       // Navigate with new order
       router.push(`/feed?neighborhoods=${ids.join(',')}`);
     }
+    dragIndexRef.current = null;
+    overIndexRef.current = null;
     setDragIndex(null);
     setOverIndex(null);
     // Clear drag flag after a tick so onClick can check it
