@@ -88,16 +88,20 @@ export function NeighborhoodHeader({
               {neighborhoodName}
             </h1>
 
-            {/* City + combo components on one line */}
-            <p className={`text-sm text-neutral-500 mb-1.5 h-5 ${city ? '' : 'opacity-0'}`}>
-              {comboComponentNames && comboComponentNames.length > 0 ? (
-                <>
-                  {city}
-                  <span className="mx-2 text-neutral-600">·</span>
-                  <span className="font-serif italic">{`Covering ${joinWithAnd(comboComponentNames)}`}</span>
-                </>
+            {/* City / subtitle line - reuses same slot for layout stability */}
+            <p className="text-sm text-neutral-500 mb-1.5 h-5">
+              {city ? (
+                comboComponentNames && comboComponentNames.length > 0 ? (
+                  <>
+                    {city}
+                    <span className="mx-2 text-neutral-600">·</span>
+                    <span className="font-serif italic">{`Covering ${joinWithAnd(comboComponentNames)}`}</span>
+                  </>
+                ) : city
               ) : (
-                city || '\u00A0'
+                neighborhoodCount !== undefined
+                  ? `Your curated feed from ${neighborhoodCount} locations`
+                  : '\u00A0'
               )}
             </p>
 
@@ -124,13 +128,6 @@ export function NeighborhoodHeader({
                 </>
               ) : '\u00A0'}
             </p>
-
-            {/* Subtitle - only rendered when showing "all" view */}
-            {neighborhoodCount !== undefined && (
-              <p className="text-sm text-neutral-500 mb-1.5">
-                {`Your curated feed from ${neighborhoodCount} locations`}
-              </p>
-            )}
 
             {/* Live status - always rendered container for consistent height */}
             <div className="mb-2 h-5">
