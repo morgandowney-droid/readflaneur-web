@@ -196,14 +196,27 @@ export async function GET(request: Request) {
         continue;
       }
 
-      // Generate slug from headline
-      const slug = result.headline
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')
-        .slice(0, 60);
+      // Generate deterministic slug from neighborhood + headline (enables dedup)
+      const slugInput = `${neighborhood.id}:${result.headline}`;
+      let slugHash = 5381;
+      for (let i = 0; i < slugInput.length; i++) {
+        slugHash = ((slugHash << 5) + slugHash + slugInput.charCodeAt(i)) | 0;
+      }
+      const slug = `digest-${neighborhood.id}-${Math.abs(slugHash).toString(36)}`;
 
-      // Check if similar article already exists this week
+      // Check if article with this slug already exists (deterministic dedup)
+      const { data: existingBySlug } = await supabase
+        .from('articles')
+        .select('id')
+        .eq('slug', slug)
+        .limit(1);
+
+      if (existingBySlug && existingBySlug.length > 0) {
+        results.skipped_no_content++;
+        continue;
+      }
+
+      // Also check if similar article already exists this week
       const { data: existing } = await supabase
         .from('articles')
         .select('id')
@@ -223,7 +236,7 @@ export async function GET(request: Request) {
         .insert({
           neighborhood_id: neighborhood.id,
           headline: result.headline,
-          slug: `${slug}-${Date.now()}`,
+          slug,
           preview_text: result.preview_text,
           body_text: result.body_text,
           image_url: '', // Will be filled by flaneur API

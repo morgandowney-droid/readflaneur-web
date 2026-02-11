@@ -559,6 +559,21 @@ export async function GET(request: Request) {
       const slug = generateSlug(item.content.headline);
       const articleType = item.type === 'opening' ? 'new_opening' : 'closure';
 
+      // Cross-pipeline dedup: check if similar headline exists in last 48h for this neighborhood
+      const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+      const headlinePrefix = item.content.headline.substring(0, 40).replace(/[%_]/g, '');
+      const { data: existingArticle } = await supabase
+        .from('articles')
+        .select('id')
+        .eq('neighborhood_id', item.place.neighborhood_id)
+        .gte('published_at', twoDaysAgo)
+        .ilike('headline', `${headlinePrefix}%`)
+        .limit(1);
+
+      if (existingArticle && existingArticle.length > 0) {
+        continue; // Similar article already exists from another pipeline
+      }
+
       const { data: insertedArticle, error: insertError } = await supabase
         .from('articles')
         .insert({
@@ -588,9 +603,8 @@ export async function GET(request: Request) {
 
       // Generate image
       try {
-        const baseUrl = process.env.VERCEL_URL
-          ? `https://${process.env.VERCEL_URL}`
-          : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\n$/, '').replace(/\/$/, '')
+          || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
         const imageResponse = await fetch(`${baseUrl}/api/internal/generate-image`, {
           method: 'POST',
@@ -625,6 +639,21 @@ export async function GET(request: Request) {
       const slug = generateSlug(item.content.headline);
       const articleType = item.mention.type === 'opening' ? 'new_opening' : 'closure';
 
+      // Cross-pipeline dedup: check if similar headline exists in last 48h
+      const twoDaysAgo2 = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+      const mentionHeadlinePrefix = item.content.headline.substring(0, 40).replace(/[%_]/g, '');
+      const { data: existingMentionArticle } = await supabase
+        .from('articles')
+        .select('id')
+        .eq('neighborhood_id', item.mention.neighborhood_id)
+        .gte('published_at', twoDaysAgo2)
+        .ilike('headline', `${mentionHeadlinePrefix}%`)
+        .limit(1);
+
+      if (existingMentionArticle && existingMentionArticle.length > 0) {
+        continue; // Similar article already exists from another pipeline
+      }
+
       const { data: insertedArticle, error: insertError } = await supabase
         .from('articles')
         .insert({
@@ -654,9 +683,8 @@ export async function GET(request: Request) {
 
       // Generate image
       try {
-        const baseUrl = process.env.VERCEL_URL
-          ? `https://${process.env.VERCEL_URL}`
-          : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\n$/, '').replace(/\/$/, '')
+          || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
         const imageResponse = await fetch(`${baseUrl}/api/internal/generate-image`, {
           method: 'POST',

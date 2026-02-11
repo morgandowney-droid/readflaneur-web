@@ -281,7 +281,21 @@ export async function fixThinContent(
       );
 
       for (const story of stories) {
-        const slug = `grok-${neighborhoodId}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+        // Deterministic slug from neighborhood + headline (enables dedup)
+        const headlineHash = story.headline.split('').reduce((acc: number, c: string) => ((acc << 5) + acc + c.charCodeAt(0)) | 0, 5381);
+        const slug = `grok-${neighborhoodId}-${Math.abs(headlineHash).toString(36)}`;
+
+        // Skip if article with this slug already exists
+        const { data: existing } = await supabase
+          .from('articles')
+          .select('id')
+          .eq('slug', slug)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          console.log(`[ThinContent] Skipping duplicate: ${story.headline}`);
+          continue;
+        }
 
         const { data: inserted, error: insertError } = await supabase
           .from('articles')

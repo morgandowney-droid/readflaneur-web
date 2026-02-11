@@ -50,16 +50,15 @@ interface ArticleInsert {
 }
 
 /**
- * Generate unique slug
+ * Generate deterministic slug from headline + neighborhood (enables dedup)
  */
 function generateSlug(headline: string, neighborhoodId: string): string {
-  const base = headline
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .substring(0, 50);
-  const timestamp = Date.now().toString(36);
-  return `${base}-${neighborhoodId}-${timestamp}`;
+  const input = `${neighborhoodId}:${headline}`;
+  let hash = 5381;
+  for (let i = 0; i < input.length; i++) {
+    hash = ((hash << 5) + hash + input.charCodeAt(i)) | 0;
+  }
+  return `fallback-${neighborhoodId}-${Math.abs(hash).toString(36)}`;
 }
 
 /**
@@ -177,8 +176,18 @@ export async function GET(request: NextRequest) {
             imageUrl = lifestyleImage || defaultImage;
           }
 
-          // Insert article
+          // Insert article (slug is deterministic, so check for existing first)
           const article = fallbackStoryToArticle(result.story, imageUrl);
+          const { data: existingArticle } = await supabase
+            .from('articles')
+            .select('id')
+            .eq('slug', article.slug)
+            .limit(1);
+
+          if (existingArticle && existingArticle.length > 0) {
+            continue; // Already exists
+          }
+
           const { error: insertError } = await supabase
             .from('articles')
             .insert(article);
