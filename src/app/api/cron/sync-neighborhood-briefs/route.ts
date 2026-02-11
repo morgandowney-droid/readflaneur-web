@@ -29,7 +29,7 @@ import { LiquorLicense } from '@/lib/nyc-liquor';
 
 /**
  * Check if it's currently between 3-9am in a given timezone.
- * 6-hour window (24 chances at */15) survives Vercel cron gaps up to ~5 hours.
+ * 6-hour window (24 chances at every-15-min) survives Vercel cron gaps up to ~5 hours.
  * Widened from 4-8am after observing 4-hour Vercel cron gaps during APAC windows.
  */
 function isMorningWindow(timezone: string): boolean {

@@ -15,7 +15,7 @@ import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
  * Phase 1 (briefs): up to 120s, 2 concurrent enrichments
  * Phase 2 (articles): remaining budget, 2 concurrent enrichments
  *
- * Reduced from */5 to */15 and concurrency 5->2 to stay within Gemini quota.
+ * Reduced from every-5-min to every-15-min and concurrency 5->2 to stay within Gemini quota.
  */
 
 export const runtime = 'nodejs';
