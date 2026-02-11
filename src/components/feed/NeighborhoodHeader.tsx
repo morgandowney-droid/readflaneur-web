@@ -83,44 +83,44 @@ export function NeighborhoodHeader({
       <div className={`text-center ${isAll ? 'pt-4' : 'pt-8'}`}>
         {isAll ? (
           <>
-            {/* City label - always rendered for consistent height */}
-            <p className={`text-xs tracking-[0.25em] uppercase text-neutral-500 mb-2 h-4 ${city ? '' : 'opacity-0'}`}>
-              {city || '\u00A0'}
-            </p>
-
             {/* Heading */}
-            <h1 className="font-display text-4xl md:text-5xl text-neutral-100 tracking-wide mb-3">
+            <h1 className="font-display text-4xl md:text-5xl text-neutral-100 tracking-wide mb-1">
               {neighborhoodName}
             </h1>
 
-            {/* Combo subtitle (when a specific combo neighborhood is active) */}
-            {comboComponentNames && comboComponentNames.length > 0 && (
-              <p className="font-serif italic text-base text-neutral-500 mb-3">
-                Covering {joinWithAnd(comboComponentNames)}
-              </p>
-            )}
+            {/* City label - muted, below the neighborhood name */}
+            <p className={`text-sm text-neutral-500 mb-3 h-5 ${city ? '' : 'opacity-0'}`}>
+              {city || '\u00A0'}
+            </p>
 
-            {/* Maps & History links (only when a specific neighborhood pill is active) */}
-            {neighborhoodId && (
-              <p className="flex items-center justify-center gap-3 mb-3">
-                <a
-                  href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(neighborhoodId, neighborhoodName, city))}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-neutral-500 underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60 hover:text-neutral-300 transition-colors"
-                >
-                  Maps
-                </a>
-                <a
-                  href={getWikipediaUrl(neighborhoodId, neighborhoodName)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-neutral-500 underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60 hover:text-neutral-300 transition-colors"
-                >
-                  History
-                </a>
-              </p>
-            )}
+            {/* Combo subtitle - fixed height container for layout stability */}
+            <p className={`font-serif italic text-base text-neutral-500 mb-3 h-6 ${comboComponentNames && comboComponentNames.length > 0 ? '' : 'invisible'}`}>
+              {comboComponentNames && comboComponentNames.length > 0 ? `Covering ${joinWithAnd(comboComponentNames)}` : '\u00A0'}
+            </p>
+
+            {/* Maps & History links - fixed height container for layout stability */}
+            <p className={`flex items-center justify-center gap-3 mb-3 h-5 ${neighborhoodId ? '' : 'invisible'}`}>
+              {neighborhoodId ? (
+                <>
+                  <a
+                    href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(neighborhoodId, neighborhoodName, city))}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-neutral-500 underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60 hover:text-neutral-300 transition-colors"
+                  >
+                    Maps
+                  </a>
+                  <a
+                    href={getWikipediaUrl(neighborhoodId, neighborhoodName)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-neutral-500 underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60 hover:text-neutral-300 transition-colors"
+                  >
+                    History
+                  </a>
+                </>
+              ) : '\u00A0'}
+            </p>
 
             {/* Subtitle - always rendered for consistent height */}
             <p className={`text-sm text-neutral-500 mb-3 h-5 ${neighborhoodCount !== undefined ? '' : 'opacity-0'}`}>

@@ -329,7 +329,7 @@ export function MultiFeed({
       {/* ── PILL BAR (above masthead for vertical stability) ── */}
       {isMultiple && (
         <div className="sticky top-[60px] z-20 bg-[#050505]/95 backdrop-blur-md">
-          <div className="flex items-center gap-1 py-4">
+          <div className="flex items-center gap-1 py-1.5">
             {/* Left scroll arrow */}
             <button
               onClick={() => scrollPills('left')}
@@ -349,7 +349,7 @@ export function MultiFeed({
                 onClick={() => setActiveFilter(null)}
                 className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors ${
                   activeFilter === null
-                    ? 'bg-white text-black'
+                    ? 'bg-white/10 text-white border border-white/20'
                     : 'bg-transparent text-neutral-400 border border-neutral-800 hover:border-neutral-500 hover:text-white'
                 }`}
               >
@@ -370,7 +370,7 @@ export function MultiFeed({
                     overIndex === i && dragIndex !== null && dragIndex !== i ? 'border-l-2 border-l-amber-500' : ''
                   } ${
                     activeFilter === hood.id
-                      ? 'bg-white text-black'
+                      ? 'bg-white/10 text-white border border-white/20'
                       : 'bg-transparent text-neutral-400 border border-neutral-800 hover:border-neutral-500 hover:text-white'
                   }`}
                   title={hood.combo_component_names?.length ? `Includes: ${hood.combo_component_names.join(', ')}` : undefined}

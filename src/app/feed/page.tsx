@@ -213,7 +213,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
   return (
     <div className="bg-canvas">
-      <div className="mx-auto max-w-3xl px-4 py-6">
+      <div className="mx-auto max-w-3xl px-4 pt-1 pb-6">
         {/* Section filter indicator */}
         {sectionFilter && (
           <div className="mb-6 flex items-center justify-between">
