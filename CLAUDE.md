@@ -59,10 +59,10 @@ Recent work: Article page back link to /feed, primary neighborhood sync to email
 - **Fashion week:** Slug includes day number; prompt requires "Day N" in headline with day-specific angle
 
 ### Gemini Enrichment (enrich-briefs)
-- **Schedule:** `*/15` (was `*/5`), batch size 15 (was 50), concurrency 2 (was 5)
+- **Schedule:** `*/15`, batch size 30, concurrency 4, Phase 1 budget 200s
 - **Backoff:** Exponential retry on 429/RESOURCE_EXHAUSTED (2s, 5s, 15s delays)
 - **Early termination:** Drains queue if any batch call hits quota
-- **Est. daily calls:** ~2,880 (was ~21,600)
+- **Two phases:** Phase 1 = briefs (200s budget), Phase 2 = articles (remaining ~80s)
 
 ### Brief Generation Timezone Handling (sync-neighborhood-briefs)
 - **Morning window:** 3-9 AM local time (24 chances at `*/15`, survives 5h cron gaps)
