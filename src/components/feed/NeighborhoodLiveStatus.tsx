@@ -73,6 +73,20 @@ interface WeatherState {
   description: string;
 }
 
+// Module-level weather cache so pill switches don't re-fetch
+const weatherCache = new Map<string, { data: WeatherState; fetchedAt: number }>();
+const WEATHER_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+function getCachedWeather(key: string): WeatherState | null {
+  const entry = weatherCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.fetchedAt > WEATHER_CACHE_TTL) {
+    weatherCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
 export function NeighborhoodLiveStatus({
   timezone,
   country,
@@ -83,16 +97,24 @@ export function NeighborhoodLiveStatus({
   initialWeather,
 }: NeighborhoodLiveStatusProps) {
   const { use12Hour, useFahrenheit } = getLocalFormat(country);
-  const [time, setTime] = useState<{ hours: string; minutes: string; period?: string } | null>(null);
+
+  // Initialize time eagerly so it renders on first paint (no null flash)
+  const [time, setTime] = useState(() => formatTime(timezone, use12Hour));
+
+  const cacheKey = latitude && longitude ? `${latitude},${longitude}` : '';
   const [weather, setWeather] = useState<WeatherState | null>(() => {
     if (initialWeather) {
       const tempC = initialWeather.tempC;
-      return {
+      const w = {
         tempC,
         tempF: Math.round(tempC * 9 / 5 + 32),
         description: WEATHER_DESCRIPTIONS[initialWeather.weatherCode] || 'Variable',
       };
+      if (cacheKey) weatherCache.set(cacheKey, { data: w, fetchedAt: Date.now() });
+      return w;
     }
+    // Check module-level cache (survives pill switches)
+    if (cacheKey) return getCachedWeather(cacheKey);
     return null;
   });
 
@@ -105,9 +127,9 @@ export function NeighborhoodLiveStatus({
     return () => clearInterval(interval);
   }, [timezone, use12Hour]);
 
-  // Fetch weather once on mount (skip if server-side weather was provided)
+  // Fetch weather once on mount (skip if already have weather from props or cache)
   useEffect(() => {
-    if (initialWeather) return;
+    if (weather) return; // Already have data from initialWeather or cache
     if (!latitude || !longitude) return;
     const controller = new AbortController();
 
@@ -129,21 +151,22 @@ export function NeighborhoodLiveStatus({
         if (!current) return;
 
         const tempC = Math.round(current.temperature_2m || 0);
-        setWeather({
+        const w: WeatherState = {
           tempC,
           tempF: Math.round(tempC * 9 / 5 + 32),
           description: WEATHER_DESCRIPTIONS[current.weather_code] || 'Variable',
-        });
+        };
+        // Cache for pill switches
+        const key = `${latitude},${longitude}`;
+        weatherCache.set(key, { data: w, fetchedAt: Date.now() });
+        setWeather(w);
       } catch {
         // Silently fail - weather is non-critical
       }
     })();
 
     return () => controller.abort();
-  }, [latitude, longitude, timezone, initialWeather]);
-
-  // Don't render until client-side hydration completes
-  if (!time) return null;
+  }, [latitude, longitude, timezone, weather]);
 
   const temp = weather
     ? `${useFahrenheit ? weather.tempF : weather.tempC}${useFahrenheit ? '°F' : '°C'}`
@@ -158,11 +181,11 @@ export function NeighborhoodLiveStatus({
       rel="noopener noreferrer"
       className="flex items-center justify-center gap-1 font-mono text-xs font-medium tracking-[0.2em] text-amber-600/80 hover:text-amber-600 transition-colors cursor-pointer"
     >
-      {/* Time with animated colon */}
-      <span>{time.hours}</span>
+      {/* Time with animated colon - suppressHydrationWarning since server/client times differ */}
+      <span suppressHydrationWarning>{time.hours}</span>
       <span className="animate-pulse-slow">:</span>
-      <span>{time.minutes}</span>
-      {time.period && <span>{time.period}</span>}
+      <span suppressHydrationWarning>{time.minutes}</span>
+      {time.period && <span suppressHydrationWarning>{time.period}</span>}
 
       {/* Separator + Weather */}
       {weather && (
