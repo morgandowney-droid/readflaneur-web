@@ -158,6 +158,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (!validation.valid) {
+      // Log rejection for daily admin digest
+      admin
+        .from('community_creation_rejections')
+        .insert({
+          input: input.trim(),
+          rejection_reason: validation.rejection_reason || 'Invalid neighborhood',
+          user_id: userId,
+          user_email: session.user.email || null,
+        })
+        .then(null, (e: unknown) => console.error('Failed to log rejection:', e));
+
       return NextResponse.json({
         error: validation.rejection_reason || 'This does not appear to be a valid neighborhood or district.',
       }, { status: 400 });
