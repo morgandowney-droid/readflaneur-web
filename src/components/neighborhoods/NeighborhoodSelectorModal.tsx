@@ -253,18 +253,24 @@ function GlobalNeighborhoodModal({
   const [confirmClear, setConfirmClear] = useState(false);
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [suggestionText, setSuggestionText] = useState('');
-  const [suggestionStatus, setSuggestionStatus] = useState<'idle' | 'success'>('idle');
+  const [suggestionEmail, setSuggestionEmail] = useState('');
+  const [suggestionStatus, setSuggestionStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
   const suggestionInputRef = useRef<HTMLInputElement>(null);
 
-  // Handle suggestion submission
+  // Handle suggestion submission via API
   const handleSuggestionSubmit = async () => {
-    if (!suggestionText.trim()) return;
+    if (!suggestionText.trim() || suggestionText.trim().length < 3) return;
+
+    setSuggestionStatus('submitting');
 
     try {
-      const supabase = createClient();
-      await supabase.from('neighborhood_suggestions').insert({
-        suggestion: suggestionText.trim(),
-        created_at: new Date().toISOString()
+      await fetch('/api/suggestions/neighborhood', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          suggestion: suggestionText.trim(),
+          email: suggestionEmail.trim() || undefined,
+        }),
       });
     } catch {
       // Silently fail - still show success to user
@@ -276,6 +282,7 @@ function GlobalNeighborhoodModal({
     setTimeout(() => {
       setShowSuggestion(false);
       setSuggestionText('');
+      setSuggestionEmail('');
       setSuggestionStatus('idle');
     }, 2000);
   };
@@ -1075,34 +1082,46 @@ function GlobalNeighborhoodModal({
                   Thank you. We have added this to our radar.
                 </p>
               ) : (
-                <div className="flex items-center gap-3 max-w-md">
+                <div className="max-w-md space-y-2">
+                  <div className="flex items-center gap-3">
+                    <input
+                      ref={suggestionInputRef}
+                      type="text"
+                      value={suggestionText}
+                      onChange={(e) => setSuggestionText(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSuggestionSubmit()}
+                      placeholder="e.g., Notting Hill, London"
+                      className="flex-1 bg-transparent border-b border-white/20 text-sm text-white placeholder-neutral-600 py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors"
+                      disabled={suggestionStatus === 'submitting'}
+                    />
+                    <button
+                      onClick={handleSuggestionSubmit}
+                      disabled={!suggestionText.trim() || suggestionText.trim().length < 3 || suggestionStatus === 'submitting'}
+                      className="px-4 py-1.5 text-sm text-amber-400 hover:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {suggestionStatus === 'submitting' ? '...' : 'Submit'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowSuggestion(false);
+                        setSuggestionText('');
+                        setSuggestionEmail('');
+                      }}
+                      className="text-neutral-600 hover:text-neutral-400 transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                   <input
-                    ref={suggestionInputRef}
-                    type="text"
-                    value={suggestionText}
-                    onChange={(e) => setSuggestionText(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSuggestionSubmit()}
-                    placeholder="e.g., Notting Hill, London"
-                    className="flex-1 bg-transparent border-b border-white/20 text-sm text-white placeholder-neutral-600 py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors"
+                    type="email"
+                    value={suggestionEmail}
+                    onChange={(e) => setSuggestionEmail(e.target.value)}
+                    placeholder="Email (optional - we'll notify you if added)"
+                    className="w-full bg-transparent border-b border-white/10 text-sm text-white placeholder-neutral-600 py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors"
+                    disabled={suggestionStatus === 'submitting'}
                   />
-                  <button
-                    onClick={handleSuggestionSubmit}
-                    disabled={!suggestionText.trim()}
-                    className="px-4 py-1.5 text-sm text-amber-400 hover:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Submit
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowSuggestion(false);
-                      setSuggestionText('');
-                    }}
-                    className="text-neutral-600 hover:text-neutral-400 transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
                 </div>
               )}
             </div>
@@ -1137,34 +1156,46 @@ function GlobalNeighborhoodModal({
                     Thank you. We have added this to our radar.
                   </p>
                 ) : (
-                  <div className="flex items-center justify-center gap-3 max-w-md mx-auto">
+                  <div className="max-w-md mx-auto space-y-2">
+                    <div className="flex items-center justify-center gap-3">
+                      <input
+                        ref={suggestionInputRef}
+                        type="text"
+                        value={suggestionText}
+                        onChange={(e) => setSuggestionText(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSuggestionSubmit()}
+                        placeholder="e.g., Notting Hill, London"
+                        className="flex-1 bg-transparent border-b border-white/20 text-sm text-white placeholder-neutral-600 py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors"
+                        disabled={suggestionStatus === 'submitting'}
+                      />
+                      <button
+                        onClick={handleSuggestionSubmit}
+                        disabled={!suggestionText.trim() || suggestionText.trim().length < 3 || suggestionStatus === 'submitting'}
+                        className="px-4 py-1.5 text-sm text-amber-400 hover:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {suggestionStatus === 'submitting' ? '...' : 'Submit'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowSuggestion(false);
+                          setSuggestionText('');
+                          setSuggestionEmail('');
+                        }}
+                        className="text-neutral-600 hover:text-neutral-400 transition-colors"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
                     <input
-                      ref={suggestionInputRef}
-                      type="text"
-                      value={suggestionText}
-                      onChange={(e) => setSuggestionText(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSuggestionSubmit()}
-                      placeholder="e.g., Notting Hill, London"
-                      className="flex-1 bg-transparent border-b border-white/20 text-sm text-white placeholder-neutral-600 py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors"
+                      type="email"
+                      value={suggestionEmail}
+                      onChange={(e) => setSuggestionEmail(e.target.value)}
+                      placeholder="Email (optional - we'll notify you if added)"
+                      className="w-full bg-transparent border-b border-white/10 text-sm text-white placeholder-neutral-600 py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors"
+                      disabled={suggestionStatus === 'submitting'}
                     />
-                    <button
-                      onClick={handleSuggestionSubmit}
-                      disabled={!suggestionText.trim()}
-                      className="px-4 py-1.5 text-sm text-amber-400 hover:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Submit
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowSuggestion(false);
-                        setSuggestionText('');
-                      }}
-                      className="text-neutral-600 hover:text-neutral-400 transition-colors"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
                   </div>
                 )}
               </div>
