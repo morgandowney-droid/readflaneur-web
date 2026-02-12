@@ -1,4 +1,4 @@
-export type GlobalRegion = 'north-america' | 'europe' | 'asia-pacific' | 'middle-east' | 'south-america' | 'us-vacation' | 'caribbean-vacation' | 'europe-vacation' | 'test';
+export type GlobalRegion = 'north-america' | 'europe' | 'asia-pacific' | 'middle-east' | 'south-america' | 'us-vacation' | 'caribbean-vacation' | 'europe-vacation' | 'community' | 'test';
 
 export interface Neighborhood {
   id: string;
@@ -13,6 +13,9 @@ export interface Neighborhood {
   is_active?: boolean;
   is_coming_soon?: boolean;
   is_combo?: boolean; // True for combo neighborhoods (aggregate multiple neighborhoods)
+  is_community?: boolean; // True for user-created community neighborhoods
+  created_by?: string; // User ID of creator (NULL for editorial)
+  community_status?: 'active' | 'removed'; // Admin soft-delete for community neighborhoods
   seeded_at?: string; // When first seeded - places discovered after this are "new"
 }
 

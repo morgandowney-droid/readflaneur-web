@@ -34,6 +34,9 @@ export async function GET(request: NextRequest) {
     query = query.or('is_active.eq.true,is_coming_soon.eq.true');
   }
 
+  // Exclude removed community neighborhoods
+  query = query.or('community_status.is.null,community_status.neq.removed');
+
   // Apply filters if provided
   if (region) {
     query = query.eq('region', region);

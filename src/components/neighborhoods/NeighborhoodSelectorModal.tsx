@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, createContext, useContext } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Neighborhood, GlobalRegion } from '@/types';
 import { getDistance } from '@/lib/geo-utils';
@@ -257,6 +258,17 @@ function GlobalNeighborhoodModal({
   const [suggestionStatus, setSuggestionStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
   const suggestionInputRef = useRef<HTMLInputElement>(null);
 
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'all' | 'community'>('all');
+
+  // Community tab state
+  const [communityInput, setCommunityInput] = useState('');
+  const [communityCount, setCommunityCount] = useState(0);
+  const [communityCreateStatus, setCommunityCreateStatus] = useState<'idle' | 'validating' | 'generating' | 'success' | 'error'>('idle');
+  const [communityError, setCommunityError] = useState('');
+  const [communityCreatedName, setCommunityCreatedName] = useState('');
+  const communityInputRef = useRef<HTMLInputElement>(null);
+
   // Handle suggestion submission via API
   const handleSuggestionSubmit = async () => {
     if (!suggestionText.trim() || suggestionText.trim().length < 3) return;
@@ -285,6 +297,79 @@ function GlobalNeighborhoodModal({
       setSuggestionEmail('');
       setSuggestionStatus('idle');
     }, 2000);
+  };
+
+  // Fetch community neighborhood count when community tab is shown
+  useEffect(() => {
+    if (activeTab !== 'community' || !isOpen) return;
+    fetch('/api/neighborhoods/my-community-count')
+      .then(res => res.json())
+      .then(data => setCommunityCount(data.count || 0))
+      .catch(() => {});
+  }, [activeTab, isOpen]);
+
+  // Handle community neighborhood creation
+  const handleCommunityCreate = async () => {
+    if (!communityInput.trim() || communityInput.trim().length < 3) return;
+    if (communityCreateStatus === 'validating' || communityCreateStatus === 'generating') return;
+
+    setCommunityError('');
+    setCommunityCreateStatus('validating');
+
+    try {
+      const response = await fetch('/api/neighborhoods/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input: communityInput.trim() }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setCommunityError(data.error || 'Failed to create neighborhood');
+        setCommunityCreateStatus('error');
+
+        // If there's an existing neighborhood, offer to add it
+        if (data.existingId) {
+          setCommunityError(`${data.error} You can find it in the "All Neighborhoods" tab.`);
+        }
+        return;
+      }
+
+      setCommunityCreateStatus('generating');
+
+      // Stream progress by waiting for full response
+      const data = await response.json();
+
+      if (data.success) {
+        setCommunityCreateStatus('success');
+        setCommunityCreatedName(data.neighborhood?.name || communityInput.trim());
+        setCommunityCount(prev => prev + 1);
+        setCommunityInput('');
+
+        // Add to selected set and localStorage
+        if (data.neighborhood?.id) {
+          const newSelected = new Set(selected);
+          newSelected.add(data.neighborhood.id);
+          setSelected(newSelected);
+          saveToLocalStorage(newSelected, primaryId);
+
+          // Refresh neighborhoods list
+          try {
+            const freshData = await fetchNeighborhoodsData(8000);
+            setNeighborhoods(freshData.neighborhoods);
+          } catch { /* will refresh on next open */ }
+        }
+
+        // Reset after 3s
+        setTimeout(() => {
+          setCommunityCreateStatus('idle');
+          setCommunityCreatedName('');
+        }, 3000);
+      }
+    } catch {
+      setCommunityError('Network error. Please try again.');
+      setCommunityCreateStatus('error');
+    }
   };
 
   // Get user location when sorting by nearest
@@ -875,7 +960,32 @@ function GlobalNeighborhoodModal({
             </button>
           </div>
 
-          {/* Search */}
+          {/* Tab Toggle */}
+          <div className="mt-4 flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`px-3 py-1.5 text-xs rounded-full border transition-all ${
+                activeTab === 'all'
+                  ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
+                  : 'border-white/20 text-neutral-400 hover:text-white hover:border-white/40'
+              }`}
+            >
+              All Neighborhoods
+            </button>
+            <button
+              onClick={() => setActiveTab('community')}
+              className={`px-3 py-1.5 text-xs rounded-full border transition-all ${
+                activeTab === 'community'
+                  ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
+                  : 'border-white/20 text-neutral-400 hover:text-white hover:border-white/40'
+              }`}
+            >
+              Community
+            </button>
+          </div>
+
+          {/* Search (All tab only) */}
+          {activeTab === 'all' && (
           <div className="mt-4 max-w-[15rem]">
             <div className="relative">
               <input
@@ -898,8 +1008,10 @@ function GlobalNeighborhoodModal({
               )}
             </div>
           </div>
+          )}
 
-          {/* Sort buttons */}
+          {/* Sort buttons (All tab only) */}
+          {activeTab === 'all' && (
           <div className="mt-3 flex items-center gap-2">
             <button
               onClick={handleSortByNearest}
@@ -930,11 +1042,143 @@ function GlobalNeighborhoodModal({
               {sortBy === 'region' ? 'Sort alphabetically' : 'Sort by region'}
             </button>
           </div>
+          )}
         </div>
 
-        {/* Modal Body - Masonry City Search */}
+        {/* Modal Body */}
         <div ref={bodyRef} className="flex-1 overflow-y-auto px-6 py-6">
-          {loading ? (
+          {/* Community Tab */}
+          {activeTab === 'community' ? (
+            <div>
+              {/* Create Form */}
+              {userId ? (
+                <div className="mb-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <h3 className="text-xs tracking-[0.2em] uppercase text-neutral-500 shrink-0">Create a Neighborhood</h3>
+                    <div className="flex-1 h-px bg-white/5" />
+                    <span className="text-xs font-mono text-neutral-500 tabular-nums">
+                      {communityCount}/2 created
+                    </span>
+                  </div>
+
+                  {communityCount >= 2 ? (
+                    <p className="text-sm text-neutral-500">
+                      You have reached the limit of 2 community neighborhoods.
+                    </p>
+                  ) : communityCreateStatus === 'success' ? (
+                    <div className="flex items-center gap-2 py-3">
+                      <svg className="w-4 h-4 text-green-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <p className="text-sm text-green-400">
+                        {communityCreatedName} created and added to your collection.
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <input
+                          ref={communityInputRef}
+                          type="text"
+                          value={communityInput}
+                          onChange={(e) => { setCommunityInput(e.target.value); setCommunityError(''); }}
+                          onKeyDown={(e) => e.key === 'Enter' && handleCommunityCreate()}
+                          placeholder="e.g., Notting Hill, London"
+                          disabled={communityCreateStatus === 'validating' || communityCreateStatus === 'generating'}
+                          className="flex-1 bg-transparent border-b border-white/20 text-sm text-white placeholder-neutral-600 py-2 focus:outline-none focus:border-amber-500/50 transition-colors max-w-[300px]"
+                        />
+                        <button
+                          onClick={handleCommunityCreate}
+                          disabled={!communityInput.trim() || communityInput.trim().length < 3 || communityCreateStatus === 'validating' || communityCreateStatus === 'generating'}
+                          className="px-4 py-2 text-[11px] tracking-[0.1em] uppercase font-medium bg-white text-neutral-900 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all rounded-lg whitespace-nowrap"
+                        >
+                          {communityCreateStatus === 'validating' ? 'Validating...'
+                            : communityCreateStatus === 'generating' ? 'Generating brief...'
+                            : 'Create'}
+                        </button>
+                      </div>
+                      {communityCreateStatus === 'generating' && (
+                        <p className="text-xs text-neutral-500 mt-2">
+                          This may take a minute - we are generating a brief and article for your neighborhood.
+                        </p>
+                      )}
+                      {communityError && (
+                        <p className="text-xs text-red-400 mt-2">{communityError}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="mb-8 py-6 text-center">
+                  <p className="text-sm text-neutral-400 mb-3">Sign in to create your own neighborhood</p>
+                  <Link
+                    href="/login"
+                    className="inline-block px-6 py-2 text-[11px] tracking-[0.1em] uppercase font-medium bg-white text-neutral-900 hover:bg-neutral-200 transition-all rounded-lg"
+                  >
+                    Sign In
+                  </Link>
+                </div>
+              )}
+
+              {/* Community neighborhood list */}
+              <div className="flex items-center gap-3 mb-4">
+                <h3 className="text-xs tracking-[0.2em] uppercase text-neutral-500 shrink-0">Community Neighborhoods</h3>
+                <div className="flex-1 h-px bg-white/5" />
+              </div>
+
+              {(() => {
+                const communityHoods = neighborhoods.filter(n => n.is_community);
+                if (communityHoods.length === 0) {
+                  return (
+                    <p className="text-sm text-neutral-600 py-6 text-center">
+                      No community neighborhoods yet. Be the first to create one.
+                    </p>
+                  );
+                }
+
+                // Group by city
+                const cityMap = new Map<string, NeighborhoodWithCombo[]>();
+                communityHoods.forEach(n => {
+                  if (!cityMap.has(n.city)) cityMap.set(n.city, []);
+                  cityMap.get(n.city)!.push(n);
+                });
+
+                return (
+                  <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-x-8">
+                    {Array.from(cityMap.entries())
+                      .sort(([a], [b]) => a.localeCompare(b))
+                      .map(([city, hoods]) => (
+                        <div key={city} className="break-inside-avoid mb-6">
+                          <h3 className="font-display text-base text-white mb-1.5">{city}</h3>
+                          <div className="space-y-0.5">
+                            {hoods.map(hood => {
+                              const isSelected = selected.has(hood.id);
+                              return (
+                                <div key={hood.id} data-neighborhood-id={hood.id} className="flex items-center gap-1 group/item">
+                                  <button
+                                    onClick={() => toggleNeighborhood(hood.id)}
+                                    className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${
+                                      isSelected ? 'text-amber-400 font-medium' : 'text-neutral-400 hover:text-white'
+                                    }`}
+                                  >
+                                    {isSelected && (
+                                      <svg className="w-3 h-3 shrink-0 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    )}
+                                    {hood.name}
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                );
+              })()}
+            </div>
+          ) : loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="w-8 h-8 border-2 border-neutral-700 border-t-amber-400 rounded-full animate-spin" />
             </div>
@@ -998,6 +1242,9 @@ function GlobalNeighborhoodModal({
                                       </svg>
                                     )}
                                     {hood.name}
+                                    {hood.is_community && (
+                                      <span className="text-[10px] text-neutral-600">Community</span>
+                                    )}
                                     {hasComboComponents && (
                                       <span className="text-[11px] text-neutral-600">({hood.combo_component_names!.length} areas)</span>
                                     )}
@@ -1086,6 +1333,9 @@ function GlobalNeighborhoodModal({
                               </svg>
                             )}
                             {hood.name}
+                            {hood.is_community && (
+                              <span className="text-[10px] text-neutral-600">Community</span>
+                            )}
                             {hasComboComponents && (
                               <span className="text-[11px] text-neutral-600">({hood.combo_component_names!.length} areas)</span>
                             )}
@@ -1113,8 +1363,8 @@ function GlobalNeighborhoodModal({
           )}
 
 
-          {/* Empty State */}
-          {!loading && filteredCities.length === 0 && (
+          {/* Empty State (All tab only) */}
+          {activeTab === 'all' && !loading && filteredCities.length === 0 && (
             <div className="py-12 text-center">
               <p className="text-neutral-500">No neighborhoods found for &ldquo;{searchQuery}&rdquo;</p>
               <button
