@@ -754,6 +754,18 @@ function GlobalNeighborhoodModal({
                 >
                   Change my Timezone
                 </button>
+                <span className="text-neutral-600 text-xs">|</span>
+                <button
+                  onClick={() => {
+                    setShowSuggestion(!showSuggestion);
+                    if (!showSuggestion) setTimeout(() => suggestionInputRef.current?.focus(), 50);
+                  }}
+                  className={`text-xs transition-colors ${
+                    showSuggestion ? 'text-amber-400' : 'text-neutral-500 hover:text-amber-400'
+                  }`}
+                >
+                  Suggest a Neighborhood
+                </button>
               </div>
               {/* Inline timezone selector */}
               {showTimezone && (
@@ -814,6 +826,42 @@ function GlobalNeighborhoodModal({
                     {settingsSaved ? 'Saved' : 'Save'}
                   </button>
                 </div>
+              )}
+              {/* Inline suggestion form */}
+              {showSuggestion && (
+                suggestionStatus === 'success' ? (
+                  <p className="text-xs text-neutral-500 mt-3">
+                    Thank you. We have added this to our radar.
+                  </p>
+                ) : (
+                  <div className="flex items-center gap-3 mt-3">
+                    <input
+                      ref={suggestionInputRef}
+                      type="text"
+                      value={suggestionText}
+                      onChange={(e) => setSuggestionText(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSuggestionSubmit()}
+                      placeholder="e.g., Notting Hill, London"
+                      className="flex-1 bg-transparent border-b border-white/20 text-sm text-white placeholder-neutral-600 py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors max-w-[200px]"
+                      disabled={suggestionStatus === 'submitting'}
+                    />
+                    <input
+                      type="email"
+                      value={suggestionEmail}
+                      onChange={(e) => setSuggestionEmail(e.target.value)}
+                      placeholder="Email (optional)"
+                      className="flex-1 bg-transparent border-b border-white/20 text-sm text-white placeholder-neutral-600 py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors max-w-[160px]"
+                      disabled={suggestionStatus === 'submitting'}
+                    />
+                    <button
+                      onClick={handleSuggestionSubmit}
+                      disabled={!suggestionText.trim() || suggestionText.trim().length < 3 || suggestionStatus === 'submitting'}
+                      className="text-[11px] tracking-[0.1em] uppercase text-amber-400 hover:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                    >
+                      {suggestionStatus === 'submitting' ? 'Sending...' : 'Submit'}
+                    </button>
+                  </div>
+                )
               )}
             </div>
             <button
@@ -1064,70 +1112,8 @@ function GlobalNeighborhoodModal({
             </div>
           )}
 
-          {/* Suggest a Destination */}
-          {!loading && !searchQuery && (
-            <div className="mt-6 pt-6 border-t border-white/5">
-              {!showSuggestion ? (
-                <button
-                  onClick={() => {
-                    setShowSuggestion(true);
-                    setTimeout(() => suggestionInputRef.current?.focus(), 50);
-                  }}
-                  className="text-sm text-neutral-600 hover:text-neutral-400 transition-colors"
-                >
-                  Not seeing your neighborhood? <span className="underline">Suggest a Destination.</span>
-                </button>
-              ) : suggestionStatus === 'success' ? (
-                <p className="text-sm text-neutral-500">
-                  Thank you. We have added this to our radar.
-                </p>
-              ) : (
-                <div className="max-w-md space-y-2">
-                  <div className="flex items-center gap-3">
-                    <input
-                      ref={suggestionInputRef}
-                      type="text"
-                      value={suggestionText}
-                      onChange={(e) => setSuggestionText(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSuggestionSubmit()}
-                      placeholder="e.g., Notting Hill, London"
-                      className="flex-1 bg-transparent border-b border-white/20 text-sm text-white placeholder-neutral-600 py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors"
-                      disabled={suggestionStatus === 'submitting'}
-                    />
-                    <button
-                      onClick={handleSuggestionSubmit}
-                      disabled={!suggestionText.trim() || suggestionText.trim().length < 3 || suggestionStatus === 'submitting'}
-                      className="px-4 py-1.5 text-sm text-amber-400 hover:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {suggestionStatus === 'submitting' ? '...' : 'Submit'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowSuggestion(false);
-                        setSuggestionText('');
-                        setSuggestionEmail('');
-                      }}
-                      className="text-neutral-600 hover:text-neutral-400 transition-colors"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                  <input
-                    type="email"
-                    value={suggestionEmail}
-                    onChange={(e) => setSuggestionEmail(e.target.value)}
-                    placeholder="Email (optional - we'll notify you if added)"
-                    className="w-full bg-transparent border-b border-white/10 text-sm text-white placeholder-neutral-600 py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors"
-                    disabled={suggestionStatus === 'submitting'}
-                  />
-                </div>
-              )}
-            </div>
-          )}
 
-          {/* Empty State with Suggestion */}
+          {/* Empty State */}
           {!loading && filteredCities.length === 0 && (
             <div className="py-12 text-center">
               <p className="text-neutral-500">No neighborhoods found for &ldquo;{searchQuery}&rdquo;</p>
@@ -1137,68 +1123,19 @@ function GlobalNeighborhoodModal({
               >
                 Clear search
               </button>
-
-              {/* Suggestion in empty state */}
-              <div className="mt-8 pt-6 border-t border-white/5">
-                {!showSuggestion ? (
-                  <button
-                    onClick={() => {
-                      setSuggestionText(searchQuery);
-                      setShowSuggestion(true);
-                      setTimeout(() => suggestionInputRef.current?.focus(), 50);
-                    }}
-                    className="text-sm text-neutral-600 hover:text-neutral-400 transition-colors"
-                  >
-                    Not seeing your neighborhood? <span className="underline">Suggest &ldquo;{searchQuery}&rdquo;</span>
-                  </button>
-                ) : suggestionStatus === 'success' ? (
-                  <p className="text-sm text-neutral-500">
-                    Thank you. We have added this to our radar.
-                  </p>
-                ) : (
-                  <div className="max-w-md mx-auto space-y-2">
-                    <div className="flex items-center justify-center gap-3">
-                      <input
-                        ref={suggestionInputRef}
-                        type="text"
-                        value={suggestionText}
-                        onChange={(e) => setSuggestionText(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSuggestionSubmit()}
-                        placeholder="e.g., Notting Hill, London"
-                        className="flex-1 bg-transparent border-b border-white/20 text-sm text-white placeholder-neutral-600 py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors"
-                        disabled={suggestionStatus === 'submitting'}
-                      />
-                      <button
-                        onClick={handleSuggestionSubmit}
-                        disabled={!suggestionText.trim() || suggestionText.trim().length < 3 || suggestionStatus === 'submitting'}
-                        className="px-4 py-1.5 text-sm text-amber-400 hover:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {suggestionStatus === 'submitting' ? '...' : 'Submit'}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowSuggestion(false);
-                          setSuggestionText('');
-                          setSuggestionEmail('');
-                        }}
-                        className="text-neutral-600 hover:text-neutral-400 transition-colors"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                    <input
-                      type="email"
-                      value={suggestionEmail}
-                      onChange={(e) => setSuggestionEmail(e.target.value)}
-                      placeholder="Email (optional - we'll notify you if added)"
-                      className="w-full bg-transparent border-b border-white/10 text-sm text-white placeholder-neutral-600 py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors"
-                      disabled={suggestionStatus === 'submitting'}
-                    />
-                  </div>
-                )}
-              </div>
+              <p className="mt-6 text-sm text-neutral-600">
+                Not finding what you want?{' '}
+                <button
+                  onClick={() => {
+                    setSuggestionText(searchQuery);
+                    setShowSuggestion(true);
+                    setTimeout(() => suggestionInputRef.current?.focus(), 50);
+                  }}
+                  className="text-neutral-500 hover:text-amber-400 underline transition-colors"
+                >
+                  Suggest a Neighborhood
+                </button>
+              </p>
             </div>
           )}
         </div>
