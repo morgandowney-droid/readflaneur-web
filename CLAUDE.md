@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-12
 
-Recent work: Bare /feed redirect (restore neighborhoods from localStorage), Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
+Recent work: Dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
 
 ### Email Capture (Engagement-Triggered)
 - **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
@@ -56,6 +56,21 @@ Recent work: Bare /feed redirect (restore neighborhoods from localStorage), Grok
 - **Database:** `referrals` table (referral_code, referrer_type/id, referred_email/type/id, status clicked/converted, ip_hash, timestamps). RLS: service_role only. Unique index on `(referral_code, referred_email) WHERE status = 'converted'`.
 - **localStorage keys:** `flaneur-referral-code` (user's own code, cached by ShareWidget)
 - **sessionStorage keys:** `flaneur-referral-code` (incoming referral code from `?ref=` param, consumed on conversion)
+
+### Dynamic House Ads ("Check Out a New Neighborhood")
+- **DB record:** `house_ads` where `type = 'app_download'` updated: headline "Check Out a New Neighborhood", body "See what's happening today in a nearby neighborhood.", click_url `/discover` (static fallback)
+- **Shared utility:** `src/lib/discover-neighborhood.ts` - `findDiscoveryBrief(supabase, subscribedIds, referenceNeighborhoodId)` returns `{ url, neighborhoodName }` or null
+- **Logic:** Fetches active non-combo neighborhoods, filters out subscribed, sorts by Haversine distance from reference neighborhood, finds first with a published Daily Brief article
+- **Email integration:** `src/lib/email/ads.ts` - `getHouseAd()` accepts `subscribedIds`/`primaryNeighborhoodId`, resolves dynamic URL for `app_download` type via `findDiscoveryBrief()`
+- **Web integration:** `HouseAdDisplay` in `FallbackAd.tsx` - `useEffect` reads localStorage prefs, fetches `/api/discover-neighborhood?subscribedIds=...&referenceId=...`, updates click URL from `/discover` to resolved brief URL
+- **API endpoint:** `GET /api/discover-neighborhood` - public, no auth, calls `findDiscoveryBrief()`, returns `{ url, neighborhoodName }` or `{ url: "/discover" }` fallback
+
+### Add to Collection CTA (Article Pages)
+- **Component:** `AddToCollectionCTA` (private, inline in `FallbackAd.tsx`) - shows "Add {neighborhoodName} to Your Collection" on article bottom ad slot when the neighborhood is not in user's collection
+- **Props:** `articleNeighborhoodId` and `articleNeighborhoodName` passed from article page to bottom `FallbackAd` only
+- **Logic:** `useEffect` checks `flaneur-neighborhood-preferences` localStorage. If neighborhood already present, returns null (normal fallback renders). On click: adds to localStorage array, fires `POST /api/neighborhoods/add` (fire-and-forget DB sync), shows success state.
+- **API endpoint:** `POST /api/neighborhoods/add` - accepts `{ neighborhoodId }`, uses `getSession()` auth. Authenticated: inserts into `user_neighborhood_preferences` (with next sort_order). Anonymous: returns success (localStorage-only).
+- **Placement:** Bottom ad slot only on article pages (`position="bottom"`). Top slot remains normal house ad/fallback.
 
 ## Key Patterns
 
@@ -112,7 +127,7 @@ Recent work: Bare /feed redirect (restore neighborhoods from localStorage), Grok
 - **Truncation:** `truncateAtWord()` helper (120 chars) + CSS `-webkit-line-clamp: 2` for preview text
 - **Typography:** Playfair Display via Google Fonts `@import` (Apple Mail renders; Gmail falls back to Georgia serif). All headlines, masthead, temperature use serif.
 - **Masthead:** "FLANEUR" is a clickable link to `readflaneur.com` in both Daily Brief (`Header.tsx`) and Sunday Edition templates. Styled to match surrounding text (no underline).
-- **Ad fallback:** `src/lib/email/ads.ts` - paid ads first, then random house ad from `house_ads` table. NativeAd supports body text, centered layout. Image wrapped in `{ad.imageUrl && (...)}` to prevent alt text rendering as blue link when no image exists.
+- **Ad fallback:** `src/lib/email/ads.ts` - paid ads first, then random house ad from `house_ads` table. `app_download` type resolves dynamic discovery brief URL via `findDiscoveryBrief()`. NativeAd supports body text, centered layout. Image wrapped in `{ad.imageUrl && (...)}` to prevent alt text rendering as blue link when no image exists.
 - **Deduplication:** assembler.ts tracks seen article URLs in a Set - same story never appears in both primary and satellite sections
 - **On-demand secondary editions:** `src/app/api/email/sunday-edition-request/route.ts` - two-step confirmation (prevents email client prefetch). Template shows "Your Other Editions" links for secondary neighborhoods. Dedup index: `(recipient_id, neighborhood_id, week_date)`. Rate limit: 5 on-demand sends per week. On-demand emails do NOT include secondary neighborhood buttons (no recursion).
 
@@ -294,6 +309,8 @@ src/
 │       ├── email/                 # Unsubscribe, preferences, sunday-edition-request
 │       ├── location/              # IP detect-and-match (nearest neighborhoods)
 │       ├── referral/              # Referral code, track, convert, stats
+│       ├── neighborhoods/         # Add neighborhood to collection
+│       ├── discover-neighborhood/ # Resolve nearby unsubscribed brief URL
 │       ├── internal/              # Image generation, resend
 │       └── webhooks/              # Resend inbound
 ├── config/
@@ -306,6 +323,7 @@ src/
     ├── cron-monitor/              # Self-healing system
     ├── email/                     # Scheduler, assembler, sender, templates
     ├── location/                  # IP detection, timezone resolution
+    ├── discover-neighborhood.ts    # Find nearby unsubscribed neighborhood briefs
     ├── combo-utils.ts             # Combo neighborhood queries
     ├── rss-sources.ts             # RSS feed aggregation (DB + hardcoded fallback)
     ├── search-aliases.ts          # Country/region/state search aliases

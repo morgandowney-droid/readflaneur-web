@@ -5,6 +5,21 @@
 
 ## 2026-02-12
 
+**Dynamic House Ads - "Check Out a New Neighborhood":**
+- `house_ads` record (type `app_download`) updated: headline "Check Out a New Neighborhood", body "See what's happening today in a nearby neighborhood.", static fallback `/discover`
+- New shared utility `src/lib/discover-neighborhood.ts` - `findDiscoveryBrief()` finds nearest unsubscribed neighborhood with a published Daily Brief, using Haversine distance sorting from `geo-utils.ts`
+- Email integration: `getHouseAd()` in `ads.ts` now accepts `subscribedIds`/`primaryNeighborhoodId`, resolves dynamic URL for `app_download` type. Called from `getEmailAds()` with recipient's neighborhood IDs.
+- Web integration: `HouseAdDisplay` in `FallbackAd.tsx` uses `useEffect` to read localStorage prefs, fetch `/api/discover-neighborhood`, and update click URL from `/discover` to resolved brief URL
+- New API endpoint `GET /api/discover-neighborhood?subscribedIds=...&referenceId=...` - public, no auth, returns `{ url, neighborhoodName }` or `{ url: "/discover" }` fallback
+
+**Add to Collection CTA on Article Pages:**
+- New `AddToCollectionCTA` component (inline in `FallbackAd.tsx`) - shows "Add {neighborhood} to Your Collection" on article bottom ad slot when the neighborhood is not in user's localStorage preferences
+- Article page passes `articleNeighborhoodId` and `articleNeighborhoodName` to bottom `FallbackAd` only (top slot unchanged)
+- On click: adds neighborhood ID to `flaneur-neighborhood-preferences` localStorage array, fires `POST /api/neighborhoods/add` (fire-and-forget), shows success message
+- New API endpoint `POST /api/neighborhoods/add` - uses `getSession()` auth. Authenticated users: inserts into `user_neighborhood_preferences` with next sort_order. Anonymous: returns success (localStorage-only).
+- Checks localStorage in `useEffect` (hydration-safe). Returns null if already subscribed, letting normal fallback render.
+- New migration: `20260212_update_app_download_house_ad.sql`
+
 **Sunday Edition Holiday Expansion (19 → 50):**
 - Added 31 new holidays covering all 20 active countries: East Asian (Lunar New Year, Mid-Autumn, Dragon Boat for Singapore/HK), Japanese (Golden Week, Obon, Coming of Age Day, Marine Day, Respect for Aged), Islamic (Eid al-Fitr, Eid al-Adha for UAE/Singapore), Jewish (Passover, Rosh Hashanah, Yom Kippur, Hanukkah for Israel/USA), Indian (Diwali for Singapore/UK, Vesak), European national days (King's Day, German Unity, Republic Day, Portugal Day, Lucia, Walpurgis Night, Sankt Hans, Epiphany, Constitution Day), UAE National Day, South Africa (Freedom Day, Heritage Day), Americas (Mardi Gras, Canadian Thanksgiving, Dia de los Muertos)
 - Lunar/Islamic/Hebrew/Hindu holidays use lookup tables (2025-2030) since dates can't be calculated with simple formulas
