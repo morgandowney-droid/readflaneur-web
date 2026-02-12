@@ -14,7 +14,7 @@ const DEFAULT_AD: ResolvedSundayAd = {
   source: 'default',
   sponsorLabel: 'Flaneur',
   imageUrl: null,
-  headline: 'Become This Edition\'s Presenting Sponsor',
+  headline: 'Become The Sunday Edition\'s Presenting Sponsor',
   body: 'Your brand, native in the most exclusive Sunday morning read.',
   clickUrl: 'https://readflaneur.com/advertise',
   adId: undefined,

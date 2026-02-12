@@ -308,10 +308,19 @@ export async function GET(request: Request) {
           );
 
           const enrichedBody = result.rawResponse || article.body_text;
+          // Regenerate preview_text from enriched body so it stays in sync
+          const enrichedPreview = enrichedBody
+            .replace(/\[\[[^\]]+\]\]/g, '')
+            .replace(/\*\*([^*]+)\*\*/g, '$1')
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+            .replace(/\n+/g, ' ')
+            .trim()
+            .substring(0, 200);
           const { error: updateError } = await supabase
             .from('articles')
             .update({
               body_text: enrichedBody,
+              preview_text: enrichedPreview + (enrichedPreview.length >= 200 ? '...' : ''),
               enriched_at: new Date().toISOString(),
               enrichment_model: result.model,
             })
