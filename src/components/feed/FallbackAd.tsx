@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 
@@ -29,9 +29,21 @@ interface FallbackAdProps {
   variant?: 'card' | 'story_open';
   position?: 'top' | 'bottom';
   fallback?: FallbackData;
+  articleNeighborhoodId?: string;
+  articleNeighborhoodName?: string;
 }
 
-export function FallbackAd({ variant = 'card', position, fallback }: FallbackAdProps) {
+export function FallbackAd({ variant = 'card', position, fallback, articleNeighborhoodId, articleNeighborhoodName }: FallbackAdProps) {
+  // Check if we should show "Add to Collection" CTA (bottom slot on article pages)
+  if (articleNeighborhoodId && articleNeighborhoodName) {
+    return (
+      <AddToCollectionCTA
+        neighborhoodId={articleNeighborhoodId}
+        neighborhoodName={articleNeighborhoodName}
+      />
+    );
+  }
+
   // If server provided a bonus ad, render it like a paid ad
   if (fallback?.source === 'bonus' && fallback.bonusAd) {
     return <BonusAdDisplay ad={fallback.bonusAd} variant={variant} />;
@@ -44,6 +56,80 @@ export function FallbackAd({ variant = 'card', position, fallback }: FallbackAdP
 
   // Default: existing 80/20 newsletter/house-ad logic
   return <DefaultFallback variant={variant} />;
+}
+
+// ─── Add to Collection CTA (article pages, non-subscribed neighborhoods) ───
+
+function AddToCollectionCTA({ neighborhoodId, neighborhoodName }: {
+  neighborhoodId: string;
+  neighborhoodName: string;
+}) {
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [added, setAdded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('flaneur-neighborhood-preferences');
+      if (stored) {
+        const ids = JSON.parse(stored);
+        if (Array.isArray(ids) && ids.includes(neighborhoodId)) {
+          setIsSubscribed(true);
+        }
+      }
+    } catch { /* ignore */ }
+  }, [neighborhoodId]);
+
+  const handleAdd = () => {
+    try {
+      const stored = localStorage.getItem('flaneur-neighborhood-preferences');
+      const ids: string[] = stored ? JSON.parse(stored) : [];
+      if (!ids.includes(neighborhoodId)) {
+        ids.push(neighborhoodId);
+        localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(ids));
+      }
+    } catch { /* ignore */ }
+
+    // Sync to DB if authenticated (fire-and-forget)
+    fetch('/api/neighborhoods/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ neighborhoodId }),
+    }).catch(() => {});
+
+    setAdded(true);
+  };
+
+  // Don't show if already subscribed
+  if (isSubscribed) return null;
+
+  // Success state
+  if (added) {
+    return (
+      <div className="border border-white/[0.08] bg-surface p-6">
+        <p className="text-sm text-neutral-300">
+          {neighborhoodName} added to your collection.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border border-white/[0.08] bg-surface p-6 hover:border-white/20 transition-colors">
+      <div className="flex flex-col md:flex-row md:items-center gap-4">
+        <div className="flex-1">
+          <p className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-2">Flaneur</p>
+          <h3 className="font-semibold text-lg mb-1">Add {neighborhoodName} to Your Collection</h3>
+          <p className="text-sm text-neutral-400">Never miss an update from {neighborhoodName}.</p>
+        </div>
+        <button
+          onClick={handleAdd}
+          className="inline-block bg-white text-neutral-900 px-6 py-2 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors whitespace-nowrap"
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // ─── Default Fallback (existing behavior) ───
@@ -129,10 +215,36 @@ function BonusAdDisplay({ ad, variant }: { ad: NonNullable<FallbackData['bonusAd
 // ─── House Ad Display (DB-sourced, Flaneur-branded) ───
 
 function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackData['houseAd']>; variant: 'card' | 'story_open' }) {
+  const [clickUrl, setClickUrl] = useState(houseAd.click_url);
+
+  // For app_download house ads, resolve a dynamic discovery URL
+  useEffect(() => {
+    if (houseAd.type !== 'app_download') return;
+
+    try {
+      const stored = localStorage.getItem('flaneur-neighborhood-preferences');
+      const ids: string[] = stored ? JSON.parse(stored) : [];
+      const primaryId = ids[0] || null;
+
+      const params = new URLSearchParams();
+      if (ids.length > 0) params.set('subscribedIds', ids.join(','));
+      if (primaryId) params.set('referenceId', primaryId);
+
+      fetch(`/api/discover-neighborhood?${params}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.url && data.url !== '/discover') {
+            setClickUrl(data.url);
+          }
+        })
+        .catch(() => { /* keep static fallback */ });
+    } catch { /* keep static fallback */ }
+  }, [houseAd.type]);
+
   if (variant === 'story_open') {
     return (
       <a
-        href={houseAd.click_url}
+        href={clickUrl}
         className="block border border-white/[0.08] bg-surface p-6 hover:border-white/20 transition-colors"
       >
         <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -156,7 +268,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
   // Card variant
   return (
     <a
-      href={houseAd.click_url}
+      href={clickUrl}
       className="block border border-white/[0.08] bg-surface hover:border-white/20 transition-colors"
     >
       <div className="px-3 py-2 border-b border-white/[0.08]">

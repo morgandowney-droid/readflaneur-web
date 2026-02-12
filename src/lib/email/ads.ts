@@ -6,6 +6,7 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { EmailAd } from './types';
+import { findDiscoveryBrief } from '@/lib/discover-neighborhood';
 
 interface EmailAdsResult {
   headerAd: EmailAd | null;
@@ -40,7 +41,10 @@ export async function getEmailAds(
 
   if (!paidAds || paidAds.length === 0) {
     // Fallback: show a house ad in the native slot
-    const houseAd = await getHouseAd(supabase, appUrl);
+    const houseAd = await getHouseAd(supabase, appUrl, {
+      subscribedIds: allNeighborhoodIds,
+      primaryNeighborhoodId,
+    });
     return { headerAd: null, nativeAd: houseAd };
   }
 
@@ -68,7 +72,8 @@ export async function getEmailAds(
  */
 async function getHouseAd(
   supabase: SupabaseClient,
-  appUrl: string
+  appUrl: string,
+  options?: { subscribedIds?: string[]; primaryNeighborhoodId?: string | null }
 ): Promise<EmailAd | null> {
   const { data: houseAds } = await supabase
     .from('house_ads')
@@ -84,12 +89,30 @@ async function getHouseAd(
   // Pick a random house ad
   const ad = houseAds[Math.floor(Math.random() * houseAds.length)];
 
+  let clickUrl = ad.click_url || appUrl;
+
+  // For "app_download" type, resolve a dynamic discovery brief URL
+  if (ad.type === 'app_download' && options?.subscribedIds) {
+    try {
+      const result = await findDiscoveryBrief(
+        supabase,
+        options.subscribedIds,
+        options.primaryNeighborhoodId ?? null
+      );
+      if (result) {
+        clickUrl = `${appUrl}${result.url}`;
+      }
+    } catch {
+      // Keep static fallback URL
+    }
+  }
+
   return {
     id: `house-${ad.id}`,
     imageUrl: ad.image_url || '',
     headline: ad.headline || '',
     body: ad.body || undefined,
-    clickUrl: ad.click_url || appUrl,
+    clickUrl,
     sponsorLabel: 'Flaneur',
     impressionUrl: '',
   };

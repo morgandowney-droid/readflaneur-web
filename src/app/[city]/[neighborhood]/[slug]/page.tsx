@@ -279,7 +279,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           {bottomAd ? (
             <StoryOpenAd ad={bottomAd} position="bottom" />
           ) : (
-            <FallbackAd variant="story_open" position="bottom" fallback={fallbackData} />
+            <FallbackAd
+              variant="story_open"
+              position="bottom"
+              fallback={fallbackData}
+              articleNeighborhoodId={neighborhoodId}
+              articleNeighborhoodName={article.neighborhood?.name}
+            />
           )}
         </div>
 
