@@ -670,30 +670,142 @@ function lastWeekdayOf(year: number, month: number, weekday: number): Date {
   return new Date(year, month - 1, last.getDate() - diff);
 }
 
+/** Lookup table helper for holidays with lunar/Islamic/Hebrew calendar dates.
+ * Returns Date(0) for unknown years so it won't match any 7-day window.
+ * Extend tables when adding support for years beyond 2030. */
+function fromLookup(table: Record<number, [number, number]>): (year: number) => Date {
+  return (year: number) => {
+    const entry = table[year];
+    if (!entry) return new Date(0);
+    return new Date(year, entry[0], entry[1]);
+  };
+}
+
+/** Mardi Gras / Carnival: 47 days before Easter. */
+function mardiGras(year: number): Date {
+  const easter = easterSunday(year);
+  const d = new Date(easter);
+  d.setDate(d.getDate() - 47);
+  return d;
+}
+
+// ── Lunar/Islamic/Hebrew/Hindu date lookup tables ──
+// Month is 0-indexed (Jan=0, Feb=1, ..., Dec=11). Covers 2025-2030.
+// Islamic dates are astronomical predictions and may shift ±1-2 days.
+
+const LUNAR_NEW_YEAR: Record<number, [number, number]> = {
+  2025: [0, 29], 2026: [1, 17], 2027: [1, 6], 2028: [0, 26], 2029: [1, 13], 2030: [1, 3],
+};
+const MID_AUTUMN: Record<number, [number, number]> = {
+  2025: [9, 6], 2026: [8, 25], 2027: [8, 15], 2028: [9, 3], 2029: [8, 22], 2030: [8, 12],
+};
+const DRAGON_BOAT: Record<number, [number, number]> = {
+  2025: [4, 31], 2026: [5, 19], 2027: [5, 9], 2028: [4, 28], 2029: [5, 16], 2030: [5, 5],
+};
+const EID_AL_FITR: Record<number, [number, number]> = {
+  2025: [2, 30], 2026: [2, 20], 2027: [2, 10], 2028: [1, 27], 2029: [1, 15], 2030: [1, 5],
+};
+const EID_AL_ADHA: Record<number, [number, number]> = {
+  2025: [5, 6], 2026: [4, 27], 2027: [4, 16], 2028: [4, 5], 2029: [3, 24], 2030: [3, 14],
+};
+const ROSH_HASHANAH: Record<number, [number, number]> = {
+  2025: [8, 23], 2026: [8, 12], 2027: [9, 2], 2028: [8, 21], 2029: [8, 10], 2030: [8, 28],
+};
+const YOM_KIPPUR: Record<number, [number, number]> = {
+  2025: [9, 2], 2026: [8, 21], 2027: [9, 11], 2028: [8, 30], 2029: [8, 19], 2030: [9, 7],
+};
+const PASSOVER: Record<number, [number, number]> = {
+  2025: [3, 13], 2026: [3, 2], 2027: [3, 22], 2028: [3, 11], 2029: [2, 31], 2030: [3, 18],
+};
+const HANUKKAH: Record<number, [number, number]> = {
+  2025: [11, 14], 2026: [11, 5], 2027: [11, 25], 2028: [11, 13], 2029: [11, 2], 2030: [11, 21],
+};
+const DIWALI: Record<number, [number, number]> = {
+  2025: [9, 20], 2026: [10, 8], 2027: [9, 29], 2028: [9, 17], 2029: [10, 5], 2030: [9, 26],
+};
+const VESAK: Record<number, [number, number]> = {
+  2025: [4, 12], 2026: [4, 1], 2027: [4, 20], 2028: [4, 8], 2029: [4, 27], 2030: [4, 16],
+};
+
+// Country-specific holidays are listed BEFORE global ones so that
+// detectUpcomingHoliday() prioritizes local celebrations over generic ones
+// (e.g., Lunar New Year over Valentine's Day for Singapore).
 const HOLIDAYS: HolidayDef[] = [
-  { name: "New Year's Day", getDate: (y) => new Date(y, 0, 1), countries: ['all'] },
-  { name: "Valentine's Day", getDate: (y) => new Date(y, 1, 14), countries: ['all'] },
-  { name: "St. Patrick's Day", getDate: (y) => new Date(y, 2, 17), countries: ['USA', 'Ireland', 'UK', 'Canada', 'Australia', 'New Zealand'] },
-  { name: "Easter", getDate: easterSunday, countries: ['all'] },
-  { name: "Cinco de Mayo", getDate: (y) => new Date(y, 4, 5), countries: ['USA'] },
-  { name: "Memorial Day", getDate: (y) => lastWeekdayOf(y, 5, 1), countries: ['USA'] },
-  { name: "Canada Day", getDate: (y) => new Date(y, 6, 1), countries: ['Canada'] },
-  { name: "Independence Day", getDate: (y) => new Date(y, 6, 4), countries: ['USA'] },
-  { name: "Bastille Day", getDate: (y) => new Date(y, 6, 14), countries: ['France'] },
-  { name: "National Day", getDate: (y) => new Date(y, 7, 9), countries: ['Singapore'] },
-  { name: "Halloween", getDate: (y) => new Date(y, 9, 31), countries: ['USA', 'UK', 'Ireland', 'Canada', 'Australia', 'New Zealand'] },
-  { name: "Guy Fawkes Night", getDate: (y) => new Date(y, 10, 5), countries: ['UK'] },
-  { name: "Thanksgiving", getDate: (y) => nthWeekdayOf(y, 11, 4, 4), countries: ['USA'] },
-  { name: "Christmas", getDate: (y) => new Date(y, 11, 25), countries: ['all'] },
-  { name: "New Year's Eve", getDate: (y) => new Date(y, 11, 31), countries: ['all'] },
+  // ── East Asian (Lunar Calendar) ──
+  { name: "Lunar New Year", getDate: fromLookup(LUNAR_NEW_YEAR), countries: ['Singapore', 'Hong Kong'] },
+  { name: "Mid-Autumn Festival", getDate: fromLookup(MID_AUTUMN), countries: ['Singapore', 'Hong Kong'] },
+  { name: "Dragon Boat Festival", getDate: fromLookup(DRAGON_BOAT), countries: ['Singapore', 'Hong Kong'] },
+
+  // ── Japanese ──
+  { name: "Coming of Age Day", getDate: (y) => nthWeekdayOf(y, 1, 1, 2), countries: ['Japan'] },
+  { name: "Golden Week", getDate: (y) => new Date(y, 4, 3), countries: ['Japan'] },
+  { name: "Marine Day", getDate: (y) => nthWeekdayOf(y, 7, 1, 3), countries: ['Japan'] },
+  { name: "Obon", getDate: (y) => new Date(y, 7, 13), countries: ['Japan'] },
+  { name: "Respect for the Aged Day", getDate: (y) => nthWeekdayOf(y, 9, 1, 3), countries: ['Japan'] },
+
+  // ── Islamic (dates are approximate, ±1-2 days) ──
+  { name: "Eid al-Fitr", getDate: fromLookup(EID_AL_FITR), countries: ['UAE', 'Singapore'] },
+  { name: "Eid al-Adha", getDate: fromLookup(EID_AL_ADHA), countries: ['UAE', 'Singapore'] },
+
+  // ── Jewish ──
+  { name: "Passover", getDate: fromLookup(PASSOVER), countries: ['Israel'] },
+  { name: "Rosh Hashanah", getDate: fromLookup(ROSH_HASHANAH), countries: ['Israel'] },
+  { name: "Yom Kippur", getDate: fromLookup(YOM_KIPPUR), countries: ['Israel'] },
+  { name: "Hanukkah", getDate: fromLookup(HANUKKAH), countries: ['Israel', 'USA'] },
+
+  // ── Indian / South Asian ──
+  { name: "Diwali", getDate: fromLookup(DIWALI), countries: ['Singapore', 'UK'] },
+  { name: "Vesak", getDate: fromLookup(VESAK), countries: ['Singapore'] },
+
+  // ── European country-specific ──
+  { name: "Epiphany", getDate: (y) => new Date(y, 0, 6), countries: ['Italy', 'Spain'] },
+  { name: "Walpurgis Night", getDate: (y) => new Date(y, 3, 30), countries: ['Sweden'] },
+  { name: "King's Day", getDate: (y) => new Date(y, 3, 27), countries: ['Netherlands'] },
+  { name: "Constitution Day", getDate: (y) => new Date(y, 5, 5), countries: ['Denmark'] },
+  { name: "Republic Day", getDate: (y) => new Date(y, 5, 2), countries: ['Italy'] },
+  { name: "Portugal Day", getDate: (y) => new Date(y, 5, 10), countries: ['Portugal'] },
   { name: "Midsommar", getDate: (y) => {
     const d = new Date(y, 5, 19);
     while (d.getDay() !== 5) d.setDate(d.getDate() + 1);
     return d;
   }, countries: ['Sweden'] },
+  { name: "Sankt Hans Aften", getDate: (y) => new Date(y, 5, 23), countries: ['Denmark'] },
+  { name: "Bastille Day", getDate: (y) => new Date(y, 6, 14), countries: ['France'] },
+  { name: "German Unity Day", getDate: (y) => new Date(y, 9, 3), countries: ['Germany'] },
+  { name: "Guy Fawkes Night", getDate: (y) => new Date(y, 10, 5), countries: ['UK'] },
+  { name: "Lucia", getDate: (y) => new Date(y, 11, 13), countries: ['Sweden'] },
+
+  // ── UAE ──
+  { name: "UAE National Day", getDate: (y) => new Date(y, 11, 2), countries: ['UAE'] },
+
+  // ── South Africa ──
+  { name: "Freedom Day", getDate: (y) => new Date(y, 3, 27), countries: ['South Africa'] },
+  { name: "Heritage Day", getDate: (y) => new Date(y, 8, 24), countries: ['South Africa'] },
+
+  // ── Americas (country-specific) ──
+  { name: "Mardi Gras", getDate: mardiGras, countries: ['USA'] },
+  { name: "Cinco de Mayo", getDate: (y) => new Date(y, 4, 5), countries: ['USA'] },
+  { name: "Memorial Day", getDate: (y) => lastWeekdayOf(y, 5, 1), countries: ['USA'] },
+  { name: "Canada Day", getDate: (y) => new Date(y, 6, 1), countries: ['Canada'] },
+  { name: "Independence Day", getDate: (y) => new Date(y, 6, 4), countries: ['USA'] },
+  { name: "Labor Day", getDate: (y) => nthWeekdayOf(y, 9, 1, 1), countries: ['USA'] },
+  { name: "Canadian Thanksgiving", getDate: (y) => nthWeekdayOf(y, 10, 1, 2), countries: ['Canada'] },
+  { name: "Dia de los Muertos", getDate: (y) => new Date(y, 10, 1), countries: ['USA'] },
+  { name: "Thanksgiving", getDate: (y) => nthWeekdayOf(y, 11, 4, 4), countries: ['USA'] },
   { name: "Australia Day", getDate: (y) => new Date(y, 0, 26), countries: ['Australia'] },
   { name: "ANZAC Day", getDate: (y) => new Date(y, 3, 25), countries: ['Australia', 'New Zealand'] },
-  { name: "Labor Day", getDate: (y) => nthWeekdayOf(y, 9, 1, 1), countries: ['USA'] },
+
+  // ── Multi-country regional ──
+  { name: "St. Patrick's Day", getDate: (y) => new Date(y, 2, 17), countries: ['USA', 'Ireland', 'UK', 'Canada', 'Australia', 'New Zealand'] },
+  { name: "Singapore National Day", getDate: (y) => new Date(y, 7, 9), countries: ['Singapore'] },
+  { name: "Halloween", getDate: (y) => new Date(y, 9, 31), countries: ['USA', 'UK', 'Ireland', 'Canada', 'Australia', 'New Zealand'] },
+
+  // ── Global (last, so local holidays take priority) ──
+  { name: "New Year's Day", getDate: (y) => new Date(y, 0, 1), countries: ['all'] },
+  { name: "Valentine's Day", getDate: (y) => new Date(y, 1, 14), countries: ['all'] },
+  { name: "Easter", getDate: easterSunday, countries: ['all'] },
+  { name: "Christmas", getDate: (y) => new Date(y, 11, 25), countries: ['all'] },
+  { name: "New Year's Eve", getDate: (y) => new Date(y, 11, 31), countries: ['all'] },
 ];
 
 /**
