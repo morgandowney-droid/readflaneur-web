@@ -97,6 +97,11 @@ const REGION_DATA: Record<GlobalRegion, { label: string; icon: string; descripti
     description: 'Experimental feeds',
     color: '#6B21A8'
   },
+  'community': {
+    label: 'Community',
+    icon: '✦',
+    description: 'Reader-created neighborhoods'
+  },
 };
 
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
@@ -200,6 +205,7 @@ export function EnhancedNeighborhoodSelector({
       'caribbean-vacation': [],
       'europe-vacation': [],
       'test': [],
+      'community': [],
     };
 
     const cityMap = new Map<string, CityData>();
@@ -249,6 +255,7 @@ export function EnhancedNeighborhoodSelector({
       'caribbean-vacation': [],
       'europe-vacation': [],
       'test': [],
+      'community': [],
     };
 
     Object.entries(organizedData).forEach(([region, cities]) => {

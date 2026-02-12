@@ -23,6 +23,7 @@ const REGION_LABELS: Record<GlobalRegion, string> = {
   'caribbean-vacation': 'Caribbean Vacation',
   'europe-vacation': 'European Vacation',
   'test': 'Test Lab',
+  'community': 'Community',
 };
 
 export function NeighborhoodSelector({
