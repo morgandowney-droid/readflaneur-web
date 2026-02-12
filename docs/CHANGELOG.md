@@ -7,7 +7,7 @@
 
 **Mobile UX Overhaul (21 Issues, 5 Groups):**
 - Based on real iPhone 14 Pro user testing. 13 files modified across navigation, feed layout, selector, auth, and ad experience.
-- **Navigation:** Logo links to /feed, "Stories" link in header for all users, "Edit Neighborhoods" with amber accent, default entry point changed from /login to /signup, homepage hero wraps in Link to /feed
+- **Navigation:** Logo links to /feed, "Stories" link in header for all users, "Edit Neighborhoods" with amber accent, default entry point changed from /login to /signup, homepage hero wraps in Link to /feed (both `/` and `/discover`)
 - **Feed layout:** Back-to-top FAB repositioned to bottom-right on mobile (top-center desktop), masthead padding reduced on mobile (`pt-2 md:pt-6`), compact card metadata no-wrap with category label dedup, daily brief gets amber left border accent, brief renders after header (not before neighborhood name)
 - **Scroll behavior:** Pills non-sticky on mobile (`md:sticky`), gradient fade indicators on scrollable pills, Guide/Map/History collapsed behind overflow menu on mobile
 - **Neighborhood selector:** No auto-focus on mobile (prevents keyboard covering screen), geolocation-based default sort on open, "Set as Primary" always visible on touch devices, "Go to Stories" escape link in header

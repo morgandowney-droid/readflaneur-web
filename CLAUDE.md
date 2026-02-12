@@ -40,7 +40,7 @@ Recent work: Mobile UX overhaul (navigation wayfinding, feed layout, selector fi
 
 ### Mobile UX Overhaul
 - **Navigation wayfinding:** Logo links to `/feed` (not `/`). "Stories" link in both desktop and mobile nav for all users. "Dashboard" gated behind admin. Default entry point changed from `/login` to `/signup`.
-- **Homepage hero:** FLANEUR + tagline wrapped in `<Link href="/feed">` as manual fallback for returning users.
+- **Homepage hero:** FLANEUR + tagline wrapped in `<Link href="/feed">` on both `/` (homepage) and `/discover` as manual fallback for returning users.
 - **Mobile menu:** "Edit selections" renamed to "Edit Neighborhoods" with `text-amber-500/80` accent. "Stories" link appears for all users (auth + unauth). Padding tightened to `py-3`.
 - **Back-to-top button:** Bottom-right FAB on mobile (`fixed bottom-6 right-4`), top-center on desktop. Text label hidden on mobile (`hidden md:inline`).
 - **Masthead padding:** `pt-2 md:pt-6` (tighter on mobile, preserved on desktop).
