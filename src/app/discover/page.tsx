@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { HomeSignupEnhanced } from '@/components/home/HomeSignupEnhanced';
 import { HeroStats } from '@/components/home/HeroStats';
@@ -33,13 +34,15 @@ export default async function DiscoverPage() {
         />
 
         <div className="relative mx-auto max-w-3xl text-center">
-          <h1 className="hero-fade-in font-display text-6xl md:text-7xl lg:text-8xl font-light tracking-[0.3em] mb-6">
-            FLÂNEUR
-          </h1>
+          <Link href="/feed" className="hover:opacity-80 transition-opacity">
+            <h1 className="hero-fade-in font-display text-6xl md:text-7xl lg:text-8xl font-light tracking-[0.3em] mb-6">
+              FLÂNEUR
+            </h1>
 
-          <p className="hero-fade-in-delay-1 text-sm md:text-base text-neutral-400 mb-12 font-light tracking-[0.5em] uppercase">
-            Local stories, interesting neighborhoods.
-          </p>
+            <p className="hero-fade-in-delay-1 text-sm md:text-base text-neutral-400 mb-12 font-light tracking-[0.5em] uppercase">
+              Local stories, interesting neighborhoods.
+            </p>
+          </Link>
 
           <div className="hero-fade-in-delay-2">
             <HeroStats neighborhoodCount={regularNeighborhoods.length} cityCount={cityCount} />
