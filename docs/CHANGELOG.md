@@ -31,6 +31,11 @@
 - `openModal()` accepts optional tab parameter for direct-to-tab navigation
 - Not authenticated: "Sign in to create your own neighborhood" with login link
 
+**Community Neighborhoods TypeScript Fixes:**
+- `openModal` signature changed to `(tab?: ModalTab) => void` which is incompatible with `onClick: MouseEventHandler`. Wrapped in arrow functions in NeighborhoodHeader, HomeSignupEnhanced, HeroStats.
+- Added `'community'` to `GlobalRegion` union but missed updating all `Record<GlobalRegion, ...>` objects. Fixed in EnhancedNeighborhoodSelector (REGION_DATA, byRegion, result) and NeighborhoodSelector (REGION_LABELS).
+- Migration version collision: `20260213` was already taken by `neighborhood_suggestions`. Renamed to `20260217`/`20260218` after repairing Supabase schema_migrations history.
+
 **Global 5-Email-Per-Day Limit:**
 - New shared utility `src/lib/email/daily-email-limit.ts` counts daily_brief_sends + weekly_brief_sends per recipient per UTC day
 - Enforced in all 4 send paths: daily brief sender, instant resend, Sunday Edition cron, on-demand Sunday Edition request
