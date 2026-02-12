@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { NeighborhoodSuggestionForm } from '@/components/NeighborhoodSuggestionForm';
+import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 
 // Serializable fallback data passed from server components
 export interface FallbackData {
@@ -218,6 +219,13 @@ function BonusAdDisplay({ ad, variant }: { ad: NonNullable<FallbackData['bonusAd
 function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackData['houseAd']>; variant: 'card' | 'story_open' }) {
   const [clickUrl, setClickUrl] = useState(houseAd.click_url);
   const [showSuggestionForm, setShowSuggestionForm] = useState(false);
+  const { openModal } = useNeighborhoodModal();
+  const [hasCommunityNeighborhood] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem('flaneur-has-community-neighborhood') === 'true';
+    } catch { return false; }
+  });
 
   // For app_download house ads, resolve a dynamic discovery URL
   useEffect(() => {
@@ -297,6 +305,59 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
               Suggest
             </button>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // Community Neighborhood type: opens modal to Community tab
+  if (houseAd.type === 'community_neighborhood') {
+    // Hide if user already has a community neighborhood
+    if (hasCommunityNeighborhood) return null;
+
+    if (variant === 'story_open') {
+      return (
+        <div className="border border-white/[0.08] bg-surface p-6 hover:border-white/20 transition-colors">
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <div className="flex-1">
+              <p className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-2">
+                Flaneur
+              </p>
+              <h3 className="font-semibold text-lg mb-1">{houseAd.headline}</h3>
+              {houseAd.body && (
+                <p className="text-sm text-neutral-400">{houseAd.body}</p>
+              )}
+            </div>
+            <button
+              onClick={() => openModal('community')}
+              className="inline-block bg-white text-neutral-900 px-6 py-2 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors whitespace-nowrap"
+            >
+              Get Started
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Card variant
+    return (
+      <div className="border border-white/[0.08] bg-surface">
+        <div className="px-3 py-2 border-b border-white/[0.08]">
+          <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
+            Flaneur
+          </span>
+        </div>
+        <div className="p-4">
+          <h3 className="font-semibold text-sm mb-2">{houseAd.headline}</h3>
+          {houseAd.body && (
+            <p className="text-xs text-neutral-400 mb-3">{houseAd.body}</p>
+          )}
+          <button
+            onClick={() => openModal('community')}
+            className="inline-block bg-white text-neutral-900 px-4 py-2 text-xs tracking-widest uppercase hover:bg-neutral-200 transition-colors"
+          >
+            Get Started
+          </button>
         </div>
       </div>
     );

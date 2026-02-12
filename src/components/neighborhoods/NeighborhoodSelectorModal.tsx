@@ -71,9 +71,11 @@ function getGeoRegion(region?: string): string {
 }
 
 // Modal Context
+type ModalTab = 'all' | 'community';
+
 interface NeighborhoodModalContextType {
   isOpen: boolean;
-  openModal: () => void;
+  openModal: (tab?: ModalTab) => void;
   closeModal: () => void;
 }
 
@@ -180,6 +182,7 @@ async function fetchNeighborhoodsData(timeoutMs: number = 8000): Promise<{
 
 export function NeighborhoodModalProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [initialTab, setInitialTab] = useState<ModalTab>('all');
   const [prefetchedData, setPrefetchedData] = useState<{
     neighborhoods: NeighborhoodWithCombo[];
     selected: Set<string>;
@@ -200,7 +203,10 @@ export function NeighborhoodModalProvider({ children }: { children: React.ReactN
     <NeighborhoodModalContext.Provider
       value={{
         isOpen,
-        openModal: () => setIsOpen(true),
+        openModal: (tab?: ModalTab) => {
+          setInitialTab(tab || 'all');
+          setIsOpen(true);
+        },
         closeModal: () => setIsOpen(false),
       }}
     >
@@ -209,6 +215,7 @@ export function NeighborhoodModalProvider({ children }: { children: React.ReactN
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         prefetchedData={prefetchedData}
+        initialTab={initialTab}
       />
     </NeighborhoodModalContext.Provider>
   );
@@ -218,6 +225,7 @@ function GlobalNeighborhoodModal({
   isOpen,
   onClose,
   prefetchedData,
+  initialTab = 'all',
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -226,6 +234,7 @@ function GlobalNeighborhoodModal({
     selected: Set<string>;
     userId: string | null;
   } | null;
+  initialTab?: ModalTab;
 }) {
   const router = useRouter();
   const [neighborhoods, setNeighborhoods] = useState<NeighborhoodWithCombo[]>([]);
@@ -346,6 +355,9 @@ function GlobalNeighborhoodModal({
         setCommunityCount(prev => prev + 1);
         setCommunityInput('');
 
+        // Mark that user has created a community neighborhood (hides house ad)
+        try { localStorage.setItem('flaneur-has-community-neighborhood', 'true'); } catch { /* ignore */ }
+
         // Add to selected set and localStorage
         if (data.neighborhood?.id) {
           const newSelected = new Set(selected);
@@ -403,15 +415,16 @@ function GlobalNeighborhoodModal({
     setSortBy(sortBy === 'region' ? 'name' : 'region');
   };
 
-  // Reset confirm state and load settings when modal opens
+  // Reset confirm state, load settings, and apply initial tab when modal opens
   useEffect(() => {
     if (isOpen) {
       setConfirmClear(false);
       setSettingsSaved(false);
+      setActiveTab(initialTab);
       const stored = getStoredLocation();
       if (stored?.city) setSettingsCity(stored.city);
     }
-  }, [isOpen]);
+  }, [isOpen, initialTab]);
 
   // Use prefetched data if available, otherwise fetch on open
   useEffect(() => {
@@ -1066,12 +1079,17 @@ function GlobalNeighborhoodModal({
                       You have reached the limit of 2 community neighborhoods.
                     </p>
                   ) : communityCreateStatus === 'success' ? (
-                    <div className="flex items-center gap-2 py-3">
-                      <svg className="w-4 h-4 text-green-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <p className="text-sm text-green-400">
-                        {communityCreatedName} created and added to your collection.
+                    <div className="py-3">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-green-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <p className="text-sm text-green-400">
+                          {communityCreatedName} created and added to your collection.
+                        </p>
+                      </div>
+                      <p className="text-xs text-neutral-500 mt-2 ml-6">
+                        You will receive a daily brief for {communityCreatedName} at 7am local time starting tomorrow.
                       </p>
                     </div>
                   ) : (
