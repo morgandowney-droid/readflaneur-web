@@ -40,7 +40,7 @@ function renderWithBold(text: string): ReactNode[] {
     // Add the bold text (match[1] for [[]], match[2] for **)
     const boldText = match[1] || match[2];
     parts.push(
-      <strong key={`bold-${keyIndex++}`} className="font-semibold">
+      <strong key={`bold-${keyIndex++}`} className="font-semibold text-neutral-200">
         {boldText}
       </strong>
     );
@@ -756,7 +756,7 @@ export function NeighborhoodBrief({
             enrichedCategories
           );
           result.push(
-            <strong key={`bold-seg-${segIdx}`} className="font-semibold">
+            <strong key={`bold-seg-${segIdx}`} className="font-semibold text-neutral-200">
               {elements}
             </strong>
           );
@@ -786,7 +786,7 @@ export function NeighborhoodBrief({
         enrichedCategories
       );
       result.push(
-        <strong key="header" className="font-semibold">
+        <strong key="header" className="font-semibold text-neutral-200">
           {headerElements}
         </strong>
       );
@@ -1014,7 +1014,7 @@ function ArchivedBriefCard({
           const { elements } = renderWithSearchableEntities(
             segment.text, neighborhoodName, city, brief.sources, brief.enriched_categories
           );
-          result.push(<strong key={`b-${segIdx}`} className="font-semibold">{elements}</strong>);
+          result.push(<strong key={`b-${segIdx}`} className="font-semibold text-neutral-200">{elements}</strong>);
         } else if (segment.text.trim()) {
           const { elements } = renderWithSearchableEntities(
             segment.text, neighborhoodName, city, brief.sources, brief.enriched_categories
