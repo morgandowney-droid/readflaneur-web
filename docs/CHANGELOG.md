@@ -3,6 +3,25 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-12
+
+**Sunday Edition Holiday Expansion (19 → 50):**
+- Added 31 new holidays covering all 20 active countries: East Asian (Lunar New Year, Mid-Autumn, Dragon Boat for Singapore/HK), Japanese (Golden Week, Obon, Coming of Age Day, Marine Day, Respect for Aged), Islamic (Eid al-Fitr, Eid al-Adha for UAE/Singapore), Jewish (Passover, Rosh Hashanah, Yom Kippur, Hanukkah for Israel/USA), Indian (Diwali for Singapore/UK, Vesak), European national days (King's Day, German Unity, Republic Day, Portugal Day, Lucia, Walpurgis Night, Sankt Hans, Epiphany, Constitution Day), UAE National Day, South Africa (Freedom Day, Heritage Day), Americas (Mardi Gras, Canadian Thanksgiving, Dia de los Muertos)
+- Lunar/Islamic/Hebrew/Hindu holidays use lookup tables (2025-2030) since dates can't be calculated with simple formulas
+- Local holidays listed before global ones so `detectUpcomingHoliday()` prioritizes them (e.g., Lunar New Year over Valentine's Day for Singapore)
+- Added `fromLookup()` helper and `mardiGras()` (Easter - 47 days) calculation
+
+**Bare /feed Redirect Fix:**
+- Article page "← All Stories" and "More Stories" links go to bare `/feed` (no `?neighborhoods=` params)
+- Server component can't read localStorage → `MultiFeed` received empty neighborhoods → no pills/header
+- Fix: `MultiFeed` useEffect detects empty neighborhoods array, reads `flaneur-neighborhood-preferences` from localStorage, does `router.replace()` with IDs + `window.scrollTo(0, 0)`
+- Covers all paths to bare `/feed`: back links, bookmarks, direct URL entry
+
+**Grok Search Result Sanitization:**
+- Nassim Hill daily brief contained raw `{'title': '...', 'url': '...', 'snippet': ...}` tool output leaked from Grok, making the brief card huge
+- Added regex strip at pipeline level (`grok.ts`) and display level (`NeighborhoodBrief.cleanContent()`)
+- Pattern handles both complete objects (with `}`) and truncated ones (no closing brace)
+
 ## 2026-02-11
 
 **Pipeline Reliability Fixes:**

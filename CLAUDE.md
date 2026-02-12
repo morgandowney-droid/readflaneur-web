@@ -12,9 +12,9 @@
 - **Sentry:** https://sentry.io/organizations/flaneur-vk/issues/
 - **200 neighborhoods** across 73 cities, 42 countries (the "Flaneur 200")
 
-## Last Updated: 2026-02-11
+## Last Updated: 2026-02-12
 
-Recent work: Tracked referral system (/invite page, share surfaces, email footer links), article page back link to /feed, primary neighborhood sync to email scheduler, Gemini model switch (2.5-pro), feed article dedup, region sort in modal, clickable "My Neighborhoods" heading, engagement-triggered email capture, smart auto-redirect.
+Recent work: Bare /feed redirect (restore neighborhoods from localStorage), Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
 
 ### Email Capture (Engagement-Triggered)
 - **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
@@ -87,6 +87,7 @@ Recent work: Tracked referral system (/invite page, share surfaces, email footer
 - **Morning window:** 3-9 AM local time (24 chances at `*/15`, survives 5h cron gaps)
 - **Dedup:** `hasBriefForLocalToday()` uses `toLocaleDateString('en-CA', { timeZone })` per neighborhood
 - **NOT UTC midnight:** Fetches last 36h of briefs, checks each against its local "today"
+- **Content sanitization:** Both `grok.ts` and `NeighborhoodBrief.cleanContent()` strip raw Grok search result objects (`{'title': ..., 'url': ...}`) that occasionally leak into brief text
 
 ### Image Generation
 - Endpoint: `/api/internal/generate-image`
@@ -99,6 +100,7 @@ Recent work: Tracked referral system (/invite page, share surfaces, email footer
 - **Assembler:** `src/lib/email/assembler.ts` — articles + weather, dateline in category labels
 - **Sender:** `src/lib/email/sender.ts` — React Email via Resend
 - **Sunday Edition:** `src/lib/weekly-brief-service.ts` — Gemini + Grok. Sections: The Letter, The Next Few Days, That Time of Year, Data Point, Your Other Editions
+- **Holiday system:** 50 holidays across 20 countries. Local holidays listed before global so `detectUpcomingHoliday()` prioritizes them (e.g., Lunar New Year over Valentine's Day for Singapore). Fixed-date and nth-weekday holidays use calculation; lunar/Islamic/Hebrew/Hindu holidays use lookup tables (2025-2030). Regions: East Asian (CNY, Mid-Autumn, Dragon Boat), Japanese (Golden Week, Obon, Coming of Age), Islamic (Eid al-Fitr, Eid al-Adha), Jewish (Passover, Rosh Hashanah, Yom Kippur, Hanukkah), Indian (Diwali, Vesak), European national days, South African, UAE National Day, plus existing Western holidays.
 - **Weather:** Pure logic in `src/lib/email/weather-story.ts` (no LLM)
 - **Hero block:** `{neighborhood} · {city}` (12px tracked caps) + temperature (48px Playfair Display) + weather description - merged as one centered visual thought, no label
 - **Temperature:** Single-unit: °F for USA, °C for everyone else. Sunday Edition data point same logic.
@@ -251,8 +253,9 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **ComboNeighborhoodCards:** Still exists for GuidesClient.tsx but removed from feed header
 
 ### Article Page Navigation
-- **Back link:** `← ALL STORIES` at top, links to `/feed` (user's neighborhoods loaded from localStorage)
+- **Back link:** `← ALL STORIES` at top, links to `/feed`
 - **Bottom CTA:** `MORE STORIES` button, also links to `/feed`
+- **Bare /feed redirect:** Both links go to bare `/feed` (no query params). `MultiFeed` detects empty `neighborhoods` prop, reads localStorage, and does `router.replace()` with neighborhoods + `scrollTo(0,0)`. Covers any path to bare `/feed` (back links, bookmarks, direct URL).
 - **No neighborhood-specific links:** Article pages are entry points from shared links too - `/feed` loads the user's own neighborhood set regardless of which neighborhood the article belongs to
 
 ### Article Body Typography ("Effortless Legibility")
