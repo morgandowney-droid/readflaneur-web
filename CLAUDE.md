@@ -108,6 +108,7 @@ Recent work: "Suggest a Neighborhood" house ad + contact form + admin page, dyna
 - **Backoff:** Exponential retry on 429/RESOURCE_EXHAUSTED (2s, 5s, 15s delays)
 - **Early termination:** Drains queue if any batch call hits quota
 - **Two phases:** Phase 1 = briefs (200s budget), Phase 2 = articles (remaining ~80s)
+- **Greeting:** Prompt explicitly requires "Good morning" (never evening/afternoon) since briefs are delivered in the morning regardless of enrichment time
 
 ### Brief Generation Timezone Handling (sync-neighborhood-briefs)
 - **Morning window:** 3-9 AM local time (24 chances at `*/15`, survives 5h cron gaps)

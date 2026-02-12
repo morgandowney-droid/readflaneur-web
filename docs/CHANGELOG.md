@@ -5,6 +5,11 @@
 
 ## 2026-02-12
 
+**Enriched Brief Greeting Fix:**
+- Gemini enrichment prompt said "Good morning, neighbors or similar" - Gemini interpreted "or similar" as license to use "Good evening" for briefs enriched at certain UTC hours
+- Fixed in `brief-enricher-gemini.ts`: explicitly requires "Good morning" (never evening/afternoon) since briefs are always delivered in the morning
+- Affected: Ireland, County Limerick, and potentially other UTC+0/+1 neighborhoods enriched in late UTC hours
+
 **Suggest a Neighborhood - House Ad, Contact Form, Admin Page:**
 - New `neighborhood_suggestions` table with RLS (service_role only), status workflow: new → reviewed → added/dismissed
 - New `suggest_neighborhood` house ad type in `house_ads` - renders inline form instead of navigating away
