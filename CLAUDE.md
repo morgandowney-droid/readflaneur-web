@@ -64,6 +64,7 @@ Recent work: "Suggest a Neighborhood" house ad + contact form + admin page, dyna
 - **Contact page:** `/contact` includes "Suggest a Neighborhood" section with full-variant form
 - **API endpoint:** `POST /api/suggestions/neighborhood` - validates (3-200 chars), SHA-256 IP hash, rate limit 5/hour per IP, detects city/country from Vercel headers, inserts to `neighborhood_suggestions` table
 - **Email notification:** `notifyNeighborhoodSuggestion()` in `email.ts` sends to `contact@readflaneur.com`
+- **Neighborhood selector modal:** `NeighborhoodSelectorModal.tsx` "Suggest a Destination" wired to API endpoint (was direct Supabase insert that silently failed due to RLS). Optional email field added. Both placements: bottom of city list + empty search state.
 - **Admin page:** `/admin/suggestions` - stats row, filter tabs (all/new/reviewed/added/dismissed), table with inline notes editing and status actions
 - **Admin API:** `GET/PATCH /api/admin/suggestions` - admin role auth, service role DB access
 

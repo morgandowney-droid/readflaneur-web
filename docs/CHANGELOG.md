@@ -16,6 +16,7 @@
 - `/admin/suggestions` page - stats row, filter tabs, table with status badges, inline admin notes editing, status action buttons (Review/Added/Dismiss/Reopen)
 - `GET/PATCH /api/admin/suggestions` - admin role auth via session, service role DB access
 - Admin dashboard card added to `/admin`
+- `NeighborhoodSelectorModal.tsx` "Suggest a Destination" rewired from direct Supabase insert (silently failed due to RLS) to `POST /api/suggestions/neighborhood`. Added optional email field. Both placements updated (bottom of city list + empty search state). Submitting state disables inputs.
 
 **Dynamic House Ads - "Check Out a New Neighborhood":**
 - `house_ads` record (type `app_download`) updated: headline "Check Out a New Neighborhood", body "See what's happening today in a nearby neighborhood.", static fallback `/discover`
