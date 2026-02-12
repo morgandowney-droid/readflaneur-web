@@ -5,6 +5,17 @@
 
 ## 2026-02-12
 
+**Global 5-Email-Per-Day Limit:**
+- New shared utility `src/lib/email/daily-email-limit.ts` counts daily_brief_sends + weekly_brief_sends per recipient per UTC day
+- Enforced in all 4 send paths: daily brief sender, instant resend, Sunday Edition cron, on-demand Sunday Edition request
+- Transactional emails (password reset, ad confirmations) are exempt
+- On-demand Sunday Edition shows user-friendly "Limit Reached" HTML page when capped
+
+**Always-Resend on Primary Neighborhood Change:**
+- `sync-primary-neighborhood` now triggers instant resend on any primary change, even within the same city
+- Previously only resent when the city changed (e.g., Stockholm to New York)
+- Now also resends when switching e.g., Ostermalm to Sodermalm (both Stockholm)
+
 **Vercel Preview Build Fix (Lazy-Init Supabase Admin):**
 - Module-level `createClient()` calls in 6 API routes crashed Vercel preview builds where env vars aren't available during page data collection
 - Converted to `getSupabaseAdmin()` lazy getter functions in: `admin/suggestions`, `referral/code`, `referral/convert`, `referral/track`, `referral/stats`, `suggestions/neighborhood`

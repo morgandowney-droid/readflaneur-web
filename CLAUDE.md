@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-12
 
-Recent work: Vercel preview build fix (lazy-init Supabase admin in 6 routes), Hamptons component renames (removed redundant suffix), brief content sanitization fixes (nested-paren URLs, URL-encoded artifacts), neighborhood selector tidy (renames, region consolidation, new neighborhoods), single-line feed headlines, enrichment language/framing fixes, brighter brief section headings, "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
+Recent work: Global 5-email-per-day limit, always-resend on primary neighborhood change, Vercel preview build fix (lazy-init Supabase admin in 6 routes), Hamptons component renames (removed redundant suffix), brief content sanitization fixes (nested-paren URLs, URL-encoded artifacts), neighborhood selector tidy (renames, region consolidation, new neighborhoods), single-line feed headlines, enrichment language/framing fixes, brighter brief section headings, "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
 
 ### Email Capture (Engagement-Triggered)
 - **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
@@ -88,7 +88,7 @@ Recent work: Vercel preview build fix (lazy-init Supabase admin in 6 routes), Ha
 ### Primary Neighborhood Sync
 - **Endpoint:** `POST /api/location/sync-primary-neighborhood` - syncs primary neighborhood change to DB for email scheduler
 - **Called from:** `useNeighborhoodPreferences.setPrimary()` (fire-and-forget, covers ContextSwitcher, modal, drag-reorder)
-- **Logic:** Uses `getSession()` (not `getUser()`), looks up neighborhood city, updates `profiles.primary_city`/`primary_timezone`, triggers instant resend if city changed
+- **Logic:** Uses `getSession()` (not `getUser()`), looks up neighborhood city, updates `profiles.primary_city`/`primary_timezone`, triggers instant resend on any primary change (same city or different)
 - **Anonymous users:** Silent no-op (returns success)
 
 ### Cron Jobs
@@ -134,7 +134,8 @@ Recent work: Vercel preview build fix (lazy-init Supabase admin in 6 routes), Ha
 - **Hero block:** `{neighborhood} · {city}` (12px tracked caps) + temperature (48px Playfair Display) + weather description - merged as one centered visual thought, no label
 - **Temperature:** Single-unit: °F for USA, °C for everyone else. Sunday Edition data point same logic.
 - **US neighborhoods:** °F only. Determined by `neighborhoods.country`
-- **Instant resend:** `src/lib/email/instant-resend.ts` (3/day limit)
+- **Instant resend:** `src/lib/email/instant-resend.ts` (3/day resend limit)
+- **Global daily email limit:** `src/lib/email/daily-email-limit.ts` - max 5 content emails per recipient per day (UTC), checked across `daily_brief_sends` + `weekly_brief_sends`. Wired into daily brief sender, instant resend, Sunday Edition cron, and on-demand Sunday Edition request. Transactional emails (password reset, ad confirmations) are exempt.
 - **Layout:** Primary stories use compact `StoryList variant="primary"` (19px/16px), no hero image. Native ad between stories 1 and 2.
 - **Section headers:** Always `{neighborhood} · {city}` - no smart geography hiding. City in muted `#b0b0b0`.
 - **Section dividers:** `SectionDivider` component - centered wide-tracked uppercase `{name} · {city}` + 32px gold accent rule (`rgba(120, 53, 15, 0.4)`)
