@@ -171,14 +171,27 @@ async function fetchBriefAsStory(
     .substring(0, 50);
   const slug = `${neighborhoodId}-brief-${date}-${headlineSlug}`;
 
-  // Generate preview text from content
-  const previewText = articleBody
+  // Generate preview text from content, truncated at sentence boundary (no ellipsis)
+  let previewText = articleBody
     .replace(/\[\[[^\]]+\]\]/g, '')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/\n+/g, ' ')
     .trim()
-    .substring(0, 200) + (articleBody.length > 200 ? '...' : '');
+    .substring(0, 200);
+
+  if (previewText.length >= 200) {
+    const lastPeriod = previewText.lastIndexOf('.');
+    const lastExcl = previewText.lastIndexOf('!');
+    const lastQuestion = previewText.lastIndexOf('?');
+    const lastEnd = Math.max(lastPeriod, lastExcl, lastQuestion);
+    if (lastEnd > 0) {
+      previewText = previewText.slice(0, lastEnd + 1);
+    } else {
+      const lastSpace = previewText.lastIndexOf(' ');
+      if (lastSpace > 0) previewText = previewText.slice(0, lastSpace);
+    }
+  }
 
   // Check if an article with this slug already exists (from a previous email run)
   const { data: existingArticle } = await supabase

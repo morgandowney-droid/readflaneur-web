@@ -1,11 +1,20 @@
 import { Section, Text, Link, Hr } from '@react-email/components';
 import { EmailStory } from '../../types';
 
-function truncateAtWord(text: string, max: number): string {
+function truncateAtSentence(text: string, max: number): string {
   if (text.length <= max) return text;
-  const truncated = text.slice(0, max);
-  const lastSpace = truncated.lastIndexOf(' ');
-  return (lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated) + '...';
+  const slice = text.slice(0, max);
+  // Find the last sentence-ending punctuation
+  const lastPeriod = slice.lastIndexOf('.');
+  const lastExcl = slice.lastIndexOf('!');
+  const lastQuestion = slice.lastIndexOf('?');
+  const lastEnd = Math.max(lastPeriod, lastExcl, lastQuestion);
+  if (lastEnd > 0) {
+    return text.slice(0, lastEnd + 1);
+  }
+  // No sentence boundary found - fall back to word boundary, no ellipsis
+  const lastSpace = slice.lastIndexOf(' ');
+  return lastSpace > 0 ? text.slice(0, lastSpace) : slice;
 }
 
 interface StoryListProps {
@@ -33,7 +42,7 @@ export function StoryList({ stories, variant = 'default' }: StoryListProps) {
           </Link>
           {story.previewText && (
             <Text style={isPrimary ? previewPrimary : preview}>
-              {truncateAtWord(story.previewText, 120)}
+              {truncateAtSentence(story.previewText, 160)}
             </Text>
           )}
         </Section>

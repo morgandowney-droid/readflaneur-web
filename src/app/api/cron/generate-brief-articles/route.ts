@@ -118,7 +118,15 @@ function generatePreviewText(content: string): string {
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove link markup, keep text
     .replace(/\n+/g, ' ')
     .trim();
-  return cleaned.substring(0, 200) + (cleaned.length > 200 ? '...' : '');
+  if (cleaned.length <= 200) return cleaned;
+  const slice = cleaned.substring(0, 200);
+  const lastPeriod = slice.lastIndexOf('.');
+  const lastExcl = slice.lastIndexOf('!');
+  const lastQuestion = slice.lastIndexOf('?');
+  const lastEnd = Math.max(lastPeriod, lastExcl, lastQuestion);
+  if (lastEnd > 0) return cleaned.slice(0, lastEnd + 1);
+  const lastSpace = slice.lastIndexOf(' ');
+  return lastSpace > 0 ? cleaned.slice(0, lastSpace) : slice;
 }
 
 export async function GET(request: Request) {

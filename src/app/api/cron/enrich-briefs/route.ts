@@ -320,7 +320,16 @@ export async function GET(request: Request) {
             .from('articles')
             .update({
               body_text: enrichedBody,
-              preview_text: enrichedPreview + (enrichedPreview.length >= 200 ? '...' : ''),
+              preview_text: (() => {
+                if (enrichedPreview.length < 200) return enrichedPreview;
+                const lp = enrichedPreview.lastIndexOf('.');
+                const le = enrichedPreview.lastIndexOf('!');
+                const lq = enrichedPreview.lastIndexOf('?');
+                const end = Math.max(lp, le, lq);
+                if (end > 0) return enrichedPreview.slice(0, end + 1);
+                const ls = enrichedPreview.lastIndexOf(' ');
+                return ls > 0 ? enrichedPreview.slice(0, ls) : enrichedPreview;
+              })(),
               enriched_at: new Date().toISOString(),
               enrichment_model: result.model,
             })
