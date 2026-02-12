@@ -101,6 +101,22 @@ export function MultiFeed({
     setIsHydrated(true);
   }, []);
 
+  // Redirect to include neighborhoods from localStorage when URL has none
+  // (e.g., user clicked "← All Stories" or "More Stories" from an article page)
+  useEffect(() => {
+    if (neighborhoods.length > 0) return;
+    try {
+      const stored = localStorage.getItem('flaneur-neighborhood-preferences');
+      if (stored) {
+        const ids = JSON.parse(stored);
+        if (Array.isArray(ids) && ids.length > 0) {
+          window.scrollTo(0, 0);
+          router.replace(`/feed?neighborhoods=${ids.join(',')}`);
+        }
+      }
+    } catch {}
+  }, [neighborhoods.length, router]);
+
   // Fetch brief for filtered neighborhood (REST API - bypasses Supabase client issues)
   useEffect(() => {
     if (activeFilter === null) {
