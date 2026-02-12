@@ -5,6 +5,18 @@
 
 ## 2026-02-12
 
+**Suggest a Neighborhood - House Ad, Contact Form, Admin Page:**
+- New `neighborhood_suggestions` table with RLS (service_role only), status workflow: new → reviewed → added/dismissed
+- New `suggest_neighborhood` house ad type in `house_ads` - renders inline form instead of navigating away
+- `NeighborhoodSuggestionForm` shared component with `compact` (house ad) and `full` (contact page) variants
+- `HouseAdDisplay` in `FallbackAd.tsx` handles `suggest_neighborhood` type - "Suggest" button toggles inline form (both card and story_open variants)
+- `/contact` page: added "Suggest a Neighborhood" section between Tips and Advertising
+- `POST /api/suggestions/neighborhood` - validates 3-200 chars, SHA-256 IP hash rate limit (5/hr), Vercel IP city/country detection, inserts to DB
+- `notifyNeighborhoodSuggestion()` in `email.ts` sends to `contact@readflaneur.com` with suggestion details + admin link
+- `/admin/suggestions` page - stats row, filter tabs, table with status badges, inline admin notes editing, status action buttons (Review/Added/Dismiss/Reopen)
+- `GET/PATCH /api/admin/suggestions` - admin role auth via session, service role DB access
+- Admin dashboard card added to `/admin`
+
 **Dynamic House Ads - "Check Out a New Neighborhood":**
 - `house_ads` record (type `app_download`) updated: headline "Check Out a New Neighborhood", body "See what's happening today in a nearby neighborhood.", static fallback `/discover`
 - New shared utility `src/lib/discover-neighborhood.ts` - `findDiscoveryBrief()` finds nearest unsubscribed neighborhood with a published Daily Brief, using Haversine distance sorting from `geo-utils.ts`

@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-12
 
-Recent work: Dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
+Recent work: "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
 
 ### Email Capture (Engagement-Triggered)
 - **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
@@ -56,6 +56,16 @@ Recent work: Dynamic house ads ("Check Out a New Neighborhood" with discovery br
 - **Database:** `referrals` table (referral_code, referrer_type/id, referred_email/type/id, status clicked/converted, ip_hash, timestamps). RLS: service_role only. Unique index on `(referral_code, referred_email) WHERE status = 'converted'`.
 - **localStorage keys:** `flaneur-referral-code` (user's own code, cached by ShareWidget)
 - **sessionStorage keys:** `flaneur-referral-code` (incoming referral code from `?ref=` param, consumed on conversion)
+
+### Suggest a Neighborhood
+- **House ad:** `house_ads` where `type = 'suggest_neighborhood'`, headline "Suggest a Neighborhood", click_url `#suggest` (handled inline, not navigated)
+- **Shared form:** `src/components/NeighborhoodSuggestionForm.tsx` - client component with `compact` (house ad inline) and `full` (contact page) variants. Suggestion text + optional email + submit.
+- **FallbackAd integration:** `HouseAdDisplay` handles `suggest_neighborhood` type - renders "Suggest" button that toggles inline form (not a link). Both card and story_open variants.
+- **Contact page:** `/contact` includes "Suggest a Neighborhood" section with full-variant form
+- **API endpoint:** `POST /api/suggestions/neighborhood` - validates (3-200 chars), SHA-256 IP hash, rate limit 5/hour per IP, detects city/country from Vercel headers, inserts to `neighborhood_suggestions` table
+- **Email notification:** `notifyNeighborhoodSuggestion()` in `email.ts` sends to `contact@readflaneur.com`
+- **Admin page:** `/admin/suggestions` - stats row, filter tabs (all/new/reviewed/added/dismissed), table with inline notes editing and status actions
+- **Admin API:** `GET/PATCH /api/admin/suggestions` - admin role auth, service role DB access
 
 ### Dynamic House Ads ("Check Out a New Neighborhood")
 - **DB record:** `house_ads` where `type = 'app_download'` updated: headline "Check Out a New Neighborhood", body "See what's happening today in a nearby neighborhood.", click_url `/discover` (static fallback)
@@ -303,13 +313,14 @@ src/
 │   ├── proofs/[token]/            # Customer ad proof page
 │   └── api/
 │       ├── cron/                  # 30+ automated cron jobs
-│       ├── admin/                 # Admin APIs (includes cleanup-duplicates endpoint)
+│       ├── admin/                 # Admin APIs (cleanup-duplicates, suggestions)
 │       ├── ads/                   # Availability, checkout, upload, booking-info
 │       ├── reactions/             # Emoji reactions API + saved articles
 │       ├── email/                 # Unsubscribe, preferences, sunday-edition-request
 │       ├── location/              # IP detect-and-match (nearest neighborhoods)
 │       ├── referral/              # Referral code, track, convert, stats
 │       ├── neighborhoods/         # Add neighborhood to collection
+│       ├── suggestions/           # Neighborhood suggestion submissions
 │       ├── discover-neighborhood/ # Resolve nearby unsubscribed brief URL
 │       ├── internal/              # Image generation, resend
 │       └── webhooks/              # Resend inbound
@@ -348,7 +359,8 @@ src/
 - `neighborhood_briefs` — Grok-generated daily summaries
 - `weekly_briefs` — Sunday Edition content (rearview, horizon, holiday, data_point)
 - `ads` — ad campaigns with booking fields (stripe_session_id, customer_email, is_global_takeover) and quality control (proof_token, approval_status, ai_quality_score)
-- `house_ads` — fallback ads (types: waitlist, app_download, advertise, newsletter, sunday_edition)
+- `house_ads` — fallback ads (types: waitlist, app_download, advertise, newsletter, sunday_edition, suggest_neighborhood)
+- `neighborhood_suggestions` — reader-submitted neighborhood requests (suggestion, email, city/country, status: new/reviewed/added/dismissed)
 - `article_reactions` — emoji reactions (bookmark/heart/fire), anonymous + authenticated
 - `cron_executions` / `cron_issues` — monitoring & self-healing
 - `daily_brief_sends` / `weekly_brief_sends` — email dedup (weekly: unique on `recipient_id, neighborhood_id, week_date`)
