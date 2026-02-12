@@ -5,6 +5,20 @@
 
 ## 2026-02-12
 
+**Single-Line Feed Headlines:**
+- All feed headlines (daily brief card, compact list view, gallery card) now render on one line with `whitespace-nowrap overflow-hidden` (no wrapping, no ellipsis)
+- Text ends cleanly at the container edge when too long to fit
+- Affected: `NeighborhoodBrief.tsx` (h3), `CompactArticleCard.tsx` (h2, was `line-clamp-2`), `ArticleCard.tsx` (h2 in both hover states, was `line-clamp-3`)
+
+**Enriched Brief Language & Framing Fixes:**
+- Vasastan enriched brief was written entirely in Swedish because Gemini followed the Swedish search instruction too literally
+- Lidingö enriched brief used "Another week on the island" despite being a daily update
+- Fixed in `brief-enricher-gemini.ts`: added "ALWAYS write in English" with allowance for local language terms, and "This is a DAILY update" with explicit prohibition of weekly framing
+- Applied to both `daily_brief` and `weekly_recap` style prompts
+
+**Brighter Section Headings in Daily Brief Cards:**
+- Section headings (e.g., "Tech Brains and Rock and Roll") in `NeighborhoodBrief.tsx` changed from inherited `text-neutral-400` to explicit `text-neutral-200` for better visual hierarchy
+
 **Enriched Brief Greeting Fix:**
 - Gemini enrichment prompt said "Good morning, neighbors or similar" - Gemini interpreted "or similar" as license to use "Good evening" for briefs enriched at certain UTC hours
 - Fixed in `brief-enricher-gemini.ts`: explicitly requires "Good morning" (never evening/afternoon) since briefs are always delivered in the morning

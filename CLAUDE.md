@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-12
 
-Recent work: "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
+Recent work: Single-line feed headlines, enrichment language/framing fixes, brighter brief section headings, "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
 
 ### Email Capture (Engagement-Triggered)
 - **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
@@ -109,6 +109,8 @@ Recent work: "Suggest a Neighborhood" house ad + contact form + admin page, dyna
 - **Early termination:** Drains queue if any batch call hits quota
 - **Two phases:** Phase 1 = briefs (200s budget), Phase 2 = articles (remaining ~80s)
 - **Greeting:** Prompt explicitly requires "Good morning" (never evening/afternoon) since briefs are delivered in the morning regardless of enrichment time
+- **Language:** Prompt requires English output with local language terms sprinkled in naturally (Swedish greetings, French venue names, etc.). Prevents Gemini from writing entirely in the local language when searching local-language sources.
+- **Daily framing:** Prompt explicitly states "This is a DAILY update" and prohibits weekly/monthly framing ("another week", "this week's roundup")
 
 ### Brief Generation Timezone Handling (sync-neighborhood-briefs)
 - **Morning window:** 3-9 AM local time (24 chances at `*/15`, survives 5h cron gaps)
@@ -271,7 +273,7 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **Primary neighborhood:** First item in localStorage array. Indicated across ContextSwitcher (amber dot + "PRIMARY" label), MultiFeed pill bar, HomeSignupEnhanced chips, and NeighborhoodSelectorModal. Users can change primary via "Set primary" actions.
 - **Combo dropdowns:** `bg-surface border-white/[0.08]`, items `hover:text-white hover:bg-white/5`
 - **ViewToggle:** Minimal `w-8 h-8` icons, no pill background. Active: `text-white`, inactive: `text-neutral-300`
-- **DailyBriefWidget:** Renders between Control Deck and FeedList (passed as `dailyBrief` ReactNode prop to `NeighborhoodFeed` or `MultiFeed`). Spacing: `mt-8 mb-12`.
+- **DailyBriefWidget:** Renders between Control Deck and FeedList (passed as `dailyBrief` ReactNode prop to `NeighborhoodFeed` or `MultiFeed`). Spacing: `mt-8 mb-12`. Section headings in brief cards use `text-neutral-200` (brighter than body `text-neutral-400`). Brief headline is single-line (`whitespace-nowrap overflow-hidden`).
 - **MultiFeed integration:** `MultiFeed` now uses `<NeighborhoodHeader mode="all">` instead of standalone header. Accepts `dailyBrief` and `initialWeather` props. Passes `comboComponentNames` for combo subtitle. Pill filter switches the daily brief dynamically - fetches brief from `neighborhood_briefs` table client-side per neighborhood, with skeleton loading state.
 - **MultiFeed render order:** Pills render BEFORE masthead for vertical stability. Sticky `top-[60px]` pills no longer jump when masthead height changes between "My Neighborhoods" and specific neighborhood details.
 - **Drag-to-reorder pills:** Neighborhood pills are `draggable` with HTML5 drag-and-drop. On drop: reorders localStorage, navigates with new URL order. First pill = primary. Visual: dragged pill `opacity-50`, drop target amber left border, `cursor-grab`/`cursor-grabbing`.
@@ -296,7 +298,7 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **Section headers:** `text-xl font-semibold text-neutral-100 mt-10 mb-6` in Merriweather
 
 ### Font Sizes (General)
-- Feed body: 17px, Feed headlines: 20-22px, Metadata: 10-12px, Masthead: 30px
+- Feed body: 17px, Feed headlines: 20-22px (single-line, `whitespace-nowrap overflow-hidden`, no ellipsis), Metadata: 10-12px, Masthead: 30px
 - Article body: 19-22px Merriweather serif
 
 ## Project Structure
