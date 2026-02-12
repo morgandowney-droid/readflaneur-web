@@ -5,6 +5,14 @@
 
 ## 2026-02-12
 
+**Hamptons Neighborhood Renames:**
+- Removed "(Hamptons)" suffix from component neighborhoods: Southampton (Hamptons) -> Southampton, Bridgehampton (Hamptons) -> Bridgehampton, Amagansett (Hamptons) -> Amagansett, Sagaponack (Hamptons) -> Sagaponack
+- City column ("The Hamptons") already provides the grouping context, so suffix was redundant in pills and selector
+
+**Brief Content Sanitization Fixes:**
+- Fixed markdown link stripping regex in `brief-enricher-gemini.ts` to handle nested parentheses in URLs (e.g., Wikipedia links)
+- Added regex in `NeighborhoodBrief.tsx` `cleanContent()` to strip URL-encoded artifacts (`%20The%20Hamptons)`) left by broken markdown link parsing
+
 **Neighborhood Selector Tidy (Two Rounds):**
 - **Alps consolidation:** Gstaad -> Gstaad Swiss Alps, St. Moritz -> St. Moritz Swiss Alps, Courchevel 1850 -> Courchevel 1850 French Alps, new Zermatt Swiss Alps. All under city "Alps". Swiss Alps city group eliminated.
 - **New York Surroundings:** Scarsdale -> Scarsdale NY, Greenwich Backcountry moved here (new city group)
