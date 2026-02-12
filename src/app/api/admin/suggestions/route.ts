@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 
-const supabaseAdmin = createServiceClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 async function checkAdmin() {
   const supabase = await createClient();
@@ -28,7 +30,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: suggestions, error } = await supabaseAdmin
+    const { data: suggestions, error } = await getSupabaseAdmin()
       .from('neighborhood_suggestions')
       .select('*')
       .order('created_at', { ascending: false })
@@ -76,7 +78,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'No valid updates' }, { status: 400 });
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await getSupabaseAdmin()
       .from('neighborhood_suggestions')
       .update(updates)
       .eq('id', id);
