@@ -13,7 +13,7 @@ export function HeroStats({
 
   return (
     <button
-      onClick={openModal}
+      onClick={() => openModal()}
       className="flex items-center justify-center gap-3 text-xs tracking-[0.2em] uppercase text-neutral-500 mb-10 hover:text-neutral-300 transition-colors cursor-pointer w-full"
     >
       <span>{neighborhoodCount} neighborhoods</span>

@@ -88,7 +88,7 @@ export function NeighborhoodHeader({
             {/* Heading — clickable to open selector when showing "My Neighborhoods" */}
             <h1
               className={`font-display text-4xl md:text-5xl text-neutral-100 tracking-wide mb-1${!neighborhoodId ? ' cursor-pointer hover:text-white transition-colors' : ''}`}
-              onClick={!neighborhoodId ? openModal : undefined}
+              onClick={!neighborhoodId ? () => openModal() : undefined}
               role={!neighborhoodId ? 'button' : undefined}
             >
               {neighborhoodName}

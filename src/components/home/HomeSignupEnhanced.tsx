@@ -216,7 +216,7 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
 
         {/* Add Neighborhoods Button - uses global modal */}
         <button
-          onClick={openModal}
+          onClick={() => openModal()}
           className="inline-flex items-center gap-2.5 px-5 py-2.5 border border-dashed border-white/[0.08] text-neutral-400 text-sm tracking-wide hover:border-white/20 hover:text-neutral-100 transition-all duration-200 rounded-lg"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
