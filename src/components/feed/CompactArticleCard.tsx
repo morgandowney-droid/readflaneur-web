@@ -78,7 +78,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
               </>
             )}
           </div>
-          <h2 className="font-semibold text-lg md:text-xl leading-tight mb-1.5 line-clamp-2">
+          <h2 className="font-semibold text-lg md:text-xl leading-tight mb-1.5 whitespace-nowrap overflow-hidden">
             {article.headline}
           </h2>
           {blurb && (
