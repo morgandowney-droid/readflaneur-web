@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { NeighborhoodSuggestionForm } from '@/components/NeighborhoodSuggestionForm';
 
 export default function ContactPage() {
   return (
@@ -32,6 +33,14 @@ export default function ContactPage() {
                 tips@readflaneur.com
               </a>
             </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-medium mb-3">Suggest a Neighborhood</h2>
+            <p className="text-sm text-neutral-400 mb-4">
+              Don&apos;t see your neighborhood on Flaneur? Let us know which neighborhood you&apos;d like us to add.
+            </p>
+            <NeighborhoodSuggestionForm variant="full" />
           </section>
 
           <section>

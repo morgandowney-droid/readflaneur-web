@@ -389,6 +389,42 @@ export async function notifyAdminChangeRequest(params: {
   });
 }
 
+// Notify admin about new neighborhood suggestion
+export async function notifyNeighborhoodSuggestion(params: {
+  suggestion: string;
+  email: string | null;
+  city: string | null;
+  country: string | null;
+}): Promise<boolean> {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://readflaneur.com';
+  const location = [params.city, params.country].filter(Boolean).join(', ') || 'Unknown location';
+
+  const html = `
+    <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h1 style="font-weight: 300; letter-spacing: 0.1em;">FLANEUR</h1>
+      <h2 style="font-weight: 400;">New Neighborhood Suggestion</h2>
+
+      <div style="background: #f5f5f5; padding: 20px; margin: 20px 0;">
+        <p><strong>Suggestion:</strong> ${params.suggestion}</p>
+        <p><strong>From:</strong> ${params.email || 'Anonymous'}</p>
+        <p><strong>Location:</strong> ${location}</p>
+      </div>
+
+      <div style="margin: 30px 0;">
+        <a href="${appUrl}/admin/suggestions" style="background: #000; color: #fff; padding: 12px 24px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.1em; font-size: 14px;">
+          Review Suggestions
+        </a>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({
+    to: 'contact@readflaneur.com',
+    subject: `[Flaneur] New Neighborhood Suggestion: ${params.suggestion}`,
+    html,
+  });
+}
+
 // Helper to build Google Maps URL
 function getMapsUrl(place: { name: string; address: string | null; latitude: number | null; longitude: number | null }): string {
   const query = place.address ? `${place.name}, ${place.address}` : place.name;

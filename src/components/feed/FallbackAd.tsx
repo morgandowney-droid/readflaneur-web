@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import { NeighborhoodSuggestionForm } from '@/components/NeighborhoodSuggestionForm';
 
 // Serializable fallback data passed from server components
 export interface FallbackData {
@@ -216,6 +217,7 @@ function BonusAdDisplay({ ad, variant }: { ad: NonNullable<FallbackData['bonusAd
 
 function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackData['houseAd']>; variant: 'card' | 'story_open' }) {
   const [clickUrl, setClickUrl] = useState(houseAd.click_url);
+  const [showSuggestionForm, setShowSuggestionForm] = useState(false);
 
   // For app_download house ads, resolve a dynamic discovery URL
   useEffect(() => {
@@ -240,6 +242,65 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
         .catch(() => { /* keep static fallback */ });
     } catch { /* keep static fallback */ }
   }, [houseAd.type]);
+
+  // Suggest Neighborhood type: interactive inline form
+  if (houseAd.type === 'suggest_neighborhood') {
+    if (variant === 'story_open') {
+      return (
+        <div className="border border-white/[0.08] bg-surface p-6">
+          <div className="flex flex-col md:flex-row md:items-start gap-4">
+            <div className="flex-1">
+              <p className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-2">
+                Flaneur
+              </p>
+              <h3 className="font-semibold text-lg mb-1">{houseAd.headline}</h3>
+              {houseAd.body && (
+                <p className="text-sm text-neutral-400">{houseAd.body}</p>
+              )}
+              {showSuggestionForm && (
+                <NeighborhoodSuggestionForm variant="compact" />
+              )}
+            </div>
+            {!showSuggestionForm && (
+              <button
+                onClick={() => setShowSuggestionForm(true)}
+                className="inline-block bg-white text-neutral-900 px-6 py-2 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors whitespace-nowrap"
+              >
+                Suggest
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Card variant
+    return (
+      <div className="border border-white/[0.08] bg-surface">
+        <div className="px-3 py-2 border-b border-white/[0.08]">
+          <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
+            Flaneur
+          </span>
+        </div>
+        <div className="p-4">
+          <h3 className="font-semibold text-sm mb-2">{houseAd.headline}</h3>
+          {houseAd.body && (
+            <p className="text-xs text-neutral-400 mb-3">{houseAd.body}</p>
+          )}
+          {showSuggestionForm ? (
+            <NeighborhoodSuggestionForm variant="compact" />
+          ) : (
+            <button
+              onClick={() => setShowSuggestionForm(true)}
+              className="inline-block bg-white text-neutral-900 px-4 py-2 text-xs tracking-widest uppercase hover:bg-neutral-200 transition-colors"
+            >
+              Suggest
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (variant === 'story_open') {
     return (

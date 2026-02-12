@@ -11,6 +11,7 @@ const adminPages = [
   { href: '/admin/ads', title: 'Ads', description: 'Review and approve ads' },
   { href: '/admin/journalists', title: 'Journalists', description: 'Manage journalist applications' },
   { href: '/admin/tips', title: 'Tips', description: 'Review submitted tips' },
+  { href: '/admin/suggestions', title: 'Suggestions', description: 'Neighborhood suggestions from readers' },
   { href: '/admin/analytics', title: 'Analytics', description: 'View site analytics' },
   { href: '/admin/newsletter', title: 'Newsletter', description: 'Manage newsletter subscribers' },
   { href: '/admin/sections', title: 'Sections', description: 'Manage content sections' },
