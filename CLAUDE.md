@@ -10,11 +10,11 @@
 - **Backend API:** https://flaneur-azure.vercel.app
 - **GitHub:** https://github.com/morgandowney-droid/readflaneur-web
 - **Sentry:** https://sentry.io/organizations/flaneur-vk/issues/
-- **200 neighborhoods** across 73 cities, 42 countries (the "Flaneur 200")
+- **270 neighborhoods** across 91 cities, 42 countries
 
 ## Last Updated: 2026-02-12
 
-Recent work: Single-line feed headlines, enrichment language/framing fixes, brighter brief section headings, "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
+Recent work: Neighborhood selector tidy (renames, region consolidation, new neighborhoods), single-line feed headlines, enrichment language/framing fixes, brighter brief section headings, "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
 
 ### Email Capture (Engagement-Triggered)
 - **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
@@ -357,7 +357,7 @@ src/
 
 ## Key Database Tables
 
-- `neighborhoods` — 200 neighborhoods (Flaneur 200) with coordinates, region, country, `is_combo`
+- `neighborhoods` — 270 active neighborhoods with coordinates, region, country, `is_combo`
 - `combo_neighborhoods` — join table for combo components
 - `articles` — news articles with AI images (`enriched_at`, `enrichment_model`)
 - `neighborhood_briefs` — Grok-generated daily summaries

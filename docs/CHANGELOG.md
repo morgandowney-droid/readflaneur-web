@@ -5,6 +5,16 @@
 
 ## 2026-02-12
 
+**Neighborhood Selector Tidy (Two Rounds):**
+- **Alps consolidation:** Gstaad -> Gstaad Swiss Alps, St. Moritz -> St. Moritz Swiss Alps, Courchevel 1850 -> Courchevel 1850 French Alps, new Zermatt Swiss Alps. All under city "Alps". Swiss Alps city group eliminated.
+- **New York Surroundings:** Scarsdale -> Scarsdale NY, Greenwich Backcountry moved here (new city group)
+- **Costa del Sol:** Marbella city renamed, Marbella -> Marbella Municipality, Golden Mile moved here
+- **French Riviera:** Saint-Tropez moved from European Vacation
+- **Hamptons expansion:** Added Southampton, Bridgehampton, Amagansett (all with "(Hamptons)" suffix). Renamed Hamptons (Sagaponack) -> Sagaponack (Hamptons). The Hamptons -> The Hamptons Overview. Consolidated from us-vacation to north-america region.
+- **Dedup:** Duplicate Aspen under US Vacation deactivated (Colorado one stays)
+- **"Suggest a Neighborhood"** moved from bottom of modal to top bar next to "Change my Timezone" with `|` separator. Toggle-to-expand inline form (matching timezone UX). Empty search state links to the top bar form. Old bottom section removed.
+- Active neighborhoods: 200 -> 270 across 91 cities
+
 **Single-Line Feed Headlines:**
 - All feed headlines (daily brief card, compact list view, gallery card) now render on one line with `whitespace-nowrap overflow-hidden` (no wrapping, no ellipsis)
 - Text ends cleanly at the container edge when too long to fit
