@@ -2,10 +2,12 @@ import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 /**
  * GET /api/referral/code
@@ -24,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     if (session?.user) {
       // Authenticated user - look up or generate code from profiles
-      const { data: profile } = await supabaseAdmin
+      const { data: profile } = await getSupabaseAdmin()
         .from('profiles')
         .select('id, referral_code')
         .eq('id', session.user.id)
@@ -39,12 +41,12 @@ export async function GET(request: NextRequest) {
       }
 
       // Generate new code
-      const { data: codeResult } = await supabaseAdmin.rpc('generate_referral_code');
+      const { data: codeResult } = await getSupabaseAdmin().rpc('generate_referral_code');
       if (!codeResult) {
         return NextResponse.json({ error: 'Failed to generate code' }, { status: 500 });
       }
 
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('profiles')
         .update({ referral_code: codeResult })
         .eq('id', profile.id);
@@ -54,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     // Newsletter subscriber auth via email+token
     if (email && token) {
-      const { data: subscriber } = await supabaseAdmin
+      const { data: subscriber } = await getSupabaseAdmin()
         .from('newsletter_subscribers')
         .select('id, referral_code')
         .eq('email', email.toLowerCase().trim())
@@ -69,12 +71,12 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ code: subscriber.referral_code });
       }
 
-      const { data: codeResult } = await supabaseAdmin.rpc('generate_referral_code');
+      const { data: codeResult } = await getSupabaseAdmin().rpc('generate_referral_code');
       if (!codeResult) {
         return NextResponse.json({ error: 'Failed to generate code' }, { status: 500 });
       }
 
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('newsletter_subscribers')
         .update({ referral_code: codeResult })
         .eq('id', subscriber.id);

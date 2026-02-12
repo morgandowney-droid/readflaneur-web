@@ -2,10 +2,12 @@ import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 /**
  * POST /api/referral/track
@@ -25,7 +27,7 @@ export async function POST(request: NextRequest) {
     let referrerType: 'profile' | 'newsletter' | null = null;
     let referrerId: string | null = null;
 
-    const { data: profile } = await supabaseAdmin
+    const { data: profile } = await getSupabaseAdmin()
       .from('profiles')
       .select('id')
       .eq('referral_code', trimmedCode)
@@ -35,7 +37,7 @@ export async function POST(request: NextRequest) {
       referrerType = 'profile';
       referrerId = profile.id;
     } else {
-      const { data: subscriber } = await supabaseAdmin
+      const { data: subscriber } = await getSupabaseAdmin()
         .from('newsletter_subscribers')
         .select('id')
         .eq('referral_code', trimmedCode)
@@ -58,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     // Check for recent click from same IP+code (dedup within 24h)
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { data: existing } = await supabaseAdmin
+    const { data: existing } = await getSupabaseAdmin()
       .from('referrals')
       .select('id')
       .eq('ip_hash', ipHash)
@@ -69,7 +71,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true }); // Already tracked
     }
 
-    await supabaseAdmin.from('referrals').insert({
+    await getSupabaseAdmin().from('referrals').insert({
       referral_code: trimmedCode,
       referrer_type: referrerType,
       referrer_id: referrerId,

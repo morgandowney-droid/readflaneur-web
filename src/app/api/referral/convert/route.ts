@@ -1,10 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 /**
  * POST /api/referral/convert
@@ -25,7 +27,7 @@ export async function POST(request: NextRequest) {
     let referrerType: 'profile' | 'newsletter' | null = null;
     let referrerId: string | null = null;
 
-    const { data: profile } = await supabaseAdmin
+    const { data: profile } = await getSupabaseAdmin()
       .from('profiles')
       .select('id')
       .eq('referral_code', trimmedCode)
@@ -35,7 +37,7 @@ export async function POST(request: NextRequest) {
       referrerType = 'profile';
       referrerId = profile.id;
     } else {
-      const { data: subscriber } = await supabaseAdmin
+      const { data: subscriber } = await getSupabaseAdmin()
         .from('newsletter_subscribers')
         .select('id')
         .eq('referral_code', trimmedCode)
@@ -53,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     // Prevent self-referral
     if (referrerType === 'profile') {
-      const { data: selfProfile } = await supabaseAdmin
+      const { data: selfProfile } = await getSupabaseAdmin()
         .from('profiles')
         .select('email')
         .eq('id', referrerId)
@@ -62,7 +64,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: true });
       }
     } else {
-      const { data: selfSub } = await supabaseAdmin
+      const { data: selfSub } = await getSupabaseAdmin()
         .from('newsletter_subscribers')
         .select('email')
         .eq('id', referrerId)
@@ -76,7 +78,7 @@ export async function POST(request: NextRequest) {
     let referredType: 'profile' | 'newsletter' | null = null;
     let referredId: string | null = null;
 
-    const { data: referredProfile } = await supabaseAdmin
+    const { data: referredProfile } = await getSupabaseAdmin()
       .from('profiles')
       .select('id')
       .eq('email', normalizedEmail)
@@ -86,7 +88,7 @@ export async function POST(request: NextRequest) {
       referredType = 'profile';
       referredId = referredProfile.id;
     } else {
-      const { data: referredSub } = await supabaseAdmin
+      const { data: referredSub } = await getSupabaseAdmin()
         .from('newsletter_subscribers')
         .select('id')
         .eq('email', normalizedEmail)
@@ -99,7 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Try to update an existing click row to converted
-    const { data: existingClick } = await supabaseAdmin
+    const { data: existingClick } = await getSupabaseAdmin()
       .from('referrals')
       .select('id')
       .eq('referral_code', trimmedCode)
@@ -109,7 +111,7 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (existingClick && existingClick.length > 0) {
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('referrals')
         .update({
           status: 'converted',
@@ -121,7 +123,7 @@ export async function POST(request: NextRequest) {
         .eq('id', existingClick[0].id);
     } else {
       // No click row - create a direct conversion (e.g. shared link outside invite page)
-      await supabaseAdmin.from('referrals').insert({
+      await getSupabaseAdmin().from('referrals').insert({
         referral_code: trimmedCode,
         referrer_type: referrerType,
         referrer_id: referrerId,

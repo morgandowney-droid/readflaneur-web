@@ -2,10 +2,12 @@ import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 /**
  * GET /api/referral/stats
@@ -24,14 +26,14 @@ export async function GET(request: NextRequest) {
     const { data: { session } } = await supabase.auth.getSession();
 
     if (session?.user) {
-      const { data: profile } = await supabaseAdmin
+      const { data: profile } = await getSupabaseAdmin()
         .from('profiles')
         .select('referral_code')
         .eq('id', session.user.id)
         .single();
       referralCode = profile?.referral_code || null;
     } else if (email && token) {
-      const { data: subscriber } = await supabaseAdmin
+      const { data: subscriber } = await getSupabaseAdmin()
         .from('newsletter_subscribers')
         .select('referral_code')
         .eq('email', email.toLowerCase().trim())
@@ -47,12 +49,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Count clicks and conversions
-    const { count: clicks } = await supabaseAdmin
+    const { count: clicks } = await getSupabaseAdmin()
       .from('referrals')
       .select('id', { count: 'exact', head: true })
       .eq('referral_code', referralCode);
 
-    const { count: conversions } = await supabaseAdmin
+    const { count: conversions } = await getSupabaseAdmin()
       .from('referrals')
       .select('id', { count: 'exact', head: true })
       .eq('referral_code', referralCode)
