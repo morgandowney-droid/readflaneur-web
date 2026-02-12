@@ -246,22 +246,6 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
         {singleNeighborhood ? (
           <>
-            {/* What's Happening brief */}
-            {brief && (
-              <NeighborhoodBrief
-                headline={brief.headline}
-                content={brief.content}
-                generatedAt={brief.generated_at}
-                neighborhoodName={singleNeighborhood.name}
-                neighborhoodId={singleNeighborhood.id}
-                city={singleNeighborhood.city}
-                sources={brief.sources || []}
-                enrichedContent={brief.enriched_content || undefined}
-                enrichedCategories={brief.enriched_categories || undefined}
-                enrichedAt={brief.enriched_at || undefined}
-              />
-            )}
-
             <NeighborhoodFeed
               items={feedItems}
               city={singleNeighborhood.city}
@@ -271,6 +255,20 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               neighborhoodId={singleNeighborhood.id}
               defaultView="compact"
               initialWeather={initialWeather || undefined}
+              dailyBrief={brief ? (
+                <NeighborhoodBrief
+                  headline={brief.headline}
+                  content={brief.content}
+                  generatedAt={brief.generated_at}
+                  neighborhoodName={singleNeighborhood.name}
+                  neighborhoodId={singleNeighborhood.id}
+                  city={singleNeighborhood.city}
+                  sources={brief.sources || []}
+                  enrichedContent={brief.enriched_content || undefined}
+                  enrichedCategories={brief.enriched_categories || undefined}
+                  enrichedAt={brief.enriched_at || undefined}
+                />
+              ) : undefined}
             />
             {hasMoreArticles && (
               <LoadMoreButton

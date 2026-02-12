@@ -61,19 +61,19 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1">
-            <span className="uppercase tracking-wider">{article.neighborhood?.name}</span>
+          <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1 overflow-hidden whitespace-nowrap">
+            <span className="uppercase tracking-wider shrink-0">{article.neighborhood?.name}</span>
             {article.published_at && (
               <>
-                <span>&middot;</span>
-                <span>{formatDate(article.published_at)}</span>
+                <span className="shrink-0">&middot;</span>
+                <span className="shrink-0">{formatDate(article.published_at)}</span>
               </>
             )}
             {article.category_label && (
               <>
-                <span>&middot;</span>
-                <span className="text-neutral-300 italic">
-                  {article.category_label}
+                <span className="shrink-0">&middot;</span>
+                <span className="text-neutral-300 italic truncate max-w-[120px]">
+                  {article.category_label.replace(new RegExp(`^${article.neighborhood?.name}\\s+`, 'i'), '')}
                 </span>
               </>
             )}

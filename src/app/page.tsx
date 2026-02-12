@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import Link from 'next/link';
 import { HomeSignupEnhanced } from '@/components/home/HomeSignupEnhanced';
 import { HeroStats } from '@/components/home/HeroStats';
 import { SmartRedirect } from '@/components/home/SmartRedirect';
@@ -34,15 +35,17 @@ export default async function HomePage() {
         />
 
         <div className="relative mx-auto max-w-3xl text-center">
-          {/* Logo */}
-          <h1 className="hero-fade-in font-display text-6xl md:text-7xl lg:text-8xl font-light tracking-[0.3em] mb-6">
-            FLÂNEUR
-          </h1>
+          <Link href="/feed" className="hover:opacity-80 transition-opacity">
+            {/* Logo */}
+            <h1 className="hero-fade-in font-display text-6xl md:text-7xl lg:text-8xl font-light tracking-[0.3em] mb-6">
+              FLÂNEUR
+            </h1>
 
-          {/* Tagline */}
-          <p className="hero-fade-in-delay-1 text-sm md:text-base text-neutral-400 mb-12 font-light tracking-[0.5em] uppercase">
-            Local stories, interesting neighborhoods.
-          </p>
+            {/* Tagline */}
+            <p className="hero-fade-in-delay-1 text-sm md:text-base text-neutral-400 mb-12 font-light tracking-[0.5em] uppercase">
+              Local stories, interesting neighborhoods.
+            </p>
+          </Link>
 
           {/* Stats */}
           <div className="hero-fade-in-delay-2">

@@ -36,7 +36,7 @@ function joinWithAnd(names: string[]): string {
   return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
 }
 
-type DropdownKey = 'guide' | 'map' | 'history';
+type DropdownKey = 'guide' | 'map' | 'history' | 'mobile-overflow';
 
 export function NeighborhoodHeader({
   mode = 'single',
@@ -82,7 +82,7 @@ export function NeighborhoodHeader({
   return (
     <header className="mb-2">
       {/* ── MASTHEAD ── */}
-      <div className="text-center pt-6">
+      <div className="text-center pt-2 md:pt-6">
         {isAll ? (
           <>
             {/* Heading — clickable to open selector when showing "My Neighborhoods" */}
@@ -201,105 +201,156 @@ export function NeighborhoodHeader({
           </div>
 
           {/* Col 2: GUIDE / MAP / HISTORY (single mode only) */}
-          <div className="justify-self-center flex items-center gap-4 md:gap-6 shrink-0">
+          <div className="justify-self-center shrink-0">
             {isAll ? (
               <div />
-            ) : isCombo ? (
-              <>
-                {/* GUIDE dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() => setOpenDropdown(openDropdown === 'guide' ? null : 'guide')}
-                    className={linkClass}
-                  >
-                    GUIDE
-                  </button>
-                  {openDropdown === 'guide' && (
-                    <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px] z-10">
-                      {comboInfo.components.map(c => (
-                        <a
-                          key={c.id}
-                          href={`/${citySlug}/${getNeighborhoodSlugFromId(c.id)}/guides`}
-                          className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-white hover:bg-white/5 w-full text-left"
-                        >
-                          {c.name}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* MAP dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() => setOpenDropdown(openDropdown === 'map' ? null : 'map')}
-                    className={linkClass}
-                  >
-                    MAP
-                  </button>
-                  {openDropdown === 'map' && (
-                    <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px] z-10">
-                      {comboInfo.components.map(c => (
-                        <a
-                          key={c.id}
-                          href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(c.id, c.name, c.city))}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-white hover:bg-white/5 w-full text-left"
-                        >
-                          {c.name}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* HISTORY dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() => setOpenDropdown(openDropdown === 'history' ? null : 'history')}
-                    className={linkClass}
-                  >
-                    HISTORY
-                  </button>
-                  {openDropdown === 'history' && (
-                    <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px] z-10">
-                      {comboInfo.components.map(c => (
-                        <a
-                          key={c.id}
-                          href={getWikipediaUrl(c.id, c.name)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-white hover:bg-white/5 w-full text-left"
-                        >
-                          {c.name}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
             ) : (
               <>
-                <Link href={`/${citySlug}/${neighborhoodSlug}/guides`} className={linkClass}>
-                  GUIDE
-                </Link>
-                <a
-                  href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(neighborhoodId, neighborhoodName, city))}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={linkClass}
-                >
-                  MAP
-                </a>
-                <a
-                  href={getWikipediaUrl(neighborhoodId, neighborhoodName)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={linkClass}
-                >
-                  HISTORY
-                </a>
+                {/* Desktop: inline links */}
+                <div className="hidden md:flex items-center gap-6">
+                  {isCombo ? (
+                    <>
+                      {/* GUIDE dropdown */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenDropdown(openDropdown === 'guide' ? null : 'guide')}
+                          className={linkClass}
+                        >
+                          GUIDE
+                        </button>
+                        {openDropdown === 'guide' && (
+                          <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px] z-10">
+                            {comboInfo!.components.map(c => (
+                              <a
+                                key={c.id}
+                                href={`/${citySlug}/${getNeighborhoodSlugFromId(c.id)}/guides`}
+                                className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-white hover:bg-white/5 w-full text-left"
+                              >
+                                {c.name}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* MAP dropdown */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenDropdown(openDropdown === 'map' ? null : 'map')}
+                          className={linkClass}
+                        >
+                          MAP
+                        </button>
+                        {openDropdown === 'map' && (
+                          <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px] z-10">
+                            {comboInfo!.components.map(c => (
+                              <a
+                                key={c.id}
+                                href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(c.id, c.name, c.city))}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-white hover:bg-white/5 w-full text-left"
+                              >
+                                {c.name}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* HISTORY dropdown */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenDropdown(openDropdown === 'history' ? null : 'history')}
+                          className={linkClass}
+                        >
+                          HISTORY
+                        </button>
+                        {openDropdown === 'history' && (
+                          <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px] z-10">
+                            {comboInfo!.components.map(c => (
+                              <a
+                                key={c.id}
+                                href={getWikipediaUrl(c.id, c.name)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-white hover:bg-white/5 w-full text-left"
+                              >
+                                {c.name}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Link href={`/${citySlug}/${neighborhoodSlug}/guides`} className={linkClass}>
+                        GUIDE
+                      </Link>
+                      <a
+                        href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(neighborhoodId, neighborhoodName, city))}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={linkClass}
+                      >
+                        MAP
+                      </a>
+                      <a
+                        href={getWikipediaUrl(neighborhoodId, neighborhoodName)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={linkClass}
+                      >
+                        HISTORY
+                      </a>
+                    </>
+                  )}
+                </div>
+
+                {/* Mobile: overflow button with dropdown */}
+                <div className="md:hidden relative">
+                  <button
+                    onClick={() => setOpenDropdown(openDropdown === 'mobile-overflow' ? null : 'mobile-overflow')}
+                    className="text-neutral-400 hover:text-white transition-colors p-1"
+                    aria-label="More options"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <circle cx="3" cy="8" r="1.5" />
+                      <circle cx="8" cy="8" r="1.5" />
+                      <circle cx="13" cy="8" r="1.5" />
+                    </svg>
+                  </button>
+                  {openDropdown === 'mobile-overflow' && (
+                    <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-white/[0.08] shadow-lg rounded py-2 min-w-[140px] z-10">
+                      <Link
+                        href={isCombo ? `/${citySlug}/${getNeighborhoodSlugFromId(comboInfo!.components[0]?.id || neighborhoodId)}/guides` : `/${citySlug}/${neighborhoodSlug}/guides`}
+                        className="block px-4 py-2 text-xs tracking-[0.2em] uppercase text-neutral-400 hover:text-white hover:bg-white/5"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        Guide
+                      </Link>
+                      <a
+                        href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(neighborhoodId, neighborhoodName, city))}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block px-4 py-2 text-xs tracking-[0.2em] uppercase text-neutral-400 hover:text-white hover:bg-white/5"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        Map
+                      </a>
+                      <a
+                        href={getWikipediaUrl(neighborhoodId, neighborhoodName)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block px-4 py-2 text-xs tracking-[0.2em] uppercase text-neutral-400 hover:text-white hover:bg-white/5"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        History
+                      </a>
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </div>

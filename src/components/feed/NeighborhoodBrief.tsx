@@ -819,7 +819,7 @@ export function NeighborhoodBrief({
 
   return (
     <div
-      className="bg-surface p-5 md:p-6 mb-3 cursor-pointer"
+      className="bg-surface p-5 md:p-6 mb-3 cursor-pointer border-l-2 border-amber-500/40"
       onClick={() => { if (hasMore) setIsExpanded(!isExpanded); }}
     >
       {/* Eyebrow + Live Dot */}

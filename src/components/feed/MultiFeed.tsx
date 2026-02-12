@@ -346,7 +346,7 @@ export function MultiFeed({
 
       {/* ── PILL BAR (above masthead for vertical stability) ── */}
       {isMultiple && (
-        <div className="sticky top-[60px] z-20 bg-[#050505]/95 backdrop-blur-md">
+        <div className="md:sticky md:top-[60px] z-20 md:bg-[#050505]/95 md:backdrop-blur-md">
           <div className="flex items-center gap-1 py-3">
             {/* Left scroll arrow */}
             <button
@@ -357,10 +357,19 @@ export function MultiFeed({
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 3L5 7l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
 
-            {/* Scrollable pills */}
+            {/* Scrollable pills with fade indicators */}
+            <div className="relative overflow-hidden flex-1">
+              {/* Left fade */}
+              {canScrollLeft && (
+                <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#050505] to-transparent z-10 pointer-events-none" />
+              )}
+              {/* Right fade */}
+              {canScrollRight && (
+                <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none" />
+              )}
             <div
               ref={pillsRef}
-              className="flex items-center gap-2 overflow-x-auto no-scrollbar flex-1"
+              className="flex items-center gap-2 overflow-x-auto no-scrollbar"
             >
               {/* "All" pill */}
               <button
@@ -403,6 +412,7 @@ export function MultiFeed({
                   )}
                 </button>
               ))}
+            </div>
             </div>
 
             {/* Right scroll arrow */}

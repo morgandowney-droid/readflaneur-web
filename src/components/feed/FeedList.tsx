@@ -6,6 +6,7 @@ import { CompactArticleCard } from './CompactArticleCard';
 import { AdCard } from './AdCard';
 import { EmailCaptureCard } from './EmailCaptureCard';
 import { FeedView } from './ViewToggle';
+import { useNewUserGracePeriod } from '@/hooks/useNewUserGracePeriod';
 
 interface FeedListProps {
   items: FeedItem[];
@@ -13,7 +14,14 @@ interface FeedListProps {
 }
 
 export function FeedList({ items, view = 'gallery' }: FeedListProps) {
-  if (items.length === 0) {
+  const isGracePeriod = useNewUserGracePeriod();
+
+  // Filter out ads and email prompts during new user grace period
+  const displayItems = isGracePeriod
+    ? items.filter(item => item.type === 'article')
+    : items;
+
+  if (displayItems.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         {/* Empty state icon */}
@@ -36,7 +44,7 @@ export function FeedList({ items, view = 'gallery' }: FeedListProps) {
 
   return (
     <div className={view === 'compact' ? 'space-y-0' : 'space-y-4'}>
-      {items.map((item, index) => {
+      {displayItems.map((item, index) => {
         if (item.type === 'email-prompt') {
           return (
             <div key="email-prompt" className="py-4">

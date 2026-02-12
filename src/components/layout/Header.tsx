@@ -269,7 +269,7 @@ export function Header() {
       )}
     >
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
-        <Link href="/" className="font-display text-xl tracking-[0.35em] font-light hover:opacity-70 transition-opacity">
+        <Link href="/feed" className="font-display text-xl tracking-[0.35em] font-light hover:opacity-70 transition-opacity">
           FLÂNEUR
         </Link>
 
@@ -313,14 +313,25 @@ export function Header() {
                   Admin
                 </Link>
               )}
+              {isAdmin && (
+                <Link
+                  href="/advertiser"
+                  className={cn(
+                    'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center border-b-2',
+                    pathname.startsWith('/advertiser') ? 'text-white font-medium border-amber-500' : 'text-neutral-500 border-transparent'
+                  )}
+                >
+                  Dashboard
+                </Link>
+              )}
               <Link
-                href="/advertiser"
+                href="/feed"
                 className={cn(
                   'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center border-b-2',
-                  pathname.startsWith('/advertiser') ? 'text-white font-medium border-amber-500' : 'text-neutral-500 border-transparent'
+                  pathname === '/feed' ? 'text-white font-medium border-amber-500' : 'text-neutral-500 border-transparent'
                 )}
               >
-                Dashboard
+                Stories
               </Link>
               <button
                 onClick={handleSignOut}
@@ -332,13 +343,13 @@ export function Header() {
           ) : (
             <>
               <Link
-                href="/login"
+                href="/signup"
                 className={cn(
                   'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center',
-                  pathname === '/login' ? 'text-white font-medium' : 'text-neutral-500'
+                  pathname === '/signup' ? 'text-white font-medium' : 'text-neutral-500'
                 )}
               >
-                Login
+                Sign Up
               </Link>
             </>
           )}
@@ -409,9 +420,9 @@ export function Header() {
                     handleNeighborhoodsClick({ preventDefault: () => {} } as React.MouseEvent);
                     setMobileMenuOpen(false);
                   }}
-                  className="mt-3 text-xs text-neutral-500 hover:text-white transition-colors block text-right w-full"
+                  className="mt-3 text-sm text-amber-500/80 hover:text-amber-400 transition-colors block text-right w-full"
                 >
-                  Edit selections
+                  Edit Neighborhoods
                 </button>
               </div>
             )}
@@ -453,6 +464,18 @@ export function Header() {
                 </div>
               </div>
             )}
+            {/* Stories link for all users */}
+            <Link
+              href="/feed"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                'text-sm tracking-widest uppercase transition-colors hover:text-white py-3 border-b border-white/[0.08] block text-right',
+                pathname === '/feed' ? 'text-white font-medium' : 'text-neutral-400'
+              )}
+            >
+              Stories
+            </Link>
+
             {user ? (
               <>
                 {isAdmin && (
@@ -460,46 +483,46 @@ export function Header() {
                     href="/admin/ads"
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
-                      'text-sm tracking-widest uppercase transition-colors hover:text-white py-4 border-b border-white/[0.08] block text-right',
+                      'text-sm tracking-widest uppercase transition-colors hover:text-white py-3 border-b border-white/[0.08] block text-right',
                       pathname.startsWith('/admin') ? 'text-white font-medium' : 'text-neutral-400'
                     )}
                   >
                     Admin
                   </Link>
                 )}
-                <Link
-                  href="/advertiser"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    'text-sm tracking-widest uppercase transition-colors hover:text-white py-4 border-b border-white/[0.08] block text-right',
-                    pathname.startsWith('/advertiser') ? 'text-white font-medium' : 'text-neutral-400'
-                  )}
-                >
-                  Dashboard
-                </Link>
+                {isAdmin && (
+                  <Link
+                    href="/advertiser"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={cn(
+                      'text-sm tracking-widest uppercase transition-colors hover:text-white py-3 border-b border-white/[0.08] block text-right',
+                      pathname.startsWith('/advertiser') ? 'text-white font-medium' : 'text-neutral-400'
+                    )}
+                  >
+                    Dashboard
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     handleSignOut();
                     setMobileMenuOpen(false);
                   }}
-                  className="text-sm tracking-widest uppercase text-neutral-400 hover:text-white transition-colors text-right py-4 w-full"
+                  className="text-sm tracking-widest uppercase text-neutral-400 hover:text-white transition-colors text-right py-3 w-full"
                 >
                   Sign Out
                 </button>
               </>
             ) : (
-              <>
-                <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    'text-sm tracking-widest uppercase transition-colors hover:text-white py-4 block text-right',
-                    pathname === '/login' ? 'text-white font-medium' : 'text-neutral-400'
-                  )}
-                >
-                  Login
-                </Link>
-              </>
+              <Link
+                href="/signup"
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  'text-xs tracking-widest uppercase transition-colors hover:text-white py-3 block text-right',
+                  pathname === '/signup' ? 'text-white font-medium' : 'text-neutral-500'
+                )}
+              >
+                Sign Up
+              </Link>
             )}
           </nav>
         </div>

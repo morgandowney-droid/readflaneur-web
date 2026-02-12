@@ -74,6 +74,7 @@ export default function SignupPage() {
           full_name: fullName,
           role: role,
         },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
@@ -92,9 +93,12 @@ export default function SignupPage() {
       <div className="min-h-[80vh] flex items-center justify-center px-4">
         <div className="w-full max-w-sm text-center">
           <h1 className="text-2xl font-light text-neutral-100 mb-4">Check Your Email</h1>
-          <p className="text-neutral-400 mb-6">
+          <p className="text-neutral-400 mb-3">
             We&apos;ve sent a confirmation link to <strong>{email}</strong>. Click the
             link to activate your account.
+          </p>
+          <p className="text-sm text-neutral-500 mb-6">
+            Not seeing it? Check your spam or junk folder.
           </p>
           <Link
             href="/login"

@@ -31,7 +31,8 @@ export function BackToTopButton({
     <button
       onClick={handleClick}
       className={cn(
-        'fixed top-20 left-1/2 -translate-x-1/2 z-40',
+        'fixed bottom-6 right-4 z-40',
+        'md:bottom-auto md:top-20 md:left-1/2 md:right-auto md:-translate-x-1/2',
         'flex items-center gap-2 px-4 py-2.5',
         'bg-black text-white text-sm font-medium',
         'rounded-full shadow-lg',
@@ -56,7 +57,7 @@ export function BackToTopButton({
           d="M5 10l7-7m0 0l7 7m-7-7v18"
         />
       </svg>
-      <span>{label || 'Back to top'}</span>
+      <span className="hidden md:inline">{label || 'Back to top'}</span>
     </button>
   );
 }

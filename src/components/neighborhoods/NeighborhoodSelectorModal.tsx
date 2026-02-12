@@ -271,6 +271,7 @@ function GlobalNeighborhoodModal({
   const [activeTab, setActiveTab] = useState<'all' | 'community'>('all');
 
   // Community tab state
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [communityInput, setCommunityInput] = useState('');
   const [communityCount, setCommunityCount] = useState(0);
   const [communityCreateStatus, setCommunityCreateStatus] = useState<'idle' | 'validating' | 'generating' | 'success' | 'error'>('idle');
@@ -423,6 +424,25 @@ function GlobalNeighborhoodModal({
       setActiveTab(initialTab);
       const stored = getStoredLocation();
       if (stored?.city) setSettingsCity(stored.city);
+
+      // Auto-focus search on desktop only (prevents keyboard covering screen on mobile)
+      if (window.innerWidth >= 768) {
+        setTimeout(() => searchInputRef.current?.focus(), 100);
+      }
+
+      // Attempt geolocation for default nearest sort (use cached location if available)
+      if (userLocation) {
+        setSortBy('nearest');
+      } else {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setUserLocation([position.coords.latitude, position.coords.longitude]);
+            setSortBy('nearest');
+          },
+          () => { /* Silent fail - stay alphabetical */ },
+          { timeout: 3000 }
+        );
+      }
     }
   }, [isOpen, initialTab]);
 
@@ -962,15 +982,24 @@ function GlobalNeighborhoodModal({
                 )
               )}
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 -m-2 text-neutral-500 hover:text-white transition-colors"
-              aria-label="Close"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/feed"
+                onClick={onClose}
+                className="text-xs tracking-wide uppercase text-neutral-400 hover:text-white transition-colors whitespace-nowrap"
+              >
+                Go to Stories &rsaquo;
+              </Link>
+              <button
+                onClick={onClose}
+                className="p-2 -m-2 text-neutral-500 hover:text-white transition-colors"
+                aria-label="Close"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Tab Toggle */}
@@ -1002,12 +1031,12 @@ function GlobalNeighborhoodModal({
           <div className="mt-4 max-w-[15rem]">
             <div className="relative">
               <input
+                ref={searchInputRef}
                 type="text"
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-transparent border-b border-white/20 text-sm text-white placeholder-neutral-600 py-2 focus:outline-none focus:border-amber-500/50 transition-colors"
-                autoFocus
               />
               {searchQuery && (
                 <button
@@ -1273,7 +1302,7 @@ function GlobalNeighborhoodModal({
                                   {showSetPrimary && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); makePrimary(hood.id); }}
-                                      className="text-[10px] tracking-wider uppercase font-medium text-emerald-500/80 hover:text-emerald-400 opacity-0 group-hover/item:opacity-100 transition-opacity shrink-0 py-0.5"
+                                      className="text-[10px] tracking-wider uppercase font-medium text-emerald-500/80 hover:text-emerald-400 opacity-100 md:opacity-0 md:group-hover/item:opacity-100 transition-opacity shrink-0 py-0.5"
                                       title="Set as primary"
                                     >
                                       Set as Primary
@@ -1364,7 +1393,7 @@ function GlobalNeighborhoodModal({
                           {showSetPrimary && (
                             <button
                               onClick={(e) => { e.stopPropagation(); makePrimary(hood.id); }}
-                              className="text-[10px] tracking-wider uppercase font-medium text-emerald-500/80 hover:text-emerald-400 opacity-0 group-hover/item:opacity-100 transition-opacity shrink-0 py-0.5"
+                              className="text-[10px] tracking-wider uppercase font-medium text-emerald-500/80 hover:text-emerald-400 opacity-100 md:opacity-0 md:group-hover/item:opacity-100 transition-opacity shrink-0 py-0.5"
                               title="Set as primary"
                             >
                               Set as Primary
