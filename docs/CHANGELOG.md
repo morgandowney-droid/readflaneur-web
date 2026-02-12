@@ -5,6 +5,11 @@
 
 ## 2026-02-12
 
+**Vercel Preview Build Fix (Lazy-Init Supabase Admin):**
+- Module-level `createClient()` calls in 6 API routes crashed Vercel preview builds where env vars aren't available during page data collection
+- Converted to `getSupabaseAdmin()` lazy getter functions in: `admin/suggestions`, `referral/code`, `referral/convert`, `referral/track`, `referral/stats`, `suggestions/neighborhood`
+- Preview and production builds now both succeed cleanly
+
 **Hamptons Neighborhood Renames:**
 - Removed "(Hamptons)" suffix from component neighborhoods: Southampton (Hamptons) -> Southampton, Bridgehampton (Hamptons) -> Bridgehampton, Amagansett (Hamptons) -> Amagansett, Sagaponack (Hamptons) -> Sagaponack
 - City column ("The Hamptons") already provides the grouping context, so suffix was redundant in pills and selector
