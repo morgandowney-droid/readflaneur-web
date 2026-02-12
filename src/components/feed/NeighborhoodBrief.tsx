@@ -647,6 +647,8 @@ function cleanContent(text: string): string {
     .replace(/\(https?:\/\/[^)]+\)/g, '')
     // Remove bare URLs
     .replace(/https?:\/\/\S+/g, '')
+    // Strip URL-encoded artifacts from broken markdown link parsing (e.g., "%20The%20Hamptons)")
+    .replace(/%20[A-Za-z%0-9]+(?:%20[A-Za-z%0-9]+)*\)/g, '')
     // Replace em dashes with period and space (cleaner sentence break)
     .replace(/\s*—\s*/g, '. ')
     // Fix any double periods that may result
