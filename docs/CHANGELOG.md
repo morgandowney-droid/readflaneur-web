@@ -5,6 +5,32 @@
 
 ## 2026-02-12
 
+**Community Neighborhoods (User-Created):**
+- Authenticated users can create up to 2 neighborhoods via the "Community" tab in the neighborhood selector modal
+- Gemini Flash validates input (verifies real neighborhood, normalizes name/city/country/region/timezone/coordinates)
+- Duplicate detection: exact slug match + 500m Haversine proximity against all active neighborhoods
+- Full content pipeline runs synchronously (240s budget): Grok brief -> Gemini enrichment -> article -> image generation
+- Graceful degradation: neighborhood activates before pipeline - if any step fails, crons fill gaps on next cycle
+- `POST /api/neighborhoods/create` (maxDuration=300), `GET /api/neighborhoods/my-community-count`
+- DB: `is_community`, `created_by`, `community_status` columns on `neighborhoods` table
+- All community neighborhoods use `region: 'community'`, ID format `city-name` slug
+- Admin page at `/admin/community-neighborhoods` with remove/restore actions
+- Neighborhoods API filters out removed community neighborhoods
+
+**"Create Your Own Neighborhood" House Ad:**
+- New `community_neighborhood` type in `house_ads` table
+- Rotates in feed and article ad slots: "Any neighborhood in the world - one click and we handle the rest"
+- "Get Started" button opens neighborhood selector modal directly to Community tab via `openModal('community')`
+- Hidden via `flaneur-has-community-neighborhood` localStorage once user has created one
+- Success message: "You will receive a daily brief for {name} at 7am local time starting tomorrow"
+
+**Neighborhood Selector Modal - Community Tab:**
+- Tab toggle ("All Neighborhoods" | "Community") below title, above search
+- Community tab: create form (text input + button with validating/generating/success states), 0/2 counter, community neighborhood list grouped by city
+- "Community" badge (`text-[10px] text-neutral-600`) next to community neighborhoods in All tab
+- `openModal()` accepts optional tab parameter for direct-to-tab navigation
+- Not authenticated: "Sign in to create your own neighborhood" with login link
+
 **Global 5-Email-Per-Day Limit:**
 - New shared utility `src/lib/email/daily-email-limit.ts` counts daily_brief_sends + weekly_brief_sends per recipient per UTC day
 - Enforced in all 4 send paths: daily brief sender, instant resend, Sunday Edition cron, on-demand Sunday Edition request

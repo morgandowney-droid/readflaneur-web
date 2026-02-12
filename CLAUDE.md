@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-12
 
-Recent work: Global 5-email-per-day limit, always-resend on primary neighborhood change, Vercel preview build fix (lazy-init Supabase admin in 6 routes), Hamptons component renames (removed redundant suffix), brief content sanitization fixes (nested-paren URLs, URL-encoded artifacts), neighborhood selector tidy (renames, region consolidation, new neighborhoods), single-line feed headlines, enrichment language/framing fixes, brighter brief section headings, "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
+Recent work: Community neighborhoods (user-created neighborhoods with AI validation + full brief pipeline), "Create Your Own Neighborhood" house ad, global 5-email-per-day limit, always-resend on primary neighborhood change, Vercel preview build fix (lazy-init Supabase admin in 6 routes), Hamptons component renames (removed redundant suffix), brief content sanitization fixes (nested-paren URLs, URL-encoded artifacts), neighborhood selector tidy (renames, region consolidation, new neighborhoods), single-line feed headlines, enrichment language/framing fixes, brighter brief section headings, "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
 
 ### Email Capture (Engagement-Triggered)
 - **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
@@ -67,6 +67,27 @@ Recent work: Global 5-email-per-day limit, always-resend on primary neighborhood
 - **Neighborhood selector modal:** `NeighborhoodSelectorModal.tsx` "Suggest a Destination" wired to API endpoint (was direct Supabase insert that silently failed due to RLS). Optional email field added. Both placements: bottom of city list + empty search state.
 - **Admin page:** `/admin/suggestions` - stats row, filter tabs (all/new/reviewed/added/dismissed), table with inline notes editing and status actions
 - **Admin API:** `GET/PATCH /api/admin/suggestions` - admin role auth, service role DB access
+
+### Community Neighborhoods (User-Created)
+- **Limit:** 2 per authenticated user
+- **Create endpoint:** `POST /api/neighborhoods/create` (maxDuration=300) - auth, limit check, Gemini Flash AI validation (verifies real neighborhood, normalizes name/city/country/region/timezone/coordinates), duplicate detection (exact ID + 500m Haversine proximity), insert, pipeline, instant resend
+- **Pipeline:** Runs synchronously after insert with 240s time budget. Each step is try/catch (graceful degradation - crons fill gaps):
+  1. Grok brief generation (`generateNeighborhoodBrief()`)
+  2. Gemini enrichment (`enrichBriefWithGemini()`)
+  3. Article creation (same schema as `generate-brief-articles` cron)
+  4. Image generation (via `/api/internal/generate-image`)
+- **Count endpoint:** `GET /api/neighborhoods/my-community-count` - returns `{ count }` for limit UI
+- **DB columns:** `neighborhoods.is_community` (boolean), `neighborhoods.created_by` (UUID), `neighborhoods.community_status` ('active'|'removed')
+- **Region:** All community neighborhoods use `region: 'community'`
+- **ID format:** `generateCommunityId(city, name)` - deterministic slug (e.g., `paris-montmartre`)
+- **Shared utilities:** `src/lib/community-pipeline.ts` - `generateCommunityId()`, `generateBriefArticleSlug()`, `generatePreviewText()`
+- **Neighborhood selector:** "All Neighborhoods" | "Community" tab toggle. Community tab has create form (text input + button with validating/generating status states), count display, community neighborhood list grouped by city. "Community" badge on community neighborhoods in All tab.
+- **Modal tab param:** `openModal('community')` opens directly to Community tab (used by house ad)
+- **House ad:** `community_neighborhood` type in `house_ads` - "Create Your Own Neighborhood" with "Get Started" button. Opens modal to Community tab. Hidden via `flaneur-has-community-neighborhood` localStorage once user has created one.
+- **Success message:** "You will receive a daily brief for {name} at 7am local time starting tomorrow."
+- **Admin:** `/admin/community-neighborhoods` page + `GET/PATCH /api/admin/community-neighborhoods` - list all, remove/restore (toggles `community_status` + `is_active`)
+- **Neighborhoods API:** Filters out `community_status = 'removed'` neighborhoods
+- **localStorage keys:** `flaneur-has-community-neighborhood` ('true' after first creation)
 
 ### Dynamic House Ads ("Check Out a New Neighborhood")
 - **DB record:** `house_ads` where `type = 'app_download'` updated: headline "Check Out a New Neighborhood", body "See what's happening today in a nearby neighborhood.", click_url `/discover` (static fallback)
@@ -318,13 +339,13 @@ src/
 │   ├── proofs/[token]/            # Customer ad proof page
 │   └── api/
 │       ├── cron/                  # 30+ automated cron jobs
-│       ├── admin/                 # Admin APIs (cleanup-duplicates, suggestions)
+│       ├── admin/                 # Admin APIs (cleanup-duplicates, suggestions, community-neighborhoods)
 │       ├── ads/                   # Availability, checkout, upload, booking-info
 │       ├── reactions/             # Emoji reactions API + saved articles
 │       ├── email/                 # Unsubscribe, preferences, sunday-edition-request
 │       ├── location/              # IP detect-and-match (nearest neighborhoods)
 │       ├── referral/              # Referral code, track, convert, stats
-│       ├── neighborhoods/         # Add neighborhood to collection
+│       ├── neighborhoods/         # Add, create, count community neighborhoods
 │       ├── suggestions/           # Neighborhood suggestion submissions
 │       ├── discover-neighborhood/ # Resolve nearby unsubscribed brief URL
 │       ├── internal/              # Image generation, resend
@@ -339,6 +360,7 @@ src/
     ├── cron-monitor/              # Self-healing system
     ├── email/                     # Scheduler, assembler, sender, templates
     ├── location/                  # IP detection, timezone resolution
+    ├── community-pipeline.ts       # Community neighborhood creation utilities
     ├── discover-neighborhood.ts    # Find nearby unsubscribed neighborhood briefs
     ├── combo-utils.ts             # Combo neighborhood queries
     ├── rss-sources.ts             # RSS feed aggregation (DB + hardcoded fallback)
@@ -358,13 +380,13 @@ src/
 
 ## Key Database Tables
 
-- `neighborhoods` — 270 active neighborhoods with coordinates, region, country, `is_combo`
+- `neighborhoods` — 270+ active neighborhoods with coordinates, region, country, `is_combo`, `is_community`, `created_by`, `community_status`
 - `combo_neighborhoods` — join table for combo components
 - `articles` — news articles with AI images (`enriched_at`, `enrichment_model`)
 - `neighborhood_briefs` — Grok-generated daily summaries
 - `weekly_briefs` — Sunday Edition content (rearview, horizon, holiday, data_point)
 - `ads` — ad campaigns with booking fields (stripe_session_id, customer_email, is_global_takeover) and quality control (proof_token, approval_status, ai_quality_score)
-- `house_ads` — fallback ads (types: waitlist, app_download, advertise, newsletter, sunday_edition, suggest_neighborhood)
+- `house_ads` — fallback ads (types: waitlist, app_download, advertise, newsletter, sunday_edition, suggest_neighborhood, community_neighborhood)
 - `neighborhood_suggestions` — reader-submitted neighborhood requests (suggestion, email, city/country, status: new/reviewed/added/dismissed)
 - `article_reactions` — emoji reactions (bookmark/heart/fire), anonymous + authenticated
 - `cron_executions` / `cron_issues` — monitoring & self-healing
