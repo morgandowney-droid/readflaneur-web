@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-12
 
-Recent work: Community neighborhoods (user-created neighborhoods with AI validation + full brief pipeline), "Create Your Own Neighborhood" house ad, community neighborhoods TypeScript fixes (openModal signature, GlobalRegion exhaustiveness), global 5-email-per-day limit, always-resend on primary neighborhood change, Vercel preview build fix (lazy-init Supabase admin in 6 routes), Hamptons component renames (removed redundant suffix), brief content sanitization fixes (nested-paren URLs, URL-encoded artifacts), neighborhood selector tidy (renames, region consolidation, new neighborhoods), single-line feed headlines, enrichment language/framing fixes, brighter brief section headings, "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
+Recent work: Mobile UX overhaul (navigation wayfinding, feed layout, selector fixes, auth flow, ad grace period), Community neighborhoods (user-created neighborhoods with AI validation + full brief pipeline), "Create Your Own Neighborhood" house ad, community neighborhoods TypeScript fixes (openModal signature, GlobalRegion exhaustiveness), global 5-email-per-day limit, always-resend on primary neighborhood change, Vercel preview build fix (lazy-init Supabase admin in 6 routes), Hamptons component renames (removed redundant suffix), brief content sanitization fixes (nested-paren URLs, URL-encoded artifacts), neighborhood selector tidy (renames, region consolidation, new neighborhoods), single-line feed headlines, enrichment language/framing fixes, brighter brief section headings, "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
 
 ### Email Capture (Engagement-Triggered)
 - **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
@@ -37,6 +37,22 @@ Recent work: Community neighborhoods (user-created neighborhoods with AI validat
 - **OAuth hidden:** Google & Apple login buttons hidden on `/login` and `/signup` pages. Code is fully implemented and ready to re-enable (just uncomment the OAuth button sections).
 - **Current auth:** Email/password only via Supabase Auth
 - **OAuth callback routes:** Both `/auth/callback` and `/api/auth/callback` are intact and working
+
+### Mobile UX Overhaul
+- **Navigation wayfinding:** Logo links to `/feed` (not `/`). "Stories" link in both desktop and mobile nav for all users. "Dashboard" gated behind admin. Default entry point changed from `/login` to `/signup`.
+- **Homepage hero:** FLANEUR + tagline wrapped in `<Link href="/feed">` as manual fallback for returning users.
+- **Mobile menu:** "Edit selections" renamed to "Edit Neighborhoods" with `text-amber-500/80` accent. "Stories" link appears for all users (auth + unauth). Padding tightened to `py-3`.
+- **Back-to-top button:** Bottom-right FAB on mobile (`fixed bottom-6 right-4`), top-center on desktop. Text label hidden on mobile (`hidden md:inline`).
+- **Masthead padding:** `pt-2 md:pt-6` (tighter on mobile, preserved on desktop).
+- **Pills (MultiFeed):** Non-sticky on mobile (`md:sticky md:top-[60px]`), sticky on desktop only. Left/right gradient fade indicators (`w-8 bg-gradient-to-l/r from-[#050505]`) show based on scroll position.
+- **Guide/Map/History:** Hidden on mobile (`hidden md:flex`), replaced with `...` overflow dropdown (`md:hidden`) containing Guide/Map/History as vertical items.
+- **Daily brief styling:** `border-l-2 border-amber-500/40` on brief container to distinguish from ads.
+- **Brief ordering (single view):** Brief moved from before `<NeighborhoodFeed>` to `dailyBrief` prop (renders after header, not before neighborhood name).
+- **Metadata no-wrap:** `CompactArticleCard` metadata row gets `overflow-hidden whitespace-nowrap`. Category label strips redundant neighborhood prefix via regex, truncates at 120px.
+- **Neighborhood selector:** Search input no auto-focus on mobile (desktop only via `window.innerWidth >= 768`). Attempts geolocation on open for default nearest sort. "Set as Primary" always visible on mobile (`opacity-100 md:opacity-0 md:group-hover/item:opacity-100`). "Go to Stories >" escape link in modal header.
+- **Auth flow:** `emailRedirectTo: window.location.origin/auth/callback` prevents localhost redirect. "Check spam" hint on confirmation screen.
+- **Ad grace period:** `useNewUserGracePeriod` hook (`src/hooks/useNewUserGracePeriod.ts`) checks `flaneur-first-visit` localStorage timestamp. `FeedList` filters out ads and email prompts during first 5 days.
+- **New localStorage key:** `flaneur-first-visit` (timestamp, set on first visit)
 
 ### Tracked Referral System
 - **Invite page:** `/invite` - mirrors homepage hero + `HomeSignupEnhanced` + `InviteEmailCapture`. No `SmartRedirect` (visitors must see the page).
@@ -278,7 +294,7 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 
 ### Homepage Hero ("Cinematic Dark Mode")
 - **Background:** `bg-black` base + `radial-gradient(ellipse at top, rgba(30,30,30,1), rgba(0,0,0,1) 70%)` overlay for tonal depth (CSS-only, no image asset)
-- **FLANEUR:** `text-6xl md:text-7xl lg:text-8xl` Cormorant Garamond serif, `tracking-[0.3em]`
+- **FLANEUR:** `text-6xl md:text-7xl lg:text-8xl` Cormorant Garamond serif, `tracking-[0.3em]`. Wrapped in `<Link href="/feed">` with tagline.
 - **Tagline:** `tracking-[0.5em] uppercase`, `text-sm md:text-base`, neutral-400
 - **Animations:** Staggered `heroFadeIn` keyframes in `globals.css` - 1.5s ease-out with 0.3s delays between elements (logo, tagline, stats, rule)
 - **Padding:** `py-28 md:py-36 lg:py-48` for cinematic breathing room
@@ -286,10 +302,10 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 ### NeighborhoodHeader (Feed Page)
 - **Mode prop:** `mode: 'single' | 'all'` (default `'single'`). Controls masthead content and control deck layout.
 - **Masthead (single):** Centered `text-center pt-8`. City label, serif neighborhood name, italic combo sub-line, `NeighborhoodLiveStatus` with `mb-8`.
-- **Masthead (all):** Centered `text-center pt-6`. "My Neighborhoods" heading (clickable - opens NeighborhoodSelectorModal) + "{N} locations" subtitle when no pill active. When a pill is active: city + combo components on one line (dot separator), Maps/History links, LiveStatus. Subtitle conditionally rendered (not fixed-height invisible).
+- **Masthead (all):** Centered `text-center pt-2 md:pt-6` (tighter mobile). "My Neighborhoods" heading (clickable - opens NeighborhoodSelectorModal) + "{N} locations" subtitle when no pill active. When a pill is active: city + combo components on one line (dot separator), Maps/History links, LiveStatus. Subtitle conditionally rendered (not fixed-height invisible).
 - **Maps/History links (all mode):** Small grey dotted-underline links (`text-xs text-neutral-500 decoration-dotted`) under neighborhood name. Only shown when a specific pill is active. Same URLs as single-mode MAP/HISTORY.
 - **NeighborhoodLiveStatus:** `font-mono text-xs font-medium tracking-[0.2em] text-amber-600/80`. Clickable - Google weather. Accepts `initialWeather` prop for server-side pre-fetch (skips client fetch when provided).
-- **Control Deck:** CSS Grid `grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]` for overflow-safe centering. Left: `<ContextSwitcher>` (truncates long names), Center: GUIDE/MAP/HISTORY with `shrink-0` (single) or empty (all), Right: ViewToggle.
+- **Control Deck:** CSS Grid `grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]` for overflow-safe centering. Left: `<ContextSwitcher>` (truncates long names), Center: GUIDE/MAP/HISTORY `hidden md:flex` on desktop, `...` overflow dropdown on mobile (`md:hidden`), Right: ViewToggle.
 - **ContextSwitcher:** `src/components/feed/ContextSwitcher.tsx` - dropdown trigger (`{LABEL} ▾`, truncated `max-w-[80px] md:max-w-[200px]`) + popover (`bg-[#121212] border-white/10 w-64 z-30`). Sections: "All Neighborhoods" (layers icon), neighborhood list (dot + name + city + primary badge + "Set primary" on hover), "Customize List..." (opens modal), "Invite a Friend" (via ShareWidget, shown only to subscribers). Click-outside + Escape close.
 - **useNeighborhoodPreferences:** `src/hooks/useNeighborhoodPreferences.ts` - reads localStorage IDs, fetches name/city from Supabase, cross-tab sync via `storage` event. Exposes `primaryId` and `setPrimary(id)` to reorder localStorage array.
 - **Primary neighborhood:** First item in localStorage array. Indicated across ContextSwitcher (amber dot + "PRIMARY" label), MultiFeed pill bar, HomeSignupEnhanced chips, and NeighborhoodSelectorModal. Users can change primary via "Set primary" actions.
@@ -297,7 +313,7 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **ViewToggle:** Minimal `w-8 h-8` icons, no pill background. Active: `text-white`, inactive: `text-neutral-300`
 - **DailyBriefWidget:** Renders between Control Deck and FeedList (passed as `dailyBrief` ReactNode prop to `NeighborhoodFeed` or `MultiFeed`). Spacing: `mt-8 mb-12`. Section headings in brief cards use `text-neutral-200` (brighter than body `text-neutral-400`). Brief headline is single-line (`whitespace-nowrap overflow-hidden`).
 - **MultiFeed integration:** `MultiFeed` now uses `<NeighborhoodHeader mode="all">` instead of standalone header. Accepts `dailyBrief` and `initialWeather` props. Passes `comboComponentNames` for combo subtitle. Pill filter switches the daily brief dynamically - fetches brief from `neighborhood_briefs` table client-side per neighborhood, with skeleton loading state.
-- **MultiFeed render order:** Pills render BEFORE masthead for vertical stability. Sticky `top-[60px]` pills no longer jump when masthead height changes between "My Neighborhoods" and specific neighborhood details.
+- **MultiFeed render order:** Pills render BEFORE masthead for vertical stability. `md:sticky md:top-[60px]` pills (non-sticky on mobile, sticky on desktop). Left/right gradient fade indicators on pill scroll container. Pills no longer jump when masthead height changes between "My Neighborhoods" and specific neighborhood details.
 - **Drag-to-reorder pills:** Neighborhood pills are `draggable` with HTML5 drag-and-drop. On drop: reorders localStorage, navigates with new URL order. First pill = primary. Visual: dragged pill `opacity-50`, drop target amber left border, `cursor-grab`/`cursor-grabbing`.
 - **ContextSwitcher setPrimary navigation:** `handleSetPrimary` now navigates with reordered IDs after calling `setPrimary()`, so MultiFeed reflects new primary immediately.
 - **Shared slug utils:** `getCitySlugFromId()` and `getNeighborhoodSlugFromId()` in `neighborhood-utils.ts` replace duplicate helpers in MultiFeed, ComboNeighborhoodCards, feed/page.
