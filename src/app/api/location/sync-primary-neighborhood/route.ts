@@ -95,14 +95,12 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', userId);
 
-    // Trigger instant resend if city actually changed
-    if (cityChanged) {
-      performInstantResend(serviceSupabase, {
-        userId,
-        source: 'profile',
-        trigger: 'neighborhood_change',
-      }).catch(() => {});
-    }
+    // Trigger instant resend on any primary change (same city or different)
+    performInstantResend(serviceSupabase, {
+      userId,
+      source: 'profile',
+      trigger: 'neighborhood_change',
+    }).catch(() => {});
 
     return NextResponse.json({ success: true, cityChanged });
   } catch (error) {

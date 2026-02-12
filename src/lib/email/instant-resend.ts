@@ -11,6 +11,7 @@ import { EmailRecipient } from './types';
 import { assembleDailyBrief } from './assembler';
 import { sendDailyBrief } from './sender';
 import { sendEmail } from '@/lib/email';
+import { checkDailyEmailLimit } from './daily-email-limit';
 
 const MAX_RESENDS_PER_DAY = 3;
 
@@ -169,9 +170,16 @@ export async function performInstantResend(
       return { success: false, reason: 'no_recipient' };
     }
 
-    // 2. Check rate limit
+    // 2. Check resend-specific rate limit (3/day)
     const rateLimit = await checkResendRateLimit(supabase, recipient.id);
     if (!rateLimit.allowed) {
+      await sendRateLimitNotice(recipient.email);
+      return { success: false, reason: 'rate_limited' };
+    }
+
+    // 2b. Check global daily email limit (5/day across all email types)
+    const globalLimit = await checkDailyEmailLimit(supabase, recipient.id);
+    if (!globalLimit.allowed) {
       await sendRateLimitNotice(recipient.email);
       return { success: false, reason: 'rate_limited' };
     }

@@ -3,6 +3,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { render } from '@react-email/components';
 import { SundayEditionTemplate, SundayEditionContent } from '@/lib/email/templates/SundayEditionTemplate';
 import { sendEmail } from '@/lib/email';
+import { checkDailyEmailLimit } from '@/lib/email/daily-email-limit';
 import { resolveRecipients } from '@/lib/email/scheduler';
 import { resolveSundayAd } from '@/lib/email/sunday-ad-resolver';
 import { fetchWeather } from '@/lib/email/weather';
@@ -272,6 +273,13 @@ export async function GET(request: Request) {
       }
 
       try {
+        // Check global daily email limit (5/day across all email types)
+        const limit = await checkDailyEmailLimit(supabase, recipient.id);
+        if (!limit.allowed) {
+          console.log(`Daily email limit reached for ${recipient.email} (${limit.count} sent today), skipping Sunday Edition`);
+          continue;
+        }
+
         const html = await render(SundayEditionTemplate(emailContent));
         const subject = `The Sunday Edition: ${hood.name}`;
         const from = process.env.EMAIL_FROM || 'Flaneur <hello@readflaneur.com>';

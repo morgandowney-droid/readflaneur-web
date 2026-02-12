@@ -8,6 +8,7 @@ import { render } from '@react-email/components';
 import { sendEmail } from '@/lib/email';
 import { DailyBriefContent } from './types';
 import { DailyBriefTemplate } from './templates/DailyBriefTemplate';
+import { checkDailyEmailLimit } from './daily-email-limit';
 
 /**
  * Build the email subject line
@@ -36,6 +37,13 @@ export async function sendDailyBrief(
   content: DailyBriefContent
 ): Promise<boolean> {
   try {
+    // Check global daily email limit (5/day across all email types)
+    const limit = await checkDailyEmailLimit(supabase, content.recipient.id);
+    if (!limit.allowed) {
+      console.log(`Daily email limit reached for ${content.recipient.email} (${limit.count} sent today)`);
+      return false;
+    }
+
     // Render the React Email template to HTML
     const html = await render(DailyBriefTemplate(content));
     const subject = buildSubject(content);

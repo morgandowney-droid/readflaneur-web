@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { render } from '@react-email/components';
 import { SundayEditionTemplate, SundayEditionContent } from '@/lib/email/templates/SundayEditionTemplate';
 import { sendEmail } from '@/lib/email';
+import { checkDailyEmailLimit } from '@/lib/email/daily-email-limit';
 import { resolveSundayAd } from '@/lib/email/sunday-ad-resolver';
 import { fetchWeather } from '@/lib/email/weather';
 
@@ -238,6 +239,15 @@ export async function GET(request: Request) {
       : undefined,
     // No secondary neighborhoods in on-demand emails (no recursion)
   };
+
+  // Check global daily email limit (5/day across all email types)
+  const dailyLimit = await checkDailyEmailLimit(supabase, recipientId);
+  if (!dailyLimit.allowed) {
+    return new NextResponse(
+      renderPage('Limit Reached', 'error', `You've reached the maximum of 5 emails per day. Your Sunday Edition will be available tomorrow.`),
+      { status: 429, headers: { 'Content-Type': 'text/html' } }
+    );
+  }
 
   // Resolve sponsor ad
   const sundayAd = await resolveSundayAd(supabase, neighborhoodId);
