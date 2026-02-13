@@ -5,6 +5,12 @@
 
 ## 2026-02-13
 
+**Language Toggle Globe Icon + Mobile Fix:**
+- Replaced Union Jack SVG with wireframe globe icon (`GlobeIcon` component - circle + ellipse meridian + latitude lines)
+- Fixed mobile translate button doing nothing when browser language is English: `detectLanguage()` returned `'en'`, `setLanguage('en')` was a no-op. Now opens the language picker dropdown when detection returns English.
+- Added `data-testid` attributes (`language-toggle`, `language-badge`, `language-picker`) for Playwright testing
+- Playwright test: `e2e/language-toggle-mobile.spec.ts` - 5 tests covering globe visibility, picker open on English browser, language selection + badge, toggle back to English, outside-click close
+
 **Mobile Feed Card Layouts:**
 - Gallery view (ArticleCard): metadata + headline now render above image on mobile (`md:hidden` block with `line-clamp-2` for 2-line headline cap). Desktop retains gradient overlay on image.
 - Compact view (CompactArticleCard): metadata + headline render full-width above image on mobile. Image + blurb sit side-by-side below. Desktop keeps original row layout.
