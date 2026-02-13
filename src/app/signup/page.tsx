@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import { createClient } from '@/lib/supabase/client';
 
 function GoogleIcon() {
@@ -35,6 +36,8 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   const handleOAuthSignup = async (provider: 'google' | 'apple') => {
     setError(null);
@@ -62,6 +65,12 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!captchaToken) {
+      setError('Please complete the verification check.');
+      return;
+    }
+
     setIsLoading(true);
 
     const supabase = createClient();
@@ -75,12 +84,15 @@ export default function SignupPage() {
           role: role,
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
+        captchaToken,
       },
     });
 
     if (error) {
       setError(error.message);
       setIsLoading(false);
+      turnstileRef.current?.reset();
+      setCaptchaToken(null);
       return;
     }
 
@@ -207,9 +219,21 @@ export default function SignupPage() {
             )}
           </div>
 
+          {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+            <div className="flex justify-center">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                onSuccess={setCaptchaToken}
+                onExpire={() => setCaptchaToken(null)}
+                options={{ theme: 'dark', size: 'flexible' }}
+              />
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || (!!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken)}
             className="w-full bg-white text-neutral-900 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50"
           >
             {isLoading ? 'Creating account...' : 'Create Account'}

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import { createClient } from '@/lib/supabase/client';
 
 function GoogleIcon() {
@@ -35,6 +36,8 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   const handleOAuthLogin = async (provider: 'google' | 'apple') => {
     setError(null);
@@ -62,29 +65,21 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken) {
+      setError('Please complete the verification check.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      console.log('Creating Supabase client...');
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      console.log('Supabase URL:', supabaseUrl);
-      console.log('Supabase Key exists:', !!supabaseKey);
-      console.log('Supabase Key starts with:', supabaseKey?.substring(0, 10));
-
-      if (!supabaseUrl || !supabaseKey) {
-        setError('Configuration error: Supabase credentials not found. Please refresh the page.');
-        setIsLoading(false);
-        return;
-      }
-
       const supabase = createClient();
-
-      console.log('Attempting login for:', email);
 
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: captchaToken ? { captchaToken } : undefined,
       });
 
       console.log('Login response:', { data, authError });
@@ -92,6 +87,8 @@ function LoginForm() {
       if (authError) {
         setError(authError.message);
         setIsLoading(false);
+        turnstileRef.current?.reset();
+        setCaptchaToken(null);
         return;
       }
 
@@ -130,9 +127,10 @@ function LoginForm() {
         window.location.href = redirect;
       }, 300);
     } catch (err) {
-      console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       setIsLoading(false);
+      turnstileRef.current?.reset();
+      setCaptchaToken(null);
     }
   };
 
@@ -191,9 +189,21 @@ function LoginForm() {
           />
         </div>
 
+        {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+          <div className="flex justify-center">
+            <Turnstile
+              ref={turnstileRef}
+              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+              onSuccess={setCaptchaToken}
+              onExpire={() => setCaptchaToken(null)}
+              options={{ theme: 'dark', size: 'flexible' }}
+            />
+          </div>
+        )}
+
         <button
           type="submit"
-          disabled={isLoading || success}
+          disabled={isLoading || success || (!!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken)}
           className="w-full bg-white text-neutral-900 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50 rounded-lg"
         >
           {isLoading ? 'Signing in...' : success ? 'Redirecting...' : 'Sign In'}
