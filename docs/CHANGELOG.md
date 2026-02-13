@@ -5,6 +5,16 @@
 
 ## 2026-02-13
 
+**Mobile Neighborhood Dropdown:**
+- Replaced horizontal pill scroll with dropdown selector on mobile (<768px) - shows full neighborhood list in one tap instead of sideways scrolling
+- Dropdown trigger: shows "All Stories" or active neighborhood name + city, chevron rotates on open
+- Dropdown list: "All Stories" with grid icon, neighborhoods with colored dots (amber=primary), PRIMARY badge, amber checkmark for active selection
+- `max-h-[60vh]` scrollable list handles 19+ neighborhoods comfortably
+- Click-outside-to-close via mousedown listener on document
+- Desktop pill bar completely unchanged (drag-to-reorder, scroll arrows, fade indicators)
+- Both breakpoints share `activeFilter` state - switching viewport stays in sync
+- Manage button + ViewToggle extracted into shared `controlButtons` const (no duplication)
+
 **Signup Page Polish:**
 - Removed "I am a..." role picker (reader/journalist/advertiser) - all signups default to `reader`, reducing friction
 - Added `rounded-lg` to all inputs, buttons, and error box matching login page style
