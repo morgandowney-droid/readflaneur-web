@@ -5,6 +5,12 @@
 
 ## 2026-02-13
 
+**Theme Accent & Contrast Fixes:**
+- Added `--theme-accent` CSS variable: `#fbbf24` (amber-400) in dark mode, `#b45309` (amber-700) in light mode. Registered as `text-accent` / `text-accent-muted` via `@theme inline`.
+- Replaced all `text-amber-400` selected/interactive states with `text-accent` in NeighborhoodSelectorModal, MultiFeed, ContextSwitcher, and Header hamburger. Fixes near-invisible selected text in light mode (amber-400 on white = 1.7:1 contrast ratio).
+- Fixed hamburger neighborhood chips: changed `bg-canvas` to `bg-elevated rounded` so chips are visible in light mode (`#fafaf9` on `#ffffff` was invisible).
+- Fixed hamburger scroll-close: added 50px delta threshold to prevent false triggers from layout shifts or incidental touch events.
+
 **Full Light/Dark Theme System:**
 - CSS variable foundation: 11 semantic tokens (canvas, surface, elevated, fg, fg-muted, fg-subtle, border, border-strong, hover, overlay, header-bg) defined in `:root` (dark) and `[data-theme="light"]`
 - Updated `@theme inline` to expose all tokens as Tailwind color utilities (`text-fg`, `bg-canvas`, `border-border`, etc.)
