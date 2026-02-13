@@ -9,7 +9,7 @@ export default function TestEnrichedBriefPage() {
         </h1>
         <EnrichedBriefDemo />
 
-        <div className="mt-8 text-center text-sm text-neutral-500">
+        <div className="mt-8 text-center text-sm text-fg-subtle">
           <p>Click &quot;View 6 verified sources&quot; to see the enriched view</p>
         </div>
       </div>

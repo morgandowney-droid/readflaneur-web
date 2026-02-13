@@ -27,7 +27,7 @@ export default async function DiscoverPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-black text-white py-28 md:py-36 lg:py-48 px-6">
+      <section data-theme="dark" className="relative overflow-hidden bg-black text-white py-28 md:py-36 lg:py-48 px-6">
         <div
           className="absolute inset-0"
           style={{ background: 'radial-gradient(ellipse at top, rgba(30,30,30,1), rgba(0,0,0,1) 70%)' }}
@@ -39,7 +39,7 @@ export default async function DiscoverPage() {
               FLÂNEUR
             </h1>
 
-            <p className="hero-fade-in-delay-1 text-sm md:text-base text-neutral-400 mb-12 font-light tracking-[0.5em] uppercase">
+            <p className="hero-fade-in-delay-1 text-sm md:text-base text-fg-muted mb-12 font-light tracking-[0.5em] uppercase">
               Local stories, interesting neighborhoods.
             </p>
           </Link>
@@ -48,7 +48,7 @@ export default async function DiscoverPage() {
             <HeroStats neighborhoodCount={regularNeighborhoods.length} cityCount={cityCount} />
           </div>
 
-          <div className="hero-fade-in-delay-3 w-8 h-px bg-neutral-600 mx-auto" />
+          <div className="hero-fade-in-delay-3 w-8 h-px bg-fg-subtle mx-auto" />
         </div>
       </section>
 

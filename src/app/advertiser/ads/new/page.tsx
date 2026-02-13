@@ -21,7 +21,7 @@ function AdPreviewCard({ headline, imageUrl }: { headline: string; imageUrl: str
   return (
     <div className="bg-white overflow-hidden">
       <div className="px-3 py-2">
-        <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
+        <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">
           SPONSORED
         </span>
       </div>
@@ -36,7 +36,7 @@ function AdPreviewCard({ headline, imageUrl }: { headline: string; imageUrl: str
             }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-neutral-300 text-sm">
+          <div className="w-full h-full flex items-center justify-center text-fg-muted text-sm">
             Your image here
           </div>
         )}
@@ -185,10 +185,10 @@ export default function CreateAdPage() {
           </div>
 
           <div className="bg-neutral-50 p-6 mb-6 text-left">
-            <p className="text-xs tracking-widest uppercase text-neutral-400 mb-3">
+            <p className="text-xs tracking-widest uppercase text-fg-muted mb-3">
               What happens next?
             </p>
-            <ol className="text-sm text-neutral-600 space-y-3">
+            <ol className="text-sm text-fg-subtle space-y-3">
               <li><strong>1.</strong> Our team reviews your ad to ensure it meets our guidelines</li>
               <li><strong>2.</strong> You&apos;ll receive an email notification when approved</li>
               <li><strong>3.</strong> Complete payment to make your ad go live</li>
@@ -197,7 +197,7 @@ export default function CreateAdPage() {
 
           <a
             href="/advertiser"
-            className="inline-block bg-black text-white px-8 py-3 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors"
+            className="inline-block bg-black text-white px-8 py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors"
           >
             View Dashboard
           </a>
@@ -216,10 +216,10 @@ export default function CreateAdPage() {
 
             {/* Ad Guidelines */}
             <div className="mb-8 p-6 bg-neutral-50 border border-neutral-200">
-              <h2 className="text-xs tracking-widest uppercase text-neutral-400 mb-4">
+              <h2 className="text-xs tracking-widest uppercase text-fg-muted mb-4">
                 Creative Guidelines
               </h2>
-              <div className="space-y-4 text-sm text-neutral-600">
+              <div className="space-y-4 text-sm text-fg-subtle">
                 <div>
                   <p className="font-medium text-black mb-2">What works well:</p>
                   <ul className="space-y-1 ml-4">
@@ -239,7 +239,7 @@ export default function CreateAdPage() {
                     <li>• Garish colors that clash with our editorial aesthetic</li>
                   </ul>
                 </div>
-                <p className="text-xs text-neutral-400 pt-2 border-t border-neutral-200">
+                <p className="text-xs text-fg-muted pt-2 border-t border-neutral-200">
                   Ads that match the Flâneur aesthetic perform significantly better with our readers.
                 </p>
               </div>
@@ -253,7 +253,7 @@ export default function CreateAdPage() {
               )}
 
               <div>
-                <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+                <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
                   Headline
                 </label>
                 <input
@@ -268,7 +268,7 @@ export default function CreateAdPage() {
               </div>
 
               <div>
-                <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+                <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
                   Image URL
                 </label>
                 <input
@@ -279,13 +279,13 @@ export default function CreateAdPage() {
                   className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none"
                   placeholder="https://example.com/image.jpg"
                 />
-                <p className="text-xs text-neutral-400 mt-1">
+                <p className="text-xs text-fg-muted mt-1">
                   Recommended: 1200x675px (16:9 aspect ratio)
                 </p>
               </div>
 
               <div>
-                <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+                <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
                   Click URL
                 </label>
                 <input
@@ -299,7 +299,7 @@ export default function CreateAdPage() {
               </div>
 
               <div>
-                <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+                <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
                   Placement
                 </label>
                 <div className="space-y-3 mb-6">
@@ -313,7 +313,7 @@ export default function CreateAdPage() {
                     />
                     <div>
                       <p className="font-medium">Feed Ad</p>
-                      <p className="text-sm text-neutral-400">
+                      <p className="text-sm text-fg-muted">
                         Appears between stories in the neighborhood feed
                       </p>
                     </div>
@@ -328,7 +328,7 @@ export default function CreateAdPage() {
                     />
                     <div>
                       <p className="font-medium">Story Open Ad</p>
-                      <p className="text-sm text-neutral-400">
+                      <p className="text-sm text-fg-muted">
                         Appears at the top and bottom of individual articles
                       </p>
                     </div>
@@ -337,7 +337,7 @@ export default function CreateAdPage() {
               </div>
 
               <div>
-                <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+                <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
                   Targeting
                 </label>
                 <div className="space-y-3">
@@ -351,7 +351,7 @@ export default function CreateAdPage() {
                     />
                     <div>
                       <p className="font-medium">Specific Neighborhood</p>
-                      <p className="text-sm text-neutral-400">
+                      <p className="text-sm text-fg-muted">
                         Target one neighborhood - from $150/week
                       </p>
                     </div>
@@ -366,7 +366,7 @@ export default function CreateAdPage() {
                     />
                     <div>
                       <p className="font-medium">Global</p>
-                      <p className="text-sm text-neutral-400">
+                      <p className="text-sm text-fg-muted">
                         Show in all neighborhoods - $3,000/month
                       </p>
                     </div>
@@ -393,10 +393,10 @@ export default function CreateAdPage() {
               </div>
 
               <div>
-                <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+                <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
                   Section Targeting (Optional)
                 </label>
-                <p className="text-sm text-neutral-500 mb-3">
+                <p className="text-sm text-fg-subtle mb-3">
                   Target your ad to specific content sections. Leave empty to show everywhere.
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -424,7 +424,7 @@ export default function CreateAdPage() {
                   ))}
                 </div>
                 {formData.sectionIds.length > 0 && (
-                  <p className="text-xs text-neutral-400 mt-2">
+                  <p className="text-xs text-fg-muted mt-2">
                     {formData.sectionIds.length} section{formData.sectionIds.length !== 1 ? 's' : ''} selected
                   </p>
                 )}
@@ -432,14 +432,14 @@ export default function CreateAdPage() {
 
               <div className="pt-4 border-t border-neutral-200">
                 <div className="bg-neutral-50 p-4 mb-4">
-                  <p className="text-sm text-neutral-600">
+                  <p className="text-sm text-fg-subtle">
                     <strong>Review Process:</strong> All ads are reviewed before going live to ensure they meet our community guidelines. You&apos;ll receive an email once approved (within 24 hours, usually much more quickly), then you can complete payment.
                   </p>
                 </div>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                  className="w-full bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50"
                 >
                   {isLoading ? 'Submitting...' : 'Submit for Review'}
                 </button>
@@ -449,11 +449,11 @@ export default function CreateAdPage() {
 
           {/* Live Preview */}
           <div>
-            <p className="text-xs tracking-widest uppercase text-neutral-400 mb-4">
+            <p className="text-xs tracking-widest uppercase text-fg-muted mb-4">
               Live Preview
             </p>
             <div className="bg-neutral-100 p-4 rounded sticky top-24">
-              <p className="text-xs text-neutral-400 mb-3 text-center">
+              <p className="text-xs text-fg-muted mb-3 text-center">
                 How your ad will appear
               </p>
               <div className="space-y-3 max-w-sm mx-auto">
@@ -466,7 +466,7 @@ export default function CreateAdPage() {
 
                 <MockArticleCard {...mockArticles[1]} />
               </div>
-              <p className="text-xs text-neutral-400 mt-4 text-center">
+              <p className="text-xs text-fg-muted mt-4 text-center">
                 {formData.isGlobal
                   ? 'Shown in all neighborhoods'
                   : selectedNeighborhood

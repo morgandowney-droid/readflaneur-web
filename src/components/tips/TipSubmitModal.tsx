@@ -74,14 +74,14 @@ export default function TipSubmitModal({
       {/* Modal */}
       <div className="relative w-full max-w-lg max-h-[90vh] bg-surface rounded-lg shadow-xl overflow-hidden mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08]">
-          <h2 className="text-lg font-medium text-neutral-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-medium text-fg">
             {showSuccess ? 'Thank You!' : 'Share a Tip or Suggestion'}
           </h2>
           <button
             type="button"
             onClick={handleClose}
-            className="p-1 text-neutral-400 hover:text-white transition-colors"
+            className="p-1 text-fg-muted hover:text-fg transition-colors"
             aria-label="Close"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,15 +100,15 @@ export default function TipSubmitModal({
                 </svg>
               </div>
 
-              <h3 className="text-xl font-medium text-neutral-100">Submitted Successfully</h3>
+              <h3 className="text-xl font-medium text-fg">Submitted Successfully</h3>
 
-              <p className="text-neutral-400 text-sm">
+              <p className="text-fg-muted text-sm">
                 Thank you for contributing to local journalism. Our editorial team
                 will review your submission and may reach out if we have questions.
               </p>
 
               {tipId && (
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-fg-subtle">
                   Reference ID: {tipId.slice(0, 8)}
                 </p>
               )}
@@ -116,7 +116,7 @@ export default function TipSubmitModal({
               <button
                 type="button"
                 onClick={handleClose}
-                className="mt-4 px-6 py-2 bg-black text-white text-sm uppercase tracking-wider hover:bg-neutral-800"
+                className="mt-4 px-6 py-2 bg-black text-white text-sm uppercase tracking-wider hover:bg-elevated"
               >
                 Done
               </button>
@@ -132,10 +132,10 @@ export default function TipSubmitModal({
 
         {/* Footer with email contact */}
         {!showSuccess && (
-          <div className="px-6 py-3 border-t border-white/[0.08] bg-canvas">
-            <p className="text-xs text-neutral-500 text-center">
+          <div className="px-6 py-3 border-t border-border bg-canvas">
+            <p className="text-xs text-fg-subtle text-center">
               If you feel like emailing us instead:{' '}
-              <a href="mailto:contact@readflaneur.com" className="text-neutral-100 hover:underline">
+              <a href="mailto:contact@readflaneur.com" className="text-fg hover:underline">
                 contact@readflaneur.com
               </a>
             </p>

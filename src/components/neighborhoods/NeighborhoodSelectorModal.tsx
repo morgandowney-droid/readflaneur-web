@@ -833,13 +833,13 @@ function GlobalNeighborhoodModal({
       {/* Modal Content */}
       <div
         ref={modalRef}
-        className="absolute inset-x-0 top-2 bottom-0 sm:inset-8 md:inset-12 lg:inset-y-12 lg:inset-x-24 xl:inset-y-16 xl:inset-x-32 bg-neutral-900/90 backdrop-blur-md border border-white/10 rounded-t-xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col animate-modal-slide-up"
+        className="absolute inset-x-0 top-2 bottom-0 sm:inset-8 md:inset-12 lg:inset-y-12 lg:inset-x-24 xl:inset-y-16 xl:inset-x-32 bg-surface/90 backdrop-blur-md border border-border-strong rounded-t-xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col animate-modal-slide-up"
       >
         {/* Modal Header */}
-        <div className="flex-shrink-0 px-6 py-5 border-b border-white/10">
+        <div className="flex-shrink-0 px-6 py-5 border-b border-border-strong">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-display text-2xl font-light tracking-wide text-white">
+              <h2 className="font-display text-2xl font-light tracking-wide text-fg">
                 City Search
               </h2>
               {/* Selection counter + change primary + change timezone */}
@@ -849,37 +849,37 @@ function GlobalNeighborhoodModal({
                     <span className="text-xs font-mono text-amber-400 tabular-nums">
                       {selected.size} selected
                     </span>
-                    <span className="text-neutral-600 text-xs">|</span>
+                    <span className="text-fg-subtle text-xs">|</span>
                   </>
                 )}
                 {primaryId && selected.size > 1 && (
                   <>
                     <button
                       onClick={scrollToPrimary}
-                      className="text-xs text-neutral-500 hover:text-amber-400 transition-colors"
+                      className="text-xs text-fg-subtle hover:text-amber-400 transition-colors"
                     >
                       Change my Primary Neighborhood
                     </button>
-                    <span className="text-neutral-600 text-xs">|</span>
+                    <span className="text-fg-subtle text-xs">|</span>
                   </>
                 )}
                 <button
                   onClick={() => setShowTimezone(!showTimezone)}
                   className={`text-xs transition-colors ${
-                    showTimezone ? 'text-amber-400' : 'text-neutral-500 hover:text-amber-400'
+                    showTimezone ? 'text-amber-400' : 'text-fg-subtle hover:text-amber-400'
                   }`}
                   title="This will update the time at which you will receive daily or weekly 7am emails"
                 >
                   Change my Timezone
                 </button>
-                <span className="text-neutral-600 text-xs">|</span>
+                <span className="text-fg-subtle text-xs">|</span>
                 <button
                   onClick={() => {
                     setShowSuggestion(!showSuggestion);
                     if (!showSuggestion) setTimeout(() => suggestionInputRef.current?.focus(), 50);
                   }}
                   className={`text-xs transition-colors ${
-                    showSuggestion ? 'text-amber-400' : 'text-neutral-500 hover:text-amber-400'
+                    showSuggestion ? 'text-amber-400' : 'text-fg-subtle hover:text-amber-400'
                   }`}
                 >
                   Suggest a Neighborhood
@@ -888,18 +888,18 @@ function GlobalNeighborhoodModal({
               {/* Inline timezone selector */}
               {showTimezone && (
                 <div className="flex items-center gap-3 mt-3">
-                  <label className="text-[11px] tracking-[0.15em] uppercase text-neutral-500 shrink-0">City</label>
+                  <label className="text-[11px] tracking-[0.15em] uppercase text-fg-subtle shrink-0">City</label>
                   <select
                     value={settingsCity}
                     onChange={(e) => {
                       setSettingsCity(e.target.value);
                       setSettingsSaved(false);
                     }}
-                    className="flex-1 bg-transparent border-b border-white/20 text-sm text-white py-1.5 focus:outline-none focus:border-amber-500/50 appearance-none cursor-pointer max-w-[200px]"
+                    className="flex-1 bg-transparent border-b border-border-strong text-sm text-fg py-1.5 focus:outline-none focus:border-amber-500/50 appearance-none cursor-pointer max-w-[200px]"
                   >
-                    <option value="" className="bg-neutral-900">Select city...</option>
+                    <option value="" className="bg-surface">Select city...</option>
                     {allCityNames.map(c => (
-                      <option key={c} value={c} className="bg-neutral-900">{c}</option>
+                      <option key={c} value={c} className="bg-surface">{c}</option>
                     ))}
                   </select>
                   <button
@@ -916,11 +916,11 @@ function GlobalNeighborhoodModal({
                       setSettingsDetecting(false);
                     }}
                     disabled={settingsDetecting}
-                    className="text-neutral-500 hover:text-white transition-colors p-1.5 shrink-0"
+                    className="text-fg-subtle hover:text-fg transition-colors p-1.5 shrink-0"
                     title="Detect my city"
                   >
                     {settingsDetecting ? (
-                      <div className="w-4 h-4 border border-neutral-600 border-t-amber-400 rounded-full animate-spin" />
+                      <div className="w-4 h-4 border border-border border-t-amber-400 rounded-full animate-spin" />
                     ) : (
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -948,7 +948,7 @@ function GlobalNeighborhoodModal({
               {/* Inline suggestion form */}
               {showSuggestion && (
                 suggestionStatus === 'success' ? (
-                  <p className="text-xs text-neutral-500 mt-3">
+                  <p className="text-xs text-fg-subtle mt-3">
                     Thank you. We have added this to our radar.
                   </p>
                 ) : (
@@ -960,7 +960,7 @@ function GlobalNeighborhoodModal({
                       onChange={(e) => setSuggestionText(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSuggestionSubmit()}
                       placeholder="e.g., Notting Hill, London"
-                      className="flex-1 bg-transparent border-b border-white/20 text-sm text-white placeholder-neutral-600 py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors max-w-[200px]"
+                      className="flex-1 bg-transparent border-b border-border-strong text-sm text-fg placeholder-fg-subtle py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors max-w-[200px]"
                       disabled={suggestionStatus === 'submitting'}
                     />
                     <input
@@ -968,7 +968,7 @@ function GlobalNeighborhoodModal({
                       value={suggestionEmail}
                       onChange={(e) => setSuggestionEmail(e.target.value)}
                       placeholder="Email (optional)"
-                      className="flex-1 bg-transparent border-b border-white/20 text-sm text-white placeholder-neutral-600 py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors max-w-[160px]"
+                      className="flex-1 bg-transparent border-b border-border-strong text-sm text-fg placeholder-fg-subtle py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors max-w-[160px]"
                       disabled={suggestionStatus === 'submitting'}
                     />
                     <button
@@ -986,13 +986,13 @@ function GlobalNeighborhoodModal({
               <Link
                 href="/feed"
                 onClick={onClose}
-                className="text-xs tracking-wide uppercase text-neutral-400 hover:text-white transition-colors whitespace-nowrap"
+                className="text-xs tracking-wide uppercase text-fg-muted hover:text-fg transition-colors whitespace-nowrap"
               >
                 Go to Stories &rsaquo;
               </Link>
               <button
                 onClick={onClose}
-                className="p-2 -m-2 text-neutral-500 hover:text-white transition-colors"
+                className="p-2 -m-2 text-fg-subtle hover:text-fg transition-colors"
                 aria-label="Close"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1009,7 +1009,7 @@ function GlobalNeighborhoodModal({
               className={`px-3 py-1.5 text-xs rounded-full border transition-all ${
                 activeTab === 'all'
                   ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
-                  : 'border-white/20 text-neutral-400 hover:text-white hover:border-white/40'
+                  : 'border-border-strong text-fg-muted hover:text-fg hover:border-border-strong'
               }`}
             >
               All Neighborhoods
@@ -1019,7 +1019,7 @@ function GlobalNeighborhoodModal({
               className={`px-3 py-1.5 text-xs rounded-full border transition-all ${
                 activeTab === 'community'
                   ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
-                  : 'border-white/20 text-neutral-400 hover:text-white hover:border-white/40'
+                  : 'border-border-strong text-fg-muted hover:text-fg hover:border-border-strong'
               }`}
             >
               Community Created
@@ -1036,12 +1036,12 @@ function GlobalNeighborhoodModal({
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent border-b border-white/20 text-sm text-white placeholder-neutral-600 py-2 focus:outline-none focus:border-amber-500/50 transition-colors"
+                className="w-full bg-transparent border-b border-border-strong text-sm text-fg placeholder-fg-subtle py-2 focus:outline-none focus:border-amber-500/50 transition-colors"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 text-fg-subtle hover:text-fg"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
@@ -1061,7 +1061,7 @@ function GlobalNeighborhoodModal({
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full border transition-all whitespace-nowrap ${
                 sortBy === 'nearest'
                   ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
-                  : 'border-white/20 text-neutral-400 hover:text-white hover:border-white/40'
+                  : 'border-border-strong text-fg-muted hover:text-fg hover:border-border-strong'
               }`}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1075,7 +1075,7 @@ function GlobalNeighborhoodModal({
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full border transition-all whitespace-nowrap ${
                 sortBy === 'region'
                   ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
-                  : 'border-white/20 text-neutral-400 hover:text-white hover:border-white/40'
+                  : 'border-border-strong text-fg-muted hover:text-fg hover:border-border-strong'
               }`}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1096,15 +1096,15 @@ function GlobalNeighborhoodModal({
               {userId ? (
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <h3 className="text-xs tracking-[0.2em] uppercase text-neutral-500 shrink-0">Create a Neighborhood</h3>
-                    <div className="flex-1 h-px bg-white/5" />
-                    <span className="text-xs font-mono text-neutral-500 tabular-nums">
+                    <h3 className="text-xs tracking-[0.2em] uppercase text-fg-subtle shrink-0">Create a Neighborhood</h3>
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-xs font-mono text-fg-subtle tabular-nums">
                       {communityCount}/2 created
                     </span>
                   </div>
 
                   {communityCount >= 2 ? (
-                    <p className="text-sm text-neutral-500">
+                    <p className="text-sm text-fg-subtle">
                       You have reached the limit of 2 community neighborhoods.
                     </p>
                   ) : communityCreateStatus === 'success' ? (
@@ -1117,7 +1117,7 @@ function GlobalNeighborhoodModal({
                           {communityCreatedName} created and added to your collection.
                         </p>
                       </div>
-                      <p className="text-xs text-neutral-500 mt-2 ml-6">
+                      <p className="text-xs text-fg-subtle mt-2 ml-6">
                         You will receive a daily brief for {communityCreatedName} at 7am local time starting tomorrow.
                       </p>
                     </div>
@@ -1132,12 +1132,12 @@ function GlobalNeighborhoodModal({
                           onKeyDown={(e) => e.key === 'Enter' && handleCommunityCreate()}
                           placeholder="e.g., Notting Hill, London"
                           disabled={communityCreateStatus === 'validating' || communityCreateStatus === 'generating'}
-                          className="flex-1 bg-transparent border-b border-white/20 text-sm text-white placeholder-neutral-600 py-2 focus:outline-none focus:border-amber-500/50 transition-colors max-w-[300px]"
+                          className="flex-1 bg-transparent border-b border-border-strong text-sm text-fg placeholder-fg-subtle py-2 focus:outline-none focus:border-amber-500/50 transition-colors max-w-[300px]"
                         />
                         <button
                           onClick={handleCommunityCreate}
                           disabled={!communityInput.trim() || communityInput.trim().length < 3 || communityCreateStatus === 'validating' || communityCreateStatus === 'generating'}
-                          className="px-4 py-2 text-[11px] tracking-[0.1em] uppercase font-medium bg-white text-neutral-900 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all rounded-lg whitespace-nowrap"
+                          className="px-4 py-2 text-[11px] tracking-[0.1em] uppercase font-medium bg-fg text-canvas hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-all rounded-lg whitespace-nowrap"
                         >
                           {communityCreateStatus === 'validating' ? 'Validating...'
                             : communityCreateStatus === 'generating' ? 'Generating brief...'
@@ -1145,7 +1145,7 @@ function GlobalNeighborhoodModal({
                         </button>
                       </div>
                       {communityCreateStatus === 'generating' && (
-                        <p className="text-xs text-neutral-500 mt-2">
+                        <p className="text-xs text-fg-subtle mt-2">
                           This may take a minute - we are generating a brief and article for your neighborhood.
                         </p>
                       )}
@@ -1157,10 +1157,10 @@ function GlobalNeighborhoodModal({
                 </div>
               ) : (
                 <div className="mb-8 py-6 text-center">
-                  <p className="text-sm text-neutral-400 mb-3">Sign in to create your own neighborhood</p>
+                  <p className="text-sm text-fg-muted mb-3">Sign in to create your own neighborhood</p>
                   <Link
                     href="/login"
-                    className="inline-block px-6 py-2 text-[11px] tracking-[0.1em] uppercase font-medium bg-white text-neutral-900 hover:bg-neutral-200 transition-all rounded-lg"
+                    className="inline-block px-6 py-2 text-[11px] tracking-[0.1em] uppercase font-medium bg-fg text-canvas hover:opacity-80 transition-all rounded-lg"
                   >
                     Sign In
                   </Link>
@@ -1169,15 +1169,15 @@ function GlobalNeighborhoodModal({
 
               {/* Community neighborhood list */}
               <div className="flex items-center gap-3 mb-4">
-                <h3 className="text-xs tracking-[0.2em] uppercase text-neutral-500 shrink-0">Community Created Neighborhoods</h3>
-                <div className="flex-1 h-px bg-white/5" />
+                <h3 className="text-xs tracking-[0.2em] uppercase text-fg-subtle shrink-0">Community Created Neighborhoods</h3>
+                <div className="flex-1 h-px bg-border" />
               </div>
 
               {(() => {
                 const communityHoods = neighborhoods.filter(n => n.is_community);
                 if (communityHoods.length === 0) {
                   return (
-                    <p className="text-sm text-neutral-600 py-6 text-center">
+                    <p className="text-sm text-fg-subtle py-6 text-center">
                       No community neighborhoods yet. Be the first to create one.
                     </p>
                   );
@@ -1196,7 +1196,7 @@ function GlobalNeighborhoodModal({
                       .sort(([a], [b]) => a.localeCompare(b))
                       .map(([city, hoods]) => (
                         <div key={city} className="break-inside-avoid mb-6">
-                          <h3 className="font-display text-base text-white mb-1.5">{city}</h3>
+                          <h3 className="font-display text-base text-fg mb-1.5">{city}</h3>
                           <div className="space-y-0.5">
                             {hoods.map(hood => {
                               const isSelected = selected.has(hood.id);
@@ -1205,7 +1205,7 @@ function GlobalNeighborhoodModal({
                                   <button
                                     onClick={() => toggleNeighborhood(hood.id)}
                                     className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${
-                                      isSelected ? 'text-amber-400 font-medium' : 'text-neutral-400 hover:text-white'
+                                      isSelected ? 'text-amber-400 font-medium' : 'text-fg-muted hover:text-fg'
                                     }`}
                                   >
                                     {isSelected && (
@@ -1227,7 +1227,7 @@ function GlobalNeighborhoodModal({
             </div>
           ) : loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 border-2 border-neutral-700 border-t-amber-400 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-border border-t-amber-400 rounded-full animate-spin" />
             </div>
           ) : sortBy === 'region' ? (
             /* Region-grouped layout: separate masonry per region */
@@ -1245,8 +1245,8 @@ function GlobalNeighborhoodModal({
               return orderedRegions.map(({ key, label, cities: regionCities }) => (
                 <div key={key} className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <h3 className="text-xs tracking-[0.2em] uppercase text-neutral-500 shrink-0">{label}</h3>
-                    <div className="flex-1 h-px bg-white/5" />
+                    <h3 className="text-xs tracking-[0.2em] uppercase text-fg-subtle shrink-0">{label}</h3>
+                    <div className="flex-1 h-px bg-border" />
                   </div>
                   <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-x-8">
                     {regionCities.map(({ city, neighborhoods: cityHoods }) => {
@@ -1255,10 +1255,10 @@ function GlobalNeighborhoodModal({
                       return (
                         <div key={city} className="break-inside-avoid mb-6">
                           <div className="flex items-baseline gap-2 mb-1.5">
-                            <h3 className="font-display text-base text-white">{city}</h3>
+                            <h3 className="font-display text-base text-fg">{city}</h3>
                             <button
                               onClick={() => selectAllInCity(cityHoods)}
-                              className={`text-[11px] transition-colors ${allInCitySelected ? 'text-amber-400 hover:text-amber-300' : 'text-neutral-600 hover:text-amber-400'}`}
+                              className={`text-[11px] transition-colors ${allInCitySelected ? 'text-amber-400 hover:text-amber-300' : 'text-fg-subtle hover:text-amber-400'}`}
                             >
                               {allInCitySelected ? 'Deselect' : 'Select all'}
                             </button>
@@ -1269,7 +1269,7 @@ function GlobalNeighborhoodModal({
                               const hasComboComponents = hood.combo_component_names && hood.combo_component_names.length > 0;
                               if (hood.is_coming_soon) {
                                 return (
-                                  <div key={hood.id} className="text-sm text-neutral-700 py-0.5 cursor-default">
+                                  <div key={hood.id} className="text-sm text-fg-subtle py-0.5 cursor-default">
                                     {hood.name} <span className="text-[11px]">(Soon)</span>
                                   </div>
                                 );
@@ -1280,7 +1280,7 @@ function GlobalNeighborhoodModal({
                                 <div key={hood.id} data-neighborhood-id={hood.id} className="flex items-center gap-1 group/item">
                                   <button
                                     onClick={() => toggleNeighborhood(hood.id)}
-                                    className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${isSelected ? 'text-amber-400 font-medium' : 'text-neutral-400 hover:text-white'}`}
+                                    className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${isSelected ? 'text-amber-400 font-medium' : 'text-fg-muted hover:text-fg'}`}
                                     title={hasComboComponents ? `Includes: ${hood.combo_component_names!.join(', ')}` : undefined}
                                   >
                                     {isSelected && (
@@ -1290,10 +1290,10 @@ function GlobalNeighborhoodModal({
                                     )}
                                     {hood.name}
                                     {hood.is_community && (
-                                      <span className="text-[10px] text-neutral-600">Community Created</span>
+                                      <span className="text-[10px] text-fg-subtle">Community Created</span>
                                     )}
                                     {hasComboComponents && (
-                                      <span className="text-[11px] text-neutral-600">({hood.combo_component_names!.length} areas)</span>
+                                      <span className="text-[11px] text-fg-subtle">({hood.combo_component_names!.length} areas)</span>
                                     )}
                                     {isPrimary && (
                                       <span className="text-[9px] tracking-wider uppercase text-amber-500/70 font-medium ml-1">Primary</span>
@@ -1330,19 +1330,19 @@ function GlobalNeighborhoodModal({
                 <div key={city} className="break-inside-avoid mb-6">
                   {/* City Header */}
                   <div className="flex items-baseline gap-2 mb-1.5">
-                    <h3 className="font-display text-base text-white">
+                    <h3 className="font-display text-base text-fg">
                       {city}
                     </h3>
                     <button
                       onClick={() => selectAllInCity(cityHoods)}
                       className={`text-[11px] transition-colors ${
-                        allInCitySelected ? 'text-amber-400 hover:text-amber-300' : 'text-neutral-600 hover:text-amber-400'
+                        allInCitySelected ? 'text-amber-400 hover:text-amber-300' : 'text-fg-subtle hover:text-amber-400'
                       }`}
                     >
                       {allInCitySelected ? 'Deselect' : 'Select all'}
                     </button>
                     {sortBy === 'nearest' && distance < Infinity && (
-                      <span className="ml-auto text-xs font-sans text-neutral-600">{Math.round(distance)} km</span>
+                      <span className="ml-auto text-xs font-sans text-fg-subtle">{Math.round(distance)} km</span>
                     )}
                   </div>
 
@@ -1354,7 +1354,7 @@ function GlobalNeighborhoodModal({
 
                       if (hood.is_coming_soon) {
                         return (
-                          <div key={hood.id} className="text-sm text-neutral-700 py-0.5 cursor-default">
+                          <div key={hood.id} className="text-sm text-fg-subtle py-0.5 cursor-default">
                             {hood.name} <span className="text-[11px]">(Soon)</span>
                           </div>
                         );
@@ -1370,7 +1370,7 @@ function GlobalNeighborhoodModal({
                             className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${
                               isSelected
                                 ? 'text-amber-400 font-medium'
-                                : 'text-neutral-400 hover:text-white'
+                                : 'text-fg-muted hover:text-fg'
                             }`}
                             title={hasComboComponents ? `Includes: ${hood.combo_component_names!.join(', ')}` : undefined}
                           >
@@ -1381,10 +1381,10 @@ function GlobalNeighborhoodModal({
                             )}
                             {hood.name}
                             {hood.is_community && (
-                              <span className="text-[10px] text-neutral-600">Community Created</span>
+                              <span className="text-[10px] text-fg-subtle">Community Created</span>
                             )}
                             {hasComboComponents && (
-                              <span className="text-[11px] text-neutral-600">({hood.combo_component_names!.length} areas)</span>
+                              <span className="text-[11px] text-fg-subtle">({hood.combo_component_names!.length} areas)</span>
                             )}
                             {isPrimary && (
                               <span className="text-[9px] tracking-wider uppercase text-amber-500/70 font-medium ml-1">Primary</span>
@@ -1413,7 +1413,7 @@ function GlobalNeighborhoodModal({
           {/* Empty State (All tab only) */}
           {activeTab === 'all' && !loading && filteredCities.length === 0 && (
             <div className="py-12 text-center">
-              <p className="text-neutral-500">No pre-existing &ldquo;{searchQuery}&rdquo; neighborhoods found.</p>
+              <p className="text-fg-subtle">No pre-existing &ldquo;{searchQuery}&rdquo; neighborhoods found.</p>
               <div className="mt-4 flex items-center justify-center gap-3">
                 <button
                   onClick={() => setActiveTab('community')}
@@ -1421,10 +1421,10 @@ function GlobalNeighborhoodModal({
                 >
                   Create one
                 </button>
-                <span className="text-neutral-700">or</span>
+                <span className="text-fg-subtle">or</span>
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="text-sm text-neutral-400 hover:text-white font-medium transition-colors"
+                  className="text-sm text-fg-muted hover:text-fg font-medium transition-colors"
                 >
                   Clear search
                 </button>
@@ -1434,12 +1434,12 @@ function GlobalNeighborhoodModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex-shrink-0 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-white/10 bg-neutral-900/80 backdrop-blur-sm flex items-center justify-between">
-          <div className="text-sm text-neutral-500">
+        <div className="flex-shrink-0 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border-strong bg-surface/80 backdrop-blur-sm flex items-center justify-between">
+          <div className="text-sm text-fg-subtle">
             {selected.size > 0 ? (
               confirmClear ? (
                 <span className="flex items-center gap-2">
-                  <span className="text-neutral-400">Are you sure?</span>
+                  <span className="text-fg-muted">Are you sure?</span>
                   <button
                     onClick={() => { clearAll(); setConfirmClear(false); }}
                     className="text-red-400 hover:text-red-300 font-medium transition-colors"
@@ -1448,7 +1448,7 @@ function GlobalNeighborhoodModal({
                   </button>
                   <button
                     onClick={() => setConfirmClear(false)}
-                    className="text-neutral-500 hover:text-white transition-colors"
+                    className="text-fg-subtle hover:text-fg transition-colors"
                   >
                     No
                   </button>
@@ -1456,7 +1456,7 @@ function GlobalNeighborhoodModal({
               ) : (
                 <button
                   onClick={() => setConfirmClear(true)}
-                  className="text-neutral-500 hover:text-white transition-colors"
+                  className="text-fg-subtle hover:text-fg transition-colors"
                 >
                   Clear all
                 </button>
@@ -1468,7 +1468,7 @@ function GlobalNeighborhoodModal({
           <button
             onClick={handleExplore}
             disabled={selected.size === 0}
-            className="px-8 py-2.5 text-[11px] tracking-[0.15em] uppercase font-medium bg-white text-neutral-900 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 rounded-lg"
+            className="px-8 py-2.5 text-[11px] tracking-[0.15em] uppercase font-medium bg-fg text-canvas hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 rounded-lg"
           >
             {selected.size > 0 ? 'Read Stories' : 'Browse All'}
           </button>

@@ -136,7 +136,7 @@ function LoginForm() {
 
   return (
     <div className="w-full max-w-sm">
-      <h1 className="text-2xl font-light text-center text-neutral-100 mb-10">Sign In</h1>
+      <h1 className="text-2xl font-light text-center text-fg mb-10">Sign In</h1>
 
       {/* OAuth buttons hidden pre-launch — Google & Apple login fully implemented and ready to re-enable */}
 
@@ -149,14 +149,14 @@ function LoginForm() {
 
         {success && (
           <div className="text-center py-3">
-            <p className="text-sm text-neutral-400 tracking-wide">Welcome back. Redirecting...</p>
+            <p className="text-sm text-fg-muted tracking-wide">Welcome back. Redirecting...</p>
           </div>
         )}
 
         <div>
           <label
             htmlFor="email"
-            className="block text-xs tracking-widest uppercase text-neutral-400 mb-2"
+            className="block text-xs tracking-widest uppercase text-fg-muted mb-2"
           >
             Email
           </label>
@@ -166,7 +166,7 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white rounded-lg"
+            className="w-full px-4 py-3 border border-border-strong focus:border-amber-500 focus:outline-none bg-surface text-fg rounded-lg"
             placeholder="you@example.com"
           />
         </div>
@@ -174,7 +174,7 @@ function LoginForm() {
         <div>
           <label
             htmlFor="password"
-            className="block text-xs tracking-widest uppercase text-neutral-400 mb-2"
+            className="block text-xs tracking-widest uppercase text-fg-muted mb-2"
           >
             Password
           </label>
@@ -184,7 +184,7 @@ function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white rounded-lg"
+            className="w-full px-4 py-3 border border-border-strong focus:border-amber-500 focus:outline-none bg-surface text-fg rounded-lg"
             placeholder="Your password"
           />
         </div>
@@ -204,19 +204,19 @@ function LoginForm() {
         <button
           type="submit"
           disabled={isLoading || success || (!!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken)}
-          className="w-full bg-white text-neutral-900 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50 rounded-lg"
+          className="w-full bg-fg text-canvas py-3 text-sm tracking-widest uppercase hover:opacity-80 transition-colors disabled:opacity-50 rounded-lg"
         >
           {isLoading ? 'Signing in...' : success ? 'Redirecting...' : 'Sign In'}
         </button>
       </form>
 
       <div className="text-center mt-6 space-y-2">
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-fg-subtle">
           <Link href="/forgot-password" className="text-white hover:underline">
             Forgot your password?
           </Link>
         </p>
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-fg-subtle">
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="text-white hover:underline">
             Sign up

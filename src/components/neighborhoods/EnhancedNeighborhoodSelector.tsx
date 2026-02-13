@@ -374,26 +374,26 @@ export function EnhancedNeighborhoodSelector({
   return (
     <div className={`${mode === 'modal' ? 'max-h-[80vh] overflow-hidden flex flex-col' : ''}`}>
       {/* Header */}
-      <div className={`${mode === 'modal' ? 'px-6 pt-6 pb-4 border-b border-white/[0.08]' : 'mb-8'}`}>
+      <div className={`${mode === 'modal' ? 'px-6 pt-6 pb-4 border-b border-border' : 'mb-8'}`}>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-2xl md:text-3xl font-light tracking-tight text-neutral-100">
+            <h2 className="text-2xl md:text-3xl font-light tracking-tight text-fg">
               {mode === 'modal' ? 'Select Neighborhoods' : 'Neighborhoods'}
             </h2>
-            <p className="mt-1 text-neutral-500 text-sm">
+            <p className="mt-1 text-fg-subtle text-sm">
               {totalSelected > 0 ? (
-                <span className="text-neutral-100 font-medium">{totalSelected} selected</span>
+                <span className="text-fg font-medium">{totalSelected} selected</span>
               ) : (
                 'Choose neighborhoods to personalize your stories'
               )}
-              <span className="mx-2 text-neutral-300">·</span>
+              <span className="mx-2 text-fg-muted">·</span>
               <span>{totalNeighborhoods} available</span>
             </p>
           </div>
           {mode === 'modal' && onClose && (
             <button
               onClick={onClose}
-              className="p-2 -m-2 text-neutral-400 hover:text-neutral-100 transition-colors"
+              className="p-2 -m-2 text-fg-muted hover:text-fg transition-colors"
               aria-label="Close"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -406,7 +406,7 @@ export function EnhancedNeighborhoodSelector({
         {/* Search Bar */}
         <div className="mt-4 relative">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
@@ -416,12 +416,12 @@ export function EnhancedNeighborhoodSelector({
             placeholder="Search neighborhoods, cities, or countries..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-12 py-3 text-sm bg-neutral-800 border-0 rounded-lg text-neutral-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-surface transition-all placeholder:text-neutral-500"
+            className="w-full pl-11 pr-12 py-3 text-sm bg-elevated border-0 rounded-lg text-fg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-surface transition-all placeholder:text-fg-subtle"
           />
           {searchQuery ? (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center text-neutral-400 hover:text-neutral-100"
+              className="absolute inset-y-0 right-0 pr-4 flex items-center text-fg-muted hover:text-fg"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
@@ -429,7 +429,7 @@ export function EnhancedNeighborhoodSelector({
             </button>
           ) : (
             <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-              <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-xs text-neutral-500 bg-neutral-700 rounded">
+              <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-xs text-fg-subtle bg-elevated rounded">
                 /
               </kbd>
             </div>
@@ -444,7 +444,7 @@ export function EnhancedNeighborhoodSelector({
               className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
                 activeRegion === 'all'
                   ? 'bg-amber-600 text-white'
-                  : 'bg-neutral-800 text-neutral-400 hover:bg-white/10'
+                  : 'bg-elevated text-fg-muted hover:bg-white/10'
               }`}
             >
               All Regions
@@ -461,8 +461,8 @@ export function EnhancedNeighborhoodSelector({
                         ? 'text-white'
                         : 'bg-amber-600 text-white'
                       : isVacation
-                        ? 'text-[#00563F] border border-[#00563F] hover:bg-[#00563F] hover:text-white'
-                        : 'bg-neutral-800 text-neutral-400 hover:bg-white/10'
+                        ? 'text-[#00563F] border border-[#00563F] hover:bg-[#00563F] hover:text-fg'
+                        : 'bg-elevated text-fg-muted hover:bg-white/10'
                   }`}
                   style={activeRegion === region && isVacation ? { backgroundColor: '#00563F' } : {}}
                 >
@@ -479,7 +479,7 @@ export function EnhancedNeighborhoodSelector({
         {/* Search Results View */}
         {searchQuery && (
           <div className="mb-4">
-            <p className="text-xs text-neutral-500 mb-4">
+            <p className="text-xs text-fg-subtle mb-4">
               {Object.values(filteredData).flat().reduce((acc, city) => acc + city.neighborhoods.length, 0)} results for "{searchQuery}"
             </p>
           </div>
@@ -500,25 +500,25 @@ export function EnhancedNeighborhoodSelector({
                 {/* Region Header */}
                 <button
                   onClick={() => toggleRegion(region)}
-                  className="w-full flex items-center justify-between py-3 border-b border-white/[0.08] hover:border-white/20 transition-colors"
+                  className="w-full flex items-center justify-between py-3 border-b border-border hover:border-border-strong transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-lg text-neutral-300 group-hover:text-neutral-500 transition-colors">
+                    <span className="text-lg text-fg-muted group-hover:text-fg-subtle transition-colors">
                       {regionData.icon}
                     </span>
                     <div className="text-left">
-                      <h3 className="text-sm font-semibold tracking-wide uppercase text-neutral-100">
+                      <h3 className="text-sm font-semibold tracking-wide uppercase text-fg">
                         {regionData.label}
                       </h3>
-                      <p className="text-xs text-neutral-400 mt-0.5">{regionData.description}</p>
+                      <p className="text-xs text-fg-muted mt-0.5">{regionData.description}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-neutral-400">
+                    <span className="text-xs text-fg-muted">
                       {regionNeighborhoodCount} neighborhoods
                     </span>
                     <svg
-                      className={`w-4 h-4 text-neutral-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                      className={`w-4 h-4 text-fg-muted transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -547,7 +547,7 @@ export function EnhancedNeighborhoodSelector({
                         className={`relative overflow-hidden rounded-xl border transition-all duration-200 ${
                           selectedInCity > 0
                             ? 'border-amber-600 shadow-lg'
-                            : 'border-white/[0.08] hover:border-white/20 hover:shadow-md'
+                            : 'border-border hover:border-border-strong hover:shadow-md'
                         }`}
                       >
                         {/* City Card Header */}
@@ -576,7 +576,7 @@ export function EnhancedNeighborhoodSelector({
 
                             {/* Selection indicator */}
                             {selectedInCity > 0 && (
-                              <div className="absolute top-3 right-3 px-2 py-1 bg-surface rounded-full text-xs font-medium text-neutral-100 shadow-lg">
+                              <div className="absolute top-3 right-3 px-2 py-1 bg-surface rounded-full text-xs font-medium text-fg shadow-lg">
                                 {selectedInCity}/{availableInCity}
                               </div>
                             )}
@@ -598,8 +598,8 @@ export function EnhancedNeighborhoodSelector({
                         >
                           <div className="p-3 space-y-1">
                             {/* Select All for City */}
-                            <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/[0.08]">
-                              <span className="text-xs text-neutral-400">
+                            <div className="flex items-center justify-between pb-2 mb-2 border-b border-border">
+                              <span className="text-xs text-fg-muted">
                                 {city.neighborhoods.length} neighborhood{city.neighborhoods.length !== 1 ? 's' : ''}
                               </span>
                               <button
@@ -608,7 +608,7 @@ export function EnhancedNeighborhoodSelector({
                                   selectAllInCity(city.neighborhoods);
                                 }}
                                 disabled={saving}
-                                className="text-xs text-neutral-500 hover:text-neutral-100 font-medium disabled:opacity-50"
+                                className="text-xs text-fg-subtle hover:text-fg font-medium disabled:opacity-50"
                               >
                                 Select all
                               </button>
@@ -627,10 +627,10 @@ export function EnhancedNeighborhoodSelector({
                                     disabled={saving || neighborhood.is_coming_soon}
                                     className={`group/pill relative px-3 py-1.5 text-sm rounded-lg transition-all duration-150 ${
                                       neighborhood.is_coming_soon
-                                        ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
+                                        ? 'bg-elevated text-fg-subtle cursor-not-allowed'
                                         : isSelected
-                                        ? 'bg-neutral-900 text-white shadow-md'
-                                        : 'bg-neutral-800 text-neutral-300 hover:bg-white/10'
+                                        ? 'bg-surface text-fg shadow-md'
+                                        : 'bg-elevated text-fg-muted hover:bg-white/10'
                                     }`}
                                     style={{
                                       animationDelay: `${idx * 30}ms`,
@@ -640,7 +640,7 @@ export function EnhancedNeighborhoodSelector({
                                       {neighborhood.name}
                                       {articleCount > 0 && !neighborhood.is_coming_soon && (
                                         <span className={`text-[10px] px-1 py-0.5 rounded ${
-                                          isSelected ? 'bg-white/20' : 'bg-neutral-700'
+                                          isSelected ? 'bg-white/20' : 'bg-elevated'
                                         }`}>
                                           {articleCount}
                                         </span>
@@ -667,7 +667,7 @@ export function EnhancedNeighborhoodSelector({
                             {city.neighborhoods.length > 0 && (
                               <Link
                                 href={getCityUrl(city, city.neighborhoods[0])}
-                                className="mt-3 flex items-center justify-center gap-1 py-2 text-xs text-neutral-500 hover:text-neutral-100 transition-colors"
+                                className="mt-3 flex items-center justify-center gap-1 py-2 text-xs text-fg-subtle hover:text-fg transition-colors"
                               >
                                 View {city.name} stories
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -689,15 +689,15 @@ export function EnhancedNeighborhoodSelector({
         {/* Empty State */}
         {Object.values(filteredData).every(cities => cities.length === 0) && (
           <div className="py-12 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-neutral-800 flex items-center justify-center">
-              <svg className="w-8 h-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-elevated flex items-center justify-center">
+              <svg className="w-8 h-8 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <p className="text-neutral-500">No neighborhoods found for "{searchQuery}"</p>
+            <p className="text-fg-subtle">No neighborhoods found for "{searchQuery}"</p>
             <button
               onClick={() => setSearchQuery('')}
-              className="mt-2 text-sm text-neutral-100 font-medium hover:underline"
+              className="mt-2 text-sm text-fg font-medium hover:underline"
             >
               Clear search
             </button>
@@ -707,11 +707,11 @@ export function EnhancedNeighborhoodSelector({
 
       {/* Footer (for modal mode) */}
       {mode === 'modal' && (
-        <div className="px-6 py-4 border-t border-white/[0.08] bg-canvas flex items-center justify-between">
-          <p className="text-sm text-neutral-500">
+        <div className="px-6 py-4 border-t border-border bg-canvas flex items-center justify-between">
+          <p className="text-sm text-fg-subtle">
             {totalSelected > 0 ? (
               <>
-                <span className="font-medium text-neutral-100">{totalSelected}</span> neighborhood{totalSelected !== 1 ? 's' : ''} selected
+                <span className="font-medium text-fg">{totalSelected}</span> neighborhood{totalSelected !== 1 ? 's' : ''} selected
               </>
             ) : (
               'Select at least one neighborhood'
@@ -720,14 +720,14 @@ export function EnhancedNeighborhoodSelector({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm text-neutral-400 hover:text-neutral-100 transition-colors"
+              className="px-4 py-2 text-sm text-fg-muted hover:text-fg transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={onClose}
               disabled={totalSelected === 0}
-              className="px-5 py-2 text-sm font-medium bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-5 py-2 text-sm font-medium bg-surface text-fg rounded-lg hover:bg-elevated disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Done
             </button>

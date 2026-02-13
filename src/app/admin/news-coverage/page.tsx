@@ -213,7 +213,7 @@ export default function NewsCoveragePage() {
       <div className="min-h-screen bg-canvas py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-center py-24">
-            <div className="inline-block w-8 h-8 border-2 border-neutral-700 border-t-neutral-200 rounded-full animate-spin" />
+            <div className="inline-block w-8 h-8 border-2 border-border border-t-neutral-200 rounded-full animate-spin" />
           </div>
         </div>
       </div>
@@ -225,20 +225,20 @@ export default function NewsCoveragePage() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/admin" className="text-xs text-neutral-400 hover:text-white mb-2 block">
+          <Link href="/admin" className="text-xs text-fg-muted hover:text-fg mb-2 block">
             &larr; Admin
           </Link>
           <h1 className="text-2xl font-light">News Coverage Monitor</h1>
-          <p className="text-sm text-neutral-500 mt-1">
+          <p className="text-sm text-fg-subtle mt-1">
             Track which neighborhoods need more RSS feed sources
           </p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-surface border border-white/[0.08] p-4">
+          <div className="bg-surface border border-border p-4">
             <div className="text-2xl font-light">{stats.total}</div>
-            <div className="text-xs text-neutral-500 uppercase tracking-wide">Total Active</div>
+            <div className="text-xs text-fg-subtle uppercase tracking-wide">Total Active</div>
           </div>
           <div className="bg-green-500/10 border border-green-500/20 p-4">
             <div className="text-2xl font-light text-green-400">{stats.good}</div>
@@ -255,13 +255,13 @@ export default function NewsCoveragePage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-4 mb-6 border-b border-white/[0.08]">
+        <div className="flex items-center gap-4 mb-6 border-b border-border">
           <button
             onClick={() => setActiveTab('coverage')}
             className={`pb-2 text-sm font-medium border-b-2 -mb-px ${
               activeTab === 'coverage'
-                ? 'border-amber-500 text-neutral-100'
-                : 'border-transparent text-neutral-400 hover:text-white'
+                ? 'border-amber-500 text-fg'
+                : 'border-transparent text-fg-muted hover:text-fg'
             }`}
           >
             Coverage by Neighborhood
@@ -270,8 +270,8 @@ export default function NewsCoveragePage() {
             onClick={() => setActiveTab('sources')}
             className={`pb-2 text-sm font-medium border-b-2 -mb-px ${
               activeTab === 'sources'
-                ? 'border-amber-500 text-neutral-100'
-                : 'border-transparent text-neutral-400 hover:text-white'
+                ? 'border-amber-500 text-fg'
+                : 'border-transparent text-fg-muted hover:text-fg'
             }`}
           >
             RSS Sources ({rssSources.length})
@@ -281,11 +281,11 @@ export default function NewsCoveragePage() {
         {/* Filters */}
         <div className="flex items-center gap-4 mb-6">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-neutral-500">Filter by city:</span>
+            <span className="text-xs text-fg-subtle">Filter by city:</span>
             <select
               value={selectedCity || ''}
               onChange={(e) => setSelectedCity(e.target.value || null)}
-              className="text-sm border border-white/[0.08] px-2 py-1"
+              className="text-sm border border-border px-2 py-1"
             >
               <option value="">All Cities</option>
               {(activeTab === 'coverage' ? cities : rssCities).map(city => (
@@ -296,7 +296,7 @@ export default function NewsCoveragePage() {
           {activeTab === 'sources' && (
             <button
               onClick={() => setShowAddFeed(!showAddFeed)}
-              className="ml-auto text-xs bg-black text-white px-3 py-1.5 hover:bg-neutral-800"
+              className="ml-auto text-xs bg-black text-white px-3 py-1.5 hover:bg-elevated"
             >
               + Add RSS Feed
             </button>
@@ -305,7 +305,7 @@ export default function NewsCoveragePage() {
 
         {/* Add Feed Form */}
         {showAddFeed && activeTab === 'sources' && (
-          <div className="bg-surface border border-white/[0.08] p-4 mb-6">
+          <div className="bg-surface border border-border p-4 mb-6">
             <h3 className="text-sm font-medium mb-3">Add New RSS Feed</h3>
             {feedError && (
               <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 p-2 mb-3">
@@ -316,7 +316,7 @@ export default function NewsCoveragePage() {
               <select
                 value={newFeed.city}
                 onChange={(e) => setNewFeed({ ...newFeed, city: e.target.value })}
-                className="text-sm border border-white/[0.08] px-3 py-2"
+                className="text-sm border border-border px-3 py-2"
               >
                 <option value="">Select City...</option>
                 {rssCities.map(city => (
@@ -329,7 +329,7 @@ export default function NewsCoveragePage() {
                   type="text"
                   placeholder="New City Name"
                   onChange={(e) => setNewFeed({ ...newFeed, city: e.target.value })}
-                  className="text-sm border border-white/[0.08] px-3 py-2"
+                  className="text-sm border border-border px-3 py-2"
                 />
               )}
               <input
@@ -337,24 +337,24 @@ export default function NewsCoveragePage() {
                 placeholder="Source Name (e.g., NY Times)"
                 value={newFeed.name}
                 onChange={(e) => setNewFeed({ ...newFeed, name: e.target.value })}
-                className="text-sm border border-white/[0.08] px-3 py-2"
+                className="text-sm border border-border px-3 py-2"
               />
               <input
                 type="url"
                 placeholder="RSS Feed URL"
                 value={newFeed.feed_url}
                 onChange={(e) => setNewFeed({ ...newFeed, feed_url: e.target.value })}
-                className="text-sm border border-white/[0.08] px-3 py-2"
+                className="text-sm border border-border px-3 py-2"
               />
               <button
                 onClick={handleAddFeed}
                 disabled={addingFeed}
-                className="text-sm bg-black text-white px-4 py-2 hover:bg-neutral-800 disabled:opacity-50"
+                className="text-sm bg-black text-white px-4 py-2 hover:bg-elevated disabled:opacity-50"
               >
                 {addingFeed ? 'Adding...' : 'Add Feed'}
               </button>
             </div>
-            <p className="text-xs text-neutral-400 mt-3">
+            <p className="text-xs text-fg-muted mt-3">
               Tip: Find RSS feeds by adding /feed, /rss, or /rss.xml to news website URLs, or search "[site name] RSS feed"
             </p>
           </div>
@@ -362,22 +362,22 @@ export default function NewsCoveragePage() {
 
         {/* Coverage Tab */}
         {activeTab === 'coverage' && (
-          <div className="bg-surface border border-white/[0.08]">
+          <div className="bg-surface border border-border">
             <table className="w-full text-sm">
-              <thead className="bg-canvas border-b border-white/[0.08]">
+              <thead className="bg-canvas border-b border-border">
                 <tr>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase">Status</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase">Neighborhood</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase">City</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-neutral-500 uppercase">7 Days</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-neutral-500 uppercase">30 Days</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-neutral-500 uppercase">Avg/Day</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase">Last Article</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-fg-subtle uppercase">Status</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-fg-subtle uppercase">Neighborhood</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-fg-subtle uppercase">City</th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-fg-subtle uppercase">7 Days</th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-fg-subtle uppercase">30 Days</th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-fg-subtle uppercase">Avg/Day</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-fg-subtle uppercase">Last Article</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.06]">
                 {filteredCoverage.map((n) => (
-                  <tr key={n.id} className="hover:bg-white/5">
+                  <tr key={n.id} className="hover:bg-hover">
                     <td className="px-4 py-3">
                       {n.status === 'good' && (
                         <span className="inline-block w-2 h-2 rounded-full bg-green-500" title="Good coverage" />
@@ -390,7 +390,7 @@ export default function NewsCoveragePage() {
                       )}
                     </td>
                     <td className="px-4 py-3 font-medium">{n.name}</td>
-                    <td className="px-4 py-3 text-neutral-500">{n.city}</td>
+                    <td className="px-4 py-3 text-fg-subtle">{n.city}</td>
                     <td className="px-4 py-3 text-right">{n.article_count_7d}</td>
                     <td className="px-4 py-3 text-right">{n.article_count_30d}</td>
                     <td className="px-4 py-3 text-right">
@@ -398,7 +398,7 @@ export default function NewsCoveragePage() {
                         {n.avg_per_day.toFixed(1)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-neutral-500">
+                    <td className="px-4 py-3 text-fg-subtle">
                       {n.last_article_date
                         ? new Date(n.last_article_date).toLocaleDateString()
                         : <span className="text-red-500">Never</span>
@@ -413,25 +413,25 @@ export default function NewsCoveragePage() {
 
         {/* Sources Tab */}
         {activeTab === 'sources' && (
-          <div className="bg-surface border border-white/[0.08]">
+          <div className="bg-surface border border-border">
             <table className="w-full text-sm">
-              <thead className="bg-canvas border-b border-white/[0.08]">
+              <thead className="bg-canvas border-b border-border">
                 <tr>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase">Active</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase">City</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase">Source</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase">Feed URL</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-neutral-500 uppercase">Actions</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-fg-subtle uppercase">Active</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-fg-subtle uppercase">City</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-fg-subtle uppercase">Source</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-fg-subtle uppercase">Feed URL</th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-fg-subtle uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.06]">
                 {filteredSources.map((source) => (
-                  <tr key={source.id} className={`hover:bg-white/5 ${!source.is_active ? 'opacity-50' : ''}`}>
+                  <tr key={source.id} className={`hover:bg-hover ${!source.is_active ? 'opacity-50' : ''}`}>
                     <td className="px-4 py-3">
                       <button
                         onClick={() => handleToggleFeed(source.id, source.is_active)}
                         className={`w-8 h-5 rounded-full relative transition-colors ${
-                          source.is_active ? 'bg-green-500' : 'bg-neutral-700'
+                          source.is_active ? 'bg-green-500' : 'bg-elevated'
                         }`}
                       >
                         <span
@@ -448,7 +448,7 @@ export default function NewsCoveragePage() {
                         href={source.feed_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-neutral-500 hover:text-white text-xs truncate block max-w-xs"
+                        className="text-fg-subtle hover:text-fg text-xs truncate block max-w-xs"
                       >
                         {source.feed_url}
                       </a>
@@ -466,7 +466,7 @@ export default function NewsCoveragePage() {
               </tbody>
             </table>
             {filteredSources.length === 0 && (
-              <div className="text-center py-8 text-neutral-500">
+              <div className="text-center py-8 text-fg-subtle">
                 No RSS sources found. Add one above.
               </div>
             )}

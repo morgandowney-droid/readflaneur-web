@@ -91,12 +91,12 @@ export function ShareWidget({ compact, onDone }: ShareWidgetProps) {
       <button
         onClick={handleShare}
         disabled={loading}
-        className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-white/5 transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-hover transition-colors"
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-neutral-500 shrink-0">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-fg-subtle shrink-0">
           <path d="M7 1v8M4 4l3-3 3 3M2 9v3a1 1 0 001 1h8a1 1 0 001-1V9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <span className="text-xs text-neutral-400">
+        <span className="text-xs text-fg-muted">
           {loading ? 'Loading...' : copied ? 'Link copied!' : 'Invite a Friend'}
         </span>
       </button>
@@ -107,7 +107,7 @@ export function ShareWidget({ compact, onDone }: ShareWidgetProps) {
     <button
       onClick={handleShare}
       disabled={loading}
-      className="text-sm text-neutral-400 hover:text-white transition-colors"
+      className="text-sm text-fg-muted hover:text-fg transition-colors"
     >
       {loading ? 'Loading...' : copied ? 'Link copied!' : 'Invite a Friend'}
     </button>

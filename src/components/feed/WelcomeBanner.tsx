@@ -43,10 +43,10 @@ export function WelcomeBanner() {
   if (!visible || !welcomeCity) return null;
 
   return (
-    <div className="bg-surface border-b border-white/10 px-4 py-3 mb-4 flex items-center justify-between gap-3">
-      <p className="text-sm text-neutral-400">
+    <div className="bg-surface border-b border-border-strong px-4 py-3 mb-4 flex items-center justify-between gap-3">
+      <p className="text-sm text-fg-muted">
         Viewing stories near{' '}
-        <span className="text-neutral-100 font-medium">{welcomeCity}</span>.{' '}
+        <span className="text-fg font-medium">{welcomeCity}</span>.{' '}
         <button
           onClick={handleCustomize}
           className="text-amber-500 hover:text-amber-400 font-medium underline underline-offset-2 decoration-amber-500/40"
@@ -56,7 +56,7 @@ export function WelcomeBanner() {
       </p>
       <button
         onClick={handleDismiss}
-        className="text-neutral-500 hover:text-white shrink-0 p-1"
+        className="text-fg-subtle hover:text-fg shrink-0 p-1"
         aria-label="Dismiss"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

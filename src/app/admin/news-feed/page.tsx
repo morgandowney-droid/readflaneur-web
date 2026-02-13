@@ -130,7 +130,7 @@ export default function NewsFeedAdmin() {
       <div className="min-h-screen bg-canvas py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-center py-24">
-            <div className="inline-block w-8 h-8 border-2 border-neutral-700 border-t-neutral-200 rounded-full animate-spin" />
+            <div className="inline-block w-8 h-8 border-2 border-border border-t-neutral-200 rounded-full animate-spin" />
           </div>
         </div>
       </div>
@@ -146,38 +146,38 @@ export default function NewsFeedAdmin() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/admin" className="text-xs text-neutral-400 hover:text-white mb-2 block">
+          <Link href="/admin" className="text-xs text-fg-muted hover:text-fg mb-2 block">
             &larr; Admin
           </Link>
           <h1 className="text-2xl font-light">NEWS FEED QUALITY CONTROL</h1>
-          <p className="text-sm text-neutral-500 mt-1">
+          <p className="text-sm text-fg-subtle mt-1">
             Monitor content health across all neighborhoods
           </p>
         </div>
 
         {/* Summary Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-surface border border-white/[0.08] p-4">
+          <div className="bg-surface border border-border p-4">
             <div className="text-3xl font-light">{stats?.totalArticles24h || 0}</div>
-            <div className="text-xs text-neutral-500 uppercase tracking-wide">Total Articles (24h)</div>
-            <div className="text-xs text-neutral-400 mt-1">
+            <div className="text-xs text-fg-subtle uppercase tracking-wide">Total Articles (24h)</div>
+            <div className="text-xs text-fg-muted mt-1">
               Across {stats?.totalActiveNeighborhoods || 0} neighborhoods
             </div>
           </div>
           <div className="bg-surface border border-red-500/20 p-4">
             <div className="text-3xl font-light text-red-600">{stats?.neighborhoodsWithNoContent.length || 0}</div>
-            <div className="text-xs text-neutral-500 uppercase tracking-wide">No Content (24h)</div>
+            <div className="text-xs text-fg-subtle uppercase tracking-wide">No Content (24h)</div>
           </div>
           <div className="bg-surface border border-amber-500/20 p-4">
             <div className="text-3xl font-light text-amber-600">{stats?.neighborhoodsWithoutRss?.length || 0}</div>
-            <div className="text-xs text-neutral-500 uppercase tracking-wide">No RSS Stories (24h)</div>
+            <div className="text-xs text-fg-subtle uppercase tracking-wide">No RSS Stories (24h)</div>
           </div>
           <button
             onClick={() => setShowOverwhelmed(!showOverwhelmed)}
-            className="text-left bg-surface border border-white/[0.08] hover:border-neutral-400 p-4 transition-all"
+            className="text-left bg-surface border border-border hover:border-neutral-400 p-4 transition-all"
           >
             <div className="text-3xl font-light text-yellow-600">{stats?.neighborhoodsOverwhelmed.length || 0}</div>
-            <div className="text-xs text-neutral-500 uppercase tracking-wide">Overwhelmed (&gt;5/day)</div>
+            <div className="text-xs text-fg-subtle uppercase tracking-wide">Overwhelmed (&gt;5/day)</div>
           </button>
         </div>
 
@@ -270,11 +270,11 @@ export default function NewsFeedAdmin() {
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-4 mb-6">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-neutral-500">Time:</span>
+            <span className="text-xs text-fg-subtle">Time:</span>
             <select
               value={filter.days}
               onChange={(e) => setFilter({ ...filter, days: parseInt(e.target.value) })}
-              className="text-sm border border-white/[0.08] px-2 py-1 bg-surface"
+              className="text-sm border border-border px-2 py-1 bg-surface"
             >
               <option value="1">Last 24h</option>
               <option value="7">Last 7 days</option>
@@ -282,11 +282,11 @@ export default function NewsFeedAdmin() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs text-neutral-500">Category:</span>
+            <span className="text-xs text-fg-subtle">Category:</span>
             <select
               value={filter.category}
               onChange={(e) => setFilter({ ...filter, category: e.target.value, storyType: '', source: '' })}
-              className="text-sm border border-white/[0.08] px-2 py-1 bg-surface"
+              className="text-sm border border-border px-2 py-1 bg-surface"
               disabled={!!filter.storyType || !!filter.source}
             >
               <option value="">All Categories</option>
@@ -299,11 +299,11 @@ export default function NewsFeedAdmin() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs text-neutral-500">Neighborhood:</span>
+            <span className="text-xs text-fg-subtle">Neighborhood:</span>
             <select
               value={filter.neighborhood}
               onChange={(e) => setFilter({ ...filter, neighborhood: e.target.value })}
-              className="text-sm border border-white/[0.08] px-2 py-1 bg-surface max-w-[200px]"
+              className="text-sm border border-border px-2 py-1 bg-surface max-w-[200px]"
             >
               <option value="">All Neighborhoods</option>
               {neighborhoods.map(n => (
@@ -315,11 +315,11 @@ export default function NewsFeedAdmin() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs text-neutral-500">Story Type:</span>
+            <span className="text-xs text-fg-subtle">Story Type:</span>
             <select
               value={filter.storyType}
               onChange={(e) => setFilter({ ...filter, storyType: e.target.value, category: '', source: '' })}
-              className="text-sm border border-white/[0.08] px-2 py-1 bg-surface max-w-[200px]"
+              className="text-sm border border-border px-2 py-1 bg-surface max-w-[200px]"
               disabled={!!filter.source}
             >
               <option value="">All Story Types</option>
@@ -332,11 +332,11 @@ export default function NewsFeedAdmin() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs text-neutral-500">Source:</span>
+            <span className="text-xs text-fg-subtle">Source:</span>
             <select
               value={filter.source}
               onChange={(e) => setFilter({ ...filter, source: e.target.value, storyType: '', category: '' })}
-              className="text-sm border border-white/[0.08] px-2 py-1 bg-surface"
+              className="text-sm border border-border px-2 py-1 bg-surface"
             >
               <option value="">All Sources</option>
               <option value="rss">RSS Feeds (News Brief)</option>
@@ -348,7 +348,7 @@ export default function NewsFeedAdmin() {
           {(filter.category || filter.storyType || filter.source || filter.neighborhood) && (
             <button
               onClick={() => setFilter({ ...filter, category: '', storyType: '', source: '', neighborhood: '' })}
-              className="text-xs text-neutral-500 hover:text-white underline"
+              className="text-xs text-fg-subtle hover:text-fg underline"
             >
               Clear filters
             </button>
@@ -356,22 +356,22 @@ export default function NewsFeedAdmin() {
 
           {loading && (
             <div className="ml-auto">
-              <div className="inline-block w-4 h-4 border-2 border-neutral-700 border-t-neutral-200 rounded-full animate-spin" />
+              <div className="inline-block w-4 h-4 border-2 border-border border-t-neutral-200 rounded-full animate-spin" />
             </div>
           )}
         </div>
 
         {/* Articles Table */}
-        <div className="bg-surface border border-white/[0.08] mb-8">
+        <div className="bg-surface border border-border mb-8">
           <table className="w-full text-sm">
-            <thead className="bg-canvas border-b border-white/[0.08]">
+            <thead className="bg-canvas border-b border-border">
               <tr>
-                <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase">Headline</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase w-36">Neighborhood</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase w-20">Region</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase w-28">Category</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-neutral-500 uppercase w-20">Source</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-neutral-500 uppercase w-16">Time</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-fg-subtle uppercase">Headline</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-fg-subtle uppercase w-36">Neighborhood</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-fg-subtle uppercase w-20">Region</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-fg-subtle uppercase w-28">Category</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-fg-subtle uppercase w-20">Source</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-fg-subtle uppercase w-16">Time</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.06]">
@@ -381,20 +381,20 @@ export default function NewsFeedAdmin() {
                     <Link
                       href={`/${article.neighborhood?.city?.toLowerCase().replace(/\s+/g, '-') || 'unknown'}/${article.neighborhood?.name?.toLowerCase().replace(/\s+/g, '-') || 'unknown'}/${article.slug}`}
                       target="_blank"
-                      className="text-neutral-200 hover:text-white hover:underline"
+                      className="text-fg hover:text-fg hover:underline"
                     >
                       {truncate(article.headline, 60)}
                     </Link>
                   </td>
-                  <td className="px-4 py-2 text-neutral-500 text-xs">
+                  <td className="px-4 py-2 text-fg-subtle text-xs">
                     {article.neighborhood?.name || '-'}
                   </td>
-                  <td className="px-4 py-2 text-neutral-400 text-xs">
+                  <td className="px-4 py-2 text-fg-muted text-xs">
                     {article.neighborhood?.region || article.neighborhood?.city || '-'}
                   </td>
                   <td className="px-4 py-2">
                     {article.category_label && (
-                      <span className="text-xs bg-neutral-800 px-2 py-0.5 text-neutral-400">
+                      <span className="text-xs bg-elevated px-2 py-0.5 text-fg-muted">
                         {article.category_label}
                       </span>
                     )}
@@ -407,19 +407,19 @@ export default function NewsFeedAdmin() {
                     ) : article.ai_model?.toLowerCase().includes('gemini') ? (
                       <span className="text-xs bg-green-500/15 px-2 py-0.5 text-green-400">Gemini</span>
                     ) : article.author_type === 'ai' ? (
-                      <span className="text-xs bg-neutral-800 px-2 py-0.5 text-neutral-400">AI</span>
+                      <span className="text-xs bg-elevated px-2 py-0.5 text-fg-muted">AI</span>
                     ) : (
-                      <span className="text-xs text-neutral-400">-</span>
+                      <span className="text-xs text-fg-muted">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-2 text-right text-neutral-400 text-xs">
+                  <td className="px-4 py-2 text-right text-fg-muted text-xs">
                     {formatRelativeTime(article.published_at)}
                   </td>
                 </tr>
               ))}
               {articles.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-neutral-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-fg-muted">
                     No articles found for selected filters
                   </td>
                 </tr>
@@ -429,15 +429,15 @@ export default function NewsFeedAdmin() {
         </div>
 
         {/* Failed Content Section */}
-        <div className="border border-white/[0.08] bg-surface">
+        <div className="border border-border bg-surface">
           <button
             onClick={() => setShowFailed(!showFailed)}
-            className="w-full flex items-center justify-between px-4 py-3 border-b border-white/[0.08] bg-canvas hover:bg-neutral-800 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-3 border-b border-border bg-canvas hover:bg-elevated transition-colors"
           >
-            <span className="text-sm font-medium text-neutral-300">
+            <span className="text-sm font-medium text-fg-muted">
               FAILED/STUCK CONTENT ({failedContent.length})
             </span>
-            <span className="text-neutral-400">
+            <span className="text-fg-muted">
               {showFailed ? '▲' : '▼'}
             </span>
           </button>
@@ -452,10 +452,10 @@ export default function NewsFeedAdmin() {
                   <div key={item.id} className="px-4 py-3 flex items-start gap-3">
                     <span className="text-yellow-500 mt-0.5">⚠</span>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-neutral-200 truncate">
+                      <div className="text-sm font-medium text-fg truncate">
                         {item.headline}
                       </div>
-                      <div className="text-xs text-neutral-500 mt-0.5">
+                      <div className="text-xs text-fg-subtle mt-0.5">
                         {item.neighborhood?.name || 'Unknown'} &middot;{' '}
                         {isScheduleMissed && (
                           <span className="text-red-600">
@@ -469,14 +469,14 @@ export default function NewsFeedAdmin() {
                         )}
                       </div>
                       {item.editor_notes && (
-                        <div className="text-xs text-neutral-400 mt-1 italic">
+                        <div className="text-xs text-fg-muted mt-1 italic">
                           Note: {item.editor_notes}
                         </div>
                       )}
                     </div>
                     <Link
                       href={`/admin/articles?id=${item.id}`}
-                      className="text-xs text-neutral-400 hover:text-white"
+                      className="text-xs text-fg-muted hover:text-fg"
                     >
                       View
                     </Link>
@@ -484,7 +484,7 @@ export default function NewsFeedAdmin() {
                 );
               })}
               {failedContent.length === 0 && (
-                <div className="px-4 py-8 text-center text-neutral-400 text-sm">
+                <div className="px-4 py-8 text-center text-fg-muted text-sm">
                   No failed or stuck content
                 </div>
               )}

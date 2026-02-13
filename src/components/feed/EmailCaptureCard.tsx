@@ -95,9 +95,9 @@ export function EmailCaptureCard({ neighborhoodName }: EmailCaptureCardProps) {
 
   if (status === 'success') {
     return (
-      <div className="bg-surface border border-white/[0.08] p-6 text-center">
-        <p className="text-lg font-medium text-neutral-100 mb-1">You're in!</p>
-        <p className="text-sm text-neutral-400">
+      <div className="bg-surface border border-border p-6 text-center">
+        <p className="text-lg font-medium text-fg mb-1">You're in!</p>
+        <p className="text-sm text-fg-muted">
           Check your inbox for a verification link.
         </p>
       </div>
@@ -109,11 +109,11 @@ export function EmailCaptureCard({ neighborhoodName }: EmailCaptureCardProps) {
     : 'Get your daily brief';
 
   return (
-    <div className="bg-surface border border-white/[0.08] p-6 relative">
+    <div className="bg-surface border border-border p-6 relative">
       {/* Dismiss button */}
       <button
         onClick={handleDismiss}
-        className="absolute top-3 right-3 text-neutral-500 hover:text-white transition-colors"
+        className="absolute top-3 right-3 text-fg-subtle hover:text-fg transition-colors"
         aria-label="Dismiss"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -121,10 +121,10 @@ export function EmailCaptureCard({ neighborhoodName }: EmailCaptureCardProps) {
         </svg>
       </button>
 
-      <h3 className="text-base font-medium text-neutral-100 mb-1 pr-6">
+      <h3 className="text-base font-medium text-fg mb-1 pr-6">
         {headline}
       </h3>
-      <p className="text-sm text-neutral-400 mb-4">
+      <p className="text-sm text-fg-muted mb-4">
         Free daily brief every morning. Unsubscribe anytime.
       </p>
 
@@ -134,13 +134,13 @@ export function EmailCaptureCard({ neighborhoodName }: EmailCaptureCardProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Enter your email"
-          className="flex-1 px-4 py-2.5 bg-neutral-900 border border-white/20 text-white text-sm placeholder:text-neutral-500 focus:outline-none focus:border-amber-500 transition-colors"
+          className="flex-1 px-4 py-2.5 bg-surface border border-border-strong text-white text-sm placeholder:text-fg-subtle focus:outline-none focus:border-amber-500 transition-colors"
           disabled={status === 'loading'}
         />
         <button
           type="submit"
           disabled={status === 'loading'}
-          className="px-6 py-2.5 bg-white text-neutral-900 text-sm font-medium tracking-wide hover:bg-amber-600 hover:text-white transition-colors disabled:opacity-50 whitespace-nowrap"
+          className="px-6 py-2.5 bg-fg text-canvas text-sm font-medium tracking-wide hover:bg-amber-600 hover:text-fg transition-colors disabled:opacity-50 whitespace-nowrap"
         >
           {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
         </button>

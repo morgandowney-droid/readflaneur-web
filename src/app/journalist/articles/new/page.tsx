@@ -207,7 +207,7 @@ export default function CreateArticlePage() {
     return (
       <div className="py-12 px-4">
         <div className="mx-auto max-w-3xl">
-          <p className="text-neutral-400">Loading...</p>
+          <p className="text-fg-muted">Loading...</p>
         </div>
       </div>
     );
@@ -224,7 +224,7 @@ export default function CreateArticlePage() {
           <h1 className="text-2xl font-light">Write New Article</h1>
           <Link
             href="/journalist"
-            className="text-sm text-neutral-500 hover:text-black"
+            className="text-sm text-fg-subtle hover:text-black"
           >
             &larr; Back to Dashboard
           </Link>
@@ -232,7 +232,7 @@ export default function CreateArticlePage() {
 
         {/* Guidelines */}
         <div className="bg-neutral-50 border border-neutral-200 p-4 mb-8">
-          <p className="text-sm text-neutral-600">
+          <p className="text-sm text-fg-subtle">
             <strong>Guidelines:</strong> Articles should be 100-600 words (ideal: ~300 words).
             Include 1-5 high-quality photos. Focus on speed, wit, and aesthetics.
           </p>
@@ -247,7 +247,7 @@ export default function CreateArticlePage() {
 
           {/* Neighborhood */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Neighborhood *
             </label>
             <select
@@ -271,7 +271,7 @@ export default function CreateArticlePage() {
 
           {/* Headline */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Headline *
             </label>
             <input
@@ -283,14 +283,14 @@ export default function CreateArticlePage() {
               className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none text-lg"
               placeholder="Your compelling headline"
             />
-            <p className="text-xs text-neutral-400 mt-1">
+            <p className="text-xs text-fg-muted mt-1">
               {formData.headline.length}/150 characters
             </p>
           </div>
 
           {/* Preview Text */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Preview Text *
             </label>
             <textarea
@@ -302,14 +302,14 @@ export default function CreateArticlePage() {
               className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none resize-none"
               placeholder="1-2 sentences shown when readers hover over the photo..."
             />
-            <p className="text-xs text-neutral-400 mt-1">
+            <p className="text-xs text-fg-muted mt-1">
               This appears when readers hover over the photo or tap on mobile. {formData.previewText.length}/200 characters
             </p>
           </div>
 
           {/* Images */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Photos * (1-5 images)
             </label>
 
@@ -380,7 +380,7 @@ export default function CreateArticlePage() {
                 >
                   {uploadingImage ? 'Uploading...' : `Add Photo${formData.images.length > 0 ? 's' : ''}`}
                 </label>
-                <p className="text-xs text-neutral-400 mt-2">
+                <p className="text-xs text-fg-muted mt-2">
                   JPEG, PNG, WebP, or HEIC. Max 10MB each. First photo is featured.
                 </p>
               </div>
@@ -389,7 +389,7 @@ export default function CreateArticlePage() {
 
           {/* Article Body */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Article Body *
             </label>
             <textarea
@@ -401,7 +401,7 @@ export default function CreateArticlePage() {
               placeholder="Write your article here. Use blank lines between paragraphs..."
             />
             <div className="flex justify-between mt-1">
-              <p className="text-xs text-neutral-400">
+              <p className="text-xs text-fg-muted">
                 Use blank lines to separate paragraphs
               </p>
               <p className={`text-xs ${getWordCountColor()}`}>
@@ -417,7 +417,7 @@ export default function CreateArticlePage() {
               type="button"
               onClick={(e) => handleSubmit(e, true)}
               disabled={isSubmitting || uploadingImage}
-              className="flex-1 border border-black py-3 text-sm tracking-widest uppercase hover:bg-black hover:text-white transition-colors disabled:opacity-50"
+              className="flex-1 border border-black py-3 text-sm tracking-widest uppercase hover:bg-black hover:text-fg transition-colors disabled:opacity-50"
             >
               Save as Draft
             </button>
@@ -425,7 +425,7 @@ export default function CreateArticlePage() {
               type="button"
               onClick={(e) => handleSubmit(e, false)}
               disabled={isSubmitting || uploadingImage}
-              className="flex-1 bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+              className="flex-1 bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50"
             >
               {isSubmitting ? 'Submitting...' : 'Submit for Review'}
             </button>

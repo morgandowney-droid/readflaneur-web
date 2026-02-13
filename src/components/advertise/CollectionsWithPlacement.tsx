@@ -21,13 +21,13 @@ export function CollectionsWithPlacement() {
   return (
     <div id="collections">
       {/* Collections Header */}
-      <h2 className="text-xs tracking-[0.3em] uppercase text-neutral-500 mb-10 text-center">
+      <h2 className="text-xs tracking-[0.3em] uppercase text-fg-subtle mb-10 text-center">
         Collections
       </h2>
 
       {/* Placement Toggle — between header and cards */}
       <div className="max-w-md mx-auto mb-10">
-        <label className="block text-xs tracking-[0.2em] uppercase text-neutral-500 mb-2">
+        <label className="block text-xs tracking-[0.2em] uppercase text-fg-subtle mb-2">
           Placement
         </label>
         <div className="flex gap-2">
@@ -40,7 +40,7 @@ export function CollectionsWithPlacement() {
             className={`flex-1 py-3 text-sm tracking-wide uppercase transition-colors rounded-lg ${
               activePlacement === 'daily_brief'
                 ? 'bg-white text-black'
-                : 'bg-neutral-900 text-neutral-400 border border-neutral-700 hover:border-neutral-500'
+                : 'bg-surface text-fg-muted border border-border hover:border-neutral-500'
             }`}
           >
             Daily Brief
@@ -54,13 +54,13 @@ export function CollectionsWithPlacement() {
             className={`flex-1 py-3 text-sm tracking-wide uppercase transition-colors rounded-lg ${
               activePlacement === 'sunday_edition'
                 ? 'bg-white text-black'
-                : 'bg-neutral-900 text-neutral-400 border border-neutral-700 hover:border-neutral-500'
+                : 'bg-surface text-fg-muted border border-border hover:border-neutral-500'
             }`}
           >
             Sunday Edition
           </button>
         </div>
-        <p className="text-sm text-neutral-600 mt-1">
+        <p className="text-sm text-fg-subtle mt-1">
           {activePlacement === 'sunday_edition'
             ? 'Only Sundays are available for Sunday Edition bookings.'
             : activePlacement === 'daily_brief'
@@ -107,10 +107,10 @@ function CollectionCard({
 
   return (
     <div
-      className={`bg-neutral-900 border p-8 flex flex-col ${
+      className={`bg-surface border p-8 flex flex-col ${
         collection.key === 'tier1'
           ? 'border-amber-800/40'
-          : 'border-neutral-800'
+          : 'border-border'
       }`}
     >
       {/* Top section */}
@@ -127,7 +127,7 @@ function CollectionCard({
         <h3 className="font-[family-name:var(--font-cormorant)] text-2xl font-light mb-2">
           {collection.name}
         </h3>
-        <p className="text-base text-neutral-400 mb-6 leading-relaxed">
+        <p className="text-base text-fg-muted mb-6 leading-relaxed">
           {collection.tagline}
         </p>
       </div>
@@ -144,7 +144,7 @@ function CollectionCard({
           </span>
           <span
             className={`text-sm transition-colors duration-200 ${
-              isDailyHighlighted ? 'text-neutral-300' : 'text-neutral-500'
+              isDailyHighlighted ? 'text-fg-muted' : 'text-fg-subtle'
             }`}
           >
             /day per individual neighborhood
@@ -153,14 +153,14 @@ function CollectionCard({
         <div className="transition-colors duration-200">
           <span
             className={`text-xl font-light transition-colors duration-200 ${
-              isSundayHighlighted ? 'text-white' : isDailyHighlighted ? 'text-neutral-600' : 'text-neutral-300'
+              isSundayHighlighted ? 'text-white' : isDailyHighlighted ? 'text-neutral-600' : 'text-fg-muted'
             }`}
           >
             ${collection.sundayPrice}
           </span>
           <span
             className={`text-sm transition-colors duration-200 ${
-              isSundayHighlighted ? 'text-neutral-300' : 'text-neutral-500'
+              isSundayHighlighted ? 'text-fg-muted' : 'text-fg-subtle'
             }`}
           >
             /Sunday per individual neighborhood
@@ -168,7 +168,7 @@ function CollectionCard({
         </div>
       </div>
 
-      <p className="text-sm text-neutral-500 mb-6 leading-relaxed flex-1">
+      <p className="text-sm text-fg-subtle mb-6 leading-relaxed flex-1">
         {collection.description}
       </p>
       <div className="mb-6">
@@ -176,17 +176,17 @@ function CollectionCard({
           onClick={scrollToBookAndFocus}
           className="text-left w-full group cursor-pointer"
         >
-          <p className="text-xs tracking-[0.2em] uppercase text-neutral-600 mb-2 group-hover:text-neutral-400 transition-colors">
+          <p className="text-xs tracking-[0.2em] uppercase text-neutral-600 mb-2 group-hover:text-fg-muted transition-colors">
             Example Neighborhoods
           </p>
-          <p className="text-sm text-neutral-400 group-hover:text-neutral-200 transition-colors">
+          <p className="text-sm text-fg-muted group-hover:text-fg transition-colors">
             {collection.exampleNeighborhoods.join(' / ')}
           </p>
         </button>
       </div>
       <button
         onClick={scrollToBookAndFocus}
-        className="block w-full text-center bg-white text-black py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
+        className="block w-full text-center bg-white text-black py-3 text-sm tracking-widest uppercase rounded-lg hover:opacity-80 transition-colors cursor-pointer"
       >
         Book Now
       </button>

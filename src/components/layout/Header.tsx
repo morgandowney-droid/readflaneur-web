@@ -9,6 +9,7 @@ import { useScrollDirection } from '@/hooks/useScrollDirection';
 import type { User } from '@supabase/supabase-js';
 import type { Section, Neighborhood } from '@/types';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
 
@@ -263,7 +264,7 @@ export function Header() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 w-full border-b border-white/5 bg-black/80 backdrop-blur-xl',
+        'sticky top-0 z-50 w-full border-b border-border header-bg',
         'transition-transform duration-300 ease-in-out',
         shouldHideHeader && '-translate-y-full'
       )}
@@ -278,8 +279,8 @@ export function Header() {
           <Link
             href="/search"
             className={cn(
-              'transition-colors hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center',
-              pathname === '/search' ? 'text-white' : 'text-neutral-400'
+              'transition-colors hover:text-fg min-w-[44px] min-h-[44px] flex items-center justify-center',
+              pathname === '/search' ? 'text-fg' : 'text-fg-muted'
             )}
             title="Search"
             aria-label="Search articles"
@@ -291,23 +292,24 @@ export function Header() {
           <button
             onClick={handleNeighborhoodsClick}
             className={cn(
-              'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center border-b-2',
+              'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
               pathname === '/neighborhoods' || pathname === '/feed'
-                ? 'text-white font-medium border-amber-500'
-                : 'text-neutral-500 border-transparent'
+                ? 'text-fg font-medium border-amber-500'
+                : 'text-fg-subtle border-transparent'
             )}
           >
             Neighborhoods
           </button>
 
+          <ThemeToggle />
           {user ? (
             <div className="flex items-center gap-4">
               {isAdmin && (
                 <Link
                   href="/admin/ads"
                   className={cn(
-                    'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center border-b-2',
-                    pathname.startsWith('/admin') ? 'text-white font-medium border-amber-500' : 'text-neutral-500 border-transparent'
+                    'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
+                    pathname.startsWith('/admin') ? 'text-fg font-medium border-amber-500' : 'text-fg-subtle border-transparent'
                   )}
                 >
                   Admin
@@ -317,8 +319,8 @@ export function Header() {
                 <Link
                   href="/advertiser"
                   className={cn(
-                    'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center border-b-2',
-                    pathname.startsWith('/advertiser') ? 'text-white font-medium border-amber-500' : 'text-neutral-500 border-transparent'
+                    'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
+                    pathname.startsWith('/advertiser') ? 'text-fg font-medium border-amber-500' : 'text-fg-subtle border-transparent'
                   )}
                 >
                   Dashboard
@@ -327,15 +329,15 @@ export function Header() {
               <Link
                 href="/feed"
                 className={cn(
-                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center border-b-2',
-                  pathname === '/feed' ? 'text-white font-medium border-amber-500' : 'text-neutral-500 border-transparent'
+                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
+                  pathname === '/feed' ? 'text-fg font-medium border-amber-500' : 'text-fg-subtle border-transparent'
                 )}
               >
                 Stories
               </Link>
               <button
                 onClick={handleSignOut}
-                className="text-[11px] tracking-[0.2em] uppercase text-neutral-500 hover:text-white transition-colors min-h-[44px]"
+                className="text-[11px] tracking-[0.2em] uppercase text-fg-subtle hover:text-fg transition-colors min-h-[44px]"
               >
                 Sign Out
               </button>
@@ -345,8 +347,8 @@ export function Header() {
               <Link
                 href="/signup"
                 className={cn(
-                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-white min-h-[44px] flex items-center',
-                  pathname === '/signup' ? 'text-white font-medium' : 'text-neutral-500'
+                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center',
+                  pathname === '/signup' ? 'text-fg font-medium' : 'text-fg-subtle'
                 )}
               >
                 Sign Up
@@ -360,8 +362,8 @@ export function Header() {
           <Link
             href="/search"
             className={cn(
-              'transition-colors hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center',
-              pathname === '/search' ? 'text-white' : 'text-neutral-400'
+              'transition-colors hover:text-fg min-w-[44px] min-h-[44px] flex items-center justify-center',
+              pathname === '/search' ? 'text-fg' : 'text-fg-muted'
             )}
             aria-label="Search articles"
           >
@@ -369,9 +371,10 @@ export function Header() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </Link>
+          <ThemeToggle className="md:hidden" />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-neutral-400 hover:text-white"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-fg-muted hover:text-fg"
             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileMenuOpen}
           >
@@ -390,12 +393,12 @@ export function Header() {
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-white/[0.08] bg-surface">
+        <div className="md:hidden border-t border-border bg-surface">
           <nav className="flex flex-col px-4">
             {/* Selected Neighborhoods */}
             {selectedNeighborhoods.length > 0 && (
-              <div className="py-4 border-b border-white/[0.08]">
-                <p className="text-[10px] tracking-widest uppercase text-neutral-400 mb-3 text-right">
+              <div className="py-4 border-b border-border">
+                <p className="text-[10px] tracking-widest uppercase text-fg-muted mb-3 text-right">
                   Your Neighborhoods
                 </p>
                 <div className="flex flex-wrap gap-2 justify-end">
@@ -404,13 +407,13 @@ export function Header() {
                       key={hood.id}
                       href={`/feed?neighborhoods=${hood.id}`}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-black text-white"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-canvas text-fg"
                     >
                       <span>{hood.name}</span>
                     </Link>
                   ))}
                   {selectedNeighborhoods.length > 6 && (
-                    <span className="text-xs text-neutral-400 py-1.5">
+                    <span className="text-xs text-fg-muted py-1.5">
                       +{selectedNeighborhoods.length - 6} more
                     </span>
                   )}
@@ -435,8 +438,8 @@ export function Header() {
                   setMobileMenuOpen(false);
                 }}
                 className={cn(
-                  'text-sm tracking-widest uppercase transition-colors hover:text-white text-right py-4 border-b border-white/[0.08]',
-                  pathname === '/neighborhoods' || pathname === '/feed' ? 'text-white font-medium' : 'text-neutral-400'
+                  'text-sm tracking-widest uppercase transition-colors hover:text-fg text-right py-4 border-b border-border',
+                  pathname === '/neighborhoods' || pathname === '/feed' ? 'text-fg font-medium' : 'text-fg-muted'
                 )}
               >
                 Choose Neighborhoods
@@ -445,8 +448,8 @@ export function Header() {
 
             {/* Browse by Section */}
             {sections.length > 0 && (
-              <div className="py-4 border-b border-white/[0.08]">
-                <p className="text-[10px] tracking-widest uppercase text-neutral-400 mb-3 text-right">
+              <div className="py-4 border-b border-border">
+                <p className="text-[10px] tracking-widest uppercase text-fg-muted mb-3 text-right">
                   Browse by Section
                 </p>
                 <div className="flex flex-wrap gap-2 justify-end">
@@ -455,7 +458,7 @@ export function Header() {
                       key={section.id}
                       href={`/feed?section=${section.slug}`}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-300 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-elevated hover:bg-hover text-fg-muted transition-colors"
                     >
                       {section.icon && <span>{section.icon}</span>}
                       <span>{section.name}</span>
@@ -469,8 +472,8 @@ export function Header() {
               href="/feed"
               onClick={() => setMobileMenuOpen(false)}
               className={cn(
-                'text-sm tracking-widest uppercase transition-colors hover:text-white py-3 border-b border-white/[0.08] block text-right',
-                pathname === '/feed' ? 'text-white font-medium' : 'text-neutral-400'
+                'text-sm tracking-widest uppercase transition-colors hover:text-fg py-3 border-b border-border block text-right',
+                pathname === '/feed' ? 'text-fg font-medium' : 'text-fg-muted'
               )}
             >
               Stories
@@ -483,8 +486,8 @@ export function Header() {
                     href="/admin/ads"
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
-                      'text-sm tracking-widest uppercase transition-colors hover:text-white py-3 border-b border-white/[0.08] block text-right',
-                      pathname.startsWith('/admin') ? 'text-white font-medium' : 'text-neutral-400'
+                      'text-sm tracking-widest uppercase transition-colors hover:text-fg py-3 border-b border-border block text-right',
+                      pathname.startsWith('/admin') ? 'text-fg font-medium' : 'text-fg-muted'
                     )}
                   >
                     Admin
@@ -495,8 +498,8 @@ export function Header() {
                     href="/advertiser"
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
-                      'text-sm tracking-widest uppercase transition-colors hover:text-white py-3 border-b border-white/[0.08] block text-right',
-                      pathname.startsWith('/advertiser') ? 'text-white font-medium' : 'text-neutral-400'
+                      'text-sm tracking-widest uppercase transition-colors hover:text-fg py-3 border-b border-border block text-right',
+                      pathname.startsWith('/advertiser') ? 'text-fg font-medium' : 'text-fg-muted'
                     )}
                   >
                     Dashboard
@@ -507,7 +510,7 @@ export function Header() {
                     handleSignOut();
                     setMobileMenuOpen(false);
                   }}
-                  className="text-sm tracking-widest uppercase text-neutral-400 hover:text-white transition-colors text-right py-3 w-full"
+                  className="text-sm tracking-widest uppercase text-fg-muted hover:text-fg transition-colors text-right py-3 w-full"
                 >
                   Sign Out
                 </button>
@@ -517,8 +520,8 @@ export function Header() {
                 href="/signup"
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
-                  'text-xs tracking-widest uppercase transition-colors hover:text-white py-3 block text-right',
-                  pathname === '/signup' ? 'text-white font-medium' : 'text-neutral-500'
+                  'text-xs tracking-widest uppercase transition-colors hover:text-fg py-3 block text-right',
+                  pathname === '/signup' ? 'text-fg font-medium' : 'text-fg-subtle'
                 )}
               >
                 Sign Up

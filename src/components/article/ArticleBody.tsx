@@ -289,7 +289,7 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
     paragraphs = newParagraphs;
   }
 
-  const pClass = 'text-neutral-200 text-[1.2rem] md:text-[1.35rem] leading-loose mb-8';
+  const pClass = 'text-fg text-[1.2rem] md:text-[1.35rem] leading-loose mb-8';
   const linkClass = 'text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all';
 
   return (
@@ -299,7 +299,7 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
         const headerMatch = paragraph.match(/^\[\[([^\]]+)\]\]$/);
         if (headerMatch) {
           return (
-            <h3 key={index} className="text-xl font-semibold text-neutral-100 mt-10 mb-6" style={{ fontFamily: 'var(--font-body-serif)' }}>
+            <h3 key={index} className="text-xl font-semibold text-fg mt-10 mb-6" style={{ fontFamily: 'var(--font-body-serif)' }}>
               {headerMatch[1]}
             </h3>
           );
@@ -329,7 +329,7 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
             const linkMatch = part.match(/\{\{LINKREF:(\d+)\}\}/);
 
             if (strongMatch) {
-              result.push(<strong key={`strong-${partIdx}`} className="font-bold text-neutral-100">{strongMatch[1]}</strong>);
+              result.push(<strong key={`strong-${partIdx}`} className="font-bold text-fg">{strongMatch[1]}</strong>);
             } else if (linkMatch) {
               const linkIdx = parseInt(linkMatch[1]);
               const link = links[linkIdx];

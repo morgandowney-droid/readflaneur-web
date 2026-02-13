@@ -93,11 +93,11 @@ export default async function PaymentSuccessPage({ searchParams }: SuccessPagePr
 
         {orderDetails && (
           <div className="bg-neutral-50 p-6 mb-6 text-left">
-            <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">
               Order Details
             </p>
             <p className="font-medium">{orderDetails.ad?.headline}</p>
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-fg-subtle">
               {orderDetails.package?.name} - {orderDetails.package?.duration_days} days
             </p>
           </div>
@@ -106,13 +106,13 @@ export default async function PaymentSuccessPage({ searchParams }: SuccessPagePr
         <div className="flex flex-col gap-3">
           <Link
             href="/advertiser"
-            className="bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors"
+            className="bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors"
           >
             View Dashboard
           </Link>
           <Link
             href="/advertiser/ads/new"
-            className="border border-black py-3 text-sm tracking-widest uppercase hover:bg-black hover:text-white transition-colors"
+            className="border border-black py-3 text-sm tracking-widest uppercase hover:bg-black hover:text-fg transition-colors"
           >
             Create Another Ad
           </Link>

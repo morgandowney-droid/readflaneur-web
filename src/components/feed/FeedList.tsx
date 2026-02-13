@@ -25,16 +25,16 @@ export function FeedList({ items, view = 'gallery' }: FeedListProps) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         {/* Empty state icon */}
-        <div className="w-16 h-16 mb-6 text-neutral-200">
+        <div className="w-16 h-16 mb-6 text-fg">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-full h-full">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
           </svg>
         </div>
-        <p className="text-base font-medium text-neutral-200 mb-1">No stories yet</p>
-        <p className="text-sm text-neutral-400 mb-6">We&apos;re gathering local news for this neighborhood.</p>
+        <p className="text-base font-medium text-fg mb-1">No stories yet</p>
+        <p className="text-sm text-fg-muted mb-6">We&apos;re gathering local news for this neighborhood.</p>
         <a
           href="/neighborhoods"
-          className="text-xs tracking-widest uppercase text-neutral-500 hover:text-white transition-colors"
+          className="text-xs tracking-widest uppercase text-fg-subtle hover:text-fg transition-colors"
         >
           Explore other neighborhoods
         </a>
@@ -68,7 +68,7 @@ export function FeedList({ items, view = 'gallery' }: FeedListProps) {
           );
         }
         return (
-          <div key={`ad-${item.data.id}-${index}`} className="py-6 border-t border-white/[0.08]">
+          <div key={`ad-${item.data.id}-${index}`} className="py-6 border-t border-border">
             <AdCard
               ad={item.data as Ad}
               variant={view}

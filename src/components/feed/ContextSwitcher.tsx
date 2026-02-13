@@ -89,7 +89,7 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
       {/* Trigger */}
       <button
         onClick={() => setOpen(!open)}
-        className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-neutral-400 hover:text-white transition-colors min-w-0"
+        className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-fg-muted hover:text-fg transition-colors min-w-0"
       >
         <span className="truncate max-w-[80px] md:max-w-[200px]">{currentLabel}</span>
         <svg
@@ -105,20 +105,20 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
 
       {/* Popover */}
       {open && (
-        <div className="absolute top-full mt-2 left-0 bg-[#121212] border border-white/10 shadow-2xl rounded-md w-64 z-30">
+        <div className="absolute top-full mt-2 left-0 bg-surface border border-border-strong shadow-2xl rounded-md w-64 z-30">
           {/* Section 1: Global */}
-          <div className="py-2 border-b border-white/10">
+          <div className="py-2 border-b border-border-strong">
             <button
               onClick={handleSelectAll}
-              className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-white/5 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-hover transition-colors"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-neutral-500 shrink-0">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-fg-subtle shrink-0">
                 <rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
                 <rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
                 <rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
                 <rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
               </svg>
-              <span className="text-xs uppercase tracking-wide text-neutral-300">All Neighborhoods</span>
+              <span className="text-xs uppercase tracking-wide text-fg-muted">All Neighborhoods</span>
               {currentContext === 'all' && (
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="ml-auto text-amber-500 shrink-0">
                   <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -131,12 +131,12 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
           <div className="max-h-64 overflow-y-auto py-2">
             {isLoading ? (
               <div className="px-4 py-3 space-y-2">
-                <div className="h-3 bg-neutral-800 rounded w-3/4 animate-pulse" />
-                <div className="h-3 bg-neutral-800 rounded w-1/2 animate-pulse" />
-                <div className="h-3 bg-neutral-800 rounded w-2/3 animate-pulse" />
+                <div className="h-3 bg-elevated rounded w-3/4 animate-pulse" />
+                <div className="h-3 bg-elevated rounded w-1/2 animate-pulse" />
+                <div className="h-3 bg-elevated rounded w-2/3 animate-pulse" />
               </div>
             ) : neighborhoods.length === 0 ? (
-              <p className="px-4 py-3 text-xs text-neutral-500">No neighborhoods selected</p>
+              <p className="px-4 py-3 text-xs text-fg-subtle">No neighborhoods selected</p>
             ) : (
               neighborhoods.map((n, i) => {
                 const isPrimary = i === 0 && showPrimary;
@@ -144,22 +144,22 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
                   <button
                     key={n.id}
                     onClick={() => handleSelectNeighborhood(n.id)}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-white/5 transition-colors group"
+                    className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-hover transition-colors group"
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isPrimary ? 'bg-amber-500' : 'bg-neutral-600'}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isPrimary ? 'bg-amber-500' : 'bg-fg-subtle'}`} />
                     <span className="flex-1 min-w-0">
                       <span className="flex items-center gap-2">
-                        <span className="text-xs text-neutral-200 truncate">{n.name}</span>
+                        <span className="text-xs text-fg truncate">{n.name}</span>
                         {isPrimary && (
                           <span className="text-[9px] tracking-wider uppercase text-amber-500/70 font-medium shrink-0">Primary</span>
                         )}
                       </span>
-                      <span className="text-[10px] text-neutral-500 block">{n.city}</span>
+                      <span className="text-[10px] text-fg-subtle block">{n.city}</span>
                     </span>
                     {!isPrimary && showPrimary && (
                       <button
                         onClick={(e) => handleSetPrimary(e, n.id)}
-                        className="text-[9px] tracking-wider uppercase text-neutral-600 hover:text-amber-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0"
+                        className="text-[9px] tracking-wider uppercase text-fg-subtle hover:text-amber-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0"
                         title="Set as primary"
                       >
                         Set primary
@@ -177,18 +177,18 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
           </div>
 
           {/* Section 3: Actions */}
-          <div className="border-t border-white/10 py-2">
+          <div className="border-t border-border-strong py-2">
             <button
               onClick={handleCustomize}
-              className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-white/5 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-hover transition-colors"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-neutral-500 shrink-0">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-fg-subtle shrink-0">
                 <path d="M2 4h10M2 7h10M2 10h10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                 <circle cx="5" cy="4" r="1.2" fill="currentColor" />
                 <circle cx="9" cy="7" r="1.2" fill="currentColor" />
                 <circle cx="6" cy="10" r="1.2" fill="currentColor" />
               </svg>
-              <span className="text-xs text-neutral-400">Customize List...</span>
+              <span className="text-xs text-fg-muted">Customize List...</span>
             </button>
             {isSubscribed && (
               <ShareWidget compact onDone={() => setOpen(false)} />

@@ -107,10 +107,10 @@ export function SectionInterestSelector({ onSave, compact = false }: SectionInte
   if (loading) {
     return (
       <div className="animate-pulse">
-        <div className="h-8 bg-neutral-800 rounded w-48 mb-4"></div>
+        <div className="h-8 bg-elevated rounded w-48 mb-4"></div>
         <div className="flex flex-wrap gap-2">
           {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="h-10 bg-neutral-800 rounded w-24"></div>
+            <div key={i} className="h-10 bg-elevated rounded w-24"></div>
           ))}
         </div>
       </div>
@@ -128,7 +128,7 @@ export function SectionInterestSelector({ onSave, compact = false }: SectionInte
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs border transition-colors ${
                 selectedIds.includes(section.id)
                   ? 'bg-amber-600 text-white border-amber-600'
-                  : 'bg-surface text-neutral-300 border-white/[0.08] hover:border-white/20'
+                  : 'bg-surface text-fg-muted border-border hover:border-border-strong'
               }`}
             >
               {section.icon && <span>{section.icon}</span>}
@@ -139,7 +139,7 @@ export function SectionInterestSelector({ onSave, compact = false }: SectionInte
         <button
           onClick={saveInterests}
           disabled={saving}
-          className="text-xs tracking-widest uppercase text-neutral-500 hover:text-white transition-colors disabled:opacity-50"
+          className="text-xs tracking-widest uppercase text-fg-subtle hover:text-fg transition-colors disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Preferences'}
         </button>
@@ -150,8 +150,8 @@ export function SectionInterestSelector({ onSave, compact = false }: SectionInte
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-light text-neutral-100 mb-2">Your Interests</h3>
-        <p className="text-sm text-neutral-500">
+        <h3 className="text-lg font-light text-fg mb-2">Your Interests</h3>
+        <p className="text-sm text-fg-subtle">
           Select topics you're interested in to personalize your stories.
         </p>
       </div>
@@ -164,7 +164,7 @@ export function SectionInterestSelector({ onSave, compact = false }: SectionInte
             className={`flex flex-col items-center gap-2 p-4 border transition-colors ${
               selectedIds.includes(section.id)
                 ? 'bg-amber-600 text-white border-amber-600'
-                : 'bg-surface text-neutral-300 border-white/[0.08] hover:border-white/20'
+                : 'bg-surface text-fg-muted border-border hover:border-border-strong'
             }`}
           >
             {section.icon && <span className="text-2xl">{section.icon}</span>}
@@ -173,21 +173,21 @@ export function SectionInterestSelector({ onSave, compact = false }: SectionInte
         ))}
       </div>
 
-      <div className="flex items-center justify-between pt-4 border-t border-white/[0.08]">
-        <p className="text-xs text-neutral-400">
+      <div className="flex items-center justify-between pt-4 border-t border-border">
+        <p className="text-xs text-fg-muted">
           {selectedIds.length} of {sections.length} selected
         </p>
         <button
           onClick={saveInterests}
           disabled={saving}
-          className="px-6 py-2 bg-black text-white text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+          className="px-6 py-2 bg-black text-white text-sm tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Preferences'}
         </button>
       </div>
 
       {!userId && (
-        <p className="text-xs text-neutral-400 text-center">
+        <p className="text-xs text-fg-muted text-center">
           Sign in to sync your preferences across devices.
         </p>
       )}

@@ -40,10 +40,10 @@ export function RecentComments({ limit = 5 }: RecentCommentsProps) {
   if (loading) {
     return (
       <div className="bg-neutral-50 p-6">
-        <h3 className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-4">
+        <h3 className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-4">
           Recent Comments
         </h3>
-        <p className="text-sm text-neutral-400">Loading...</p>
+        <p className="text-sm text-fg-muted">Loading...</p>
       </div>
     );
   }
@@ -51,17 +51,17 @@ export function RecentComments({ limit = 5 }: RecentCommentsProps) {
   if (comments.length === 0) {
     return (
       <div className="bg-neutral-50 p-6">
-        <h3 className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-4">
+        <h3 className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-4">
           Recent Comments
         </h3>
-        <p className="text-sm text-neutral-500">No comments yet. Be the first to join the conversation.</p>
+        <p className="text-sm text-fg-subtle">No comments yet. Be the first to join the conversation.</p>
       </div>
     );
   }
 
   return (
     <div className="bg-neutral-50 p-6">
-      <h3 className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-4">
+      <h3 className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-4">
         Recent Comments
       </h3>
 
@@ -72,12 +72,12 @@ export function RecentComments({ limit = 5 }: RecentCommentsProps) {
               <p className="text-sm text-neutral-700 line-clamp-2 mb-2">
                 &ldquo;{comment.content}&rdquo;
               </p>
-              <div className="flex items-center gap-2 text-xs text-neutral-400">
+              <div className="flex items-center gap-2 text-xs text-fg-muted">
                 <span className="font-medium text-neutral-600">{comment.author_name}</span>
                 <span>&middot;</span>
                 <span>{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
               </div>
-              <p className="text-xs text-neutral-400 mt-1 group-hover:text-black transition-colors line-clamp-1">
+              <p className="text-xs text-fg-muted mt-1 group-hover:text-black transition-colors line-clamp-1">
                 on: {comment.article_headline}
               </p>
             </Link>

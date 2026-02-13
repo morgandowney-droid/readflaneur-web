@@ -155,7 +155,7 @@ export default function SpottedPage() {
         <div className="mb-6">
           <Link
             href={`/${city}/${neighborhood}`}
-            className="text-xs tracking-widest uppercase text-neutral-400 hover:text-black"
+            className="text-xs tracking-widest uppercase text-fg-muted hover:text-black"
           >
             &larr; {neighborhoodName}
           </Link>
@@ -164,7 +164,7 @@ export default function SpottedPage() {
         {/* Header */}
         <header className="mb-8">
           <h1 className="text-2xl font-light mb-1">Spotted</h1>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-fg-subtle">
             Real-time sightings from {neighborhoodName}.
           </p>
         </header>
@@ -216,8 +216,8 @@ export default function SpottedPage() {
         {/* Items List */}
         {filteredItems.length === 0 ? (
           <div className="text-center py-12 bg-neutral-50">
-            <p className="text-neutral-500">Nothing spotted yet.</p>
-            <p className="text-sm text-neutral-400 mt-1">Be the first to report something.</p>
+            <p className="text-fg-subtle">Nothing spotted yet.</p>
+            <p className="text-sm text-fg-muted mt-1">Be the first to report something.</p>
           </div>
         ) : (
           <div className="space-y-0 divide-y divide-neutral-100">
@@ -232,7 +232,7 @@ export default function SpottedPage() {
                       <CategoryBadge category={item.category} />
                       <UrgencyIndicator urgency={item.ai_urgency} />
                       {item.verification_count > 1 && (
-                        <span className="text-[10px] text-neutral-400">
+                        <span className="text-[10px] text-fg-muted">
                           {item.verification_count} reports
                         </span>
                       )}
@@ -241,7 +241,7 @@ export default function SpottedPage() {
                     <p className="text-sm text-neutral-800">{item.content}</p>
 
                     {(item.location_description || item.business_name) && (
-                      <p className="text-xs text-neutral-500 mt-1">
+                      <p className="text-xs text-fg-subtle mt-1">
                         {item.business_name && <span className="font-medium">{item.business_name}</span>}
                         {item.business_name && item.location_description && ' · '}
                         {item.location_description}
@@ -249,7 +249,7 @@ export default function SpottedPage() {
                     )}
                   </div>
 
-                  <span className="text-xs text-neutral-400 whitespace-nowrap">
+                  <span className="text-xs text-fg-muted whitespace-nowrap">
                     {timeAgo(item.spotted_at)}
                   </span>
                 </div>
@@ -265,7 +265,7 @@ export default function SpottedPage() {
           </p>
           <Link
             href={`/${city}/${neighborhood}?tip=true`}
-            className="inline-block px-6 py-2 bg-black text-white text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors"
+            className="inline-block px-6 py-2 bg-black text-white text-xs tracking-widest uppercase hover:bg-elevated transition-colors"
           >
             Share a Tip
           </Link>

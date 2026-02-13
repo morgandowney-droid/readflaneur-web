@@ -25,8 +25,8 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated }: Sourc
     const rssSource = parseEditorNotesSource(editorNotes);
     if (rssSource) {
       return (
-        <div className="mt-8 pt-6 border-t border-white/[0.08]">
-          <p className="text-xs text-neutral-400">
+        <div className="mt-8 pt-6 border-t border-border">
+          <p className="text-xs text-fg-muted">
             <span className="italic">Source: </span>
             <a
               href={rssSource.url}
@@ -42,8 +42,8 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated }: Sourc
     }
 
     return (
-      <div className="mt-8 pt-6 border-t border-white/[0.08]">
-        <p className="text-xs text-neutral-400 italic">
+      <div className="mt-8 pt-6 border-t border-border">
+        <p className="text-xs text-fg-muted italic">
           Synthesized from public news sources and social media via AI-powered search and analysis.
         </p>
       </div>
@@ -90,14 +90,14 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated }: Sourc
     return (
       <span key={source.id}>
         {prefix}
-        <span className="text-neutral-500">{displayName}</span>
+        <span className="text-fg-subtle">{displayName}</span>
       </span>
     );
   };
 
   return (
-    <div className="mt-8 pt-6 border-t border-white/[0.08]">
-      <p className="text-xs text-neutral-400">
+    <div className="mt-8 pt-6 border-t border-border">
+      <p className="text-xs text-fg-muted">
         <span className="italic">Synthesized from reporting by </span>
         {sources.map((source, index) => formatSource(source, index))}
         <span className="italic">.</span>

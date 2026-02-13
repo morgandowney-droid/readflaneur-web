@@ -42,7 +42,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
 
   return (
     <Link href={articleUrl}>
-      <article className="flex gap-4 py-4 border-b border-white/[0.08] hover:bg-white/5 transition-colors">
+      <article className="flex gap-4 py-4 border-b border-border hover:bg-hover transition-colors">
         {article.image_url && (
           <div className="relative w-24 h-24 flex-shrink-0">
             <Image
@@ -61,7 +61,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1 overflow-hidden whitespace-nowrap">
+          <div className="flex items-center gap-2 text-xs text-fg-muted mb-1 overflow-hidden whitespace-nowrap">
             <span className="uppercase tracking-wider shrink-0">{article.neighborhood?.name}</span>
             {article.published_at && (
               <>
@@ -72,7 +72,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
             {article.category_label && (
               <>
                 <span className="shrink-0">&middot;</span>
-                <span className="text-neutral-300 italic truncate max-w-[120px]">
+                <span className="text-fg-muted italic truncate max-w-[120px]">
                   {article.category_label.replace(new RegExp(`^${article.neighborhood?.name}\\s+`, 'i'), '')}
                 </span>
               </>
@@ -82,7 +82,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
             {article.headline}
           </h2>
           {blurb && (
-            <p className="text-[1.05rem] text-neutral-400 leading-7">
+            <p className="text-[1.05rem] text-fg-muted leading-7">
               {blurb}
             </p>
           )}

@@ -87,7 +87,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div className="relative aspect-video w-full bg-neutral-800">
+        <div className="relative aspect-video w-full bg-elevated">
           {article.image_url ? (
             <Image
               src={article.image_url}
@@ -98,7 +98,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
-              <svg className="w-12 h-12 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-12 h-12 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
               </svg>
             </div>
@@ -163,7 +163,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
 
         {isHovered && (
           <div className="p-4">
-            <div className="flex items-center gap-2 text-xs text-neutral-400 mb-2">
+            <div className="flex items-center gap-2 text-xs text-fg-muted mb-2">
               <span className="uppercase tracking-wider">
                 {article.neighborhood?.name}
               </span>
@@ -175,7 +175,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
                   <a
                     href={`/${citySlug}/${neighborhoodSlug}?category=${categoryLabelToSlug(article.category_label)}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="text-neutral-300 italic hover:text-neutral-500 hover:underline transition-colors"
+                    className="text-fg-muted italic hover:text-fg-subtle hover:underline transition-colors"
                   >
                     {article.category_label}
                   </a>
@@ -183,7 +183,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
               )}
             </div>
             <h2 className="text-xl md:text-2xl font-semibold mb-3 whitespace-nowrap overflow-hidden">{article.headline}</h2>
-            <p className="text-neutral-400 text-[1.05rem] leading-7 mb-4">
+            <p className="text-fg-muted text-[1.05rem] leading-7 mb-4">
               {article.preview_text || article.body_text.substring(0, 200)}
             </p>
             <span className="text-sm font-bold tracking-wider uppercase text-amber-500 hover:text-amber-400">

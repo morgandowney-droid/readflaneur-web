@@ -280,7 +280,7 @@ export default function PropertyWatchPage() {
         <div className="mb-6">
           <Link
             href={`/${city}/${neighborhood}`}
-            className="text-xs tracking-widest uppercase text-neutral-400 hover:text-black"
+            className="text-xs tracking-widest uppercase text-fg-muted hover:text-black"
           >
             &larr; {neighborhoodName}
           </Link>
@@ -289,7 +289,7 @@ export default function PropertyWatchPage() {
         {/* Header */}
         <header className="mb-6">
           <h1 className="text-2xl font-light mb-1">Property Watch</h1>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-fg-subtle">
             What's changing in {neighborhoodName}, {formattedCity}.
           </p>
         </header>
@@ -297,7 +297,7 @@ export default function PropertyWatchPage() {
         {/* Weekly Digest */}
         {digest?.ai_summary && (
           <div className="mb-6 p-4 bg-neutral-50 border border-neutral-200">
-            <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">This Week</p>
+            <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">This Week</p>
             <p className="text-sm text-neutral-700">{digest.ai_summary}</p>
           </div>
         )}
@@ -345,8 +345,8 @@ export default function PropertyWatchPage() {
           <div className="space-y-0 divide-y divide-neutral-100">
             {allItems.length === 0 ? (
               <div className="text-center py-12 bg-neutral-50">
-                <p className="text-neutral-500">No activity yet.</p>
-                <p className="text-sm text-neutral-400 mt-1">Be the first to report something.</p>
+                <p className="text-fg-subtle">No activity yet.</p>
+                <p className="text-sm text-fg-muted mt-1">Be the first to report something.</p>
               </div>
             ) : (
               allItems.slice(0, 30).map((item) => (
@@ -356,7 +356,7 @@ export default function PropertyWatchPage() {
                       <span className="text-lg"><SightingIcon type={(item as PropertySighting).sighting_type} /></span>
                       <div className="flex-1">
                         <p className="text-sm">{(item as PropertySighting).ai_summary || (item as PropertySighting).address || (item as PropertySighting).location_description}</p>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
+                        <div className="flex items-center gap-2 mt-1 text-xs text-fg-subtle">
                           {(item as PropertySighting).asking_price && (
                             <span>{formatPrice((item as PropertySighting).asking_price, currencySymbol)}</span>
                           )}
@@ -370,7 +370,7 @@ export default function PropertyWatchPage() {
                       <span className="text-lg"><StorefrontIcon type={(item as StorefrontChange).change_type} /></span>
                       <div className="flex-1">
                         <p className="text-sm">{(item as StorefrontChange).ai_summary || `${(item as StorefrontChange).business_name || 'Business'} ${(item as StorefrontChange).change_type} at ${(item as StorefrontChange).address}`}</p>
-                        <p className="text-xs text-neutral-500 mt-1">{timeAgo(item._date)}</p>
+                        <p className="text-xs text-fg-subtle mt-1">{timeAgo(item._date)}</p>
                       </div>
                     </div>
                   )}
@@ -379,7 +379,7 @@ export default function PropertyWatchPage() {
                       <span className="text-lg"><ProjectIcon type={(item as DevelopmentProject).project_type} status={(item as DevelopmentProject).status} /></span>
                       <div className="flex-1">
                         <p className="text-sm">{(item as DevelopmentProject).ai_summary || `${(item as DevelopmentProject).project_type} at ${(item as DevelopmentProject).address}`}</p>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
+                        <div className="flex items-center gap-2 mt-1 text-xs text-fg-subtle">
                           <span className="capitalize">{(item as DevelopmentProject).status}</span>
                           <span>{timeAgo(item._date)}</span>
                         </div>
@@ -395,7 +395,7 @@ export default function PropertyWatchPage() {
                       </span>
                       <div className="flex-1">
                         <p className="text-sm">{(item as RealEstateMove).ai_summary || (item as RealEstateMove).address}</p>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
+                        <div className="flex items-center gap-2 mt-1 text-xs text-fg-subtle">
                           {(item as RealEstateMove).current_price && (
                             <span>{formatPrice((item as RealEstateMove).current_price, currencySymbol)}</span>
                           )}
@@ -421,7 +421,7 @@ export default function PropertyWatchPage() {
             {config?.has_listings_api ? (
               listings.length === 0 ? (
                 <div className="text-center py-12 bg-neutral-50">
-                  <p className="text-neutral-500">No listings data yet.</p>
+                  <p className="text-fg-subtle">No listings data yet.</p>
                 </div>
               ) : (
                 listings.map((listing) => (
@@ -434,7 +434,7 @@ export default function PropertyWatchPage() {
                       </span>
                       <div className="flex-1">
                         <p className="text-sm">{listing.ai_summary || listing.address}</p>
-                        <div className="flex items-center gap-3 mt-1 text-xs text-neutral-500">
+                        <div className="flex items-center gap-3 mt-1 text-xs text-fg-subtle">
                           {listing.current_price && <span>{formatPrice(listing.current_price, currencySymbol)}</span>}
                           {listing.price_change && (
                             <span className={listing.price_change < 0 ? 'text-green-600' : 'text-red-600'}>
@@ -452,8 +452,8 @@ export default function PropertyWatchPage() {
               // Crowdsourced sightings for non-US
               sightings.filter(s => ['for_sale', 'for_rent', 'sold'].includes(s.sighting_type)).length === 0 ? (
                 <div className="text-center py-12 bg-neutral-50">
-                  <p className="text-neutral-500">No sightings yet.</p>
-                  <p className="text-sm text-neutral-400 mt-1">Spot a "For Sale" sign? Report it below.</p>
+                  <p className="text-fg-subtle">No sightings yet.</p>
+                  <p className="text-sm text-fg-muted mt-1">Spot a "For Sale" sign? Report it below.</p>
                 </div>
               ) : (
                 sightings
@@ -464,7 +464,7 @@ export default function PropertyWatchPage() {
                         <span className="text-lg"><SightingIcon type={sighting.sighting_type} /></span>
                         <div className="flex-1">
                           <p className="text-sm">{sighting.ai_summary || sighting.address || sighting.location_description}</p>
-                          <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
+                          <div className="flex items-center gap-2 mt-1 text-xs text-fg-subtle">
                             {sighting.asking_price && <span>{formatPrice(sighting.asking_price, currencySymbol)}</span>}
                             {sighting.verification_count > 1 && <span>{sighting.verification_count} reports</span>}
                             <span>{timeAgo(sighting.first_spotted_at)}</span>
@@ -482,7 +482,7 @@ export default function PropertyWatchPage() {
           <div className="space-y-0 divide-y divide-neutral-100">
             {storefronts.length === 0 ? (
               <div className="text-center py-12 bg-neutral-50">
-                <p className="text-neutral-500">No storefront changes tracked yet.</p>
+                <p className="text-fg-subtle">No storefront changes tracked yet.</p>
               </div>
             ) : (
               storefronts.map((storefront) => (
@@ -492,12 +492,12 @@ export default function PropertyWatchPage() {
                     <div className="flex-1">
                       <p className="text-sm font-medium">
                         {storefront.business_name || 'Business'}
-                        <span className="font-normal text-neutral-500"> · {storefront.change_type}</span>
+                        <span className="font-normal text-fg-subtle"> · {storefront.change_type}</span>
                       </p>
                       {storefront.ai_summary && (
                         <p className="text-sm text-neutral-600 mt-0.5">{storefront.ai_summary}</p>
                       )}
-                      <p className="text-xs text-neutral-500 mt-1">
+                      <p className="text-xs text-fg-subtle mt-1">
                         {storefront.address} · {timeAgo(storefront.first_spotted_at)}
                       </p>
                     </div>
@@ -512,7 +512,7 @@ export default function PropertyWatchPage() {
           <div className="space-y-0 divide-y divide-neutral-100">
             {projects.length === 0 ? (
               <div className="text-center py-12 bg-neutral-50">
-                <p className="text-neutral-500">No development projects tracked yet.</p>
+                <p className="text-fg-subtle">No development projects tracked yet.</p>
               </div>
             ) : (
               projects.map((project) => (
@@ -522,12 +522,12 @@ export default function PropertyWatchPage() {
                     <div className="flex-1">
                       <p className="text-sm font-medium">
                         {project.address}
-                        <span className="font-normal text-neutral-500 capitalize"> · {project.status}</span>
+                        <span className="font-normal text-fg-subtle capitalize"> · {project.status}</span>
                       </p>
                       {project.ai_summary && (
                         <p className="text-sm text-neutral-600 mt-0.5">{project.ai_summary}</p>
                       )}
-                      <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
+                      <div className="flex items-center gap-2 mt-1 text-xs text-fg-subtle">
                         <span className="capitalize">{project.project_type.replace('_', ' ')}</span>
                         {project.floors && <span>{project.floors} floors</span>}
                         {project.units && <span>{project.units} units</span>}
@@ -544,12 +544,12 @@ export default function PropertyWatchPage() {
         {/* Submit CTA */}
         <div className="mt-8 p-6 bg-neutral-50 border border-neutral-200">
           <p className="text-sm text-neutral-600 mb-1 font-medium">See something changing?</p>
-          <p className="text-xs text-neutral-500 mb-4">
+          <p className="text-xs text-fg-subtle mb-4">
             For sale signs, construction, new storefronts, closures - help track what's happening.
           </p>
           <button
             onClick={() => setShowSubmitForm(!showSubmitForm)}
-            className="px-6 py-2 bg-black text-white text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors"
+            className="px-6 py-2 bg-black text-white text-xs tracking-widest uppercase hover:bg-elevated transition-colors"
           >
             Report a Sighting
           </button>
@@ -567,7 +567,7 @@ export default function PropertyWatchPage() {
         </div>
 
         {/* Data source note */}
-        <p className="mt-6 text-xs text-neutral-400 text-center">
+        <p className="mt-6 text-xs text-fg-muted text-center">
           {config?.has_listings_api
             ? `Listings data from ${config.listings_api_source}. Crowdsourced sightings from the community.`
             : 'All data crowdsourced from the community.'}
@@ -617,7 +617,7 @@ function PropertySightingForm({
   return (
     <form onSubmit={handleSubmit} className="mt-4 space-y-3 pt-4 border-t border-neutral-200">
       <div>
-        <label className="block text-xs text-neutral-500 mb-1">What did you see?</label>
+        <label className="block text-xs text-fg-subtle mb-1">What did you see?</label>
         <select
           value={type}
           onChange={(e) => setType(e.target.value)}
@@ -635,7 +635,7 @@ function PropertySightingForm({
       </div>
 
       <div>
-        <label className="block text-xs text-neutral-500 mb-1">Where? (address or description)</label>
+        <label className="block text-xs text-fg-subtle mb-1">Where? (address or description)</label>
         <input
           type="text"
           value={address}
@@ -648,9 +648,9 @@ function PropertySightingForm({
 
       {['for_sale', 'for_rent'].includes(type) && (
         <div>
-          <label className="block text-xs text-neutral-500 mb-1">Asking price (if visible)</label>
+          <label className="block text-xs text-fg-subtle mb-1">Asking price (if visible)</label>
           <div className="relative">
-            <span className="absolute left-3 top-2 text-sm text-neutral-400">{currencySymbol}</span>
+            <span className="absolute left-3 top-2 text-sm text-fg-muted">{currencySymbol}</span>
             <input
               type="text"
               value={price}
@@ -663,7 +663,7 @@ function PropertySightingForm({
       )}
 
       <div>
-        <label className="block text-xs text-neutral-500 mb-1">Any other details?</label>
+        <label className="block text-xs text-fg-subtle mb-1">Any other details?</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -676,7 +676,7 @@ function PropertySightingForm({
       <button
         type="submit"
         disabled={submitting || !address}
-        className="w-full py-2 bg-black text-white text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+        className="w-full py-2 bg-black text-white text-xs tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50"
       >
         {submitting ? 'Submitting...' : 'Submit'}
       </button>

@@ -78,7 +78,7 @@ export default function AdvertiserDashboardPage() {
     return (
       <div className="py-12 px-4">
         <div className="mx-auto max-w-5xl">
-          <p className="text-neutral-400">Loading...</p>
+          <p className="text-fg-muted">Loading...</p>
         </div>
       </div>
     );
@@ -104,7 +104,7 @@ export default function AdvertiserDashboardPage() {
 
     // Not enough data yet
     if (impressions < 10) {
-      return { label: 'Gathering data', color: 'text-neutral-400', icon: '◐' };
+      return { label: 'Gathering data', color: 'text-fg-muted', icon: '◐' };
     }
 
     const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
@@ -117,9 +117,9 @@ export default function AdvertiserDashboardPage() {
     } else if (ctr >= 0.5) {
       return { label: 'Good engagement', color: 'text-blue-600', icon: '●' };
     } else if (ctr >= 0.2) {
-      return { label: 'Building awareness', color: 'text-neutral-500', icon: '●' };
+      return { label: 'Building awareness', color: 'text-fg-subtle', icon: '●' };
     } else {
-      return { label: 'Reaching readers', color: 'text-neutral-500', icon: '●' };
+      return { label: 'Reaching readers', color: 'text-fg-subtle', icon: '●' };
     }
   };
 
@@ -137,7 +137,7 @@ export default function AdvertiserDashboardPage() {
           <h1 className="text-2xl font-light">Advertiser Dashboard</h1>
           <Link
             href="/advertiser/ads/new"
-            className="bg-black text-white px-6 py-2 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors"
+            className="bg-black text-white px-6 py-2 text-sm tracking-widest uppercase hover:bg-elevated transition-colors"
           >
             Create New Ad
           </Link>
@@ -146,25 +146,25 @@ export default function AdvertiserDashboardPage() {
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
           <div className="bg-white p-6 border border-neutral-200">
-            <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">
               Active
             </p>
             <p className="text-3xl font-light">{activeAds.length}</p>
           </div>
           <div className="bg-white p-6 border border-neutral-200">
-            <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">
               Paused
             </p>
             <p className="text-3xl font-light">{pausedAds.length}</p>
           </div>
           <div className="bg-white p-6 border border-neutral-200">
-            <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">
               Pending Review
             </p>
             <p className="text-3xl font-light">{pendingReviewAds.length}</p>
           </div>
           <div className="bg-white p-6 border border-neutral-200">
-            <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">
               Ready to Pay
             </p>
             <p className="text-3xl font-light">{approvedAds.length}</p>
@@ -173,14 +173,14 @@ export default function AdvertiserDashboardPage() {
 
         {/* Policy Notice */}
         <div className="bg-neutral-50 border border-neutral-200 p-4 mb-8">
-          <p className="text-sm text-neutral-600">
+          <p className="text-sm text-fg-subtle">
             <strong>Note:</strong> All ad purchases are final and non-refundable. You may pause and resume ads at any time, but paused time counts toward your campaign duration.
           </p>
         </div>
 
         {/* Ads List */}
         <div>
-          <h2 className="text-xs tracking-widest uppercase text-neutral-400 mb-4">
+          <h2 className="text-xs tracking-widest uppercase text-fg-muted mb-4">
             Your Ads
           </h2>
 
@@ -189,7 +189,7 @@ export default function AdvertiserDashboardPage() {
               <p className="text-neutral-600 mb-4">You haven&apos;t created any ads yet.</p>
               <Link
                 href="/advertiser/ads/new"
-                className="inline-block bg-black text-white px-6 py-2 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors"
+                className="inline-block bg-black text-white px-6 py-2 text-sm tracking-widest uppercase hover:bg-elevated transition-colors"
               >
                 Create Your First Ad
               </Link>
@@ -209,11 +209,11 @@ export default function AdvertiserDashboardPage() {
                     />
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium truncate">{ad.headline}</h3>
-                      <p className="text-sm text-neutral-400">
+                      <p className="text-sm text-fg-muted">
                         {ad.is_global ? 'Global' : ad.neighborhood_id}
                       </p>
                       {ad.start_date && ad.end_date && (
-                        <p className="text-xs text-neutral-400 mt-1">
+                        <p className="text-xs text-fg-muted mt-1">
                           {new Date(ad.start_date).toLocaleDateString()} - {new Date(ad.end_date).toLocaleDateString()}
                         </p>
                       )}
@@ -286,7 +286,7 @@ export default function AdvertiserDashboardPage() {
                     {ad.status !== 'rejected' && (
                       <Link
                         href={`/advertiser/ads/${ad.id}/edit`}
-                        className="text-sm tracking-widest uppercase text-neutral-400 hover:text-black transition-colors"
+                        className="text-sm tracking-widest uppercase text-fg-muted hover:text-black transition-colors"
                       >
                         Edit
                       </Link>
@@ -295,7 +295,7 @@ export default function AdvertiserDashboardPage() {
                       href={ad.click_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm tracking-widest uppercase text-neutral-400 hover:text-black transition-colors"
+                      className="text-sm tracking-widest uppercase text-fg-muted hover:text-black transition-colors"
                     >
                       View Landing Page
                     </a>

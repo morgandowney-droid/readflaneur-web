@@ -130,15 +130,15 @@ export default function AdminCommentsPage() {
     <div className="py-8 px-4">
       <div className="mx-auto max-w-4xl">
         {/* Admin Navigation */}
-        <nav className="flex flex-wrap gap-4 mb-8 pb-4 border-b border-white/[0.08]">
+        <nav className="flex flex-wrap gap-4 mb-8 pb-4 border-b border-border">
           {adminNavItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={`text-xs tracking-widest uppercase transition-colors ${
                 pathname === item.href
-                  ? 'text-neutral-100'
-                  : 'text-neutral-400 hover:text-white'
+                  ? 'text-fg'
+                  : 'text-fg-muted hover:text-fg'
               }`}
             >
               {item.label}
@@ -157,7 +157,7 @@ export default function AdminCommentsPage() {
               className={`px-4 py-2 text-sm tracking-widest uppercase transition-colors ${
                 filter === f
                   ? 'bg-black text-white'
-                  : 'border border-white/[0.08] hover:border-white/20'
+                  : 'border border-border hover:border-border-strong'
               }`}
             >
               {f}
@@ -167,26 +167,26 @@ export default function AdminCommentsPage() {
 
         {/* Comments List */}
         {loading ? (
-          <p className="text-neutral-400">Loading...</p>
+          <p className="text-fg-muted">Loading...</p>
         ) : comments.length === 0 ? (
           <div className="text-center py-12 bg-canvas">
-            <p className="text-neutral-500">No comments to review.</p>
+            <p className="text-fg-subtle">No comments to review.</p>
           </div>
         ) : (
           <div className="space-y-4">
             {comments.map((comment) => (
               <div
                 key={comment.id}
-                className="p-6 border border-white/[0.08] bg-surface"
+                className="p-6 border border-border bg-surface"
               >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <p className="font-medium">{comment.author_name}</p>
                     {comment.author_email && (
-                      <p className="text-xs text-neutral-400">{comment.author_email}</p>
+                      <p className="text-xs text-fg-muted">{comment.author_email}</p>
                     )}
-                    <p className="text-xs text-neutral-400">
+                    <p className="text-xs text-fg-muted">
                       {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                     </p>
                   </div>
@@ -204,7 +204,7 @@ export default function AdminCommentsPage() {
                       {comment.status}
                     </span>
                     {comment.moderation_score !== null && comment.moderation_score > 0 && (
-                      <span className="px-2 py-1 text-xs bg-neutral-800 text-neutral-400">
+                      <span className="px-2 py-1 text-xs bg-elevated text-fg-muted">
                         Score: {(comment.moderation_score * 100).toFixed(0)}%
                       </span>
                     )}
@@ -213,8 +213,8 @@ export default function AdminCommentsPage() {
 
                 {/* Article Link */}
                 {comment.article && (
-                  <p className="text-xs text-neutral-400 mb-3">
-                    On: <span className="text-neutral-100">{comment.article.headline}</span>
+                  <p className="text-xs text-fg-muted mb-3">
+                    On: <span className="text-fg">{comment.article.headline}</span>
                   </p>
                 )}
 

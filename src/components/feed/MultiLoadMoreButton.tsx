@@ -193,14 +193,14 @@ export function MultiLoadMoreButton({
         <button
           onClick={loadMore}
           disabled={loading}
-          className="w-full py-3 text-sm tracking-wide uppercase text-neutral-500 hover:text-white border border-white/[0.08] hover:border-white/20 transition-colors disabled:opacity-50"
+          className="w-full py-3 text-sm tracking-wide uppercase text-fg-subtle hover:text-fg border border-border hover:border-border-strong transition-colors disabled:opacity-50"
         >
           {loading ? 'Loading...' : 'Load More Stories'}
         </button>
       )}
 
       {!hasMore && items.length > 0 && (
-        <p className="text-center text-sm text-neutral-400 py-4">
+        <p className="text-center text-sm text-fg-muted py-4">
           You've reached the end
         </p>
       )}

@@ -69,15 +69,15 @@ export function InviteEmailCapture() {
   if (status === 'success') {
     return (
       <div className="text-center py-8">
-        <p className="text-neutral-200 text-lg">{message}</p>
-        <p className="text-neutral-500 text-sm mt-2">Redirecting to your feed...</p>
+        <p className="text-fg text-lg">{message}</p>
+        <p className="text-fg-subtle text-sm mt-2">Redirecting to your feed...</p>
       </div>
     );
   }
 
   return (
     <div className="max-w-md mx-auto">
-      <p className="text-neutral-400 text-sm mb-4 tracking-wide">
+      <p className="text-fg-muted text-sm mb-4 tracking-wide">
         Enter your email to get daily stories from the neighborhoods you follow.
       </p>
       <form onSubmit={handleSubmit} className="flex gap-3">
@@ -86,13 +86,13 @@ export function InviteEmailCapture() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="your@email.com"
-          className="flex-1 bg-neutral-900 border border-white/20 text-white px-4 py-3 text-sm rounded-md focus:outline-none focus:border-amber-500 transition-colors placeholder:text-neutral-600"
+          className="flex-1 bg-surface border border-border-strong text-white px-4 py-3 text-sm rounded-md focus:outline-none focus:border-amber-500 transition-colors placeholder:text-neutral-600"
           disabled={status === 'loading'}
         />
         <button
           type="submit"
           disabled={status === 'loading' || !email}
-          className="bg-white text-neutral-900 px-6 py-3 text-sm font-medium rounded-md hover:bg-amber-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          className="bg-fg text-canvas px-6 py-3 text-sm font-medium rounded-md hover:bg-amber-600 hover:text-fg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
         >
           {status === 'loading' ? 'Sending...' : 'Subscribe'}
         </button>

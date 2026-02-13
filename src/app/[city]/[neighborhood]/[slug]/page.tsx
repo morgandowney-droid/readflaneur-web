@@ -127,7 +127,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         {/* Back link — goes to main feed (user's neighborhoods loaded from localStorage) */}
         <Link
           href="/feed"
-          className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-neutral-400 hover:text-white mb-8"
+          className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-fg-muted hover:text-fg mb-8"
         >
           <span>&larr;</span>
           <span>All Stories</span>
@@ -151,7 +151,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             if (isBrief) {
               return (
                 <>
-                  <p className="text-xs uppercase tracking-wider text-neutral-400 mb-1">
+                  <p className="text-xs uppercase tracking-wider text-fg-muted mb-1">
                     {article.neighborhood?.name}
                     {article.neighborhood?.city && <span> &middot; {article.neighborhood.city}</span>}
                   </p>
@@ -161,7 +161,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   <h1 className="text-3xl font-light leading-tight mb-3">
                     {cleanArticleHeadline(article.headline)}
                   </h1>
-                  <p className="text-xs text-neutral-400">
+                  <p className="text-xs text-fg-muted">
                     {formatRelativeTime(article.created_at)}
                   </p>
                 </>
@@ -170,7 +170,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
             return (
               <>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-neutral-400 mb-4">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fg-muted mb-4">
                   <span className="uppercase tracking-wider">
                     {article.neighborhood?.name}
                   </span>
@@ -181,7 +181,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                       <span>&middot;</span>
                       <Link
                         href={`/${city}/${neighborhood}?category=${categoryLabelToSlug(article.category_label)}`}
-                        className="text-neutral-300 italic hover:text-neutral-500 hover:underline transition-colors"
+                        className="text-fg-muted italic hover:text-fg-subtle hover:underline transition-colors"
                       >
                         {article.category_label}
                       </Link>
@@ -190,7 +190,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   {(article.article_type === 'community_news' || article.article_type === 'brief_summary' || article.author_type === 'ai') && (
                     <>
                       <span>&middot;</span>
-                      <span className="text-neutral-300">AI-Synthesized Brief</span>
+                      <span className="text-fg-muted">AI-Synthesized Brief</span>
                     </>
                   )}
                 </div>
@@ -198,7 +198,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   {article.headline}
                 </h1>
                 {article.author?.full_name && (
-                  <p className="text-sm text-neutral-500">
+                  <p className="text-sm text-fg-subtle">
                     By {article.author.full_name}
                   </p>
                 )}
@@ -275,7 +275,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         )}
 
         {/* Bottom Story Open Ad */}
-        <div className="mt-12 pt-8 border-t border-white/[0.08]">
+        <div className="mt-12 pt-8 border-t border-border">
           {bottomAd ? (
             <StoryOpenAd ad={bottomAd} position="bottom" />
           ) : (
@@ -296,7 +296,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         <PostReadEmailCapture neighborhoodName={article.neighborhood?.name || 'neighborhood'} />
 
         {/* More stories */}
-        <div className="mt-12 pt-8 border-t border-white/[0.08] text-center">
+        <div className="mt-12 pt-8 border-t border-border text-center">
           <Link
             href="/feed"
             className="inline-block bg-white text-neutral-900 px-8 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors"
@@ -308,13 +308,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         {/* Explore nearby neighborhoods */}
         {nearbyNeighborhoods && nearbyNeighborhoods.length > 0 && (
           <div className="mt-8 text-center">
-            <p className="text-[10px] uppercase tracking-widest text-neutral-400 mb-3">Explore nearby</p>
+            <p className="text-[10px] uppercase tracking-widest text-fg-muted mb-3">Explore nearby</p>
             <div className="flex flex-wrap justify-center gap-2">
               {nearbyNeighborhoods.map((n) => (
                 <Link
                   key={n.id}
                   href={`/${city}/${neighborhoodToSlug(n.id)}`}
-                  className="px-3 py-1.5 text-xs border border-white/[0.08] rounded-full text-neutral-400 hover:border-white/20 hover:text-white transition-colors"
+                  className="px-3 py-1.5 text-xs border border-border rounded-full text-fg-muted hover:border-border-strong hover:text-fg transition-colors"
                 >
                   {n.name}
                 </Link>

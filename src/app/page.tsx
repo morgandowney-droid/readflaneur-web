@@ -27,7 +27,7 @@ export default async function HomePage() {
     <div className="min-h-screen">
       <SmartRedirect />
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-black text-white py-28 md:py-36 lg:py-48 px-6">
+      <section data-theme="dark" className="relative overflow-hidden bg-black text-white py-28 md:py-36 lg:py-48 px-6">
         {/* Gradient overlay for tonal depth */}
         <div
           className="absolute inset-0"
@@ -42,7 +42,7 @@ export default async function HomePage() {
             </h1>
 
             {/* Tagline */}
-            <p className="hero-fade-in-delay-1 text-sm md:text-base text-neutral-400 mb-12 font-light tracking-[0.5em] uppercase">
+            <p className="hero-fade-in-delay-1 text-sm md:text-base text-fg-muted mb-12 font-light tracking-[0.5em] uppercase">
               Local stories, interesting neighborhoods.
             </p>
           </Link>
@@ -53,7 +53,7 @@ export default async function HomePage() {
           </div>
 
           {/* Decorative element */}
-          <div className="hero-fade-in-delay-3 w-8 h-px bg-neutral-600 mx-auto" />
+          <div className="hero-fade-in-delay-3 w-8 h-px bg-fg-subtle mx-auto" />
         </div>
       </section>
 

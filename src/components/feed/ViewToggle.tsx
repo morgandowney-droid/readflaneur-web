@@ -22,8 +22,8 @@ export function ViewToggle({ view, onChange }: ViewToggleProps) {
           className={cn(
             'flex items-center justify-center w-8 h-8 transition-colors',
             view === 'compact'
-              ? 'text-white'
-              : 'text-neutral-300 hover:text-neutral-500'
+              ? 'text-fg'
+              : 'text-fg-muted hover:text-fg-subtle'
           )}
           aria-label="Compact view"
           title="Compact view"
@@ -37,8 +37,8 @@ export function ViewToggle({ view, onChange }: ViewToggleProps) {
           className={cn(
             'flex items-center justify-center w-8 h-8 transition-colors',
             view === 'gallery'
-              ? 'text-white'
-              : 'text-neutral-300 hover:text-neutral-500'
+              ? 'text-fg'
+              : 'text-fg-muted hover:text-fg-subtle'
           )}
           aria-label="Gallery view"
           title="Gallery view"
@@ -52,7 +52,7 @@ export function ViewToggle({ view, onChange }: ViewToggleProps) {
       {/* Mobile: single toggle button showing the OTHER view's icon */}
       <button
         onClick={() => onChange(nextView)}
-        className="md:hidden flex items-center justify-center w-8 h-8 text-white transition-colors"
+        className="md:hidden flex items-center justify-center w-8 h-8 text-fg transition-colors"
         aria-label={label}
         title={label}
       >

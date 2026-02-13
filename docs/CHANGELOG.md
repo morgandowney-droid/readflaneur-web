@@ -5,6 +5,23 @@
 
 ## 2026-02-13
 
+**Full Light/Dark Theme System:**
+- CSS variable foundation: 11 semantic tokens (canvas, surface, elevated, fg, fg-muted, fg-subtle, border, border-strong, hover, overlay, header-bg) defined in `:root` (dark) and `[data-theme="light"]`
+- Updated `@theme inline` to expose all tokens as Tailwind color utilities (`text-fg`, `bg-canvas`, `border-border`, etc.)
+- Flash prevention: inline `<script>` in `layout.tsx` reads `flaneur-theme` from localStorage and sets `data-theme` attribute before first paint
+- `useTheme()` hook (`src/hooks/useTheme.ts`): manages theme state, localStorage persistence, `data-theme` attribute
+- `ThemeToggle` component (`src/components/layout/ThemeToggle.tsx`): sun/moon icon, placed in desktop nav and mobile hamburger area
+- Light palette uses stone shades (warm undertone): canvas `#fafaf9`, surface `#ffffff`, fg `#1c1917`
+- Bulk replaced ~400+ hardcoded color classes across 110+ TSX files (text-neutral-100..500, bg-neutral-800/900, border-white/*, hover:bg-white/5, hover:text-white)
+- Button classes (`.btn-primary`, `.btn-secondary`, `.btn-ghost`) use semantic tokens
+- Header uses `.header-bg` CSS class with `--theme-header-bg` variable for glassmorphism
+- Homepage hero, discover hero, invite hero wrapped in `data-theme="dark"` to stay permanently dark
+- Gradient fades on pill bar use `from-canvas` (tracks theme automatically)
+- NeighborhoodSelectorModal glassmorphism, inputs, buttons, city headers all use semantic tokens
+- Legal page: replaced `prose-invert` with semantic text color overrides
+- Email templates (`src/lib/email/`) and home components (`src/components/home/`) excluded from sweep
+- New localStorage key: `flaneur-theme` (`'dark'` | `'light'`, absence = dark default)
+
 **Fix: generate-brief-articles Cron Processing All Neighborhoods:**
 - Root cause: `batch=10` fetched same 10 newest briefs every run. Once those had articles, subsequent runs found nothing - 260+ neighborhoods never got daily brief articles.
 - Fix: 4-step approach - get recent enriched brief IDs (36h window), find which already have articles, fetch full data only for those that need articles, process with 270s time budget

@@ -190,7 +190,7 @@ export default function PhotoUploader({
 
           <div className="space-y-2">
             <svg
-              className="mx-auto h-12 w-12 text-neutral-400"
+              className="mx-auto h-12 w-12 text-fg-muted"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -204,16 +204,16 @@ export default function PhotoUploader({
             </svg>
 
             {uploading ? (
-              <p className="text-sm text-neutral-600">Uploading...</p>
+              <p className="text-sm text-fg-subtle">Uploading...</p>
             ) : (
               <>
-                <p className="text-sm text-neutral-600">
+                <p className="text-sm text-fg-subtle">
                   <span className="font-medium">Click to upload</span> or drag and drop
                 </p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-fg-subtle">
                   JPEG, PNG, WebP, or HEIC up to {maxSizeMB}MB
                 </p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-fg-subtle">
                   {photos.length} of {maxPhotos} photos added
                 </p>
               </>
@@ -250,7 +250,7 @@ export default function PhotoUploader({
                   flex items-center justify-center
                   opacity-0 group-hover:opacity-100
                   transition-opacity
-                  hover:bg-neutral-800
+                  hover:bg-elevated
                 "
                 aria-label="Remove photo"
               >
@@ -260,7 +260,7 @@ export default function PhotoUploader({
               </button>
 
               {/* File info */}
-              <p className="text-xs text-neutral-500 mt-1 truncate">
+              <p className="text-xs text-fg-subtle mt-1 truncate">
                 {photo.filename}
               </p>
             </div>

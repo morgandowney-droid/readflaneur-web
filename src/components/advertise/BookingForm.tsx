@@ -64,7 +64,7 @@ export function BookingForm({ neighborhoodIds, placementType, date, totalPriceCe
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-xs tracking-[0.2em] uppercase text-neutral-500 mb-2">
+        <label className="block text-xs tracking-[0.2em] uppercase text-fg-subtle mb-2">
           Your Email
         </label>
         <input
@@ -72,7 +72,7 @@ export function BookingForm({ neighborhoodIds, placementType, date, totalPriceCe
           value={email}
           onChange={(e) => { setEmail(e.target.value); setError(''); }}
           placeholder="you@company.com"
-          className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-3 text-base text-white placeholder-neutral-600 focus:border-neutral-500 focus:outline-none"
+          className="w-full bg-elevated border border-border rounded-lg px-4 py-3 text-base text-white placeholder-fg-subtle focus:border-neutral-500 focus:outline-none"
         />
       </div>
 
@@ -83,14 +83,14 @@ export function BookingForm({ neighborhoodIds, placementType, date, totalPriceCe
       <button
         onClick={handleBook}
         disabled={loading}
-        className="w-full bg-white text-black py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-white text-black py-3 text-sm tracking-widest uppercase rounded-lg hover:opacity-80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading
           ? 'Processing...'
           : `Book ${count > 1 ? `${count} neighborhoods for ` : 'for '}$${(totalPriceCents / 100).toFixed(0)}`}
       </button>
 
-      <p className="text-xs text-neutral-600 text-center">
+      <p className="text-xs text-fg-subtle text-center">
         You&apos;ll be redirected to Stripe for secure payment.
       </p>
     </div>

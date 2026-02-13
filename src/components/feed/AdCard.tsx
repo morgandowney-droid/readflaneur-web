@@ -47,7 +47,7 @@ export function AdCard({ ad, variant = 'gallery' }: AdCardProps) {
       <div className="px-4 py-2">
         <span className={cn(
           'text-[10px] tracking-[0.2em] uppercase',
-          variant === 'gallery' ? 'text-amber-600 font-medium' : 'text-neutral-400'
+          variant === 'gallery' ? 'text-amber-600 font-medium' : 'text-fg-muted'
         )}>
           {ad.sponsor_label}
         </span>

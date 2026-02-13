@@ -61,7 +61,7 @@ export default function AdminNewsletterPage() {
     return (
       <div className="py-12 px-4">
         <div className="mx-auto max-w-4xl">
-          <p className="text-neutral-400">Loading...</p>
+          <p className="text-fg-muted">Loading...</p>
         </div>
       </div>
     );
@@ -74,7 +74,7 @@ export default function AdminNewsletterPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-light">Newsletter Subscribers</h1>
-            <p className="text-neutral-500 mt-1">
+            <p className="text-fg-subtle mt-1">
               {subscribers.length} subscriber{subscribers.length !== 1 ? 's' : ''}
             </p>
           </div>
@@ -82,13 +82,13 @@ export default function AdminNewsletterPage() {
             <button
               onClick={exportCSV}
               disabled={subscribers.length === 0}
-              className="bg-black text-white px-4 py-2 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+              className="bg-black text-white px-4 py-2 text-sm tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50"
             >
               Export CSV
             </button>
             <Link
               href="/admin/ads"
-              className="text-sm text-neutral-500 hover:text-white"
+              className="text-sm text-fg-subtle hover:text-fg"
             >
               &larr; Back to Admin
             </Link>
@@ -96,19 +96,19 @@ export default function AdminNewsletterPage() {
         </div>
 
         {/* Subscribers Table */}
-        <div className="bg-surface border border-white/[0.08]">
+        <div className="bg-surface border border-border">
           {subscribers.length === 0 ? (
-            <p className="p-8 text-center text-neutral-400">
+            <p className="p-8 text-center text-fg-muted">
               No subscribers yet.
             </p>
           ) : (
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/[0.08]">
-                  <th className="text-left p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">
+                <tr className="border-b border-border">
+                  <th className="text-left p-4 text-xs tracking-widest uppercase text-fg-muted font-normal">
                     Email
                   </th>
-                  <th className="text-right p-4 text-xs tracking-widest uppercase text-neutral-400 font-normal">
+                  <th className="text-right p-4 text-xs tracking-widest uppercase text-fg-muted font-normal">
                     Subscribed
                   </th>
                 </tr>
@@ -117,7 +117,7 @@ export default function AdminNewsletterPage() {
                 {subscribers.map((subscriber) => (
                   <tr key={subscriber.id} className="border-b border-white/[0.06] last:border-0">
                     <td className="p-4">{subscriber.email}</td>
-                    <td className="p-4 text-right text-neutral-400">
+                    <td className="p-4 text-right text-fg-muted">
                       {new Date(subscriber.subscribed_at).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',

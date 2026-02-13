@@ -84,14 +84,14 @@ export default function GenerateContentPage() {
     <div className="min-h-screen bg-canvas py-12">
       <div className="max-w-2xl mx-auto px-4">
         <h1 className="text-2xl font-bold mb-2">Generate Content</h1>
-        <p className="text-neutral-400 mb-8">
+        <p className="text-fg-muted mb-8">
           Manually trigger the news scraper and article generator.
         </p>
 
-        <div className="bg-surface rounded-lg border border-white/[0.08] p-6 space-y-6">
+        <div className="bg-surface rounded-lg border border-border p-6 space-y-6">
           {/* Cron Secret */}
           <div>
-            <label className="block text-sm font-medium text-neutral-300 mb-2">
+            <label className="block text-sm font-medium text-fg-muted mb-2">
               Cron Secret
             </label>
             <input
@@ -99,7 +99,7 @@ export default function GenerateContentPage() {
               value={cronSecret}
               onChange={(e) => handleCronSecretChange(e.target.value)}
               placeholder="Enter cron secret"
-              className="w-full px-3 py-2 border border-white/[0.08] bg-surface rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900"
+              className="w-full px-3 py-2 border border-border bg-surface rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900"
             />
           </div>
 
@@ -107,13 +107,13 @@ export default function GenerateContentPage() {
           <div className="space-y-4">
             <div className="p-4 bg-canvas rounded-lg">
               <h3 className="font-medium mb-2">Step 1: Scrape News</h3>
-              <p className="text-sm text-neutral-400 mb-3">
+              <p className="text-sm text-fg-muted mb-3">
                 Fetches fresh news from RSS feeds for all neighborhoods.
               </p>
               <button
                 onClick={scrapeNews}
                 disabled={loading !== null}
-                className="bg-neutral-900 text-white px-4 py-2 rounded-md hover:bg-neutral-800 disabled:opacity-50"
+                className="bg-surface text-fg px-4 py-2 rounded-md hover:bg-elevated disabled:opacity-50"
               >
                 {loading === 'scrape' ? 'Scraping...' : 'Scrape News'}
               </button>
@@ -121,14 +121,14 @@ export default function GenerateContentPage() {
 
             <div className="p-4 bg-canvas rounded-lg">
               <h3 className="font-medium mb-2">Step 2: Generate Articles</h3>
-              <p className="text-sm text-neutral-400 mb-3">
+              <p className="text-sm text-fg-muted mb-3">
                 Processes the queue to generate articles with AI (includes images).
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={processQueue}
                   disabled={loading !== null}
-                  className="bg-neutral-900 text-white px-4 py-2 rounded-md hover:bg-neutral-800 disabled:opacity-50"
+                  className="bg-surface text-fg px-4 py-2 rounded-md hover:bg-elevated disabled:opacity-50"
                 >
                   {loading === 'process' ? 'Processing...' : 'Process Once'}
                 </button>
@@ -155,10 +155,10 @@ export default function GenerateContentPage() {
             <h2 className="text-lg font-medium mb-4">Results</h2>
             <div className="space-y-3">
               {results.slice().reverse().map((result, i) => (
-                <div key={i} className="bg-surface rounded-lg border border-white/[0.08] p-4">
+                <div key={i} className="bg-surface rounded-lg border border-border p-4">
                   <div className="flex justify-between items-start mb-2">
                     <span className="font-medium">{result.action}</span>
-                    <span className="text-xs text-neutral-500">
+                    <span className="text-xs text-fg-subtle">
                       {new Date(result.timestamp).toLocaleTimeString()}
                     </span>
                   </div>

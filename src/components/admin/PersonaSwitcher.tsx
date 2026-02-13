@@ -134,9 +134,9 @@ export function PersonaSwitcher() {
       {/* Floating Switcher Button */}
       <div className="fixed bottom-4 right-4 z-50">
         {isOpen && (
-          <div className="absolute bottom-12 right-0 w-64 bg-surface rounded-lg shadow-xl border border-white/[0.08] overflow-hidden mb-2">
-            <div className="p-3 border-b border-white/[0.08] bg-canvas">
-              <h3 className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+          <div className="absolute bottom-12 right-0 w-64 bg-surface rounded-lg shadow-xl border border-border overflow-hidden mb-2">
+            <div className="p-3 border-b border-border bg-canvas">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-fg-subtle">
                 View As Persona
               </h3>
             </div>
@@ -148,13 +148,13 @@ export function PersonaSwitcher() {
                   className={`w-full text-left px-3 py-2 rounded-md flex items-center gap-3 transition-colors ${
                     currentPersona === persona.id
                       ? 'bg-white/10'
-                      : 'hover:bg-white/5'
+                      : 'hover:bg-hover'
                   }`}
                 >
                   <span className="text-xl">{persona.icon}</span>
                   <div>
-                    <div className="text-sm font-medium text-neutral-100">{persona.label}</div>
-                    <div className="text-xs text-neutral-500">{persona.description}</div>
+                    <div className="text-sm font-medium text-fg">{persona.label}</div>
+                    <div className="text-xs text-fg-subtle">{persona.description}</div>
                   </div>
                   {currentPersona === persona.id && (
                     <span className="ml-auto text-green-500">✓</span>
@@ -162,8 +162,8 @@ export function PersonaSwitcher() {
                 </button>
               ))}
             </div>
-            <div className="p-2 border-t border-white/[0.08] bg-canvas">
-              <p className="text-xs text-neutral-400 text-center">
+            <div className="p-2 border-t border-border bg-canvas">
+              <p className="text-xs text-fg-muted text-center">
                 Press Ctrl+Shift+A to toggle admin mode
               </p>
             </div>
@@ -172,7 +172,7 @@ export function PersonaSwitcher() {
 
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-12 h-12 rounded-full bg-neutral-900 text-white shadow-lg flex items-center justify-center text-xl hover:bg-neutral-700 transition-colors"
+          className="w-12 h-12 rounded-full bg-surface text-fg shadow-lg flex items-center justify-center text-xl hover:bg-elevated transition-colors"
           title="Switch Persona"
           aria-label={`Switch persona. Currently viewing as ${currentConfig.label}`}
         >

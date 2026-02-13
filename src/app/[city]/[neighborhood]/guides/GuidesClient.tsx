@@ -111,9 +111,9 @@ function StarRating({ rating, reviewCount }: { rating: number | null; reviewCoun
           </svg>
         ))}
       </div>
-      <span className="text-xs text-neutral-500">
+      <span className="text-xs text-fg-subtle">
         {rating.toFixed(1)}
-        {reviewCount && <span className="text-neutral-400"> ({reviewCount.toLocaleString()})</span>}
+        {reviewCount && <span className="text-fg-muted"> ({reviewCount.toLocaleString()})</span>}
       </span>
     </div>
   );
@@ -329,7 +329,7 @@ export function GuidesClient({
           <div className="mb-4">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs tracking-wide text-neutral-500 hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs tracking-wide text-fg-subtle hover:text-fg transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -341,7 +341,7 @@ export function GuidesClient({
           {/* Main header row */}
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-[10px] tracking-[0.2em] uppercase text-neutral-400 mb-0.5">
+              <p className="text-[10px] tracking-[0.2em] uppercase text-fg-muted mb-0.5">
                 {formattedCity}
               </p>
               <h1 className="text-lg font-light tracking-wide">
@@ -349,7 +349,7 @@ export function GuidesClient({
               </h1>
               {/* Show "Includes: ..." text for combo neighborhoods */}
               {comboInfo && comboInfo.components.length > 0 && (
-                <p className="text-xs text-neutral-400 mt-0.5">
+                <p className="text-xs text-fg-muted mt-0.5">
                   Includes: {comboInfo.components.map(c => c.name).join(', ')}
                 </p>
               )}
@@ -360,18 +360,18 @@ export function GuidesClient({
               <div className="flex items-center gap-2">
                 <Link
                   href={`/${city}/${neighborhood}`}
-                  className="text-xs tracking-widest uppercase text-neutral-500 hover:text-white transition-colors px-2 py-1"
+                  className="text-xs tracking-widest uppercase text-fg-subtle hover:text-fg transition-colors px-2 py-1"
                 >
                   News
                 </Link>
-                <span className="text-xs tracking-widest uppercase text-neutral-100 px-2 py-1 border-b border-neutral-100">
+                <span className="text-xs tracking-widest uppercase text-fg px-2 py-1 border-b border-neutral-100">
                   Places
                 </span>
                 <a
                   href={`https://www.google.com/maps/place/${encodeURIComponent(neighborhoodName + ', ' + formattedCity)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs tracking-widest uppercase text-neutral-500 hover:text-white transition-colors px-2 py-1"
+                  className="text-xs tracking-widest uppercase text-fg-subtle hover:text-fg transition-colors px-2 py-1"
                 >
                   Map
                 </a>
@@ -379,7 +379,7 @@ export function GuidesClient({
                   href={getWikipediaUrl(neighborhoodId, neighborhoodName)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs tracking-widest uppercase text-neutral-500 hover:text-white transition-colors px-2 py-1"
+                  className="text-xs tracking-widest uppercase text-fg-subtle hover:text-fg transition-colors px-2 py-1"
                 >
                   Wiki
                 </a>
@@ -391,11 +391,11 @@ export function GuidesClient({
               <div className="flex items-center gap-2">
                 <Link
                   href={`/${city}/${neighborhood}`}
-                  className="text-xs tracking-widest uppercase text-neutral-500 hover:text-white transition-colors px-2 py-1"
+                  className="text-xs tracking-widest uppercase text-fg-subtle hover:text-fg transition-colors px-2 py-1"
                 >
                   News
                 </Link>
-                <span className="text-xs tracking-widest uppercase text-neutral-100 px-2 py-1 border-b border-neutral-100">
+                <span className="text-xs tracking-widest uppercase text-fg px-2 py-1 border-b border-neutral-100">
                   Places
                 </span>
               </div>
@@ -422,7 +422,7 @@ export function GuidesClient({
               className={`px-2.5 py-1.5 text-[11px] transition-colors ${
                 sortBy === 'best'
                   ? 'bg-amber-600 text-white'
-                  : 'text-neutral-500 hover:text-white'
+                  : 'text-fg-subtle hover:text-fg'
               }`}
             >
               Best
@@ -432,7 +432,7 @@ export function GuidesClient({
               className={`px-2.5 py-1.5 text-[11px] transition-colors ${
                 sortBy === 'rating'
                   ? 'bg-amber-600 text-white'
-                  : 'text-neutral-500 hover:text-white'
+                  : 'text-fg-subtle hover:text-fg'
               }`}
             >
               Stars
@@ -442,7 +442,7 @@ export function GuidesClient({
               className={`px-2.5 py-1.5 text-[11px] transition-colors ${
                 sortBy === 'reviews'
                   ? 'bg-amber-600 text-white'
-                  : 'text-neutral-500 hover:text-white'
+                  : 'text-fg-subtle hover:text-fg'
               }`}
             >
               Review Count
@@ -458,7 +458,7 @@ export function GuidesClient({
               className={`px-2.5 py-1.5 text-[11px] transition-colors flex items-center gap-0.5 ${
                 sortBy === 'distance'
                   ? 'bg-amber-600 text-white'
-                  : 'text-neutral-500 hover:text-white'
+                  : 'text-fg-subtle hover:text-fg'
               }`}
             >
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -530,7 +530,7 @@ export function GuidesClient({
                   className={`px-2.5 py-1.5 text-[11px] whitespace-nowrap transition-colors disabled:opacity-50 ${
                     selectedCategory === cat.slug && !showBookmarks
                       ? 'bg-amber-600 text-white'
-                      : 'border border-white/[0.08] hover:border-white/20'
+                      : 'border border-border hover:border-border-strong'
                   }`}
                 >
                   {displayName}
@@ -543,7 +543,7 @@ export function GuidesClient({
               className={`px-2.5 py-1.5 text-[11px] whitespace-nowrap transition-colors disabled:opacity-50 flex items-center gap-1 ${
                 showBookmarks
                   ? 'bg-amber-600 text-white'
-                  : 'border border-white/[0.08] hover:border-white/20'
+                  : 'border border-border hover:border-border-strong'
               }`}
             >
               <svg className="w-3 h-3" fill={showBookmarks ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -562,7 +562,7 @@ export function GuidesClient({
                 className={`px-2.5 py-1 text-[11px] whitespace-nowrap transition-colors disabled:opacity-50 ${
                   !selectedSubcategory
                     ? 'bg-amber-600 text-white'
-                    : 'bg-surface border border-white/[0.08] hover:border-white/20'
+                    : 'bg-surface border border-border hover:border-border-strong'
                 }`}
               >
                 All Services
@@ -574,7 +574,7 @@ export function GuidesClient({
                   disabled={filterLoading}
                   className={`px-2.5 py-1 text-[11px] whitespace-nowrap transition-colors disabled:opacity-50 ${
                     selectedSubcategory === sub.slug
-                      ? 'bg-neutral-800 text-white'
+                      ? 'bg-elevated text-white'
                       : 'bg-neutral-50 border border-neutral-200 hover:border-neutral-400'
                   }`}
                 >
@@ -588,13 +588,13 @@ export function GuidesClient({
         {/* Listings */}
         {filterLoading ? (
           <div className="text-center py-12">
-            <div className="inline-block w-6 h-6 border-2 border-white/[0.08] border-t-white rounded-full animate-spin" />
+            <div className="inline-block w-6 h-6 border-2 border-border border-t-white rounded-full animate-spin" />
           </div>
         ) : showBookmarks ? (
           bookmarks.size === 0 ? (
             <div className="text-center py-12 bg-surface">
-              <p className="text-neutral-500 mb-2">No saved places yet.</p>
-              <p className="text-sm text-neutral-400">Tap "Save" on any place to bookmark it.</p>
+              <p className="text-fg-subtle mb-2">No saved places yet.</p>
+              <p className="text-sm text-fg-muted">Tap "Save" on any place to bookmark it.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -613,8 +613,8 @@ export function GuidesClient({
           )
         ) : listings.length === 0 ? (
           <div className="text-center py-12 bg-neutral-50">
-            <p className="text-neutral-500 mb-2">No listings yet.</p>
-            <p className="text-sm text-neutral-400">Check back soon.</p>
+            <p className="text-fg-subtle mb-2">No listings yet.</p>
+            <p className="text-sm text-fg-muted">Check back soon.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -652,9 +652,9 @@ function ListingCard({
   showRank: boolean;
 }) {
   return (
-    <div className="border border-white/[0.08] bg-surface overflow-hidden">
+    <div className="border border-border bg-surface overflow-hidden">
       {listing.google_photo_url && (
-        <div className="relative h-32 bg-neutral-800">
+        <div className="relative h-32 bg-elevated">
           {showRank && (
             <div className="absolute top-2 left-2 z-10 w-6 h-6 bg-black text-white text-xs font-medium flex items-center justify-center">
               {index + 1}
@@ -700,24 +700,24 @@ function ListingCard({
             )}
           </div>
           {listing.price_range && (
-            <span className="text-xs text-neutral-400 shrink-0">{listing.price_range}</span>
+            <span className="text-xs text-fg-muted shrink-0">{listing.price_range}</span>
           )}
         </div>
 
         {(listing.subcategory?.name || listing.category?.name) && (
-          <p className="text-[11px] text-neutral-400 mb-1">
+          <p className="text-[11px] text-fg-muted mb-1">
             {listing.subcategory?.name || listing.category?.name}
           </p>
         )}
 
         <StarRating rating={listing.google_rating} reviewCount={listing.google_reviews_count} />
 
-        <div className="mt-1.5 flex items-center gap-2 text-xs text-neutral-500">
+        <div className="mt-1.5 flex items-center gap-2 text-xs text-fg-subtle">
           {listing.address && (
             <span className="truncate">{listing.address}</span>
           )}
           {listing.distance !== null && (
-            <span className="shrink-0 text-neutral-400">
+            <span className="shrink-0 text-fg-muted">
               {listing.distance < 1
                 ? `${Math.round(listing.distance * 1000)}m`
                 : `${listing.distance.toFixed(1)}km`}
@@ -726,7 +726,7 @@ function ListingCard({
         </div>
 
         {listing.description && (
-          <p className="mt-2 text-xs text-neutral-400 line-clamp-2">{listing.description}</p>
+          <p className="mt-2 text-xs text-fg-muted line-clamp-2">{listing.description}</p>
         )}
 
         <div className="mt-3 flex items-center gap-1 text-xs -ml-2">
@@ -735,7 +735,7 @@ function ListingCard({
               href={listing.website_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-neutral-400 hover:text-white transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
+              className="text-fg-muted hover:text-fg transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
             >
               Website
             </a>
@@ -743,7 +743,7 @@ function ListingCard({
           {listing.phone && (
             <a
               href={`tel:${listing.phone}`}
-              className="text-neutral-400 hover:text-white transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
+              className="text-fg-muted hover:text-fg transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
             >
               Call
             </a>
@@ -753,14 +753,14 @@ function ListingCard({
               href={getMapsUrl(listing)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-neutral-400 hover:text-white transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
+              className="text-fg-muted hover:text-fg transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
             >
               Directions
             </a>
           ) : null}
           <button
             onClick={() => shareListing(listing)}
-            className="text-neutral-400 hover:text-white transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
+            className="text-fg-muted hover:text-fg transition-colors px-2 py-1.5 min-h-[44px] flex items-center"
           >
             Share
           </button>
@@ -769,7 +769,7 @@ function ListingCard({
             className={`transition-colors px-2 py-1.5 min-h-[44px] flex items-center ${
               bookmarks.has(listing.id)
                 ? 'text-white'
-                : 'text-neutral-400 hover:text-white'
+                : 'text-fg-muted hover:text-fg'
             }`}
           >
             {bookmarks.has(listing.id) ? 'Saved' : 'Save'}

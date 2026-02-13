@@ -72,7 +72,7 @@ function CommentItem({
       <div className="py-4">
         <div className="flex items-center gap-2 mb-2">
           <span className="font-medium text-sm">{comment.author_name}</span>
-          <span className="text-xs text-neutral-400">
+          <span className="text-xs text-fg-muted">
             {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
           </span>
         </div>
@@ -85,7 +85,7 @@ function CommentItem({
           <button
             onClick={() => handleVote('up')}
             disabled={voting}
-            className="flex items-center gap-1 text-neutral-400 hover:text-black transition-colors disabled:opacity-50"
+            className="flex items-center gap-1 text-fg-muted hover:text-black transition-colors disabled:opacity-50"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -96,7 +96,7 @@ function CommentItem({
           <button
             onClick={() => handleVote('down')}
             disabled={voting}
-            className="flex items-center gap-1 text-neutral-400 hover:text-black transition-colors disabled:opacity-50"
+            className="flex items-center gap-1 text-fg-muted hover:text-black transition-colors disabled:opacity-50"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -107,7 +107,7 @@ function CommentItem({
           {canNest && (
             <button
               onClick={() => onReply(comment.id)}
-              className="text-neutral-400 hover:text-black transition-colors"
+              className="text-fg-muted hover:text-black transition-colors"
             >
               Reply
             </button>
@@ -224,14 +224,14 @@ function CommentForm({
           required
           className="w-full px-4 py-3 text-sm border border-neutral-200 focus:border-black focus:outline-none resize-none"
         />
-        <p className="text-xs text-neutral-400 mt-1">{content.length}/2000</p>
+        <p className="text-xs text-fg-muted mt-1">{content.length}/2000</p>
       </div>
 
       <div className="flex gap-3">
         <button
           type="submit"
           disabled={submitting || !content.trim() || !authorName.trim()}
-          className="px-6 py-2 text-sm tracking-widest uppercase bg-black text-white hover:bg-neutral-800 transition-colors disabled:opacity-50"
+          className="px-6 py-2 text-sm tracking-widest uppercase bg-black text-white hover:bg-elevated transition-colors disabled:opacity-50"
         >
           {submitting ? 'Posting...' : parentId ? 'Reply' : 'Post Comment'}
         </button>
@@ -289,7 +289,7 @@ export function Comments({ articleId }: CommentsProps) {
 
   return (
     <div className="mt-12 pt-8 border-t border-neutral-200">
-      <h2 className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-6">
+      <h2 className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-6">
         Comments {comments.length > 0 && `(${comments.length})`}
       </h2>
 
@@ -306,9 +306,9 @@ export function Comments({ articleId }: CommentsProps) {
 
       {/* Comments List */}
       {loading ? (
-        <p className="text-sm text-neutral-400">Loading comments...</p>
+        <p className="text-sm text-fg-muted">Loading comments...</p>
       ) : comments.length === 0 ? (
-        <p className="text-sm text-neutral-400">No comments yet. Be the first to share your thoughts.</p>
+        <p className="text-sm text-fg-muted">No comments yet. Be the first to share your thoughts.</p>
       ) : (
         <div className="divide-y divide-neutral-100">
           {topLevelComments.map((comment) => (

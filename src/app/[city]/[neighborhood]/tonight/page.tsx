@@ -155,7 +155,7 @@ export default function TonightPage() {
         <div className="mb-6">
           <Link
             href={`/${city}/${neighborhood}`}
-            className="text-xs tracking-widest uppercase text-neutral-400 hover:text-black"
+            className="text-xs tracking-widest uppercase text-fg-muted hover:text-black"
           >
             &larr; {neighborhoodName}
           </Link>
@@ -164,7 +164,7 @@ export default function TonightPage() {
         {/* Header */}
         <header className="mb-8">
           <h1 className="text-2xl font-light mb-1">Tonight</h1>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-fg-subtle">
             What's happening in {neighborhoodName}.
           </p>
         </header>
@@ -204,15 +204,15 @@ export default function TonightPage() {
         </div>
 
         {/* Date Label */}
-        <p className="text-xs tracking-widest uppercase text-neutral-400 mb-4">
+        <p className="text-xs tracking-widest uppercase text-fg-muted mb-4">
           {getDateLabel()}
         </p>
 
         {/* Picks List */}
         {picks.length === 0 ? (
           <div className="text-center py-12 bg-neutral-50">
-            <p className="text-neutral-500">Nothing scheduled yet.</p>
-            <p className="text-sm text-neutral-400 mt-1">Check back later.</p>
+            <p className="text-fg-subtle">Nothing scheduled yet.</p>
+            <p className="text-sm text-fg-muted mt-1">Check back later.</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -234,7 +234,7 @@ export default function TonightPage() {
                       <p className="text-xs text-neutral-600 mt-1">{pick.venue_name}</p>
                     )}
 
-                    <div className="flex items-center gap-3 mt-2 text-xs text-neutral-500">
+                    <div className="flex items-center gap-3 mt-2 text-xs text-fg-subtle">
                       {pick.start_time && (
                         <span>
                           {formatTime(pick.start_time)}
@@ -262,7 +262,7 @@ export default function TonightPage() {
                             href={pick.reservation_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-neutral-400 hover:text-black transition-colors"
+                            className="text-fg-muted hover:text-black transition-colors"
                           >
                             Reserve
                           </a>
@@ -272,7 +272,7 @@ export default function TonightPage() {
                             href={`https://maps.google.com/?q=${encodeURIComponent(pick.venue_address)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-neutral-400 hover:text-black transition-colors"
+                            className="text-fg-muted hover:text-black transition-colors"
                           >
                             Directions
                           </a>

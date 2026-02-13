@@ -77,7 +77,7 @@ export function NeighborhoodHeader({
   const componentNames = isCombo ? comboInfo.components.map(c => c.name) : [];
   const isAll = mode === 'all';
 
-  const linkClass = 'text-xs tracking-[0.2em] uppercase text-neutral-400 hover:text-white transition-colors';
+  const linkClass = 'text-xs tracking-[0.2em] uppercase text-fg-muted hover:text-fg transition-colors';
 
   return (
     <header className="mb-2">
@@ -87,7 +87,7 @@ export function NeighborhoodHeader({
           <>
             {/* Heading — clickable to open selector when showing "My Neighborhoods" */}
             <h1
-              className={`font-display text-4xl md:text-5xl text-neutral-100 tracking-wide mb-1${!neighborhoodId ? ' cursor-pointer hover:text-white transition-colors' : ''}`}
+              className={`font-display text-4xl md:text-5xl text-fg tracking-wide mb-1${!neighborhoodId ? ' cursor-pointer hover:text-fg transition-colors' : ''}`}
               onClick={!neighborhoodId ? () => openModal() : undefined}
               role={!neighborhoodId ? 'button' : undefined}
             >
@@ -95,7 +95,7 @@ export function NeighborhoodHeader({
             </h1>
 
             {/* City / subtitle line - reuses same slot for layout stability */}
-            <p className="text-sm text-neutral-500 mb-1.5 h-5">
+            <p className="text-sm text-fg-subtle mb-1.5 h-5">
               {city ? (
                 comboComponentNames && comboComponentNames.length > 0 ? (
                   <>
@@ -119,7 +119,7 @@ export function NeighborhoodHeader({
                     href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(neighborhoodId, neighborhoodName, city))}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-neutral-500 underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60 hover:text-neutral-300 transition-colors"
+                    className="text-xs text-fg-subtle underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60 hover:text-fg-muted transition-colors"
                   >
                     Maps
                   </a>
@@ -127,7 +127,7 @@ export function NeighborhoodHeader({
                     href={getWikipediaUrl(neighborhoodId, neighborhoodName)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-neutral-500 underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60 hover:text-neutral-300 transition-colors"
+                    className="text-xs text-fg-subtle underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60 hover:text-fg-muted transition-colors"
                   >
                     History
                   </a>
@@ -153,18 +153,18 @@ export function NeighborhoodHeader({
         ) : (
           <>
             {/* City label */}
-            <p className="text-[11px] tracking-[0.3em] uppercase text-neutral-400 mb-2">
+            <p className="text-[11px] tracking-[0.3em] uppercase text-fg-muted mb-2">
               {city}
             </p>
 
             {/* Heading */}
-            <h1 className="font-display text-4xl md:text-5xl text-neutral-100 tracking-wide mb-3">
+            <h1 className="font-display text-4xl md:text-5xl text-fg tracking-wide mb-3">
               {neighborhoodName}
             </h1>
 
             {/* Combo subtitle */}
             {isCombo && (
-              <p className="font-serif italic text-base text-neutral-500 mb-3">
+              <p className="font-serif italic text-base text-fg-subtle mb-3">
                 Covering {joinWithAnd(componentNames)}
               </p>
             )}
@@ -191,7 +191,7 @@ export function NeighborhoodHeader({
 
       {/* ── CONTROL DECK (CSS Grid for true centering) ── */}
       {!hideControlDeck && (
-        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-y border-white/10 py-4" ref={dropdownRef}>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-y border-border-strong py-4" ref={dropdownRef}>
           {/* Col 1: Context Switcher */}
           <div className="justify-self-start min-w-0">
             <ContextSwitcher
@@ -219,12 +219,12 @@ export function NeighborhoodHeader({
                           GUIDE
                         </button>
                         {openDropdown === 'guide' && (
-                          <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px] z-10">
+                          <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-border shadow-sm rounded py-2 min-w-[160px] z-10">
                             {comboInfo!.components.map(c => (
                               <a
                                 key={c.id}
                                 href={`/${citySlug}/${getNeighborhoodSlugFromId(c.id)}/guides`}
-                                className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-white hover:bg-white/5 w-full text-left"
+                                className="block px-4 py-1.5 text-xs text-fg-subtle hover:text-fg hover:bg-hover w-full text-left"
                               >
                                 {c.name}
                               </a>
@@ -242,14 +242,14 @@ export function NeighborhoodHeader({
                           MAP
                         </button>
                         {openDropdown === 'map' && (
-                          <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px] z-10">
+                          <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-border shadow-sm rounded py-2 min-w-[160px] z-10">
                             {comboInfo!.components.map(c => (
                               <a
                                 key={c.id}
                                 href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(c.id, c.name, c.city))}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-white hover:bg-white/5 w-full text-left"
+                                className="block px-4 py-1.5 text-xs text-fg-subtle hover:text-fg hover:bg-hover w-full text-left"
                               >
                                 {c.name}
                               </a>
@@ -267,14 +267,14 @@ export function NeighborhoodHeader({
                           HISTORY
                         </button>
                         {openDropdown === 'history' && (
-                          <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-white/[0.08] shadow-sm rounded py-2 min-w-[160px] z-10">
+                          <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-border shadow-sm rounded py-2 min-w-[160px] z-10">
                             {comboInfo!.components.map(c => (
                               <a
                                 key={c.id}
                                 href={getWikipediaUrl(c.id, c.name)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="block px-4 py-1.5 text-xs text-neutral-500 hover:text-white hover:bg-white/5 w-full text-left"
+                                className="block px-4 py-1.5 text-xs text-fg-subtle hover:text-fg hover:bg-hover w-full text-left"
                               >
                                 {c.name}
                               </a>
@@ -312,7 +312,7 @@ export function NeighborhoodHeader({
                 <div className="md:hidden relative">
                   <button
                     onClick={() => setOpenDropdown(openDropdown === 'mobile-overflow' ? null : 'mobile-overflow')}
-                    className="text-neutral-400 hover:text-white transition-colors p-1"
+                    className="text-fg-muted hover:text-fg transition-colors p-1"
                     aria-label="More options"
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -322,10 +322,10 @@ export function NeighborhoodHeader({
                     </svg>
                   </button>
                   {openDropdown === 'mobile-overflow' && (
-                    <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-white/[0.08] shadow-lg rounded py-2 min-w-[140px] z-10">
+                    <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-border shadow-lg rounded py-2 min-w-[140px] z-10">
                       <Link
                         href={isCombo ? `/${citySlug}/${getNeighborhoodSlugFromId(comboInfo!.components[0]?.id || neighborhoodId)}/guides` : `/${citySlug}/${neighborhoodSlug}/guides`}
-                        className="block px-4 py-2 text-xs tracking-[0.2em] uppercase text-neutral-400 hover:text-white hover:bg-white/5"
+                        className="block px-4 py-2 text-xs tracking-[0.2em] uppercase text-fg-muted hover:text-fg hover:bg-hover"
                         onClick={() => setOpenDropdown(null)}
                       >
                         Guide
@@ -334,7 +334,7 @@ export function NeighborhoodHeader({
                         href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(neighborhoodId, neighborhoodName, city))}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block px-4 py-2 text-xs tracking-[0.2em] uppercase text-neutral-400 hover:text-white hover:bg-white/5"
+                        className="block px-4 py-2 text-xs tracking-[0.2em] uppercase text-fg-muted hover:text-fg hover:bg-hover"
                         onClick={() => setOpenDropdown(null)}
                       >
                         Map
@@ -343,7 +343,7 @@ export function NeighborhoodHeader({
                         href={getWikipediaUrl(neighborhoodId, neighborhoodName)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block px-4 py-2 text-xs tracking-[0.2em] uppercase text-neutral-400 hover:text-white hover:bg-white/5"
+                        className="block px-4 py-2 text-xs tracking-[0.2em] uppercase text-fg-muted hover:text-fg hover:bg-hover"
                         onClick={() => setOpenDropdown(null)}
                       >
                         History

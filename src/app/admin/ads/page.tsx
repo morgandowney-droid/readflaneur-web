@@ -181,7 +181,7 @@ export default function AdminAdsPage() {
     return (
       <div className="py-12 px-4">
         <div className="mx-auto max-w-6xl">
-          <p className="text-neutral-400">Loading...</p>
+          <p className="text-fg-muted">Loading...</p>
         </div>
       </div>
     );
@@ -205,7 +205,7 @@ export default function AdminAdsPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-light">Ad Review</h1>
-            <p className="text-neutral-500 mt-1">
+            <p className="text-fg-subtle mt-1">
               {filter === 'pending_review'
                 ? `${pendingCount} ad${pendingCount !== 1 ? 's' : ''} pending review`
                 : `${ads.length} ad${ads.length !== 1 ? 's' : ''}`}
@@ -215,13 +215,13 @@ export default function AdminAdsPage() {
           <div className="flex items-center gap-6">
             <Link
               href="/admin"
-              className="text-sm text-neutral-500 hover:text-white"
+              className="text-sm text-fg-subtle hover:text-fg"
             >
               Dashboard
             </Link>
             <Link
               href="/admin/articles"
-              className="text-sm text-neutral-500 hover:text-white"
+              className="text-sm text-fg-subtle hover:text-fg"
             >
               Articles
             </Link>
@@ -233,7 +233,7 @@ export default function AdminAdsPage() {
                   className={`px-3 py-2 text-xs tracking-widest uppercase ${
                     filter === f.key
                       ? 'bg-black text-white'
-                      : 'bg-neutral-800 text-neutral-400 hover:bg-white/10'
+                      : 'bg-elevated text-fg-muted hover:bg-white/10'
                   }`}
                 >
                   {f.label}
@@ -260,8 +260,8 @@ export default function AdminAdsPage() {
         </div>
 
         {ads.length === 0 ? (
-          <div className="bg-surface border border-white/[0.08] p-12 text-center">
-            <p className="text-neutral-400">
+          <div className="bg-surface border border-border p-12 text-center">
+            <p className="text-fg-muted">
               {filter === 'pending_review'
                 ? 'No ads pending review.'
                 : filter === 'needs_design'
@@ -285,7 +285,7 @@ export default function AdminAdsPage() {
                 className={`bg-surface border p-6 ${
                   ad.needs_design_service
                     ? 'border-amber-300'
-                    : 'border-white/[0.08]'
+                    : 'border-border'
                 }`}
               >
                 {/* Badges row */}
@@ -296,7 +296,7 @@ export default function AdminAdsPage() {
                     </span>
                   )}
                   {!ad.passionfroot_order_id && (
-                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-neutral-800 text-neutral-400">
+                    <span className="inline-block px-2 py-0.5 text-[10px] tracking-widest uppercase bg-elevated text-fg-muted">
                       Direct
                     </span>
                   )}
@@ -318,7 +318,7 @@ export default function AdminAdsPage() {
                           ? 'bg-green-500/15 text-green-400'
                           : ad.status === 'rejected'
                             ? 'bg-red-500/15 text-red-400'
-                            : 'bg-neutral-800 text-neutral-400'
+                            : 'bg-elevated text-fg-muted'
                     }`}
                   >
                     {ad.status.replace('_', ' ')}
@@ -359,12 +359,12 @@ export default function AdminAdsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Ad Preview */}
                   <div>
-                    <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
+                    <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">
                       Preview
                     </p>
-                    <div className="border border-white/[0.08]">
+                    <div className="border border-border">
                       <div className="px-3 py-2">
-                        <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
+                        <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">
                           SPONSORED
                         </span>
                       </div>
@@ -375,7 +375,7 @@ export default function AdminAdsPage() {
                           className="w-full aspect-video object-cover"
                         />
                       ) : (
-                        <div className="w-full aspect-video bg-neutral-800 flex items-center justify-center text-neutral-400 text-sm">
+                        <div className="w-full aspect-video bg-elevated flex items-center justify-center text-fg-muted text-sm">
                           No image yet
                         </div>
                       )}
@@ -389,26 +389,26 @@ export default function AdminAdsPage() {
 
                   {/* Ad Details + Inline Editing */}
                   <div>
-                    <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
+                    <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">
                       Details
                     </p>
                     <div className="space-y-3 text-sm">
                       {/* Client info (Passionfroot) */}
                       {ad.client_name && (
                         <div>
-                          <span className="text-neutral-400">Client:</span>{' '}
+                          <span className="text-fg-muted">Client:</span>{' '}
                           {ad.client_name}
                           {ad.client_email && (
-                            <span className="text-neutral-400"> ({ad.client_email})</span>
+                            <span className="text-fg-muted"> ({ad.client_email})</span>
                           )}
                         </div>
                       )}
                       <div>
-                        <span className="text-neutral-400">Advertiser:</span>{' '}
+                        <span className="text-fg-muted">Advertiser:</span>{' '}
                         {ad.advertiser?.email || ad.client_email || 'Unknown'}
                       </div>
                       <div>
-                        <span className="text-neutral-400">Targeting:</span>{' '}
+                        <span className="text-fg-muted">Targeting:</span>{' '}
                         {ad.is_global
                           ? 'Global (all neighborhoods)'
                           : ad.neighborhood
@@ -416,7 +416,7 @@ export default function AdminAdsPage() {
                             : 'Unknown'}
                       </div>
                       <div>
-                        <span className="text-neutral-400">Click URL:</span>{' '}
+                        <span className="text-fg-muted">Click URL:</span>{' '}
                         {ad.click_url ? (
                           <a
                             href={ad.click_url}
@@ -427,24 +427,24 @@ export default function AdminAdsPage() {
                             {ad.click_url}
                           </a>
                         ) : (
-                          <span className="text-neutral-300 italic">Not provided</span>
+                          <span className="text-fg-muted italic">Not provided</span>
                         )}
                       </div>
                       <div>
-                        <span className="text-neutral-400">Submitted:</span>{' '}
+                        <span className="text-fg-muted">Submitted:</span>{' '}
                         {new Date(ad.created_at).toLocaleDateString()}
                       </div>
                       <div>
-                        <span className="text-neutral-400">Placement:</span>{' '}
+                        <span className="text-fg-muted">Placement:</span>{' '}
                         {ad.placement === 'story_open' ? 'Story Open' : 'Feed'}
                       </div>
                       <div>
-                        <span className="text-neutral-400">Email Type:</span>{' '}
+                        <span className="text-fg-muted">Email Type:</span>{' '}
                         {ad.placement_type === 'sunday_edition' ? 'Sunday Edition' : 'Daily Brief'}
                       </div>
                       {(ad.status === 'active' || ad.status === 'paused') && (
-                        <div className="pt-2 mt-2 border-t border-white/[0.08]">
-                          <p className="text-neutral-400 mb-1">Performance:</p>
+                        <div className="pt-2 mt-2 border-t border-border">
+                          <p className="text-fg-muted mb-1">Performance:</p>
                           <p><span className="font-medium">{ad.impressions?.toLocaleString() || 0}</span> impressions</p>
                           <p><span className="font-medium">{ad.clicks?.toLocaleString() || 0}</span> clicks</p>
                           {ad.impressions > 0 && (
@@ -455,8 +455,8 @@ export default function AdminAdsPage() {
 
                       {/* Inline headline edit (for pending ads) */}
                       {ad.status === 'pending_review' && (
-                        <div className="pt-3 mt-3 border-t border-white/[0.08]">
-                          <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-1">
+                        <div className="pt-3 mt-3 border-t border-border">
+                          <label className="block text-xs tracking-widest uppercase text-fg-muted mb-1">
                             Headline (editable)
                           </label>
                           <textarea
@@ -468,7 +468,7 @@ export default function AdminAdsPage() {
                               })
                             }
                             placeholder="Enter or edit the ad headline..."
-                            className="w-full px-3 py-2 border border-white/[0.08] focus:border-amber-500 focus:outline-none text-sm"
+                            className="w-full px-3 py-2 border border-border focus:border-amber-500 focus:outline-none text-sm"
                             rows={2}
                           />
                         </div>
@@ -477,7 +477,7 @@ export default function AdminAdsPage() {
                       {/* Body copy (Sunday Edition ads) */}
                       {ad.status === 'pending_review' && ad.placement_type === 'sunday_edition' && (
                         <div>
-                          <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-1">
+                          <label className="block text-xs tracking-widest uppercase text-fg-muted mb-1">
                             Body Copy (shown in email)
                           </label>
                           <textarea
@@ -489,7 +489,7 @@ export default function AdminAdsPage() {
                               })
                             }
                             placeholder="Short sponsor body copy for the Sunday Edition..."
-                            className="w-full px-3 py-2 border border-white/[0.08] focus:border-amber-500 focus:outline-none text-sm"
+                            className="w-full px-3 py-2 border border-border focus:border-amber-500 focus:outline-none text-sm"
                             rows={3}
                           />
                         </div>
@@ -498,7 +498,7 @@ export default function AdminAdsPage() {
                       {/* Admin notes */}
                       {ad.status === 'pending_review' && (
                         <div>
-                          <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-1">
+                          <label className="block text-xs tracking-widest uppercase text-fg-muted mb-1">
                             Admin Notes (internal)
                           </label>
                           <textarea
@@ -510,16 +510,16 @@ export default function AdminAdsPage() {
                               })
                             }
                             placeholder="Internal notes (not shown to advertiser)..."
-                            className="w-full px-3 py-2 border border-white/[0.08] focus:border-amber-500 focus:outline-none text-sm"
+                            className="w-full px-3 py-2 border border-border focus:border-amber-500 focus:outline-none text-sm"
                             rows={2}
                           />
                         </div>
                       )}
                       {/* Show read-only notes for non-pending ads */}
                       {ad.status !== 'pending_review' && ad.admin_notes && (
-                        <div className="pt-2 mt-2 border-t border-white/[0.08]">
-                          <p className="text-xs tracking-widest uppercase text-neutral-400 mb-1">Admin Notes</p>
-                          <p className="text-sm text-neutral-400 whitespace-pre-wrap">{ad.admin_notes}</p>
+                        <div className="pt-2 mt-2 border-t border-border">
+                          <p className="text-xs tracking-widest uppercase text-fg-muted mb-1">Admin Notes</p>
+                          <p className="text-sm text-fg-muted whitespace-pre-wrap">{ad.admin_notes}</p>
                         </div>
                       )}
                     </div>
@@ -527,7 +527,7 @@ export default function AdminAdsPage() {
 
                   {/* Actions */}
                   <div>
-                    <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
+                    <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">
                       Actions
                     </p>
 
@@ -580,7 +580,7 @@ export default function AdminAdsPage() {
                         {ad.proof_token && (
                           <button
                             onClick={() => copyProofUrl(ad.proof_token!)}
-                            className="w-full border border-white/[0.08] text-neutral-400 py-2 text-sm tracking-widest uppercase hover:border-white/20 transition-colors"
+                            className="w-full border border-border text-fg-muted py-2 text-sm tracking-widest uppercase hover:border-border-strong transition-colors"
                           >
                             Copy Proof URL
                           </button>
@@ -591,14 +591,14 @@ export default function AdminAdsPage() {
                             href={ad.click_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block w-full border border-white/[0.08] py-2 text-sm tracking-widest uppercase text-center hover:border-white/20 transition-colors"
+                            className="block w-full border border-border py-2 text-sm tracking-widest uppercase text-center hover:border-border-strong transition-colors"
                           >
                             Visit Link
                           </a>
                         )}
                       </div>
                     ) : (
-                      <div className="text-sm text-neutral-500 space-y-2">
+                      <div className="text-sm text-fg-subtle space-y-2">
                         {ad.status === 'rejected' && ad.rejection_reason && (
                           <span className="block text-red-600">
                             Rejected: {ad.rejection_reason}
@@ -613,7 +613,7 @@ export default function AdminAdsPage() {
                         {ad.proof_token && (
                           <button
                             onClick={() => copyProofUrl(ad.proof_token!)}
-                            className="w-full border border-white/[0.08] text-neutral-400 py-1.5 text-xs tracking-widest uppercase hover:border-white/20 transition-colors mt-2"
+                            className="w-full border border-border text-fg-muted py-1.5 text-xs tracking-widest uppercase hover:border-border-strong transition-colors mt-2"
                           >
                             Copy Proof URL
                           </button>
@@ -632,14 +632,14 @@ export default function AdminAdsPage() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-surface p-6 max-w-md w-full">
               <h2 className="text-lg font-medium mb-4">Reject Ad</h2>
-              <p className="text-sm text-neutral-400 mb-4">
+              <p className="text-sm text-fg-muted mb-4">
                 Please provide a reason for rejection. This will be sent to the advertiser.
               </p>
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="e.g., Image quality too low, Content doesn't meet our guidelines..."
-                className="w-full px-4 py-3 border border-white/[0.08] focus:border-amber-500 focus:outline-none mb-4"
+                className="w-full px-4 py-3 border border-border focus:border-amber-500 focus:outline-none mb-4"
                 rows={3}
               />
               <div className="flex gap-3">
@@ -655,7 +655,7 @@ export default function AdminAdsPage() {
                     setShowRejectModal(null);
                     setRejectionReason('');
                   }}
-                  className="px-6 py-2 border border-white/[0.08] text-sm tracking-widest uppercase hover:border-white/20 transition-colors"
+                  className="px-6 py-2 border border-border text-sm tracking-widest uppercase hover:border-border-strong transition-colors"
                 >
                   Cancel
                 </button>

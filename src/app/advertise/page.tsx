@@ -22,13 +22,13 @@ export default async function AdvertisePage() {
     <div className="bg-neutral-950 text-white min-h-screen -mt-[1px]">
       {/* Hero */}
       <section className="pt-20 pb-16 px-4 text-center">
-        <p className="text-xs tracking-[0.3em] uppercase text-neutral-500 mb-6">
+        <p className="text-xs tracking-[0.3em] uppercase text-fg-subtle mb-6">
           Advertising
         </p>
         <h1 className="font-[family-name:var(--font-cormorant)] text-4xl md:text-5xl font-light leading-tight max-w-3xl mx-auto mb-6">
           Reach Some of the World&apos;s Most Discerning Audiences.
         </h1>
-        <p className="text-neutral-400 max-w-xl mx-auto text-base leading-relaxed">
+        <p className="text-fg-muted max-w-xl mx-auto text-base leading-relaxed">
           Your brand, woven into the daily rituals of the West Village, Mayfair,
           &Ouml;stermalm, and beyond. Placements are hand-selected to feel like
           recommendations, not interruptions.
@@ -46,10 +46,10 @@ export default async function AdvertisePage() {
           ].map((stat) => (
             <div
               key={stat.label}
-              className="bg-neutral-900 border border-neutral-800 p-5 text-center"
+              className="bg-surface border border-border p-5 text-center"
             >
               <p className="text-2xl font-light mb-1">{stat.value}</p>
-              <p className="text-xs tracking-[0.2em] uppercase text-neutral-500">
+              <p className="text-xs tracking-[0.2em] uppercase text-fg-subtle">
                 {stat.label}
               </p>
             </div>
@@ -70,10 +70,10 @@ export default async function AdvertisePage() {
       {/* Booking Calendar */}
       <section id="book" className="px-4 pb-20">
         <div className="max-w-xl mx-auto">
-          <h2 className="text-xs tracking-[0.3em] uppercase text-neutral-500 mb-3 text-center">
+          <h2 className="text-xs tracking-[0.3em] uppercase text-fg-subtle mb-3 text-center">
             Book a Placement
           </h2>
-          <p className="text-neutral-400 text-base text-center mb-8">
+          <p className="text-fg-muted text-base text-center mb-8">
             Select a neighborhood, choose your date, and check out securely via Stripe.
           </p>
           <AdBookingCalendar />
@@ -82,30 +82,30 @@ export default async function AdvertisePage() {
 
       {/* Global Takeover */}
       <section className="px-4 pb-20">
-        <div className="max-w-2xl mx-auto text-center border border-amber-800/30 bg-neutral-900 py-12 px-6">
+        <div className="max-w-2xl mx-auto text-center border border-amber-800/30 bg-surface py-12 px-6">
           <p className="text-xs tracking-[0.2em] uppercase text-amber-600 mb-4">
             Premium
           </p>
           <h2 className="font-[family-name:var(--font-cormorant)] text-2xl font-light mb-4">
             Global Takeover
           </h2>
-          <p className="text-base text-neutral-400 mb-6 leading-relaxed max-w-lg mx-auto">
+          <p className="text-base text-fg-muted mb-6 leading-relaxed max-w-lg mx-auto">
             Own every neighborhood for an entire day. Your brand appears across all {neighborhoodCount} neighborhoods
             in {cityCount} cities - the most concentrated wealth audience on the internet.
           </p>
           <div className="flex justify-center gap-8 mb-8">
             <div>
               <span className="text-2xl font-light">${(GLOBAL_TAKEOVER_RATES.dailyBrief / 100).toLocaleString()}</span>
-              <span className="text-neutral-500 text-sm">/day</span>
+              <span className="text-fg-subtle text-sm">/day</span>
             </div>
             <div>
               <span className="text-2xl font-light">${(GLOBAL_TAKEOVER_RATES.sundayEdition / 100).toLocaleString()}</span>
-              <span className="text-neutral-500 text-sm">/Sunday</span>
+              <span className="text-fg-subtle text-sm">/Sunday</span>
             </div>
           </div>
           <a
             href="mailto:ads@readflaneur.com?subject=Global%20Takeover%20Inquiry"
-            className="inline-block bg-white text-black px-8 py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-neutral-200 transition-colors"
+            className="inline-block bg-white text-black px-8 py-3 text-sm tracking-widest uppercase rounded-lg hover:opacity-80 transition-colors"
           >
             Contact Us
           </a>
@@ -115,7 +115,7 @@ export default async function AdvertisePage() {
       {/* How It Works */}
       <section className="px-4 pb-20">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-xs tracking-[0.3em] uppercase text-neutral-500 mb-10 text-center">
+          <h2 className="text-xs tracking-[0.3em] uppercase text-fg-subtle mb-10 text-center">
             How It Works
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -142,11 +142,11 @@ export default async function AdvertisePage() {
               },
             ].map((item) => (
               <div key={item.step} className="text-center">
-                <div className="w-10 h-10 border border-neutral-700 flex items-center justify-center text-sm text-neutral-400 mx-auto mb-4">
+                <div className="w-10 h-10 border border-border flex items-center justify-center text-sm text-fg-muted mx-auto mb-4">
                   {item.step}
                 </div>
                 <h3 className="font-medium text-base mb-2">{item.title}</h3>
-                <p className="text-sm text-neutral-500 leading-relaxed">
+                <p className="text-sm text-fg-subtle leading-relaxed">
                   {item.desc}
                 </p>
               </div>
@@ -157,22 +157,22 @@ export default async function AdvertisePage() {
 
       {/* Bottom CTA */}
       <section className="px-4 pb-20">
-        <div className="max-w-2xl mx-auto text-center border border-neutral-800 bg-neutral-900 py-12 px-6">
+        <div className="max-w-2xl mx-auto text-center border border-border bg-surface py-12 px-6">
           <h2 className="font-[family-name:var(--font-cormorant)] text-2xl font-light mb-4">
             Ready to reach the world&apos;s most discerning readers?
           </h2>
-          <p className="text-base text-neutral-400 mb-8">
+          <p className="text-base text-fg-muted mb-8">
             Questions? Email{' '}
             <a
               href="mailto:ads@readflaneur.com"
-              className="text-white underline underline-offset-4 hover:text-neutral-300"
+              className="text-white underline underline-offset-4 hover:text-fg-muted"
             >
               ads@readflaneur.com
             </a>
           </p>
           <a
             href="#book"
-            className="inline-block bg-white text-black px-8 py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-neutral-200 transition-colors"
+            className="inline-block bg-white text-black px-8 py-3 text-sm tracking-widest uppercase rounded-lg hover:opacity-80 transition-colors"
           >
             Book Your Placement
           </a>

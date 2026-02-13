@@ -42,7 +42,7 @@ export function NeighborhoodSuggestionForm({ variant }: NeighborhoodSuggestionFo
   if (status === 'success') {
     return (
       <div className={variant === 'compact' ? 'py-2' : 'py-4'}>
-        <p className="text-sm text-neutral-300">Thanks for your suggestion! We review every submission.</p>
+        <p className="text-sm text-fg-muted">Thanks for your suggestion! We review every submission.</p>
       </div>
     );
   }
@@ -56,7 +56,7 @@ export function NeighborhoodSuggestionForm({ variant }: NeighborhoodSuggestionFo
           onChange={(e) => setSuggestion(e.target.value)}
           placeholder="e.g. Williamsburg, Brooklyn"
           maxLength={200}
-          className="w-full px-3 py-2 border border-white/[0.08] bg-transparent focus:border-white/30 focus:outline-none text-sm text-white placeholder:text-neutral-500"
+          className="w-full px-3 py-2 border border-border bg-transparent focus:border-white/30 focus:outline-none text-sm text-white placeholder:text-fg-subtle"
           disabled={status === 'submitting'}
         />
         <div className="flex gap-2">
@@ -65,13 +65,13 @@ export function NeighborhoodSuggestionForm({ variant }: NeighborhoodSuggestionFo
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email (optional)"
-            className="flex-1 px-3 py-2 border border-white/[0.08] bg-transparent focus:border-white/30 focus:outline-none text-sm text-white placeholder:text-neutral-500"
+            className="flex-1 px-3 py-2 border border-border bg-transparent focus:border-white/30 focus:outline-none text-sm text-white placeholder:text-fg-subtle"
             disabled={status === 'submitting'}
           />
           <button
             type="submit"
             disabled={status === 'submitting' || suggestion.trim().length < 3}
-            className="bg-white text-neutral-900 px-5 py-2 text-xs tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50 whitespace-nowrap"
+            className="bg-fg text-canvas px-5 py-2 text-xs tracking-widest uppercase hover:opacity-80 transition-colors disabled:opacity-50 whitespace-nowrap"
           >
             {status === 'submitting' ? '...' : 'Submit'}
           </button>
@@ -87,7 +87,7 @@ export function NeighborhoodSuggestionForm({ variant }: NeighborhoodSuggestionFo
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="suggestion" className="block text-sm text-neutral-300 mb-1">
+        <label htmlFor="suggestion" className="block text-sm text-fg-muted mb-1">
           Neighborhood and city
         </label>
         <input
@@ -97,12 +97,12 @@ export function NeighborhoodSuggestionForm({ variant }: NeighborhoodSuggestionFo
           onChange={(e) => setSuggestion(e.target.value)}
           placeholder="e.g. Williamsburg, Brooklyn"
           maxLength={200}
-          className="w-full px-4 py-3 bg-neutral-900 border border-white/20 text-white focus:border-amber-500 focus:outline-none text-sm placeholder:text-neutral-500"
+          className="w-full px-4 py-3 bg-surface border border-border-strong text-white focus:border-amber-500 focus:outline-none text-sm placeholder:text-fg-subtle"
           disabled={status === 'submitting'}
         />
       </div>
       <div>
-        <label htmlFor="suggest-email" className="block text-sm text-neutral-300 mb-1">
+        <label htmlFor="suggest-email" className="block text-sm text-fg-muted mb-1">
           Your email (optional - we&apos;ll notify you if we add it)
         </label>
         <input
@@ -111,14 +111,14 @@ export function NeighborhoodSuggestionForm({ variant }: NeighborhoodSuggestionFo
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="your@email.com"
-          className="w-full px-4 py-3 bg-neutral-900 border border-white/20 text-white focus:border-amber-500 focus:outline-none text-sm placeholder:text-neutral-500"
+          className="w-full px-4 py-3 bg-surface border border-border-strong text-white focus:border-amber-500 focus:outline-none text-sm placeholder:text-fg-subtle"
           disabled={status === 'submitting'}
         />
       </div>
       <button
         type="submit"
         disabled={status === 'submitting' || suggestion.trim().length < 3}
-        className="bg-white text-neutral-900 px-6 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50"
+        className="bg-fg text-canvas px-6 py-3 text-sm tracking-widest uppercase hover:opacity-80 transition-colors disabled:opacity-50"
       >
         {status === 'submitting' ? 'Submitting...' : 'Submit Suggestion'}
       </button>

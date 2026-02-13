@@ -35,7 +35,7 @@ export function StoryOpenAd({ ad, position }: StoryOpenAdProps) {
 
   return (
     <div
-      className="bg-surface border border-white/[0.08] overflow-hidden cursor-pointer hover:border-white/20 transition-colors"
+      className="bg-surface border border-border overflow-hidden cursor-pointer hover:border-border-strong transition-colors"
       onClick={handleClick}
     >
       <div className="flex flex-col sm:flex-row">
@@ -52,13 +52,13 @@ export function StoryOpenAd({ ad, position }: StoryOpenAdProps) {
 
         {/* Content */}
         <div className="p-4 flex flex-col justify-center">
-          <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400 mb-2">
+          <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted mb-2">
             {ad.sponsor_label}
           </span>
           <h3 className="font-medium text-lg leading-tight mb-2">
             {ad.headline}
           </h3>
-          <span className="text-xs tracking-widest uppercase text-neutral-500 hover:text-white">
+          <span className="text-xs tracking-widest uppercase text-fg-subtle hover:text-fg">
             Learn More &rarr;
           </span>
         </div>

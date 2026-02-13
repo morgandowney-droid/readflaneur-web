@@ -185,7 +185,7 @@ export default function SettingsPage() {
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <p className="text-neutral-500">Loading...</p>
+        <p className="text-fg-subtle">Loading...</p>
       </div>
     );
   }
@@ -193,17 +193,17 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
       <div className="mb-8">
-        <Link href="/" className="text-sm text-neutral-500 hover:text-white">
+        <Link href="/" className="text-sm text-fg-subtle hover:text-fg">
           &larr; Back to Home
         </Link>
       </div>
 
-      <h1 className="text-3xl font-light text-neutral-100 mb-8">Settings</h1>
+      <h1 className="text-3xl font-light text-fg mb-8">Settings</h1>
 
       {/* Primary Timezone Section */}
       <section className="mb-12">
-        <h2 className="text-lg font-medium text-neutral-100 mb-4">Primary Timezone</h2>
-        <p className="text-sm text-neutral-400 mb-6">
+        <h2 className="text-lg font-medium text-fg mb-4">Primary Timezone</h2>
+        <p className="text-sm text-fg-muted mb-6">
           Set your primary city to receive local updates and newsletters timed to your timezone.
         </p>
 
@@ -211,7 +211,7 @@ export default function SettingsPage() {
           <div>
             <label
               htmlFor="city"
-              className="block text-xs tracking-widest uppercase text-neutral-400 mb-2"
+              className="block text-xs tracking-widest uppercase text-fg-muted mb-2"
             >
               City
             </label>
@@ -220,7 +220,7 @@ export default function SettingsPage() {
                 id="city"
                 value={primaryCity}
                 onChange={(e) => setPrimaryCity(e.target.value)}
-                className="flex-1 px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white"
+                className="flex-1 px-4 py-3 border border-border-strong focus:border-amber-500 focus:outline-none bg-surface text-fg"
               >
                 <option value="">Select a city...</option>
                 {cities.map((city) => (
@@ -233,7 +233,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={handleDetectLocation}
                 disabled={isDetecting}
-                className="px-4 py-3 border border-white/20 hover:border-white/30 transition-colors disabled:opacity-50 text-white"
+                className="px-4 py-3 border border-border-strong hover:border-border-strong transition-colors disabled:opacity-50 text-white"
                 title="Detect my location"
               >
                 {isDetecting ? (
@@ -252,7 +252,7 @@ export default function SettingsPage() {
           </div>
 
           {primaryCity && (
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-fg-subtle">
               Timezone: {getTimezoneForCity(primaryCity) || 'Unknown'}
             </p>
           )}
@@ -263,7 +263,7 @@ export default function SettingsPage() {
             </p>
           )}
           {emailResendNote && (
-            <p className="text-sm text-neutral-500 italic">
+            <p className="text-sm text-fg-subtle italic">
               {emailResendNote}
             </p>
           )}
@@ -272,7 +272,7 @@ export default function SettingsPage() {
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-6 py-3 bg-white text-neutral-900 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50"
+              className="px-6 py-3 bg-fg text-canvas text-sm tracking-widest uppercase hover:opacity-80 transition-colors disabled:opacity-50"
             >
               {isSaving ? 'Saving...' : 'Save'}
             </button>
@@ -283,7 +283,7 @@ export default function SettingsPage() {
                   handleSave();
                 }}
                 disabled={isSaving}
-                className="px-6 py-3 border border-white/20 text-sm tracking-widest uppercase text-neutral-300 hover:border-white/30 transition-colors disabled:opacity-50"
+                className="px-6 py-3 border border-border-strong text-sm tracking-widest uppercase text-fg-muted hover:border-border-strong transition-colors disabled:opacity-50"
               >
                 Clear
               </button>
@@ -295,14 +295,14 @@ export default function SettingsPage() {
       {/* Account Section (only for logged in users) */}
       {isLoggedIn && profile && (
         <section className="mb-12">
-          <h2 className="text-lg font-medium text-neutral-100 mb-4">Account</h2>
+          <h2 className="text-lg font-medium text-fg mb-4">Account</h2>
           <div className="space-y-2 text-sm">
-            <p className="text-neutral-400">
-              <span className="text-neutral-500">Email:</span> {profile.email}
+            <p className="text-fg-muted">
+              <span className="text-fg-subtle">Email:</span> {profile.email}
             </p>
             {profile.full_name && (
-              <p className="text-neutral-400">
-                <span className="text-neutral-500">Name:</span> {profile.full_name}
+              <p className="text-fg-muted">
+                <span className="text-fg-subtle">Name:</span> {profile.full_name}
               </p>
             )}
           </div>
@@ -311,8 +311,8 @@ export default function SettingsPage() {
 
       {/* Not logged in notice */}
       {isLoggedIn === false && (
-        <section className="p-4 bg-surface border border-white/[0.08]">
-          <p className="text-sm text-neutral-400">
+        <section className="p-4 bg-surface border border-border">
+          <p className="text-sm text-fg-muted">
             <Link href="/login" className="text-white hover:underline">Sign in</Link>
             {' '}to sync your settings across devices.
           </p>

@@ -50,7 +50,7 @@ export function MagicLinkReminder() {
         <p className="text-sm text-red-400">Something went wrong. Please try again.</p>
       ) : (
         <div className="flex flex-col items-center gap-3">
-          <p className="text-sm text-neutral-400">
+          <p className="text-sm text-fg-muted">
             Get fresh neighborhood daily briefs every morning
           </p>
           <div className="flex items-center gap-2">
@@ -60,12 +60,12 @@ export function MagicLinkReminder() {
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleResend()}
               placeholder="Enter your email"
-              className="px-3 py-2 bg-neutral-900 border border-white/20 text-sm text-white placeholder-neutral-600 rounded-lg w-56 focus:outline-none focus:border-amber-500/50 transition-colors"
+              className="px-3 py-2 bg-surface border border-border-strong text-sm text-white placeholder-fg-subtle rounded-lg w-56 focus:outline-none focus:border-amber-500/50 transition-colors"
             />
             <button
               onClick={handleResend}
               disabled={status === 'sending' || !email}
-              className="px-4 py-2 text-xs tracking-wider uppercase font-medium bg-white text-neutral-900 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors rounded-lg"
+              className="px-4 py-2 text-xs tracking-wider uppercase font-medium bg-fg text-canvas hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors rounded-lg"
             >
               {status === 'sending' ? '...' : 'Subscribe'}
             </button>

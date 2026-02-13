@@ -27,7 +27,7 @@ export default async function InvitePage() {
     <div className="min-h-screen">
       {/* No SmartRedirect - visitors should see the invite page */}
       <Suspense fallback={
-        <section className="relative overflow-hidden bg-black text-white py-24 md:py-32 lg:py-40 px-6">
+        <section data-theme="dark" className="relative overflow-hidden bg-black text-white py-24 md:py-32 lg:py-40 px-6">
           <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at top, rgba(30,30,30,1), rgba(0,0,0,1) 70%)' }} />
           <div className="relative mx-auto max-w-3xl text-center">
             <h1 className="font-display text-6xl md:text-7xl lg:text-8xl font-light tracking-[0.3em] mb-6">FLANEUR</h1>

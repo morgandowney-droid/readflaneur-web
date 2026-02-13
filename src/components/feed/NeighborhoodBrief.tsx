@@ -40,7 +40,7 @@ function renderWithBold(text: string): ReactNode[] {
     // Add the bold text (match[1] for [[]], match[2] for **)
     const boldText = match[1] || match[2];
     parts.push(
-      <strong key={`bold-${keyIndex++}`} className="font-semibold text-neutral-200">
+      <strong key={`bold-${keyIndex++}`} className="font-semibold text-fg">
         {boldText}
       </strong>
     );
@@ -608,7 +608,7 @@ function renderWithSearchableEntities(
           href={moreUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-neutral-500 hover:text-neutral-300 text-xs underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid transition-all"
+          className="text-fg-subtle hover:text-fg-muted text-xs underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid transition-all"
           onClick={(e) => e.stopPropagation()}
         >
           (more)
@@ -760,7 +760,7 @@ export function NeighborhoodBrief({
             enrichedCategories
           );
           result.push(
-            <strong key={`bold-seg-${segIdx}`} className="font-semibold text-neutral-200">
+            <strong key={`bold-seg-${segIdx}`} className="font-semibold text-fg">
               {elements}
             </strong>
           );
@@ -790,7 +790,7 @@ export function NeighborhoodBrief({
         enrichedCategories
       );
       result.push(
-        <strong key="header" className="font-semibold text-neutral-200">
+        <strong key="header" className="font-semibold text-fg">
           {headerElements}
         </strong>
       );
@@ -839,12 +839,12 @@ export function NeighborhoodBrief({
       </div>
 
       {/* Headline */}
-      <h3 className="font-display text-2xl md:text-3xl text-neutral-100 leading-tight mb-4 whitespace-nowrap overflow-hidden">
+      <h3 className="font-display text-2xl md:text-3xl text-fg leading-tight mb-4 whitespace-nowrap overflow-hidden">
         {headline}
       </h3>
 
       {/* Content */}
-      <div className="text-lg text-neutral-400 leading-relaxed max-w-prose">
+      <div className="text-lg text-fg-muted leading-relaxed max-w-prose">
         {isExpanded ? (
           <div className="space-y-4">
             {paragraphs.map((p, i) => (
@@ -852,7 +852,7 @@ export function NeighborhoodBrief({
             ))}
             <button
               onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
-              className="inline text-sm font-medium text-neutral-400 hover:text-white transition-colors"
+              className="inline text-sm font-medium text-fg-muted hover:text-fg transition-colors"
             >
               Show less
             </button>
@@ -865,7 +865,7 @@ export function NeighborhoodBrief({
                 {' '}
                 <button
                   onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}
-                  className="inline text-sm font-medium text-neutral-400 hover:text-white transition-colors"
+                  className="inline text-sm font-medium text-fg-muted hover:text-fg transition-colors"
                 >
                   Read more &rsaquo;
                 </button>
@@ -877,9 +877,9 @@ export function NeighborhoodBrief({
 
       {/* Source attribution - only show when expanded */}
       {isExpanded && (
-        <div className="mt-3 pt-3 border-t border-white/[0.08]">
+        <div className="mt-3 pt-3 border-t border-border">
           {hasEnrichedSources ? (
-            <p className="text-[10px] text-neutral-400 leading-relaxed">
+            <p className="text-[10px] text-fg-muted leading-relaxed">
               <span className="italic">Synthesized from reporting by </span>
               {(() => {
                 // Collect unique sources with URLs from enriched categories
@@ -914,7 +914,7 @@ export function NeighborhoodBrief({
               <span className="italic">.</span>
             </p>
           ) : (
-            <p className="text-[10px] text-neutral-400 italic">
+            <p className="text-[10px] text-fg-muted italic">
               Synthesized from public news sources and social media via AI-powered search and analysis.
             </p>
           )}
@@ -929,14 +929,14 @@ export function NeighborhoodBriefSkeleton() {
   return (
     <div className="bg-surface p-5 md:p-6 mb-3 animate-pulse">
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-1.5 h-1.5 rounded-full bg-neutral-800" />
-        <div className="h-3 w-28 bg-neutral-800 rounded" />
+        <div className="w-1.5 h-1.5 rounded-full bg-elevated" />
+        <div className="h-3 w-28 bg-elevated rounded" />
       </div>
-      <div className="h-7 w-3/4 bg-neutral-800 rounded mb-4" />
+      <div className="h-7 w-3/4 bg-elevated rounded mb-4" />
       <div className="space-y-2 max-w-prose">
-        <div className="h-3 w-full bg-neutral-800 rounded" />
-        <div className="h-3 w-5/6 bg-neutral-800 rounded" />
-        <div className="h-3 w-4/6 bg-neutral-800 rounded" />
+        <div className="h-3 w-full bg-elevated rounded" />
+        <div className="h-3 w-5/6 bg-elevated rounded" />
+        <div className="h-3 w-4/6 bg-elevated rounded" />
       </div>
     </div>
   );
@@ -1019,7 +1019,7 @@ function ArchivedBriefCard({
           const { elements } = renderWithSearchableEntities(
             segment.text, neighborhoodName, city, brief.sources, brief.enriched_categories
           );
-          result.push(<strong key={`b-${segIdx}`} className="font-semibold text-neutral-200">{elements}</strong>);
+          result.push(<strong key={`b-${segIdx}`} className="font-semibold text-fg">{elements}</strong>);
         } else if (segment.text.trim()) {
           const { elements } = renderWithSearchableEntities(
             segment.text, neighborhoodName, city, brief.sources, brief.enriched_categories
@@ -1054,12 +1054,12 @@ function ArchivedBriefCard({
       </div>
 
       {/* Headline */}
-      <h4 className="font-medium text-sm text-neutral-200 mb-1">
+      <h4 className="font-medium text-sm text-fg mb-1">
         {brief.headline}
       </h4>
 
       {/* Content */}
-      <div className="text-xs text-neutral-400 leading-relaxed">
+      <div className="text-xs text-fg-muted leading-relaxed">
         {isExpanded ? (
           <div className="space-y-2">
             {paragraphs.map((p, i) => (
@@ -1165,7 +1165,7 @@ export function BriefArchive({
     <div>
       <button
         onClick={handleToggle}
-        className="flex items-center gap-2 text-xs text-neutral-400 hover:text-neutral-900 transition-colors"
+        className="flex items-center gap-2 text-xs text-fg-muted hover:text-neutral-900 transition-colors"
       >
         <span className="text-[10px]">{isVisible ? '▼' : '▶'}</span>
         <span>Previous days</span>
@@ -1183,20 +1183,20 @@ export function BriefArchive({
           ))}
 
           {isLoading && (
-            <div className="text-xs text-neutral-400 py-2">Loading...</div>
+            <div className="text-xs text-fg-muted py-2">Loading...</div>
           )}
 
           {!isLoading && hasMore && briefs.length > 0 && (
             <button
               onClick={loadBriefs}
-              className="text-xs text-neutral-400 hover:text-neutral-900 py-1"
+              className="text-xs text-fg-muted hover:text-neutral-900 py-1"
             >
               Load more briefs
             </button>
           )}
 
           {!isLoading && briefs.length === 0 && (
-            <p className="text-xs text-neutral-500 py-2">No archived briefs yet.</p>
+            <p className="text-xs text-fg-subtle py-2">No archived briefs yet.</p>
           )}
         </div>
       )}

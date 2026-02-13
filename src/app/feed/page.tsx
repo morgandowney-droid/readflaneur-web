@@ -237,7 +237,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
             </div>
             <Link
               href={neighborhoodIds.length > 0 ? `/feed?neighborhoods=${neighborhoodIds.join(',')}` : '/feed'}
-              className="text-xs tracking-widest uppercase text-neutral-400 hover:text-white transition-colors"
+              className="text-xs tracking-widest uppercase text-fg-muted hover:text-fg transition-colors"
             >
               Clear Filter
             </Link>
@@ -280,7 +280,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
             )}
             {feedItems.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-neutral-500 mb-4">No articles yet for this neighborhood.</p>
+                <p className="text-fg-subtle mb-4">No articles yet for this neighborhood.</p>
                 <Link href="/neighborhoods" className="text-sm underline hover:no-underline">
                   Explore all neighborhoods
                 </Link>
@@ -320,7 +320,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
             )}
             {feedItems.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-neutral-500 mb-4">No articles yet for your selected neighborhoods.</p>
+                <p className="text-fg-subtle mb-4">No articles yet for your selected neighborhoods.</p>
                 <Link href="/neighborhoods" className="text-sm underline hover:no-underline">
                   Explore all neighborhoods
                 </Link>

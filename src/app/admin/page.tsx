@@ -21,18 +21,18 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-canvas py-12">
       <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-neutral-100 mb-2">Admin Dashboard</h1>
-        <p className="text-neutral-400 mb-8">Manage your Flâneur platform</p>
+        <h1 className="text-3xl font-bold text-fg mb-2">Admin Dashboard</h1>
+        <p className="text-fg-muted mb-8">Manage your Flâneur platform</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {adminPages.map((page) => (
             <Link
               key={page.href}
               href={page.href}
-              className="block p-6 bg-surface border border-white/[0.08] rounded-lg hover:border-white/20 hover:shadow-sm transition-all"
+              className="block p-6 bg-surface border border-border rounded-lg hover:border-border-strong hover:shadow-sm transition-all"
             >
-              <h2 className="text-lg font-semibold text-neutral-100 mb-1">{page.title}</h2>
-              <p className="text-sm text-neutral-500">{page.description}</p>
+              <h2 className="text-lg font-semibold text-fg mb-1">{page.title}</h2>
+              <p className="text-sm text-fg-subtle">{page.description}</p>
             </Link>
           ))}
         </div>

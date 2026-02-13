@@ -61,7 +61,7 @@ function SuccessContent() {
   return (
     <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">
       <div className="text-center max-w-md px-4">
-        <p className="text-xs tracking-[0.3em] uppercase text-neutral-500 mb-4">
+        <p className="text-xs tracking-[0.3em] uppercase text-fg-subtle mb-4">
           Booking Confirmed
         </p>
         <h1 className="font-[family-name:var(--font-cormorant)] text-3xl font-light mb-6">
@@ -69,11 +69,11 @@ function SuccessContent() {
         </h1>
 
         {bookings.length > 0 && (
-          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 mb-8 text-left">
+          <div className="bg-surface border border-border rounded-lg p-6 mb-8 text-left">
             <div className="space-y-2 text-sm">
               {bookings.length === 1 ? (
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Neighborhood</span>
+                  <span className="text-fg-subtle">Neighborhood</span>
                   <span>
                     {bookings[0].neighborhoodName}
                     {bookings[0].cityName ? `, ${bookings[0].cityName}` : ''}
@@ -81,7 +81,7 @@ function SuccessContent() {
                 </div>
               ) : (
                 <div>
-                  <span className="text-neutral-500 block mb-1">Neighborhoods</span>
+                  <span className="text-fg-subtle block mb-1">Neighborhoods</span>
                   {bookings.map((b) => (
                     <div key={b.adId} className="flex justify-between py-0.5">
                       <span>
@@ -93,18 +93,18 @@ function SuccessContent() {
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-neutral-500">Date</span>
+                <span className="text-fg-subtle">Date</span>
                 <span>{displayDate}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-neutral-500">Placement</span>
+                <span className="text-fg-subtle">Placement</span>
                 <span>{placementLabel}</span>
               </div>
             </div>
           </div>
         )}
 
-        <p className="text-neutral-400 text-base leading-relaxed mb-8">
+        <p className="text-fg-muted text-base leading-relaxed mb-8">
           Check your email for {bookings.length > 1 ? 'links' : 'a link'} to upload your ad
           creative. Our editorial team will review it and notify you when{' '}
           {bookings.length > 1 ? 'your ads are' : "it's"} live.
@@ -114,7 +114,7 @@ function SuccessContent() {
         {bookings.length === 1 && bookings[0].adId && (
           <a
             href={`/advertise/upload/${bookings[0].adId}`}
-            className="inline-block bg-white text-black px-8 py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-neutral-200 transition-colors mb-4"
+            className="inline-block bg-white text-black px-8 py-3 text-sm tracking-widest uppercase rounded-lg hover:opacity-80 transition-colors mb-4"
           >
             Upload Creative Now
           </a>
@@ -126,7 +126,7 @@ function SuccessContent() {
               <a
                 key={b.adId}
                 href={`/advertise/upload/${b.adId}`}
-                className="block bg-white text-black px-6 py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-neutral-200 transition-colors"
+                className="block bg-white text-black px-6 py-3 text-sm tracking-widest uppercase rounded-lg hover:opacity-80 transition-colors"
               >
                 Upload — {b.neighborhoodName}
               </a>
@@ -137,7 +137,7 @@ function SuccessContent() {
         <div className="mt-4">
           <a
             href="/advertise"
-            className="text-neutral-500 text-sm underline underline-offset-4 hover:text-neutral-300"
+            className="text-fg-subtle text-sm underline underline-offset-4 hover:text-fg-muted"
           >
             Back to Advertising
           </a>
@@ -152,7 +152,7 @@ export default function SuccessPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">
-          <p className="text-neutral-500 text-sm">Loading...</p>
+          <p className="text-fg-subtle text-sm">Loading...</p>
         </div>
       }
     >

@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-13
 
-Recent work: Mobile ViewToggle moved above feed (not in dropdown row), Fix generate-brief-articles cron (batch=10 starved 260+ neighborhoods, now processes all in one pass with 36h window), mobile dropdown "Explore" link + empty search -> Community Created tab, rename Community -> Community Created in selector, Mobile neighborhood dropdown (replaces pill scroll on mobile, full list in one tap), Signup page polish (remove role picker, rounded corners, default reader), enrichment-gated brief publishing (email + article cron skip unenriched briefs), custom SMTP via Resend for auth emails, Cloudflare Turnstile CAPTCHA on signup/login, standards page restyle, mobile view toggle consolidation, Mobile UX overhaul (navigation wayfinding, feed layout, selector fixes, auth flow, ad grace period), Community neighborhoods (user-created neighborhoods with AI validation + full brief pipeline), "Create Your Own Neighborhood" house ad, community neighborhoods TypeScript fixes (openModal signature, GlobalRegion exhaustiveness), global 5-email-per-day limit, always-resend on primary neighborhood change, Vercel preview build fix (lazy-init Supabase admin in 6 routes), Hamptons component renames (removed redundant suffix), brief content sanitization fixes (nested-paren URLs, URL-encoded artifacts), neighborhood selector tidy (renames, region consolidation, new neighborhoods), single-line feed headlines, enrichment language/framing fixes, brighter brief section headings, "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
+Recent work: Full light/dark theme system (CSS variables, useTheme hook, ThemeToggle, semantic Tailwind classes, flash prevention, force-dark hero), Mobile ViewToggle moved above feed (not in dropdown row), Fix generate-brief-articles cron (batch=10 starved 260+ neighborhoods, now processes all in one pass with 36h window), mobile dropdown "Explore" link + empty search -> Community Created tab, rename Community -> Community Created in selector, Mobile neighborhood dropdown (replaces pill scroll on mobile, full list in one tap), Signup page polish (remove role picker, rounded corners, default reader), enrichment-gated brief publishing (email + article cron skip unenriched briefs), custom SMTP via Resend for auth emails, Cloudflare Turnstile CAPTCHA on signup/login, standards page restyle, mobile view toggle consolidation, Mobile UX overhaul (navigation wayfinding, feed layout, selector fixes, auth flow, ad grace period), Community neighborhoods (user-created neighborhoods with AI validation + full brief pipeline), "Create Your Own Neighborhood" house ad, community neighborhoods TypeScript fixes (openModal signature, GlobalRegion exhaustiveness), global 5-email-per-day limit, always-resend on primary neighborhood change, Vercel preview build fix (lazy-init Supabase admin in 6 routes), Hamptons component renames (removed redundant suffix), brief content sanitization fixes (nested-paren URLs, URL-encoded artifacts), neighborhood selector tidy (renames, region consolidation, new neighborhoods), single-line feed headlines, enrichment language/framing fixes, brighter brief section headings, "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
 
 ### Email Capture (Engagement-Triggered)
 - **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
@@ -286,20 +286,23 @@ CSS spec: setting `overflow-x: hidden` forces `overflow-y: auto` (can't mix `hid
 ### No Em Dashes
 Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashes look AI-generated.
 
-### Obsidian Theme (Dark Mode)
-- **Permanent dark mode** - no light mode toggle, always dark
-- **CSS vars:** `--background: #050505`, `--foreground: #e5e5e5`, `--color-canvas: #050505`, `--color-surface: #121212`
-- **html bg:** `#050505` (prevents white flash on load)
-- **Selection:** amber `#d97706` on white
-- **Buttons:** `.btn-primary` = `bg-white text-neutral-900` hover amber-600, `.btn-secondary` = `bg-transparent text-white border-white/20`, `.btn-ghost` = `text-neutral-400` hover white
-- **Header:** `bg-black/80 backdrop-blur-xl border-white/5`, active borders `border-amber-500`
-- **Cards/surfaces:** `bg-surface` (#121212), borders `border-white/[0.08]`
-- **Text hierarchy:** Headlines `text-neutral-100`, body `text-neutral-400`, meta `text-neutral-500`
-- **Hover states:** `hover:text-white`, `hover:bg-white/5`
-- **Form inputs:** `bg-neutral-900 border-white/20 text-white`, focus `border-amber-500`
-- **Article prose:** `prose-invert` on all prose containers
-- **Admin pages:** uniform `bg-surface`, table headers `bg-neutral-800`
-- **DO NOT touch:** email templates (must stay light for mail clients)
+### Theme System (Light/Dark)
+- **Default:** Dark mode. Toggle via sun/moon icon in Header (desktop nav + mobile hamburger area)
+- **localStorage key:** `flaneur-theme` (`'dark'` | `'light'`, absence = dark)
+- **Flash prevention:** Inline `<script>` in `layout.tsx` sets `data-theme` attribute before first paint
+- **CSS variables:** Semantic tokens in `globals.css` `:root` (dark) and `[data-theme="light"]` (light)
+- **Hook:** `useTheme()` from `src/hooks/useTheme.ts` - `{ theme, setTheme, toggleTheme }`
+- **Component:** `ThemeToggle` from `src/components/layout/ThemeToggle.tsx`
+- **Semantic Tailwind classes:** `text-fg`, `text-fg-muted`, `text-fg-subtle`, `bg-canvas`, `bg-surface`, `bg-elevated`, `border-border`, `border-border-strong`, `hover:bg-hover`, `hover:text-fg`
+- **Light palette:** Stone shades (warm undertone) - canvas `#fafaf9`, surface `#ffffff`, fg `#1c1917`
+- **Dark palette:** Canvas `#050505`, Surface `#121212`, fg `#e5e5e5`
+- **Buttons:** `.btn-primary` = `bg-fg text-canvas` hover amber-600, `.btn-secondary` = `bg-transparent text-fg border-border-strong`, `.btn-ghost` = `text-fg-muted` hover text-fg
+- **Header:** `.header-bg` class (CSS var `--theme-header-bg`) + `backdrop-blur`, `border-border`
+- **Force-dark sections:** Homepage hero, discover hero, invite hero use `data-theme="dark"` to scope all children to dark CSS variables
+- **Gradient fades:** Use `from-canvas` (tracks theme automatically)
+- **Article prose:** Semantic text classes (`text-fg`, `text-fg-muted`) instead of `prose-invert`
+- **DO NOT touch:** email templates in `src/lib/email/` (must stay light for mail clients)
+- **DO NOT touch:** `src/components/home/` (hero components, excluded from theme sweep)
 
 ### Homepage Hero ("Cinematic Dark Mode")
 - **Background:** `bg-black` base + `radial-gradient(ellipse at top, rgba(30,30,30,1), rgba(0,0,0,1) 70%)` overlay for tonal depth (CSS-only, no image asset)
@@ -315,7 +318,7 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **Maps/History links (all mode):** Small grey dotted-underline links (`text-xs text-neutral-500 decoration-dotted`) under neighborhood name. Only shown when a specific pill is active. Same URLs as single-mode MAP/HISTORY.
 - **NeighborhoodLiveStatus:** `font-mono text-xs font-medium tracking-[0.2em] text-amber-600/80`. Clickable - Google weather. Accepts `initialWeather` prop for server-side pre-fetch (skips client fetch when provided).
 - **Control Deck:** CSS Grid `grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]` for overflow-safe centering. Left: `<ContextSwitcher>` (truncates long names), Center: GUIDE/MAP/HISTORY `hidden md:flex` on desktop, `...` overflow dropdown on mobile (`md:hidden`), Right: ViewToggle.
-- **ContextSwitcher:** `src/components/feed/ContextSwitcher.tsx` - dropdown trigger (`{LABEL} ▾`, truncated `max-w-[80px] md:max-w-[200px]`) + popover (`bg-[#121212] border-white/10 w-64 z-30`). Sections: "All Neighborhoods" (layers icon), neighborhood list (dot + name + city + primary badge + "Set primary" on hover), "Customize List..." (opens modal), "Invite a Friend" (via ShareWidget, shown only to subscribers). Click-outside + Escape close.
+- **ContextSwitcher:** `src/components/feed/ContextSwitcher.tsx` - dropdown trigger (`{LABEL} ▾`, truncated `max-w-[80px] md:max-w-[200px]`) + popover (`bg-surface border-border-strong w-64 z-30`). Sections: "All Neighborhoods" (layers icon), neighborhood list (dot + name + city + primary badge + "Set primary" on hover), "Customize List..." (opens modal), "Invite a Friend" (via ShareWidget, shown only to subscribers). Click-outside + Escape close.
 - **useNeighborhoodPreferences:** `src/hooks/useNeighborhoodPreferences.ts` - reads localStorage IDs, fetches name/city from Supabase, cross-tab sync via `storage` event. Exposes `primaryId` and `setPrimary(id)` to reorder localStorage array.
 - **Primary neighborhood:** First item in localStorage array. Indicated across ContextSwitcher (amber dot + "PRIMARY" label), MultiFeed pill bar, HomeSignupEnhanced chips, and NeighborhoodSelectorModal. Users can change primary via "Set primary" actions.
 - **Combo dropdowns:** `bg-surface border-white/[0.08]`, items `hover:text-white hover:bg-white/5`

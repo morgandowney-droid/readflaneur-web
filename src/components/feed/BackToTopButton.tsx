@@ -37,7 +37,7 @@ export function BackToTopButton({
         'bg-black text-white text-sm font-medium',
         'rounded-full shadow-lg',
         'transition-all duration-200',
-        'hover:bg-neutral-800 hover:shadow-xl active:scale-95'
+        'hover:bg-elevated hover:shadow-xl active:scale-95'
       )}
       style={{
         animation: 'fadeIn 0.2s ease-out'

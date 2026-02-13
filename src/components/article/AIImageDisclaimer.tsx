@@ -6,7 +6,7 @@ interface AIImageDisclaimerProps {
 
 export function AIImageDisclaimer({ className = '' }: AIImageDisclaimerProps) {
   return (
-    <div className={`text-xs text-neutral-500 ${className}`}>
+    <div className={`text-xs text-fg-subtle ${className}`}>
       <p className="font-medium text-neutral-600">AI-Generated Illustration | Dramatization</p>
       <p className="italic mt-0.5">
         This image is a stylized artistic rendering used for illustrative purposes only.

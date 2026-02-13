@@ -55,12 +55,12 @@ export default async function MapPage({ params }: MapPageProps) {
         <header className="mb-8 text-center">
           <Link
             href={`/${city}/${neighborhood}`}
-            className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-neutral-400 hover:text-black mb-4"
+            className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-fg-muted hover:text-black mb-4"
           >
             <span>&larr;</span>
             <span>Back to {neighborhoodData.name}</span>
           </Link>
-          <p className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-2">
+          <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">
             {neighborhoodData.city}
           </p>
           <h1 className="text-2xl font-light tracking-wide">
@@ -82,7 +82,7 @@ export default async function MapPage({ params }: MapPageProps) {
           )}
         </div>
 
-        <div className="mt-6 text-center text-sm text-neutral-500">
+        <div className="mt-6 text-center text-sm text-fg-subtle">
           {NEIGHBORHOOD_BOUNDARIES[neighborhoodId] ? (
             <p>The highlighted area shows the core neighborhood boundaries.</p>
           ) : (

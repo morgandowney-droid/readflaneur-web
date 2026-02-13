@@ -72,7 +72,7 @@ function SearchContent() {
   return (
     <div className="py-12 px-4">
       <div className="mx-auto max-w-3xl">
-        <h1 className="text-2xl font-light text-neutral-100 mb-8">Search</h1>
+        <h1 className="text-2xl font-light text-fg mb-8">Search</h1>
 
         {/* Search Form */}
         <form onSubmit={handleSubmit} className="mb-8">
@@ -82,31 +82,31 @@ function SearchContent() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search articles..."
-              className="flex-1 px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white"
+              className="flex-1 px-4 py-3 border border-border-strong focus:border-amber-500 focus:outline-none bg-surface text-fg"
               autoFocus
             />
             <button
               type="submit"
               disabled={loading || query.trim().length < 2}
-              className="px-6 py-3 bg-white text-neutral-900 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:bg-neutral-600 disabled:cursor-not-allowed"
+              className="px-6 py-3 bg-fg text-canvas text-sm tracking-widest uppercase hover:opacity-80 transition-colors disabled:bg-fg-subtle disabled:cursor-not-allowed"
             >
               {loading ? '...' : 'Search'}
             </button>
           </div>
           {query.length > 0 && query.length < 2 && (
-            <p className="text-xs text-neutral-400 mt-2">Enter at least 2 characters</p>
+            <p className="text-xs text-fg-muted mt-2">Enter at least 2 characters</p>
           )}
         </form>
 
         {/* Results */}
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-neutral-400">Searching...</p>
+            <p className="text-fg-muted">Searching...</p>
           </div>
         ) : searched ? (
           results.length > 0 ? (
             <div>
-              <p className="text-sm text-neutral-400 mb-6">
+              <p className="text-sm text-fg-muted mb-6">
                 {results.length} result{results.length !== 1 ? 's' : ''} for &ldquo;{initialQuery}&rdquo;
               </p>
 
@@ -115,7 +115,7 @@ function SearchContent() {
                   <Link
                     key={result.id}
                     href={result.url}
-                    className="group block border border-white/[0.08] hover:border-white/20 transition-colors"
+                    className="group block border border-border hover:border-border-strong transition-colors"
                   >
                     <div className="flex gap-4">
                       {/* Thumbnail */}
@@ -131,7 +131,7 @@ function SearchContent() {
 
                       {/* Content */}
                       <div className="flex-1 py-3 pr-4">
-                        <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1">
+                        <div className="flex items-center gap-2 text-xs text-fg-muted mb-1">
                           {result.neighborhood && (
                             <>
                               <span>{result.neighborhood}</span>
@@ -143,11 +143,11 @@ function SearchContent() {
                           </span>
                         </div>
 
-                        <h2 className="font-medium text-neutral-100 group-hover:underline line-clamp-2 mb-1">
+                        <h2 className="font-medium text-fg group-hover:underline line-clamp-2 mb-1">
                           {result.headline}
                         </h2>
 
-                        <p className="text-sm text-neutral-500 line-clamp-2">
+                        <p className="text-sm text-fg-subtle line-clamp-2">
                           {result.excerpt}
                         </p>
                       </div>
@@ -158,8 +158,8 @@ function SearchContent() {
             </div>
           ) : (
             <div className="text-center py-12 bg-surface">
-              <p className="text-neutral-500 mb-2">No results found for &ldquo;{initialQuery}&rdquo;</p>
-              <p className="text-sm text-neutral-400">Try different keywords or check your spelling</p>
+              <p className="text-fg-subtle mb-2">No results found for &ldquo;{initialQuery}&rdquo;</p>
+              <p className="text-sm text-fg-muted">Try different keywords or check your spelling</p>
             </div>
           )
         ) : (
@@ -169,7 +169,7 @@ function SearchContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <p className="text-neutral-500">Enter a search term to find articles</p>
+            <p className="text-fg-subtle">Enter a search term to find articles</p>
           </div>
         )}
       </div>
@@ -181,10 +181,10 @@ function SearchLoading() {
   return (
     <div className="py-12 px-4">
       <div className="mx-auto max-w-3xl">
-        <h1 className="text-2xl font-light text-neutral-100 mb-8">Search</h1>
-        <div className="h-12 bg-neutral-800 animate-pulse mb-8" />
+        <h1 className="text-2xl font-light text-fg mb-8">Search</h1>
+        <div className="h-12 bg-elevated animate-pulse mb-8" />
         <div className="text-center py-12">
-          <p className="text-neutral-400">Loading...</p>
+          <p className="text-fg-muted">Loading...</p>
         </div>
       </div>
     </div>

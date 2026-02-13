@@ -107,7 +107,7 @@ export default function EditAdPage() {
     return (
       <div className="py-12 px-4">
         <div className="mx-auto max-w-2xl">
-          <p className="text-neutral-400">Loading...</p>
+          <p className="text-fg-muted">Loading...</p>
         </div>
       </div>
     );
@@ -122,7 +122,7 @@ export default function EditAdPage() {
           </div>
           <Link
             href="/advertiser"
-            className="text-sm text-neutral-500 hover:text-black"
+            className="text-sm text-fg-subtle hover:text-black"
           >
             &larr; Back to Dashboard
           </Link>
@@ -163,7 +163,7 @@ export default function EditAdPage() {
           )}
 
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Headline
             </label>
             <input
@@ -178,7 +178,7 @@ export default function EditAdPage() {
           </div>
 
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Image URL
             </label>
             <input
@@ -189,12 +189,12 @@ export default function EditAdPage() {
               className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none"
               placeholder="https://example.com/image.jpg"
             />
-            <p className="text-xs text-neutral-400 mt-1">
+            <p className="text-xs text-fg-muted mt-1">
               Recommended: 1200x675px (16:9 aspect ratio)
             </p>
             {formData.imageUrl && (
               <div className="mt-3">
-                <p className="text-xs text-neutral-400 mb-2">Preview:</p>
+                <p className="text-xs text-fg-muted mb-2">Preview:</p>
                 <img
                   src={formData.imageUrl}
                   alt="Ad preview"
@@ -208,7 +208,7 @@ export default function EditAdPage() {
           </div>
 
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Click URL
             </label>
             <input
@@ -225,7 +225,7 @@ export default function EditAdPage() {
             <button
               type="submit"
               disabled={saving || success}
-              className="flex-1 bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+              className="flex-1 bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50"
             >
               {saving ? 'Saving...' : success ? 'Saved!' : 'Save Changes'}
             </button>

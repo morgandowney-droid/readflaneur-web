@@ -149,7 +149,7 @@ export function EnrichedNeighborhoodBrief({
                     className="bg-white/5 rounded-md p-3 border border-amber-900/30"
                   >
                     {/* Entity name */}
-                    <div className="font-medium text-sm text-neutral-100 mb-1">
+                    <div className="font-medium text-sm text-fg mb-1">
                       {story.entity}
                     </div>
 
@@ -170,7 +170,7 @@ export function EnrichedNeighborhoodBrief({
                           href={story.googleFallbackUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-neutral-500 hover:text-neutral-700"
+                          className="text-fg-subtle hover:text-neutral-700"
                           onClick={(e) => e.stopPropagation()}
                         >
                           🔍 Search Google
@@ -179,7 +179,7 @@ export function EnrichedNeighborhoodBrief({
                     </div>
 
                     {/* Context */}
-                    <p className="text-xs text-neutral-600 leading-relaxed">
+                    <p className="text-xs text-fg-subtle leading-relaxed">
                       {story.context}
                     </p>
 

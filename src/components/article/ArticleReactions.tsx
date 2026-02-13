@@ -96,7 +96,7 @@ export function ArticleReactions({ articleId }: ArticleReactionsProps) {
   };
 
   return (
-    <div className="mt-8 pt-6 border-t border-white/[0.08]">
+    <div className="mt-8 pt-6 border-t border-border">
       <div className="flex items-center gap-4">
         {REACTIONS.map((reaction) => {
           const isActive = active.has(reaction.type);
@@ -108,8 +108,8 @@ export function ArticleReactions({ articleId }: ArticleReactionsProps) {
               onClick={() => toggle(reaction.type)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all ${
                 isActive
-                  ? 'border-white/20 bg-white/5'
-                  : 'border-white/[0.08] hover:border-white/20'
+                  ? 'border-border-strong bg-white/5'
+                  : 'border-border hover:border-border-strong'
               }`}
               title={reaction.label}
             >
@@ -117,7 +117,7 @@ export function ArticleReactions({ articleId }: ArticleReactionsProps) {
                 {isActive ? reaction.activeIcon : reaction.icon}
               </span>
               {count > 0 && (
-                <span className={`text-xs ${isActive ? reaction.activeColor : 'text-neutral-400'}`}>
+                <span className={`text-xs ${isActive ? reaction.activeColor : 'text-fg-muted'}`}>
                   {count}
                 </span>
               )}

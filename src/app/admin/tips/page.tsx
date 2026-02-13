@@ -115,7 +115,7 @@ export default function AdminTipsPage() {
     return (
       <div className="py-12 px-4">
         <div className="mx-auto max-w-6xl">
-          <p className="text-neutral-400">Loading...</p>
+          <p className="text-fg-muted">Loading...</p>
         </div>
       </div>
     );
@@ -134,7 +134,7 @@ export default function AdminTipsPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-light">Tip Review</h1>
-            <p className="text-neutral-500 mt-1">
+            <p className="text-fg-subtle mt-1">
               {pendingCount} tip{pendingCount !== 1 ? 's' : ''} pending review ({total} total)
             </p>
           </div>
@@ -142,19 +142,19 @@ export default function AdminTipsPage() {
           <div className="flex items-center gap-6">
             <Link
               href="/admin/ads"
-              className="text-sm text-neutral-500 hover:text-white"
+              className="text-sm text-fg-subtle hover:text-fg"
             >
               Ads
             </Link>
             <Link
               href="/admin/articles"
-              className="text-sm text-neutral-500 hover:text-white"
+              className="text-sm text-fg-subtle hover:text-fg"
             >
               Articles
             </Link>
             <Link
               href="/admin/comments"
-              className="text-sm text-neutral-500 hover:text-white"
+              className="text-sm text-fg-subtle hover:text-fg"
             >
               Comments
             </Link>
@@ -170,7 +170,7 @@ export default function AdminTipsPage() {
               className={`px-4 py-2 text-sm tracking-widest uppercase ${
                 filter === status
                   ? 'bg-black text-white'
-                  : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+                  : 'bg-elevated text-fg-muted hover:bg-elevated'
               }`}
             >
               {status.replace('_', ' ')}
@@ -180,8 +180,8 @@ export default function AdminTipsPage() {
         </div>
 
         {tips.length === 0 ? (
-          <div className="bg-surface border border-white/[0.08] p-12 text-center">
-            <p className="text-neutral-400">
+          <div className="bg-surface border border-border p-12 text-center">
+            <p className="text-fg-muted">
               {filter === 'pending'
                 ? 'No tips pending review.'
                 : `No ${filter === 'all' ? '' : filter.replace('_', ' ') + ' '}tips found.`}
@@ -192,7 +192,7 @@ export default function AdminTipsPage() {
             {tips.map((tip) => (
               <div
                 key={tip.id}
-                className="bg-surface border border-white/[0.08] p-6"
+                className="bg-surface border border-border p-6"
               >
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Tip Content */}
@@ -212,11 +212,11 @@ export default function AdminTipsPage() {
                         }`}>
                           {tip.status.replace('_', ' ')}
                         </span>
-                        <span className="text-xs text-neutral-400">
+                        <span className="text-xs text-fg-muted">
                           {tip.neighborhood?.name}, {tip.neighborhood?.city}
                         </span>
                       </div>
-                      <span className="text-xs text-neutral-400">
+                      <span className="text-xs text-fg-muted">
                         {formatDate(tip.created_at)}
                       </span>
                     </div>
@@ -225,7 +225,7 @@ export default function AdminTipsPage() {
                       <h3 className="font-medium mb-2">{tip.headline}</h3>
                     )}
 
-                    <p className="text-sm text-neutral-300 whitespace-pre-wrap">
+                    <p className="text-sm text-fg-muted whitespace-pre-wrap">
                       {expandedTip === tip.id
                         ? tip.content
                         : tip.content.length > 300
@@ -245,7 +245,7 @@ export default function AdminTipsPage() {
                     {/* Photos */}
                     {tip.photo_urls && tip.photo_urls.length > 0 && (
                       <div className="mt-4">
-                        <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
+                        <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">
                           Photos ({tip.photo_urls.length})
                         </p>
                         <div className="flex gap-2 flex-wrap">
@@ -260,7 +260,7 @@ export default function AdminTipsPage() {
                               <img
                                 src={url}
                                 alt={`Photo ${index + 1}`}
-                                className="w-24 h-24 object-cover border border-white/[0.08] hover:border-white/20 transition-colors"
+                                className="w-24 h-24 object-cover border border-border hover:border-border-strong transition-colors"
                               />
                             </a>
                           ))}
@@ -270,26 +270,26 @@ export default function AdminTipsPage() {
 
                     {/* Submitter Info */}
                     <div className="mt-4 pt-4 border-t border-white/[0.06]">
-                      <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
+                      <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">
                         Submitter
                       </p>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div>
-                          <span className="text-neutral-400">Name:</span>{' '}
+                          <span className="text-fg-muted">Name:</span>{' '}
                           {tip.submitter_name || (tip.user?.full_name || 'Anonymous')}
                         </div>
                         <div>
-                          <span className="text-neutral-400">Email:</span>{' '}
+                          <span className="text-fg-muted">Email:</span>{' '}
                           {tip.submitter_email || tip.user?.email || 'Not provided'}
                         </div>
                         {tip.submitter_phone && (
                           <div>
-                            <span className="text-neutral-400">Phone:</span>{' '}
+                            <span className="text-fg-muted">Phone:</span>{' '}
                             {tip.submitter_phone}
                           </div>
                         )}
                         <div>
-                          <span className="text-neutral-400">Credit:</span>{' '}
+                          <span className="text-fg-muted">Credit:</span>{' '}
                           {tip.credit_preference.replace('_', ' ')}
                         </div>
                       </div>
@@ -297,13 +297,13 @@ export default function AdminTipsPage() {
 
                     {/* Device/Location Info (collapsible) */}
                     <details className="mt-4 pt-4 border-t border-white/[0.06]">
-                      <summary className="text-xs tracking-widest uppercase text-neutral-400 cursor-pointer hover:text-neutral-400">
+                      <summary className="text-xs tracking-widest uppercase text-fg-muted cursor-pointer hover:text-fg-muted">
                         Device & Location Data
                       </summary>
                       <div className="grid grid-cols-2 gap-2 text-sm mt-2">
                         {tip.gps_latitude && tip.gps_longitude && (
                           <div className="col-span-2">
-                            <span className="text-neutral-400">GPS:</span>{' '}
+                            <span className="text-fg-muted">GPS:</span>{' '}
                             <a
                               href={`https://www.google.com/maps?q=${tip.gps_latitude},${tip.gps_longitude}`}
                               target="_blank"
@@ -313,43 +313,43 @@ export default function AdminTipsPage() {
                               {tip.gps_latitude.toFixed(6)}, {tip.gps_longitude.toFixed(6)}
                             </a>
                             {tip.gps_accuracy && (
-                              <span className="text-neutral-400 ml-1">
+                              <span className="text-fg-muted ml-1">
                                 (±{Math.round(tip.gps_accuracy)}m)
                               </span>
                             )}
                           </div>
                         )}
                         <div>
-                          <span className="text-neutral-400">Device:</span>{' '}
+                          <span className="text-fg-muted">Device:</span>{' '}
                           {tip.device_type || 'Unknown'}
                         </div>
                         <div>
-                          <span className="text-neutral-400">Browser:</span>{' '}
+                          <span className="text-fg-muted">Browser:</span>{' '}
                           {tip.browser || 'Unknown'}
                         </div>
                         <div>
-                          <span className="text-neutral-400">OS:</span>{' '}
+                          <span className="text-fg-muted">OS:</span>{' '}
                           {tip.os || 'Unknown'}
                         </div>
                         <div>
-                          <span className="text-neutral-400">Timezone:</span>{' '}
+                          <span className="text-fg-muted">Timezone:</span>{' '}
                           {tip.timezone || 'Unknown'}
                         </div>
                         {tip.screen_resolution && (
                           <div>
-                            <span className="text-neutral-400">Screen:</span>{' '}
+                            <span className="text-fg-muted">Screen:</span>{' '}
                             {tip.screen_resolution}
                           </div>
                         )}
                         {tip.language && (
                           <div>
-                            <span className="text-neutral-400">Language:</span>{' '}
+                            <span className="text-fg-muted">Language:</span>{' '}
                             {tip.language}
                           </div>
                         )}
                         <div className="col-span-2">
-                          <span className="text-neutral-400">IP Hash:</span>{' '}
-                          <code className="text-xs bg-neutral-800 px-1">
+                          <span className="text-fg-muted">IP Hash:</span>{' '}
+                          <code className="text-xs bg-elevated px-1">
                             {tip.ip_address_hash?.substring(0, 16)}...
                           </code>
                         </div>
@@ -359,10 +359,10 @@ export default function AdminTipsPage() {
                     {/* Review notes if any */}
                     {tip.reviewer_notes && (
                       <div className="mt-4 pt-4 border-t border-white/[0.06]">
-                        <p className="text-xs tracking-widest uppercase text-neutral-400 mb-1">
+                        <p className="text-xs tracking-widest uppercase text-fg-muted mb-1">
                           Reviewer Notes
                         </p>
-                        <p className="text-sm text-neutral-400">{tip.reviewer_notes}</p>
+                        <p className="text-sm text-fg-muted">{tip.reviewer_notes}</p>
                       </div>
                     )}
 
@@ -378,7 +378,7 @@ export default function AdminTipsPage() {
 
                   {/* Actions */}
                   <div>
-                    <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
+                    <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">
                       Actions
                     </p>
                     {tip.status === 'pending' || tip.status === 'under_review' ? (
@@ -415,21 +415,21 @@ export default function AdminTipsPage() {
                         </button>
 
                         {/* Notes input */}
-                        <div className="pt-3 border-t border-white/[0.08]">
-                          <label className="text-xs text-neutral-500 mb-1 block">
+                        <div className="pt-3 border-t border-border">
+                          <label className="text-xs text-fg-subtle mb-1 block">
                             Add reviewer notes (optional)
                           </label>
                           <textarea
                             value={reviewerNotes}
                             onChange={(e) => setReviewerNotes(e.target.value)}
                             placeholder="Internal notes..."
-                            className="w-full px-3 py-2 border border-white/[0.08] text-sm focus:border-amber-500 focus:outline-none"
+                            className="w-full px-3 py-2 border border-border text-sm focus:border-amber-500 focus:outline-none"
                             rows={2}
                           />
                         </div>
                       </div>
                     ) : (
-                      <div className="space-y-3 text-sm text-neutral-500">
+                      <div className="space-y-3 text-sm text-fg-subtle">
                         <p>
                           Reviewed by {tip.reviewer?.full_name || tip.reviewer?.email || 'Unknown'}
                         </p>
@@ -438,27 +438,27 @@ export default function AdminTipsPage() {
                         )}
 
                         {/* Allow changing status even after review */}
-                        <div className="pt-3 border-t border-white/[0.08]">
-                          <p className="text-xs text-neutral-400 mb-2">Change status:</p>
+                        <div className="pt-3 border-t border-border">
+                          <p className="text-xs text-fg-muted mb-2">Change status:</p>
                           <div className="flex flex-wrap gap-2">
                             <button
                               onClick={() => handleAction(tip.id, 'pending')}
                               disabled={processingId === tip.id}
-                              className="px-3 py-1 text-xs border border-white/[0.08] hover:border-white/20"
+                              className="px-3 py-1 text-xs border border-border hover:border-border-strong"
                             >
                               Pending
                             </button>
                             <button
                               onClick={() => handleAction(tip.id, 'approved')}
                               disabled={processingId === tip.id}
-                              className="px-3 py-1 text-xs border border-white/[0.08] hover:border-white/20"
+                              className="px-3 py-1 text-xs border border-border hover:border-border-strong"
                             >
                               Approved
                             </button>
                             <button
                               onClick={() => handleAction(tip.id, 'converted')}
                               disabled={processingId === tip.id}
-                              className="px-3 py-1 text-xs border border-white/[0.08] hover:border-white/20"
+                              className="px-3 py-1 text-xs border border-border hover:border-border-strong"
                             >
                               Converted
                             </button>
@@ -478,14 +478,14 @@ export default function AdminTipsPage() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-surface p-6 max-w-md w-full">
               <h2 className="text-lg font-medium mb-4">Reject Tip</h2>
-              <p className="text-sm text-neutral-400 mb-4">
+              <p className="text-sm text-fg-muted mb-4">
                 Please provide a reason for rejection. This will be sent to the submitter if they provided an email.
               </p>
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="e.g., Unable to verify information, Content doesn't meet our guidelines..."
-                className="w-full px-4 py-3 border border-white/[0.08] focus:border-amber-500 focus:outline-none mb-4"
+                className="w-full px-4 py-3 border border-border focus:border-amber-500 focus:outline-none mb-4"
                 rows={3}
               />
               <div className="flex gap-3">
@@ -501,7 +501,7 @@ export default function AdminTipsPage() {
                     setShowRejectModal(null);
                     setRejectionReason('');
                   }}
-                  className="px-6 py-2 border border-white/[0.08] text-sm tracking-widest uppercase hover:border-white/20 transition-colors"
+                  className="px-6 py-2 border border-border text-sm tracking-widest uppercase hover:border-border-strong transition-colors"
                 >
                   Cancel
                 </button>

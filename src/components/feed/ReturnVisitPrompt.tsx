@@ -138,11 +138,11 @@ export function ReturnVisitPrompt() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="mx-auto max-w-2xl px-4 pb-4">
-        <div className="bg-surface border border-white/[0.08] p-4 shadow-2xl shadow-black/50 relative">
+        <div className="bg-surface border border-border p-4 shadow-2xl shadow-black/50 relative">
           {/* Dismiss */}
           <button
             onClick={handleDismiss}
-            className="absolute top-3 right-3 text-neutral-500 hover:text-white transition-colors"
+            className="absolute top-3 right-3 text-fg-subtle hover:text-fg transition-colors"
             aria-label="Dismiss"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -151,12 +151,12 @@ export function ReturnVisitPrompt() {
           </button>
 
           {status === 'success' ? (
-            <p className="text-sm text-neutral-100 text-center py-1">
+            <p className="text-sm text-fg text-center py-1">
               You're in! Check your inbox for a verification link.
             </p>
           ) : (
             <>
-              <p className="text-sm text-neutral-300 mb-3 pr-6">
+              <p className="text-sm text-fg-muted mb-3 pr-6">
                 Welcome back. Save your setup and get daily briefs.
               </p>
 
@@ -167,13 +167,13 @@ export function ReturnVisitPrompt() {
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={handleFocus}
                   placeholder="Enter your email"
-                  className="flex-1 px-3 py-2 bg-neutral-900 border border-white/20 text-white text-sm placeholder:text-neutral-500 focus:outline-none focus:border-amber-500 transition-colors"
+                  className="flex-1 px-3 py-2 bg-surface border border-border-strong text-white text-sm placeholder:text-fg-subtle focus:outline-none focus:border-amber-500 transition-colors"
                   disabled={status === 'loading'}
                 />
                 <button
                   type="submit"
                   disabled={status === 'loading'}
-                  className="px-5 py-2 bg-white text-neutral-900 text-sm font-medium hover:bg-amber-600 hover:text-white transition-colors disabled:opacity-50 whitespace-nowrap"
+                  className="px-5 py-2 bg-fg text-canvas text-sm font-medium hover:bg-amber-600 hover:text-fg transition-colors disabled:opacity-50 whitespace-nowrap"
                 >
                   {status === 'loading' ? '...' : 'Subscribe'}
                 </button>

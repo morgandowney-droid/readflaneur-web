@@ -87,8 +87,8 @@ export function NewsletterSignup({
     return (
       <div className={getContainerClasses(variant)}>
         <div className="text-center py-4">
-          <p className="text-lg font-medium text-neutral-100 mb-1">You're in!</p>
-          <p className="text-sm text-neutral-400">
+          <p className="text-lg font-medium text-fg mb-1">You're in!</p>
+          <p className="text-sm text-fg-muted">
             {magicLinkSent
               ? 'Check your inbox for a magic link to complete your account.'
               : 'You\'re subscribed to neighborhood stories.'
@@ -101,12 +101,12 @@ export function NewsletterSignup({
 
   if (variant === 'hero') {
     return (
-      <div className="bg-neutral-900 text-white py-12 px-4">
+      <div className="bg-surface text-fg py-12 px-4">
         <div className="mx-auto max-w-xl text-center">
           <h2 className="text-2xl font-light tracking-wide mb-3">
             Get Local Stories in Your Inbox
           </h2>
-          <p className="text-neutral-400 mb-6">
+          <p className="text-fg-muted mb-6">
             {neighborhoodName
               ? `The best of ${neighborhoodName}, delivered twice weekly.`
               : 'Neighborhood news from the places you love, delivered twice weekly.'
@@ -118,13 +118,13 @@ export function NewsletterSignup({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="w-full sm:w-auto sm:flex-1 px-4 py-3 bg-white text-black text-center sm:text-left placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-white"
+              className="w-full sm:w-auto sm:flex-1 px-4 py-3 bg-white text-black text-center sm:text-left placeholder:text-fg-muted focus:outline-none focus:ring-2 focus:ring-white"
               disabled={status === 'loading'}
             />
             <button
               type="submit"
               disabled={status === 'loading'}
-              className="w-full sm:w-auto px-8 py-3 bg-white text-black text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50"
+              className="w-full sm:w-auto px-8 py-3 bg-white text-black text-sm tracking-widest uppercase hover:opacity-80 transition-colors disabled:opacity-50"
             >
               {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
             </button>
@@ -132,7 +132,7 @@ export function NewsletterSignup({
           {status === 'error' && (
             <p className="text-red-400 text-sm mt-3">{errorMessage}</p>
           )}
-          <p className="text-xs text-neutral-500 mt-4">
+          <p className="text-xs text-fg-subtle mt-4">
             Free forever. Unsubscribe anytime.
           </p>
         </div>
@@ -143,10 +143,10 @@ export function NewsletterSignup({
   if (variant === 'sidebar') {
     return (
       <div className="bg-surface p-6">
-        <h3 className="text-sm font-medium tracking-wide uppercase text-neutral-100 mb-3">
+        <h3 className="text-sm font-medium tracking-wide uppercase text-fg mb-3">
           Newsletter
         </h3>
-        <p className="text-sm text-neutral-400 mb-4">
+        <p className="text-sm text-fg-muted mb-4">
           Get the latest stories delivered to your inbox twice weekly.
         </p>
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -155,13 +155,13 @@ export function NewsletterSignup({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Your email"
-            className="w-full px-3 py-2 text-sm bg-canvas border border-white/[0.08] text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500"
+            className="w-full px-3 py-2 text-sm bg-canvas border border-border text-fg placeholder:text-fg-subtle focus:outline-none focus:border-amber-500"
             disabled={status === 'loading'}
           />
           <button
             type="submit"
             disabled={status === 'loading'}
-            className="w-full py-2 bg-black text-white text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+            className="w-full py-2 bg-black text-white text-xs tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50"
           >
             {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
           </button>
@@ -183,13 +183,13 @@ export function NewsletterSignup({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
-            className="px-4 py-2 bg-surface border border-white/[0.08] text-neutral-100 rounded-none text-center sm:text-left text-sm focus:outline-none focus:border-amber-500 placeholder:text-neutral-500 w-full sm:w-64"
+            className="px-4 py-2 bg-surface border border-border text-fg rounded-none text-center sm:text-left text-sm focus:outline-none focus:border-amber-500 placeholder:text-fg-subtle w-full sm:w-64"
             disabled={status === 'loading'}
           />
           <button
             type="submit"
             disabled={status === 'loading'}
-            className="px-6 py-2 bg-black text-white text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50 whitespace-nowrap"
+            className="px-6 py-2 bg-black text-white text-xs tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50 whitespace-nowrap"
           >
             {status === 'loading' ? '...' : 'Subscribe'}
           </button>
@@ -206,13 +206,13 @@ export function NewsletterSignup({
     <div className={getContainerClasses(variant)}>
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         <div className="flex-1">
-          <h3 className="text-lg font-medium text-neutral-100 mb-1">
+          <h3 className="text-lg font-medium text-fg mb-1">
             {neighborhoodName
               ? `Get ${neighborhoodName} News`
               : 'Stay in the Loop'
             }
           </h3>
-          <p className="text-sm text-neutral-400">
+          <p className="text-sm text-fg-muted">
             Local stories delivered to your inbox twice weekly.
           </p>
         </div>
@@ -222,13 +222,13 @@ export function NewsletterSignup({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
-            className="px-4 py-2 bg-surface border border-white/[0.08] text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500 min-w-[200px]"
+            className="px-4 py-2 bg-surface border border-border text-fg placeholder:text-fg-subtle focus:outline-none focus:border-amber-500 min-w-[200px]"
             disabled={status === 'loading'}
           />
           <button
             type="submit"
             disabled={status === 'loading'}
-            className="px-6 py-2 bg-black text-white text-sm tracking-wider uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50 whitespace-nowrap"
+            className="px-6 py-2 bg-black text-white text-sm tracking-wider uppercase hover:bg-elevated transition-colors disabled:opacity-50 whitespace-nowrap"
           >
             {status === 'loading' ? '...' : 'Subscribe'}
           </button>
@@ -250,6 +250,6 @@ function getContainerClasses(variant: string): string {
     case 'footer':
       return 'py-6';
     default:
-      return 'bg-surface border border-white/[0.08] p-6';
+      return 'bg-surface border border-border p-6';
   }
 }

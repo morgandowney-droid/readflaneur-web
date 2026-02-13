@@ -328,7 +328,7 @@ export function MultiFeed({
   const manageButton = (
     <button
       onClick={() => openModal()}
-      className="text-neutral-500 hover:text-white transition-colors p-1.5"
+      className="text-fg-subtle hover:text-fg transition-colors p-1.5"
       title="Manage neighborhoods"
     >
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -349,7 +349,7 @@ export function MultiFeed({
 
   // Desktop: manage + view toggle together
   const controlButtons = (
-    <div className="shrink-0 flex items-center gap-1 pl-2 border-l border-neutral-800">
+    <div className="shrink-0 flex items-center gap-1 pl-2 border-l border-border">
       {manageButton}
       {viewToggle}
     </div>
@@ -393,19 +393,19 @@ export function MultiFeed({
 
       {/* ── NEIGHBORHOOD NAV (above masthead for vertical stability) ── */}
       {isMultiple && (
-        <div className="md:sticky md:top-[60px] z-20 md:bg-[#050505]/95 md:backdrop-blur-md">
+        <div className="md:sticky md:top-[60px] z-20 md:bg-canvas/95 md:backdrop-blur-md">
 
           {/* MOBILE: Dropdown + manage button */}
           <div className="md:hidden relative flex items-center gap-2 py-3" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex-1 flex items-center justify-between bg-[#121212] border border-white/10 rounded-lg px-4 py-2.5 text-left min-w-0"
+              className="flex-1 flex items-center justify-between bg-surface border border-border-strong rounded-lg px-4 py-2.5 text-left min-w-0"
             >
               <div className="min-w-0">
                 {activeHood ? (
                   <>
-                    <div className="text-sm font-medium text-white truncate">{activeHood.name}</div>
-                    <div className="text-[10px] text-neutral-500 truncate">{activeHood.city}</div>
+                    <div className="text-sm font-medium text-fg truncate">{activeHood.name}</div>
+                    <div className="text-[10px] text-fg-subtle truncate">{activeHood.city}</div>
                   </>
                 ) : (
                   <div className="text-sm font-medium text-white">All Stories</div>
@@ -413,28 +413,28 @@ export function MultiFeed({
               </div>
               <svg
                 width="16" height="16" viewBox="0 0 16 16" fill="none"
-                className={`shrink-0 ml-2 text-neutral-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                className={`shrink-0 ml-2 text-fg-muted transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
               >
                 <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
 
             {dropdownOpen && (
-              <div className="absolute top-full left-0 right-12 mt-1 bg-[#121212] border border-white/10 rounded-lg shadow-2xl max-h-[60vh] overflow-y-auto z-30">
+              <div className="absolute top-full left-0 right-12 mt-1 bg-surface border border-border-strong rounded-lg shadow-2xl max-h-[60vh] overflow-y-auto z-30">
                 {/* All Stories option */}
                 <button
                   onClick={() => { setActiveFilter(null); setDropdownOpen(false); }}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                    activeFilter === null ? 'bg-white/5' : 'hover:bg-white/5'
+                    activeFilter === null ? 'bg-hover' : 'hover:bg-hover'
                   }`}
                 >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-neutral-500">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-fg-subtle">
                     <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.2"/>
                     <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.2"/>
                     <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.2"/>
                     <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.2"/>
                   </svg>
-                  <span className="text-sm text-white font-medium">All Stories</span>
+                  <span className="text-sm text-fg font-medium">All Stories</span>
                   {activeFilter === null && (
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto shrink-0 text-amber-500">
                       <path d="M2.5 7l3 3 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -442,7 +442,7 @@ export function MultiFeed({
                   )}
                 </button>
 
-                <div className="border-t border-white/[0.06]" />
+                <div className="border-t border-border" />
 
                 {/* Neighborhood list */}
                 {neighborhoods.map((hood, i) => (
@@ -450,20 +450,20 @@ export function MultiFeed({
                     key={hood.id}
                     onClick={() => { setActiveFilter(activeFilter === hood.id ? null : hood.id); setDropdownOpen(false); }}
                     className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                      activeFilter === hood.id ? 'bg-white/5' : 'hover:bg-white/5'
+                      activeFilter === hood.id ? 'bg-hover' : 'hover:bg-hover'
                     }`}
                   >
                     <span className={`shrink-0 w-2 h-2 rounded-full ${
-                      i === 0 ? 'bg-amber-500' : 'bg-neutral-600'
+                      i === 0 ? 'bg-amber-500' : 'bg-fg-subtle'
                     }`} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-white truncate">{hood.name}</span>
+                        <span className="text-sm text-fg truncate">{hood.name}</span>
                         {i === 0 && (
                           <span className="text-[8px] tracking-wider font-bold text-amber-500/60 shrink-0">PRIMARY</span>
                         )}
                       </div>
-                      <div className="text-[10px] text-neutral-500 truncate">{hood.city}</div>
+                      <div className="text-[10px] text-fg-subtle truncate">{hood.city}</div>
                     </div>
                     {activeFilter === hood.id && (
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto shrink-0 text-amber-500">
@@ -474,10 +474,10 @@ export function MultiFeed({
                 ))}
 
                 {/* Explore link */}
-                <div className="border-t border-white/[0.06]">
+                <div className="border-t border-border">
                   <button
                     onClick={() => { setDropdownOpen(false); openModal(); }}
-                    className="w-full px-4 py-3 text-left text-xs tracking-wide text-neutral-500 hover:text-amber-400 transition-colors"
+                    className="w-full px-4 py-3 text-left text-xs tracking-wide text-fg-subtle hover:text-amber-400 transition-colors"
                   >
                     Explore other neighborhoods
                   </button>
@@ -485,7 +485,7 @@ export function MultiFeed({
               </div>
             )}
 
-            <div className="shrink-0 pl-2 border-l border-neutral-800">
+            <div className="shrink-0 pl-2 border-l border-border">
               {manageButton}
             </div>
           </div>
@@ -495,7 +495,7 @@ export function MultiFeed({
             {/* Left scroll arrow */}
             <button
               onClick={() => scrollPills('left')}
-              className={`shrink-0 p-1 transition-opacity ${canScrollLeft ? 'opacity-100 text-neutral-400 hover:text-white' : 'opacity-0 pointer-events-none'}`}
+              className={`shrink-0 p-1 transition-opacity ${canScrollLeft ? 'opacity-100 text-fg-muted hover:text-fg' : 'opacity-0 pointer-events-none'}`}
               aria-label="Scroll left"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 3L5 7l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -504,10 +504,10 @@ export function MultiFeed({
             {/* Scrollable pills with fade indicators */}
             <div className="relative overflow-hidden flex-1">
               {canScrollLeft && (
-                <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#050505] to-transparent z-10 pointer-events-none" />
+                <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-canvas to-transparent z-10 pointer-events-none" />
               )}
               {canScrollRight && (
-                <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none" />
+                <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-canvas to-transparent z-10 pointer-events-none" />
               )}
               <div
                 ref={pillsRef}
@@ -518,8 +518,8 @@ export function MultiFeed({
                   onClick={() => setActiveFilter(null)}
                   className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors ${
                     activeFilter === null
-                      ? 'bg-white/10 text-white border border-white/20'
-                      : 'bg-transparent text-neutral-400 border border-neutral-800 hover:border-neutral-500 hover:text-white'
+                      ? 'bg-hover text-fg border border-border-strong'
+                      : 'bg-transparent text-fg-muted border border-border hover:border-neutral-500 hover:text-fg'
                   }`}
                 >
                   All Stories
@@ -539,8 +539,8 @@ export function MultiFeed({
                       overIndex === i && dragIndex !== null && dragIndex !== i ? 'border-l-2 border-l-amber-500' : ''
                     } ${
                       activeFilter === hood.id
-                        ? 'bg-white/10 text-white border border-white/20'
-                        : 'bg-transparent text-neutral-400 border border-neutral-800 hover:border-neutral-500 hover:text-white'
+                        ? 'bg-hover text-fg border border-border-strong'
+                        : 'bg-transparent text-fg-muted border border-border hover:border-neutral-500 hover:text-fg'
                     }`}
                     title={hood.combo_component_names?.length ? `Includes: ${hood.combo_component_names.join(', ')}` : undefined}
                   >
@@ -560,7 +560,7 @@ export function MultiFeed({
             {/* Right scroll arrow */}
             <button
               onClick={() => scrollPills('right')}
-              className={`shrink-0 p-1 transition-opacity ${canScrollRight ? 'opacity-100 text-neutral-400 hover:text-white' : 'opacity-0 pointer-events-none'}`}
+              className={`shrink-0 p-1 transition-opacity ${canScrollRight ? 'opacity-100 text-fg-muted hover:text-fg' : 'opacity-0 pointer-events-none'}`}
               aria-label="Scroll right"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -621,7 +621,7 @@ export function MultiFeed({
       {/* ── EMPTY STATE ── */}
       {isEmpty && (
         <div className="py-4">
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-fg-subtle">
             Select neighborhoods to see local stories
           </p>
         </div>
@@ -639,14 +639,14 @@ export function MultiFeed({
         <div className="space-y-4 py-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="animate-pulse">
-              <div className="h-4 bg-neutral-800 rounded w-3/4 mb-2" />
-              <div className="h-3 bg-neutral-800 rounded w-1/2" />
+              <div className="h-4 bg-elevated rounded w-3/4 mb-2" />
+              <div className="h-3 bg-elevated rounded w-1/2" />
             </div>
           ))}
         </div>
       ) : activeFilter && fetchedArticles?.length === 0 ? (
         <div className="py-8 text-center">
-          <p className="text-sm text-neutral-500">No articles yet for this neighborhood.</p>
+          <p className="text-sm text-fg-subtle">No articles yet for this neighborhood.</p>
         </div>
       ) : (
         <FeedList items={filteredItems} view={currentView} />
@@ -658,7 +658,7 @@ export function MultiFeed({
           <button
             onClick={loadMoreFiltered}
             disabled={moreLoading}
-            className="w-full py-3 text-sm tracking-wide uppercase text-neutral-500 hover:text-white border border-white/[0.08] hover:border-white/20 transition-colors disabled:opacity-50"
+            className="w-full py-3 text-sm tracking-wide uppercase text-fg-subtle hover:text-fg border border-border hover:border-border-strong transition-colors disabled:opacity-50"
           >
             {moreLoading ? 'Loading...' : 'Load More Stories'}
           </button>

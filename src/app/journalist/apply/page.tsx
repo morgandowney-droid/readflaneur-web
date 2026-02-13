@@ -91,7 +91,7 @@ export default function JournalistApplyPage() {
     return (
       <div className="py-12 px-4">
         <div className="mx-auto max-w-2xl">
-          <p className="text-neutral-400">Loading...</p>
+          <p className="text-fg-muted">Loading...</p>
         </div>
       </div>
     );
@@ -111,7 +111,7 @@ export default function JournalistApplyPage() {
           </p>
           <Link
             href="/"
-            className="inline-block bg-black text-white px-8 py-3 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors"
+            className="inline-block bg-black text-white px-8 py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors"
           >
             Back to Home
           </Link>
@@ -128,7 +128,7 @@ export default function JournalistApplyPage() {
             <p className="text-yellow-800">{error}</p>
           </div>
           <div className="mt-6 text-center">
-            <Link href="/" className="text-sm text-neutral-500 hover:text-black">
+            <Link href="/" className="text-sm text-fg-subtle hover:text-black">
               &larr; Back to Home
             </Link>
           </div>
@@ -149,7 +149,7 @@ export default function JournalistApplyPage() {
       <div className="mx-auto max-w-2xl">
         <div className="mb-8">
           <h1 className="text-2xl font-light mb-2">Apply to Write for Flâneur</h1>
-          <p className="text-neutral-500">
+          <p className="text-fg-subtle">
             Become a Neighborhood Editor and share stories from your community.
           </p>
         </div>
@@ -163,7 +163,7 @@ export default function JournalistApplyPage() {
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Neighborhood Selection */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Which neighborhood do you want to cover? *
             </label>
             <select
@@ -187,7 +187,7 @@ export default function JournalistApplyPage() {
 
           {/* Zip Code */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Your Zip/Postal Code *
             </label>
             <input
@@ -198,14 +198,14 @@ export default function JournalistApplyPage() {
               placeholder="e.g., W11 2BQ"
               className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none"
             />
-            <p className="text-xs text-neutral-400 mt-1">
+            <p className="text-xs text-fg-muted mt-1">
               We verify that editors live in or near their neighborhood.
             </p>
           </div>
 
           {/* Phone */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Phone Number *
             </label>
             <input
@@ -220,7 +220,7 @@ export default function JournalistApplyPage() {
 
           {/* Bio */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               About You *
             </label>
             <textarea
@@ -235,7 +235,7 @@ export default function JournalistApplyPage() {
 
           {/* Why Interested */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Why are you interested in this role?
             </label>
             <textarea
@@ -249,10 +249,10 @@ export default function JournalistApplyPage() {
 
           {/* Photo URLs */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               The Test: Share 2 Photos of Your Neighborhood *
             </label>
-            <p className="text-sm text-neutral-500 mb-4">
+            <p className="text-sm text-fg-subtle mb-4">
               Upload your photos to a service like Google Drive, Dropbox, or iCloud and paste the links below.
               Photos should be taken recently and showcase your neighborhood.
             </p>
@@ -281,7 +281,7 @@ export default function JournalistApplyPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+              className="w-full bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50"
             >
               {submitting ? 'Submitting...' : 'Submit Application'}
             </button>
@@ -289,7 +289,7 @@ export default function JournalistApplyPage() {
         </form>
 
         <div className="mt-8 text-center">
-          <Link href="/careers" className="text-sm text-neutral-500 hover:text-black">
+          <Link href="/careers" className="text-sm text-fg-subtle hover:text-black">
             &larr; Back to Job Description
           </Link>
         </div>

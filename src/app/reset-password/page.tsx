@@ -65,7 +65,7 @@ export default function ResetPasswordPage() {
   if (isValidSession === null) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4">
-        <p className="text-neutral-400">Loading...</p>
+        <p className="text-fg-muted">Loading...</p>
       </div>
     );
   }
@@ -81,7 +81,7 @@ export default function ResetPasswordPage() {
           </p>
           <Link
             href="/forgot-password"
-            className="inline-block bg-black text-white px-6 py-3 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors"
+            className="inline-block bg-black text-white px-6 py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors"
           >
             Request New Link
           </Link>
@@ -134,7 +134,7 @@ export default function ResetPasswordPage() {
           <div>
             <label
               htmlFor="password"
-              className="block text-xs tracking-widest uppercase text-neutral-400 mb-2"
+              className="block text-xs tracking-widest uppercase text-fg-muted mb-2"
             >
               New Password
             </label>
@@ -153,7 +153,7 @@ export default function ResetPasswordPage() {
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-xs tracking-widest uppercase text-neutral-400 mb-2"
+              className="block text-xs tracking-widest uppercase text-fg-muted mb-2"
             >
               Confirm Password
             </label>
@@ -171,7 +171,7 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+            className="w-full bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50"
           >
             {isLoading ? 'Updating...' : 'Update Password'}
           </button>

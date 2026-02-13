@@ -85,7 +85,7 @@ export function InviteHero() {
   };
 
   return (
-    <section className="relative overflow-hidden bg-black text-white py-24 md:py-32 lg:py-40 px-6">
+    <section data-theme="dark" className="relative overflow-hidden bg-black text-white py-24 md:py-32 lg:py-40 px-6">
       {/* Gradient overlay for tonal depth */}
       <div
         className="absolute inset-0"
@@ -94,7 +94,7 @@ export function InviteHero() {
 
       <div className="relative mx-auto max-w-3xl text-center">
         {/* Invite context */}
-        <p className="hero-fade-in text-sm text-neutral-500 mb-6 font-light tracking-[0.3em] uppercase">
+        <p className="hero-fade-in text-sm text-fg-subtle mb-6 font-light tracking-[0.3em] uppercase">
           {refCode ? 'A friend invited you to' : 'You are invited to join'}
         </p>
 
@@ -104,19 +104,19 @@ export function InviteHero() {
         </h1>
 
         {/* Tagline */}
-        <p className="hero-fade-in-delay-1 text-base md:text-lg text-neutral-400 mb-4 font-light max-w-lg mx-auto leading-relaxed">
+        <p className="hero-fade-in-delay-1 text-base md:text-lg text-fg-muted mb-4 font-light max-w-lg mx-auto leading-relaxed">
           Daily local stories from the neighborhoods you care about, delivered every morning.
         </p>
 
         {/* Decorative rule */}
-        <div className="hero-fade-in-delay-1 w-8 h-px bg-neutral-600 mx-auto mb-10" />
+        <div className="hero-fade-in-delay-1 w-8 h-px bg-fg-subtle mx-auto mb-10" />
 
         {/* Email capture - integrated into hero */}
         <div className="hero-fade-in-delay-2 max-w-md mx-auto">
           {status === 'success' ? (
             <div className="py-4">
-              <p className="text-neutral-200 text-lg">{message}</p>
-              <p className="text-neutral-500 text-sm mt-2">Redirecting to your feed...</p>
+              <p className="text-fg text-lg">{message}</p>
+              <p className="text-fg-subtle text-sm mt-2">Redirecting to your feed...</p>
             </div>
           ) : (
             <>

@@ -47,7 +47,7 @@ export default async function JournalistDashboardPage() {
           <h1 className="text-2xl font-light">Journalist Dashboard</h1>
           <Link
             href="/journalist/articles/new"
-            className="bg-black text-white px-6 py-2 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors"
+            className="bg-black text-white px-6 py-2 text-sm tracking-widest uppercase hover:bg-elevated transition-colors"
           >
             Write New Article
           </Link>
@@ -56,19 +56,19 @@ export default async function JournalistDashboardPage() {
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <div className="bg-white p-6 border border-neutral-200">
-            <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">
               Published
             </p>
             <p className="text-3xl font-light">{publishedArticles.length}</p>
           </div>
           <div className="bg-white p-6 border border-neutral-200">
-            <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">
               Drafts
             </p>
             <p className="text-3xl font-light">{draftArticles.length}</p>
           </div>
           <div className="bg-white p-6 border border-neutral-200">
-            <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">
               Pending Review
             </p>
             <p className="text-3xl font-light">{pendingArticles.length}</p>
@@ -77,7 +77,7 @@ export default async function JournalistDashboardPage() {
 
         {/* Articles List */}
         <div>
-          <h2 className="text-xs tracking-widest uppercase text-neutral-400 mb-4">
+          <h2 className="text-xs tracking-widest uppercase text-fg-muted mb-4">
             Your Articles
           </h2>
 
@@ -88,7 +88,7 @@ export default async function JournalistDashboardPage() {
               </p>
               <Link
                 href="/journalist/articles/new"
-                className="inline-block bg-black text-white px-6 py-2 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors"
+                className="inline-block bg-black text-white px-6 py-2 text-sm tracking-widest uppercase hover:bg-elevated transition-colors"
               >
                 Write Your First Article
               </Link>
@@ -109,7 +109,7 @@ export default async function JournalistDashboardPage() {
                     />
                     <div className="flex-1">
                       <h3 className="font-medium">{article.headline}</h3>
-                      <p className="text-sm text-neutral-400 mt-1">
+                      <p className="text-sm text-fg-muted mt-1">
                         {article.neighborhood?.name}, {article.neighborhood?.city}
                       </p>
                     </div>
@@ -125,7 +125,7 @@ export default async function JournalistDashboardPage() {
                       >
                         {article.status}
                       </span>
-                      <p className="text-sm text-neutral-400 mt-2">
+                      <p className="text-sm text-fg-muted mt-2">
                         {formatRelativeTime(article.created_at)}
                       </p>
                     </div>

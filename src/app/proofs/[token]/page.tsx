@@ -118,7 +118,7 @@ export default function ProofPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-canvas flex items-center justify-center">
-        <p className="text-neutral-400 text-sm tracking-widest uppercase">Loading...</p>
+        <p className="text-fg-muted text-sm tracking-widest uppercase">Loading...</p>
       </div>
     );
   }
@@ -128,7 +128,7 @@ export default function ProofPage() {
       <div className="min-h-screen bg-canvas flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-xl font-light tracking-wide mb-2">FLANEUR</h1>
-          <p className="text-neutral-500">This proof link is invalid or has expired.</p>
+          <p className="text-fg-subtle">This proof link is invalid or has expired.</p>
         </div>
       </div>
     );
@@ -187,22 +187,22 @@ export default function ProofPage() {
   return (
     <div className="min-h-screen bg-canvas">
       {/* Header */}
-      <div className="bg-surface border-b border-white/[0.08]">
+      <div className="bg-surface border-b border-border">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-lg font-light tracking-[0.15em]">FLANEUR</h1>
-            <p className="text-xs text-neutral-400 mt-0.5">Ad Proof Review</p>
+            <p className="text-xs text-fg-muted mt-0.5">Ad Proof Review</p>
           </div>
           <div className="flex items-center gap-3">
             {ad.client_name && (
-              <span className="text-sm text-neutral-500">{ad.client_name}</span>
+              <span className="text-sm text-fg-subtle">{ad.client_name}</span>
             )}
             <span className={`px-2 py-1 text-[10px] tracking-widest uppercase rounded ${
               ad.approval_status === 'pending_approval'
                 ? 'bg-amber-100 text-amber-800'
                 : ad.approval_status === 'changes_requested'
                   ? 'bg-orange-100 text-orange-800'
-                  : 'bg-neutral-800 text-neutral-400'
+                  : 'bg-elevated text-fg-muted'
             }`}>
               {ad.approval_status === 'pending_approval' ? 'Awaiting Approval' : ad.approval_status?.replace('_', ' ')}
             </span>
@@ -230,18 +230,18 @@ export default function ProofPage() {
         )}
 
         {/* Ad Preview */}
-        <div className="bg-surface border border-white/[0.08] rounded-lg overflow-hidden mb-6">
-          <div className="p-4 border-b border-white/[0.08]">
-            <p className="text-xs tracking-widest uppercase text-neutral-400">
+        <div className="bg-surface border border-border rounded-lg overflow-hidden mb-6">
+          <div className="p-4 border-b border-border">
+            <p className="text-xs tracking-widest uppercase text-fg-muted">
               Preview — {ad.placement_type === 'sunday_edition' ? 'Sunday Edition' : 'Daily Brief'}
             </p>
           </div>
 
           <div className="p-6">
             {/* Ad unit mock */}
-            <div className="max-w-lg mx-auto border border-white/[0.08] rounded-lg overflow-hidden">
+            <div className="max-w-lg mx-auto border border-border rounded-lg overflow-hidden">
               <div className="px-4 py-2 bg-surface">
-                <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
+                <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">
                   PRESENTED BY {ad.sponsor_label}
                 </span>
               </div>
@@ -255,14 +255,14 @@ export default function ProofPage() {
               <div className="p-4">
                 <h3 className="font-semibold text-base mb-1">{displayHeadline || '(No headline)'}</h3>
                 {displayBody && (
-                  <p className="text-sm text-neutral-400">{displayBody}</p>
+                  <p className="text-sm text-fg-muted">{displayBody}</p>
                 )}
                 {ad.click_url && (
                   <a
                     href={ad.click_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block mt-3 text-sm text-neutral-500 hover:text-white"
+                    className="inline-block mt-3 text-sm text-fg-subtle hover:text-fg"
                   >
                     Learn more &rarr;
                   </a>
@@ -274,8 +274,8 @@ export default function ProofPage() {
 
         {/* AI quality info */}
         {ad.ai_quality_score !== null && ad.ai_quality_score !== undefined && (
-          <div className="bg-surface border border-white/[0.08] rounded-lg p-4 mb-6">
-            <p className="text-xs tracking-widest uppercase text-neutral-400 mb-2">Quality Score</p>
+          <div className="bg-surface border border-border rounded-lg p-4 mb-6">
+            <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">Quality Score</p>
             <div className="flex items-center gap-3">
               <div className={`text-2xl font-light ${
                 ad.ai_quality_score >= 70 ? 'text-green-600' :
@@ -283,7 +283,7 @@ export default function ProofPage() {
               }`}>
                 {ad.ai_quality_score}
               </div>
-              <div className="text-sm text-neutral-500">
+              <div className="text-sm text-fg-subtle">
                 {ad.ai_quality_score >= 70 ? 'Excellent — meets our editorial standards' :
                  ad.ai_quality_score >= 40 ? 'Acceptable — meets minimum requirements' :
                  'Below standard — consider updating your creative'}
@@ -307,32 +307,32 @@ export default function ProofPage() {
             </button>
             <button
               onClick={() => setShowChanges(true)}
-              className="px-6 py-3 border border-white/[0.08] text-sm tracking-widest uppercase rounded-lg hover:border-white/20 transition-colors"
+              className="px-6 py-3 border border-border text-sm tracking-widest uppercase rounded-lg hover:border-border-strong transition-colors"
             >
               Request Changes
             </button>
           </div>
         ) : (
-          <div className="bg-surface border border-white/[0.08] rounded-lg p-6">
+          <div className="bg-surface border border-border rounded-lg p-6">
             <h3 className="text-sm font-medium mb-3">What changes would you like?</h3>
             <textarea
               value={changeMessage}
               onChange={(e) => setChangeMessage(e.target.value)}
               placeholder="Describe the changes you'd like made to your placement..."
-              className="w-full px-4 py-3 border border-white/[0.08] rounded-lg focus:border-amber-500 focus:outline-none text-sm mb-4"
+              className="w-full px-4 py-3 border border-border rounded-lg focus:border-amber-500 focus:outline-none text-sm mb-4"
               rows={4}
             />
             <div className="flex gap-3">
               <button
                 onClick={handleRequestChanges}
                 disabled={processing || !changeMessage.trim()}
-                className="flex-1 bg-black text-white py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                className="flex-1 bg-black text-white py-3 text-sm tracking-widest uppercase rounded-lg hover:bg-elevated transition-colors disabled:opacity-50"
               >
                 {processing ? 'Sending...' : 'Submit Feedback'}
               </button>
               <button
                 onClick={() => { setShowChanges(false); setChangeMessage(''); }}
-                className="px-6 py-3 border border-white/[0.08] text-sm tracking-widest uppercase rounded-lg hover:border-white/20 transition-colors"
+                className="px-6 py-3 border border-border text-sm tracking-widest uppercase rounded-lg hover:border-border-strong transition-colors"
               >
                 Cancel
               </button>

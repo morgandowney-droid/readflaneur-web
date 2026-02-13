@@ -103,17 +103,17 @@ export default function SignupPage() {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4">
         <div className="w-full max-w-sm text-center">
-          <h1 className="text-2xl font-light text-neutral-100 mb-4">Check Your Email</h1>
-          <p className="text-neutral-400 mb-3">
+          <h1 className="text-2xl font-light text-fg mb-4">Check Your Email</h1>
+          <p className="text-fg-muted mb-3">
             We&apos;ve sent a confirmation link to <strong>{email}</strong>. Click the
             link to activate your account.
           </p>
-          <p className="text-sm text-neutral-500 mb-6">
+          <p className="text-sm text-fg-subtle mb-6">
             Not seeing it? Check your spam or junk folder.
           </p>
           <Link
             href="/login"
-            className="inline-block bg-white text-neutral-900 px-8 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors rounded-lg"
+            className="inline-block bg-fg text-canvas px-8 py-3 text-sm tracking-widest uppercase hover:opacity-80 transition-colors rounded-lg"
           >
             Back to Login
           </Link>
@@ -125,7 +125,7 @@ export default function SignupPage() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-light text-center text-neutral-100 mb-10">Create Account</h1>
+        <h1 className="text-2xl font-light text-center text-fg mb-10">Create Account</h1>
 
         {/* OAuth buttons hidden pre-launch — Google & Apple login fully implemented and ready to re-enable */}
 
@@ -139,7 +139,7 @@ export default function SignupPage() {
           <div>
             <label
               htmlFor="fullName"
-              className="block text-xs tracking-widest uppercase text-neutral-400 mb-2"
+              className="block text-xs tracking-widest uppercase text-fg-muted mb-2"
             >
               Full Name
             </label>
@@ -149,7 +149,7 @@ export default function SignupPage() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white rounded-lg"
+              className="w-full px-4 py-3 border border-border-strong focus:border-amber-500 focus:outline-none bg-surface text-fg rounded-lg"
               placeholder="Your name"
             />
           </div>
@@ -157,7 +157,7 @@ export default function SignupPage() {
           <div>
             <label
               htmlFor="email"
-              className="block text-xs tracking-widest uppercase text-neutral-400 mb-2"
+              className="block text-xs tracking-widest uppercase text-fg-muted mb-2"
             >
               Email
             </label>
@@ -167,7 +167,7 @@ export default function SignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white rounded-lg"
+              className="w-full px-4 py-3 border border-border-strong focus:border-amber-500 focus:outline-none bg-surface text-fg rounded-lg"
               placeholder="you@example.com"
             />
           </div>
@@ -175,7 +175,7 @@ export default function SignupPage() {
           <div>
             <label
               htmlFor="password"
-              className="block text-xs tracking-widest uppercase text-neutral-400 mb-2"
+              className="block text-xs tracking-widest uppercase text-fg-muted mb-2"
             >
               Password
             </label>
@@ -186,7 +186,7 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white rounded-lg"
+              className="w-full px-4 py-3 border border-border-strong focus:border-amber-500 focus:outline-none bg-surface text-fg rounded-lg"
               placeholder="Minimum 6 characters"
             />
           </div>
@@ -206,13 +206,13 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={isLoading || (!!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken)}
-            className="w-full bg-white text-neutral-900 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50 rounded-lg"
+            className="w-full bg-fg text-canvas py-3 text-sm tracking-widest uppercase hover:opacity-80 transition-colors disabled:opacity-50 rounded-lg"
           >
             {isLoading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-neutral-500 mt-6">
+        <p className="text-center text-sm text-fg-subtle mt-6">
           Already have an account?{' '}
           <Link href="/login" className="text-white hover:underline">
             Sign in

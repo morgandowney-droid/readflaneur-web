@@ -112,7 +112,7 @@ export default function UploadPage({ params }: { params: Promise<{ adId: string 
   if (loading) {
     return (
       <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">
-        <p className="text-neutral-500 text-sm">Loading...</p>
+        <p className="text-fg-subtle text-sm">Loading...</p>
       </div>
     );
   }
@@ -124,7 +124,7 @@ export default function UploadPage({ params }: { params: Promise<{ adId: string 
           <h1 className="font-[family-name:var(--font-cormorant)] text-2xl font-light mb-4">
             {error}
           </h1>
-          <p className="text-neutral-500 text-sm">
+          <p className="text-fg-subtle text-sm">
             If you believe this is an error, contact{' '}
             <a href="mailto:ads@readflaneur.com" className="underline">ads@readflaneur.com</a>
           </p>
@@ -137,11 +137,11 @@ export default function UploadPage({ params }: { params: Promise<{ adId: string 
     return (
       <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">
         <div className="text-center max-w-md px-4">
-          <p className="text-xs tracking-[0.3em] uppercase text-neutral-500 mb-4">Creative Submitted</p>
+          <p className="text-xs tracking-[0.3em] uppercase text-fg-subtle mb-4">Creative Submitted</p>
           <h1 className="font-[family-name:var(--font-cormorant)] text-3xl font-light mb-6">
             Your ad is under review
           </h1>
-          <p className="text-neutral-400 text-sm leading-relaxed mb-8">
+          <p className="text-fg-muted text-sm leading-relaxed mb-8">
             Our editorial team will review your creative and notify you by email when it&apos;s approved.
             This typically takes less than 24 hours.
           </p>
@@ -174,13 +174,13 @@ export default function UploadPage({ params }: { params: Promise<{ adId: string 
     <div className="min-h-screen bg-neutral-950 text-white -mt-[1px]">
       <div className="max-w-xl mx-auto px-4 py-16">
         {/* Header */}
-        <p className="text-xs tracking-[0.3em] uppercase text-neutral-500 mb-4 text-center">
+        <p className="text-xs tracking-[0.3em] uppercase text-fg-subtle mb-4 text-center">
           Upload Creative
         </p>
         <h1 className="font-[family-name:var(--font-cormorant)] text-3xl font-light text-center mb-2">
           {adInfo?.neighborhood_name}{adInfo?.city_name ? `, ${adInfo.city_name}` : ''}
         </h1>
-        <p className="text-neutral-500 text-sm text-center mb-10">
+        <p className="text-fg-subtle text-sm text-center mb-10">
           {placementLabel} &mdash; {displayDate}
         </p>
 
@@ -188,7 +188,7 @@ export default function UploadPage({ params }: { params: Promise<{ adId: string 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Brand Name */}
           <div>
-            <label className="block text-xs tracking-[0.2em] uppercase text-neutral-500 mb-2">
+            <label className="block text-xs tracking-[0.2em] uppercase text-fg-subtle mb-2">
               Brand Name
             </label>
             <input
@@ -197,13 +197,13 @@ export default function UploadPage({ params }: { params: Promise<{ adId: string 
               onChange={(e) => setSponsorLabel(e.target.value)}
               placeholder="Your company or brand name"
               required
-              className="w-full bg-neutral-900 border border-neutral-700 px-4 py-3 text-sm text-white placeholder-neutral-600 focus:border-neutral-500 focus:outline-none"
+              className="w-full bg-surface border border-neutral-700 px-4 py-3 text-sm text-white placeholder-fg-subtle focus:border-neutral-500 focus:outline-none"
             />
           </div>
 
           {/* Headline */}
           <div>
-            <label className="block text-xs tracking-[0.2em] uppercase text-neutral-500 mb-2">
+            <label className="block text-xs tracking-[0.2em] uppercase text-fg-subtle mb-2">
               Headline <span className="text-neutral-600">({60 - headline.length} chars remaining)</span>
             </label>
             <input
@@ -213,13 +213,13 @@ export default function UploadPage({ params }: { params: Promise<{ adId: string 
               placeholder="Short, compelling headline"
               required
               maxLength={60}
-              className="w-full bg-neutral-900 border border-neutral-700 px-4 py-3 text-sm text-white placeholder-neutral-600 focus:border-neutral-500 focus:outline-none"
+              className="w-full bg-surface border border-neutral-700 px-4 py-3 text-sm text-white placeholder-fg-subtle focus:border-neutral-500 focus:outline-none"
             />
           </div>
 
           {/* Body Copy */}
           <div>
-            <label className="block text-xs tracking-[0.2em] uppercase text-neutral-500 mb-2">
+            <label className="block text-xs tracking-[0.2em] uppercase text-fg-subtle mb-2">
               Body Copy <span className="text-neutral-600">(optional, {150 - body.length} chars remaining)</span>
             </label>
             <textarea
@@ -228,20 +228,20 @@ export default function UploadPage({ params }: { params: Promise<{ adId: string 
               placeholder="Optional supporting text"
               maxLength={150}
               rows={2}
-              className="w-full bg-neutral-900 border border-neutral-700 px-4 py-3 text-sm text-white placeholder-neutral-600 focus:border-neutral-500 focus:outline-none resize-none"
+              className="w-full bg-surface border border-neutral-700 px-4 py-3 text-sm text-white placeholder-fg-subtle focus:border-neutral-500 focus:outline-none resize-none"
             />
           </div>
 
           {/* Image Upload */}
           <div>
-            <label className="block text-xs tracking-[0.2em] uppercase text-neutral-500 mb-2">
+            <label className="block text-xs tracking-[0.2em] uppercase text-fg-subtle mb-2">
               Ad Image <span className="text-neutral-600">(JPG, PNG, or WebP, max 2MB)</span>
             </label>
             <div
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed ${
                 imagePreview ? 'border-neutral-600' : 'border-neutral-700'
-              } bg-neutral-900 p-8 text-center cursor-pointer hover:border-neutral-500 transition-colors`}
+              } bg-surface p-8 text-center cursor-pointer hover:border-neutral-500 transition-colors`}
             >
               {imagePreview ? (
                 <img
@@ -251,7 +251,7 @@ export default function UploadPage({ params }: { params: Promise<{ adId: string 
                 />
               ) : (
                 <div>
-                  <p className="text-neutral-400 text-sm mb-1">Drop your image here or click to browse</p>
+                  <p className="text-fg-muted text-sm mb-1">Drop your image here or click to browse</p>
                   <p className="text-neutral-600 text-xs">Recommended: 600x400px or larger</p>
                 </div>
               )}
@@ -264,7 +264,7 @@ export default function UploadPage({ params }: { params: Promise<{ adId: string 
               className="hidden"
             />
             {imageFile && (
-              <p className="text-xs text-neutral-500 mt-2">
+              <p className="text-xs text-fg-subtle mt-2">
                 {imageFile.name} ({(imageFile.size / 1024).toFixed(0)} KB)
               </p>
             )}
@@ -272,7 +272,7 @@ export default function UploadPage({ params }: { params: Promise<{ adId: string 
 
           {/* Click URL */}
           <div>
-            <label className="block text-xs tracking-[0.2em] uppercase text-neutral-500 mb-2">
+            <label className="block text-xs tracking-[0.2em] uppercase text-fg-subtle mb-2">
               Click URL
             </label>
             <input
@@ -281,7 +281,7 @@ export default function UploadPage({ params }: { params: Promise<{ adId: string 
               onChange={(e) => setClickUrl(e.target.value)}
               placeholder="https://yourbrand.com/landing-page"
               required
-              className="w-full bg-neutral-900 border border-neutral-700 px-4 py-3 text-sm text-white placeholder-neutral-600 focus:border-neutral-500 focus:outline-none"
+              className="w-full bg-surface border border-neutral-700 px-4 py-3 text-sm text-white placeholder-fg-subtle focus:border-neutral-500 focus:outline-none"
             />
           </div>
 

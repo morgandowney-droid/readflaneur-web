@@ -203,7 +203,7 @@ export function SimpleNeighborhoodMap({
       <div ref={mapRef} className="w-full h-64 rounded-lg border border-neutral-200" />
 
       <div className="mt-3 flex items-center justify-between">
-        <div className="flex items-center gap-4 text-xs text-neutral-500">
+        <div className="flex items-center gap-4 text-xs text-fg-subtle">
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 bg-red-100 border-2 border-red-600 rounded-sm" />
             {name}
@@ -216,7 +216,7 @@ export function SimpleNeighborhoodMap({
 
         <button
           onClick={handleOpenInMaps}
-          className="flex items-center gap-1.5 text-xs text-neutral-500 hover:text-black transition-colors"
+          className="flex items-center gap-1.5 text-xs text-fg-subtle hover:text-black transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

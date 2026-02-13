@@ -111,7 +111,7 @@ export function AdvertiserPersonas() {
         <h2 className="font-[family-name:var(--font-cormorant)] text-3xl md:text-4xl font-light text-center mb-3">
           Choose Your Strategy.
         </h2>
-        <p className="text-neutral-400 text-base text-center mb-12 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-fg-muted text-base text-center mb-12 max-w-2xl mx-auto leading-relaxed">
           From corner stores to global conglomerates, Flaneur offers a distinct lever for growth.
         </p>
 
@@ -119,10 +119,10 @@ export function AdvertiserPersonas() {
           {PERSONAS.map((persona) => (
             <div
               key={persona.title}
-              className={`relative bg-neutral-900 border p-8 flex flex-col ${
+              className={`relative bg-surface border p-8 flex flex-col ${
                 persona.highlight
                   ? 'border-amber-700/50 shadow-[0_0_30px_-5px_rgba(217,169,78,0.12)]'
-                  : 'border-neutral-800'
+                  : 'border-border'
               }`}
             >
               {persona.badge && (
@@ -131,23 +131,23 @@ export function AdvertiserPersonas() {
                 </span>
               )}
 
-              <div className="text-neutral-300 mb-5">{persona.icon}</div>
+              <div className="text-fg-muted mb-5">{persona.icon}</div>
 
               <h3 className="font-[family-name:var(--font-cormorant)] text-2xl font-light mb-4">
                 {persona.title}
               </h3>
 
               <div className="md:min-h-[60px]">
-                <p className="text-xs tracking-[0.15em] uppercase text-neutral-500 mb-1">
+                <p className="text-xs tracking-[0.15em] uppercase text-fg-subtle mb-1">
                   Who
                 </p>
-                <p className="text-sm text-neutral-300 leading-relaxed">
+                <p className="text-sm text-fg-muted leading-relaxed">
                   {persona.who}
                 </p>
               </div>
 
               <div className="mt-4">
-                <p className="text-xs tracking-[0.15em] uppercase text-neutral-500 mb-1">
+                <p className="text-xs tracking-[0.15em] uppercase text-fg-subtle mb-1">
                   The Goal
                 </p>
                 <p className="text-sm text-white font-medium">
@@ -156,15 +156,15 @@ export function AdvertiserPersonas() {
               </div>
 
               <div className="mt-4 flex-1">
-                <p className="text-xs tracking-[0.15em] uppercase text-neutral-500 mb-1">
+                <p className="text-xs tracking-[0.15em] uppercase text-fg-subtle mb-1">
                   The Play
                 </p>
-                <p className="text-sm text-neutral-400 leading-relaxed">
+                <p className="text-sm text-fg-muted leading-relaxed">
                   {persona.play}
                 </p>
               </div>
 
-              <div className="border-t border-neutral-800 pt-4 mt-auto">
+              <div className="border-t border-border pt-4 mt-auto">
                 <p className="text-xs tracking-[0.15em] uppercase text-neutral-600 mb-1">
                   Recommended
                 </p>

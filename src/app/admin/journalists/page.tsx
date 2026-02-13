@@ -123,7 +123,7 @@ export default function AdminJournalistsPage() {
     return (
       <div className="py-12 px-4">
         <div className="mx-auto max-w-6xl">
-          <p className="text-neutral-400">Loading...</p>
+          <p className="text-fg-muted">Loading...</p>
         </div>
       </div>
     );
@@ -136,7 +136,7 @@ export default function AdminJournalistsPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-light">Journalist Applications</h1>
-            <p className="text-neutral-500 mt-1">
+            <p className="text-fg-subtle mt-1">
               {pendingCount} application{pendingCount !== 1 ? 's' : ''} pending review
             </p>
           </div>
@@ -144,7 +144,7 @@ export default function AdminJournalistsPage() {
           <div className="flex items-center gap-6">
             <Link
               href="/admin/ads"
-              className="text-sm text-neutral-500 hover:text-white"
+              className="text-sm text-fg-subtle hover:text-fg"
             >
               &larr; Back to Admin
             </Link>
@@ -154,7 +154,7 @@ export default function AdminJournalistsPage() {
                 className={`px-4 py-2 text-sm tracking-widest uppercase ${
                   filter === 'pending'
                     ? 'bg-black text-white'
-                    : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+                    : 'bg-elevated text-fg-muted hover:bg-elevated'
                 }`}
               >
                 Pending
@@ -164,7 +164,7 @@ export default function AdminJournalistsPage() {
                 className={`px-4 py-2 text-sm tracking-widest uppercase ${
                   filter === 'all'
                     ? 'bg-black text-white'
-                    : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+                    : 'bg-elevated text-fg-muted hover:bg-elevated'
                 }`}
               >
                 All
@@ -175,44 +175,44 @@ export default function AdminJournalistsPage() {
 
         {/* Applications */}
         {filteredApplications.length === 0 ? (
-          <div className="bg-surface border border-white/[0.08] p-12 text-center">
-            <p className="text-neutral-400">
+          <div className="bg-surface border border-border p-12 text-center">
+            <p className="text-fg-muted">
               {filter === 'pending' ? 'No pending applications.' : 'No applications yet.'}
             </p>
           </div>
         ) : (
           <div className="space-y-6">
             {filteredApplications.map((app) => (
-              <div key={app.id} className="bg-surface border border-white/[0.08] p-6">
+              <div key={app.id} className="bg-surface border border-border p-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Applicant Info */}
                   <div>
-                    <p className="text-xs tracking-widest uppercase text-neutral-400 mb-3">
+                    <p className="text-xs tracking-widest uppercase text-fg-muted mb-3">
                       Applicant
                     </p>
                     <div className="space-y-2 text-sm">
                       <p>
-                        <span className="text-neutral-400">Name:</span>{' '}
+                        <span className="text-fg-muted">Name:</span>{' '}
                         {app.user?.full_name || 'Not provided'}
                       </p>
                       <p>
-                        <span className="text-neutral-400">Email:</span>{' '}
+                        <span className="text-fg-muted">Email:</span>{' '}
                         {app.user?.email}
                       </p>
                       <p>
-                        <span className="text-neutral-400">Phone:</span>{' '}
+                        <span className="text-fg-muted">Phone:</span>{' '}
                         {app.phone}
                       </p>
                       <p>
-                        <span className="text-neutral-400">Zip Code:</span>{' '}
+                        <span className="text-fg-muted">Zip Code:</span>{' '}
                         {app.zip_code}
                       </p>
                       <p>
-                        <span className="text-neutral-400">Neighborhood:</span>{' '}
+                        <span className="text-fg-muted">Neighborhood:</span>{' '}
                         {app.neighborhood?.name}, {app.neighborhood?.city}
                       </p>
                       <p>
-                        <span className="text-neutral-400">Applied:</span>{' '}
+                        <span className="text-fg-muted">Applied:</span>{' '}
                         {new Date(app.created_at).toLocaleDateString()}
                       </p>
                       <p>
@@ -233,18 +233,18 @@ export default function AdminJournalistsPage() {
 
                   {/* Bio & Interest */}
                   <div>
-                    <p className="text-xs tracking-widest uppercase text-neutral-400 mb-3">
+                    <p className="text-xs tracking-widest uppercase text-fg-muted mb-3">
                       About
                     </p>
                     <div className="space-y-4 text-sm">
                       <div>
-                        <p className="text-neutral-400 mb-1">Bio:</p>
-                        <p className="text-neutral-300">{app.bio}</p>
+                        <p className="text-fg-muted mb-1">Bio:</p>
+                        <p className="text-fg-muted">{app.bio}</p>
                       </div>
                       {app.why_interested && (
                         <div>
-                          <p className="text-neutral-400 mb-1">Why interested:</p>
-                          <p className="text-neutral-300">{app.why_interested}</p>
+                          <p className="text-fg-muted mb-1">Why interested:</p>
+                          <p className="text-fg-muted">{app.why_interested}</p>
                         </div>
                       )}
                     </div>
@@ -252,7 +252,7 @@ export default function AdminJournalistsPage() {
 
                   {/* Photos & Actions */}
                   <div>
-                    <p className="text-xs tracking-widest uppercase text-neutral-400 mb-3">
+                    <p className="text-xs tracking-widest uppercase text-fg-muted mb-3">
                       Sample Photos
                     </p>
                     <div className="space-y-2 mb-4">
@@ -310,14 +310,14 @@ export default function AdminJournalistsPage() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-surface p-6 max-w-md w-full">
               <h2 className="text-lg font-medium mb-4">Reject Application</h2>
-              <p className="text-sm text-neutral-400 mb-4">
+              <p className="text-sm text-fg-muted mb-4">
                 Optionally provide a reason for rejection.
               </p>
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="e.g., Location too far from neighborhood..."
-                className="w-full px-4 py-3 border border-white/[0.08] focus:border-amber-500 focus:outline-none mb-4"
+                className="w-full px-4 py-3 border border-border focus:border-amber-500 focus:outline-none mb-4"
                 rows={3}
               />
               <div className="flex gap-3">
@@ -333,7 +333,7 @@ export default function AdminJournalistsPage() {
                     setShowRejectModal(null);
                     setRejectionReason('');
                   }}
-                  className="px-6 py-2 border border-white/[0.08] text-sm tracking-widest uppercase hover:border-white/20 transition-colors"
+                  className="px-6 py-2 border border-border text-sm tracking-widest uppercase hover:border-border-strong transition-colors"
                 >
                   Cancel
                 </button>

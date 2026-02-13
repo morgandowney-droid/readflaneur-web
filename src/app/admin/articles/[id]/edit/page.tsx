@@ -182,7 +182,7 @@ export default function AdminEditArticlePage() {
     return (
       <div className="py-12 px-4">
         <div className="mx-auto max-w-3xl">
-          <p className="text-neutral-400">Loading...</p>
+          <p className="text-fg-muted">Loading...</p>
         </div>
       </div>
     );
@@ -195,7 +195,7 @@ export default function AdminEditArticlePage() {
           <h1 className="text-2xl font-light">Edit Article</h1>
           <Link
             href="/admin/articles"
-            className="text-sm text-neutral-500 hover:text-white"
+            className="text-sm text-fg-subtle hover:text-fg"
           >
             &larr; Back to Articles
           </Link>
@@ -213,7 +213,7 @@ export default function AdminEditArticlePage() {
                     ? 'bg-orange-500/15 text-orange-400'
                     : formData.status === 'scheduled'
                       ? 'bg-blue-500/15 text-blue-400'
-                      : 'bg-neutral-800 text-neutral-400'
+                      : 'bg-elevated text-fg-muted'
             }`}
           >
             {formData.status}
@@ -229,13 +229,13 @@ export default function AdminEditArticlePage() {
         <div className="space-y-8">
           {/* Neighborhood */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Neighborhood
             </label>
             <select
               value={formData.neighborhoodId}
               onChange={(e) => setFormData({ ...formData, neighborhoodId: e.target.value })}
-              className="w-full px-4 py-3 border border-white/[0.08] focus:border-amber-500 focus:outline-none bg-surface"
+              className="w-full px-4 py-3 border border-border focus:border-amber-500 focus:outline-none bg-surface"
             >
               <option value="">Select a neighborhood</option>
               {Object.entries(neighborhoodsByCity).map(([city, hoods]) => (
@@ -252,7 +252,7 @@ export default function AdminEditArticlePage() {
 
           {/* Headline */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Headline
             </label>
             <input
@@ -260,16 +260,16 @@ export default function AdminEditArticlePage() {
               value={formData.headline}
               onChange={(e) => setFormData({ ...formData, headline: e.target.value })}
               maxLength={150}
-              className="w-full px-4 py-3 border border-white/[0.08] focus:border-amber-500 focus:outline-none text-lg"
+              className="w-full px-4 py-3 border border-border focus:border-amber-500 focus:outline-none text-lg"
             />
-            <p className="text-xs text-neutral-400 mt-1">
+            <p className="text-xs text-fg-muted mt-1">
               {formData.headline.length}/150 characters
             </p>
           </div>
 
           {/* Preview Text */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Preview Text
             </label>
             <textarea
@@ -277,24 +277,24 @@ export default function AdminEditArticlePage() {
               onChange={(e) => setFormData({ ...formData, previewText: e.target.value })}
               rows={2}
               maxLength={200}
-              className="w-full px-4 py-3 border border-white/[0.08] focus:border-amber-500 focus:outline-none resize-none"
+              className="w-full px-4 py-3 border border-border focus:border-amber-500 focus:outline-none resize-none"
               placeholder="1-2 sentences shown on hover..."
             />
-            <p className="text-xs text-neutral-400 mt-1">
+            <p className="text-xs text-fg-muted mt-1">
               {formData.previewText.length}/200 characters
             </p>
           </div>
 
           {/* Images */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Photos (1-5 images)
             </label>
 
             {formData.images.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                 {formData.images.map((url, index) => (
-                  <div key={index} className="relative aspect-video bg-neutral-800">
+                  <div key={index} className="relative aspect-video bg-elevated">
                     <img
                       src={url}
                       alt={`Photo ${index + 1}`}
@@ -350,7 +350,7 @@ export default function AdminEditArticlePage() {
                 />
                 <label
                   htmlFor="image-upload"
-                  className={`inline-block border border-white/[0.08] px-6 py-3 text-sm tracking-widest uppercase cursor-pointer hover:border-white/20 transition-colors ${
+                  className={`inline-block border border-border px-6 py-3 text-sm tracking-widest uppercase cursor-pointer hover:border-border-strong transition-colors ${
                     uploadingImage ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
@@ -362,17 +362,17 @@ export default function AdminEditArticlePage() {
 
           {/* Article Body */}
           <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
+            <label className="block text-xs tracking-widest uppercase text-fg-muted mb-2">
               Article Body
             </label>
             <textarea
               value={formData.bodyText}
               onChange={(e) => setFormData({ ...formData, bodyText: e.target.value })}
               rows={14}
-              className="w-full px-4 py-3 border border-white/[0.08] focus:border-amber-500 focus:outline-none resize-none font-serif"
+              className="w-full px-4 py-3 border border-border focus:border-amber-500 focus:outline-none resize-none font-serif"
             />
             <div className="flex justify-between mt-1">
-              <p className="text-xs text-neutral-400">
+              <p className="text-xs text-fg-muted">
                 Use blank lines to separate paragraphs
               </p>
               <p className={`text-xs ${getWordCountColor()}`}>
@@ -398,12 +398,12 @@ export default function AdminEditArticlePage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-6 border-t border-white/[0.08] space-y-4">
+          <div className="pt-6 border-t border-border space-y-4">
             <div className="flex gap-4">
               <button
                 onClick={() => handleSave()}
                 disabled={saving || uploadingImage}
-                className="flex-1 border border-white/[0.08] py-3 text-sm tracking-widest uppercase hover:bg-white/10 text-neutral-100 transition-colors disabled:opacity-50"
+                className="flex-1 border border-border py-3 text-sm tracking-widest uppercase hover:bg-white/10 text-fg transition-colors disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>

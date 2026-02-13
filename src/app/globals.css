@@ -4,13 +4,57 @@
   --background: #050505;
   --foreground: #e5e5e5;
   --font-cormorant: 'Cormorant Garamond', serif;
+  /* Theme tokens (dark default) */
+  --theme-canvas: #050505;
+  --theme-surface: #121212;
+  --theme-elevated: #1a1a1a;
+  --theme-fg: #e5e5e5;
+  --theme-fg-muted: #a3a3a3;
+  --theme-fg-subtle: #737373;
+  --theme-border: rgba(255,255,255,0.08);
+  --theme-border-strong: rgba(255,255,255,0.2);
+  --theme-hover: rgba(255,255,255,0.05);
+  --theme-overlay: rgba(0,0,0,0.8);
+  --theme-header-bg: rgba(0,0,0,0.8);
+  --theme-modal-bg: rgba(23,23,23,0.9);
+  --theme-selection-bg: #d97706;
+  --theme-selection-fg: #ffffff;
+}
+
+[data-theme="light"] {
+  --background: #fafaf9;
+  --foreground: #1c1917;
+  --theme-canvas: #fafaf9;
+  --theme-surface: #ffffff;
+  --theme-elevated: #f5f5f4;
+  --theme-fg: #1c1917;
+  --theme-fg-muted: #57534e;
+  --theme-fg-subtle: #78716c;
+  --theme-border: rgba(0,0,0,0.08);
+  --theme-border-strong: rgba(0,0,0,0.15);
+  --theme-hover: rgba(0,0,0,0.04);
+  --theme-overlay: rgba(0,0,0,0.5);
+  --theme-header-bg: rgba(255,255,255,0.85);
+  --theme-modal-bg: rgba(255,255,255,0.92);
+  --theme-selection-bg: #d97706;
+  --theme-selection-fg: #ffffff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-canvas: #050505;
-  --color-surface: #121212;
+  --color-canvas: var(--theme-canvas);
+  --color-surface: var(--theme-surface);
+  --color-elevated: var(--theme-elevated);
+  --color-fg: var(--theme-fg);
+  --color-fg-muted: var(--theme-fg-muted);
+  --color-fg-subtle: var(--theme-fg-subtle);
+  --color-border: var(--theme-border);
+  --color-border-strong: var(--theme-border-strong);
+  --color-hover: var(--theme-hover);
+  --color-overlay: var(--theme-overlay);
+  --color-header-bg: var(--theme-header-bg);
+  --color-modal-bg: var(--theme-modal-bg);
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-serif: var(--font-cormorant);
   --font-body-serif: var(--font-merriweather), Georgia, 'Times New Roman', serif;
@@ -37,23 +81,23 @@ main {
 /* Luxury button styles */
 .btn-primary {
   @apply inline-flex items-center justify-center px-8 py-3 text-sm tracking-[0.2em] uppercase font-medium rounded-lg;
-  @apply bg-white text-neutral-900 border border-white;
+  @apply bg-fg text-canvas border border-fg;
   @apply transition-all duration-300 ease-out;
   @apply hover:bg-amber-600 hover:text-white hover:border-amber-600;
 }
 
 .btn-secondary {
   @apply inline-flex items-center justify-center px-8 py-3 text-sm tracking-[0.2em] uppercase font-medium rounded-lg;
-  @apply bg-transparent text-white border border-white/20;
+  @apply bg-transparent text-fg border border-border-strong;
   @apply transition-all duration-300 ease-out;
-  @apply hover:bg-white hover:text-neutral-900;
+  @apply hover:bg-fg hover:text-canvas;
 }
 
 .btn-ghost {
   @apply inline-flex items-center justify-center px-6 py-2 text-sm tracking-[0.15em] uppercase rounded-lg;
-  @apply text-neutral-400 border border-transparent;
+  @apply text-fg-muted border border-transparent;
   @apply transition-all duration-300 ease-out;
-  @apply hover:text-white;
+  @apply hover:text-fg;
 }
 
 /* Serif display font utility */
@@ -77,8 +121,8 @@ a {
 
 /* Custom selection color */
 ::selection {
-  background-color: #d97706;
-  color: #ffffff;
+  background-color: var(--theme-selection-bg);
+  color: var(--theme-selection-fg);
 }
 
 /* Back to top button animation - opacity only to avoid transform conflicts */
@@ -145,5 +189,12 @@ a {
 /* Smooth scrolling and overscroll background */
 html {
   scroll-behavior: smooth;
-  background-color: #050505;
+  background-color: var(--theme-canvas);
+}
+
+/* Header glassmorphism - adapts to theme */
+.header-bg {
+  background-color: var(--theme-header-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }

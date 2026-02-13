@@ -95,22 +95,22 @@ export function PostReadEmailCapture({ neighborhoodName }: PostReadEmailCaptureP
 
   if (status === 'success') {
     return (
-      <div className="mt-6 pt-6 border-t border-white/[0.08] text-center">
-        <p className="text-sm text-neutral-100">You're in! Check your inbox for a verification link.</p>
+      <div className="mt-6 pt-6 border-t border-border text-center">
+        <p className="text-sm text-fg">You're in! Check your inbox for a verification link.</p>
       </div>
     );
   }
 
   return (
-    <div className="mt-6 pt-6 border-t border-white/[0.08]">
+    <div className="mt-6 pt-6 border-t border-border">
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex-1 flex items-center gap-2 min-w-0">
-          <p className="text-sm text-neutral-300 whitespace-nowrap">
+          <p className="text-sm text-fg-muted whitespace-nowrap">
             Enjoying {neighborhoodName} stories? Get them daily.
           </p>
           <button
             onClick={handleDismiss}
-            className="shrink-0 text-neutral-500 hover:text-white transition-colors sm:hidden"
+            className="shrink-0 text-fg-subtle hover:text-fg transition-colors sm:hidden"
             aria-label="Dismiss"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -125,13 +125,13 @@ export function PostReadEmailCapture({ neighborhoodName }: PostReadEmailCaptureP
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Your email"
-            className="w-48 px-3 py-1.5 bg-neutral-900 border border-white/20 text-white text-sm placeholder:text-neutral-500 focus:outline-none focus:border-amber-500 transition-colors"
+            className="w-48 px-3 py-1.5 bg-surface border border-border-strong text-white text-sm placeholder:text-fg-subtle focus:outline-none focus:border-amber-500 transition-colors"
             disabled={status === 'loading'}
           />
           <button
             type="submit"
             disabled={status === 'loading'}
-            className="px-4 py-1.5 bg-white text-neutral-900 text-sm font-medium hover:bg-amber-600 hover:text-white transition-colors disabled:opacity-50"
+            className="px-4 py-1.5 bg-fg text-canvas text-sm font-medium hover:bg-amber-600 hover:text-fg transition-colors disabled:opacity-50"
           >
             {status === 'loading' ? '...' : 'Subscribe'}
           </button>
@@ -139,7 +139,7 @@ export function PostReadEmailCapture({ neighborhoodName }: PostReadEmailCaptureP
 
         <button
           onClick={handleDismiss}
-          className="hidden sm:block shrink-0 text-neutral-500 hover:text-white transition-colors"
+          className="hidden sm:block shrink-0 text-fg-subtle hover:text-fg transition-colors"
           aria-label="Dismiss"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">

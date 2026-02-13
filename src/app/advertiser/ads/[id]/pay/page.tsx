@@ -161,7 +161,7 @@ export default function PayForAdPage() {
     return (
       <div className="py-12 px-4">
         <div className="mx-auto max-w-2xl">
-          <p className="text-neutral-400">Loading...</p>
+          <p className="text-fg-muted">Loading...</p>
         </div>
       </div>
     );
@@ -176,7 +176,7 @@ export default function PayForAdPage() {
           </div>
           <Link
             href="/advertiser"
-            className="text-sm text-neutral-500 hover:text-black"
+            className="text-sm text-fg-subtle hover:text-black"
           >
             &larr; Back to Dashboard
           </Link>
@@ -192,7 +192,7 @@ export default function PayForAdPage() {
           {/* Package Selection */}
           <div>
             <h1 className="text-2xl font-light mb-2">Complete Payment</h1>
-            <p className="text-neutral-500 mb-8">
+            <p className="text-fg-subtle mb-8">
               Choose how long you want your ad to run.
             </p>
 
@@ -218,9 +218,9 @@ export default function PayForAdPage() {
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="font-medium text-lg">{pkg.name}</h3>
-                      <p className="text-sm text-neutral-500">{pkg.duration_days} days</p>
+                      <p className="text-sm text-fg-subtle">{pkg.duration_days} days</p>
                       {pkg.description && (
-                        <p className="text-sm text-neutral-400 mt-1">{pkg.description}</p>
+                        <p className="text-sm text-fg-muted mt-1">{pkg.description}</p>
                       )}
                     </div>
                     <p className="text-2xl font-light">{formatPrice(pkg.price_cents)}</p>
@@ -238,7 +238,7 @@ export default function PayForAdPage() {
                     <button
                       onClick={() => handlePayment(pkg.id)}
                       disabled={processing}
-                      className={`${isAdmin ? 'flex-1' : 'w-full'} bg-black text-white py-2 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50`}
+                      className={`${isAdmin ? 'flex-1' : 'w-full'} bg-black text-white py-2 text-sm tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50`}
                     >
                       {processing ? 'Processing...' : isAdmin ? 'Pay Anyway' : 'Select'}
                     </button>
@@ -249,7 +249,7 @@ export default function PayForAdPage() {
 
             <Link
               href="/advertiser"
-              className="text-sm text-neutral-500 hover:text-black"
+              className="text-sm text-fg-subtle hover:text-black"
             >
               &larr; Back to Dashboard
             </Link>
@@ -257,13 +257,13 @@ export default function PayForAdPage() {
 
           {/* Ad Preview */}
           <div>
-            <p className="text-xs tracking-widest uppercase text-neutral-400 mb-4">
+            <p className="text-xs tracking-widest uppercase text-fg-muted mb-4">
               Your Ad
             </p>
             <div className="bg-neutral-100 p-4 rounded">
               <div className="bg-white overflow-hidden max-w-sm mx-auto">
                 <div className="px-3 py-2">
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">
                     SPONSORED
                   </span>
                 </div>
@@ -276,7 +276,7 @@ export default function PayForAdPage() {
                   <h3 className="font-semibold text-sm">{ad?.headline}</h3>
                 </div>
               </div>
-              <p className="text-xs text-neutral-400 mt-4 text-center">
+              <p className="text-xs text-fg-muted mt-4 text-center">
                 {ad?.is_global ? 'Shown in all neighborhoods' : 'Shown in selected neighborhood'}
               </p>
             </div>

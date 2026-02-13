@@ -11,7 +11,7 @@ export default function PrivacyPage() {
       <div className="mx-auto max-w-2xl prose prose-neutral">
         <h1 className="text-2xl font-light tracking-wide mb-8">Privacy Policy</h1>
 
-        <p className="text-sm text-neutral-500 mb-8">
+        <p className="text-sm text-fg-subtle mb-8">
           Last updated: January 2026
         </p>
 

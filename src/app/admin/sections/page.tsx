@@ -164,8 +164,8 @@ export default function AdminSectionsPage() {
       <div className="py-12 px-4">
         <div className="mx-auto max-w-4xl">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-neutral-800 rounded w-48"></div>
-            <div className="h-64 bg-neutral-800 rounded"></div>
+            <div className="h-8 bg-elevated rounded w-48"></div>
+            <div className="h-64 bg-elevated rounded"></div>
           </div>
         </div>
       </div>
@@ -179,7 +179,7 @@ export default function AdminSectionsPage() {
           <h1 className="text-2xl font-light">Manage Sections</h1>
           <button
             onClick={() => setShowAddForm(true)}
-            className="px-4 py-2 bg-black text-white text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors"
+            className="px-4 py-2 bg-black text-white text-sm tracking-widest uppercase hover:bg-elevated transition-colors"
           >
             Add Section
           </button>
@@ -187,13 +187,13 @@ export default function AdminSectionsPage() {
 
         {/* Add Section Form */}
         {showAddForm && (
-          <div className="mb-8 p-6 border border-white/[0.08] bg-canvas">
-            <h2 className="text-sm tracking-widest uppercase text-neutral-400 mb-4">
+          <div className="mb-8 p-6 border border-border bg-canvas">
+            <h2 className="text-sm tracking-widest uppercase text-fg-muted mb-4">
               New Section
             </h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-neutral-500 mb-1">Name</label>
+                <label className="block text-xs text-fg-subtle mb-1">Name</label>
                 <input
                   type="text"
                   value={newSection.name}
@@ -204,46 +204,46 @@ export default function AdminSectionsPage() {
                       slug: generateSlug(e.target.value),
                     });
                   }}
-                  className="w-full px-3 py-2 border border-white/[0.08] focus:border-amber-500 focus:outline-none text-sm"
+                  className="w-full px-3 py-2 border border-border focus:border-amber-500 focus:outline-none text-sm"
                   placeholder="Section name"
                 />
               </div>
               <div>
-                <label className="block text-xs text-neutral-500 mb-1">Slug</label>
+                <label className="block text-xs text-fg-subtle mb-1">Slug</label>
                 <input
                   type="text"
                   value={newSection.slug}
                   onChange={(e) => setNewSection({ ...newSection, slug: e.target.value })}
-                  className="w-full px-3 py-2 border border-white/[0.08] focus:border-amber-500 focus:outline-none text-sm"
+                  className="w-full px-3 py-2 border border-border focus:border-amber-500 focus:outline-none text-sm"
                   placeholder="section-slug"
                 />
               </div>
               <div>
-                <label className="block text-xs text-neutral-500 mb-1">Icon (emoji)</label>
+                <label className="block text-xs text-fg-subtle mb-1">Icon (emoji)</label>
                 <input
                   type="text"
                   value={newSection.icon}
                   onChange={(e) => setNewSection({ ...newSection, icon: e.target.value })}
-                  className="w-full px-3 py-2 border border-white/[0.08] focus:border-amber-500 focus:outline-none text-sm"
+                  className="w-full px-3 py-2 border border-border focus:border-amber-500 focus:outline-none text-sm"
                   placeholder="e.g. 🎨"
                 />
               </div>
               <div>
-                <label className="block text-xs text-neutral-500 mb-1">Display Order</label>
+                <label className="block text-xs text-fg-subtle mb-1">Display Order</label>
                 <input
                   type="number"
                   value={newSection.display_order}
                   onChange={(e) => setNewSection({ ...newSection, display_order: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-white/[0.08] focus:border-amber-500 focus:outline-none text-sm"
+                  className="w-full px-3 py-2 border border-border focus:border-amber-500 focus:outline-none text-sm"
                 />
               </div>
               <div className="col-span-2">
-                <label className="block text-xs text-neutral-500 mb-1">Description</label>
+                <label className="block text-xs text-fg-subtle mb-1">Description</label>
                 <input
                   type="text"
                   value={newSection.description}
                   onChange={(e) => setNewSection({ ...newSection, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-white/[0.08] focus:border-amber-500 focus:outline-none text-sm"
+                  className="w-full px-3 py-2 border border-border focus:border-amber-500 focus:outline-none text-sm"
                   placeholder="Brief description of this section"
                 />
               </div>
@@ -252,13 +252,13 @@ export default function AdminSectionsPage() {
               <button
                 onClick={addSection}
                 disabled={saving || !newSection.name || !newSection.slug}
-                className="px-4 py-2 bg-black text-white text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-black text-white text-xs tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Add Section'}
               </button>
               <button
                 onClick={() => setShowAddForm(false)}
-                className="px-4 py-2 border border-white/[0.08] text-xs tracking-widest uppercase hover:border-white/20 transition-colors"
+                className="px-4 py-2 border border-border text-xs tracking-widest uppercase hover:border-border-strong transition-colors"
               >
                 Cancel
               </button>
@@ -267,8 +267,8 @@ export default function AdminSectionsPage() {
         )}
 
         {/* Sections List */}
-        <div className="border border-white/[0.08]">
-          <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-4 px-4 py-3 bg-canvas border-b border-white/[0.08] text-xs tracking-widest uppercase text-neutral-400">
+        <div className="border border-border">
+          <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-4 px-4 py-3 bg-canvas border-b border-border text-xs tracking-widest uppercase text-fg-muted">
             <div>Order</div>
             <div>Section</div>
             <div>Slug</div>
@@ -288,30 +288,30 @@ export default function AdminSectionsPage() {
                     type="number"
                     value={editForm.display_order}
                     onChange={(e) => setEditForm({ ...editForm, display_order: parseInt(e.target.value) || 0 })}
-                    className="w-16 px-2 py-1 border border-white/[0.08] focus:border-amber-500 focus:outline-none text-sm"
+                    className="w-16 px-2 py-1 border border-border focus:border-amber-500 focus:outline-none text-sm"
                   />
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
                       value={editForm.icon || ''}
                       onChange={(e) => setEditForm({ ...editForm, icon: e.target.value })}
-                      className="w-12 px-2 py-1 border border-white/[0.08] focus:border-amber-500 focus:outline-none text-sm text-center"
+                      className="w-12 px-2 py-1 border border-border focus:border-amber-500 focus:outline-none text-sm text-center"
                       placeholder="Icon"
                     />
                     <input
                       type="text"
                       value={editForm.name}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="flex-1 px-2 py-1 border border-white/[0.08] focus:border-amber-500 focus:outline-none text-sm"
+                      className="flex-1 px-2 py-1 border border-border focus:border-amber-500 focus:outline-none text-sm"
                     />
                   </div>
                   <input
                     type="text"
                     value={editForm.slug}
                     onChange={(e) => setEditForm({ ...editForm, slug: e.target.value })}
-                    className="w-32 px-2 py-1 border border-white/[0.08] focus:border-amber-500 focus:outline-none text-sm"
+                    className="w-32 px-2 py-1 border border-border focus:border-amber-500 focus:outline-none text-sm"
                   />
-                  <span className="text-sm text-neutral-500">{section.article_count}</span>
+                  <span className="text-sm text-fg-subtle">{section.article_count}</span>
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -331,7 +331,7 @@ export default function AdminSectionsPage() {
                     </button>
                     <button
                       onClick={cancelEditing}
-                      className="text-xs text-neutral-500 hover:text-white"
+                      className="text-xs text-fg-subtle hover:text-fg"
                     >
                       Cancel
                     </button>
@@ -339,19 +339,19 @@ export default function AdminSectionsPage() {
                 </>
               ) : (
                 <>
-                  <span className="text-sm text-neutral-400 w-16">{section.display_order}</span>
+                  <span className="text-sm text-fg-muted w-16">{section.display_order}</span>
                   <div className="flex items-center gap-2">
                     {section.icon && <span className="text-lg">{section.icon}</span>}
                     <span className="font-medium">{section.name}</span>
                   </div>
-                  <span className="text-sm text-neutral-500">{section.slug}</span>
-                  <span className="text-sm text-neutral-500">{section.article_count}</span>
-                  <span className={`text-xs ${section.is_active ? 'text-green-600' : 'text-neutral-400'}`}>
+                  <span className="text-sm text-fg-subtle">{section.slug}</span>
+                  <span className="text-sm text-fg-subtle">{section.article_count}</span>
+                  <span className={`text-xs ${section.is_active ? 'text-green-600' : 'text-fg-muted'}`}>
                     {section.is_active ? 'Active' : 'Inactive'}
                   </span>
                   <button
                     onClick={() => startEditing(section)}
-                    className="text-xs text-neutral-500 hover:text-white"
+                    className="text-xs text-fg-subtle hover:text-fg"
                   >
                     Edit
                   </button>
@@ -361,7 +361,7 @@ export default function AdminSectionsPage() {
           ))}
         </div>
 
-        <div className="mt-8 text-xs text-neutral-400">
+        <div className="mt-8 text-xs text-fg-muted">
           <p>
             Sections are used to categorize articles and enable topic-based filtering.
             The AI automatically assigns sections when generating articles.

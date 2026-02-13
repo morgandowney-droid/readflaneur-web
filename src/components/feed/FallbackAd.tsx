@@ -107,8 +107,8 @@ function AddToCollectionCTA({ neighborhoodId, neighborhoodName }: {
   // Success state
   if (added) {
     return (
-      <div className="border border-white/[0.08] bg-surface p-6">
-        <p className="text-sm text-neutral-300">
+      <div className="border border-border bg-surface p-6">
+        <p className="text-sm text-fg-muted">
           {neighborhoodName} added to your collection.
         </p>
       </div>
@@ -116,16 +116,16 @@ function AddToCollectionCTA({ neighborhoodId, neighborhoodName }: {
   }
 
   return (
-    <div className="border border-white/[0.08] bg-surface p-6 hover:border-white/20 transition-colors">
+    <div className="border border-border bg-surface p-6 hover:border-border-strong transition-colors">
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         <div className="flex-1">
-          <p className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-2">Flaneur</p>
+          <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">Flaneur</p>
           <h3 className="font-semibold text-lg mb-1">Add {neighborhoodName} to Your Collection</h3>
-          <p className="text-sm text-neutral-400">Never miss an update from {neighborhoodName}.</p>
+          <p className="text-sm text-fg-muted">Never miss an update from {neighborhoodName}.</p>
         </div>
         <button
           onClick={handleAdd}
-          className="inline-block bg-white text-neutral-900 px-6 py-2 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors whitespace-nowrap"
+          className="inline-block bg-fg text-canvas px-6 py-2 text-sm tracking-widest uppercase hover:opacity-80 transition-colors whitespace-nowrap"
         >
           Add
         </button>
@@ -156,7 +156,7 @@ function BonusAdDisplay({ ad, variant }: { ad: NonNullable<FallbackData['bonusAd
   if (variant === 'story_open') {
     return (
       <div
-        className="bg-surface border border-white/[0.08] overflow-hidden cursor-pointer hover:border-white/20 transition-colors"
+        className="bg-surface border border-border overflow-hidden cursor-pointer hover:border-border-strong transition-colors"
         onClick={handleClick}
       >
         <div className="flex flex-col sm:flex-row">
@@ -172,11 +172,11 @@ function BonusAdDisplay({ ad, variant }: { ad: NonNullable<FallbackData['bonusAd
             </div>
           )}
           <div className="flex-1 p-4 flex flex-col justify-center">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-neutral-400 mb-2">
+            <p className="text-[10px] tracking-[0.2em] uppercase text-fg-muted mb-2">
               Sponsored by {ad.sponsor_label}
             </p>
             <h3 className="font-semibold text-lg mb-1">{ad.headline}</h3>
-            <span className="text-xs text-neutral-400 mt-2">
+            <span className="text-xs text-fg-muted mt-2">
               Learn more &rarr;
             </span>
           </div>
@@ -188,11 +188,11 @@ function BonusAdDisplay({ ad, variant }: { ad: NonNullable<FallbackData['bonusAd
   // Card variant
   return (
     <div
-      className="border border-white/[0.08] bg-surface overflow-hidden cursor-pointer hover:border-white/20 transition-colors"
+      className="border border-border bg-surface overflow-hidden cursor-pointer hover:border-border-strong transition-colors"
       onClick={handleClick}
     >
-      <div className="px-3 py-2 border-b border-white/[0.08]">
-        <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
+      <div className="px-3 py-2 border-b border-border">
+        <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">
           Sponsored by {ad.sponsor_label}
         </span>
       </div>
@@ -255,15 +255,15 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
   if (houseAd.type === 'suggest_neighborhood') {
     if (variant === 'story_open') {
       return (
-        <div className="border border-white/[0.08] bg-surface p-6">
+        <div className="border border-border bg-surface p-6">
           <div className="flex flex-col md:flex-row md:items-start gap-4">
             <div className="flex-1">
-              <p className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-2">
+              <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">
                 Flaneur
               </p>
               <h3 className="font-semibold text-lg mb-1">{houseAd.headline}</h3>
               {houseAd.body && (
-                <p className="text-sm text-neutral-400">{houseAd.body}</p>
+                <p className="text-sm text-fg-muted">{houseAd.body}</p>
               )}
               {showSuggestionForm && (
                 <NeighborhoodSuggestionForm variant="compact" />
@@ -272,7 +272,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
             {!showSuggestionForm && (
               <button
                 onClick={() => setShowSuggestionForm(true)}
-                className="inline-block bg-white text-neutral-900 px-6 py-2 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors whitespace-nowrap"
+                className="inline-block bg-fg text-canvas px-6 py-2 text-sm tracking-widest uppercase hover:opacity-80 transition-colors whitespace-nowrap"
               >
                 Suggest
               </button>
@@ -284,23 +284,23 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
 
     // Card variant
     return (
-      <div className="border border-white/[0.08] bg-surface">
-        <div className="px-3 py-2 border-b border-white/[0.08]">
-          <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
+      <div className="border border-border bg-surface">
+        <div className="px-3 py-2 border-b border-border">
+          <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">
             Flaneur
           </span>
         </div>
         <div className="p-4">
           <h3 className="font-semibold text-sm mb-2">{houseAd.headline}</h3>
           {houseAd.body && (
-            <p className="text-xs text-neutral-400 mb-3">{houseAd.body}</p>
+            <p className="text-xs text-fg-muted mb-3">{houseAd.body}</p>
           )}
           {showSuggestionForm ? (
             <NeighborhoodSuggestionForm variant="compact" />
           ) : (
             <button
               onClick={() => setShowSuggestionForm(true)}
-              className="inline-block bg-white text-neutral-900 px-4 py-2 text-xs tracking-widest uppercase hover:bg-neutral-200 transition-colors"
+              className="inline-block bg-fg text-canvas px-4 py-2 text-xs tracking-widest uppercase hover:opacity-80 transition-colors"
             >
               Suggest
             </button>
@@ -317,20 +317,20 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
 
     if (variant === 'story_open') {
       return (
-        <div className="border border-white/[0.08] bg-surface p-6 hover:border-white/20 transition-colors">
+        <div className="border border-border bg-surface p-6 hover:border-border-strong transition-colors">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex-1">
-              <p className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-2">
+              <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">
                 Flaneur
               </p>
               <h3 className="font-semibold text-lg mb-1">{houseAd.headline}</h3>
               {houseAd.body && (
-                <p className="text-sm text-neutral-400">{houseAd.body}</p>
+                <p className="text-sm text-fg-muted">{houseAd.body}</p>
               )}
             </div>
             <button
               onClick={() => openModal('community')}
-              className="inline-block bg-white text-neutral-900 px-6 py-2 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors whitespace-nowrap"
+              className="inline-block bg-fg text-canvas px-6 py-2 text-sm tracking-widest uppercase hover:opacity-80 transition-colors whitespace-nowrap"
             >
               Get Started
             </button>
@@ -341,20 +341,20 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
 
     // Card variant
     return (
-      <div className="border border-white/[0.08] bg-surface">
-        <div className="px-3 py-2 border-b border-white/[0.08]">
-          <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
+      <div className="border border-border bg-surface">
+        <div className="px-3 py-2 border-b border-border">
+          <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">
             Flaneur
           </span>
         </div>
         <div className="p-4">
           <h3 className="font-semibold text-sm mb-2">{houseAd.headline}</h3>
           {houseAd.body && (
-            <p className="text-xs text-neutral-400 mb-3">{houseAd.body}</p>
+            <p className="text-xs text-fg-muted mb-3">{houseAd.body}</p>
           )}
           <button
             onClick={() => openModal('community')}
-            className="inline-block bg-white text-neutral-900 px-4 py-2 text-xs tracking-widest uppercase hover:bg-neutral-200 transition-colors"
+            className="inline-block bg-fg text-canvas px-4 py-2 text-xs tracking-widest uppercase hover:opacity-80 transition-colors"
           >
             Get Started
           </button>
@@ -367,16 +367,16 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
     return (
       <a
         href={clickUrl}
-        className="block border border-white/[0.08] bg-surface p-6 hover:border-white/20 transition-colors"
+        className="block border border-border bg-surface p-6 hover:border-border-strong transition-colors"
       >
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
-            <p className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-2">
+            <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">
               Flaneur
             </p>
             <h3 className="font-semibold text-lg mb-1">{houseAd.headline}</h3>
             {houseAd.body && (
-              <p className="text-sm text-neutral-400">{houseAd.body}</p>
+              <p className="text-sm text-fg-muted">{houseAd.body}</p>
             )}
           </div>
           <span className="inline-block bg-black text-white px-6 py-2 text-sm tracking-widest uppercase whitespace-nowrap">
@@ -391,17 +391,17 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
   return (
     <a
       href={clickUrl}
-      className="block border border-white/[0.08] bg-surface hover:border-white/20 transition-colors"
+      className="block border border-border bg-surface hover:border-border-strong transition-colors"
     >
-      <div className="px-3 py-2 border-b border-white/[0.08]">
-        <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
+      <div className="px-3 py-2 border-b border-border">
+        <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">
           Flaneur
         </span>
       </div>
       <div className="p-4">
         <h3 className="font-semibold text-sm mb-2">{houseAd.headline}</h3>
         {houseAd.body && (
-          <p className="text-xs text-neutral-400 mb-3">{houseAd.body}</p>
+          <p className="text-xs text-fg-muted mb-3">{houseAd.body}</p>
         )}
         <span className="inline-block bg-black text-white px-4 py-2 text-xs tracking-widest uppercase">
           Learn More
@@ -469,16 +469,16 @@ function NewsletterSignup({ variant }: { variant: 'card' | 'story_open' }) {
 
   if (variant === 'story_open') {
     return (
-      <div className="border border-white/[0.08] bg-surface p-6">
+      <div className="border border-border bg-surface p-6">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
-            <p className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-2">
+            <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">
               Stay informed
             </p>
             <h3 className="font-semibold text-lg mb-1">
               Get local stories delivered to your inbox
             </h3>
-            <p className="text-sm text-neutral-400">
+            <p className="text-sm text-fg-muted">
               Weekly digest of the best stories from your neighborhood.
             </p>
           </div>
@@ -493,13 +493,13 @@ function NewsletterSignup({ variant }: { variant: 'card' | 'story_open' }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="px-4 py-2 border border-white/[0.08] bg-transparent focus:border-white/30 focus:outline-none text-sm w-48 text-white"
+                className="px-4 py-2 border border-border bg-transparent focus:border-white/30 focus:outline-none text-sm w-48 text-white"
                 disabled={status === 'loading'}
               />
               <button
                 type="submit"
                 disabled={status === 'loading'}
-                className="bg-black text-white px-4 py-2 text-sm tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                className="bg-black text-white px-4 py-2 text-sm tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50"
               >
                 {status === 'loading' ? '...' : 'Subscribe'}
               </button>
@@ -512,9 +512,9 @@ function NewsletterSignup({ variant }: { variant: 'card' | 'story_open' }) {
 
   // Card variant
   return (
-    <div className="border border-white/[0.08] bg-surface">
-      <div className="px-3 py-2 border-b border-white/[0.08]">
-        <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
+    <div className="border border-border bg-surface">
+      <div className="px-3 py-2 border-b border-border">
+        <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">
           Newsletter
         </span>
       </div>
@@ -522,7 +522,7 @@ function NewsletterSignup({ variant }: { variant: 'card' | 'story_open' }) {
         <h3 className="font-semibold text-sm mb-2">
           Get local stories in your inbox
         </h3>
-        <p className="text-xs text-neutral-400 mb-4">
+        <p className="text-xs text-fg-muted mb-4">
           Weekly digest from your neighborhood.
         </p>
         {status === 'success' ? (
@@ -536,13 +536,13 @@ function NewsletterSignup({ variant }: { variant: 'card' | 'story_open' }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
-              className="w-full px-3 py-2 border border-white/[0.08] bg-transparent focus:border-white/30 focus:outline-none text-sm text-white"
+              className="w-full px-3 py-2 border border-border bg-transparent focus:border-white/30 focus:outline-none text-sm text-white"
               disabled={status === 'loading'}
             />
             <button
               type="submit"
               disabled={status === 'loading'}
-              className="w-full bg-black text-white py-2 text-xs tracking-widest uppercase hover:bg-neutral-800 transition-colors disabled:opacity-50"
+              className="w-full bg-black text-white py-2 text-xs tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50"
             >
               {status === 'loading' ? '...' : 'Subscribe'}
             </button>
@@ -560,17 +560,17 @@ function StaticHouseAd({ variant }: { variant: 'card' | 'story_open' }) {
     return (
       <a
         href="/advertise"
-        className="block border border-white/[0.08] bg-surface p-6 hover:border-white/20 transition-colors"
+        className="block border border-border bg-surface p-6 hover:border-border-strong transition-colors"
       >
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
-            <p className="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-2">
+            <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">
               Reach local readers
             </p>
             <h3 className="font-semibold text-lg mb-1">
               Advertise with Flaneur
             </h3>
-            <p className="text-sm text-neutral-400">
+            <p className="text-sm text-fg-muted">
               Connect with engaged readers in your neighborhood.
             </p>
           </div>
@@ -586,10 +586,10 @@ function StaticHouseAd({ variant }: { variant: 'card' | 'story_open' }) {
   return (
     <a
       href="/advertise"
-      className="block border border-white/[0.08] bg-surface hover:border-white/20 transition-colors"
+      className="block border border-border bg-surface hover:border-border-strong transition-colors"
     >
-      <div className="px-3 py-2 border-b border-white/[0.08]">
-        <span className="text-[10px] tracking-[0.2em] uppercase text-neutral-400">
+      <div className="px-3 py-2 border-b border-border">
+        <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">
           Advertise
         </span>
       </div>
@@ -597,7 +597,7 @@ function StaticHouseAd({ variant }: { variant: 'card' | 'story_open' }) {
         <h3 className="font-semibold text-sm mb-2">
           Reach local readers
         </h3>
-        <p className="text-xs text-neutral-400 mb-3">
+        <p className="text-xs text-fg-muted mb-3">
           Connect with your neighborhood.
         </p>
         <span className="inline-block bg-black text-white px-4 py-2 text-xs tracking-widest uppercase">
