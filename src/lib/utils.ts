@@ -75,16 +75,17 @@ export function cleanArticleHeadline(headline: string): string {
 
 /**
  * Truncate a headline at the last full word within maxLen chars.
- * Strips trailing ", and" / ", or" if they end up at the sentence edge.
+ * Strips trailing ", and" / ", or" / "St." if they end up at the sentence edge.
  * No ellipsis or partial words.
  */
-export function truncateHeadline(text: string, maxLen: number = 45): string {
+export function truncateHeadline(text: string, maxLen: number = 40): string {
   if (text.length <= maxLen) return text;
   const slice = text.slice(0, maxLen);
   const lastSpace = slice.lastIndexOf(' ');
   let truncated = lastSpace > 0 ? text.slice(0, lastSpace) : slice;
-  // Strip trailing conjunctions that dangle
+  // Strip trailing conjunctions and abbreviations that dangle
   truncated = truncated.replace(/,\s*(?:and|or)\s*$/i, '');
+  truncated = truncated.replace(/\s+St\.?$/i, '');
   return truncated;
 }
 
