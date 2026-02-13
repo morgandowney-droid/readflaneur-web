@@ -98,7 +98,7 @@ function extractSourcesFromCategories(categories: EnrichedCategory[] | null): Ar
  */
 
 export const runtime = 'nodejs';
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 function generateSlug(headline: string, neighborhoodSlug: string): string {
   const date = new Date().toISOString().split('T')[0];
@@ -145,7 +145,6 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const testBriefId = url.searchParams.get('test');
-  const batchSize = parseInt(url.searchParams.get('batch') || '10');
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -153,68 +152,120 @@ export async function GET(request: Request) {
   );
 
   const startedAt = new Date().toISOString();
+  const deadline = Date.now() + 270_000; // 270s budget (leave 30s for logging + images)
   const results = {
     briefs_processed: 0,
     articles_created: 0,
+    articles_skipped: 0,
     articles_failed: 0,
     errors: [] as string[],
   };
 
   try {
 
-  // Find briefs that have enriched content but no linked article
-  let query = supabase
+  // Time window: last 36h covers all timezone morning windows
+  const cutoff = new Date();
+  cutoff.setHours(cutoff.getHours() - 36);
+
+  // Step 1: Get IDs of recent enriched briefs
+  let idsQuery = supabase
     .from('neighborhood_briefs')
-    .select(`
-      id,
-      neighborhood_id,
-      headline,
-      content,
-      enriched_content,
-      enriched_categories,
-      generated_at,
-      neighborhoods!inner(id, name, city)
-    `)
+    .select('id')
     .not('enriched_content', 'is', null)
-    .order('generated_at', { ascending: false })
-    .limit(batchSize);
+    .gte('generated_at', cutoff.toISOString())
+    .limit(500);
 
   if (testBriefId) {
-    query = query.eq('id', testBriefId);
+    idsQuery = supabase
+      .from('neighborhood_briefs')
+      .select('id')
+      .eq('id', testBriefId);
   }
 
-  const { data: briefs, error: fetchError } = await query;
+  const { data: recentBriefIds, error: idsError } = await idsQuery;
 
-  if (fetchError) {
-    return NextResponse.json({
-      success: false,
-      error: fetchError.message,
-      timestamp: new Date().toISOString(),
-    }, { status: 500 });
-  }
-
-  if (!briefs || briefs.length === 0) {
+  if (idsError || !recentBriefIds || recentBriefIds.length === 0) {
+    if (idsError) {
+      return NextResponse.json({ success: false, error: idsError.message }, { status: 500 });
+    }
     return NextResponse.json({
       success: true,
-      message: 'No briefs to process',
+      message: 'No recent enriched briefs to process',
       ...results,
       timestamp: new Date().toISOString(),
     });
   }
 
-  // Check which briefs already have articles
-  const briefIds = briefs.map(b => b.id);
-  const { data: existingArticles } = await supabase
-    .from('articles')
-    .select('brief_id')
-    .in('brief_id', briefIds);
+  // Step 2: Find which already have articles (batch-safe for large sets)
+  const allBriefIds = recentBriefIds.map(b => b.id);
+  const existingBriefIds = new Set<string>();
 
-  const existingBriefIds = new Set((existingArticles || []).map(a => a.brief_id));
+  // Query in chunks of 100 to stay within PostgREST URL limits
+  for (let i = 0; i < allBriefIds.length; i += 100) {
+    const chunk = allBriefIds.slice(i, i + 100);
+    const { data: existing } = await supabase
+      .from('articles')
+      .select('brief_id')
+      .in('brief_id', chunk);
+    if (existing) {
+      for (const a of existing) existingBriefIds.add(a.brief_id);
+    }
+  }
 
-  // Process each brief that doesn't have an article yet
+  // Step 3: Filter to only brief IDs that need articles
+  const needsArticleIds = allBriefIds.filter(id => !existingBriefIds.has(id));
+  results.articles_skipped = allBriefIds.length - needsArticleIds.length;
+
+  if (needsArticleIds.length === 0) {
+    return NextResponse.json({
+      success: true,
+      message: `All ${allBriefIds.length} recent briefs already have articles`,
+      ...results,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  // Step 4: Fetch full data only for briefs that need articles (chunks of 50)
+  const briefs: any[] = [];
+  for (let i = 0; i < needsArticleIds.length; i += 50) {
+    const chunk = needsArticleIds.slice(i, i + 50);
+    const { data, error } = await supabase
+      .from('neighborhood_briefs')
+      .select(`
+        id,
+        neighborhood_id,
+        headline,
+        content,
+        enriched_content,
+        enriched_categories,
+        generated_at,
+        neighborhoods!inner(id, name, city)
+      `)
+      .in('id', chunk)
+      .order('generated_at', { ascending: false });
+
+    if (error) {
+      results.errors.push(`Fetch chunk error: ${error.message}`);
+      continue;
+    }
+    if (data) briefs.push(...data);
+  }
+
+  if (briefs.length === 0) {
+    return NextResponse.json({
+      success: true,
+      message: 'No briefs need articles',
+      ...results,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  // Process each brief (all are pre-filtered to need articles)
   for (const brief of briefs) {
-    if (existingBriefIds.has(brief.id)) {
-      continue; // Already has an article
+    // Time budget check - stop before we run out of time
+    if (Date.now() > deadline) {
+      results.errors.push(`Time budget exhausted after ${results.articles_created} articles`);
+      break;
     }
 
     try {

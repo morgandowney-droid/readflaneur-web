@@ -463,6 +463,16 @@ export function MultiFeed({
                     )}
                   </button>
                 ))}
+
+                {/* Explore link */}
+                <div className="border-t border-white/[0.06]">
+                  <button
+                    onClick={() => { setDropdownOpen(false); openModal(); }}
+                    className="w-full px-4 py-3 text-left text-xs tracking-wide text-neutral-500 hover:text-amber-400 transition-colors"
+                  >
+                    Explore other neighborhoods
+                  </button>
+                </div>
               </div>
             )}
 
