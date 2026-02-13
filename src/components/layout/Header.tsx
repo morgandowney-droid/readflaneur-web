@@ -35,6 +35,14 @@ export function Header() {
   // - Not on a feed page
   const shouldHideHeader = isFeedPage && scrollDirection === 'down' && scrollY > 50 && !mobileMenuOpen;
 
+  // Close mobile menu on scroll
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleScroll = () => setMobileMenuOpen(false);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [mobileMenuOpen]);
+
   const handleNeighborhoodsClick = (e: React.MouseEvent) => {
     e.preventDefault();
     openModal();

@@ -627,14 +627,14 @@ export function MultiFeed({
         </div>
       )}
 
-      {/* MOBILE: View toggle just above feed */}
+      {reminder}
+
+      {/* MOBILE: View toggle directly above news feed */}
       {isMultiple && (
         <div className="md:hidden flex justify-end pb-2">
           {viewToggle}
         </div>
       )}
-
-      {reminder}
       {activeFilter && articlesLoading ? (
         <div className="space-y-4 py-4">
           {[...Array(4)].map((_, i) => (
