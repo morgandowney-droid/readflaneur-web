@@ -73,7 +73,31 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: 'Applebot-Extended',
         disallow: '/',
       },
+      {
+        userAgent: 'Meta-ExternalAgent',
+        disallow: '/',
+      },
+      {
+        userAgent: 'Meta-ExternalFetcher',
+        disallow: '/',
+      },
+      {
+        userAgent: 'Timpibot',
+        disallow: '/',
+      },
+      {
+        userAgent: 'img2dataset',
+        disallow: '/',
+      },
+      {
+        userAgent: 'Scrapy',
+        disallow: '/',
+      },
+      {
+        userAgent: 'Webzio-Extended',
+        disallow: '/',
+      },
     ],
-    sitemap: 'https://flaneur.me/sitemap.xml',
+    sitemap: 'https://readflaneur.com/sitemap.xml',
   };
 }
