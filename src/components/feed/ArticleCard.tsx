@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Article } from '@/types';
-import { formatRelativeTime, cityToSlug, neighborhoodToSlug, categoryLabelToSlug } from '@/lib/utils';
+import { formatRelativeTime, cityToSlug, neighborhoodToSlug, categoryLabelToSlug, cleanArticleHeadline } from '@/lib/utils';
 
 const ARTICLE_BOOKMARKS_KEY = 'flaneur-article-bookmarks';
 
@@ -106,7 +106,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
               )}
             </div>
             <h2 className="text-fg text-xl font-semibold leading-tight line-clamp-2">
-              {article.headline}
+              {cleanArticleHeadline(article.headline)}
             </h2>
           </div>
         )}
@@ -149,7 +149,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
                 )}
               </div>
               <h2 className="text-white text-xl font-semibold leading-tight whitespace-nowrap overflow-hidden">
-                {article.headline}
+                {cleanArticleHeadline(article.headline)}
               </h2>
             </div>
           )}
@@ -207,7 +207,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
                 </>
               )}
             </div>
-            <h2 className="text-xl md:text-2xl font-semibold mb-3 whitespace-nowrap overflow-hidden">{article.headline}</h2>
+            <h2 className="text-xl md:text-2xl font-semibold mb-3 whitespace-nowrap overflow-hidden">{cleanArticleHeadline(article.headline)}</h2>
             <p className="text-fg-muted text-[1.05rem] leading-7 mb-4">
               {article.preview_text || article.body_text.substring(0, 200)}
             </p>

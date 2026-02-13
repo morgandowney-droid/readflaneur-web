@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Article } from '@/types';
-import { cityToSlug, neighborhoodToSlug } from '@/lib/utils';
+import { cityToSlug, neighborhoodToSlug, cleanArticleHeadline } from '@/lib/utils';
 import { useLanguageContext } from '@/components/providers/LanguageProvider';
 
 interface CompactArticleCardProps {
@@ -95,7 +95,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
 
   const headlineEl = (
     <h2 className="font-semibold text-lg md:text-xl leading-tight mb-1.5 whitespace-nowrap overflow-hidden">
-      {translatedHeadline || article.headline}
+      {translatedHeadline || cleanArticleHeadline(article.headline)}
     </h2>
   );
 

@@ -5,6 +5,10 @@
 
 ## 2026-02-13
 
+**Strip DAILY BRIEF Prefix + Mobile Brief Headline Wrap:**
+- Feed cards (`ArticleCard`, `CompactArticleCard`) now use `cleanArticleHeadline()` to strip "Neighborhood DAILY BRIEF:" prefix from headlines. Neighborhood name already shown in metadata row above.
+- Daily brief widget headline (`NeighborhoodBrief.tsx`) now wraps on mobile (`md:whitespace-nowrap md:overflow-hidden` instead of unconditional `whitespace-nowrap`).
+
 **Add Portuguese, Italian, Simplified Chinese:**
 - Added 3 new languages (pt, it, zh) to `SUPPORTED_LANGUAGES`, `translations.ts` (~90 UI keys each), `translation-service.ts`, and `PHASE1_LANGUAGES` in translate-content cron. Total: 9 languages.
 

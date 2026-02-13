@@ -871,7 +871,7 @@ export function NeighborhoodBrief({
       </div>
 
       {/* Headline */}
-      <h3 className="font-display text-2xl md:text-3xl text-fg leading-tight mb-4 whitespace-nowrap overflow-hidden">
+      <h3 className="font-display text-2xl md:text-3xl text-fg leading-tight mb-4 md:whitespace-nowrap md:overflow-hidden">
         {headline}
       </h3>
 
