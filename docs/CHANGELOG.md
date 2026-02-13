@@ -5,6 +5,17 @@
 
 ## 2026-02-13
 
+**Remove Auto-Linking from Articles and Briefs:**
+- Disabled render-time `renderWithSearchableEntities()` in both `ArticleBody.tsx` and `NeighborhoodBrief.tsx`. This function auto-linked every capitalized proper noun to Google Search, making articles cluttered with hyperlinks.
+- Disabled pipeline-time `injectHyperlinks()` in `brief-enricher-gemini.ts`. Gemini's curated link candidates were stored as markdown in the DB - now new enrichments won't inject links.
+- Removed ~400 lines of dead auto-linking code (entity detection, address detection, blocked domains, enriched source matching, word blocklists) from `NeighborhoodBrief.tsx`.
+- Existing articles with pre-injected links still render those links (markdown link processing still works in ArticleBody). New articles will be link-free.
+- `hyperlink-injector.ts` preserved (still used by specialty generators: fashion-week, gala-watch, auctions, etc.)
+
+**Mobile Headline Truncation (40 chars):**
+- Updated `truncateHeadline()` default from 45 to 40 chars.
+- Added regex to strip trailing "St." abbreviation at sentence edge.
+
 **Mobile Headline Truncation:**
 - New `truncateHeadline(text, maxLen=45)` utility in `utils.ts` - truncates at last full word within 45 chars, strips trailing ", and" / ", or" conjunctions. No ellipsis or partial words.
 - `CompactArticleCard`: split `headlineEl` into `headlineDesktop` (full, whitespace-nowrap) and `headlineMobile` (truncated via `truncateHeadline()`).

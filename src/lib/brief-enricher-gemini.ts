@@ -329,10 +329,10 @@ LINK CANDIDATES RULES:
     if (enrichedData.categories.length === 0) {
       console.log('No JSON found, returning raw response for manual review');
 
-      // Still inject hyperlinks if we have candidates
-      if (linkCandidates.length > 0 && text) {
-        text = injectHyperlinks(text, linkCandidates, { name: neighborhoodName, city });
-      }
+      // Hyperlink injection disabled - made articles look cluttered
+      // if (linkCandidates.length > 0 && text) {
+      //   text = injectHyperlinks(text, linkCandidates, { name: neighborhoodName, city });
+      // }
 
       // Return raw response for debugging
       return {
@@ -362,10 +362,10 @@ LINK CANDIDATES RULES:
       }
     }
 
-    // Inject hyperlinks into prose before returning
-    if (linkCandidates.length > 0 && text) {
-      text = injectHyperlinks(text, linkCandidates, { name: neighborhoodName, city });
-    }
+    // Hyperlink injection disabled - made articles look cluttered
+    // if (linkCandidates.length > 0 && text) {
+    //   text = injectHyperlinks(text, linkCandidates, { name: neighborhoodName, city });
+    // }
 
     return {
       date: dateStr,
