@@ -692,8 +692,10 @@ export function NeighborhoodBrief({
 }: NeighborhoodBriefProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Use enriched content if available, otherwise fall back to original
-  const displayContent = enrichedContent || content;
+  // Never display unenriched (raw Grok) content — wait for Gemini enrichment
+  if (!enrichedContent) return null;
+
+  const displayContent = enrichedContent;
   const hasEnrichedSources = enrichedCategories && enrichedCategories.length > 0;
 
   // Count verified sources
@@ -984,8 +986,9 @@ function ArchivedBriefCard({
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Use enriched content if available, otherwise fall back to original
-  const displayContent = brief.enriched_content || brief.content;
+  // Never display unenriched content
+  if (!brief.enriched_content) return null;
+  const displayContent = brief.enriched_content;
   const cleanedContent = cleanContent(displayContent);
   const paragraphs = cleanedContent.split('\n\n').filter(p => p.trim());
   const previewText = paragraphs[0]?.slice(0, 150) + (paragraphs[0]?.length > 150 ? '...' : '');
