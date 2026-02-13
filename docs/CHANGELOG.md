@@ -5,6 +5,19 @@
 
 ## 2026-02-13
 
+**Fix: generate-brief-articles Cron Processing All Neighborhoods:**
+- Root cause: `batch=10` fetched same 10 newest briefs every run. Once those had articles, subsequent runs found nothing - 260+ neighborhoods never got daily brief articles.
+- Fix: 4-step approach - get recent enriched brief IDs (36h window), find which already have articles, fetch full data only for those that need articles, process with 270s time budget
+- Increased `maxDuration` from 120s to 300s, removed configurable batch size (now processes all)
+- Slug generation now uses `brief.generated_at` date (not runtime date) for consistency
+- Slug collisions (re-generated brief, same headline/date) now silently skip instead of failing
+- Covers all 270+ neighborhoods in a single cron run at :30 every hour
+
+**Mobile Dropdown Enhancements:**
+- "Explore other neighborhoods" link at bottom of mobile dropdown, opens neighborhood selector modal
+- Empty search state: "No pre-existing {query} neighborhoods found. Create one or Clear search" - "Create one" links to Community Created tab
+- Renamed "Community" to "Community Created" across selector: tab button, section heading, neighborhood badges
+
 **Mobile Neighborhood Dropdown:**
 - Replaced horizontal pill scroll with dropdown selector on mobile (<768px) - shows full neighborhood list in one tap instead of sideways scrolling
 - Dropdown trigger: shows "All Stories" or active neighborhood name + city, chevron rotates on open
