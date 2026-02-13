@@ -14,6 +14,7 @@
 - Covers all 270+ neighborhoods in a single cron run at :30 every hour
 
 **Mobile Dropdown Enhancements:**
+- ViewToggle (list/gallery) moved from dropdown row to just above feed content on mobile - cleaner dropdown row with only neighborhood selector + manage button
 - "Explore other neighborhoods" link at bottom of mobile dropdown, opens neighborhood selector modal
 - Empty search state: "No pre-existing {query} neighborhoods found. Create one or Clear search" - "Create one" links to Community Created tab
 - Renamed "Community" to "Community Created" across selector: tab button, section heading, neighborhood badges

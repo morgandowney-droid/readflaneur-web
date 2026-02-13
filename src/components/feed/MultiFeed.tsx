@@ -324,25 +324,34 @@ export function MultiFeed({
   // Get active neighborhood info for header
   const activeHood = activeFilter ? neighborhoods.find(n => n.id === activeFilter) : null;
 
-  // Shared control buttons (manage + view toggle) used by both mobile and desktop
+  // Manage button (used by both mobile and desktop)
+  const manageButton = (
+    <button
+      onClick={() => openModal()}
+      className="text-neutral-500 hover:text-white transition-colors p-1.5"
+      title="Manage neighborhoods"
+    >
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="5" cy="4" r="1.5" fill="currentColor" />
+        <circle cx="11" cy="8" r="1.5" fill="currentColor" />
+        <circle cx="7" cy="12" r="1.5" fill="currentColor" />
+      </svg>
+    </button>
+  );
+
+  const viewToggle = (
+    <ViewToggle
+      view={currentView}
+      onChange={isHydrated ? handleViewChange : () => {}}
+    />
+  );
+
+  // Desktop: manage + view toggle together
   const controlButtons = (
     <div className="shrink-0 flex items-center gap-1 pl-2 border-l border-neutral-800">
-      <button
-        onClick={() => openModal()}
-        className="text-neutral-500 hover:text-white transition-colors p-1.5"
-        title="Manage neighborhoods"
-      >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          <circle cx="5" cy="4" r="1.5" fill="currentColor" />
-          <circle cx="11" cy="8" r="1.5" fill="currentColor" />
-          <circle cx="7" cy="12" r="1.5" fill="currentColor" />
-        </svg>
-      </button>
-      <ViewToggle
-        view={currentView}
-        onChange={isHydrated ? handleViewChange : () => {}}
-      />
+      {manageButton}
+      {viewToggle}
     </div>
   );
 
@@ -386,7 +395,7 @@ export function MultiFeed({
       {isMultiple && (
         <div className="md:sticky md:top-[60px] z-20 md:bg-[#050505]/95 md:backdrop-blur-md">
 
-          {/* MOBILE: Dropdown + controls */}
+          {/* MOBILE: Dropdown + manage button */}
           <div className="md:hidden relative flex items-center gap-2 py-3" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -476,7 +485,9 @@ export function MultiFeed({
               </div>
             )}
 
-            {controlButtons}
+            <div className="shrink-0 pl-2 border-l border-neutral-800">
+              {manageButton}
+            </div>
           </div>
 
           {/* DESKTOP: Pill bar (unchanged) */}
@@ -613,6 +624,13 @@ export function MultiFeed({
           <p className="text-sm text-neutral-500">
             Select neighborhoods to see local stories
           </p>
+        </div>
+      )}
+
+      {/* MOBILE: View toggle just above feed */}
+      {isMultiple && (
+        <div className="md:hidden flex justify-end pb-2">
+          {viewToggle}
         </div>
       )}
 
