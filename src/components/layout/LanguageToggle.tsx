@@ -3,23 +3,21 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLanguageContext, SUPPORTED_LANGUAGES, LanguageCode } from '@/components/providers/LanguageProvider';
 
-/** Greyscale Union Jack SVG (monochrome, currentColor) */
-function UnionJackIcon({ className = '' }: { className?: string }) {
+/** Greyscale wireframe globe icon (monochrome, currentColor) */
+function GlobeIcon({ className = '' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 60 30" className={className} fill="currentColor" aria-hidden="true">
-      {/* Background */}
-      <rect width="60" height="30" fill="currentColor" opacity="0.15" />
-      {/* Diagonals */}
-      <path d="M0,0 L60,30 M60,0 L0,30" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-      {/* Cross */}
-      <path d="M30,0 V30 M0,15 H60" stroke="currentColor" strokeWidth="5" opacity="0.25" />
-      <path d="M30,0 V30 M0,15 H60" stroke="currentColor" strokeWidth="3" opacity="0.5" />
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <ellipse cx="12" cy="12" rx="4" ry="10" />
+      <path d="M2 12h20" />
+      <path d="M4.5 6.5h15" />
+      <path d="M4.5 17.5h15" />
     </svg>
   );
 }
 
 export function LanguageToggle({ className = '' }: { className?: string }) {
-  const { language, isTranslated, setLanguage, toggleTranslation } = useLanguageContext();
+  const { language, isTranslated, setLanguage, detectLanguage, toggleTranslation } = useLanguageContext();
   const [pickerOpen, setPickerOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -48,14 +46,28 @@ export function LanguageToggle({ className = '' }: { className?: string }) {
   return (
     <div ref={ref} className={`relative ${className}`}>
       <div className="flex items-center">
-        {/* Flag button: toggle translation on/off */}
+        {/* Globe button: toggle translation on/off, or open picker if browser is English */}
         <button
-          onClick={toggleTranslation}
+          onClick={() => {
+            if (isTranslated) {
+              // Back to English
+              toggleTranslation();
+            } else {
+              // Try to detect browser language
+              const detected = detectLanguage();
+              if (detected === 'en') {
+                // Browser is English - open picker so user can choose
+                setPickerOpen(true);
+              }
+              // If detected non-English, toggleTranslation already set it
+            }
+          }}
           className="min-w-[44px] min-h-[44px] flex items-center justify-center text-fg-subtle hover:text-fg transition-colors"
           aria-label={isTranslated ? 'Switch to English' : 'Translate page'}
           title={isTranslated ? 'Back to English' : 'Translate'}
+          data-testid="language-toggle"
         >
-          <UnionJackIcon className="w-5 h-3.5" />
+          <GlobeIcon className="w-5 h-5" />
         </button>
 
         {/* Language badge: click opens picker */}
@@ -65,6 +77,7 @@ export function LanguageToggle({ className = '' }: { className?: string }) {
             className="ml-[-8px] px-1.5 py-0.5 text-[10px] font-mono font-medium tracking-wider uppercase bg-amber-500/20 text-accent rounded"
             aria-label="Choose language"
             title="Choose language"
+            data-testid="language-badge"
           >
             {language.toUpperCase()}
           </button>
@@ -73,7 +86,7 @@ export function LanguageToggle({ className = '' }: { className?: string }) {
 
       {/* Language picker dropdown */}
       {pickerOpen && (
-        <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border-strong rounded-lg shadow-lg z-50 py-1">
+        <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border-strong rounded-lg shadow-lg z-50 py-1" data-testid="language-picker">
           {(Object.entries(SUPPORTED_LANGUAGES) as [LanguageCode, string][]).map(([code, name]) => (
             <button
               key={code}
