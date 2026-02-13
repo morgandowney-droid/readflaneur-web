@@ -5,6 +5,11 @@
 
 ## 2026-02-13
 
+**Mobile Headline Truncation:**
+- New `truncateHeadline(text, maxLen=45)` utility in `utils.ts` - truncates at last full word within 45 chars, strips trailing ", and" / ", or" conjunctions. No ellipsis or partial words.
+- `CompactArticleCard`: split `headlineEl` into `headlineDesktop` (full, whitespace-nowrap) and `headlineMobile` (truncated via `truncateHeadline()`).
+- `ArticleCard`: mobile `md:hidden` headline uses `truncateHeadline()`, removed `line-clamp-2` in favor of clean word-boundary truncation.
+
 **Strip DAILY BRIEF Prefix + Mobile Brief Headline Wrap:**
 - Feed cards (`ArticleCard`, `CompactArticleCard`) now use `cleanArticleHeadline()` to strip "Neighborhood DAILY BRIEF:" prefix from headlines. Neighborhood name already shown in metadata row above.
 - Daily brief widget headline (`NeighborhoodBrief.tsx`) now wraps on mobile (`md:whitespace-nowrap md:overflow-hidden` instead of unconditional `whitespace-nowrap`).

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Article } from '@/types';
-import { formatRelativeTime, cityToSlug, neighborhoodToSlug, categoryLabelToSlug, cleanArticleHeadline } from '@/lib/utils';
+import { formatRelativeTime, cityToSlug, neighborhoodToSlug, categoryLabelToSlug, cleanArticleHeadline, truncateHeadline } from '@/lib/utils';
 
 const ARTICLE_BOOKMARKS_KEY = 'flaneur-article-bookmarks';
 
@@ -105,8 +105,8 @@ export function ArticleCard({ article }: ArticleCardProps) {
                 </>
               )}
             </div>
-            <h2 className="text-fg text-xl font-semibold leading-tight line-clamp-2">
-              {cleanArticleHeadline(article.headline)}
+            <h2 className="text-fg text-xl font-semibold leading-tight">
+              {truncateHeadline(cleanArticleHeadline(article.headline))}
             </h2>
           </div>
         )}

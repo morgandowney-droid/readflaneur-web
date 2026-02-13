@@ -74,6 +74,21 @@ export function cleanArticleHeadline(headline: string): string {
 }
 
 /**
+ * Truncate a headline at the last full word within maxLen chars.
+ * Strips trailing ", and" / ", or" if they end up at the sentence edge.
+ * No ellipsis or partial words.
+ */
+export function truncateHeadline(text: string, maxLen: number = 45): string {
+  if (text.length <= maxLen) return text;
+  const slice = text.slice(0, maxLen);
+  const lastSpace = slice.lastIndexOf(' ');
+  let truncated = lastSpace > 0 ? text.slice(0, lastSpace) : slice;
+  // Strip trailing conjunctions that dangle
+  truncated = truncated.replace(/,\s*(?:and|or)\s*$/i, '');
+  return truncated;
+}
+
+/**
  * Get day-of-week abbreviation from a date string
  * e.g., "2026-02-08T..." → "Sun"
  */

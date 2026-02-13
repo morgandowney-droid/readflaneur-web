@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Article } from '@/types';
-import { cityToSlug, neighborhoodToSlug, cleanArticleHeadline } from '@/lib/utils';
+import { cityToSlug, neighborhoodToSlug, cleanArticleHeadline, truncateHeadline } from '@/lib/utils';
 import { useLanguageContext } from '@/components/providers/LanguageProvider';
 
 interface CompactArticleCardProps {
@@ -93,9 +93,17 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
     </div>
   );
 
-  const headlineEl = (
+  const fullHeadline = translatedHeadline || cleanArticleHeadline(article.headline);
+
+  const headlineDesktop = (
     <h2 className="font-semibold text-lg md:text-xl leading-tight mb-1.5 whitespace-nowrap overflow-hidden">
-      {translatedHeadline || cleanArticleHeadline(article.headline)}
+      {fullHeadline}
+    </h2>
+  );
+
+  const headlineMobile = (
+    <h2 className="font-semibold text-lg leading-tight mb-1.5">
+      {truncateHeadline(fullHeadline)}
     </h2>
   );
 
@@ -124,7 +132,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
           {imageEl}
           <div className="flex-1 min-w-0">
             {metadataRow}
-            {headlineEl}
+            {headlineDesktop}
             {(translatedBlurb || blurb) && (
               <p className="text-[1.05rem] text-fg-muted leading-7">
                 {translatedBlurb || blurb}
@@ -136,7 +144,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
         {/* Mobile: metadata + headline above, then image + blurb row */}
         <div className="md:hidden">
           {metadataRow}
-          {headlineEl}
+          {headlineMobile}
           <div className="flex gap-4">
             {imageEl}
             {(translatedBlurb || blurb) && (
