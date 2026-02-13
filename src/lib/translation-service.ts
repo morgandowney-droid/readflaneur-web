@@ -2,13 +2,16 @@ import { GoogleGenAI } from '@google/genai';
 import { AI_MODELS } from '@/config/ai-models';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-export type LanguageCode = 'sv' | 'fr' | 'de' | 'es' | 'ja';
+export type LanguageCode = 'sv' | 'fr' | 'de' | 'es' | 'pt' | 'it' | 'zh' | 'ja';
 
 const LANGUAGE_NAMES: Record<LanguageCode, string> = {
   sv: 'Swedish',
   fr: 'French',
   de: 'German',
   es: 'Spanish',
+  pt: 'Portuguese',
+  it: 'Italian',
+  zh: 'Simplified Chinese',
   ja: 'Japanese',
 };
 

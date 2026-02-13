@@ -19,7 +19,7 @@ export const maxDuration = 300;
 
 const TIME_BUDGET_MS = 250_000;
 const CONCURRENCY = 3;
-const PHASE1_LANGUAGES: LanguageCode[] = ['sv', 'fr', 'de', 'es', 'ja'];
+const PHASE1_LANGUAGES: LanguageCode[] = ['sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja'];
 
 export async function GET(request: Request) {
   const functionStart = Date.now();

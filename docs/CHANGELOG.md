@@ -5,6 +5,12 @@
 
 ## 2026-02-13
 
+**Add Portuguese, Italian, Simplified Chinese:**
+- Added 3 new languages (pt, it, zh) to `SUPPORTED_LANGUAGES`, `translations.ts` (~90 UI keys each), `translation-service.ts`, and `PHASE1_LANGUAGES` in translate-content cron. Total: 9 languages.
+
+**Stripe Webhook Fix:**
+- `STRIPE_WEBHOOK_SECRET` env var had trailing `\n`, causing `constructEvent()` signature verification to fail (35 failures since Feb 10). Added `.trim()` defensive fix in code and cleaned env var in Vercel.
+
 **Language Toggle Globe Icon + Mobile Fix:**
 - Replaced Union Jack SVG with wireframe globe icon (`GlobeIcon` component - circle + ellipse meridian + latitude lines)
 - Fixed mobile translate button doing nothing when browser language is English: `detectLanguage()` returned `'en'`, `setLanguage('en')` was a no-op. Now opens the language picker dropdown when detection returns English.
