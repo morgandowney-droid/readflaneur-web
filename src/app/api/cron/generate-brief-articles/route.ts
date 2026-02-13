@@ -100,8 +100,9 @@ function extractSourcesFromCategories(categories: EnrichedCategory[] | null): Ar
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
-function generateSlug(headline: string, neighborhoodSlug: string): string {
-  const date = new Date().toISOString().split('T')[0];
+function generateSlug(headline: string, neighborhoodSlug: string, generatedAt: string): string {
+  // Use brief's generation date, not "now" - consistent across retries
+  const date = new Date(generatedAt).toISOString().split('T')[0];
   const headlineSlug = headline
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '')
@@ -286,8 +287,8 @@ export async function GET(request: Request) {
         continue;
       }
 
-      // Generate slug using neighborhood id
-      const slug = generateSlug(articleHeadline, neighborhood.id);
+      // Generate slug using neighborhood id and brief's generation date
+      const slug = generateSlug(articleHeadline, neighborhood.id, brief.generated_at);
 
       // Generate preview text
       const previewText = generatePreviewText(articleBody);
@@ -317,6 +318,12 @@ export async function GET(request: Request) {
         .single();
 
       if (insertError) {
+        // Slug collision means an article already exists for this date/neighborhood/headline
+        // (likely from a re-generated brief with different ID) - safe to skip
+        if (insertError.message?.includes('articles_slug_key')) {
+          results.articles_skipped++;
+          continue;
+        }
         results.articles_failed++;
         results.errors.push(`Brief ${brief.id}: ${insertError.message}`);
         continue;
