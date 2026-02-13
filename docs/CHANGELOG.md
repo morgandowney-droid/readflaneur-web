@@ -5,6 +5,13 @@
 
 ## 2026-02-13
 
+**Wire Translations into Remaining Components:**
+- `EmailCaptureCard.tsx`: Wired `useTranslation()` for headline, description, placeholder, button, error messages.
+- `MagicLinkReminder.tsx`: Wired `useTranslation()` for prompt text, placeholder, button.
+- `MultiFeed.tsx`: Replaced hardcoded `'My Neighborhoods'` with `t('feed.myNeighborhoods')`.
+- `ArticleCard.tsx`: Added headline translation fetch via `/api/translations/article` for gallery view cards. Falls back to English when translation not available.
+- Added `email.*` translation keys (10 keys) across all 9 languages in `translations.ts`.
+
 **Remove Auto-Linking from Articles and Briefs:**
 - Disabled render-time `renderWithSearchableEntities()` in both `ArticleBody.tsx` and `NeighborhoodBrief.tsx`. This function auto-linked every capitalized proper noun to Google Search, making articles cluttered with hyperlinks.
 - Disabled pipeline-time `injectHyperlinks()` in `brief-enricher-gemini.ts`. Gemini's curated link candidates were stored as markdown in the DB - now new enrichments won't inject links.
