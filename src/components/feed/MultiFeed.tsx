@@ -620,10 +620,16 @@ export function MultiFeed({
 
       {/* ── EMPTY STATE ── */}
       {isEmpty && (
-        <div className="py-4">
-          <p className="text-sm text-fg-subtle">
+        <div className="py-8 text-center">
+          <p className="text-sm text-fg-subtle mb-4">
             Select neighborhoods to see local stories
           </p>
+          <button
+            onClick={() => openModal()}
+            className="inline-flex items-center gap-2 px-6 py-2.5 text-sm tracking-wide bg-fg text-canvas rounded-lg hover:opacity-80 transition-colors"
+          >
+            Choose Neighborhoods
+          </button>
         </div>
       )}
 
