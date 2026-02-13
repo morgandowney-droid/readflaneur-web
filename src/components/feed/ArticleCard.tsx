@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Article } from '@/types';
 import { formatRelativeTime, cityToSlug, neighborhoodToSlug, categoryLabelToSlug, cleanArticleHeadline, truncateHeadline } from '@/lib/utils';
+import { useLanguageContext } from '@/components/providers/LanguageProvider';
 
 const ARTICLE_BOOKMARKS_KEY = 'flaneur-article-bookmarks';
 
@@ -15,6 +16,8 @@ interface ArticleCardProps {
 export function ArticleCard({ article }: ArticleCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const { language, isTranslated } = useLanguageContext();
+  const [translatedHeadline, setTranslatedHeadline] = useState<string | null>(null);
 
   const citySlug = article.neighborhood?.city
     ? cityToSlug(article.neighborhood.city)
@@ -33,6 +36,20 @@ export function ArticleCard({ article }: ArticleCardProps) {
       }
     }
   }, [article.id]);
+
+  // Fetch translated headline when language changes
+  useEffect(() => {
+    if (!isTranslated) {
+      setTranslatedHeadline(null);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/translations/article?id=${article.id}&lang=${language}`)
+      .then(res => { if (!res.ok) throw new Error('not found'); return res.json(); })
+      .then(data => { if (!cancelled) setTranslatedHeadline(data.headline || null); })
+      .catch(() => { /* Silently fall back to English */ });
+    return () => { cancelled = true; };
+  }, [article.id, language, isTranslated]);
 
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -106,7 +123,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
               )}
             </div>
             <h2 className="text-fg text-xl font-semibold leading-tight">
-              {truncateHeadline(cleanArticleHeadline(article.headline))}
+              {truncateHeadline(translatedHeadline || cleanArticleHeadline(article.headline))}
             </h2>
           </div>
         )}
@@ -149,7 +166,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
                 )}
               </div>
               <h2 className="text-white text-xl font-semibold leading-tight whitespace-nowrap overflow-hidden">
-                {cleanArticleHeadline(article.headline)}
+                {translatedHeadline || cleanArticleHeadline(article.headline)}
               </h2>
             </div>
           )}
@@ -207,7 +224,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
                 </>
               )}
             </div>
-            <h2 className="text-xl md:text-2xl font-semibold mb-3 whitespace-nowrap overflow-hidden">{cleanArticleHeadline(article.headline)}</h2>
+            <h2 className="text-xl md:text-2xl font-semibold mb-3 whitespace-nowrap overflow-hidden">{translatedHeadline || cleanArticleHeadline(article.headline)}</h2>
             <p className="text-fg-muted text-[1.05rem] leading-7 mb-4">
               {article.preview_text || article.body_text.substring(0, 200)}
             </p>

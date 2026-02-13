@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const READS_KEY = 'flaneur-article-reads';
 const SUBSCRIBED_KEY = 'flaneur-newsletter-subscribed';
@@ -13,6 +14,7 @@ interface EmailCaptureCardProps {
 }
 
 export function EmailCaptureCard({ neighborhoodName }: EmailCaptureCardProps) {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -43,7 +45,7 @@ export function EmailCaptureCard({ neighborhoodName }: EmailCaptureCardProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
-      setErrorMessage('Please enter a valid email address');
+      setErrorMessage(t('email.invalidEmail'));
       setStatus('error');
       return;
     }
@@ -96,17 +98,17 @@ export function EmailCaptureCard({ neighborhoodName }: EmailCaptureCardProps) {
   if (status === 'success') {
     return (
       <div className="bg-surface border border-border p-6 text-center">
-        <p className="text-lg font-medium text-fg mb-1">You're in!</p>
+        <p className="text-lg font-medium text-fg mb-1">{t('email.success')}</p>
         <p className="text-sm text-fg-muted">
-          Check your inbox for a verification link.
+          {t('email.checkInbox')}
         </p>
       </div>
     );
   }
 
   const headline = neighborhoodName
-    ? `Get ${neighborhoodName} stories in your inbox`
-    : 'Get your daily brief';
+    ? t('email.getStories').replace('{neighborhood}', neighborhoodName)
+    : t('email.getDailyBrief');
 
   return (
     <div className="bg-surface border border-border p-6 relative">
@@ -125,7 +127,7 @@ export function EmailCaptureCard({ neighborhoodName }: EmailCaptureCardProps) {
         {headline}
       </h3>
       <p className="text-sm text-fg-muted mb-4">
-        Free daily brief every morning. Unsubscribe anytime.
+        {t('email.freeBrief')}
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
@@ -133,7 +135,7 @@ export function EmailCaptureCard({ neighborhoodName }: EmailCaptureCardProps) {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter your email"
+          placeholder={t('email.enterEmail')}
           className="flex-1 px-4 py-2.5 bg-surface border border-border-strong text-white text-sm placeholder:text-fg-subtle focus:outline-none focus:border-amber-500 transition-colors"
           disabled={status === 'loading'}
         />
@@ -142,7 +144,7 @@ export function EmailCaptureCard({ neighborhoodName }: EmailCaptureCardProps) {
           disabled={status === 'loading'}
           className="px-6 py-2.5 bg-fg text-canvas text-sm font-medium tracking-wide hover:bg-amber-600 hover:text-fg transition-colors disabled:opacity-50 whitespace-nowrap"
         >
-          {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
+          {status === 'loading' ? t('email.subscribing') : t('email.subscribe')}
         </button>
       </form>
 

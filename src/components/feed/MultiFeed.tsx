@@ -581,7 +581,7 @@ export function MultiFeed({
         mode="all"
         city={activeHood?.city || ''}
         citySlug=""
-        neighborhoodName={activeHood?.name || 'My Neighborhoods'}
+        neighborhoodName={activeHood?.name || t('feed.myNeighborhoods')}
         neighborhoodSlug=""
         neighborhoodId={activeHood?.id || ''}
         hideControlDeck

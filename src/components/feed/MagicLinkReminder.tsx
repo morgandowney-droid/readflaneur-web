@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function MagicLinkReminder() {
   const [isSignedIn, setIsSignedIn] = useState<boolean | null>(null);
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
@@ -51,7 +53,7 @@ export function MagicLinkReminder() {
       ) : (
         <div className="flex flex-col items-center gap-3">
           <p className="text-sm text-fg-muted">
-            Get fresh neighborhood daily briefs every morning
+            {t('email.getFresh')}
           </p>
           <div className="flex items-center gap-2">
             <input
@@ -59,7 +61,7 @@ export function MagicLinkReminder() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleResend()}
-              placeholder="Enter your email"
+              placeholder={t('email.enterEmail')}
               className="px-3 py-2 bg-surface border border-border-strong text-sm text-white placeholder-fg-subtle rounded-lg w-56 focus:outline-none focus:border-amber-500/50 transition-colors"
             />
             <button
@@ -67,7 +69,7 @@ export function MagicLinkReminder() {
               disabled={status === 'sending' || !email}
               className="px-4 py-2 text-xs tracking-wider uppercase font-medium bg-fg text-canvas hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors rounded-lg"
             >
-              {status === 'sending' ? '...' : 'Subscribe'}
+              {status === 'sending' ? '...' : t('email.subscribe')}
             </button>
           </div>
         </div>
