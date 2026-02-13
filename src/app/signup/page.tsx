@@ -31,7 +31,6 @@ export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<'reader' | 'journalist' | 'advertiser'>('reader');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState<string | null>(null);
@@ -81,7 +80,7 @@ export default function SignupPage() {
       options: {
         data: {
           full_name: fullName,
-          role: role,
+          role: 'reader',
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
         captchaToken,
@@ -114,7 +113,7 @@ export default function SignupPage() {
           </p>
           <Link
             href="/login"
-            className="inline-block bg-white text-neutral-900 px-8 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors"
+            className="inline-block bg-white text-neutral-900 px-8 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors rounded-lg"
           >
             Back to Login
           </Link>
@@ -126,13 +125,13 @@ export default function SignupPage() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-light text-center text-neutral-100 mb-8">Create Account</h1>
+        <h1 className="text-2xl font-light text-center text-neutral-100 mb-10">Create Account</h1>
 
         {/* OAuth buttons hidden pre-launch — Google & Apple login fully implemented and ready to re-enable */}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
-            <div className="p-3 text-sm text-red-400 bg-red-900/20 border border-red-800/30">
+            <div className="p-3 text-sm text-red-400 bg-red-900/20 border border-red-800/30 rounded-lg">
               {error}
             </div>
           )}
@@ -150,7 +149,7 @@ export default function SignupPage() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white"
+              className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white rounded-lg"
               placeholder="Your name"
             />
           </div>
@@ -168,7 +167,7 @@ export default function SignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white"
+              className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white rounded-lg"
               placeholder="you@example.com"
             />
           </div>
@@ -187,36 +186,9 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white"
+              className="w-full px-4 py-3 border border-white/20 focus:border-amber-500 focus:outline-none bg-neutral-900 text-white rounded-lg"
               placeholder="Minimum 6 characters"
             />
-          </div>
-
-          <div>
-            <label className="block text-xs tracking-widest uppercase text-neutral-400 mb-2">
-              I am a...
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['reader', 'journalist', 'advertiser'] as const).map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setRole(r)}
-                  className={`py-2 px-3 text-sm border transition-colors ${
-                    role === r
-                      ? 'border-amber-600 bg-amber-600 text-white'
-                      : 'border-white/[0.08] text-neutral-300 hover:border-white/20'
-                  }`}
-                >
-                  {r.charAt(0).toUpperCase() + r.slice(1)}
-                </button>
-              ))}
-            </div>
-            {role === 'journalist' && (
-              <p className="text-xs text-neutral-400 mt-2">
-                Journalist accounts require approval before publishing.
-              </p>
-            )}
           </div>
 
           {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
@@ -234,7 +206,7 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={isLoading || (!!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken)}
-            className="w-full bg-white text-neutral-900 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50"
+            className="w-full bg-white text-neutral-900 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50 rounded-lg"
           >
             {isLoading ? 'Creating account...' : 'Create Account'}
           </button>

@@ -12,9 +12,9 @@
 - **Sentry:** https://sentry.io/organizations/flaneur-vk/issues/
 - **270 neighborhoods** across 91 cities, 42 countries
 
-## Last Updated: 2026-02-12
+## Last Updated: 2026-02-13
 
-Recent work: Mobile UX overhaul (navigation wayfinding, feed layout, selector fixes, auth flow, ad grace period), Community neighborhoods (user-created neighborhoods with AI validation + full brief pipeline), "Create Your Own Neighborhood" house ad, community neighborhoods TypeScript fixes (openModal signature, GlobalRegion exhaustiveness), global 5-email-per-day limit, always-resend on primary neighborhood change, Vercel preview build fix (lazy-init Supabase admin in 6 routes), Hamptons component renames (removed redundant suffix), brief content sanitization fixes (nested-paren URLs, URL-encoded artifacts), neighborhood selector tidy (renames, region consolidation, new neighborhoods), single-line feed headlines, enrichment language/framing fixes, brighter brief section headings, "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
+Recent work: Signup page polish (remove role picker, rounded corners, default reader), enrichment-gated brief publishing (email + article cron skip unenriched briefs), custom SMTP via Resend for auth emails, Cloudflare Turnstile CAPTCHA on signup/login, standards page restyle, mobile view toggle consolidation, Mobile UX overhaul (navigation wayfinding, feed layout, selector fixes, auth flow, ad grace period), Community neighborhoods (user-created neighborhoods with AI validation + full brief pipeline), "Create Your Own Neighborhood" house ad, community neighborhoods TypeScript fixes (openModal signature, GlobalRegion exhaustiveness), global 5-email-per-day limit, always-resend on primary neighborhood change, Vercel preview build fix (lazy-init Supabase admin in 6 routes), Hamptons component renames (removed redundant suffix), brief content sanitization fixes (nested-paren URLs, URL-encoded artifacts), neighborhood selector tidy (renames, region consolidation, new neighborhoods), single-line feed headlines, enrichment language/framing fixes, brighter brief section headings, "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
 
 ### Email Capture (Engagement-Triggered)
 - **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
@@ -37,6 +37,15 @@ Recent work: Mobile UX overhaul (navigation wayfinding, feed layout, selector fi
 - **OAuth hidden:** Google & Apple login buttons hidden on `/login` and `/signup` pages. Code is fully implemented and ready to re-enable (just uncomment the OAuth button sections).
 - **Current auth:** Email/password only via Supabase Auth
 - **OAuth callback routes:** Both `/auth/callback` and `/api/auth/callback` are intact and working
+- **Turnstile CAPTCHA:** Cloudflare Turnstile on `/signup` and `/login` pages. Gracefully degrades (no widget shown) when `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is not set. On error, widget resets automatically. Submit button disabled until token received. Dark theme, flexible size. Requires Supabase dashboard CAPTCHA config with the Turnstile secret key.
+- **Custom SMTP:** Auth emails (confirmation, password reset, magic link) sent via Resend SMTP for better deliverability. Configured in Supabase Dashboard > Authentication > SMTP Settings.
+- **Signup form:** Name, email, password only. No role picker (all users default to `reader`). Rounded corners (`rounded-lg`) on all inputs/buttons matching login page.
+
+### Enrichment-Gated Brief Publishing
+- **Rule:** Brief articles are NEVER created from unenriched (raw Grok) content. Only `enriched_content` from Gemini is used.
+- **Email assembler** (`assembler.ts`): `fetchBriefAsStory()` returns `null` if the brief has no `enriched_content`, skipping the brief link in the email rather than linking to sparse content.
+- **Brief article cron** (`generate-brief-articles`): Already filters `.not('enriched_content', 'is', null)`, and no longer has a raw content fallback.
+- **Effect:** If enrichment hasn't run yet when the email sends, the email will include regular articles but skip the brief link. The brief article gets created on the next cron cycle after enrichment completes.
 
 ### Mobile UX Overhaul
 - **Navigation wayfinding:** Logo links to `/feed` (not `/`). "Stories" link in both desktop and mobile nav for all users. "Dashboard" gated behind admin. Default entry point changed from `/login` to `/signup`.
@@ -310,7 +319,7 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **useNeighborhoodPreferences:** `src/hooks/useNeighborhoodPreferences.ts` - reads localStorage IDs, fetches name/city from Supabase, cross-tab sync via `storage` event. Exposes `primaryId` and `setPrimary(id)` to reorder localStorage array.
 - **Primary neighborhood:** First item in localStorage array. Indicated across ContextSwitcher (amber dot + "PRIMARY" label), MultiFeed pill bar, HomeSignupEnhanced chips, and NeighborhoodSelectorModal. Users can change primary via "Set primary" actions.
 - **Combo dropdowns:** `bg-surface border-white/[0.08]`, items `hover:text-white hover:bg-white/5`
-- **ViewToggle:** Minimal `w-8 h-8` icons, no pill background. Active: `text-white`, inactive: `text-neutral-300`
+- **ViewToggle:** Desktop: two buttons (compact + gallery), active `text-white`, inactive `text-neutral-300`. Mobile: single toggle button (`md:hidden`) showing the opposite view's icon, saves horizontal space for pills.
 - **DailyBriefWidget:** Renders between Control Deck and FeedList (passed as `dailyBrief` ReactNode prop to `NeighborhoodFeed` or `MultiFeed`). Spacing: `mt-8 mb-12`. Section headings in brief cards use `text-neutral-200` (brighter than body `text-neutral-400`). Brief headline is single-line (`whitespace-nowrap overflow-hidden`).
 - **MultiFeed integration:** `MultiFeed` now uses `<NeighborhoodHeader mode="all">` instead of standalone header. Accepts `dailyBrief` and `initialWeather` props. Passes `comboComponentNames` for combo subtitle. Pill filter switches the daily brief dynamically - fetches brief from `neighborhood_briefs` table client-side per neighborhood, with skeleton loading state.
 - **MultiFeed render order:** Pills render BEFORE masthead for vertical stability. `md:sticky md:top-[60px]` pills (non-sticky on mobile, sticky on desktop). Left/right gradient fade indicators on pill scroll container. Pills no longer jump when masthead height changes between "My Neighborhoods" and specific neighborhood details.

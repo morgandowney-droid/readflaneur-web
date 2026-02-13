@@ -226,12 +226,12 @@ export async function GET(request: Request) {
       const baseHeadline = brief.headline || `What's Happening in ${neighborhood.name}`;
       const articleHeadline = `${neighborhood.name} DAILY BRIEF: ${baseHeadline}`;
 
-      // Use enriched content as article body, with brief content as fallback
-      const articleBody = brief.enriched_content || brief.content;
+      // Only use enriched content — never publish raw/unenriched briefs
+      const articleBody = brief.enriched_content;
 
       if (!articleBody) {
         results.articles_failed++;
-        results.errors.push(`Brief ${brief.id}: No content available`);
+        results.errors.push(`Brief ${brief.id}: No enriched content available`);
         continue;
       }
 

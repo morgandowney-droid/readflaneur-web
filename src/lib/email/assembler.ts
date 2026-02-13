@@ -160,8 +160,11 @@ async function fetchBriefAsStory(
 
   if (!brief) return null;
 
-  // Create an article from the brief so the email link goes to a full article page
-  const articleBody = brief.enriched_content || brief.content;
+  // Never create an article from an unenriched brief — wait for Gemini enrichment
+  if (!brief.enriched_content) return null;
+
+  // Create an article from the enriched brief so the email link goes to a full article page
+  const articleBody = brief.enriched_content;
   const articleHeadline = `${neighborhoodName} DAILY BRIEF: ${brief.headline}`;
   const date = new Date().toISOString().split('T')[0];
   const headlineSlug = brief.headline

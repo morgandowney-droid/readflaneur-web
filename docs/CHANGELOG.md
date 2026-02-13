@@ -3,6 +3,26 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-13
+
+**Signup Page Polish:**
+- Removed "I am a..." role picker (reader/journalist/advertiser) - all signups default to `reader`, reducing friction
+- Added `rounded-lg` to all inputs, buttons, and error box matching login page style
+- Increased spacing (`space-y-5`, `mb-10`) to match login page
+
+**Enrichment-Gated Brief Publishing:**
+- Email assembler (`fetchBriefAsStory`) now returns null if brief has no `enriched_content` - emails never link to sparse/unenriched brief articles
+- Brief article cron (`generate-brief-articles`) removed raw content fallback - only creates articles from Gemini-enriched briefs
+- Backfilled 7 today's brief articles that had unenriched content (e.g., Östermalm 953 -> 2,802 chars)
+
+**Custom SMTP for Auth Emails:**
+- Supabase auth emails (confirmation, password reset) now sent via Resend SMTP (`smtp.resend.com`) for better inbox deliverability
+- Sender: `noreply@readflaneur.com` with SPF/DKIM/DMARC from existing Resend domain setup
+
+**Cloudflare Turnstile CAPTCHA:**
+- Turnstile widget keys configured in Cloudflare dashboard, Vercel env vars, and Supabase Attack Protection
+- Managed mode (Cloudflare decides when to show challenge)
+
 ## 2026-02-12
 
 **Mobile UX Overhaul (21 Issues, 5 Groups):**
