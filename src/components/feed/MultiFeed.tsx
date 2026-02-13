@@ -477,7 +477,7 @@ export function MultiFeed({
                 <div className="border-t border-border">
                   <button
                     onClick={() => { setDropdownOpen(false); openModal(); }}
-                    className="w-full px-4 py-3 text-left text-xs tracking-wide text-fg-subtle hover:text-amber-400 transition-colors"
+                    className="w-full px-4 py-3 text-left text-xs tracking-wide text-fg-subtle hover:text-accent transition-colors"
                   >
                     Explore other neighborhoods
                   </button>

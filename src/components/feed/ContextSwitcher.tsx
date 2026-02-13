@@ -159,7 +159,7 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
                     {!isPrimary && showPrimary && (
                       <button
                         onClick={(e) => handleSetPrimary(e, n.id)}
-                        className="text-[9px] tracking-wider uppercase text-fg-subtle hover:text-amber-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0"
+                        className="text-[9px] tracking-wider uppercase text-fg-subtle hover:text-accent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0"
                         title="Set as primary"
                       >
                         Set primary

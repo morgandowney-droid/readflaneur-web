@@ -846,7 +846,7 @@ function GlobalNeighborhoodModal({
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 {selected.size > 0 && (
                   <>
-                    <span className="text-xs font-mono text-amber-400 tabular-nums">
+                    <span className="text-xs font-mono text-accent tabular-nums">
                       {selected.size} selected
                     </span>
                     <span className="text-fg-subtle text-xs">|</span>
@@ -856,7 +856,7 @@ function GlobalNeighborhoodModal({
                   <>
                     <button
                       onClick={scrollToPrimary}
-                      className="text-xs text-fg-subtle hover:text-amber-400 transition-colors"
+                      className="text-xs text-fg-subtle hover:text-accent transition-colors"
                     >
                       Change my Primary Neighborhood
                     </button>
@@ -866,7 +866,7 @@ function GlobalNeighborhoodModal({
                 <button
                   onClick={() => setShowTimezone(!showTimezone)}
                   className={`text-xs transition-colors ${
-                    showTimezone ? 'text-amber-400' : 'text-fg-subtle hover:text-amber-400'
+                    showTimezone ? 'text-accent' : 'text-fg-subtle hover:text-accent'
                   }`}
                   title="This will update the time at which you will receive daily or weekly 7am emails"
                 >
@@ -879,7 +879,7 @@ function GlobalNeighborhoodModal({
                     if (!showSuggestion) setTimeout(() => suggestionInputRef.current?.focus(), 50);
                   }}
                   className={`text-xs transition-colors ${
-                    showSuggestion ? 'text-amber-400' : 'text-fg-subtle hover:text-amber-400'
+                    showSuggestion ? 'text-accent' : 'text-fg-subtle hover:text-accent'
                   }`}
                 >
                   Suggest a Neighborhood
@@ -939,7 +939,7 @@ function GlobalNeighborhoodModal({
                       }
                     }}
                     disabled={!settingsCity || settingsSaved}
-                    className="text-[11px] tracking-[0.1em] uppercase text-amber-400 hover:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                    className="text-[11px] tracking-[0.1em] uppercase text-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
                   >
                     {settingsSaved ? 'Saved' : 'Save'}
                   </button>
@@ -974,7 +974,7 @@ function GlobalNeighborhoodModal({
                     <button
                       onClick={handleSuggestionSubmit}
                       disabled={!suggestionText.trim() || suggestionText.trim().length < 3 || suggestionStatus === 'submitting'}
-                      className="text-[11px] tracking-[0.1em] uppercase text-amber-400 hover:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                      className="text-[11px] tracking-[0.1em] uppercase text-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
                     >
                       {suggestionStatus === 'submitting' ? 'Sending...' : 'Submit'}
                     </button>
@@ -1008,7 +1008,7 @@ function GlobalNeighborhoodModal({
               onClick={() => setActiveTab('all')}
               className={`px-3 py-1.5 text-xs rounded-full border transition-all ${
                 activeTab === 'all'
-                  ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
+                  ? 'border-amber-500/50 text-accent bg-amber-500/10'
                   : 'border-border-strong text-fg-muted hover:text-fg hover:border-border-strong'
               }`}
             >
@@ -1018,7 +1018,7 @@ function GlobalNeighborhoodModal({
               onClick={() => setActiveTab('community')}
               className={`px-3 py-1.5 text-xs rounded-full border transition-all ${
                 activeTab === 'community'
-                  ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
+                  ? 'border-amber-500/50 text-accent bg-amber-500/10'
                   : 'border-border-strong text-fg-muted hover:text-fg hover:border-border-strong'
               }`}
             >
@@ -1060,7 +1060,7 @@ function GlobalNeighborhoodModal({
               disabled={locationLoading}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full border transition-all whitespace-nowrap ${
                 sortBy === 'nearest'
-                  ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
+                  ? 'border-amber-500/50 text-accent bg-amber-500/10'
                   : 'border-border-strong text-fg-muted hover:text-fg hover:border-border-strong'
               }`}
             >
@@ -1074,7 +1074,7 @@ function GlobalNeighborhoodModal({
               onClick={handleSortByRegion}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full border transition-all whitespace-nowrap ${
                 sortBy === 'region'
-                  ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
+                  ? 'border-amber-500/50 text-accent bg-amber-500/10'
                   : 'border-border-strong text-fg-muted hover:text-fg hover:border-border-strong'
               }`}
             >
@@ -1205,7 +1205,7 @@ function GlobalNeighborhoodModal({
                                   <button
                                     onClick={() => toggleNeighborhood(hood.id)}
                                     className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${
-                                      isSelected ? 'text-amber-400 font-medium' : 'text-fg-muted hover:text-fg'
+                                      isSelected ? 'text-accent font-medium' : 'text-fg-muted hover:text-fg'
                                     }`}
                                   >
                                     {isSelected && (
@@ -1258,7 +1258,7 @@ function GlobalNeighborhoodModal({
                             <h3 className="font-display text-base text-fg">{city}</h3>
                             <button
                               onClick={() => selectAllInCity(cityHoods)}
-                              className={`text-[11px] transition-colors ${allInCitySelected ? 'text-amber-400 hover:text-amber-300' : 'text-fg-subtle hover:text-amber-400'}`}
+                              className={`text-[11px] transition-colors ${allInCitySelected ? 'text-accent hover:text-accent' : 'text-fg-subtle hover:text-accent'}`}
                             >
                               {allInCitySelected ? 'Deselect' : 'Select all'}
                             </button>
@@ -1280,7 +1280,7 @@ function GlobalNeighborhoodModal({
                                 <div key={hood.id} data-neighborhood-id={hood.id} className="flex items-center gap-1 group/item">
                                   <button
                                     onClick={() => toggleNeighborhood(hood.id)}
-                                    className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${isSelected ? 'text-amber-400 font-medium' : 'text-fg-muted hover:text-fg'}`}
+                                    className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${isSelected ? 'text-accent font-medium' : 'text-fg-muted hover:text-fg'}`}
                                     title={hasComboComponents ? `Includes: ${hood.combo_component_names!.join(', ')}` : undefined}
                                   >
                                     {isSelected && (
@@ -1336,7 +1336,7 @@ function GlobalNeighborhoodModal({
                     <button
                       onClick={() => selectAllInCity(cityHoods)}
                       className={`text-[11px] transition-colors ${
-                        allInCitySelected ? 'text-amber-400 hover:text-amber-300' : 'text-fg-subtle hover:text-amber-400'
+                        allInCitySelected ? 'text-accent hover:text-accent' : 'text-fg-subtle hover:text-accent'
                       }`}
                     >
                       {allInCitySelected ? 'Deselect' : 'Select all'}
@@ -1369,7 +1369,7 @@ function GlobalNeighborhoodModal({
                             onClick={() => toggleNeighborhood(hood.id)}
                             className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${
                               isSelected
-                                ? 'text-amber-400 font-medium'
+                                ? 'text-accent font-medium'
                                 : 'text-fg-muted hover:text-fg'
                             }`}
                             title={hasComboComponents ? `Includes: ${hood.combo_component_names!.join(', ')}` : undefined}
@@ -1417,7 +1417,7 @@ function GlobalNeighborhoodModal({
               <div className="mt-4 flex items-center justify-center gap-3">
                 <button
                   onClick={() => setActiveTab('community')}
-                  className="text-sm text-amber-400 hover:text-amber-300 font-medium transition-colors"
+                  className="text-sm text-accent hover:text-accent font-medium transition-colors"
                 >
                   Create one
                 </button>

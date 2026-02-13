@@ -35,10 +35,15 @@ export function Header() {
   // - Not on a feed page
   const shouldHideHeader = isFeedPage && scrollDirection === 'down' && scrollY > 50 && !mobileMenuOpen;
 
-  // Close mobile menu on scroll
+  // Close mobile menu on significant scroll (50px+ delta to avoid false triggers)
   useEffect(() => {
     if (!mobileMenuOpen) return;
-    const handleScroll = () => setMobileMenuOpen(false);
+    const scrollStart = window.scrollY;
+    const handleScroll = () => {
+      if (Math.abs(window.scrollY - scrollStart) > 50) {
+        setMobileMenuOpen(false);
+      }
+    };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [mobileMenuOpen]);
@@ -415,7 +420,7 @@ export function Header() {
                       key={hood.id}
                       href={`/feed?neighborhoods=${hood.id}`}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-canvas text-fg"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-elevated text-fg rounded"
                     >
                       <span>{hood.name}</span>
                     </Link>
@@ -431,7 +436,7 @@ export function Header() {
                     handleNeighborhoodsClick({ preventDefault: () => {} } as React.MouseEvent);
                     setMobileMenuOpen(false);
                   }}
-                  className="mt-3 text-sm text-amber-500/80 hover:text-amber-400 transition-colors block text-right w-full"
+                  className="mt-3 text-sm text-accent-muted hover:text-accent transition-colors block text-right w-full"
                 >
                   Edit Neighborhoods
                 </button>

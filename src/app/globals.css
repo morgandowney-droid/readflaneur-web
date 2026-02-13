@@ -19,6 +19,8 @@
   --theme-modal-bg: rgba(23,23,23,0.9);
   --theme-selection-bg: #d97706;
   --theme-selection-fg: #ffffff;
+  --theme-accent: #fbbf24;
+  --theme-accent-muted: rgba(251, 191, 36, 0.7);
 }
 
 [data-theme="light"] {
@@ -38,6 +40,8 @@
   --theme-modal-bg: rgba(255,255,255,0.92);
   --theme-selection-bg: #d97706;
   --theme-selection-fg: #ffffff;
+  --theme-accent: #b45309;
+  --theme-accent-muted: rgba(180, 83, 9, 0.6);
 }
 
 @theme inline {
@@ -55,6 +59,8 @@
   --color-overlay: var(--theme-overlay);
   --color-header-bg: var(--theme-header-bg);
   --color-modal-bg: var(--theme-modal-bg);
+  --color-accent: var(--theme-accent);
+  --color-accent-muted: var(--theme-accent-muted);
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-serif: var(--font-cormorant);
   --font-body-serif: var(--font-merriweather), Georgia, 'Times New Roman', serif;
