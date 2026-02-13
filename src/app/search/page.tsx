@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface SearchResult {
   id: string;
@@ -26,6 +27,7 @@ function SearchContent() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { t } = useTranslation();
 
   const performSearch = useCallback(async (searchQuery: string) => {
     if (!searchQuery || searchQuery.length < 2) {
@@ -74,7 +76,7 @@ function SearchContent() {
       <div className="mx-auto max-w-3xl">
         {/* Header with close button */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-light text-fg">Search</h1>
+          <h1 className="text-2xl font-light text-fg">{t('search.title')}</h1>
           <button
             onClick={() => router.back()}
             className="p-2 -m-2 text-fg-subtle hover:text-fg transition-colors"
@@ -93,7 +95,7 @@ function SearchContent() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search articles..."
+              placeholder={t('search.placeholder')}
               className="flex-1 px-4 py-3 border border-border-strong rounded-lg focus:border-amber-500 focus:outline-none bg-surface text-fg placeholder:text-fg-subtle"
               autoFocus
             />
@@ -102,18 +104,18 @@ function SearchContent() {
               disabled={loading || query.trim().length < 2}
               className="px-6 py-3 bg-fg text-canvas text-sm tracking-widest uppercase rounded-lg hover:opacity-80 transition-colors disabled:bg-fg-subtle disabled:cursor-not-allowed"
             >
-              {loading ? '...' : 'Search'}
+              {loading ? '...' : t('search.button')}
             </button>
           </div>
           {query.length > 0 && query.length < 2 && (
-            <p className="text-xs text-fg-muted mt-2">Enter at least 2 characters</p>
+            <p className="text-xs text-fg-muted mt-2">{t('search.minChars')}</p>
           )}
         </form>
 
         {/* Results */}
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-fg-muted">Searching...</p>
+            <p className="text-fg-muted">{t('search.searching')}</p>
           </div>
         ) : searched ? (
           results.length > 0 ? (
@@ -170,8 +172,8 @@ function SearchContent() {
             </div>
           ) : (
             <div className="text-center py-12 bg-surface rounded-lg">
-              <p className="text-fg-subtle mb-2">No results found for &ldquo;{initialQuery}&rdquo;</p>
-              <p className="text-sm text-fg-muted">Try different keywords or check your spelling</p>
+              <p className="text-fg-subtle mb-2">{t('search.noResults')} &ldquo;{initialQuery}&rdquo;</p>
+              <p className="text-sm text-fg-muted">{t('search.tryDifferent')}</p>
             </div>
           )
         ) : (
@@ -181,7 +183,7 @@ function SearchContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <p className="text-fg-subtle">Enter a search term to find articles</p>
+            <p className="text-fg-subtle">{t('search.enterTerm')}</p>
           </div>
         )}
       </div>

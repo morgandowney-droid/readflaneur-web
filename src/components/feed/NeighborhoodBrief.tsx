@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, ReactNode } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
+import { useLanguageContext } from '@/components/providers/LanguageProvider';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface BriefSource {
   title?: string;
@@ -179,6 +181,7 @@ function extractSectionHeader(text: string): { header: string; rest: string } | 
 }
 
 interface NeighborhoodBriefProps {
+  briefId?: string;
   headline: string;
   content: string;
   generatedAt: string;
@@ -680,6 +683,7 @@ function formatTime(dateString: string) {
 }
 
 export function NeighborhoodBrief({
+  briefId,
   headline,
   content,
   generatedAt,
@@ -691,11 +695,39 @@ export function NeighborhoodBrief({
   enrichedCategories,
 }: NeighborhoodBriefProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { language, isTranslated } = useLanguageContext();
+  const { t } = useTranslation();
+  const [translatedContent, setTranslatedContent] = useState<string | null>(null);
 
-  // Never display unenriched (raw Grok) content — wait for Gemini enrichment
+  // Fetch translated brief content when language changes
+  useEffect(() => {
+    if (!isTranslated || !briefId) {
+      setTranslatedContent(null);
+      return;
+    }
+
+    let cancelled = false;
+    fetch(`/api/translations/brief?id=${briefId}&lang=${language}`)
+      .then(res => {
+        if (!res.ok) throw new Error('not found');
+        return res.json();
+      })
+      .then(data => {
+        if (!cancelled) {
+          setTranslatedContent(data.enriched_content || data.content || null);
+        }
+      })
+      .catch(() => {
+        // Silently fall back to English
+      });
+
+    return () => { cancelled = true; };
+  }, [briefId, language, isTranslated]);
+
+  // Never display unenriched (raw Grok) content - wait for Gemini enrichment
   if (!enrichedContent) return null;
 
-  const displayContent = enrichedContent;
+  const displayContent = translatedContent || enrichedContent;
   const hasEnrichedSources = enrichedCategories && enrichedCategories.length > 0;
 
   // Count verified sources
@@ -833,7 +865,7 @@ export function NeighborhoodBrief({
             const weekday = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
             const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
             const date = d.getDate();
-            return `${weekday} ${month} ${date} | DAILY BRIEF`;
+            return `${weekday} ${month} ${date} | ${t('feed.dailyBrief').toUpperCase()}`;
           })()}
         </span>
       </div>
@@ -854,7 +886,7 @@ export function NeighborhoodBrief({
               onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
               className="inline text-sm font-medium text-fg-muted hover:text-fg transition-colors"
             >
-              Show less
+              {t('feed.showLess')}
             </button>
           </div>
         ) : (
@@ -867,7 +899,7 @@ export function NeighborhoodBrief({
                   onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}
                   className="inline text-sm font-medium text-fg-muted hover:text-fg transition-colors"
                 >
-                  Read more &rsaquo;
+                  {t('feed.readMore')} &rsaquo;
                 </button>
               </>
             )}
@@ -880,7 +912,7 @@ export function NeighborhoodBrief({
         <div className="mt-3 pt-3 border-t border-border">
           {hasEnrichedSources ? (
             <p className="text-[10px] text-fg-muted leading-relaxed">
-              <span className="italic">Synthesized from reporting by </span>
+              <span className="italic">{t('brief.synthesized')} </span>
               {(() => {
                 // Collect unique sources with URLs from enriched categories
                 const uniqueSources = new Map<string, { name: string; url: string }>();
@@ -915,7 +947,7 @@ export function NeighborhoodBrief({
             </p>
           ) : (
             <p className="text-[10px] text-fg-muted italic">
-              Synthesized from public news sources and social media via AI-powered search and analysis.
+              {t('brief.synthesizedGeneric')}
             </p>
           )}
         </div>
@@ -985,6 +1017,7 @@ function ArchivedBriefCard({
   city: string;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { t } = useTranslation();
 
   // Never display unenriched content
   if (!brief.enriched_content) return null;
@@ -1045,11 +1078,11 @@ function ArchivedBriefCard({
             {formatArchiveDate(brief.generated_at)}
           </span>
           <span className="text-[9px] bg-amber-100 text-amber-600 px-1 py-0.5 rounded">
-            AI-Synthesized
+            {t('brief.aiSynthesized')}
           </span>
         </div>
         {brief.enriched_at && (
-          <span className="text-[10px] text-amber-500">verified</span>
+          <span className="text-[10px] text-amber-500">{t('brief.verified')}</span>
         )}
       </div>
 
@@ -1075,14 +1108,14 @@ function ArchivedBriefCard({
         onClick={() => setIsExpanded(!isExpanded)}
         className="mt-2 text-xs text-amber-600 hover:text-amber-800"
       >
-        {isExpanded ? 'Show less' : 'Read more'}
+        {isExpanded ? t('feed.showLess') : t('feed.readMore')}
       </button>
 
       {/* Source attribution - per editorial standards */}
       {isExpanded && brief.enriched_categories && brief.enriched_categories.length > 0 && (
         <div className="mt-2 pt-2 border-t border-amber-100">
           <p className="text-[9px] text-amber-500 leading-relaxed">
-            <span className="italic">Sources: </span>
+            <span className="italic">{t('brief.sources')}: </span>
             {(() => {
               const uniqueSources = new Map<string, { name: string; url: string }>();
               brief.enriched_categories.forEach(cat => {
@@ -1131,6 +1164,7 @@ export function BriefArchive({
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
+  const { t } = useTranslation();
 
   const loadBriefs = async () => {
     if (isLoading) return;
@@ -1168,7 +1202,7 @@ export function BriefArchive({
         className="flex items-center gap-2 text-xs text-fg-muted hover:text-neutral-900 transition-colors"
       >
         <span className="text-[10px]">{isVisible ? '▼' : '▶'}</span>
-        <span>Previous days</span>
+        <span>{t('brief.previousDays')}</span>
       </button>
 
       {isVisible && (
@@ -1183,7 +1217,7 @@ export function BriefArchive({
           ))}
 
           {isLoading && (
-            <div className="text-xs text-fg-muted py-2">Loading...</div>
+            <div className="text-xs text-fg-muted py-2">{t('general.loading')}</div>
           )}
 
           {!isLoading && hasMore && briefs.length > 0 && (
@@ -1191,12 +1225,12 @@ export function BriefArchive({
               onClick={loadBriefs}
               className="text-xs text-fg-muted hover:text-neutral-900 py-1"
             >
-              Load more briefs
+              {t('brief.loadMore')}
             </button>
           )}
 
           {!isLoading && briefs.length === 0 && (
-            <p className="text-xs text-fg-subtle py-2">No archived briefs yet.</p>
+            <p className="text-xs text-fg-subtle py-2">{t('brief.noArchived')}</p>
           )}
         </div>
       )}

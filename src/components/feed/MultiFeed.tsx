@@ -10,6 +10,7 @@ import { NeighborhoodHeader } from './NeighborhoodHeader';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 import { injectAds, injectEmailPrompt } from '@/lib/ad-engine';
 import { NeighborhoodBrief, NeighborhoodBriefSkeleton } from './NeighborhoodBrief';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const VIEW_PREF_KEY = 'flaneur-feed-view';
 
@@ -43,10 +44,12 @@ export function MultiFeed({
   initialWeather,
 }: MultiFeedProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [view, setView] = useState<FeedView>(defaultView);
   const [isHydrated, setIsHydrated] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [fetchedBrief, setFetchedBrief] = useState<{
+    briefId: string;
     headline: string;
     content: string;
     generated_at: string;
@@ -164,6 +167,7 @@ export function MultiFeed({
         const brief = Array.isArray(data) && data.length > 0 ? data[0] : null;
         if (brief) {
           setFetchedBrief({
+            briefId: brief.id,
             headline: brief.headline,
             content: brief.content,
             generated_at: brief.generated_at,
@@ -408,7 +412,7 @@ export function MultiFeed({
                     <div className="text-[10px] text-fg-subtle truncate">{activeHood.city}</div>
                   </>
                 ) : (
-                  <div className="text-sm font-medium text-white">All Stories</div>
+                  <div className="text-sm font-medium text-white">{t('feed.allStories')}</div>
                 )}
               </div>
               <svg
@@ -434,7 +438,7 @@ export function MultiFeed({
                     <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.2"/>
                     <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.2"/>
                   </svg>
-                  <span className="text-sm text-fg font-medium">All Stories</span>
+                  <span className="text-sm text-fg font-medium">{t('feed.allStories')}</span>
                   {activeFilter === null && (
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto shrink-0 text-amber-500">
                       <path d="M2.5 7l3 3 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -460,7 +464,7 @@ export function MultiFeed({
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-fg truncate">{hood.name}</span>
                         {i === 0 && (
-                          <span className="text-[8px] tracking-wider font-bold text-amber-500/60 shrink-0">PRIMARY</span>
+                          <span className="text-[8px] tracking-wider font-bold text-amber-500/60 shrink-0">{t('feed.primary').toUpperCase()}</span>
                         )}
                       </div>
                       <div className="text-[10px] text-fg-subtle truncate">{hood.city}</div>
@@ -479,7 +483,7 @@ export function MultiFeed({
                     onClick={() => { setDropdownOpen(false); openModal(); }}
                     className="w-full px-4 py-3 text-left text-xs tracking-wide text-fg-subtle hover:text-accent transition-colors"
                   >
-                    Explore other neighborhoods
+                    {t('feed.explore')}
                   </button>
                 </div>
               </div>
@@ -522,7 +526,7 @@ export function MultiFeed({
                       : 'bg-transparent text-fg-muted border border-border hover:border-neutral-500 hover:text-fg'
                   }`}
                 >
-                  All Stories
+                  {t('feed.allStories')}
                 </button>
 
                 {neighborhoods.map((hood, i) => (
@@ -604,6 +608,7 @@ export function MultiFeed({
       ) : fetchedBrief ? (
         <div className="mt-2 mb-6">
           <NeighborhoodBrief
+            briefId={fetchedBrief.briefId}
             headline={fetchedBrief.headline}
             content={fetchedBrief.content}
             generatedAt={fetchedBrief.generated_at}
@@ -622,13 +627,13 @@ export function MultiFeed({
       {isEmpty && (
         <div className="py-8 text-center">
           <p className="text-sm text-fg-subtle mb-4">
-            Select neighborhoods to see local stories
+            {t('feed.selectNeighborhoods')}
           </p>
           <button
             onClick={() => openModal()}
             className="inline-flex items-center gap-2 px-6 py-2.5 text-sm tracking-wide bg-fg text-canvas rounded-lg hover:opacity-80 transition-colors"
           >
-            Choose Neighborhoods
+            {t('nav.chooseNeighborhoods')}
           </button>
         </div>
       )}
@@ -652,7 +657,7 @@ export function MultiFeed({
         </div>
       ) : activeFilter && fetchedArticles?.length === 0 ? (
         <div className="py-8 text-center">
-          <p className="text-sm text-fg-subtle">No articles yet for this neighborhood.</p>
+          <p className="text-sm text-fg-subtle">{t('feed.noArticlesNeighborhood')}</p>
         </div>
       ) : (
         <FeedList items={filteredItems} view={currentView} />
@@ -666,7 +671,7 @@ export function MultiFeed({
             disabled={moreLoading}
             className="w-full py-3 text-sm tracking-wide uppercase text-fg-subtle hover:text-fg border border-border hover:border-border-strong transition-colors disabled:opacity-50"
           >
-            {moreLoading ? 'Loading...' : 'Load More Stories'}
+            {moreLoading ? t('general.loading') : t('feed.loadMoreStories')}
           </button>
         </div>
       )}

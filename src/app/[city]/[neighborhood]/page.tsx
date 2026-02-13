@@ -205,6 +205,7 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
                 </p>
               )}
               <NeighborhoodBrief
+                briefId={brief.id}
                 headline={brief.headline}
                 content={brief.content}
                 generatedAt={brief.generated_at}

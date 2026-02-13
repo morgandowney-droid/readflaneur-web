@@ -257,6 +257,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               initialWeather={initialWeather || undefined}
               dailyBrief={brief ? (
                 <NeighborhoodBrief
+                  briefId={brief.id}
                   headline={brief.headline}
                   content={brief.content}
                   generatedAt={brief.generated_at}
@@ -297,6 +298,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               initialWeather={initialWeather || undefined}
               dailyBrief={multiBrief ? (
                 <NeighborhoodBrief
+                  briefId={multiBrief.id}
                   headline={multiBrief.headline}
                   content={multiBrief.content}
                   generatedAt={multiBrief.generated_at}

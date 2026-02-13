@@ -7,6 +7,7 @@ import { AdCard } from './AdCard';
 import { EmailCaptureCard } from './EmailCaptureCard';
 import { FeedView } from './ViewToggle';
 import { useNewUserGracePeriod } from '@/hooks/useNewUserGracePeriod';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface FeedListProps {
   items: FeedItem[];
@@ -15,6 +16,7 @@ interface FeedListProps {
 
 export function FeedList({ items, view = 'gallery' }: FeedListProps) {
   const isGracePeriod = useNewUserGracePeriod();
+  const { t } = useTranslation();
 
   // Filter out ads and email prompts during new user grace period
   const displayItems = isGracePeriod
@@ -30,13 +32,13 @@ export function FeedList({ items, view = 'gallery' }: FeedListProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
           </svg>
         </div>
-        <p className="text-base font-medium text-fg mb-1">No stories yet</p>
-        <p className="text-sm text-fg-muted mb-6">We&apos;re gathering local news for this neighborhood.</p>
+        <p className="text-base font-medium text-fg mb-1">{t('feed.noStoriesYet')}</p>
+        <p className="text-sm text-fg-muted mb-6">{t('feed.gatheringNews')}</p>
         <a
           href="/neighborhoods"
           className="text-xs tracking-widest uppercase text-fg-subtle hover:text-fg transition-colors"
         >
-          Explore other neighborhoods
+          {t('feed.explore')}
         </a>
       </div>
     );

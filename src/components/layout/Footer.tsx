@@ -1,6 +1,11 @@
+'use client';
+
 import Link from 'next/link';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function Footer() {
+  const { t } = useTranslation();
+
   return (
     <footer className="border-t border-border bg-canvas py-12 md:py-16">
       <div className="mx-auto max-w-5xl px-6 text-center">
@@ -14,29 +19,29 @@ export function Footer() {
         {/* Navigation */}
         <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 mb-10">
           <Link href="/about" className="text-sm text-fg-muted hover:text-fg transition-colors">
-            About
+            {t('footer.about')}
           </Link>
           <Link href="/advertise" className="text-sm text-fg-muted hover:text-fg transition-colors">
-            Advertise
+            {t('footer.advertise')}
           </Link>
           <Link href="/careers" className="text-sm text-fg-muted hover:text-fg transition-colors">
-            Careers
+            {t('footer.careers')}
           </Link>
           <Link href="/contact" className="text-sm text-fg-muted hover:text-fg transition-colors">
-            Contact
+            {t('footer.contact')}
           </Link>
           <Link href="/legal" className="text-sm text-fg-muted hover:text-fg transition-colors">
-            Legal
+            {t('footer.legal')}
           </Link>
           <Link href="/standards" className="text-sm text-fg-muted hover:text-fg transition-colors">
-            AI Standards & Ethics
+            {t('footer.standards')}
           </Link>
         </div>
 
         {/* Copyright */}
         <div className="pt-8 border-t border-border">
           <p className="text-[11px] tracking-[0.15em] text-fg-muted">
-            &copy; {new Date().getFullYear()} Flâneur. All rights reserved.
+            &copy; {new Date().getFullYear()} Flâneur. {t('footer.rights')}
           </p>
         </div>
       </div>

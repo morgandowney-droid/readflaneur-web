@@ -7,6 +7,7 @@ import { ComboInfo } from '@/lib/combo-utils';
 import { NeighborhoodLiveStatus } from './NeighborhoodLiveStatus';
 import { ContextSwitcher } from './ContextSwitcher';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface NeighborhoodHeaderProps {
   mode?: 'single' | 'all';
@@ -60,6 +61,7 @@ export function NeighborhoodHeader({
   const [openDropdown, setOpenDropdown] = useState<DropdownKey | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { openModal } = useNeighborhoodModal();
+  const { t } = useTranslation();
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -101,12 +103,12 @@ export function NeighborhoodHeader({
                   <>
                     {city}
                     <span className="mx-2 text-neutral-600">·</span>
-                    <span className="font-serif italic">{`Covering ${joinWithAnd(comboComponentNames)}`}</span>
+                    <span className="font-serif italic">{`${t('feed.covering')} ${joinWithAnd(comboComponentNames)}`}</span>
                   </>
                 ) : city
               ) : (
                 neighborhoodCount !== undefined
-                  ? `Your curated feed from ${neighborhoodCount} locations`
+                  ? `${t('feed.curatedFeed')} ${neighborhoodCount} ${t('feed.locations')}`
                   : '\u00A0'
               )}
             </p>
@@ -121,7 +123,7 @@ export function NeighborhoodHeader({
                     rel="noopener noreferrer"
                     className="text-xs text-fg-subtle underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60 hover:text-fg-muted transition-colors"
                   >
-                    Maps
+                    {t('feed.maps')}
                   </a>
                   <a
                     href={getWikipediaUrl(neighborhoodId, neighborhoodName)}
@@ -129,7 +131,7 @@ export function NeighborhoodHeader({
                     rel="noopener noreferrer"
                     className="text-xs text-fg-subtle underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60 hover:text-fg-muted transition-colors"
                   >
-                    History
+                    {t('header.history')}
                   </a>
                 </>
               ) : '\u00A0'}
@@ -165,7 +167,7 @@ export function NeighborhoodHeader({
             {/* Combo subtitle */}
             {isCombo && (
               <p className="font-serif italic text-base text-fg-subtle mb-3">
-                Covering {joinWithAnd(componentNames)}
+                {t('feed.covering')} {joinWithAnd(componentNames)}
               </p>
             )}
 
@@ -216,7 +218,7 @@ export function NeighborhoodHeader({
                           onClick={() => setOpenDropdown(openDropdown === 'guide' ? null : 'guide')}
                           className={linkClass}
                         >
-                          GUIDE
+                          {t('header.guide').toUpperCase()}
                         </button>
                         {openDropdown === 'guide' && (
                           <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-border shadow-sm rounded py-2 min-w-[160px] z-10">
@@ -239,7 +241,7 @@ export function NeighborhoodHeader({
                           onClick={() => setOpenDropdown(openDropdown === 'map' ? null : 'map')}
                           className={linkClass}
                         >
-                          MAP
+                          {t('header.map').toUpperCase()}
                         </button>
                         {openDropdown === 'map' && (
                           <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-border shadow-sm rounded py-2 min-w-[160px] z-10">
@@ -264,7 +266,7 @@ export function NeighborhoodHeader({
                           onClick={() => setOpenDropdown(openDropdown === 'history' ? null : 'history')}
                           className={linkClass}
                         >
-                          HISTORY
+                          {t('header.history').toUpperCase()}
                         </button>
                         {openDropdown === 'history' && (
                           <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-border shadow-sm rounded py-2 min-w-[160px] z-10">
@@ -286,7 +288,7 @@ export function NeighborhoodHeader({
                   ) : (
                     <>
                       <Link href={`/${citySlug}/${neighborhoodSlug}/guides`} className={linkClass}>
-                        GUIDE
+                        {t('header.guide').toUpperCase()}
                       </Link>
                       <a
                         href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(neighborhoodId, neighborhoodName, city))}`}
@@ -294,7 +296,7 @@ export function NeighborhoodHeader({
                         rel="noopener noreferrer"
                         className={linkClass}
                       >
-                        MAP
+                        {t('header.map').toUpperCase()}
                       </a>
                       <a
                         href={getWikipediaUrl(neighborhoodId, neighborhoodName)}
@@ -302,7 +304,7 @@ export function NeighborhoodHeader({
                         rel="noopener noreferrer"
                         className={linkClass}
                       >
-                        HISTORY
+                        {t('header.history').toUpperCase()}
                       </a>
                     </>
                   )}
@@ -328,7 +330,7 @@ export function NeighborhoodHeader({
                         className="block px-4 py-2 text-xs tracking-[0.2em] uppercase text-fg-muted hover:text-fg hover:bg-hover"
                         onClick={() => setOpenDropdown(null)}
                       >
-                        Guide
+                        {t('header.guide')}
                       </Link>
                       <a
                         href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(neighborhoodId, neighborhoodName, city))}`}
@@ -337,7 +339,7 @@ export function NeighborhoodHeader({
                         className="block px-4 py-2 text-xs tracking-[0.2em] uppercase text-fg-muted hover:text-fg hover:bg-hover"
                         onClick={() => setOpenDropdown(null)}
                       >
-                        Map
+                        {t('header.map')}
                       </a>
                       <a
                         href={getWikipediaUrl(neighborhoodId, neighborhoodName)}
@@ -346,7 +348,7 @@ export function NeighborhoodHeader({
                         className="block px-4 py-2 text-xs tracking-[0.2em] uppercase text-fg-muted hover:text-fg hover:bg-hover"
                         onClick={() => setOpenDropdown(null)}
                       >
-                        History
+                        {t('header.history')}
                       </a>
                     </div>
                   )}

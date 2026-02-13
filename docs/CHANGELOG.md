@@ -5,6 +5,23 @@
 
 ## 2026-02-13
 
+**Language Translation System (Batch Pre-Translation):**
+- New DB tables: `article_translations` and `brief_translations` with unique constraints on (article_id/brief_id, language_code), lookup indexes, RLS (public read, service_role write)
+- `useLanguage()` hook + `LanguageProvider` React context: manages language state, browser detection via `navigator.languages`, localStorage `flaneur-language`, `document.documentElement.lang` updates
+- `LanguageToggle` component: greyscale Union Jack SVG icon. OFF state: click auto-detects device language. ON state: flag + amber language code badge ("SV", "FR"). Click flag = English, click badge = picker dropdown. Placed in Header desktop nav and mobile hamburger.
+- `translations.ts`: ~90 UI string keys per language for 6 languages (en, sv, fr, de, es, ja). `t(key, language)` lookup with English fallback.
+- `useTranslation()` convenience hook wraps `useLanguageContext()` + `t()`
+- `translation-service.ts`: Gemini Flash translation wrapper with exponential retry (2s, 5s, 15s backoff on 429). Preserves local language words, proper nouns, bold/header markers.
+- `translate-content` cron (*/30, maxDuration=300): Phase 1 translates articles from last 48h, Phase 2 translates enriched briefs. Concurrency 3, upsert with onConflict. Logs to `cron_executions`.
+- API endpoints: `GET /api/translations/article` and `GET /api/translations/brief` with 1h cache headers
+- `TranslatedArticleBody` + `TranslatedHeadline`: client components for article pages, fetch translations and fall back to English
+- `TranslatedArticleNav`: `BackToFeedLink` + `MoreStoriesButton` client wrappers for translated nav strings in server-rendered article page
+- `CompactArticleCard`: fetches translated headline + preview text when language != English
+- `NeighborhoodBrief`: fetches translated brief content when language != English
+- UI chrome strings wired via `t()` into: Header (nav links), Footer (all links + copyright), MultiFeed (All Stories, PRIMARY, dropdown items, empty states), FeedList (empty state), BackToTopButton, NeighborhoodHeader (GUIDE/MAP/HISTORY, Covering, curated feed), ContextSwitcher (All Neighborhoods, Primary, Set primary, Customize List), WelcomeBanner (Viewing stories near, Customize), NeighborhoodBrief (DAILY BRIEF, Show less, Read more, Synthesized, Sources, archive strings), search page (all labels)
+- Flash prevention: inline script in layout.tsx sets `document.documentElement.lang` from stored preference before first paint
+- NOT translated: email templates (stay English per CLAUDE.md rule), admin pages, neighborhood/city names, ad content
+
 **Search Page UX Polish:**
 - Added X close button (top-right, uses `router.back()`) so users can dismiss search on mobile
 - Rounded corners (`rounded-lg`) on search input, submit button, result cards, and empty state

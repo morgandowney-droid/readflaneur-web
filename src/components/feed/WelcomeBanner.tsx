@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const DISMISSED_KEY = 'flaneur-welcome-dismissed';
 
@@ -11,6 +12,7 @@ export function WelcomeBanner() {
   const router = useRouter();
   const { openModal } = useNeighborhoodModal();
   const [visible, setVisible] = useState(false);
+  const { t } = useTranslation();
   const welcomeCity = searchParams.get('welcome');
 
   useEffect(() => {
@@ -45,13 +47,13 @@ export function WelcomeBanner() {
   return (
     <div className="bg-surface border-b border-border-strong px-4 py-3 mb-4 flex items-center justify-between gap-3">
       <p className="text-sm text-fg-muted">
-        Viewing stories near{' '}
+        {t('welcome.viewingNear')}{' '}
         <span className="text-fg font-medium">{welcomeCity}</span>.{' '}
         <button
           onClick={handleCustomize}
           className="text-amber-500 hover:text-amber-400 font-medium underline underline-offset-2 decoration-amber-500/40"
         >
-          Customize
+          {t('welcome.customize')}
         </button>
       </p>
       <button

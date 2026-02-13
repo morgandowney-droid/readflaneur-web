@@ -1,9 +1,11 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Article } from '@/types';
 import { cityToSlug, neighborhoodToSlug } from '@/lib/utils';
+import { useLanguageContext } from '@/components/providers/LanguageProvider';
 
 interface CompactArticleCardProps {
   article: Article;
@@ -39,6 +41,37 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
   const articleUrl = `/${citySlug}/${neighborhoodSlug}/${article.slug || article.id}`;
 
   const blurb = article.preview_text ? truncateAtSentence(article.preview_text, 200) : '';
+
+  // Translation support
+  const { language, isTranslated } = useLanguageContext();
+  const [translatedHeadline, setTranslatedHeadline] = useState<string | null>(null);
+  const [translatedBlurb, setTranslatedBlurb] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isTranslated) {
+      setTranslatedHeadline(null);
+      setTranslatedBlurb(null);
+      return;
+    }
+
+    let cancelled = false;
+    fetch(`/api/translations/article?id=${article.id}&lang=${language}`)
+      .then(res => {
+        if (!res.ok) throw new Error('not found');
+        return res.json();
+      })
+      .then(data => {
+        if (!cancelled) {
+          setTranslatedHeadline(data.headline || null);
+          setTranslatedBlurb(data.preview_text || null);
+        }
+      })
+      .catch(() => {
+        // Silently fall back to English
+      });
+
+    return () => { cancelled = true; };
+  }, [article.id, language, isTranslated]);
 
   return (
     <Link href={articleUrl}>
@@ -79,11 +112,11 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
             )}
           </div>
           <h2 className="font-semibold text-lg md:text-xl leading-tight mb-1.5 whitespace-nowrap overflow-hidden">
-            {article.headline}
+            {translatedHeadline || article.headline}
           </h2>
-          {blurb && (
+          {(translatedBlurb || blurb) && (
             <p className="text-[1.05rem] text-fg-muted leading-7">
-              {blurb}
+              {translatedBlurb || blurb}
             </p>
           )}
         </div>

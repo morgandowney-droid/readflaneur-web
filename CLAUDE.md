@@ -14,7 +14,7 @@
 
 ## Last Updated: 2026-02-13
 
-Recent work: Search page UX (close button, rounded corners, luxury styling), Feed empty state CTA (Choose Neighborhoods button opens modal), Theme accent fix (theme-aware accent color, hamburger chip contrast, scroll-close threshold), Full light/dark theme system (CSS variables, useTheme hook, ThemeToggle, semantic Tailwind classes, flash prevention, force-dark hero), Mobile ViewToggle moved above feed (not in dropdown row), Fix generate-brief-articles cron (batch=10 starved 260+ neighborhoods, now processes all in one pass with 36h window), mobile dropdown "Explore" link + empty search -> Community Created tab, rename Community -> Community Created in selector, Mobile neighborhood dropdown (replaces pill scroll on mobile, full list in one tap), Signup page polish (remove role picker, rounded corners, default reader), enrichment-gated brief publishing (email + article cron skip unenriched briefs), custom SMTP via Resend for auth emails, Cloudflare Turnstile CAPTCHA on signup/login, standards page restyle, mobile view toggle consolidation, Mobile UX overhaul (navigation wayfinding, feed layout, selector fixes, auth flow, ad grace period), Community neighborhoods (user-created neighborhoods with AI validation + full brief pipeline), "Create Your Own Neighborhood" house ad, community neighborhoods TypeScript fixes (openModal signature, GlobalRegion exhaustiveness), global 5-email-per-day limit, always-resend on primary neighborhood change, Vercel preview build fix (lazy-init Supabase admin in 6 routes), Hamptons component renames (removed redundant suffix), brief content sanitization fixes (nested-paren URLs, URL-encoded artifacts), neighborhood selector tidy (renames, region consolidation, new neighborhoods), single-line feed headlines, enrichment language/framing fixes, brighter brief section headings, "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
+Recent work: Language translation system (batch pre-translation via Gemini Flash cron, 6 languages, LanguageToggle UI, translated articles/briefs/UI chrome), Search page UX (close button, rounded corners, luxury styling), Feed empty state CTA (Choose Neighborhoods button opens modal), Theme accent fix (theme-aware accent color, hamburger chip contrast, scroll-close threshold), Full light/dark theme system (CSS variables, useTheme hook, ThemeToggle, semantic Tailwind classes, flash prevention, force-dark hero), Mobile ViewToggle moved above feed (not in dropdown row), Fix generate-brief-articles cron (batch=10 starved 260+ neighborhoods, now processes all in one pass with 36h window), mobile dropdown "Explore" link + empty search -> Community Created tab, rename Community -> Community Created in selector, Mobile neighborhood dropdown (replaces pill scroll on mobile, full list in one tap), Signup page polish (remove role picker, rounded corners, default reader), enrichment-gated brief publishing (email + article cron skip unenriched briefs), custom SMTP via Resend for auth emails, Cloudflare Turnstile CAPTCHA on signup/login, standards page restyle, mobile view toggle consolidation, Mobile UX overhaul (navigation wayfinding, feed layout, selector fixes, auth flow, ad grace period), Community neighborhoods (user-created neighborhoods with AI validation + full brief pipeline), "Create Your Own Neighborhood" house ad, community neighborhoods TypeScript fixes (openModal signature, GlobalRegion exhaustiveness), global 5-email-per-day limit, always-resend on primary neighborhood change, Vercel preview build fix (lazy-init Supabase admin in 6 routes), Hamptons component renames (removed redundant suffix), brief content sanitization fixes (nested-paren URLs, URL-encoded artifacts), neighborhood selector tidy (renames, region consolidation, new neighborhoods), single-line feed headlines, enrichment language/framing fixes, brighter brief section headings, "Suggest a Neighborhood" house ad + contact form + admin page, dynamic house ads ("Check Out a New Neighborhood" with discovery brief links), Add to Collection CTA on article pages, bare /feed redirect, Grok search result sanitization, Sunday Edition holidays expanded (19 → 50 across 20 countries), tracked referral system, primary neighborhood sync, Gemini model switch (2.5-pro), feed article dedup, engagement-triggered email capture, smart auto-redirect.
 
 ### Email Capture (Engagement-Triggered)
 - **Trigger:** `flaneur-article-reads` localStorage counter incremented in `ArticleViewTracker`. Threshold: 3 reads.
@@ -40,6 +40,23 @@ Recent work: Search page UX (close button, rounded corners, luxury styling), Fee
 - **Turnstile CAPTCHA:** Cloudflare Turnstile on `/signup` and `/login` pages. Gracefully degrades (no widget shown) when `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is not set. On error, widget resets automatically. Submit button disabled until token received. Dark theme, flexible size. Requires Supabase dashboard CAPTCHA config with the Turnstile secret key.
 - **Custom SMTP:** Auth emails (confirmation, password reset, magic link) sent via Resend SMTP for better deliverability. Configured in Supabase Dashboard > Authentication > SMTP Settings.
 - **Signup form:** Name, email, password only. No role picker (all users default to `reader`). Rounded corners (`rounded-lg`) on all inputs/buttons matching login page.
+
+### Language Translation (Batch Pre-Translation)
+- **Approach:** Batch pre-translate articles and briefs via Gemini Flash cron. UI strings via client-side dictionary.
+- **Languages:** English (default), Swedish (sv), French (fr), German (de), Spanish (es), Japanese (ja)
+- **DB tables:** `article_translations` (article_id, language_code, headline, body, preview_text), `brief_translations` (brief_id, language_code, content, enriched_content). RLS: public read, service_role write.
+- **Hook:** `useLanguage()` (`src/hooks/useLanguage.ts`) - language state, browser detection via `navigator.languages`, localStorage `flaneur-language`
+- **Provider:** `LanguageProvider` (`src/components/providers/LanguageProvider.tsx`) - React context wrapping useLanguage, added to layout.tsx
+- **UI strings:** `src/lib/translations.ts` - ~90 keys per language, `t(key, language)` lookup with English fallback. `useTranslation()` hook wraps context + t().
+- **Toggle:** `LanguageToggle` (`src/components/layout/LanguageToggle.tsx`) - greyscale Union Jack SVG. OFF: click auto-detects language. ON: flag + amber badge ("SV"), click flag = English, click badge = picker dropdown.
+- **Cron:** `translate-content` (*/30, maxDuration=300, 250s budget). Translates articles/briefs from last 48h. Concurrency 3, exponential backoff on 429. Logs to `cron_executions`.
+- **API:** `GET /api/translations/article?id=...&lang=...`, `GET /api/translations/brief?id=...&lang=...` - 1h cache headers, returns translation or 404.
+- **Content integration:** `TranslatedArticleBody` + `TranslatedHeadline` (article pages), `CompactArticleCard` (feed headlines/previews), `NeighborhoodBrief` (brief content) - all fetch translations client-side, fall back to English.
+- **UI chrome:** `t()` wired into Header, Footer, MultiFeed, FeedList, BackToTopButton, NeighborhoodHeader, ContextSwitcher, WelcomeBanner, NeighborhoodBrief, search page
+- **Flash prevention:** Inline script in layout.tsx sets `document.documentElement.lang` from `flaneur-language` localStorage
+- **NOT translated:** Email templates (stay English), admin pages, neighborhood/city names (proper nouns), ad content (advertiser-supplied)
+- **localStorage key:** `flaneur-language` (ISO 639-1 code, absence = English)
+- **Translation service:** `src/lib/translation-service.ts` - Gemini Flash wrapper with retry, preserves local language terms and proper nouns
 
 ### Enrichment-Gated Brief Publishing
 - **Rule:** Brief articles are NEVER created from unenriched (raw Grok) content. Only `enriched_content` from Gemini is used.
@@ -384,6 +401,7 @@ src/
 │       ├── neighborhoods/         # Add, create, count community neighborhoods
 │       ├── suggestions/           # Neighborhood suggestion submissions
 │       ├── discover-neighborhood/ # Resolve nearby unsubscribed brief URL
+│       ├── translations/           # Serve cached article/brief translations
 │       ├── internal/              # Image generation, resend
 │       └── webhooks/              # Resend inbound
 ├── config/
@@ -406,6 +424,8 @@ src/
     ├── brief-enricher-gemini.ts   # Gemini enrichment pipeline
     ├── weekly-brief-service.ts    # Sunday Edition generation
     ├── ad-quality-service.ts      # AI ad review pipeline
+    ├── translations.ts            # UI string dictionaries (6 languages)
+    ├── translation-service.ts     # Gemini Flash translation + DB lookup
     └── weather.ts                 # Server-side Open-Meteo weather fetch (10-min cache)
 ```
 
@@ -430,6 +450,7 @@ src/
 - `referrals` — click/conversion tracking (referral_code, referrer_type/id, referred_email, status, ip_hash)
 - `profiles` — user prefs (primary_city, primary_timezone, paused_topics, referral_code)
 - `newsletter_subscribers` — timezone, paused_topics, referral_code
+- `article_translations` / `brief_translations` — cached Gemini Flash translations (unique on article_id/brief_id + language_code)
 - `rss_sources` — RSS feed URLs by city (192 feeds across 92 cities, 100% coverage)
 
 ## Deployment

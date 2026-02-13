@@ -6,6 +6,7 @@ import { useNeighborhoodPreferences } from '@/hooks/useNeighborhoodPreferences';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { ShareWidget } from '@/components/referral/ShareWidget';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ContextSwitcherProps {
   currentContext: 'all' | string; // 'all' or neighborhood ID
@@ -16,6 +17,7 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { t } = useTranslation();
   const { neighborhoods, primaryId, isLoading, setPrimary } = useNeighborhoodPreferences();
   const { openModal } = useNeighborhoodModal();
 
@@ -118,7 +120,7 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
                 <rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
                 <rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
               </svg>
-              <span className="text-xs uppercase tracking-wide text-fg-muted">All Neighborhoods</span>
+              <span className="text-xs uppercase tracking-wide text-fg-muted">{t('feed.allNeighborhoods')}</span>
               {currentContext === 'all' && (
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="ml-auto text-amber-500 shrink-0">
                   <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -136,7 +138,7 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
                 <div className="h-3 bg-elevated rounded w-2/3 animate-pulse" />
               </div>
             ) : neighborhoods.length === 0 ? (
-              <p className="px-4 py-3 text-xs text-fg-subtle">No neighborhoods selected</p>
+              <p className="px-4 py-3 text-xs text-fg-subtle">{t('feed.noNeighborhoodsSelected')}</p>
             ) : (
               neighborhoods.map((n, i) => {
                 const isPrimary = i === 0 && showPrimary;
@@ -151,7 +153,7 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
                       <span className="flex items-center gap-2">
                         <span className="text-xs text-fg truncate">{n.name}</span>
                         {isPrimary && (
-                          <span className="text-[9px] tracking-wider uppercase text-amber-500/70 font-medium shrink-0">Primary</span>
+                          <span className="text-[9px] tracking-wider uppercase text-amber-500/70 font-medium shrink-0">{t('feed.primary')}</span>
                         )}
                       </span>
                       <span className="text-[10px] text-fg-subtle block">{n.city}</span>
@@ -162,7 +164,7 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
                         className="text-[9px] tracking-wider uppercase text-fg-subtle hover:text-accent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0"
                         title="Set as primary"
                       >
-                        Set primary
+                        {t('feed.setPrimary')}
                       </button>
                     )}
                     {currentContext === n.id && (
@@ -188,7 +190,7 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
                 <circle cx="9" cy="7" r="1.2" fill="currentColor" />
                 <circle cx="6" cy="10" r="1.2" fill="currentColor" />
               </svg>
-              <span className="text-xs text-fg-muted">Customize List...</span>
+              <span className="text-xs text-fg-muted">{t('feed.customizeList')}</span>
             </button>
             {isSubscribed && (
               <ShareWidget compact onDone={() => setOpen(false)} />

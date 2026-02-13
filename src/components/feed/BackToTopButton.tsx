@@ -2,6 +2,7 @@
 
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface BackToTopButtonProps {
   /** Minimum scroll position before showing the button */
@@ -18,6 +19,7 @@ export function BackToTopButton({
   hasNewContent = false,
 }: BackToTopButtonProps) {
   const { scrollY } = useScrollDirection();
+  const { t } = useTranslation();
 
   const shouldShow = scrollY > showAfter || hasNewContent;
 
@@ -42,7 +44,7 @@ export function BackToTopButton({
       style={{
         animation: 'fadeIn 0.2s ease-out'
       }}
-      aria-label={label || 'Back to top'}
+      aria-label={label || t('feed.backToTop')}
     >
       <svg
         className="w-4 h-4"
@@ -57,7 +59,7 @@ export function BackToTopButton({
           d="M5 10l7-7m0 0l7 7m-7-7v18"
         />
       </svg>
-      <span className="hidden md:inline">{label || 'Back to top'}</span>
+      <span className="hidden md:inline">{label || t('feed.backToTop')}</span>
     </button>
   );
 }

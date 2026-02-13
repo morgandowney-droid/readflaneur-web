@@ -10,6 +10,8 @@ import type { User } from '@supabase/supabase-js';
 import type { Section, Neighborhood } from '@/types';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { LanguageToggle } from '@/components/layout/LanguageToggle';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
 
@@ -24,6 +26,7 @@ export function Header() {
   const [selectedNeighborhoods, setSelectedNeighborhoods] = useState<Neighborhood[]>([]);
   const { scrollDirection, scrollY } = useScrollDirection({ threshold: 10 });
   const { openModal, isOpen: modalIsOpen } = useNeighborhoodModal();
+  const { t } = useTranslation();
 
   // Determine if we're on a feed page where hiding should be enabled
   const isFeedPage = pathname === '/feed' || pathname.match(/^\/[^/]+\/[^/]+$/);
@@ -311,9 +314,10 @@ export function Header() {
                 : 'text-fg-subtle border-transparent'
             )}
           >
-            Neighborhoods
+            {t('nav.neighborhoods')}
           </button>
 
+          <LanguageToggle />
           <ThemeToggle />
           {user ? (
             <div className="flex items-center gap-4">
@@ -346,13 +350,13 @@ export function Header() {
                   pathname === '/feed' ? 'text-fg font-medium border-amber-500' : 'text-fg-subtle border-transparent'
                 )}
               >
-                Stories
+                {t('nav.stories')}
               </Link>
               <button
                 onClick={handleSignOut}
                 className="text-[11px] tracking-[0.2em] uppercase text-fg-subtle hover:text-fg transition-colors min-h-[44px]"
               >
-                Sign Out
+                {t('nav.signOut')}
               </button>
             </div>
           ) : (
@@ -364,7 +368,7 @@ export function Header() {
                   pathname === '/signup' ? 'text-fg font-medium' : 'text-fg-subtle'
                 )}
               >
-                Sign Up
+                {t('nav.signUp')}
               </Link>
             </>
           )}
@@ -384,6 +388,7 @@ export function Header() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </Link>
+          <LanguageToggle className="md:hidden" />
           <ThemeToggle className="md:hidden" />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -412,7 +417,7 @@ export function Header() {
             {selectedNeighborhoods.length > 0 && (
               <div className="py-4 border-b border-border">
                 <p className="text-[10px] tracking-widest uppercase text-fg-muted mb-3 text-right">
-                  Your Neighborhoods
+                  {t('nav.yourNeighborhoods')}
                 </p>
                 <div className="flex flex-wrap gap-2 justify-end">
                   {selectedNeighborhoods.slice(0, 6).map((hood) => (
@@ -427,7 +432,7 @@ export function Header() {
                   ))}
                   {selectedNeighborhoods.length > 6 && (
                     <span className="text-xs text-fg-muted py-1.5">
-                      +{selectedNeighborhoods.length - 6} more
+                      +{selectedNeighborhoods.length - 6} {t('general.more')}
                     </span>
                   )}
                 </div>
@@ -438,7 +443,7 @@ export function Header() {
                   }}
                   className="mt-3 text-sm text-accent-muted hover:text-accent transition-colors block text-right w-full"
                 >
-                  Edit Neighborhoods
+                  {t('nav.editNeighborhoods')}
                 </button>
               </div>
             )}
@@ -455,7 +460,7 @@ export function Header() {
                   pathname === '/neighborhoods' || pathname === '/feed' ? 'text-fg font-medium' : 'text-fg-muted'
                 )}
               >
-                Choose Neighborhoods
+                {t('nav.chooseNeighborhoods')}
               </button>
             )}
 
@@ -463,7 +468,7 @@ export function Header() {
             {sections.length > 0 && (
               <div className="py-4 border-b border-border">
                 <p className="text-[10px] tracking-widest uppercase text-fg-muted mb-3 text-right">
-                  Browse by Section
+                  {t('nav.browseBySection')}
                 </p>
                 <div className="flex flex-wrap gap-2 justify-end">
                   {sections.map((section) => (
@@ -489,7 +494,7 @@ export function Header() {
                 pathname === '/feed' ? 'text-fg font-medium' : 'text-fg-muted'
               )}
             >
-              Stories
+              {t('nav.stories')}
             </Link>
 
             {user ? (
@@ -503,7 +508,7 @@ export function Header() {
                       pathname.startsWith('/admin') ? 'text-fg font-medium' : 'text-fg-muted'
                     )}
                   >
-                    Admin
+                    {t('nav.admin')}
                   </Link>
                 )}
                 {isAdmin && (
@@ -515,7 +520,7 @@ export function Header() {
                       pathname.startsWith('/advertiser') ? 'text-fg font-medium' : 'text-fg-muted'
                     )}
                   >
-                    Dashboard
+                    {t('nav.dashboard')}
                   </Link>
                 )}
                 <button
@@ -525,7 +530,7 @@ export function Header() {
                   }}
                   className="text-sm tracking-widest uppercase text-fg-muted hover:text-fg transition-colors text-right py-3 w-full"
                 >
-                  Sign Out
+                  {t('nav.signOut')}
                 </button>
               </>
             ) : (
@@ -537,7 +542,7 @@ export function Header() {
                   pathname === '/signup' ? 'text-fg font-medium' : 'text-fg-subtle'
                 )}
               >
-                Sign Up
+                {t('nav.signUp')}
               </Link>
             )}
           </nav>

@@ -7,6 +7,7 @@ import { PersonaSwitcher } from '@/components/admin/PersonaSwitcher';
 import { NeighborhoodModalProvider } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 import { LocationPrompt } from '@/components/location/LocationPrompt';
 import { ReturnVisitPrompt } from '@/components/feed/ReturnVisitPrompt';
+import { LanguageProvider } from '@/components/providers/LanguageProvider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -58,18 +59,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${cormorant.variable} ${merriweather.variable} font-sans antialiased bg-canvas text-fg`}>
-        {/* Inline theme: set data-theme before first paint to prevent flash */}
-        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem("flaneur-theme");if(t==="light"||t==="dark"){document.documentElement.setAttribute("data-theme",t)}}catch(e){}})()` }} />
+        {/* Inline theme + language: set before first paint to prevent flash */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem("flaneur-theme");if(t==="light"||t==="dark"){document.documentElement.setAttribute("data-theme",t)}var l=localStorage.getItem("flaneur-language");if(l&&l!=="en"){document.documentElement.lang=l}}catch(e){}})()` }} />
         {/* Inline redirect: returning users go straight to feed before React hydration */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{if(location.pathname!=="/")return;var s=localStorage.getItem("flaneur-neighborhood-preferences");if(!s)return;var ids=JSON.parse(s);if(Array.isArray(ids)&&ids.length>0){window.location.replace("/feed?neighborhoods="+ids.join(","))}}catch(e){}})()` }} />
-        <NeighborhoodModalProvider>
-          <Header />
-          <main>{children}</main>
-          <Footer />
-          <PersonaSwitcher />
-          <LocationPrompt />
-          <ReturnVisitPrompt />
-        </NeighborhoodModalProvider>
+        <LanguageProvider>
+          <NeighborhoodModalProvider>
+            <Header />
+            <main>{children}</main>
+            <Footer />
+            <PersonaSwitcher />
+            <LocationPrompt />
+            <ReturnVisitPrompt />
+          </NeighborhoodModalProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

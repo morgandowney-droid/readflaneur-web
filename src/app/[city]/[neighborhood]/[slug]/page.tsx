@@ -8,13 +8,14 @@ import { FallbackAd } from '@/components/feed/FallbackAd';
 import { ArticleViewTracker } from '@/components/tracking/ArticleViewTracker';
 import { ArticleReactions } from '@/components/article/ArticleReactions';
 import { PostReadEmailCapture } from '@/components/article/PostReadEmailCapture';
-import { ArticleBody } from '@/components/article/ArticleBody';
+import { TranslatedArticleBody, TranslatedHeadline } from '@/components/article/TranslatedArticleBody';
 import { AIImageDisclaimer, AIImageBadge } from '@/components/article/AIImageDisclaimer';
 import { SourceAttribution } from '@/components/article/SourceAttribution';
 import { Ad } from '@/types';
 import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
 import { getFallback } from '@/lib/FallbackService';
 import type { FallbackData } from '@/components/feed/FallbackAd';
+import { BackToFeedLink, MoreStoriesButton } from '@/components/article/TranslatedArticleNav';
 
 interface ArticlePageProps {
   params: Promise<{
@@ -124,14 +125,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       <ArticleViewTracker articleId={article.id} />
 
       <div className="mx-auto max-w-2xl">
-        {/* Back link — goes to main feed (user's neighborhoods loaded from localStorage) */}
-        <Link
-          href="/feed"
-          className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-fg-muted hover:text-fg mb-8"
-        >
-          <span>&larr;</span>
-          <span>All Stories</span>
-        </Link>
+        {/* Back link - goes to main feed (user's neighborhoods loaded from localStorage) */}
+        <BackToFeedLink />
 
         {/* Top Story Open Ad */}
         <div className="mb-8">
@@ -195,7 +190,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   )}
                 </div>
                 <h1 className="text-3xl font-light leading-tight mb-6">
-                  {article.headline}
+                  <TranslatedHeadline articleId={article.id} headline={article.headline} />
                 </h1>
                 {article.author?.full_name && (
                   <p className="text-sm text-fg-subtle">
@@ -231,7 +226,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         })()}
 
         {/* Article Body */}
-        <ArticleBody
+        <TranslatedArticleBody
+          articleId={article.id}
           content={article.body_text}
           neighborhoodName={article.neighborhood?.name || ''}
           city={article.neighborhood?.city || ''}
@@ -297,12 +293,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
         {/* More stories */}
         <div className="mt-12 pt-8 border-t border-border text-center">
-          <Link
-            href="/feed"
-            className="inline-block bg-white text-neutral-900 px-8 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors"
-          >
-            More Stories
-          </Link>
+          <MoreStoriesButton />
         </div>
 
         {/* Explore nearby neighborhoods */}
