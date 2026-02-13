@@ -5,6 +5,10 @@
 
 ## 2026-02-13
 
+**Block AI Scrapers via robots.txt:**
+- Added 6 more AI crawler user-agents (Meta-ExternalAgent, Meta-ExternalFetcher, Timpibot, img2dataset, Scrapy, Webzio-Extended) to `src/app/robots.ts`. Now blocks 21 AI training bots total.
+- Fixed sitemap URL from `flaneur.me` to `readflaneur.com`.
+
 **Wire Translations into Remaining Components:**
 - `EmailCaptureCard.tsx`: Wired `useTranslation()` for headline, description, placeholder, button, error messages.
 - `MagicLinkReminder.tsx`: Wired `useTranslation()` for prompt text, placeholder, button.
