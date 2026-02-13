@@ -45,7 +45,7 @@ export function FeedList({ items, view = 'gallery' }: FeedListProps) {
   }
 
   return (
-    <div className={view === 'compact' ? 'space-y-0' : 'space-y-4'}>
+    <div className={view === 'compact' ? 'space-y-0' : 'space-y-6 md:space-y-4'}>
       {displayItems.map((item, index) => {
         if (item.type === 'email-prompt') {
           return (

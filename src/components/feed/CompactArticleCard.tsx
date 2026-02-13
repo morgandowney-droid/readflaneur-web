@@ -73,52 +73,78 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
     return () => { cancelled = true; };
   }, [article.id, language, isTranslated]);
 
+  const metadataRow = (
+    <div className="flex items-center gap-2 text-xs text-fg-muted mb-1 overflow-hidden whitespace-nowrap">
+      <span className="uppercase tracking-wider shrink-0">{article.neighborhood?.name}</span>
+      {article.published_at && (
+        <>
+          <span className="shrink-0">&middot;</span>
+          <span className="shrink-0">{formatDate(article.published_at)}</span>
+        </>
+      )}
+      {article.category_label && (
+        <>
+          <span className="shrink-0">&middot;</span>
+          <span className="text-fg-muted italic truncate max-w-[120px]">
+            {article.category_label.replace(new RegExp(`^${article.neighborhood?.name}\\s+`, 'i'), '')}
+          </span>
+        </>
+      )}
+    </div>
+  );
+
+  const headlineEl = (
+    <h2 className="font-semibold text-lg md:text-xl leading-tight mb-1.5 whitespace-nowrap overflow-hidden">
+      {translatedHeadline || article.headline}
+    </h2>
+  );
+
+  const imageEl = article.image_url ? (
+    <div className="relative w-24 h-24 flex-shrink-0">
+      <Image
+        src={article.image_url}
+        alt={article.headline}
+        fill
+        className="object-cover"
+        sizes="96px"
+      />
+      {(article.article_type === 'community_news' || article.article_type === 'brief_summary' || article.author_type === 'ai') && (
+        <div className="absolute bottom-1 left-1 bg-black/70 text-white text-[9px] px-1.5 py-0.5 rounded" title="AI-generated illustration">
+          AI
+        </div>
+      )}
+    </div>
+  ) : null;
+
   return (
     <Link href={articleUrl}>
-      <article className="flex gap-4 py-4 border-b border-border hover:bg-hover transition-colors">
-        {article.image_url && (
-          <div className="relative w-24 h-24 flex-shrink-0">
-            <Image
-              src={article.image_url}
-              alt={article.headline}
-              fill
-              className="object-cover"
-              sizes="96px"
-            />
-            {/* AI badge for AI-generated content */}
-            {(article.article_type === 'community_news' || article.article_type === 'brief_summary' || article.author_type === 'ai') && (
-              <div className="absolute bottom-1 left-1 bg-black/70 text-white text-[9px] px-1.5 py-0.5 rounded" title="AI-generated illustration">
-                AI
-              </div>
+      <article className="py-4 border-b border-border hover:bg-hover transition-colors">
+        {/* Desktop: original row layout */}
+        <div className="hidden md:flex gap-4">
+          {imageEl}
+          <div className="flex-1 min-w-0">
+            {metadataRow}
+            {headlineEl}
+            {(translatedBlurb || blurb) && (
+              <p className="text-[1.05rem] text-fg-muted leading-7">
+                {translatedBlurb || blurb}
+              </p>
             )}
           </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 text-xs text-fg-muted mb-1 overflow-hidden whitespace-nowrap">
-            <span className="uppercase tracking-wider shrink-0">{article.neighborhood?.name}</span>
-            {article.published_at && (
-              <>
-                <span className="shrink-0">&middot;</span>
-                <span className="shrink-0">{formatDate(article.published_at)}</span>
-              </>
-            )}
-            {article.category_label && (
-              <>
-                <span className="shrink-0">&middot;</span>
-                <span className="text-fg-muted italic truncate max-w-[120px]">
-                  {article.category_label.replace(new RegExp(`^${article.neighborhood?.name}\\s+`, 'i'), '')}
-                </span>
-              </>
+        </div>
+
+        {/* Mobile: metadata + headline above, then image + blurb row */}
+        <div className="md:hidden">
+          {metadataRow}
+          {headlineEl}
+          <div className="flex gap-4">
+            {imageEl}
+            {(translatedBlurb || blurb) && (
+              <p className="flex-1 min-w-0 text-[1.05rem] text-fg-muted leading-7">
+                {translatedBlurb || blurb}
+              </p>
             )}
           </div>
-          <h2 className="font-semibold text-lg md:text-xl leading-tight mb-1.5 whitespace-nowrap overflow-hidden">
-            {translatedHeadline || article.headline}
-          </h2>
-          {(translatedBlurb || blurb) && (
-            <p className="text-[1.05rem] text-fg-muted leading-7">
-              {translatedBlurb || blurb}
-            </p>
-          )}
         </div>
       </article>
     </Link>

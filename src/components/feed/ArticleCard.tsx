@@ -87,6 +87,30 @@ export function ArticleCard({ article }: ArticleCardProps) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
+        {/* Mobile: metadata + headline above image */}
+        {!isHovered && (
+          <div className="md:hidden px-4 pt-3 pb-2">
+            <div className="flex items-center gap-2 text-xs text-fg-muted mb-1">
+              <span className="uppercase tracking-wider">
+                {article.neighborhood?.name}
+              </span>
+              <span>&middot;</span>
+              <span>{formatRelativeTime(article.created_at)}</span>
+              {article.category_label && (
+                <>
+                  <span>&middot;</span>
+                  <span className="text-fg-muted italic">
+                    {article.category_label}
+                  </span>
+                </>
+              )}
+            </div>
+            <h2 className="text-fg text-xl font-semibold leading-tight line-clamp-2">
+              {article.headline}
+            </h2>
+          </div>
+        )}
+
         <div className="relative aspect-video w-full bg-elevated">
           {article.image_url ? (
             <Image
@@ -103,11 +127,12 @@ export function ArticleCard({ article }: ArticleCardProps) {
               </svg>
             </div>
           )}
+          {/* Desktop: overlay on image (hidden on mobile since text is above) */}
           {!isHovered && (
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="hidden md:block absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           )}
           {!isHovered && (
-            <div className="absolute bottom-0 left-0 right-0 p-4">
+            <div className="hidden md:block absolute bottom-0 left-0 right-0 p-4">
               <div className="flex items-center gap-2 text-xs text-white/70 mb-1">
                 <span className="uppercase tracking-wider">
                   {article.neighborhood?.name}

@@ -5,6 +5,11 @@
 
 ## 2026-02-13
 
+**Mobile Feed Card Layouts:**
+- Gallery view (ArticleCard): metadata + headline now render above image on mobile (`md:hidden` block with `line-clamp-2` for 2-line headline cap). Desktop retains gradient overlay on image.
+- Compact view (CompactArticleCard): metadata + headline render full-width above image on mobile. Image + blurb sit side-by-side below. Desktop keeps original row layout.
+- Gallery view spacing: increased from `space-y-4` to `space-y-6` on mobile, `md:space-y-4` on desktop.
+
 **Language Translation System (Batch Pre-Translation):**
 - New DB tables: `article_translations` and `brief_translations` with unique constraints on (article_id/brief_id, language_code), lookup indexes, RLS (public read, service_role write)
 - `useLanguage()` hook + `LanguageProvider` React context: manages language state, browser detection via `navigator.languages`, localStorage `flaneur-language`, `document.documentElement.lang` updates
