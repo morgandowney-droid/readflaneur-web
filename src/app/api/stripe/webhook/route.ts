@@ -21,11 +21,12 @@ export async function POST(request: NextRequest) {
 
   try {
     // If webhook secret is configured, verify signature
-    if (process.env.STRIPE_WEBHOOK_SECRET) {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
+    if (webhookSecret) {
       event = getStripe().webhooks.constructEvent(
         body,
         signature,
-        process.env.STRIPE_WEBHOOK_SECRET
+        webhookSecret
       );
     } else {
       // Log warning if webhook secret is missing in production
