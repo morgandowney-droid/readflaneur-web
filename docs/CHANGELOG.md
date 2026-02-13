@@ -5,6 +5,17 @@
 
 ## 2026-02-13
 
+**Search Page UX Polish:**
+- Added X close button (top-right, uses `router.back()`) so users can dismiss search on mobile
+- Rounded corners (`rounded-lg`) on search input, submit button, result cards, and empty state
+- Tighter mobile padding (`py-8` vs `py-12`), neighborhood labels uppercase-tracked
+- Result excerpts hidden on mobile (`hidden md:block`) for compact cards
+- Fixed `text-neutral-600` search icon placeholder to `text-fg-subtle`
+
+**Feed Empty State CTA:**
+- Replaced plain "Select neighborhoods to see local stories" text with centered "Choose Neighborhoods" button
+- Button opens the neighborhood selector modal, fixing the dead-end state when arriving at bare `/feed` with no neighborhoods (e.g., search -> article -> "All Stories" back link)
+
 **Theme Accent & Contrast Fixes:**
 - Added `--theme-accent` CSS variable: `#fbbf24` (amber-400) in dark mode, `#b45309` (amber-700) in light mode. Registered as `text-accent` / `text-accent-muted` via `@theme inline`.
 - Replaced all `text-amber-400` selected/interactive states with `text-accent` in NeighborhoodSelectorModal, MultiFeed, ContextSwitcher, and Header hamburger. Fixes near-invisible selected text in light mode (amber-400 on white = 1.7:1 contrast ratio).
