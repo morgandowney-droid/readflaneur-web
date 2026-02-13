@@ -65,6 +65,10 @@ export function MultiFeed({
   const [hasMoreFiltered, setHasMoreFiltered] = useState(true);
   const { openModal } = useNeighborhoodModal();
 
+  // Mobile dropdown state
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   // Pill bar scroll state
   const pillsRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -86,6 +90,18 @@ export function MultiFeed({
     ro.observe(el);
     return () => { el.removeEventListener('scroll', checkScroll); ro.disconnect(); };
   }, [checkScroll, neighborhoods.length]);
+
+  // Close mobile dropdown on outside click
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [dropdownOpen]);
 
   const scrollPills = (direction: 'left' | 'right') => {
     const el = pillsRef.current;
@@ -308,6 +324,28 @@ export function MultiFeed({
   // Get active neighborhood info for header
   const activeHood = activeFilter ? neighborhoods.find(n => n.id === activeFilter) : null;
 
+  // Shared control buttons (manage + view toggle) used by both mobile and desktop
+  const controlButtons = (
+    <div className="shrink-0 flex items-center gap-1 pl-2 border-l border-neutral-800">
+      <button
+        onClick={() => openModal()}
+        className="text-neutral-500 hover:text-white transition-colors p-1.5"
+        title="Manage neighborhoods"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <circle cx="5" cy="4" r="1.5" fill="currentColor" />
+          <circle cx="11" cy="8" r="1.5" fill="currentColor" />
+          <circle cx="7" cy="12" r="1.5" fill="currentColor" />
+        </svg>
+      </button>
+      <ViewToggle
+        view={currentView}
+        onChange={isHydrated ? handleViewChange : () => {}}
+      />
+    </div>
+  );
+
   const loadMoreFiltered = async () => {
     if (!activeFilter || !fetchedArticles) return;
     setMoreLoading(true);
@@ -344,10 +382,95 @@ export function MultiFeed({
     <div>
       <BackToTopButton showAfter={400} />
 
-      {/* ── PILL BAR (above masthead for vertical stability) ── */}
+      {/* ── NEIGHBORHOOD NAV (above masthead for vertical stability) ── */}
       {isMultiple && (
         <div className="md:sticky md:top-[60px] z-20 md:bg-[#050505]/95 md:backdrop-blur-md">
-          <div className="flex items-center gap-1 py-3">
+
+          {/* MOBILE: Dropdown + controls */}
+          <div className="md:hidden relative flex items-center gap-2 py-3" ref={dropdownRef}>
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex-1 flex items-center justify-between bg-[#121212] border border-white/10 rounded-lg px-4 py-2.5 text-left min-w-0"
+            >
+              <div className="min-w-0">
+                {activeHood ? (
+                  <>
+                    <div className="text-sm font-medium text-white truncate">{activeHood.name}</div>
+                    <div className="text-[10px] text-neutral-500 truncate">{activeHood.city}</div>
+                  </>
+                ) : (
+                  <div className="text-sm font-medium text-white">All Stories</div>
+                )}
+              </div>
+              <svg
+                width="16" height="16" viewBox="0 0 16 16" fill="none"
+                className={`shrink-0 ml-2 text-neutral-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+              >
+                <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+
+            {dropdownOpen && (
+              <div className="absolute top-full left-0 right-12 mt-1 bg-[#121212] border border-white/10 rounded-lg shadow-2xl max-h-[60vh] overflow-y-auto z-30">
+                {/* All Stories option */}
+                <button
+                  onClick={() => { setActiveFilter(null); setDropdownOpen(false); }}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                    activeFilter === null ? 'bg-white/5' : 'hover:bg-white/5'
+                  }`}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-neutral-500">
+                    <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                    <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                    <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                    <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                  </svg>
+                  <span className="text-sm text-white font-medium">All Stories</span>
+                  {activeFilter === null && (
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto shrink-0 text-amber-500">
+                      <path d="M2.5 7l3 3 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+
+                <div className="border-t border-white/[0.06]" />
+
+                {/* Neighborhood list */}
+                {neighborhoods.map((hood, i) => (
+                  <button
+                    key={hood.id}
+                    onClick={() => { setActiveFilter(activeFilter === hood.id ? null : hood.id); setDropdownOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                      activeFilter === hood.id ? 'bg-white/5' : 'hover:bg-white/5'
+                    }`}
+                  >
+                    <span className={`shrink-0 w-2 h-2 rounded-full ${
+                      i === 0 ? 'bg-amber-500' : 'bg-neutral-600'
+                    }`} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-white truncate">{hood.name}</span>
+                        {i === 0 && (
+                          <span className="text-[8px] tracking-wider font-bold text-amber-500/60 shrink-0">PRIMARY</span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-neutral-500 truncate">{hood.city}</div>
+                    </div>
+                    {activeFilter === hood.id && (
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto shrink-0 text-amber-500">
+                        <path d="M2.5 7l3 3 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {controlButtons}
+          </div>
+
+          {/* DESKTOP: Pill bar (unchanged) */}
+          <div className="hidden md:flex items-center gap-1 py-3">
             {/* Left scroll arrow */}
             <button
               onClick={() => scrollPills('left')}
@@ -359,60 +482,58 @@ export function MultiFeed({
 
             {/* Scrollable pills with fade indicators */}
             <div className="relative overflow-hidden flex-1">
-              {/* Left fade */}
               {canScrollLeft && (
                 <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#050505] to-transparent z-10 pointer-events-none" />
               )}
-              {/* Right fade */}
               {canScrollRight && (
                 <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none" />
               )}
-            <div
-              ref={pillsRef}
-              className="flex items-center gap-2 overflow-x-auto no-scrollbar"
-            >
-              {/* "All" pill */}
-              <button
-                onClick={() => setActiveFilter(null)}
-                className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors ${
-                  activeFilter === null
-                    ? 'bg-white/10 text-white border border-white/20'
-                    : 'bg-transparent text-neutral-400 border border-neutral-800 hover:border-neutral-500 hover:text-white'
-                }`}
+              <div
+                ref={pillsRef}
+                className="flex items-center gap-2 overflow-x-auto no-scrollbar"
               >
-                All Stories
-              </button>
-
-              {neighborhoods.map((hood, i) => (
+                {/* "All" pill */}
                 <button
-                  key={hood.id}
-                  ref={(el) => { pillRefs.current[i] = el; }}
-                  onPointerDown={(e) => handlePointerDown(e, i)}
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                  onClick={() => { if (isDragging.current) return; setActiveFilter(activeFilter === hood.id ? null : hood.id); }}
-                  className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors flex items-center gap-1.5 cursor-grab active:cursor-grabbing select-none touch-none ${
-                    dragIndex === i && isDragging.current ? 'opacity-50' : ''
-                  } ${
-                    overIndex === i && dragIndex !== null && dragIndex !== i ? 'border-l-2 border-l-amber-500' : ''
-                  } ${
-                    activeFilter === hood.id
+                  onClick={() => setActiveFilter(null)}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors ${
+                    activeFilter === null
                       ? 'bg-white/10 text-white border border-white/20'
                       : 'bg-transparent text-neutral-400 border border-neutral-800 hover:border-neutral-500 hover:text-white'
                   }`}
-                  title={hood.combo_component_names?.length ? `Includes: ${hood.combo_component_names.join(', ')}` : undefined}
                 >
-                  {hood.name}
-                  {i === 0 && neighborhoods.length > 1 && (
-                    <span className={`text-[8px] tracking-wider font-bold ${
-                      activeFilter === hood.id ? 'text-amber-600' : 'text-amber-500/60'
-                    }`}>
-                      PRIMARY
-                    </span>
-                  )}
+                  All Stories
                 </button>
-              ))}
-            </div>
+
+                {neighborhoods.map((hood, i) => (
+                  <button
+                    key={hood.id}
+                    ref={(el) => { pillRefs.current[i] = el; }}
+                    onPointerDown={(e) => handlePointerDown(e, i)}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    onClick={() => { if (isDragging.current) return; setActiveFilter(activeFilter === hood.id ? null : hood.id); }}
+                    className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors flex items-center gap-1.5 cursor-grab active:cursor-grabbing select-none touch-none ${
+                      dragIndex === i && isDragging.current ? 'opacity-50' : ''
+                    } ${
+                      overIndex === i && dragIndex !== null && dragIndex !== i ? 'border-l-2 border-l-amber-500' : ''
+                    } ${
+                      activeFilter === hood.id
+                        ? 'bg-white/10 text-white border border-white/20'
+                        : 'bg-transparent text-neutral-400 border border-neutral-800 hover:border-neutral-500 hover:text-white'
+                    }`}
+                    title={hood.combo_component_names?.length ? `Includes: ${hood.combo_component_names.join(', ')}` : undefined}
+                  >
+                    {hood.name}
+                    {i === 0 && neighborhoods.length > 1 && (
+                      <span className={`text-[8px] tracking-wider font-bold ${
+                        activeFilter === hood.id ? 'text-amber-600' : 'text-amber-500/60'
+                      }`}>
+                        PRIMARY
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Right scroll arrow */}
@@ -424,26 +545,9 @@ export function MultiFeed({
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
 
-            {/* Divider + Manage button + View Toggle */}
-            <div className="shrink-0 flex items-center gap-1 pl-2 border-l border-neutral-800">
-              <button
-                onClick={() => openModal()}
-                className="text-neutral-500 hover:text-white transition-colors p-1.5"
-                title="Manage neighborhoods"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  <circle cx="5" cy="4" r="1.5" fill="currentColor" />
-                  <circle cx="11" cy="8" r="1.5" fill="currentColor" />
-                  <circle cx="7" cy="12" r="1.5" fill="currentColor" />
-                </svg>
-              </button>
-              <ViewToggle
-                view={currentView}
-                onChange={isHydrated ? handleViewChange : () => {}}
-              />
-            </div>
+            {controlButtons}
           </div>
+
         </div>
       )}
 
