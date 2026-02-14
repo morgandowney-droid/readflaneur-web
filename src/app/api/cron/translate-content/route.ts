@@ -19,10 +19,18 @@ export const maxDuration = 300;
 
 const TIME_BUDGET_MS = 250_000;
 const CONCURRENCY = 3;
-const PHASE1_LANGUAGES: LanguageCode[] = ['sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja'];
+const ALL_LANGUAGES: LanguageCode[] = ['sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja'];
+
+/** Rotate language order based on current half-hour so all languages get fair coverage */
+function getRotatedLanguages(): LanguageCode[] {
+  const halfHours = Math.floor(Date.now() / (30 * 60 * 1000));
+  const offset = halfHours % ALL_LANGUAGES.length;
+  return [...ALL_LANGUAGES.slice(offset), ...ALL_LANGUAGES.slice(0, offset)];
+}
 
 export async function GET(request: Request) {
   const functionStart = Date.now();
+  const PHASE1_LANGUAGES = getRotatedLanguages();
 
   // Auth
   const authHeader = request.headers.get('authorization');
