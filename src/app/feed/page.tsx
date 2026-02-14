@@ -92,30 +92,47 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     return true;
   });
 
-  // Fill missing images: for articles without an image, use the most recent image from the same neighborhood
+  // Fill missing images: use neighborhood default image from storage, or most recent article image
   const missingImageNeighborhoods = [...new Set(
     articles.filter((a: any) => !a.image_url).map((a: any) => a.neighborhood_id)
   )];
   if (missingImageNeighborhoods.length > 0) {
-    const { data: fallbackImages } = await supabase
-      .from('articles')
-      .select('neighborhood_id, image_url')
-      .in('neighborhood_id', missingImageNeighborhoods)
-      .not('image_url', 'is', null)
-      .eq('status', 'published')
-      .order('published_at', { ascending: false });
+    const imageByNeighborhood: Record<string, string> = {};
 
-    if (fallbackImages) {
-      const imageByNeighborhood: Record<string, string> = {};
-      for (const row of fallbackImages) {
-        if (!imageByNeighborhood[row.neighborhood_id]) {
-          imageByNeighborhood[row.neighborhood_id] = row.image_url!;
+    // First: check for neighborhood default images in storage
+    for (const nId of missingImageNeighborhoods) {
+      const { data: urlData } = supabase.storage.from('images').getPublicUrl(`neighborhoods/${nId}.png`);
+      if (urlData?.publicUrl) {
+        try {
+          const head = await fetch(urlData.publicUrl, { method: 'HEAD' });
+          if (head.ok) imageByNeighborhood[nId] = urlData.publicUrl;
+        } catch { /* not cached yet */ }
+      }
+    }
+
+    // Second: for any still missing, fall back to most recent article image
+    const stillMissing = missingImageNeighborhoods.filter(nId => !imageByNeighborhood[nId]);
+    if (stillMissing.length > 0) {
+      const { data: fallbackImages } = await supabase
+        .from('articles')
+        .select('neighborhood_id, image_url')
+        .in('neighborhood_id', stillMissing)
+        .not('image_url', 'is', null)
+        .eq('status', 'published')
+        .order('published_at', { ascending: false });
+
+      if (fallbackImages) {
+        for (const row of fallbackImages) {
+          if (!imageByNeighborhood[row.neighborhood_id]) {
+            imageByNeighborhood[row.neighborhood_id] = row.image_url!;
+          }
         }
       }
-      for (const article of articles) {
-        if (!article.image_url && imageByNeighborhood[article.neighborhood_id]) {
-          article.image_url = imageByNeighborhood[article.neighborhood_id];
-        }
+    }
+
+    for (const article of articles) {
+      if (!article.image_url && imageByNeighborhood[article.neighborhood_id]) {
+        article.image_url = imageByNeighborhood[article.neighborhood_id];
       }
     }
   }

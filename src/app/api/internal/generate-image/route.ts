@@ -110,8 +110,82 @@ export async function POST(request: Request) {
   );
 
   const body = await request.json();
-  const { article_id, neighborhood_id, limit = 5 } = body;
+  const { article_id, neighborhood_id, limit = 5, mode } = body;
 
+  const genai = new GoogleGenAI({ apiKey: geminiKey });
+
+  // ── NEIGHBORHOOD DEFAULT IMAGE MODE ──
+  // Generates a single editorial photo per neighborhood, cached in storage
+  if (mode === 'neighborhood_default' && neighborhood_id) {
+    const { data: hood } = await supabase
+      .from('neighborhoods')
+      .select('id, name, city')
+      .eq('id', neighborhood_id)
+      .single();
+
+    if (!hood) {
+      return NextResponse.json({ error: 'Neighborhood not found' }, { status: 404 });
+    }
+
+    // Check if already cached
+    const storagePath = `neighborhoods/${hood.id}.png`;
+    const { data: existingUrl } = supabase.storage.from('images').getPublicUrl(storagePath);
+    if (existingUrl?.publicUrl) {
+      try {
+        const head = await fetch(existingUrl.publicUrl, { method: 'HEAD' });
+        if (head.ok) {
+          return NextResponse.json({ imageUrl: existingUrl.publicUrl, cached: true });
+        }
+      } catch { /* not cached yet */ }
+    }
+
+    // Generate editorial photo of neighborhood
+    const prompt = `Ultra photorealistic high fashion magazine pictorial of the most iconic identifiable location in ${hood.name}, ${hood.city}. High resolution, soft magazine texture, ultra-realistic, cinematic street photography, editorial fashion photography, film aesthetic, golden hour. Atmosphere: elegant, warm, intimate, welcoming. Diffuse flattering warm lighting undertones. High detail texture.
+
+IMPORTANT: Do NOT include any text, words, letters, signs, logos, or writing in the image.`;
+
+    try {
+      const response = await genai.models.generateContent({
+        model: AI_MODELS.GEMINI_IMAGE,
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        config: { responseModalities: ['Image'] },
+      });
+
+      let imageData: string | null = null;
+      let mimeType = 'image/png';
+      if (response.candidates?.[0]?.content?.parts) {
+        for (const part of response.candidates[0].content.parts) {
+          if (part.inlineData?.data) {
+            imageData = part.inlineData.data;
+            mimeType = part.inlineData.mimeType || 'image/png';
+            break;
+          }
+        }
+      }
+
+      if (!imageData) {
+        return NextResponse.json({ error: 'No image returned from Gemini' }, { status: 500 });
+      }
+
+      const buffer = Buffer.from(imageData, 'base64');
+      const { error: uploadError } = await supabase.storage
+        .from('images')
+        .upload(storagePath, buffer, { contentType: mimeType, upsert: true });
+
+      if (uploadError) {
+        return NextResponse.json({ error: uploadError.message }, { status: 500 });
+      }
+
+      const { data: urlData } = supabase.storage.from('images').getPublicUrl(storagePath);
+      return NextResponse.json({ imageUrl: urlData.publicUrl, cached: false, neighborhood: hood.name });
+    } catch (err) {
+      return NextResponse.json({
+        error: err instanceof Error ? err.message : 'Generation failed',
+      }, { status: 500 });
+    }
+  }
+
+  // ── ARTICLE IMAGE MODE (default) ──
   // Build query - include neighborhood name for fallback
   let query = supabase
     .from('articles')
@@ -141,7 +215,6 @@ export async function POST(request: Request) {
     });
   }
 
-  const genai = new GoogleGenAI({ apiKey: geminiKey });
   const results: Array<{
     id: string;
     headline: string;
@@ -199,39 +272,27 @@ export async function POST(request: Request) {
     try {
       console.log(`Generating image for: ${article.headline}`);
 
-      // Create prompt with strong safety restrictions
-      // Per readflaneur.com/standards: "All AI visuals must be stylized artistic renderings"
-      const prompt = `${article.headline}
-
-Create a stylized artistic illustration that evokes this news headline.
-Style: Editorial illustration, watercolor or gouache painting style, soft artistic rendering.
-NOT a photograph - this must be clearly an artistic interpretation.
+      // Create prompt - ultra-photorealistic editorial fashion photography of the neighborhood
+      const neighborhoodName = (article.neighborhood as { name?: string } | null)?.name || '';
+      const prompt = `Ultra photorealistic high fashion magazine pictorial of the most iconic identifiable location in ${neighborhoodName}. High resolution, soft magazine texture, ultra-realistic, cinematic street photography, editorial fashion photography, film aesthetic, golden hour. Atmosphere: elegant, warm, intimate, welcoming. Diffuse flattering warm lighting undertones. High detail texture.
 
 CRITICAL SAFETY RULES - NEVER include ANY of the following:
 - Weapons of any kind (guns, knives, batons, etc.)
 - Violence or violent acts
 - Blood, injuries, or wounds
 - People in distress or danger
-- Confrontational scenes
-- Police with drawn weapons
-- Crime scenes
 - Nudity or sexualized content
-- Revealing clothing or suggestive poses
 - Anything disturbing, graphic, or inappropriate
-- Photorealistic human faces or identifiable individuals
 
-IMPORTANT: Do NOT include any text, words, letters, signs, logos, or writing in the image.
-Focus on atmospheric, stylized imagery of buildings, streets, community spaces, or abstract representations of the story theme.
-The image should be beautiful and evocative, not literal or photographic.`;
+IMPORTANT: Do NOT include any text, words, letters, signs, logos, or writing in the image.`;
 
-      // Generate with Gemini 2.5 Flash Image
-      // Per readflaneur.com/standards: stylized artistic renderings, not photorealistic
+      // Generate with Gemini Image model
       const response = await genai.models.generateContent({
         model: AI_MODELS.GEMINI_IMAGE,
         contents: [
           {
             role: 'user',
-            parts: [{ text: `Generate a stylized artistic illustration (NOT a photograph): ${prompt}` }],
+            parts: [{ text: prompt }],
           },
         ],
         config: {
