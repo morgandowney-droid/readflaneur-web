@@ -3,12 +3,30 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-15
+
+**Fix Inviter Detection on /invite:**
+- Inviter mode now detects existing users via three signals: `flaneur-newsletter-subscribed` localStorage, `flaneur-neighborhood-preferences` localStorage, OR active auth session (via `getSession()`). Previously only checked newsletter-subscribed flag, causing authenticated users to see the invitee join form.
+
+**Restore Hyperlinks in Daily Briefs and Article Bodies:**
+- HTML `<a>` tags are now converted to markdown format instead of being stripped to plain text.
+- Markdown links `[text](url)` are rendered as clickable `<a>` elements with dotted underline style.
+- Fixes overly aggressive link stripping that removed all hyperlinks from content.
+- Updated across `NeighborhoodBrief.tsx`, `ArticleBody.tsx`, and `EnrichedNeighborhoodBrief.tsx`.
+
+**Rename "All Stories" to "All My Neighborhood Stories":**
+- Updated `article.allStories` translation key across all 9 languages.
+- Affects the `<- All Stories` back link and navigation on article pages.
+
+**Feed Spacing Fix:**
+- Added `ml-2` margin between neighborhood name and "Edit Neighborhoods" button on the daily brief context line.
+
 ## 2026-02-14
 
 **Dual-Mode Invite Page + Subscribe CAPTCHA Fix:**
-- `/invite` now detects subscribed users (via `flaneur-newsletter-subscribed` localStorage + absence of `?ref=` param) and shows **inviter mode**: "Share Flaneur" heading, personalized invite link in readonly input, "Copy Link" + "Share" buttons (native share on mobile), referral stats (clicks/friends joined) below.
+- `/invite` now detects existing users and shows **inviter mode**: "Share Flaneur" heading, personalized invite link in readonly input, "Copy Link" + "Share" buttons (native share on mobile), referral stats (clicks/friends joined) below.
 - Invitees with `?ref=CODE` or new visitors still see the existing join form (invitee mode) unchanged.
-- Fixed "Failed to send verification email" error on subscribe: replaced `signInWithOtp()` (anon key, requires Turnstile CAPTCHA token) with `supabaseAdmin.auth.admin.generateLink({ type: 'magiclink' })` + send via Resend.
+- Fixed "Failed to send verification email" error on subscribe: replaced `signInWithOtp()` (anon key, requires Turnstile CAPTCHA token) with `supabaseAdmin.auth.admin.generateLink({ type: 'magiclink' })` + send via Resend. Admin key bypasses CAPTCHA and does not affect the caller's browser session (no cookie-based client).
 - New "Welcome to Flaneur" magic link email template (dark theme, Playfair Display masthead, Verify Email CTA).
 - Fixed `callbackUrl` construction to use `NEXT_PUBLIC_APP_URL` with proper `VERCEL_URL` fallback pattern.
 
