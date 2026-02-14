@@ -75,7 +75,7 @@ export function cleanArticleHeadline(headline: string): string {
 
 /**
  * Truncate a headline at the last full word within maxLen chars.
- * Strips trailing ", and" / ", or" / "St." if they end up at the sentence edge.
+ * Strips trailing prepositions, articles, conjunctions, and "St." that dangle.
  * No ellipsis or partial words.
  */
 export function truncateHeadline(text: string, maxLen: number = 40): string {
@@ -83,9 +83,14 @@ export function truncateHeadline(text: string, maxLen: number = 40): string {
   const slice = text.slice(0, maxLen);
   const lastSpace = slice.lastIndexOf(' ');
   let truncated = lastSpace > 0 ? text.slice(0, lastSpace) : slice;
-  // Strip trailing conjunctions and abbreviations that dangle
+  // Strip trailing conjunctions with comma
   truncated = truncated.replace(/,\s*(?:and|or)\s*$/i, '');
   truncated = truncated.replace(/\s+St\.?$/i, '');
+  // Strip trailing prepositions, articles, and conjunctions that look incomplete
+  const danglingPattern = /\s+(?:for|in|at|on|to|of|by|with|from|into|as|the|a|an|and|or|but)\s*$/i;
+  while (danglingPattern.test(truncated) && truncated.includes(' ')) {
+    truncated = truncated.replace(danglingPattern, '');
+  }
   return truncated;
 }
 

@@ -45,7 +45,7 @@ export function MagicLinkReminder() {
   }
 
   return (
-    <div className="text-center py-6 mb-4">
+    <div className="hidden md:block text-center py-6 mb-4">
       {status === 'sent' ? (
         <p className="text-sm text-green-400">Check your inbox - a sign-in link is on the way.</p>
       ) : status === 'error' ? (

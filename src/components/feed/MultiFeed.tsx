@@ -622,7 +622,7 @@ export function MultiFeed({
       {/* ── DAILY BRIEF ── */}
       {activeFilter === null ? (
         dailyBrief && (
-          <div className="mt-2 mb-6">
+          <div className="mt-2 mb-2 md:mb-6">
             {dailyBrief}
             {neighborhoods[0] && (
               <p className="text-xs text-fg-muted mt-2 px-4">
