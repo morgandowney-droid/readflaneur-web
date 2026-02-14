@@ -18,6 +18,18 @@
 - Updated `article.allStories` translation key across all 9 languages.
 - Affects the `<- All Stories` back link and navigation on article pages.
 
+**Preserve Markdown Links in Gemini Enrichment Pipeline:**
+- `brief-enricher-gemini.ts` was stripping `[text](url)` markdown links from Gemini's response before saving to `enriched_content` in DB. Render-time link display had nothing to work with.
+- Removed the link-stripping regex. Future enriched briefs will have Gemini's Google Search grounding links preserved.
+- Existing briefs already stored without links need re-enrichment to get links.
+
+**Change Share Title to "Check out Flaneur":**
+- Updated `navigator.share()` title/text in `InviteHero.tsx` and `ShareWidget.tsx`.
+- Fixes Outlook generating "Url from [name]" as the email subject line.
+
+**Reduce Header Icon Spacing:**
+- Tightened gap between "Stories" nav link and theme/language icons on desktop header (`ml-1` to `-ml-2`).
+
 **Feed Spacing Fix:**
 - Added `ml-2` margin between neighborhood name and "Edit Neighborhoods" button on the daily brief context line.
 
