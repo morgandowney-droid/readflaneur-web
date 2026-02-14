@@ -861,8 +861,8 @@ export function BriefArchive({
         setBriefs(prev => [...prev, ...data.briefs]);
         setHasMore(data.hasMore);
       }
-    } catch (error) {
-      console.error('Failed to load archived briefs:', error);
+    } catch {
+      // iOS Safari "Load failed" - silently handle
     } finally {
       setIsLoading(false);
     }

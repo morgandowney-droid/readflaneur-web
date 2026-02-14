@@ -153,8 +153,8 @@ export function MultiLoadMoreButton({
       setItems((prev) => [...prev, ...newItems]);
       setOffset((prev) => prev + articlesRaw.length);
       setHasMore(articlesRaw.length === pageSize);
-    } catch (err) {
-      console.error('Error loading more articles:', err);
+    } catch {
+      // iOS Safari "Load failed" - silently handle
     } finally {
       setLoading(false);
     }

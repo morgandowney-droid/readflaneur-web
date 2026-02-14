@@ -139,8 +139,8 @@ export function LoadMoreButton({
       setItems((prev) => [...prev, ...newItems]);
       setOffset((prev) => prev + articles.length);
       setHasMore(articles.length === pageSize);
-    } catch (err) {
-      console.error('Error loading more articles:', err);
+    } catch {
+      // iOS Safari "Load failed" - silently handle
     } finally {
       setLoading(false);
     }

@@ -258,8 +258,7 @@ export function MultiFeed({
         }
         setArticlesLoading(false);
       })
-      .catch(err => {
-        console.error('Failed to fetch articles:', err);
+      .catch(() => {
         if (!cancelled) {
           setFetchedArticles([]);
           setArticlesLoading(false);
@@ -409,8 +408,8 @@ export function MultiFeed({
       } else {
         setHasMoreFiltered(false);
       }
-    } catch (err) {
-      console.error('Failed to load more:', err);
+    } catch {
+      // iOS Safari "Load failed" - silently handle
     } finally {
       setMoreLoading(false);
     }
