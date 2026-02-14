@@ -22,6 +22,8 @@ export function Header() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [signOutConfirm, setSignOutConfirm] = useState(false);
   const [sections, setSections] = useState<Section[]>([]);
   const [selectedNeighborhoods, setSelectedNeighborhoods] = useState<Neighborhood[]>([]);
   const { scrollDirection, scrollY } = useScrollDirection({ threshold: 10 });
@@ -251,10 +253,28 @@ export function Header() {
     refetchSelectedNeighborhoods();
   }, [modalIsOpen]);
 
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close account menu on click outside
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(e.target as Node)) {
+        setAccountMenuOpen(false);
+        setSignOutConfirm(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [accountMenuOpen]);
+
   const handleSignOut = async () => {
-    console.log('Sign out clicked');
+    if (!signOutConfirm) {
+      setSignOutConfirm(true);
+      return;
+    }
+
     try {
-      // Use server-side sign out to avoid client lock issues
       const response = await fetch('/api/auth/signout', {
         method: 'POST',
       });
@@ -263,14 +283,10 @@ export function Header() {
         throw new Error('Sign out failed');
       }
 
-      console.log('SignOut complete');
       setUser(null);
       setIsAdmin(false);
-      // Full page reload to clear all client state
       window.location.href = '/';
-    } catch (err) {
-      console.error('Sign out error:', err);
-      // Fallback: clear state and redirect anyway
+    } catch {
       setUser(null);
       setIsAdmin(false);
       window.location.href = '/';
@@ -349,25 +365,59 @@ export function Header() {
               >
                 {t('nav.stories')}
               </Link>
-              <button
-                onClick={handleSignOut}
-                className="text-[11px] tracking-[0.2em] uppercase text-fg-subtle hover:text-fg transition-colors min-h-[44px]"
-              >
-                {t('nav.signOut')}
-              </button>
+              {/* Account icon with sign-out dropdown */}
+              <div className="relative" ref={accountMenuRef}>
+                <button
+                  onClick={() => { setAccountMenuOpen(!accountMenuOpen); setSignOutConfirm(false); }}
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center text-emerald-700 hover:text-emerald-500 transition-colors"
+                  aria-label="Account menu"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+                {accountMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 bg-surface border border-border-strong rounded-md shadow-lg min-w-[180px] py-1 z-50">
+                    {!signOutConfirm ? (
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full text-left px-4 py-2.5 text-sm text-fg-muted hover:text-fg hover:bg-hover transition-colors"
+                      >
+                        {t('nav.signOut')}
+                      </button>
+                    ) : (
+                      <div className="px-4 py-3">
+                        <p className="text-xs text-fg-muted mb-2.5">{t('nav.signOutConfirm')}</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleSignOut}
+                            className="flex-1 px-3 py-1.5 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                          >
+                            {t('nav.signOut')}
+                          </button>
+                          <button
+                            onClick={() => { setSignOutConfirm(false); setAccountMenuOpen(false); }}
+                            className="flex-1 px-3 py-1.5 text-xs bg-surface border border-border-strong text-fg-muted rounded hover:text-fg transition-colors"
+                          >
+                            {t('nav.cancel')}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
-            <>
-              <Link
-                href="/signup"
-                className={cn(
-                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center',
-                  pathname === '/signup' ? 'text-fg font-medium' : 'text-fg-subtle'
-                )}
-              >
-                {t('nav.signUp')}
-              </Link>
-            </>
+            <Link
+              href="/login"
+              className={cn(
+                'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center',
+                pathname === '/login' ? 'text-fg font-medium' : 'text-fg-subtle'
+              )}
+            >
+              {t('nav.signIn')}
+            </Link>
           )}
           {/* Icon controls pinned to far right - never shift when text labels change width */}
           <div className="flex items-center gap-3 ml-1 pl-3 border-l border-border">
@@ -525,26 +575,46 @@ export function Header() {
                     {t('nav.dashboard')}
                   </Link>
                 )}
-                <button
-                  onClick={() => {
-                    handleSignOut();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="text-sm tracking-widest uppercase text-fg-muted hover:text-fg transition-colors text-right py-3 w-full"
-                >
-                  {t('nav.signOut')}
-                </button>
+                {!signOutConfirm ? (
+                  <button
+                    onClick={() => setSignOutConfirm(true)}
+                    className="text-sm tracking-widest uppercase text-fg-muted hover:text-fg transition-colors text-right py-3 w-full"
+                  >
+                    {t('nav.signOut')}
+                  </button>
+                ) : (
+                  <div className="py-3 text-right">
+                    <p className="text-xs text-fg-muted mb-2">{t('nav.signOutConfirm')}</p>
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        onClick={() => {
+                          setSignOutConfirm(false);
+                          handleSignOut();
+                        }}
+                        className="px-4 py-1.5 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                      >
+                        {t('nav.signOut')}
+                      </button>
+                      <button
+                        onClick={() => setSignOutConfirm(false)}
+                        className="px-4 py-1.5 text-xs bg-surface border border-border-strong text-fg-muted rounded hover:text-fg transition-colors"
+                      >
+                        {t('nav.cancel')}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <Link
-                href="/signup"
+                href="/login"
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
-                  'text-xs tracking-widest uppercase transition-colors hover:text-fg py-3 block text-right',
-                  pathname === '/signup' ? 'text-fg font-medium' : 'text-fg-subtle'
+                  'text-sm tracking-widest uppercase transition-colors hover:text-fg py-3 block text-right',
+                  pathname === '/login' ? 'text-fg font-medium' : 'text-fg-subtle'
                 )}
               >
-                {t('nav.signUp')}
+                {t('nav.signIn')}
               </Link>
             )}
           </nav>
