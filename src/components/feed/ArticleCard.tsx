@@ -9,6 +9,19 @@ import { useLanguageContext } from '@/components/providers/LanguageProvider';
 
 const ARTICLE_BOOKMARKS_KEY = 'flaneur-article-bookmarks';
 
+/** Truncate neighborhood name to fit ~15 chars, ending at the last full word */
+function truncateName(name: string, maxLen: number = 15): string {
+  if (name.length <= maxLen) return name;
+  const slice = name.slice(0, maxLen);
+  const lastSpace = slice.lastIndexOf(' ');
+  return lastSpace > 0 ? name.slice(0, lastSpace) : slice;
+}
+
+/** Simplify category label: strip neighborhood prefix from "Neighborhood Daily Brief" → "Daily Brief" */
+function simplifyCategory(label: string): string {
+  return label.replace(/^.+\s+(Daily\s+Brief)$/i, '$1');
+}
+
 interface ArticleCardProps {
   article: Article;
 }
@@ -104,12 +117,15 @@ export function ArticleCard({ article }: ArticleCardProps) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Mobile: metadata + headline above image */}
+        {/* Mobile: headline → metadata → blurb (no hover state on mobile) */}
         {!isHovered && (
           <div className="md:hidden px-4 pt-3 pb-2">
-            <div className="flex items-center gap-2 text-xs text-fg-muted mb-1">
+            <h2 className="text-fg text-xl font-semibold leading-tight mb-1">
+              {truncateHeadline(translatedHeadline || cleanArticleHeadline(article.headline))}
+            </h2>
+            <div className="flex items-center gap-2 text-xs text-fg-muted mb-2">
               <span className="uppercase tracking-wider">
-                {article.neighborhood?.name}
+                {truncateName(article.neighborhood?.name || '')}
               </span>
               <span>&middot;</span>
               <span>{formatRelativeTime(article.created_at)}</span>
@@ -117,14 +133,14 @@ export function ArticleCard({ article }: ArticleCardProps) {
                 <>
                   <span>&middot;</span>
                   <span className="text-fg-muted italic">
-                    {article.category_label}
+                    {simplifyCategory(article.category_label)}
                   </span>
                 </>
               )}
             </div>
-            <h2 className="text-fg text-xl font-semibold leading-tight">
-              {truncateHeadline(translatedHeadline || cleanArticleHeadline(article.headline))}
-            </h2>
+            <p className="text-fg-muted text-sm leading-relaxed line-clamp-4">
+              {article.preview_text || article.body_text?.substring(0, 250)}
+            </p>
           </div>
         )}
 

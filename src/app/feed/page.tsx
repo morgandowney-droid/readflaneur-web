@@ -92,6 +92,34 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     return true;
   });
 
+  // Fill missing images: for articles without an image, use the most recent image from the same neighborhood
+  const missingImageNeighborhoods = [...new Set(
+    articles.filter((a: any) => !a.image_url).map((a: any) => a.neighborhood_id)
+  )];
+  if (missingImageNeighborhoods.length > 0) {
+    const { data: fallbackImages } = await supabase
+      .from('articles')
+      .select('neighborhood_id, image_url')
+      .in('neighborhood_id', missingImageNeighborhoods)
+      .not('image_url', 'is', null)
+      .eq('status', 'published')
+      .order('published_at', { ascending: false });
+
+    if (fallbackImages) {
+      const imageByNeighborhood: Record<string, string> = {};
+      for (const row of fallbackImages) {
+        if (!imageByNeighborhood[row.neighborhood_id]) {
+          imageByNeighborhood[row.neighborhood_id] = row.image_url!;
+        }
+      }
+      for (const article of articles) {
+        if (!article.image_url && imageByNeighborhood[article.neighborhood_id]) {
+          article.image_url = imageByNeighborhood[article.neighborhood_id];
+        }
+      }
+    }
+  }
+
   // Count total articles for pagination
   let countQuery = supabase
     .from('articles')

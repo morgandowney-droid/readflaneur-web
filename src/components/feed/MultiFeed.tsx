@@ -216,12 +216,27 @@ export function MultiFeed({
       fetch(articlesUrl, { headers }).then(r => r.json()),
       fetch(adsUrl, { headers }).then(r => r.json()),
     ])
-      .then(([articlesData, adsData]) => {
+      .then(async ([articlesData, adsData]) => {
         if (cancelled) return;
         const articles = Array.isArray(articlesData) ? articlesData : [];
         const ads = Array.isArray(adsData) ? adsData : [];
 
         if (articles.length > 0) {
+          // Fill missing images with most recent image from same neighborhood
+          const hasNoImage = articles.some((a: any) => !a.image_url);
+          if (hasNoImage) {
+            try {
+              const fallbackUrl = `${supabaseUrl}/rest/v1/articles?select=image_url&neighborhood_id=eq.${encodeURIComponent(activeFilter)}&status=eq.published&image_url=not.is.null&order=published_at.desc&limit=1`;
+              const fbRes = await fetch(fallbackUrl, { headers });
+              const fbData = await fbRes.json();
+              const fallbackImage = Array.isArray(fbData) && fbData[0]?.image_url;
+              if (fallbackImage) {
+                for (const a of articles) {
+                  if (!a.image_url) a.image_url = fallbackImage;
+                }
+              }
+            } catch { /* ignore fallback failure */ }
+          }
           const feedWithAds = injectAds(articles as Article[], ads as Ad[], [activeFilter]);
           const hoodName = neighborhoods.find(n => n.id === activeFilter)?.name;
           const feedItems = injectEmailPrompt(feedWithAds, hoodName);
