@@ -15,7 +15,7 @@ function getAnonymousId(): string {
 }
 
 interface ReactionButton {
-  type: 'bookmark' | 'heart' | 'fire';
+  type: 'bookmark' | 'heart';
   icon: string;
   activeIcon: string;
   activeColor: string;
@@ -25,7 +25,6 @@ interface ReactionButton {
 const REACTIONS: ReactionButton[] = [
   { type: 'bookmark', icon: '🔖', activeIcon: '🔖', activeColor: 'text-amber-600', label: 'Save' },
   { type: 'heart', icon: '🤍', activeIcon: '❤️', activeColor: 'text-red-500', label: 'Like' },
-  { type: 'fire', icon: '🔥', activeIcon: '🔥', activeColor: 'text-orange-500', label: 'Fire' },
 ];
 
 interface ArticleReactionsProps {
@@ -33,7 +32,7 @@ interface ArticleReactionsProps {
 }
 
 export function ArticleReactions({ articleId }: ArticleReactionsProps) {
-  const [counts, setCounts] = useState<Record<string, number>>({ bookmark: 0, heart: 0, fire: 0 });
+  const [counts, setCounts] = useState<Record<string, number>>({ bookmark: 0, heart: 0 });
   const [active, setActive] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState<Set<string>>(new Set());
 
@@ -96,35 +95,29 @@ export function ArticleReactions({ articleId }: ArticleReactionsProps) {
   };
 
   return (
-    <div className="mt-8 pt-6 border-t border-border">
-      <div className="flex items-center gap-4">
-        {REACTIONS.map((reaction) => {
-          const isActive = active.has(reaction.type);
-          const count = counts[reaction.type] || 0;
+    <div className="mt-6 flex items-center gap-3">
+      {REACTIONS.map((reaction) => {
+        const isActive = active.has(reaction.type);
+        const count = counts[reaction.type] || 0;
 
-          return (
-            <button
-              key={reaction.type}
-              onClick={() => toggle(reaction.type)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all ${
-                isActive
-                  ? 'border-border-strong bg-white/5'
-                  : 'border-border hover:border-border-strong'
-              }`}
-              title={reaction.label}
-            >
-              <span className={`text-base ${isActive ? '' : 'grayscale opacity-50'}`}>
-                {isActive ? reaction.activeIcon : reaction.icon}
+        return (
+          <button
+            key={reaction.type}
+            onClick={() => toggle(reaction.type)}
+            className="flex items-center gap-1 text-fg-subtle hover:text-fg transition-colors"
+            title={reaction.label}
+          >
+            <span className={`text-sm ${isActive ? '' : 'grayscale opacity-40'}`}>
+              {isActive ? reaction.activeIcon : reaction.icon}
+            </span>
+            {count > 0 && (
+              <span className={`text-xs ${isActive ? reaction.activeColor : 'text-fg-subtle'}`}>
+                {count}
               </span>
-              {count > 0 && (
-                <span className={`text-xs ${isActive ? reaction.activeColor : 'text-fg-muted'}`}>
-                  {count}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

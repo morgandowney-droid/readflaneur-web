@@ -245,6 +245,19 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           }
         />
 
+        {/* Brief discovery CTAs - right after sources on daily brief articles */}
+        {(article.article_type === 'brief_summary' ||
+          (article.category_label && article.category_label.toLowerCase().includes('daily brief'))) && (
+          <BriefDiscoveryFooter
+            neighborhoodId={neighborhoodId}
+            neighborhoodName={article.neighborhood?.name || ''}
+            city={article.neighborhood?.city || ''}
+            currentArticleSlug={article.slug || ''}
+            citySlug={city}
+            neighborhoodSlug={neighborhood}
+          />
+        )}
+
         {/* Additional Images */}
         {article.images && article.images.length > 1 && (
           <div className="mt-8 space-y-6">
@@ -291,19 +304,6 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
         {/* Email capture for engaged readers */}
         <PostReadEmailCapture neighborhoodName={article.neighborhood?.name || 'neighborhood'} />
-
-        {/* Brief discovery CTAs - only on daily brief articles */}
-        {(article.article_type === 'brief_summary' ||
-          (article.category_label && article.category_label.toLowerCase().includes('daily brief'))) && (
-          <BriefDiscoveryFooter
-            neighborhoodId={neighborhoodId}
-            neighborhoodName={article.neighborhood?.name || ''}
-            city={article.neighborhood?.city || ''}
-            currentArticleSlug={article.slug || ''}
-            citySlug={city}
-            neighborhoodSlug={neighborhood}
-          />
-        )}
 
         {/* More stories */}
         <div className="mt-12 pt-8 border-t border-border text-center">

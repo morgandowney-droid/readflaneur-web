@@ -106,7 +106,7 @@ export function PostReadEmailCapture({ neighborhoodName }: PostReadEmailCaptureP
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex-1 flex items-center gap-2 min-w-0">
           <p className="text-sm text-fg-muted whitespace-nowrap">
-            Enjoying {neighborhoodName} stories? Get them daily.
+            Enjoying {neighborhoodName} stories? Get them emailed 7am daily.
           </p>
           <button
             onClick={handleDismiss}
