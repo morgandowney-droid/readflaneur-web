@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Article } from '@/types';
 import { cityToSlug, neighborhoodToSlug, cleanArticleHeadline, truncateHeadline } from '@/lib/utils';
 import { useLanguageContext } from '@/components/providers/LanguageProvider';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface CompactArticleCardProps {
   article: Article;
@@ -44,6 +45,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
 
   // Translation support
   const { language, isTranslated } = useLanguageContext();
+  const { t } = useTranslation();
   const [translatedHeadline, setTranslatedHeadline] = useState<string | null>(null);
   const [translatedBlurb, setTranslatedBlurb] = useState<string | null>(null);
 
@@ -86,7 +88,11 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
         <>
           <span className="shrink-0">&middot;</span>
           <span className="text-fg-muted italic truncate max-w-[120px]">
-            {article.category_label.replace(new RegExp(`^${article.neighborhood?.name}\\s+`, 'i'), '')}
+            {(() => {
+              const stripped = article.category_label.replace(new RegExp(`^${article.neighborhood?.name}\\s+`, 'i'), '');
+              if (isTranslated && /daily brief/i.test(stripped)) return t('feed.dailyBrief');
+              return stripped;
+            })()}
           </span>
         </>
       )}

@@ -16,6 +16,11 @@ export function BackToFeedLink() {
   );
 }
 
+export function TranslatedDailyBriefLabel({ dayAbbr }: { dayAbbr: string }) {
+  const { t } = useTranslation();
+  return <>{dayAbbr} {t('feed.dailyBrief')}</>;
+}
+
 export function MoreStoriesButton() {
   const { t } = useTranslation();
   return (

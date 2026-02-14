@@ -15,7 +15,7 @@ import { Ad } from '@/types';
 import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
 import { getFallback } from '@/lib/FallbackService';
 import type { FallbackData } from '@/components/feed/FallbackAd';
-import { BackToFeedLink, MoreStoriesButton } from '@/components/article/TranslatedArticleNav';
+import { BackToFeedLink, MoreStoriesButton, TranslatedDailyBriefLabel } from '@/components/article/TranslatedArticleNav';
 import { BriefDiscoveryFooter } from '@/components/article/BriefDiscoveryFooter';
 
 interface ArticlePageProps {
@@ -152,10 +152,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                     {article.neighborhood?.city && <span> &middot; {article.neighborhood.city}</span>}
                   </p>
                   <p className="text-xs font-semibold uppercase tracking-wider text-amber-700 mb-3">
-                    {getDayAbbr(article.published_at || article.created_at)} Daily Brief
+                    <TranslatedDailyBriefLabel dayAbbr={getDayAbbr(article.published_at || article.created_at)} />
                   </p>
                   <h1 className="text-3xl font-light leading-tight mb-3">
-                    {cleanArticleHeadline(article.headline)}
+                    <TranslatedHeadline articleId={article.id} headline={cleanArticleHeadline(article.headline)} />
                   </h1>
                   <p className="text-xs text-fg-muted">
                     {formatRelativeTime(article.created_at)}

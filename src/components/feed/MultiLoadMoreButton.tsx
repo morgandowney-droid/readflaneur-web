@@ -7,6 +7,7 @@ import { CompactArticleCard } from './CompactArticleCard';
 import { AdCard } from './AdCard';
 import { FeedView } from './ViewToggle';
 import { injectAds } from '@/lib/ad-engine';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const VIEW_PREF_KEY = 'flaneur-feed-view';
 
@@ -23,6 +24,7 @@ export function MultiLoadMoreButton({
   pageSize = 10,
   sectionSlug
 }: MultiLoadMoreButtonProps) {
+  const { t } = useTranslation();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [offset, setOffset] = useState(initialOffset);
   const [loading, setLoading] = useState(false);
@@ -195,13 +197,13 @@ export function MultiLoadMoreButton({
           disabled={loading}
           className="w-full py-3 text-sm tracking-wide uppercase text-fg-subtle hover:text-fg border border-border hover:border-border-strong transition-colors disabled:opacity-50"
         >
-          {loading ? 'Loading...' : 'Load More Stories'}
+          {loading ? t('general.loading') : t('feed.loadMoreStories')}
         </button>
       )}
 
       {!hasMore && items.length > 0 && (
         <p className="text-center text-sm text-fg-muted py-4">
-          You've reached the end
+          {t('feed.reachedEnd')}
         </p>
       )}
     </div>

@@ -578,7 +578,7 @@ export function MultiFeed({
                       <span className={`text-[8px] tracking-wider font-bold ${
                         activeFilter === hood.id ? 'text-amber-600' : 'text-amber-500/60'
                       }`}>
-                        PRIMARY
+                        {t('feed.primary')}
                       </span>
                     )}
                   </button>
@@ -626,8 +626,8 @@ export function MultiFeed({
             {dailyBrief}
             {neighborhoods[0] && (
               <p className="text-xs text-fg-muted mt-2 px-4">
-                Daily Brief for your primary neighborhood: <span className="text-fg-subtle">{neighborhoods[0].name}</span>
-                {' '}<button onClick={() => openModal()} className="text-accent hover:underline">Edit Neighborhoods</button>
+                {t('feed.dailyBriefForPrimary')} <span className="text-fg-subtle">{neighborhoods[0].name}</span>
+                {' '}<button onClick={() => openModal()} className="text-accent hover:underline">{t('nav.editNeighborhoods')}</button>
               </p>
             )}
           </div>
