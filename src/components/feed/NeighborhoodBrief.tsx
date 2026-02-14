@@ -27,6 +27,35 @@ interface EnrichedCategory {
  * Render text with [[section header]] markers as bold React elements
  * Also handles legacy **bold** markers for backwards compatibility
  */
+/**
+ * Render plain text segments, converting markdown links to <a> tags
+ */
+function renderWithLinks(text: string, keyPrefix: string): ReactNode[] {
+  const parts: ReactNode[] = [];
+  const linkPattern = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
+  let lastIndex = 0;
+  let match;
+  let keyIndex = 0;
+
+  while ((match = linkPattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    parts.push(
+      <a key={`${keyPrefix}-link-${keyIndex++}`} href={match[2]} target="_blank" rel="noopener noreferrer" className="text-current underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60">
+        {match[1]}
+      </a>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : [text];
+}
+
 function renderWithBold(text: string): ReactNode[] {
   const parts: ReactNode[] = [];
   // Match both [[header]] and **bold** patterns
@@ -36,9 +65,9 @@ function renderWithBold(text: string): ReactNode[] {
   let keyIndex = 0;
 
   while ((match = headerPattern.exec(text)) !== null) {
-    // Add text before the match
+    // Add text before the match (with link rendering)
     if (match.index > lastIndex) {
-      parts.push(text.slice(lastIndex, match.index));
+      parts.push(...renderWithLinks(text.slice(lastIndex, match.index), `pre-${keyIndex}`));
     }
     // Add the bold text (match[1] for [[]], match[2] for **)
     const boldText = match[1] || match[2];
@@ -50,9 +79,9 @@ function renderWithBold(text: string): ReactNode[] {
     lastIndex = match.index + match[0].length;
   }
 
-  // Add remaining text
+  // Add remaining text (with link rendering)
   if (lastIndex < text.length) {
-    parts.push(text.slice(lastIndex));
+    parts.push(...renderWithLinks(text.slice(lastIndex), `rest`));
   }
 
   return parts.length > 0 ? parts : [text];
@@ -209,7 +238,7 @@ function renderWithSearchableEntities(
   _sources?: BriefSource[],
   _enrichedCategories?: EnrichedCategory[]
 ): { elements: ReactNode[]; hasEntities: boolean; verifiedCount: number } {
-  return { elements: [text], hasEntities: false, verifiedCount: 0 };
+  return { elements: renderWithLinks(text, 'entity'), hasEntities: false, verifiedCount: 0 };
 }
 
 /**
@@ -222,10 +251,8 @@ function cleanContent(text: string): string {
     // Strip raw search result objects leaked from AI tool output
     // Matches patterns like: {'title': '...', 'url': '...', 'snippet': ...}
     .replace(/\{['"](?:title|url|snippet|author|published_at)['"]:[^}]*(?:\}|$)/gm, '')
-    // Strip HTML <a> tags but keep the link text
-    .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/gi, '$2')
-    // Strip markdown links, keeping just the text: [text](url) -> text
-    .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')
+    // Convert HTML <a> tags to markdown links (preserves hyperlinks for rendering)
+    .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/gi, '[$2]($1)')
     // Strip other common HTML tags
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/?(p|div|span|strong|em|b|i)[^>]*>/gi, '')

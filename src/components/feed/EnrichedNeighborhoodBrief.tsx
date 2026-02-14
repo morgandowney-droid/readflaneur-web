@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 
 interface StorySource {
   name: string;
@@ -59,10 +59,36 @@ const categoryIcons: Record<string, string> = {
 /**
  * Clean content by stripping HTML tags
  */
+function renderWithLinks(text: string): ReactNode[] {
+  const parts: ReactNode[] = [];
+  const linkPattern = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
+  let lastIndex = 0;
+  let match;
+  let keyIndex = 0;
+
+  while ((match = linkPattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    parts.push(
+      <a key={`elink-${keyIndex++}`} href={match[2]} target="_blank" rel="noopener noreferrer" className="text-current underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60">
+        {match[1]}
+      </a>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : [text];
+}
+
 function cleanContent(text: string): string {
   return text
-    // Strip HTML <a> tags but keep the link text
-    .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/gi, '$2')
+    // Convert HTML <a> tags to markdown links (preserves hyperlinks for rendering)
+    .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/gi, '[$2]($1)')
     // Strip other common HTML tags
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/?(p|div|span|strong|em|b|i)[^>]*>/gi, '')
@@ -118,8 +144,11 @@ export function EnrichedNeighborhoodBrief({
         <div className="text-base text-neutral-700 leading-relaxed mb-3">
           <p>
             {isExpanded
-              ? cleanedContent
-              : cleanedContent.slice(0, 200) + (cleanedContent.length > 200 ? '...' : '')
+              ? renderWithLinks(cleanedContent)
+              : <>
+                  {renderWithLinks(cleanedContent.slice(0, 200))}
+                  {cleanedContent.length > 200 ? '...' : ''}
+                </>
             }
           </p>
           {cleanedContent.length > 200 && (

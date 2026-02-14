@@ -13,13 +13,11 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
   let cleanedContent = content
     // Strip raw Grok search result objects that leak into content
     .replace(/\{['"](?:title|url|snippet|author|published_at)['"]:[^}]*(?:\}|$)/gm, '')
-    // Strip HTML <a> tags, keeping just the text
-    .replace(/<a\s+[^>]*>([^<]+)<\/a>/gi, '$1')
+    // Convert HTML <a> tags to markdown links (preserves hyperlinks for rendering)
+    .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/gi, '[$2]($1)')
     // Strip any other HTML tags that may have been generated
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/?(p|div|span|strong|em|b|i)[^>]*>/gi, '')
-    // Strip markdown links, keeping just the text: [text](url) -> text
-    .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')
     // Clean content: remove citation markers and bare URLs
     .replace(/\[\[\d+\]\]/g, '')
     .replace(/https?:\/\/\S+/g, '')
@@ -84,15 +82,23 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
         // Process bold markers
         const processedParagraph = paragraph.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
 
-        // Render function that handles strong tags
+        // Render function that handles strong tags and markdown links
         const renderParts = (text: string): ReactNode[] => {
           const result: ReactNode[] = [];
-          const parts = text.split(/(<strong>[^<]+<\/strong>)/);
+          // Split on both <strong> tags and markdown links [text](url)
+          const parts = text.split(/(<strong>[^<]+<\/strong>|\[[^\]]+\]\(https?:\/\/[^)]+\))/);
 
           parts.forEach((part, partIdx) => {
             const strongMatch = part.match(/<strong>([^<]+)<\/strong>/);
+            const linkMatch = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/);
             if (strongMatch) {
               result.push(<strong key={`strong-${partIdx}`} className="font-bold text-fg">{strongMatch[1]}</strong>);
+            } else if (linkMatch) {
+              result.push(
+                <a key={`link-${partIdx}`} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60">
+                  {linkMatch[1]}
+                </a>
+              );
             } else if (part) {
               result.push(part);
             }
