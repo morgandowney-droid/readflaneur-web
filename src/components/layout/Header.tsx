@@ -337,7 +337,7 @@ export function Header() {
             </Link>
           )}
           {/* Icon controls pinned to far right - never shift when text labels change width */}
-          <div className="flex items-center gap-3 ml-1 pl-3 border-l border-border">
+          <div className="flex items-center gap-3 pl-3 border-l border-border -ml-2">
             <ThemeToggle />
             <LanguageToggle />
           </div>
