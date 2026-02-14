@@ -61,39 +61,52 @@ export async function GET(request: Request) {
   try {
     const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
 
+    // Step 1: Get ALL article IDs from last 48h (lightweight query)
+    const { data: allArticleIds } = await supabase
+      .from('articles')
+      .select('id')
+      .eq('status', 'published')
+      .gte('published_at', cutoff)
+      .not('body_text', 'is', null)
+      .limit(1000);
+
+    const articleIdList = (allArticleIds || []).map(a => a.id);
+
     // Phase 1: Translate articles
     for (const lang of PHASE1_LANGUAGES) {
       if (Date.now() - functionStart > TIME_BUDGET_MS * 0.6) break;
       if (quotaExhausted) break;
 
-      // Get articles from last 48h missing this language's translation
+      // Step 2: Find which already have translations for this language
+      const existingIds = new Set<string>();
+      for (let i = 0; i < articleIdList.length; i += 100) {
+        const chunk = articleIdList.slice(i, i + 100);
+        const { data: existing } = await supabase
+          .from('article_translations')
+          .select('article_id')
+          .eq('language_code', lang)
+          .in('article_id', chunk);
+        for (const e of existing || []) existingIds.add(e.article_id);
+      }
+
+      // Step 3: Get IDs that need translation (take first 15 per language per run)
+      const needsIds = articleIdList.filter(id => !existingIds.has(id)).slice(0, 15);
+      if (needsIds.length === 0) continue;
+
+      // Step 4: Fetch full data only for articles that need translation
       const { data: articles } = await supabase
         .from('articles')
         .select('id, headline, body_text, preview_text')
-        .eq('status', 'published')
-        .gte('published_at', cutoff)
-        .not('body_text', 'is', null)
-        .order('published_at', { ascending: false })
-        .limit(20);
+        .in('id', needsIds);
 
       if (!articles || articles.length === 0) continue;
 
-      // Check which already have translations
-      const { data: existing } = await supabase
-        .from('article_translations')
-        .select('article_id')
-        .eq('language_code', lang)
-        .in('article_id', articles.map(a => a.id));
-
-      const existingIds = new Set((existing || []).map(e => e.article_id));
-      const needsTranslation = articles.filter(a => !existingIds.has(a.id));
-
       // Process in batches of CONCURRENCY
-      for (let i = 0; i < needsTranslation.length; i += CONCURRENCY) {
+      for (let i = 0; i < articles.length; i += CONCURRENCY) {
         if (Date.now() - functionStart > TIME_BUDGET_MS * 0.6) break;
         if (quotaExhausted) break;
 
-        const batch = needsTranslation.slice(i, i + CONCURRENCY);
+        const batch = articles.slice(i, i + CONCURRENCY);
         const results = await Promise.allSettled(
           batch.map(async (article) => {
             const translated = await translateArticle(
@@ -138,35 +151,48 @@ export async function GET(request: Request) {
       }
     }
 
+    // Step 1b: Get ALL enriched brief IDs from last 48h
+    const { data: allBriefIds } = await supabase
+      .from('neighborhood_briefs')
+      .select('id')
+      .not('enriched_content', 'is', null)
+      .gte('generated_at', cutoff)
+      .limit(1000);
+
+    const briefIdList = (allBriefIds || []).map(b => b.id);
+
     // Phase 2: Translate briefs (enriched only)
     for (const lang of PHASE1_LANGUAGES) {
       if (Date.now() - functionStart > TIME_BUDGET_MS) break;
       if (quotaExhausted) break;
 
+      // Find which already have translations for this language
+      const existingIds = new Set<string>();
+      for (let i = 0; i < briefIdList.length; i += 100) {
+        const chunk = briefIdList.slice(i, i + 100);
+        const { data: existing } = await supabase
+          .from('brief_translations')
+          .select('brief_id')
+          .eq('language_code', lang)
+          .in('brief_id', chunk);
+        for (const e of existing || []) existingIds.add(e.brief_id);
+      }
+
+      const needsIds = briefIdList.filter(id => !existingIds.has(id)).slice(0, 15);
+      if (needsIds.length === 0) continue;
+
       const { data: briefs } = await supabase
         .from('neighborhood_briefs')
         .select('id, content, enriched_content')
-        .not('enriched_content', 'is', null)
-        .gte('generated_at', new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString())
-        .order('generated_at', { ascending: false })
-        .limit(20);
+        .in('id', needsIds);
 
       if (!briefs || briefs.length === 0) continue;
 
-      const { data: existing } = await supabase
-        .from('brief_translations')
-        .select('brief_id')
-        .eq('language_code', lang)
-        .in('brief_id', briefs.map(b => b.id));
-
-      const existingIds = new Set((existing || []).map(e => e.brief_id));
-      const needsTranslation = briefs.filter(b => !existingIds.has(b.id));
-
-      for (let i = 0; i < needsTranslation.length; i += CONCURRENCY) {
+      for (let i = 0; i < briefs.length; i += CONCURRENCY) {
         if (Date.now() - functionStart > TIME_BUDGET_MS) break;
         if (quotaExhausted) break;
 
-        const batch = needsTranslation.slice(i, i + CONCURRENCY);
+        const batch = briefs.slice(i, i + CONCURRENCY);
         const results = await Promise.allSettled(
           batch.map(async (brief) => {
             const translated = await translateBrief(
@@ -211,26 +237,21 @@ export async function GET(request: Request) {
     console.error('translate-content cron error:', err);
     errors++;
   } finally {
-    // Log to cron_executions
-    const elapsed = Date.now() - functionStart;
-    try {
-      await supabase.from('cron_executions').insert({
-        job_name: 'translate-content',
-        status: errors > 0 ? 'partial' : 'success',
-        started_at: new Date(functionStart).toISOString(),
-        completed_at: new Date().toISOString(),
-        duration_ms: elapsed,
-        items_processed: articlesTranslated + briefsTranslated,
-        details: {
-          articles_translated: articlesTranslated,
-          briefs_translated: briefsTranslated,
-          errors,
-          quota_exhausted: quotaExhausted,
-        },
-      });
-    } catch (logErr) {
-      console.error('Failed to log cron execution:', logErr);
-    }
+    // Log to cron_executions (must match schema used by other crons)
+    await supabase.from('cron_executions').insert({
+      job_name: 'translate-content',
+      started_at: new Date(functionStart).toISOString(),
+      completed_at: new Date().toISOString(),
+      success: errors === 0 || (articlesTranslated + briefsTranslated) > 0,
+      errors: errors > 0 ? [`${errors} translation errors`, ...(quotaExhausted ? ['Quota exhausted'] : [])] : null,
+      response_data: {
+        articles_translated: articlesTranslated,
+        briefs_translated: briefsTranslated,
+        errors,
+        quota_exhausted: quotaExhausted,
+        duration_ms: Date.now() - functionStart,
+      },
+    }).then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
   }
 
   return NextResponse.json({
