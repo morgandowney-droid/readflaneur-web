@@ -355,9 +355,10 @@ export function NeighborhoodBrief({
         })
         .catch(() => {});
 
-      // Fetch yesterday's brief for this neighborhood
-      if (neighborhoodId) {
-        fetch(`/api/briefs/yesterday?neighborhoodId=${neighborhoodId}`)
+      // Fetch yesterday's brief for this neighborhood (before the current brief's date)
+      if (neighborhoodId && generatedAt) {
+        const params = new URLSearchParams({ neighborhoodId, beforeDate: generatedAt });
+        fetch(`/api/briefs/yesterday?${params}`)
           .then(res => res.json())
           .then(data => { if (data.url) setYesterdayUrl(data.url); })
           .catch(() => {});

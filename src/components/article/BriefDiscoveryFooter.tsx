@@ -15,6 +15,7 @@ interface BriefDiscoveryFooterProps {
   currentArticleSlug: string;
   citySlug: string;
   neighborhoodSlug: string;
+  publishedAt?: string;
 }
 
 /**
@@ -26,7 +27,7 @@ export function BriefDiscoveryFooter({
   neighborhoodId,
   neighborhoodName,
   city,
-  currentArticleSlug,
+  publishedAt,
 }: BriefDiscoveryFooterProps) {
   const [isSubscribed, setIsSubscribed] = useState(true);
   const [added, setAdded] = useState(false);
@@ -79,15 +80,17 @@ export function BriefDiscoveryFooter({
         .then(data => { if (data.neighborhoodName) setRandomDiscovery(data); })
         .catch(() => {});
 
-      // Fetch yesterday's brief article for this neighborhood
-      fetch(`/api/briefs/yesterday?neighborhoodId=${neighborhoodId}&excludeSlug=${currentArticleSlug}`)
+      // Fetch yesterday's brief article for this neighborhood (before this article's date)
+      const yesterdayParams = new URLSearchParams({ neighborhoodId });
+      if (publishedAt) yesterdayParams.set('beforeDate', publishedAt);
+      fetch(`/api/briefs/yesterday?${yesterdayParams}`)
         .then(res => res.json())
         .then(data => { if (data.url) setYesterdayUrl(data.url); })
         .catch(() => {});
     } catch {
       // localStorage failure - silently skip
     }
-  }, [neighborhoodId, city, currentArticleSlug]);
+  }, [neighborhoodId, city, publishedAt]);
 
   const handleAdd = () => {
     try {

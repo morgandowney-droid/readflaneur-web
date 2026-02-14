@@ -255,6 +255,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             currentArticleSlug={article.slug || ''}
             citySlug={city}
             neighborhoodSlug={neighborhood}
+            publishedAt={article.published_at || article.created_at}
           />
         )}
 

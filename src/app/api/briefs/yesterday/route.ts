@@ -3,15 +3,17 @@ import { createClient } from '@/lib/supabase/server';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 
 /**
- * GET /api/briefs/yesterday?neighborhoodId=xxx&excludeSlug=yyy
+ * GET /api/briefs/yesterday?neighborhoodId=xxx&beforeDate=ISO
  *
- * Returns the previous day's daily brief article URL for a neighborhood.
+ * Returns the most recent daily brief article URL for a neighborhood
+ * published BEFORE the given date. This ensures "yesterday" is always
+ * relative to the brief the user is currently reading.
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const neighborhoodId = searchParams.get('neighborhoodId');
-    const excludeSlug = searchParams.get('excludeSlug') || '';
+    const beforeDate = searchParams.get('beforeDate');
 
     if (!neighborhoodId) {
       return NextResponse.json({ url: null });
@@ -19,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // Find the most recent brief article that isn't the current one
+    // Find the most recent brief article published before the given date
     let query = supabase
       .from('articles')
       .select('slug')
@@ -27,7 +29,12 @@ export async function GET(request: NextRequest) {
       .eq('status', 'published')
       .ilike('category_label', '%Daily Brief%')
       .order('published_at', { ascending: false })
-      .limit(2);
+      .limit(1);
+
+    // If beforeDate provided, only return briefs from before that date
+    if (beforeDate) {
+      query = query.lt('published_at', beforeDate);
+    }
 
     const { data: articles } = await query;
 
@@ -35,11 +42,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ url: null });
     }
 
-    // Find the first article that isn't the current one
-    const previous = articles.find(a => a.slug !== excludeSlug);
-    if (!previous) {
-      return NextResponse.json({ url: null });
-    }
+    const previous = articles[0];
 
     const citySlug = getCitySlugFromId(neighborhoodId);
     const neighborhoodSlug = getNeighborhoodSlugFromId(neighborhoodId);

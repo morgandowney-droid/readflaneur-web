@@ -5,6 +5,15 @@
 
 ## 2026-02-14
 
+**Fix "Read Yesterday's Daily Brief" Date-Relative Query:**
+- `yesterday/route.ts`: Changed from `excludeSlug` to `beforeDate` parameter. Now uses `lt('published_at', beforeDate)` to find the most recent brief published BEFORE the current brief's date. Previously the API endpoint didn't receive any filtering info, so it always returned the most recent brief (which was today's).
+- `NeighborhoodBrief.tsx`: Passes `generatedAt` as `beforeDate` when fetching yesterday's brief in the expanded card view.
+- `BriefDiscoveryFooter.tsx`: Added `publishedAt` prop, passes it as `beforeDate` to the yesterday API. Article page passes `article.published_at` through.
+- Effect: "Read yesterday's Daily Brief" now always shows the day prior to whatever brief the user is currently viewing, not just today's brief.
+
+**"Above is the Daily Brief" Text Change:**
+- `translations.ts`: Changed `feed.dailyBriefForPrimary` from "Daily Brief for your primary neighborhood:" to "Above is the Daily Brief for your primary neighborhood:" across all 9 languages (en, sv, fr, de, es, pt, it, zh, ja).
+
 **Fix translate-content Cron Starvation + Broken Logging:**
 - `translate-content/route.ts`: Two bugs. (1) `LIMIT 20` query fetched the same 20 newest articles/briefs every run. Once those had translations for a language, the cron skipped them but never paged to older items - 800+ articles and 700+ briefs never got translated. Same starvation pattern as `generate-brief-articles`. Fix: 4-step approach (get ALL IDs from last 48h, find existing translations in chunks of 100, compute diff, fetch full data only for untranslated items, 15 per language per run). (2) `cron_executions` insert used wrong column names (`status`/`duration_ms`/`items_processed`/`details` instead of `success`/`errors`/`response_data`), causing 0 logged runs in the monitoring table despite the cron actually executing on Vercel. Fixed to match schema used by all other crons.
 - Root cause of user-reported "translations not working": UI chrome (headings, buttons, labels) translated instantly via client-side `t()` dictionaries, but article/brief content stayed in English because the cron wasn't generating translations for most content.
