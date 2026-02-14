@@ -626,7 +626,7 @@ export function MultiFeed({
             {neighborhoods[0] && (
               <p className="text-xs text-fg-muted mt-2 px-4">
                 {t('feed.dailyBriefForPrimary')} <span className="text-fg-subtle">{neighborhoods[0].name}</span>
-                {' '}<button onClick={() => openModal()} className="text-accent hover:underline">{t('nav.editNeighborhoods')}</button>
+                <button onClick={() => openModal()} className="text-accent hover:underline ml-2">{t('nav.editNeighborhoods')}</button>
               </p>
             )}
           </div>
