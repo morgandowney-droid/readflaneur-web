@@ -380,7 +380,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
             )}
           </div>
           <span className="inline-block bg-black text-white px-6 py-2 text-sm tracking-widest uppercase whitespace-nowrap">
-            Learn More
+            Let&apos;s Take a Quick Look
           </span>
         </div>
       </a>
@@ -404,7 +404,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
           <p className="text-xs text-fg-muted mb-3">{houseAd.body}</p>
         )}
         <span className="inline-block bg-black text-white px-4 py-2 text-xs tracking-widest uppercase">
-          Learn More
+          Let&apos;s Take a Quick Look
         </span>
       </div>
     </a>

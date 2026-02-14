@@ -167,9 +167,12 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             return (
               <>
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fg-muted mb-4">
-                  <span className="uppercase tracking-wider">
+                  <Link
+                    href={`/${city}/${neighborhood}`}
+                    className="uppercase tracking-wider text-fg-muted hover:text-accent transition-colors"
+                  >
                     {article.neighborhood?.name}
-                  </span>
+                  </Link>
                   <span>&middot;</span>
                   <span>{formatRelativeTime(article.created_at)}</span>
                   {article.category_label && (
