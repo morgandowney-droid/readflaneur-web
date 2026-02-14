@@ -80,14 +80,6 @@ export async function enrichBriefWithGemini(
     ? new Date(options.briefGeneratedAt)
     : new Date();
 
-  // Format date for display
-  const dateStr = options?.date || contextTime.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-
   // Get timezone name based on country
   const timezoneMap: Record<string, string> = {
     'Sweden': 'Europe/Stockholm',
@@ -100,7 +92,18 @@ export async function enrichBriefWithGemini(
   };
   const timezone = timezoneMap[country] || 'America/New_York';
 
+  // Format date for display (use neighborhood's timezone, not server timezone)
+  const dateStr = options?.date || contextTime.toLocaleDateString('en-US', {
+    timeZone: timezone,
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
   // Format the context time with timezone for Gemini
+  // Always present as 7 AM delivery time - briefs may be generated as early as
+  // midnight but are always delivered at 7 AM local time
   const contextTimeStr = contextTime.toLocaleString('en-US', {
     timeZone: timezone,
     weekday: 'long',
@@ -110,7 +113,7 @@ export async function enrichBriefWithGemini(
     hour: 'numeric',
     minute: '2-digit',
     timeZoneName: 'short',
-  });
+  }).replace(/\d{1,2}:\d{2}\s*(AM|PM)/, '7:00 AM');
 
   // Determine language hint based on country
   const languageHint = country === 'Sweden' ? 'IMPORTANT: Search Swedish news sites like Thatsup.se, Restaurangvärlden, Mitt i, DN.se, and SVD.se. Also try Swedish search terms like "öppnar", "nytt café", "restaurang".' :

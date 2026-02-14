@@ -10,8 +10,9 @@ import { LiquorLicense } from '@/lib/nyc-liquor';
  * Neighborhood Briefs Sync Cron Job
  *
  * Runs every 15 minutes and generates briefs ONLY for neighborhoods where it's
- * currently 3-9am local time. This ensures briefs feel like fresh
- * morning updates for each neighborhood globally.
+ * currently midnight-7am local time. Starting at midnight gives the full pipeline
+ * (generation → enrichment → article creation) up to 7 hours to complete before
+ * the 7 AM email send.
  *
  * Schedule: *\/15 * * * * (every 15 minutes)
  * Brief expiration: 24 hours (one per day per neighborhood)
@@ -22,22 +23,23 @@ import { LiquorLicense } from '@/lib/nyc-liquor';
  * The "already covered" check uses each neighborhood's local timezone
  * to determine what "today" means (not UTC midnight).
  *
- * The 6-hour window (3-9 AM) combined with 15-minute frequency gives
- * 24 chances per timezone to generate a brief, surviving Vercel cron
- * gaps up to ~5 hours.
+ * The 7-hour window (midnight-7 AM) combined with 15-minute frequency gives
+ * 28 chances per timezone to generate a brief, surviving Vercel cron
+ * gaps up to ~6 hours.
  */
 
 /**
- * Check if it's currently between 3-9am in a given timezone.
- * 6-hour window (24 chances at every-15-min) survives Vercel cron gaps up to ~5 hours.
- * Widened from 4-8am after observing 4-hour Vercel cron gaps during APAC windows.
+ * Check if it's currently between midnight-7am in a given timezone.
+ * 7-hour window (28 chances at every-15-min) survives Vercel cron gaps up to ~6 hours.
+ * Starts at midnight to give the full pipeline (generation → enrichment → article)
+ * up to 7 hours before the 7 AM email send.
  */
 function isMorningWindow(timezone: string): boolean {
   try {
     const now = new Date();
     const localTime = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
     const hour = localTime.getHours();
-    return hour >= 3 && hour < 9;
+    return hour >= 0 && hour < 7;
   } catch (e) {
     console.error(`Invalid timezone: ${timezone}`, e);
     return false;
