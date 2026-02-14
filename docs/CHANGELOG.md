@@ -5,6 +5,13 @@
 
 ## 2026-02-14
 
+**Mobile Feed Vertical Space Fix:**
+- `MagicLinkReminder.tsx`: Hidden on mobile (`hidden md:block`) to reduce above-fold chrome. Desktop unchanged. Mobile email capture handled by engagement-triggered `EmailCaptureCard` after 5th article instead.
+- `MultiFeed.tsx`: Tightened daily brief bottom margin on mobile (`mb-2 md:mb-6`). First article now visible on first screen without scrolling.
+
+**Headline Truncation - Dangling Word Strip:**
+- `utils.ts`: `truncateHeadline()` now iteratively strips trailing prepositions (`for`, `in`, `at`, `on`, `to`, `of`, `by`, `with`, `from`, `into`, `as`), articles (`the`, `a`, `an`), and conjunctions (`and`, `or`, `but`). Handles cascading cases (e.g., "Events for the" becomes "Events"). Previously only stripped `, and`/`, or` and `St.`.
+
 **Translation Completeness Sweep:**
 - `translations.ts`: Added `feed.reachedEnd` and `feed.dailyBriefForPrimary` keys in all 9 languages.
 - `MultiFeed.tsx`: Translated PRIMARY badge (desktop pills), "Daily Brief for your primary neighborhood" text, "Edit Neighborhoods" link via `t()`.
