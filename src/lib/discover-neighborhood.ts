@@ -12,15 +12,27 @@ export interface DiscoveryResult {
   neighborhoodName: string;
 }
 
+export interface DiscoveryOptions {
+  mode?: 'nearby' | 'random';
+  excludeCity?: string;
+}
+
 /**
  * Find the nearest unsubscribed neighborhood that has a recent brief article.
  * Returns a URL to the brief and the neighborhood name, or null if nothing found.
+ *
+ * mode='nearby' (default): sort by distance from reference neighborhood
+ * mode='random': random shuffle, optionally excluding a specific city for diversity
  */
 export async function findDiscoveryBrief(
   supabase: SupabaseClient,
   subscribedIds: string[],
-  referenceNeighborhoodId: string | null
+  referenceNeighborhoodId: string | null,
+  options?: DiscoveryOptions
 ): Promise<DiscoveryResult | null> {
+  const mode = options?.mode || 'nearby';
+  const excludeCity = options?.excludeCity;
+
   // Fetch all active, non-combo neighborhoods with coordinates
   const { data: neighborhoods } = await supabase
     .from('neighborhoods')
@@ -32,13 +44,30 @@ export async function findDiscoveryBrief(
 
   // Filter out subscribed neighborhoods
   const subscribedSet = new Set(subscribedIds);
-  const candidates = neighborhoods.filter(n => !subscribedSet.has(n.id));
+  let candidates = neighborhoods.filter(n => !subscribedSet.has(n.id));
+
+  // For random mode, exclude the specified city for diversity
+  if (mode === 'random' && excludeCity) {
+    const filtered = candidates.filter(
+      n => n.city?.toLowerCase() !== excludeCity.toLowerCase()
+    );
+    // Only apply city filter if it leaves candidates
+    if (filtered.length > 0) candidates = filtered;
+  }
 
   if (candidates.length === 0) return null;
 
-  // Sort by distance if we have a reference point
   let sorted = candidates;
-  if (referenceNeighborhoodId) {
+
+  if (mode === 'random') {
+    // Fisher-Yates shuffle for unbiased randomization
+    sorted = [...candidates];
+    for (let i = sorted.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
+    }
+  } else if (referenceNeighborhoodId) {
+    // Sort by distance from reference
     const ref = neighborhoods.find(n => n.id === referenceNeighborhoodId);
     if (ref?.latitude != null && ref?.longitude != null) {
       sorted = candidates
@@ -50,11 +79,11 @@ export async function findDiscoveryBrief(
         .sort((a, b) => a.dist - b.dist);
     }
   } else {
-    // No reference - shuffle randomly
+    // No reference and not random - shuffle as fallback
     sorted = candidates.sort(() => Math.random() - 0.5);
   }
 
-  // Try the top 10 nearest candidates to find one with a brief article
+  // Try the top 10 candidates to find one with a brief article
   const topCandidates = sorted.slice(0, 10);
 
   for (const candidate of topCandidates) {
