@@ -5,6 +5,9 @@
 
 ## 2026-02-13
 
+**Daily Brief Primary Neighborhood Context:**
+- `MultiFeed.tsx`: In "All Stories" view, shows "Daily Brief for your primary neighborhood: [name]" with an "Edit Neighborhoods" link under the brief card, so users know which neighborhood the brief refers to.
+
 **Shift Brief Generation Window to Midnight-7 AM:**
 - `sync-neighborhood-briefs/route.ts`: Morning window changed from 3-9 AM to midnight-7 AM local time. Gives the full pipeline (generation -> enrichment -> article creation) up to 7 hours before the 7 AM email send, preventing stale briefs in emails.
 - `brief-enricher-gemini.ts`: Context time string always shows 7:00 AM (regex-replaced) so Gemini frames content as morning delivery regardless of actual generation time. Fixed `dateStr` to use neighborhood timezone instead of server timezone.
