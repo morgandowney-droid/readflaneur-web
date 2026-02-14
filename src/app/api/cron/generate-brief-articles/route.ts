@@ -313,6 +313,8 @@ export async function GET(request: Request) {
           category_label: `${neighborhood.name} Daily Brief`,
           brief_id: brief.id,
           image_url: '', // Required field, can be empty
+          enriched_at: new Date().toISOString(),
+          enrichment_model: 'gemini-2.5-flash',
         })
         .select('id')
         .single();

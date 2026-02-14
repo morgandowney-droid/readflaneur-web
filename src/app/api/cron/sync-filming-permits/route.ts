@@ -155,6 +155,8 @@ export async function GET(request: Request) {
             ai_model: 'gemini-2.5-flash',
             ai_prompt: `Set Life: ${event.projectName} on ${dateStr}`,
             category_label: 'Set Life',
+            enriched_at: new Date().toISOString(),
+            enrichment_model: 'gemini-2.5-flash',
           });
 
           if (insertError) {
@@ -173,6 +175,8 @@ export async function GET(request: Request) {
                 ai_model: 'gemini-2.5-flash',
                 ai_prompt: `Set Life: ${event.projectName} on ${dateStr}`,
                 category_label: 'Set Life',
+                enriched_at: new Date().toISOString(),
+                enrichment_model: 'gemini-2.5-flash',
               });
 
               if (retryError) {

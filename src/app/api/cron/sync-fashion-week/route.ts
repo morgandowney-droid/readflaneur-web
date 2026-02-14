@@ -212,6 +212,8 @@ export async function GET(request: Request) {
           ai_model: 'gemini-2.5-flash',
           ai_prompt: `Fashion Week: ${story.fashionWeek.name} Day ${story.summary.dayNumber} - ${story.neighborhoodId}`,
           category_label: story.categoryLabel,
+          enriched_at: new Date().toISOString(),
+          enrichment_model: 'gemini-2.5-flash',
           // Hero priority articles could be pinned at top of feed
           // is_featured: story.priority === 'hero',
         });

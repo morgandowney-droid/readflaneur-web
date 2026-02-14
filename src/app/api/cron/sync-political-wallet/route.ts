@@ -206,6 +206,8 @@ export async function GET(request: Request) {
             ai_model: 'gemini-2.5-flash',
             ai_prompt: `Political Wallet: ${story.trend.neighborhoodName} - ${story.topRecipient.recipientName} ($${story.topRecipient.totalAmount.toLocaleString()})`,
             category_label: story.categoryLabel,
+            enriched_at: new Date().toISOString(),
+            enrichment_model: 'gemini-2.5-flash',
           });
 
           if (insertError) {

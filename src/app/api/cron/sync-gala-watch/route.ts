@@ -184,6 +184,8 @@ export async function GET(request: Request) {
             ai_model: 'gemini-2.5-flash',
             ai_prompt: `Gala Watch (${story.hub}): ${story.event.name} at ${story.event.venue}`,
             category_label: story.categoryLabel,
+            enriched_at: new Date().toISOString(),
+            enrichment_model: 'gemini-2.5-flash',
           });
 
           if (insertError) {

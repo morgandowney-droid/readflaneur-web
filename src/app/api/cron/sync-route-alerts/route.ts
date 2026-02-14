@@ -214,6 +214,8 @@ export async function GET(request: Request) {
             ai_model: 'gemini-2.5-flash',
             ai_prompt: `Flight Check: ${story.announcement.airline.name} ${story.announcement.originAirport.code}-${story.announcement.destination.code}`,
             category_label: story.categoryLabel,
+            enriched_at: new Date().toISOString(),
+            enrichment_model: 'gemini-2.5-flash',
           });
 
           if (insertError) {

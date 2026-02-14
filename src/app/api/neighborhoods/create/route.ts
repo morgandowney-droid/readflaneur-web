@@ -387,6 +387,8 @@ export async function POST(request: NextRequest) {
             category_label: `${validation.name} Daily Brief`,
             brief_id: briefId,
             image_url: '',
+            enriched_at: new Date().toISOString(),
+            enrichment_model: 'gemini-2.5-flash',
           });
 
         if (!articleError) {

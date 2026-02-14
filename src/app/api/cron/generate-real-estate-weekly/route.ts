@@ -154,6 +154,8 @@ export async function GET(request: Request) {
           preview_text: previewText,
           image_url: cachedImageUrl, // Reuse cached category image
           category_label: 'Real Estate Weekly',
+          enriched_at: new Date().toISOString(),
+          enrichment_model: 'gemini-2.5-flash',
           status: 'published',
           published_at: new Date().toISOString(),
           article_type: 'real-estate-weekly',

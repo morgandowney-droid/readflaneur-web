@@ -152,6 +152,8 @@ export async function GET(request: Request) {
             ai_model: 'gemini-2.5-flash',
             ai_prompt: `Al Fresco Alert: ${event.restaurantName} (${event.seatingType})`,
             category_label: 'Al Fresco',
+            enriched_at: new Date().toISOString(),
+            enrichment_model: 'gemini-2.5-flash',
           });
 
           if (insertError) {
@@ -170,6 +172,8 @@ export async function GET(request: Request) {
                 ai_model: 'gemini-2.5-flash',
                 ai_prompt: `Al Fresco Alert: ${event.restaurantName} (${event.seatingType})`,
                 category_label: 'Al Fresco',
+                enriched_at: new Date().toISOString(),
+                enrichment_model: 'gemini-2.5-flash',
               });
 
               if (retryError) {

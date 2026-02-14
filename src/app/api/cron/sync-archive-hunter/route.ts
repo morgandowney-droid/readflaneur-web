@@ -220,6 +220,8 @@ export async function GET(request: Request) {
             ai_model: 'gemini-2.5-flash',
             ai_prompt: `Archive Alert: ${story.item.brand} ${story.item.name} at ${story.item.storeLocation.name} ($${story.item.price.toLocaleString()})`,
             category_label: story.categoryLabel,
+            enriched_at: new Date().toISOString(),
+            enrichment_model: 'gemini-2.5-flash',
           });
 
           if (insertError) {

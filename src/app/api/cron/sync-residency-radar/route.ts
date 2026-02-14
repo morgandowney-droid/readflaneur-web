@@ -224,6 +224,8 @@ export async function GET(request: Request) {
             ai_model: 'gemini-2.5-flash',
             ai_prompt: `Scene Watch: ${story.announcement.brand.name} opens ${story.announcement.residencyType.replace(/_/g, ' ')} in ${story.announcement.location.name}`,
             category_label: story.categoryLabel,
+            enriched_at: new Date().toISOString(),
+            enrichment_model: 'gemini-2.5-flash',
           });
 
           if (insertError) {

@@ -176,6 +176,8 @@ export async function GET(request: Request) {
           ai_model: 'gemini-2.5-pro',
           ai_prompt: `NYC Weekly Digest: ${permits.length} permits, ${licenses.length} licenses, ${crimeStats?.total_incidents || 0} incidents`,
           category_label: 'Civic Data',
+          enriched_at: new Date().toISOString(),
+          enrichment_model: 'gemini-2.5-flash',
         });
 
         if (insertError) {
