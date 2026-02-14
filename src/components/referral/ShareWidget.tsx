@@ -62,8 +62,8 @@ export function ShareWidget({ compact, onDone }: ShareWidgetProps) {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Join me on Flaneur',
-          text: 'Local stories from interesting neighborhoods around the world.',
+          title: 'Check out Flaneur',
+          text: 'Check out Flaneur - local stories from interesting neighborhoods around the world.',
           url,
         });
         onDone?.();
