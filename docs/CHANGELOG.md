@@ -5,6 +5,12 @@
 
 ## 2026-02-13
 
+**Tighten Headline Generation Prompts (50 chars):**
+- `sync-news/route.ts`: Claude RSS headline limit reduced from 80 to 50 chars, added "punchy and specific" guidance.
+- `grok.ts` `generateNeighborhoodBrief()`: Changed from "Catchy 5-10 word headline" to "max 50 characters, be specific - name the venue, event, or street."
+- `grok.ts` `generateGrokNewsStories()`: Changed from "under 80 chars" to "max 50 chars, name the venue/event/street, never generic."
+- Takes effect for new articles from next cron runs onward. Existing headlines unchanged.
+
 **Fix Mobile Dropdown Light Mode Contrast:**
 - `MultiFeed.tsx`: Mobile neighborhood dropdown trigger showed "All Stories" as `text-white`, invisible on light theme. Changed to `text-fg`.
 
