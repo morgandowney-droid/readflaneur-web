@@ -3,6 +3,13 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-14
+
+**Daily Brief Discovery CTAs:**
+- `discover-neighborhood.ts`: Added `DiscoveryOptions` interface with `mode` (`'nearby'` | `'random'`) and `excludeCity`. Random mode uses Fisher-Yates shuffle and filters out the specified city for diversity. Existing callers (house ad) unaffected (options param is optional).
+- `discover-neighborhood/route.ts`: Passes `mode` and `excludeCity` query params through to `findDiscoveryBrief()`.
+- `NeighborhoodBrief.tsx`: When expanded, shows two discovery CTAs below source attribution: "Read the [Name] Daily Brief" (nearby unsubscribed neighborhood) and "Take me somewhere new" (random, different city). Lazy-fetched on first expand via two parallel API calls, cached in component state. Links use Next.js `<Link>` with `stopPropagation` to avoid collapsing the brief.
+
 ## 2026-02-13
 
 **Daily Brief Primary Neighborhood Context:**
