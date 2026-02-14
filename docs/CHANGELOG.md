@@ -5,6 +5,12 @@
 
 ## 2026-02-13
 
+**Editorial Photo Image Style + Neighborhood Default Fallbacks:**
+- `generate-image/route.ts`: Image generation prompt changed from watercolor/gouache illustrations to ultra-photorealistic editorial fashion photography of iconic neighborhood locations (golden hour, cinematic, magazine texture).
+- New `mode: 'neighborhood_default'` generates one editorial photo per neighborhood, cached at `images/neighborhoods/{id}.png` in Supabase storage.
+- `feed/page.tsx`: Articles without images check neighborhood default in storage first, then fall back to most recent article image.
+- `MultiFeed.tsx`: Same two-tier fallback for client-side pill-filtered views.
+
 **Gallery Mobile Layout Overhaul:**
 - `ArticleCard.tsx`: Mobile gallery cards now show headline first, metadata below (not above), then a 4-line preview blurb.
 - Neighborhood name truncated at 15 chars (last full word). Category "[Neighborhood] Daily Brief" simplified to "Daily Brief".
