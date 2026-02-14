@@ -5,6 +5,10 @@
 
 ## 2026-02-14
 
+**Fix translate-content Cron Starvation + Broken Logging:**
+- `translate-content/route.ts`: Two bugs. (1) `LIMIT 20` query fetched the same 20 newest articles/briefs every run. Once those had translations for a language, the cron skipped them but never paged to older items - 800+ articles and 700+ briefs never got translated. Same starvation pattern as `generate-brief-articles`. Fix: 4-step approach (get ALL IDs from last 48h, find existing translations in chunks of 100, compute diff, fetch full data only for untranslated items, 15 per language per run). (2) `cron_executions` insert used wrong column names (`status`/`duration_ms`/`items_processed`/`details` instead of `success`/`errors`/`response_data`), causing 0 logged runs in the monitoring table despite the cron actually executing on Vercel. Fixed to match schema used by all other crons.
+- Root cause of user-reported "translations not working": UI chrome (headings, buttons, labels) translated instantly via client-side `t()` dictionaries, but article/brief content stayed in English because the cron wasn't generating translations for most content.
+
 **DB Cleanup - Corrupted Specialized Articles:**
 - Deleted 7 corrupted articles (Escape Index, Powder Alert, News Brief, GCB Alert, Design Watch, 2x Block Watch) from Feb 11-14. Bodies had been overwritten by `enrich-briefs` Phase 2 with Gemini refusal responses ("I am unable to...") because the brief-enrichment prompt didn't match specialized content.
 - Retroactively set `enriched_at` on 107 articles (mostly `brief_summary` from Feb 11-12) that were still in the 4-day Phase 2 window without protection. Final count: 0 unprotected articles remaining.
