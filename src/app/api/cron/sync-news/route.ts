@@ -49,7 +49,7 @@ Return JSON:
   "is_relevant": true/false,
   "neighborhood_id": "the-neighborhood-id" or null (if relevant to specific neighborhood),
   "relevance_reason": "brief explanation",
-  "rewritten_headline": "Your headline (max 80 chars)" or null,
+  "rewritten_headline": "Your headline (max 50 chars, punchy and specific)" or null,
   "rewritten_preview": "Your preview (max 150 chars)" or null,
   "rewritten_body": "Your article body (100-200 words, markdown)" or null,
   "confidence": 0.0-1.0

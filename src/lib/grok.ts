@@ -113,7 +113,7 @@ You may weave this into your brief naturally, e.g., "Meanwhile, DOB records show
 After searching, create a brief "What's Happening Today" summary.
 
 Format your response EXACTLY as:
-HEADLINE: [Catchy 5-10 word headline]
+HEADLINE: [Catchy headline, max 50 characters. Be specific - name the venue, event, or street. Never generic.]
 CONTENT: [2-3 short paragraphs, each covering a different topic. Separate paragraphs with blank lines.]
 
 Writing style rules:
@@ -266,7 +266,7 @@ Avoid:
             content: `Search for recent news and posts about ${location}. Find ${count} distinct newsworthy stories from the last 24-48 hours.
 
 For each story, provide:
-1. HEADLINE: Engaging headline (under 80 chars)
+1. HEADLINE: Engaging headline (max 50 chars, name the venue/event/street, never generic)
 2. CATEGORY: One of [opening, closing, event, community, sighting, development, business]
 3. PREVIEW: 1-2 sentence teaser
 4. BODY: 2-3 paragraph article (150-250 words)
