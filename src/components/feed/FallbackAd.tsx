@@ -261,7 +261,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
               <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">
                 Flaneur
               </p>
-              <h3 className="font-semibold text-lg mb-1">{houseAd.headline}</h3>
+              <h3 className="font-semibold text-lg mb-1 whitespace-nowrap overflow-hidden text-ellipsis">{houseAd.headline}</h3>
               {houseAd.body && (
                 <p className="text-sm text-fg-muted">{houseAd.body}</p>
               )}
@@ -291,7 +291,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
           </span>
         </div>
         <div className="p-4">
-          <h3 className="font-semibold text-sm mb-2">{houseAd.headline}</h3>
+          <h3 className="font-semibold text-sm mb-2 whitespace-nowrap overflow-hidden text-ellipsis">{houseAd.headline}</h3>
           {houseAd.body && (
             <p className="text-xs text-fg-muted mb-3">{houseAd.body}</p>
           )}
@@ -323,7 +323,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
               <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">
                 Flaneur
               </p>
-              <h3 className="font-semibold text-lg mb-1">{houseAd.headline}</h3>
+              <h3 className="font-semibold text-lg mb-1 whitespace-nowrap overflow-hidden text-ellipsis">{houseAd.headline}</h3>
               {houseAd.body && (
                 <p className="text-sm text-fg-muted">{houseAd.body}</p>
               )}
@@ -348,7 +348,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
           </span>
         </div>
         <div className="p-4">
-          <h3 className="font-semibold text-sm mb-2">{houseAd.headline}</h3>
+          <h3 className="font-semibold text-sm mb-2 whitespace-nowrap overflow-hidden text-ellipsis">{houseAd.headline}</h3>
           {houseAd.body && (
             <p className="text-xs text-fg-muted mb-3">{houseAd.body}</p>
           )}
@@ -374,7 +374,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
             <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">
               Flaneur
             </p>
-            <h3 className="font-semibold text-lg mb-1">{houseAd.headline}</h3>
+            <h3 className="font-semibold text-lg mb-1 whitespace-nowrap overflow-hidden text-ellipsis">{houseAd.headline}</h3>
             {houseAd.body && (
               <p className="text-sm text-fg-muted">{houseAd.body}</p>
             )}
@@ -399,7 +399,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
         </span>
       </div>
       <div className="p-4">
-        <h3 className="font-semibold text-sm mb-2">{houseAd.headline}</h3>
+        <h3 className="font-semibold text-sm mb-2 whitespace-nowrap overflow-hidden text-ellipsis">{houseAd.headline}</h3>
         {houseAd.body && (
           <p className="text-xs text-fg-muted mb-3">{houseAd.body}</p>
         )}

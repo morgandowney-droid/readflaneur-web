@@ -11,6 +11,8 @@ interface ArticleBodyProps {
 export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProps) {
   // Strip all links (HTML and markdown) from content, keeping just the text
   let cleanedContent = content
+    // Strip raw Grok search result objects that leak into content
+    .replace(/\{['"](?:title|url|snippet|author|published_at)['"]:[^}]*(?:\}|$)/gm, '')
     // Strip HTML <a> tags, keeping just the text
     .replace(/<a\s+[^>]*>([^<]+)<\/a>/gi, '$1')
     // Strip any other HTML tags that may have been generated
@@ -21,6 +23,12 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
     // Clean content: remove citation markers and bare URLs
     .replace(/\[\[\d+\]\]/g, '')
     .replace(/https?:\/\/\S+/g, '')
+    // Strip URL-encoded artifacts from broken markdown link parsing
+    .replace(/%20[A-Za-z%0-9]+(?:%20[A-Za-z%0-9]+)*\)/g, '')
+    // Replace em dashes with period and space
+    .replace(/\s*—\s*/g, '. ')
+    // Fix double periods
+    .replace(/\.\.\s*/g, '. ')
     .trim();
 
   // Insert paragraph breaks before section headers [[...]]

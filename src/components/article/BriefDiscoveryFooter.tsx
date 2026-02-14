@@ -42,8 +42,10 @@ export function BriefDiscoveryFooter({
       const subscribedIds = stored ? JSON.parse(stored) as string[] : [];
       setIsSubscribed(subscribedIds.includes(neighborhoodId));
 
+      // Exclude both subscribed neighborhoods AND the current one from discovery
+      const excludeIds = [...new Set([...subscribedIds, neighborhoodId])];
       const params = new URLSearchParams();
-      if (subscribedIds.length > 0) params.set('subscribedIds', subscribedIds.join(','));
+      params.set('subscribedIds', excludeIds.join(','));
       params.set('referenceId', neighborhoodId);
 
       // Fetch nearby discovery
