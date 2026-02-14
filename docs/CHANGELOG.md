@@ -5,6 +5,15 @@
 
 ## 2026-02-13
 
+**Gallery Mobile Layout Overhaul:**
+- `ArticleCard.tsx`: Mobile gallery cards now show headline first, metadata below (not above), then a 4-line preview blurb.
+- Neighborhood name truncated at 15 chars (last full word). Category "[Neighborhood] Daily Brief" simplified to "Daily Brief".
+- `FeedList.tsx`: Mobile gallery spacing increased from `space-y-6` to `space-y-10` for clear story separation.
+
+**Fallback Images for Empty Articles:**
+- `feed/page.tsx` (server): Articles without images now fall back to the most recent published image from the same neighborhood. Batch query per neighborhood.
+- `MultiFeed.tsx` (client): Same fallback logic for pill-filtered article fetches.
+
 **Tighten Headline Generation Prompts (50 chars):**
 - `sync-news/route.ts`: Claude RSS headline limit reduced from 80 to 50 chars, added "punchy and specific" guidance.
 - `grok.ts` `generateNeighborhoodBrief()`: Changed from "Catchy 5-10 word headline" to "max 50 characters, be specific - name the venue, event, or street."
