@@ -5,6 +5,11 @@
 
 ## 2026-02-14
 
+**DB Cleanup - Corrupted Specialized Articles:**
+- Deleted 7 corrupted articles (Escape Index, Powder Alert, News Brief, GCB Alert, Design Watch, 2x Block Watch) from Feb 11-14. Bodies had been overwritten by `enrich-briefs` Phase 2 with Gemini refusal responses ("I am unable to...") because the brief-enrichment prompt didn't match specialized content.
+- Retroactively set `enriched_at` on 107 articles (mostly `brief_summary` from Feb 11-12) that were still in the 4-day Phase 2 window without protection. Final count: 0 unprotected articles remaining.
+- Also deleted 45 corrupted nuisance watch articles in earlier cleanup (bodies replaced with daily brief content).
+
 **Systemic enriched_at Fix (All Article-Creating Crons):**
 - All 27 crons that create articles (sync-filming-permits, sync-fashion-week, sync-sample-sales, sync-alfresco-permits, sync-heritage-filings, generate-brief-articles, sync-news, neighborhoods/create, and 19 more) now set `enriched_at` and `enrichment_model` at insert time. Previously only `sync-nuisance-watch` had this fix. Without `enriched_at`, `enrich-briefs` Phase 2 would pick up any published article from the last 4 days and overwrite its body with daily brief content from `enrichBriefWithGemini()`. This affected all specialized article types (filming permits, fashion week, auction calendars, etc.), not just nuisance watch.
 - Crons with multiple article inserts (sync-alfresco-permits, sync-filming-permits, sync-heritage-filings, sync-news) all had each insert block fixed.
