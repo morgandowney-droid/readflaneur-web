@@ -5,10 +5,19 @@
 
 ## 2026-02-14
 
-**Daily Brief Discovery CTAs:**
+**Daily Brief Discovery System:**
 - `discover-neighborhood.ts`: Added `DiscoveryOptions` interface with `mode` (`'nearby'` | `'random'`) and `excludeCity`. Random mode uses Fisher-Yates shuffle and filters out the specified city for diversity. Existing callers (house ad) unaffected (options param is optional).
 - `discover-neighborhood/route.ts`: Passes `mode` and `excludeCity` query params through to `findDiscoveryBrief()`.
-- `NeighborhoodBrief.tsx`: When expanded, shows two discovery CTAs below source attribution: "Read the [Name] Daily Brief" (nearby unsubscribed neighborhood) and "Take me somewhere new" (random, different city). Lazy-fetched on first expand via two parallel API calls, cached in component state. Links use Next.js `<Link>` with `stopPropagation` to avoid collapsing the brief.
+- `NeighborhoodBrief.tsx`: When expanded, shows three discovery CTAs below source attribution: "Read yesterday's [Name] Daily Brief", "Read today's nearby [Name] Daily Brief", and "Take me somewhere new". Lazy-fetched on first expand via three parallel API calls, cached in component state.
+- `BriefDiscoveryFooter.tsx`: New unified "Keep reading" component on daily brief article pages, placed right after source attribution. Includes: yesterday's brief link, add to neighborhoods (if not subscribed), nearby brief, "take me somewhere new", and inline email capture ("Get them emailed 7am daily"). Current neighborhood excluded from discovery candidates to prevent self-referencing.
+- `/api/briefs/yesterday/route.ts`: New endpoint returning previous day's brief article URL for a neighborhood.
+
+**Article Page Polish:**
+- `ArticleReactions.tsx`: Removed fire emoji. Bookmark and heart now compact inline (no borders, smaller icons, no section divider).
+- `PostReadEmailCapture.tsx`: Updated text to "Get them emailed 7am daily".
+- `FallbackAd.tsx`: House ad headlines single-line truncated on mobile (`whitespace-nowrap overflow-hidden text-ellipsis`).
+- `ArticleBody.tsx`: Added Grok raw search result stripping (`{'title': ..., 'url': ..., 'snippet': ...}`), URL-encoded artifact removal, and em dash replacement.
+- `FeedList.tsx`: Added subtle `border-b border-border/30` separator between gallery view stories.
 
 ## 2026-02-13
 
