@@ -5,6 +5,13 @@
 
 ## 2026-02-14
 
+**Dual-Mode Invite Page + Subscribe CAPTCHA Fix:**
+- `/invite` now detects subscribed users (via `flaneur-newsletter-subscribed` localStorage + absence of `?ref=` param) and shows **inviter mode**: "Share Flaneur" heading, personalized invite link in readonly input, "Copy Link" + "Share" buttons (native share on mobile), referral stats (clicks/friends joined) below.
+- Invitees with `?ref=CODE` or new visitors still see the existing join form (invitee mode) unchanged.
+- Fixed "Failed to send verification email" error on subscribe: replaced `signInWithOtp()` (anon key, requires Turnstile CAPTCHA token) with `supabaseAdmin.auth.admin.generateLink({ type: 'magiclink' })` + send via Resend.
+- New "Welcome to Flaneur" magic link email template (dark theme, Playfair Display masthead, Verify Email CTA).
+- Fixed `callbackUrl` construction to use `NEXT_PUBLIC_APP_URL` with proper `VERCEL_URL` fallback pattern.
+
 **Streamline Invite Page (Zero-Friction Referral Flow):**
 - Removed `HomeSignupEnhanced` neighborhood selector from `/invite` page. Invitees no longer need to manually pick neighborhoods before subscribing.
 - `InviteHero` now auto-detects invitee's location via `/api/location/detect-and-match` on form submit, finds 4 nearest neighborhoods, saves to localStorage, then subscribes and redirects to `/feed?welcome={city}` with WelcomeBanner.
