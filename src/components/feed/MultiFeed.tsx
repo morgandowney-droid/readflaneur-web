@@ -412,7 +412,7 @@ export function MultiFeed({
                     <div className="text-[10px] text-fg-subtle truncate">{activeHood.city}</div>
                   </>
                 ) : (
-                  <div className="text-sm font-medium text-white">{t('feed.allStories')}</div>
+                  <div className="text-sm font-medium text-fg">{t('feed.allStories')}</div>
                 )}
               </div>
               <svg
