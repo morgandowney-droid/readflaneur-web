@@ -2,11 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useNeighborhoodPreferences } from '@/hooks/useNeighborhoodPreferences';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { ShareWidget } from '@/components/referral/ShareWidget';
 import { useTranslation } from '@/hooks/useTranslation';
+import { createClient } from '@/lib/supabase/client';
 
 interface ContextSwitcherProps {
   currentContext: 'all' | string; // 'all' or neighborhood ID
@@ -81,9 +83,14 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
 
   const showPrimary = neighborhoods.length > 1;
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     setIsSubscribed(localStorage.getItem('flaneur-newsletter-subscribed') === 'true');
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session?.user);
+    }, () => {});
   }, []);
 
   return (
@@ -194,6 +201,18 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
             </button>
             {isSubscribed && (
               <ShareWidget compact onDone={() => setOpen(false)} />
+            )}
+            {isAuthenticated && (
+              <Link
+                href="/account"
+                onClick={() => setOpen(false)}
+                className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-hover transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-fg-subtle shrink-0">
+                  <path d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="text-xs text-fg-muted">{t('nav.account')}</span>
+              </Link>
             )}
           </div>
         </div>

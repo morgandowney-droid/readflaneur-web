@@ -22,8 +22,6 @@ export function Header() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const [signOutConfirm, setSignOutConfirm] = useState(false);
   const [sections, setSections] = useState<Section[]>([]);
   const [selectedNeighborhoods, setSelectedNeighborhoods] = useState<Neighborhood[]>([]);
   const { scrollDirection, scrollY } = useScrollDirection({ threshold: 10 });
@@ -253,45 +251,6 @@ export function Header() {
     refetchSelectedNeighborhoods();
   }, [modalIsOpen]);
 
-  const accountMenuRef = useRef<HTMLDivElement>(null);
-
-  // Close account menu on click outside
-  useEffect(() => {
-    if (!accountMenuOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (accountMenuRef.current && !accountMenuRef.current.contains(e.target as Node)) {
-        setAccountMenuOpen(false);
-        setSignOutConfirm(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [accountMenuOpen]);
-
-  const handleSignOut = async () => {
-    if (!signOutConfirm) {
-      setSignOutConfirm(true);
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/auth/signout', {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error('Sign out failed');
-      }
-
-      setUser(null);
-      setIsAdmin(false);
-      window.location.href = '/';
-    } catch {
-      setUser(null);
-      setIsAdmin(false);
-      window.location.href = '/';
-    }
-  };
 
   return (
     <header
@@ -365,48 +324,6 @@ export function Header() {
               >
                 {t('nav.stories')}
               </Link>
-              {/* Account icon with sign-out dropdown */}
-              <div className="relative" ref={accountMenuRef}>
-                <button
-                  onClick={() => { setAccountMenuOpen(!accountMenuOpen); setSignOutConfirm(false); }}
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center text-emerald-700 hover:text-emerald-500 transition-colors"
-                  aria-label="Account menu"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
-                {accountMenuOpen && (
-                  <div className="absolute right-0 top-full mt-1 bg-surface border border-border-strong rounded-md shadow-lg min-w-[180px] py-1 z-50">
-                    {!signOutConfirm ? (
-                      <button
-                        onClick={handleSignOut}
-                        className="w-full text-left px-4 py-2.5 text-sm text-fg-muted hover:text-fg hover:bg-hover transition-colors"
-                      >
-                        {t('nav.signOut')}
-                      </button>
-                    ) : (
-                      <div className="px-4 py-3">
-                        <p className="text-xs text-fg-muted mb-2.5">{t('nav.signOutConfirm')}</p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={handleSignOut}
-                            className="flex-1 px-3 py-1.5 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                          >
-                            {t('nav.signOut')}
-                          </button>
-                          <button
-                            onClick={() => { setSignOutConfirm(false); setAccountMenuOpen(false); }}
-                            className="flex-1 px-3 py-1.5 text-xs bg-surface border border-border-strong text-fg-muted rounded hover:text-fg transition-colors"
-                          >
-                            {t('nav.cancel')}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
             </div>
           ) : (
             <Link
@@ -575,35 +492,16 @@ export function Header() {
                     {t('nav.dashboard')}
                   </Link>
                 )}
-                {!signOutConfirm ? (
-                  <button
-                    onClick={() => setSignOutConfirm(true)}
-                    className="text-sm tracking-widest uppercase text-fg-muted hover:text-fg transition-colors text-right py-3 w-full"
-                  >
-                    {t('nav.signOut')}
-                  </button>
-                ) : (
-                  <div className="py-3 text-right">
-                    <p className="text-xs text-fg-muted mb-2">{t('nav.signOutConfirm')}</p>
-                    <div className="flex gap-2 justify-end">
-                      <button
-                        onClick={() => {
-                          setSignOutConfirm(false);
-                          handleSignOut();
-                        }}
-                        className="px-4 py-1.5 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                      >
-                        {t('nav.signOut')}
-                      </button>
-                      <button
-                        onClick={() => setSignOutConfirm(false)}
-                        className="px-4 py-1.5 text-xs bg-surface border border-border-strong text-fg-muted rounded hover:text-fg transition-colors"
-                      >
-                        {t('nav.cancel')}
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <Link
+                  href="/account"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    'text-sm tracking-widest uppercase transition-colors hover:text-fg py-3 block text-right',
+                    pathname === '/account' ? 'text-fg font-medium' : 'text-fg-muted'
+                  )}
+                >
+                  {t('nav.account')}
+                </Link>
               </>
             ) : (
               <Link
