@@ -213,6 +213,7 @@ export async function GET(request: Request) {
         }
 
         // Create article with cached image
+        // Set enriched_at so enrich-briefs cron skips these (already complete)
         const { error: insertError } = await supabase.from('articles').insert({
           neighborhood_id: finalNeighborhoodId,
           headline: story.headline,
@@ -226,6 +227,8 @@ export async function GET(request: Request) {
           ai_model: 'gemini-2.5-flash',
           ai_prompt: `Nuisance Watch: ${story.category} at ${story.displayLocation}`,
           category_label: categoryLabel,
+          enriched_at: new Date().toISOString(),
+          enrichment_model: 'gemini-2.5-flash',
         });
 
         if (insertError) {
