@@ -5,6 +5,15 @@
 
 ## 2026-02-14
 
+**Translation Completeness Sweep:**
+- `translations.ts`: Added `feed.reachedEnd` and `feed.dailyBriefForPrimary` keys in all 9 languages.
+- `MultiFeed.tsx`: Translated PRIMARY badge (desktop pills), "Daily Brief for your primary neighborhood" text, "Edit Neighborhoods" link via `t()`.
+- `MultiLoadMoreButton.tsx` / `LoadMoreButton.tsx`: Translated "Load More Stories", "Loading...", "You've reached the end" via `t()`.
+- `CompactArticleCard.tsx`: Translates "Daily Brief" category label on feed cards when language is active.
+- `TranslatedArticleNav.tsx`: Added `TranslatedDailyBriefLabel` for article page brief label.
+- `[slug]/page.tsx`: Brief article headlines now wrapped in `TranslatedHeadline`, "Daily Brief" label uses translated component.
+- `translate-content/route.ts`: Language rotation - rotates start language each cron run (half-hour offset) so zh/ja get fair coverage instead of always being last. Fixes starvation where sv had 157 translations but ja only 70.
+
 **Daily Brief Discovery System:**
 - `discover-neighborhood.ts`: Added `DiscoveryOptions` interface with `mode` (`'nearby'` | `'random'`) and `excludeCity`. Random mode uses Fisher-Yates shuffle and filters out the specified city for diversity. Existing callers (house ad) unaffected (options param is optional).
 - `discover-neighborhood/route.ts`: Passes `mode` and `excludeCity` query params through to `findDiscoveryBrief()`.
