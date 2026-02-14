@@ -120,7 +120,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
         {/* Mobile: headline → metadata → blurb (no hover state on mobile) */}
         {!isHovered && (
           <div className="md:hidden px-4 pt-3 pb-2">
-            <h2 className="text-fg text-xl font-semibold leading-tight mb-1">
+            <h2 className="text-fg text-xl font-semibold leading-tight mb-1 whitespace-nowrap overflow-hidden">
               {truncateHeadline(translatedHeadline || cleanArticleHeadline(article.headline))}
             </h2>
             <div className="flex items-center gap-2 text-xs text-fg-muted mb-2">
