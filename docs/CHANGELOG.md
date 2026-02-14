@@ -5,6 +5,9 @@
 
 ## 2026-02-13
 
+**Fix Mobile Dropdown Light Mode Contrast:**
+- `MultiFeed.tsx`: Mobile neighborhood dropdown trigger showed "All Stories" as `text-white`, invisible on light theme. Changed to `text-fg`.
+
 **Block AI Scrapers via robots.txt:**
 - Added 6 more AI crawler user-agents (Meta-ExternalAgent, Meta-ExternalFetcher, Timpibot, img2dataset, Scrapy, Webzio-Extended) to `src/app/robots.ts`. Now blocks 21 AI training bots total.
 - Fixed sitemap URL from `flaneur.me` to `readflaneur.com`.
