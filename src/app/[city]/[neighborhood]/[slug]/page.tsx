@@ -16,6 +16,7 @@ import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
 import { getFallback } from '@/lib/FallbackService';
 import type { FallbackData } from '@/components/feed/FallbackAd';
 import { BackToFeedLink, MoreStoriesButton } from '@/components/article/TranslatedArticleNav';
+import { BriefDiscoveryFooter } from '@/components/article/BriefDiscoveryFooter';
 
 interface ArticlePageProps {
   params: Promise<{
@@ -290,6 +291,19 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
         {/* Email capture for engaged readers */}
         <PostReadEmailCapture neighborhoodName={article.neighborhood?.name || 'neighborhood'} />
+
+        {/* Brief discovery CTAs - only on daily brief articles */}
+        {(article.article_type === 'brief_summary' ||
+          (article.category_label && article.category_label.toLowerCase().includes('daily brief'))) && (
+          <BriefDiscoveryFooter
+            neighborhoodId={neighborhoodId}
+            neighborhoodName={article.neighborhood?.name || ''}
+            city={article.neighborhood?.city || ''}
+            currentArticleSlug={article.slug || ''}
+            citySlug={city}
+            neighborhoodSlug={neighborhood}
+          />
+        )}
 
         {/* More stories */}
         <div className="mt-12 pt-8 border-t border-border text-center">

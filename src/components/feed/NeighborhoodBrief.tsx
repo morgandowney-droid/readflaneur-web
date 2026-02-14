@@ -293,6 +293,7 @@ export function NeighborhoodBrief({
   // Discovery CTA state - lazy loaded on first expand
   const [nearbyDiscovery, setNearbyDiscovery] = useState<{ url: string; neighborhoodName: string } | null>(null);
   const [randomDiscovery, setRandomDiscovery] = useState<{ url: string; neighborhoodName: string } | null>(null);
+  const [yesterdayUrl, setYesterdayUrl] = useState<string | null>(null);
   const discoveryFetched = useRef(false);
 
   // Fetch translated brief content when language changes
@@ -353,6 +354,14 @@ export function NeighborhoodBrief({
           if (data.neighborhoodName) setRandomDiscovery(data);
         })
         .catch(() => {});
+
+      // Fetch yesterday's brief for this neighborhood
+      if (neighborhoodId) {
+        fetch(`/api/briefs/yesterday?neighborhoodId=${neighborhoodId}`)
+          .then(res => res.json())
+          .then(data => { if (data.url) setYesterdayUrl(data.url); })
+          .catch(() => {});
+      }
     } catch {
       // localStorage or fetch failure - silently skip CTAs
     }
@@ -588,22 +597,34 @@ export function NeighborhoodBrief({
       )}
 
       {/* Discovery CTAs - only show when expanded and at least one result loaded */}
-      {isExpanded && (nearbyDiscovery || randomDiscovery) && (
+      {isExpanded && (yesterdayUrl || nearbyDiscovery || randomDiscovery) && (
         <div className="mt-3 pt-3 border-t border-border flex flex-col gap-1.5">
-          {nearbyDiscovery && (
+          {yesterdayUrl && (
             <Link
-              href={nearbyDiscovery.url}
+              href={yesterdayUrl}
+              scroll={true}
               onClick={(e) => e.stopPropagation()}
               className="text-xs text-fg-muted hover:text-accent transition-colors"
             >
-              Read the <span className="font-semibold text-fg">{nearbyDiscovery.neighborhoodName}</span> Daily Brief &rsaquo;
+              Read yesterday&apos;s <span className="font-semibold text-fg">{neighborhoodName}</span> Daily Brief &rsaquo;
+            </Link>
+          )}
+          {nearbyDiscovery && (
+            <Link
+              href={nearbyDiscovery.url}
+              scroll={true}
+              onClick={(e) => e.stopPropagation()}
+              className="text-xs text-fg-muted hover:text-accent transition-colors"
+            >
+              Read today&apos;s nearby <span className="font-semibold text-fg">{nearbyDiscovery.neighborhoodName}</span> Daily Brief &rsaquo;
             </Link>
           )}
           {randomDiscovery && (
             <Link
               href={randomDiscovery.url}
+              scroll={true}
               onClick={(e) => e.stopPropagation()}
-              className="text-xs text-fg-muted hover:text-accent transition-colors"
+              className="mt-1.5 text-xs text-fg-muted hover:text-accent transition-colors"
             >
               Take me somewhere new &rsaquo;
             </Link>

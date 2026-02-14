@@ -63,10 +63,12 @@ export function FeedList({ items, view = 'gallery' }: FeedListProps) {
               article={item.data as Article}
             />
           ) : (
-            <ArticleCard
+            <div
               key={`article-${item.data.id}-${index}`}
-              article={item.data as Article}
-            />
+              className="pb-4 md:pb-3 border-b border-border/30 last:border-b-0"
+            >
+              <ArticleCard article={item.data as Article} />
+            </div>
           );
         }
         return (
