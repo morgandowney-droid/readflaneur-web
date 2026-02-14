@@ -5,6 +5,11 @@
 
 ## 2026-02-14
 
+**Systemic enriched_at Fix (All Article-Creating Crons):**
+- All 27 crons that create articles (sync-filming-permits, sync-fashion-week, sync-sample-sales, sync-alfresco-permits, sync-heritage-filings, generate-brief-articles, sync-news, neighborhoods/create, and 19 more) now set `enriched_at` and `enrichment_model` at insert time. Previously only `sync-nuisance-watch` had this fix. Without `enriched_at`, `enrich-briefs` Phase 2 would pick up any published article from the last 4 days and overwrite its body with daily brief content from `enrichBriefWithGemini()`. This affected all specialized article types (filming permits, fashion week, auction calendars, etc.), not just nuisance watch.
+- Crons with multiple article inserts (sync-alfresco-permits, sync-filming-permits, sync-heritage-filings, sync-news) all had each insert block fixed.
+- `enrichment_model` set to match actual content source: `'claude-sonnet-4-5'` for RSS articles, `'grok-4.1-fast'` for Grok articles, `'gemini-2.5-flash'` for all others.
+
 **Nuisance Watch Article Body Overwrite Fix:**
 - `sync-nuisance-watch/route.ts`: Now sets `enriched_at` and `enrichment_model` at article creation time. Previously, nuisance articles had no `enriched_at`, so `enrich-briefs` Phase 2 would pick them up and send the 40-word noise complaint body to `enrichBriefWithGemini()`, which generated a full daily brief for the neighborhood - completely replacing the original headline-matched content. This caused "Block Watch: Noise complaints on York Street" articles to contain Valentine's Day event content instead.
 
