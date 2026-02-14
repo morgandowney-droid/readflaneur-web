@@ -5,6 +5,10 @@
 
 ## 2026-02-13
 
+**Mobile Gallery Single-Line Headlines + Wider Spacing:**
+- `ArticleCard.tsx`: Mobile gallery headlines now single-line (`whitespace-nowrap overflow-hidden`), truncated at last full word via `truncateHeadline()`, no ellipsis.
+- `FeedList.tsx`: Mobile gallery spacing increased from `space-y-10` to `space-y-14` (3.5rem, ~2 headline heights between stories).
+
 **Editorial Photo Image Style + Neighborhood Default Fallbacks:**
 - `generate-image/route.ts`: Image generation prompt changed from watercolor/gouache illustrations to ultra-photorealistic editorial fashion photography of iconic neighborhood locations (golden hour, cinematic, magazine texture).
 - New `mode: 'neighborhood_default'` generates one editorial photo per neighborhood, cached at `images/neighborhoods/{id}.png` in Supabase storage.
