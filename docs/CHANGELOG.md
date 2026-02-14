@@ -5,6 +5,10 @@
 
 ## 2026-02-13
 
+**Strip All Hyperlinks from Article Body and Brief Content:**
+- `ArticleBody.tsx`: Removed LINK placeholder system. Now strips all `<a>` HTML tags and markdown `[text](url)` links at render time, keeping just the text. Fixes existing articles with pre-baked markdown links from before `injectHyperlinks()` was disabled.
+- `NeighborhoodBrief.tsx`: Added markdown link stripping (`[text](url)` -> `text`) to `cleanContent()` function.
+
 **Mobile Gallery Single-Line Headlines + Wider Spacing:**
 - `ArticleCard.tsx`: Mobile gallery headlines now single-line (`whitespace-nowrap overflow-hidden`), truncated at last full word via `truncateHeadline()`, no ellipsis.
 - `FeedList.tsx`: Mobile gallery spacing increased from `space-y-10` to `space-y-14` (3.5rem, ~2 headline heights between stories).
