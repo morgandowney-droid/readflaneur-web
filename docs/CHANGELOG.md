@@ -5,6 +5,9 @@
 
 ## 2026-02-14
 
+**Nuisance Watch Article Body Overwrite Fix:**
+- `sync-nuisance-watch/route.ts`: Now sets `enriched_at` and `enrichment_model` at article creation time. Previously, nuisance articles had no `enriched_at`, so `enrich-briefs` Phase 2 would pick them up and send the 40-word noise complaint body to `enrichBriefWithGemini()`, which generated a full daily brief for the neighborhood - completely replacing the original headline-matched content. This caused "Block Watch: Noise complaints on York Street" articles to contain Valentine's Day event content instead.
+
 **Mobile Feed Vertical Space Fix:**
 - `MagicLinkReminder.tsx`: Hidden on mobile (`hidden md:block`) to reduce above-fold chrome. Desktop unchanged. Mobile email capture handled by engagement-triggered `EmailCaptureCard` after 5th article instead.
 - `MultiFeed.tsx`: Tightened daily brief bottom margin on mobile (`mb-2 md:mb-6`). First article now visible on first screen without scrolling.
