@@ -5,6 +5,10 @@
 
 ## 2026-02-13
 
+**Shift Brief Generation Window to Midnight-7 AM:**
+- `sync-neighborhood-briefs/route.ts`: Morning window changed from 3-9 AM to midnight-7 AM local time. Gives the full pipeline (generation -> enrichment -> article creation) up to 7 hours before the 7 AM email send, preventing stale briefs in emails.
+- `brief-enricher-gemini.ts`: Context time string always shows 7:00 AM (regex-replaced) so Gemini frames content as morning delivery regardless of actual generation time. Fixed `dateStr` to use neighborhood timezone instead of server timezone.
+
 **Strip All Hyperlinks from Article Body and Brief Content:**
 - `ArticleBody.tsx`: Removed LINK placeholder system. Now strips all `<a>` HTML tags and markdown `[text](url)` links at render time, keeping just the text. Fixes existing articles with pre-baked markdown links from before `injectHyperlinks()` was disabled.
 - `NeighborhoodBrief.tsx`: Added markdown link stripping (`[text](url)` -> `text`) to `cleanContent()` function.
