@@ -223,6 +223,8 @@ function cleanContent(text: string): string {
     .replace(/\{['"](?:title|url|snippet|author|published_at)['"]:[^}]*(?:\}|$)/gm, '')
     // Strip HTML <a> tags but keep the link text
     .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/gi, '$2')
+    // Strip markdown links, keeping just the text: [text](url) -> text
+    .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')
     // Strip other common HTML tags
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/?(p|div|span|strong|em|b|i)[^>]*>/gi, '')

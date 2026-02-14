@@ -9,19 +9,18 @@ interface ArticleBodyProps {
 }
 
 export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProps) {
-  // First, convert any HTML <a> tags to markdown format for consistent handling
-  // <a href="url" ...>text</a> -> [text](url)
+  // Strip all links (HTML and markdown) from content, keeping just the text
   let cleanedContent = content
-    .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/gi, '[$2]($1)')
+    // Strip HTML <a> tags, keeping just the text
+    .replace(/<a\s+[^>]*>([^<]+)<\/a>/gi, '$1')
     // Strip any other HTML tags that may have been generated
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/?(p|div|span|strong|em|b|i)[^>]*>/gi, '')
-    // Preserve markdown links by converting them to a placeholder format
-    // [text](url) -> {{LINK:url}}text{{/LINK}}
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '{{LINK:$2}}$1{{/LINK}}')
-    // Clean content: remove citation markers and bare URLs (not in markdown format)
+    // Strip markdown links, keeping just the text: [text](url) -> text
+    .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')
+    // Clean content: remove citation markers and bare URLs
     .replace(/\[\[\d+\]\]/g, '')
-    .replace(/(?<!\{\{LINK:)https?:\/\/\S+/g, '')
+    .replace(/https?:\/\/\S+/g, '')
     .trim();
 
   // Insert paragraph breaks before section headers [[...]]
@@ -60,7 +59,6 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
   }
 
   const pClass = 'text-fg text-[1.2rem] md:text-[1.35rem] leading-loose mb-8';
-  const linkClass = 'text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all';
 
   return (
     <article className="max-w-none" style={{ fontFamily: 'var(--font-body-serif)' }}>
@@ -75,47 +73,18 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
           );
         }
 
-        // Process bold markers and links
-        // First, extract links and replace with numbered placeholders
-        const links: { url: string; text: string }[] = [];
-        let processedParagraph = paragraph.replace(/\{\{LINK:(https?:\/\/[^}]+)\}\}([^{]+)\{\{\/LINK\}\}/g,
-          (_, url, text) => {
-            links.push({ url, text: text.replace(/\*\*/g, '') }); // Remove ** from link text
-            return `{{LINKREF:${links.length - 1}}}`;
-          }
-        );
-
         // Process bold markers
-        processedParagraph = processedParagraph.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        const processedParagraph = paragraph.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
 
-        // Render function that handles strong tags and link refs
+        // Render function that handles strong tags
         const renderParts = (text: string): ReactNode[] => {
           const result: ReactNode[] = [];
-          // Split by both strong tags and link references
-          const parts = text.split(/(<strong>[^<]+<\/strong>|\{\{LINKREF:\d+\}\})/);
+          const parts = text.split(/(<strong>[^<]+<\/strong>)/);
 
           parts.forEach((part, partIdx) => {
             const strongMatch = part.match(/<strong>([^<]+)<\/strong>/);
-            const linkMatch = part.match(/\{\{LINKREF:(\d+)\}\}/);
-
             if (strongMatch) {
               result.push(<strong key={`strong-${partIdx}`} className="font-bold text-fg">{strongMatch[1]}</strong>);
-            } else if (linkMatch) {
-              const linkIdx = parseInt(linkMatch[1]);
-              const link = links[linkIdx];
-              if (link) {
-                result.push(
-                  <a
-                    key={`link-${partIdx}`}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={linkClass}
-                  >
-                    {link.text}
-                  </a>
-                );
-              }
             } else if (part) {
               result.push(part);
             }
@@ -124,33 +93,17 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
           return result;
         };
 
-        // Helper to render content with line breaks preserved
-        const renderWithLineBreaks = (content: string, renderer: (text: string) => ReactNode[]): ReactNode[] => {
-          // Split on newlines (handle both \n and markdown line breaks with trailing spaces)
-          const lines = content.split(/  \n|\n/);
-          const result: ReactNode[] = [];
-          lines.forEach((line, lineIdx) => {
-            if (lineIdx > 0) {
-              result.push(<br key={`br-${lineIdx}`} />);
-            }
-            result.push(...renderer(line));
-          });
-          return result;
-        };
+        // Render content with line breaks preserved
+        const lines = processedParagraph.split(/  \n|\n/);
+        const rendered: ReactNode[] = [];
+        lines.forEach((line, lineIdx) => {
+          if (lineIdx > 0) rendered.push(<br key={`br-${lineIdx}`} />);
+          rendered.push(...renderParts(line));
+        });
 
-        // If there are links or bold text, use the custom renderer
-        if (links.length > 0 || processedParagraph.includes('<strong>')) {
-          return (
-            <p key={index} className={pClass}>
-              {renderWithLineBreaks(processedParagraph, renderParts)}
-            </p>
-          );
-        }
-
-        // Regular paragraph - plain text
         return (
           <p key={index} className={pClass}>
-            {renderWithLineBreaks(paragraph, (text) => [text])}
+            {rendered}
           </p>
         );
       })}
