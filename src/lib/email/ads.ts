@@ -107,11 +107,23 @@ async function getHouseAd(
     }
   }
 
+  let body: string | undefined = ad.body || undefined;
+
+  // Resolve {{neighborhood_count}} placeholder with live count
+  if (body && body.includes('{{neighborhood_count}}')) {
+    const { count } = await supabase
+      .from('neighborhoods')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_active', true)
+      .eq('is_combo', false);
+    body = body.replace(/\{\{neighborhood_count\}\}/g, String(count || 270));
+  }
+
   return {
     id: `house-${ad.id}`,
     imageUrl: ad.image_url || '',
     headline: ad.headline || '',
-    body: ad.body || undefined,
+    body,
     clickUrl,
     sponsorLabel: 'Flaneur',
     impressionUrl: '',

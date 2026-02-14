@@ -92,13 +92,25 @@ export async function getFallback(
 
     if (houseAds && houseAds.length > 0) {
       const picked = weightedRandom(houseAds);
+      let body = picked.body as string | null;
+
+      // Resolve {{neighborhood_count}} placeholder with live count
+      if (body && body.includes('{{neighborhood_count}}')) {
+        const { count } = await supabase
+          .from('neighborhoods')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true)
+          .eq('is_combo', false);
+        body = body.replace(/\{\{neighborhood_count\}\}/g, String(count || 270));
+      }
+
       return {
         source: 'house_ad',
         houseAd: {
           id: picked.id,
           type: picked.type,
           headline: picked.headline,
-          body: picked.body,
+          body,
           image_url: picked.image_url,
           click_url: picked.click_url,
           weight: picked.weight,
