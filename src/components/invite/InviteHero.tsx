@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 const REFERRAL_STORAGE_KEY = 'flaneur-referral-code';
@@ -16,23 +16,22 @@ export function InviteHero() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [statusDetail, setStatusDetail] = useState('');
+  const tracked = useRef(false);
 
   useEffect(() => {
-    if (!refCode) return;
+    if (!refCode || tracked.current) return;
+    tracked.current = true;
 
     // Store referral code for attribution during subscribe
     sessionStorage.setItem(REFERRAL_STORAGE_KEY, refCode);
 
     // Fire-and-forget click tracking
-    try {
-      fetch('/api/referral/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: refCode }),
-      }).catch(() => {});
-    } catch {
-      // Silent fail
-    }
+    fetch('/api/referral/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: refCode }),
+    }).catch(() => {});
   }, [refCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,14 +39,38 @@ export function InviteHero() {
     if (!email || !email.includes('@')) return;
 
     setStatus('loading');
+    setStatusDetail('');
 
     try {
+      // Step 1: Auto-detect location and get nearest neighborhoods
       let neighborhoodIds: string[] = [];
-      const stored = localStorage.getItem(PREFS_KEY);
-      if (stored) {
-        try { neighborhoodIds = JSON.parse(stored); } catch { /* ignore */ }
+      let welcomeCity = '';
+
+      try {
+        setStatusDetail('Finding neighborhoods near you...');
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+
+        const detectRes = await fetch('/api/location/detect-and-match', {
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (detectRes.ok) {
+          const detectData = await detectRes.json();
+          if (detectData.success && detectData.neighborhoods?.length) {
+            neighborhoodIds = detectData.neighborhoods.map((n: { id: string }) => n.id);
+            welcomeCity = detectData.city || detectData.neighborhoods[0].city;
+            localStorage.setItem(PREFS_KEY, JSON.stringify(neighborhoodIds));
+          }
+        }
+      } catch {
+        // Location detection failed - subscribe without neighborhoods
+        // They'll get auto-detected on /feed via SmartRedirect
       }
 
+      // Step 2: Subscribe with detected neighborhoods
+      setStatusDetail('Setting up your subscription...');
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
       const res = await fetch('/api/newsletter/subscribe', {
@@ -72,8 +95,13 @@ export function InviteHero() {
 
         localStorage.setItem(SUBSCRIBED_KEY, 'true');
         setStatus('success');
-        setMessage(data.message || 'You are in.');
-        setTimeout(() => router.push('/feed'), 1500);
+        setMessage('You are in. Check your email to verify.');
+
+        // Redirect to feed with welcome banner
+        const feedUrl = welcomeCity
+          ? `/feed?welcome=${encodeURIComponent(welcomeCity)}`
+          : '/feed';
+        setTimeout(() => router.push(feedUrl), 2000);
       } else {
         setStatus('error');
         setMessage(data.error || 'Something went wrong.');
@@ -111,7 +139,7 @@ export function InviteHero() {
         {/* Decorative rule */}
         <div className="hero-fade-in-delay-1 w-8 h-px bg-fg-subtle mx-auto mb-10" />
 
-        {/* Email capture - integrated into hero */}
+        {/* Email capture */}
         <div className="hero-fade-in-delay-2 max-w-md mx-auto">
           {status === 'success' ? (
             <div className="py-4">
@@ -125,7 +153,7 @@ export function InviteHero() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
+                  placeholder="Enter your email"
                   className="flex-1 bg-white/5 border border-white/15 text-white px-4 py-3 text-sm rounded-md focus:outline-none focus:border-amber-500 transition-colors placeholder:text-neutral-600"
                   disabled={status === 'loading'}
                 />
@@ -134,15 +162,20 @@ export function InviteHero() {
                   disabled={status === 'loading' || !email}
                   className="bg-white text-neutral-900 px-6 py-3 text-sm font-medium rounded-md hover:bg-amber-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                 >
-                  {status === 'loading' ? 'Sending...' : 'Subscribe'}
+                  {status === 'loading' ? 'Joining...' : 'Join'}
                 </button>
               </form>
               {status === 'error' && (
                 <p className="text-red-400 text-xs mt-2">{message}</p>
               )}
-              <p className="text-neutral-600 text-xs mt-3">
-                Choose your neighborhoods below, then subscribe.
-              </p>
+              {status === 'loading' && statusDetail && (
+                <p className="text-fg-subtle text-xs mt-3">{statusDetail}</p>
+              )}
+              {status === 'idle' && (
+                <p className="text-neutral-600 text-xs mt-3">
+                  We will find neighborhoods near you automatically.
+                </p>
+              )}
             </>
           )}
         </div>

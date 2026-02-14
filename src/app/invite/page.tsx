@@ -1,28 +1,14 @@
 import { Suspense } from 'react';
-import { createClient } from '@/lib/supabase/server';
-import { HomeSignupEnhanced } from '@/components/home/HomeSignupEnhanced';
 import { InviteHero } from '@/components/invite/InviteHero';
-import { Neighborhood } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Join Flaneur - Local stories, interesting neighborhoods',
-  description: 'A friend invited you to Flaneur. Choose your neighborhoods and get daily local stories.',
+  description: 'A friend invited you to Flaneur. Get daily local stories from the neighborhoods you care about.',
 };
 
-export default async function InvitePage() {
-  const supabase = await createClient();
-
-  const { data: neighborhoodsData } = await supabase
-    .from('neighborhoods')
-    .select('*')
-    .eq('is_active', true)
-    .order('city')
-    .order('name');
-
-  const neighborhoods = (neighborhoodsData || []) as Neighborhood[];
-
+export default function InvitePage() {
   return (
     <div className="min-h-screen">
       {/* No SmartRedirect - visitors should see the invite page */}
@@ -36,13 +22,6 @@ export default async function InvitePage() {
       }>
         <InviteHero />
       </Suspense>
-
-      {/* Neighborhood Selection */}
-      <section className="bg-canvas py-16 md:py-20 px-6">
-        <div className="mx-auto max-w-2xl text-center">
-          <HomeSignupEnhanced neighborhoods={neighborhoods} />
-        </div>
-      </section>
     </div>
   );
 }

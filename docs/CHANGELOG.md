@@ -5,6 +5,18 @@
 
 ## 2026-02-14
 
+**Streamline Invite Page (Zero-Friction Referral Flow):**
+- Removed `HomeSignupEnhanced` neighborhood selector from `/invite` page. Invitees no longer need to manually pick neighborhoods before subscribing.
+- `InviteHero` now auto-detects invitee's location via `/api/location/detect-and-match` on form submit, finds 4 nearest neighborhoods, saves to localStorage, then subscribes and redirects to `/feed?welcome={city}` with WelcomeBanner.
+- Changed placeholder from "your@email.com" to "Enter your email", button from "Subscribe" to "Join", removed "Choose your neighborhoods below" hint, added "We will find neighborhoods near you automatically."
+- Loading states show progress: "Finding neighborhoods near you..." then "Setting up your subscription..."
+- Graceful fallback: if location detection fails, subscribes without neighborhoods and SmartRedirect handles detection on /feed.
+- Invite page no longer queries all neighborhoods server-side (was only needed for HomeSignupEnhanced).
+
+**Dynamic Neighborhood Count in House Ads:**
+- `FallbackService.ts` and `email/ads.ts`: House ad body text now resolves `{{neighborhood_count}}` placeholder with live COUNT query against active, non-combo neighborhoods. Replaces stale hardcoded "128" (actual count ~270).
+- Migration: Updated existing `house_ads` rows to use placeholder.
+
 **Fix "Read Yesterday's Daily Brief" Date-Relative Query:**
 - `yesterday/route.ts`: Changed from `excludeSlug` to `beforeDate` parameter. Now uses `lt('published_at', beforeDate)` to find the most recent brief published BEFORE the current brief's date. Previously the API endpoint didn't receive any filtering info, so it always returned the most recent brief (which was today's).
 - `NeighborhoodBrief.tsx`: Passes `generatedAt` as `beforeDate` when fetching yesterday's brief in the expanded card view.
