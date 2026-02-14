@@ -235,10 +235,10 @@ export function MultiFeed({
             if (!fallbackImage) {
               try {
                 // Fall back to most recent article image
-                const fbUrl = `${supabaseUrl}/rest/v1/articles?select=image_url&neighborhood_id=eq.${encodeURIComponent(activeFilter)}&status=eq.published&image_url=not.is.null&order=published_at.desc&limit=1`;
+                const fbUrl = `${supabaseUrl}/rest/v1/articles?select=image_url&neighborhood_id=eq.${encodeURIComponent(activeFilter)}&status=eq.published&image_url=not.is.null&order=published_at.desc&limit=5`;
                 const fbRes = await fetch(fbUrl, { headers });
                 const fbData = await fbRes.json();
-                fallbackImage = Array.isArray(fbData) && fbData[0]?.image_url || null;
+                fallbackImage = Array.isArray(fbData) ? (fbData.find((r: any) => r.image_url)?.image_url || null) : null;
               } catch { /* ignore */ }
             }
             if (fallbackImage) {

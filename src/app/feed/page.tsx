@@ -118,13 +118,14 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
         .select('neighborhood_id, image_url')
         .in('neighborhood_id', stillMissing)
         .not('image_url', 'is', null)
+        .neq('image_url', '')
         .eq('status', 'published')
         .order('published_at', { ascending: false });
 
       if (fallbackImages) {
         for (const row of fallbackImages) {
-          if (!imageByNeighborhood[row.neighborhood_id]) {
-            imageByNeighborhood[row.neighborhood_id] = row.image_url!;
+          if (!imageByNeighborhood[row.neighborhood_id] && row.image_url) {
+            imageByNeighborhood[row.neighborhood_id] = row.image_url;
           }
         }
       }
