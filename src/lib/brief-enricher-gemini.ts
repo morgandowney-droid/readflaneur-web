@@ -288,7 +288,7 @@ LINK CANDIDATES RULES:
       .replace(/\*([^*]+)\*/g, '$1')       // *italic* -> italic
       .replace(/```json[\s\S]*?```/g, '')  // Remove JSON code blocks
       .replace(/```[\s\S]*?```/g, '')      // Remove other code blocks
-      .replace(/\[([^\]]+)\]\(([^()]*(?:\([^()]*\))*[^()]*)\)/g, '$1')  // [link](url) -> link (handles nested parens in URLs)
+      // Preserve markdown links [text](url) - they're rendered as clickable <a> tags at display time
       .replace(/^#+\s+/gm, '')             // Remove heading markers
       .replace(/\{\s*"?categories"?[\s\S]*$/i, '')  // Remove trailing JSON
       .replace(/\{\s*categories[\s\S]*$/i, '')     // Remove unquoted JSON variant
