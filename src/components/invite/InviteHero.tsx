@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 const REFERRAL_STORAGE_KEY = 'flaneur-referral-code';
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
@@ -32,13 +33,33 @@ export function InviteHero() {
   const [stats, setStats] = useState<{ clicks: number; conversions: number } | null>(null);
 
   // Detect inviter vs invitee on mount
+  // Inviter = existing user (authenticated OR subscribed) without ?ref= param
   useEffect(() => {
-    const subscribed = localStorage.getItem(SUBSCRIBED_KEY) === 'true';
     const hasRefParam = !!refCode;
-    if (subscribed && !hasRefParam) {
-      setIsInviter(true);
+    if (hasRefParam) {
+      setInviterReady(true);
+      return;
     }
-    setInviterReady(true);
+
+    const subscribed = localStorage.getItem(SUBSCRIBED_KEY) === 'true';
+    const hasNeighborhoods = !!localStorage.getItem(PREFS_KEY);
+
+    if (subscribed || hasNeighborhoods) {
+      setIsInviter(true);
+      setInviterReady(true);
+      return;
+    }
+
+    // Also check auth session for logged-in users who may not have localStorage flags
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setIsInviter(true);
+      }
+      setInviterReady(true);
+    }, () => {
+      setInviterReady(true);
+    });
   }, [refCode]);
 
   // Fetch referral code for inviter mode
