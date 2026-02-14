@@ -207,6 +207,10 @@
     {
       "path": "/api/cron/translate-content",
       "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/retry-missing-images",
+      "schedule": "0 */2 * * *"
     }
   ]
 }
