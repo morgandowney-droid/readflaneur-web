@@ -264,12 +264,10 @@ function cleanContent(text: string): string {
     .replace(/\[\[\d+\]\]\([^)]+\)\s*/g, '\n\n')
     // Remove any remaining standalone citation markers
     .replace(/\[\[\d+\]\]\s*/g, '\n\n')
-    // Remove parenthetical URLs
-    .replace(/\(https?:\/\/[^)]+\)/g, '')
-    // Remove bare URLs
-    .replace(/https?:\/\/\S+/g, '')
-    // Strip URL-encoded artifacts from broken markdown link parsing (e.g., "%20The%20Hamptons)")
-    .replace(/%20[A-Za-z%0-9]+(?:%20[A-Za-z%0-9]+)*\)/g, '')
+    // Remove parenthetical URLs (but preserve URLs inside markdown links)
+    .replace(/(?<!\])\(https?:\/\/[^)]+\)/g, '')
+    // Remove bare URLs (but preserve URLs inside markdown links)
+    .replace(/(?<!\]\()https?:\/\/\S+/g, '')
     // Replace em dashes with period and space (cleaner sentence break)
     .replace(/\s*—\s*/g, '. ')
     // Fix any double periods that may result
