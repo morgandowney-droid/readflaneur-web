@@ -216,8 +216,18 @@ export async function GET(request: Request) {
     });
   }
 
+  // Time budget: stop processing 30s before maxDuration to ensure logging completes
+  const startTime = Date.now();
+  const TIME_BUDGET_MS = 270_000; // 270s of 300s maxDuration
+  const hasTimeBudget = () => Date.now() - startTime < TIME_BUDGET_MS;
+
   // Process each neighborhood
   for (const hood of neighborhoods) {
+    if (!hasTimeBudget()) {
+      console.log(`Time budget exhausted after ${results.neighborhoods_processed} neighborhoods (${Date.now() - startTime}ms)`);
+      break;
+    }
+
     try {
       results.neighborhoods_processed++;
 
