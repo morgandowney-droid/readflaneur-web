@@ -324,6 +324,15 @@ export function Header() {
               >
                 {t('nav.stories')}
               </Link>
+              <Link
+                href="/account"
+                className={cn(
+                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
+                  pathname === '/account' ? 'text-fg font-medium border-amber-500' : 'text-fg-subtle border-transparent'
+                )}
+              >
+                {t('nav.account')}
+              </Link>
             </div>
           ) : (
             <Link
