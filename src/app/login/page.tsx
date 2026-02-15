@@ -76,81 +76,61 @@ function LoginForm() {
     try {
       const supabase = createClient();
 
-      const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> =>
-        Promise.race([
-          promise,
+      // Try client-side sign-in first (with CAPTCHA if available)
+      let session = null;
+      try {
+        const opts = captchaToken ? { captchaToken } : undefined;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        const { data, error: authError } = await Promise.race([
+          supabase.auth.signInWithPassword({ email, password, options: opts }),
           new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('Sign in timed out. Please try again.')), ms)
+            setTimeout(() => reject(new Error('timeout')), 8000)
           ),
         ]);
+        clearTimeout(timeout);
 
-      // Try with CAPTCHA token first, fall back to without if it fails or hangs
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let signInResult: any;
-      let usedCaptcha = false;
-
-      if (captchaToken) {
-        try {
-          signInResult = await withTimeout(
-            supabase.auth.signInWithPassword({ email, password, options: { captchaToken } }),
-            8000
-          );
-          usedCaptcha = true;
-        } catch {
-          // CAPTCHA verification hanging - retry without token
-          signInResult = null;
+        if (!authError && data?.session) {
+          session = data.session;
         }
-
-        // Also retry if CAPTCHA returned an error (misconfigured, expired token, etc.)
-        if (signInResult?.error?.message?.toLowerCase().includes('captcha')) {
-          signInResult = null;
-        }
-
-        if (!signInResult) {
-          signInResult = await withTimeout(
-            supabase.auth.signInWithPassword({ email, password }),
-            10000
-          );
-        }
-      } else {
-        signInResult = await withTimeout(
-          supabase.auth.signInWithPassword({ email, password }),
-          10000
-        );
+      } catch {
+        // Client-side auth timed out or failed - will try server fallback
       }
 
-      const { data, error: authError } = signInResult;
+      // Fallback: server-side sign-in (bypasses CAPTCHA via service role key)
+      if (!session) {
+        try {
+          const res = await fetch('/api/auth/signin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+          const result = await res.json();
 
-      if (authError) {
-        setError(authError.message);
-        setIsLoading(false);
-        if (usedCaptcha) {
+          if (res.ok && result.access_token) {
+            // Set client session from server response
+            await supabase.auth.setSession({
+              access_token: result.access_token,
+              refresh_token: result.refresh_token,
+            });
+            session = { access_token: result.access_token, refresh_token: result.refresh_token };
+          } else {
+            setError(result.error || 'Sign in failed');
+            setIsLoading(false);
+            turnstileRef.current?.reset();
+            setCaptchaToken(null);
+            return;
+          }
+        } catch {
+          setError('Sign in failed. Please try again.');
+          setIsLoading(false);
           turnstileRef.current?.reset();
           setCaptchaToken(null);
+          return;
         }
-        return;
       }
 
-      if (!data.session) {
-        setError('Login failed - no session created');
-        setIsLoading(false);
-        return;
-      }
-
-      // Client session is set - redirect immediately, set server cookies in background
       setSuccess(true);
-
-      // Fire-and-forget: set server-side cookies (don't block redirect)
-      fetch('/api/auth/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        }),
-      }).catch(() => {});
-
-      // Redirect immediately
       window.location.href = redirect;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
