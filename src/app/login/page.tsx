@@ -84,17 +84,29 @@ function LoginForm() {
           ),
         ]);
 
-      // Try with CAPTCHA token first (8s timeout), fall back to without if it hangs
+      // Try with CAPTCHA token first, fall back to without if it fails or hangs
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let signInResult: any;
+      let usedCaptcha = false;
+
       if (captchaToken) {
         try {
           signInResult = await withTimeout(
             supabase.auth.signInWithPassword({ email, password, options: { captchaToken } }),
             8000
           );
+          usedCaptcha = true;
         } catch {
-          // CAPTCHA verification may be hanging at Supabase - retry without token
+          // CAPTCHA verification hanging - retry without token
+          signInResult = null;
+        }
+
+        // Also retry if CAPTCHA returned an error (misconfigured, expired token, etc.)
+        if (signInResult?.error?.message?.toLowerCase().includes('captcha')) {
+          signInResult = null;
+        }
+
+        if (!signInResult) {
           signInResult = await withTimeout(
             supabase.auth.signInWithPassword({ email, password }),
             10000
@@ -112,8 +124,10 @@ function LoginForm() {
       if (authError) {
         setError(authError.message);
         setIsLoading(false);
-        turnstileRef.current?.reset();
-        setCaptchaToken(null);
+        if (usedCaptcha) {
+          turnstileRef.current?.reset();
+          setCaptchaToken(null);
+        }
         return;
       }
 
