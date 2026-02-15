@@ -109,83 +109,99 @@ export async function GET(request: Request) {
       console.error('[SundayEdition] Failed to get image');
     }
 
-    for (const neighborhood of toProcess) {
+    // Process neighborhoods in concurrent batches of 3 for throughput
+    const CONCURRENCY = 3;
+    const queue = [...toProcess];
+
+    while (queue.length > 0) {
       if (Date.now() - functionStart > TIME_BUDGET_MS) {
         console.log(`[SundayEdition] Time budget exceeded at ${Date.now() - functionStart}ms`);
         break;
       }
 
-      try {
-        results.neighborhoods_processed++;
-        console.log(`[SundayEdition] Generating for ${neighborhood.name}...`);
+      const batch = queue.splice(0, CONCURRENCY);
+      const batchResults = await Promise.allSettled(
+        batch.map(async (neighborhood) => {
+          results.neighborhoods_processed++;
+          console.log(`[SundayEdition] Generating for ${neighborhood.name}...`);
 
-        const content = await generateWeeklyBrief(
-          supabase,
-          neighborhood.id,
-          neighborhood.name,
-          neighborhood.city,
-          neighborhood.country || 'USA'
-        );
+          const content = await generateWeeklyBrief(
+            supabase,
+            neighborhood.id,
+            neighborhood.name,
+            neighborhood.city,
+            neighborhood.country || 'USA'
+          );
 
-        // Create feed article
-        const bodyText = formatWeeklyBriefAsArticle(content, neighborhood.name);
-        const headline = `The Sunday Edition: ${neighborhood.name}`;
-        const slug = `${neighborhood.id}-sunday-edition-${weekDate}`;
+          // Create feed article
+          const bodyText = formatWeeklyBriefAsArticle(content, neighborhood.name);
+          const headline = `The Sunday Edition: ${neighborhood.name}`;
+          const slug = `${neighborhood.id}-sunday-edition-${weekDate}`;
 
-        const { data: article, error: articleError } = await supabase
-          .from('articles')
-          .insert({
-            headline,
-            body_text: bodyText,
-            slug,
-            neighborhood_id: neighborhood.id,
-            status: 'published',
-            published_at: new Date().toISOString(),
-            category_label: 'The Sunday Edition',
-            author_type: 'ai',
-            ai_model: 'gemini-2.5-pro',
-            image_url: imageUrl,
-          })
-          .select('id')
-          .single();
+          const { data: article, error: articleError } = await supabase
+            .from('articles')
+            .insert({
+              headline,
+              body_text: bodyText,
+              slug,
+              neighborhood_id: neighborhood.id,
+              status: 'published',
+              published_at: new Date().toISOString(),
+              category_label: 'The Sunday Edition',
+              author_type: 'ai',
+              ai_model: 'gemini-2.5-pro',
+              image_url: imageUrl,
+            })
+            .select('id')
+            .single();
 
-        if (articleError) {
-          results.errors.push(`${neighborhood.name} article: ${articleError.message}`);
-        } else {
-          results.articles_created++;
+          if (articleError) {
+            results.errors.push(`${neighborhood.name} article: ${articleError.message}`);
+          } else {
+            results.articles_created++;
+          }
+
+          // Save structured brief data
+          const { error: briefError } = await supabase
+            .from('weekly_briefs')
+            .upsert({
+              neighborhood_id: neighborhood.id,
+              week_date: weekDate,
+              rearview_narrative: content.rearviewNarrative,
+              rearview_stories: content.rearviewStories,
+              horizon_events: content.horizonEvents,
+              data_point: content.dataPoint,
+              holiday_section: content.holidaySection || null,
+              article_id: article?.id || null,
+              generated_at: new Date().toISOString(),
+            }, {
+              onConflict: 'neighborhood_id,week_date',
+            });
+
+          if (briefError) {
+            results.errors.push(`${neighborhood.name} brief: ${briefError.message}`);
+          } else {
+            results.briefs_generated++;
+          }
+
+          console.log(`[SundayEdition] ${neighborhood.name} complete`);
+          return neighborhood.name;
+        })
+      );
+
+      // Log any failures
+      for (let i = 0; i < batchResults.length; i++) {
+        const result = batchResults[i];
+        if (result.status === 'rejected') {
+          const name = batch[i]?.name || 'unknown';
+          results.errors.push(`${name}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`);
+          console.error(`[SundayEdition] ${name} error:`, result.reason);
         }
+      }
 
-        // Save structured brief data
-        const { error: briefError } = await supabase
-          .from('weekly_briefs')
-          .upsert({
-            neighborhood_id: neighborhood.id,
-            week_date: weekDate,
-            rearview_narrative: content.rearviewNarrative,
-            rearview_stories: content.rearviewStories,
-            horizon_events: content.horizonEvents,
-            data_point: content.dataPoint,
-            holiday_section: content.holidaySection || null,
-            article_id: article?.id || null,
-            generated_at: new Date().toISOString(),
-          }, {
-            onConflict: 'neighborhood_id,week_date',
-          });
-
-        if (briefError) {
-          results.errors.push(`${neighborhood.name} brief: ${briefError.message}`);
-        } else {
-          results.briefs_generated++;
-        }
-
-        console.log(`[SundayEdition] ${neighborhood.name} complete`);
-
-        // Rate limit between neighborhoods
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-      } catch (err) {
-        results.errors.push(`${neighborhood.name}: ${err instanceof Error ? err.message : String(err)}`);
-        console.error(`[SundayEdition] ${neighborhood.name} error:`, err);
+      // Brief delay between batches
+      if (queue.length > 0) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
   } finally {
