@@ -5,6 +5,14 @@
 
 ## 2026-02-15
 
+**Translate House Ad Text (Headlines, Body, CTAs):**
+- All house ad types now use `t()` translation keys (`houseAd.{type}.headline/body/cta`) with DB fallback for unknown types.
+- Type-specific CTA buttons: "Let's Build It" (community), "Let's Place It" (advertise), "Let's Welcome Friends" (invite), "Suggest" (suggest), "Let's Take a Quick Look" (default).
+- `{neighborhoodCount}` placeholder in advertise body text handled via `.replace()`.
+- CTA button styling fixed from `bg-black text-white` to theme-aware `bg-fg text-canvas`.
+- 21 house ad translation keys added across all 9 languages (290 total keys per language).
+- Invitation ad tagline changed from "exclusive local feed" to "exclusive local intel".
+
 **Translate Footer Pages (About, Legal, Standards, Contact, Careers):**
 - All 5 footer pages now use `t()` translation keys with full translations across 9 languages (en, sv, fr, de, es, pt, it, zh, ja).
 - About page: server/client split - server fetches neighborhood counts, `AboutContent` client component renders translated content with `{neighborhoodCount}`, `{cityCount}`, `{vacationCount}` placeholders.
