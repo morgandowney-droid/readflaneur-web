@@ -1,16 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 type Tab = 'privacy' | 'terms';
 
 export default function LegalPage() {
   const [activeTab, setActiveTab] = useState<Tab>('privacy');
+  const { t } = useTranslation();
 
   return (
     <div className="py-12 px-4">
       <div className="mx-auto max-w-2xl">
-        <h1 className="text-2xl font-light tracking-wide mb-8">Legal</h1>
+        <h1 className="text-2xl font-light tracking-wide mb-8">{t('legal.title')}</h1>
 
         {/* Tabs */}
         <div className="flex gap-4 border-b border-border mb-8">
@@ -22,7 +24,7 @@ export default function LegalPage() {
                 : 'text-fg-subtle hover:text-fg'
             }`}
           >
-            Privacy Policy
+            {t('legal.privacyPolicy')}
           </button>
           <button
             onClick={() => setActiveTab('terms')}
@@ -32,7 +34,7 @@ export default function LegalPage() {
                 : 'text-fg-subtle hover:text-fg'
             }`}
           >
-            Terms of Service
+            {t('legal.termsOfService')}
           </button>
         </div>
 
@@ -46,98 +48,97 @@ export default function LegalPage() {
 }
 
 function PrivacyContent() {
+  const { t } = useTranslation();
+
   return (
     <>
       <p className="text-sm text-fg-subtle mb-8">
-        Last updated: January 2026
+        {t('legal.lastUpdated')}
       </p>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">1. Introduction</h2>
+        <h2 className="text-lg font-medium mb-4">{t('privacy.s1Title')}</h2>
         <p className="text-sm text-fg-muted mb-4">
-          Flâneur (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy. This Privacy Policy
-          explains how we collect, use, disclose, and safeguard your information when you use our website
-          and services.
+          {t('privacy.s1Text')}
         </p>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">2. Information We Collect</h2>
+        <h2 className="text-lg font-medium mb-4">{t('privacy.s2Title')}</h2>
 
-        <h3 className="text-base font-medium mt-6 mb-3">2.1 Information You Provide</h3>
+        <h3 className="text-base font-medium mt-6 mb-3">{t('privacy.s2_1Title')}</h3>
         <ul className="text-sm text-fg-muted list-disc pl-6 mb-4 space-y-1">
-          <li><strong>Account Information:</strong> Email address, name, and password when you create an account</li>
-          <li><strong>Tip Submissions:</strong> Content, photos, and optional contact information (name, email, phone) when you submit tips</li>
-          <li><strong>Newsletter Subscriptions:</strong> Email address and neighborhood preferences</li>
-          <li><strong>Advertising Information:</strong> Business information when you create advertisements</li>
+          <li>{t('privacy.s2_1_account')}</li>
+          <li>{t('privacy.s2_1_tips')}</li>
+          <li>{t('privacy.s2_1_newsletter')}</li>
+          <li>{t('privacy.s2_1_advertising')}</li>
         </ul>
 
-        <h3 className="text-base font-medium mt-6 mb-3">2.2 Information Collected Automatically</h3>
+        <h3 className="text-base font-medium mt-6 mb-3">{t('privacy.s2_2Title')}</h3>
         <p className="text-sm text-fg-muted mb-2">
-          When you use our services, we automatically collect:
+          {t('privacy.s2_2Text')}
         </p>
         <ul className="text-sm text-fg-muted list-disc pl-6 mb-4 space-y-1">
-          <li><strong>Device Information:</strong> Device type, operating system, browser type, screen resolution</li>
-          <li><strong>Usage Data:</strong> Pages visited, time spent, click patterns</li>
-          <li><strong>Location Data:</strong> IP address (stored in hashed form) and, with your permission, GPS coordinates</li>
-          <li><strong>Cookies:</strong> Session cookies for authentication and preferences</li>
+          <li>{t('privacy.s2_2_device')}</li>
+          <li>{t('privacy.s2_2_usage')}</li>
+          <li>{t('privacy.s2_2_location')}</li>
+          <li>{t('privacy.s2_2_cookies')}</li>
         </ul>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">3. How We Use Your Information</h2>
+        <h2 className="text-lg font-medium mb-4">{t('privacy.s3Title')}</h2>
         <ul className="text-sm text-fg-muted list-disc pl-6 mb-4 space-y-1">
-          <li>Providing and improving our services</li>
-          <li>Processing and reviewing tip submissions</li>
-          <li>Contacting you about submissions (if you provide contact information)</li>
-          <li>Sending newsletters and updates (with your consent)</li>
-          <li>Preventing fraud and abuse</li>
-          <li>Analyzing usage patterns to improve user experience</li>
-          <li>Complying with legal obligations</li>
+          <li>{t('privacy.s3_1')}</li>
+          <li>{t('privacy.s3_2')}</li>
+          <li>{t('privacy.s3_3')}</li>
+          <li>{t('privacy.s3_4')}</li>
+          <li>{t('privacy.s3_5')}</li>
+          <li>{t('privacy.s3_6')}</li>
+          <li>{t('privacy.s3_7')}</li>
         </ul>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">4. Information Sharing</h2>
+        <h2 className="text-lg font-medium mb-4">{t('privacy.s4Title')}</h2>
         <p className="text-sm text-fg-muted mb-2">
-          We do not sell your personal information. We may share information with:
+          {t('privacy.s4Text')}
         </p>
         <ul className="text-sm text-fg-muted list-disc pl-6 mb-4 space-y-1">
-          <li><strong>Service Providers:</strong> Third parties who help us operate our services (hosting, email, analytics)</li>
-          <li><strong>Legal Requirements:</strong> When required by law or to protect our rights</li>
-          <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets</li>
+          <li>{t('privacy.s4_providers')}</li>
+          <li>{t('privacy.s4_legal')}</li>
+          <li>{t('privacy.s4_business')}</li>
         </ul>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">5. Your Rights</h2>
+        <h2 className="text-lg font-medium mb-4">{t('privacy.s5Title')}</h2>
         <p className="text-sm text-fg-muted mb-2">
-          Depending on your location, you may have the right to:
+          {t('privacy.s5Text')}
         </p>
         <ul className="text-sm text-fg-muted list-disc pl-6 mb-4 space-y-1">
-          <li>Access the personal information we hold about you</li>
-          <li>Request correction of inaccurate information</li>
-          <li>Request deletion of your personal information</li>
-          <li>Opt out of marketing communications</li>
-          <li>Withdraw consent for data processing</li>
+          <li>{t('privacy.s5_1')}</li>
+          <li>{t('privacy.s5_2')}</li>
+          <li>{t('privacy.s5_3')}</li>
+          <li>{t('privacy.s5_4')}</li>
+          <li>{t('privacy.s5_5')}</li>
         </ul>
         <p className="text-sm text-fg-muted mb-4">
-          To exercise these rights, please contact us at contact@readflaneur.com.
+          {t('privacy.s5Contact')}
         </p>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">6. Security</h2>
+        <h2 className="text-lg font-medium mb-4">{t('privacy.s6Title')}</h2>
         <p className="text-sm text-fg-muted mb-4">
-          We implement appropriate technical and organizational measures to protect your personal
-          information, including encryption, access controls, and secure data storage.
+          {t('privacy.s6Text')}
         </p>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">7. Contact Us</h2>
+        <h2 className="text-lg font-medium mb-4">{t('privacy.s7Title')}</h2>
         <p className="text-sm text-fg-muted">
-          If you have any questions about this Privacy Policy, please contact us at contact@readflaneur.com.
+          {t('privacy.s7Text')}
         </p>
       </section>
     </>
@@ -145,94 +146,88 @@ function PrivacyContent() {
 }
 
 function TermsContent() {
+  const { t } = useTranslation();
+
   return (
     <>
       <p className="text-sm text-fg-subtle mb-8">
-        Last updated: January 2026
+        {t('legal.lastUpdated')}
       </p>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">1. Acceptance of Terms</h2>
+        <h2 className="text-lg font-medium mb-4">{t('terms.s1Title')}</h2>
         <p className="text-sm text-fg-muted mb-4">
-          By accessing or using Flâneur (&quot;the Service&quot;), you agree to be bound by these Terms of Service.
-          If you do not agree to these terms, please do not use our Service.
+          {t('terms.s1Text')}
         </p>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">2. Description of Service</h2>
+        <h2 className="text-lg font-medium mb-4">{t('terms.s2Title')}</h2>
         <p className="text-sm text-fg-muted mb-4">
-          Flâneur is a local news platform that provides neighborhood-focused journalism and allows
-          community members to submit news tips, photos, and other content for editorial consideration.
+          {t('terms.s2Text')}
         </p>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">3. User Submission Terms</h2>
+        <h2 className="text-lg font-medium mb-4">{t('terms.s3Title')}</h2>
         <p className="text-sm text-fg-muted mb-4">
-          By submitting content to Flâneur, you grant us a perpetual, worldwide, royalty-free, non-exclusive
-          license to use, reproduce, modify, adapt, publish, translate, create derivative works from,
-          distribute, perform, and display your submitted content in any media format.
+          {t('terms.s3Text')}
         </p>
         <p className="text-sm text-fg-muted mb-2">
-          By submitting content, you represent and warrant that:
+          {t('terms.s3WarrantText')}
         </p>
         <ul className="text-sm text-fg-muted list-disc pl-6 mb-4 space-y-1">
-          <li>You are the original creator of the content or have obtained all necessary permissions</li>
-          <li>The content does not infringe upon any third party&apos;s intellectual property rights</li>
-          <li>The content is accurate to the best of your knowledge</li>
-          <li>The content does not contain defamatory, obscene, or unlawful material</li>
+          <li>{t('terms.s3_1')}</li>
+          <li>{t('terms.s3_2')}</li>
+          <li>{t('terms.s3_3')}</li>
+          <li>{t('terms.s3_4')}</li>
         </ul>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">4. Prohibited Conduct</h2>
+        <h2 className="text-lg font-medium mb-4">{t('terms.s4Title')}</h2>
         <ul className="text-sm text-fg-muted list-disc pl-6 mb-4 space-y-1">
-          <li>Submit false, misleading, or fabricated information</li>
-          <li>Impersonate any person or entity</li>
-          <li>Harass, threaten, or intimidate other users</li>
-          <li>Submit content that is illegal, harmful, or violates third-party rights</li>
-          <li>Attempt to gain unauthorized access to our systems</li>
-          <li>Use automated tools to scrape or collect data</li>
+          <li>{t('terms.s4_1')}</li>
+          <li>{t('terms.s4_2')}</li>
+          <li>{t('terms.s4_3')}</li>
+          <li>{t('terms.s4_4')}</li>
+          <li>{t('terms.s4_5')}</li>
+          <li>{t('terms.s4_6')}</li>
         </ul>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">5. Intellectual Property</h2>
+        <h2 className="text-lg font-medium mb-4">{t('terms.s5Title')}</h2>
         <p className="text-sm text-fg-muted mb-4">
-          All content on Flâneur, except user-submitted content, is the property of Flâneur or its
-          licensors and is protected by copyright, trademark, and other intellectual property laws.
+          {t('terms.s5Text')}
         </p>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">6. Disclaimer of Warranties</h2>
+        <h2 className="text-lg font-medium mb-4">{t('terms.s6Title')}</h2>
         <p className="text-sm text-fg-muted mb-4">
-          THE SERVICE IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; WITHOUT WARRANTIES OF ANY KIND,
-          EITHER EXPRESS OR IMPLIED.
+          {t('terms.s6Text')}
         </p>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">7. Limitation of Liability</h2>
+        <h2 className="text-lg font-medium mb-4">{t('terms.s7Title')}</h2>
         <p className="text-sm text-fg-muted mb-4">
-          TO THE MAXIMUM EXTENT PERMITTED BY LAW, FLÂNEUR SHALL NOT BE LIABLE FOR ANY INDIRECT,
-          INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES.
+          {t('terms.s7Text')}
         </p>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">8. Governing Law</h2>
+        <h2 className="text-lg font-medium mb-4">{t('terms.s8Title')}</h2>
         <p className="text-sm text-fg-muted mb-4">
-          These terms shall be governed by and construed in accordance with the laws of the State of
-          New York.
+          {t('terms.s8Text')}
         </p>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">9. Contact</h2>
+        <h2 className="text-lg font-medium mb-4">{t('terms.s9Title')}</h2>
         <p className="text-sm text-fg-muted">
-          If you have any questions about these Terms of Service, please contact us at contact@readflaneur.com.
+          {t('terms.s9Text')}
         </p>
       </section>
     </>
