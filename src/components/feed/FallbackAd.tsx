@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { NeighborhoodSuggestionForm } from '@/components/NeighborhoodSuggestionForm';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // Serializable fallback data passed from server components
 export interface FallbackData {
@@ -220,12 +221,22 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
   const [clickUrl, setClickUrl] = useState(houseAd.click_url);
   const [showSuggestionForm, setShowSuggestionForm] = useState(false);
   const { openModal } = useNeighborhoodModal();
+  const { t } = useTranslation();
   const [hasCommunityNeighborhood] = useState(() => {
     if (typeof window === 'undefined') return false;
     try {
       return localStorage.getItem('flaneur-has-community-neighborhood') === 'true';
     } catch { return false; }
   });
+
+  // Use translated text, falling back to DB values
+  const adType = houseAd.type;
+  const headlineKey = `houseAd.${adType}.headline`;
+  const bodyKey = `houseAd.${adType}.body`;
+  const ctaKey = `houseAd.${adType}.cta`;
+  const headline = t(headlineKey) !== headlineKey ? t(headlineKey) : houseAd.headline;
+  const body = t(bodyKey) !== bodyKey ? t(bodyKey) : houseAd.body;
+  const cta = t(ctaKey) !== ctaKey ? t(ctaKey) : 'Learn More';
 
   // For app_download house ads, resolve a dynamic discovery URL
   useEffect(() => {
@@ -261,9 +272,9 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
               <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">
                 Flaneur
               </p>
-              <h3 className="font-semibold text-lg mb-1 whitespace-nowrap overflow-hidden text-ellipsis">{houseAd.headline}</h3>
-              {houseAd.body && (
-                <p className="text-sm text-fg-muted">{houseAd.body}</p>
+              <h3 className="font-semibold text-lg mb-1 whitespace-nowrap overflow-hidden text-ellipsis">{headline}</h3>
+              {body && (
+                <p className="text-sm text-fg-muted">{body}</p>
               )}
               {showSuggestionForm && (
                 <NeighborhoodSuggestionForm variant="compact" />
@@ -274,7 +285,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
                 onClick={() => setShowSuggestionForm(true)}
                 className="inline-block bg-fg text-canvas px-6 py-2 text-sm tracking-widest uppercase hover:opacity-80 transition-colors whitespace-nowrap"
               >
-                Suggest
+                {cta}
               </button>
             )}
           </div>
@@ -291,9 +302,9 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
           </span>
         </div>
         <div className="p-4">
-          <h3 className="font-semibold text-sm mb-2 whitespace-nowrap overflow-hidden text-ellipsis">{houseAd.headline}</h3>
-          {houseAd.body && (
-            <p className="text-xs text-fg-muted mb-3">{houseAd.body}</p>
+          <h3 className="font-semibold text-sm mb-2 whitespace-nowrap overflow-hidden text-ellipsis">{headline}</h3>
+          {body && (
+            <p className="text-xs text-fg-muted mb-3">{body}</p>
           )}
           {showSuggestionForm ? (
             <NeighborhoodSuggestionForm variant="compact" />
@@ -302,7 +313,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
               onClick={() => setShowSuggestionForm(true)}
               className="inline-block bg-fg text-canvas px-4 py-2 text-xs tracking-widest uppercase hover:opacity-80 transition-colors"
             >
-              Suggest
+              {cta}
             </button>
           )}
         </div>
@@ -323,16 +334,16 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
               <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">
                 Flaneur
               </p>
-              <h3 className="font-semibold text-lg mb-1 whitespace-nowrap overflow-hidden text-ellipsis">{houseAd.headline}</h3>
-              {houseAd.body && (
-                <p className="text-sm text-fg-muted">{houseAd.body}</p>
+              <h3 className="font-semibold text-lg mb-1 whitespace-nowrap overflow-hidden text-ellipsis">{headline}</h3>
+              {body && (
+                <p className="text-sm text-fg-muted">{body}</p>
               )}
             </div>
             <button
               onClick={() => openModal('community')}
               className="inline-block bg-fg text-canvas px-6 py-2 text-sm tracking-widest uppercase hover:opacity-80 transition-colors whitespace-nowrap"
             >
-              Get Started
+              {cta}
             </button>
           </div>
         </div>
@@ -348,20 +359,23 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
           </span>
         </div>
         <div className="p-4">
-          <h3 className="font-semibold text-sm mb-2 whitespace-nowrap overflow-hidden text-ellipsis">{houseAd.headline}</h3>
-          {houseAd.body && (
-            <p className="text-xs text-fg-muted mb-3">{houseAd.body}</p>
+          <h3 className="font-semibold text-sm mb-2 whitespace-nowrap overflow-hidden text-ellipsis">{headline}</h3>
+          {body && (
+            <p className="text-xs text-fg-muted mb-3">{body}</p>
           )}
           <button
             onClick={() => openModal('community')}
             className="inline-block bg-fg text-canvas px-4 py-2 text-xs tracking-widest uppercase hover:opacity-80 transition-colors"
           >
-            Get Started
+            {cta}
           </button>
         </div>
       </div>
     );
   }
+
+  // Handle {neighborhoodCount} placeholder in body text
+  const displayBody = body ? body.replace('{neighborhoodCount}', '270') : null;
 
   if (variant === 'story_open') {
     return (
@@ -374,13 +388,13 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
             <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">
               Flaneur
             </p>
-            <h3 className="font-semibold text-lg mb-1 whitespace-nowrap overflow-hidden text-ellipsis">{houseAd.headline}</h3>
-            {houseAd.body && (
-              <p className="text-sm text-fg-muted">{houseAd.body}</p>
+            <h3 className="font-semibold text-lg mb-1 whitespace-nowrap overflow-hidden text-ellipsis">{headline}</h3>
+            {displayBody && (
+              <p className="text-sm text-fg-muted">{displayBody}</p>
             )}
           </div>
-          <span className="inline-block bg-black text-white px-6 py-2 text-sm tracking-widest uppercase whitespace-nowrap">
-            Let&apos;s Take a Quick Look
+          <span className="inline-block bg-fg text-canvas px-6 py-2 text-sm tracking-widest uppercase whitespace-nowrap">
+            {cta}
           </span>
         </div>
       </a>
@@ -399,12 +413,12 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
         </span>
       </div>
       <div className="p-4">
-        <h3 className="font-semibold text-sm mb-2 whitespace-nowrap overflow-hidden text-ellipsis">{houseAd.headline}</h3>
-        {houseAd.body && (
-          <p className="text-xs text-fg-muted mb-3">{houseAd.body}</p>
+        <h3 className="font-semibold text-sm mb-2 whitespace-nowrap overflow-hidden text-ellipsis">{headline}</h3>
+        {displayBody && (
+          <p className="text-xs text-fg-muted mb-3">{displayBody}</p>
         )}
-        <span className="inline-block bg-black text-white px-4 py-2 text-xs tracking-widest uppercase">
-          Let&apos;s Take a Quick Look
+        <span className="inline-block bg-fg text-canvas px-4 py-2 text-xs tracking-widest uppercase">
+          {cta}
         </span>
       </div>
     </a>
