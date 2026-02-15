@@ -101,35 +101,21 @@ function LoginForm() {
         return;
       }
 
-      // Set the session server-side to ensure cookies are properly set
-      try {
-        const controller = new AbortController();
-        const sessionTimeout = setTimeout(() => controller.abort(), 5000);
-        const response = await fetch('/api/auth/session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            access_token: data.session.access_token,
-            refresh_token: data.session.refresh_token,
-          }),
-          signal: controller.signal,
-        });
-        clearTimeout(sessionTimeout);
-
-        if (!response.ok) {
-          console.error('Failed to set server session');
-        }
-      } catch (sessionErr) {
-        console.error('Error setting server session:', sessionErr);
-        // Continue with redirect even if server session fails - client session is set
-      }
-
+      // Client session is set - redirect immediately, set server cookies in background
       setSuccess(true);
 
-      // Redirect after a brief delay to ensure cookies are set
-      setTimeout(() => {
-        window.location.href = redirect;
-      }, 300);
+      // Fire-and-forget: set server-side cookies (don't block redirect)
+      fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        }),
+      }).catch(() => {});
+
+      // Redirect immediately
+      window.location.href = redirect;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       setIsLoading(false);
