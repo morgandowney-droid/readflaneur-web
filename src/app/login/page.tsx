@@ -97,22 +97,31 @@ function LoginForm() {
         // Client-side auth timed out or failed - will try server fallback
       }
 
-      // Fallback: server-side sign-in (bypasses CAPTCHA via service role key)
+      // Fallback: server-side sign-in (bypasses CAPTCHA via service role key + direct REST)
       if (!session) {
         try {
+          const fallbackController = new AbortController();
+          const fallbackTimeout = setTimeout(() => fallbackController.abort(), 15000);
           const res = await fetch('/api/auth/signin', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
+            signal: fallbackController.signal,
           });
+          clearTimeout(fallbackTimeout);
           const result = await res.json();
 
           if (res.ok && result.access_token) {
-            // Set client session from server response
-            await supabase.auth.setSession({
-              access_token: result.access_token,
-              refresh_token: result.refresh_token,
-            });
+            // Set client session from server response (with timeout - don't block)
+            try {
+              await Promise.race([
+                supabase.auth.setSession({
+                  access_token: result.access_token,
+                  refresh_token: result.refresh_token,
+                }),
+                new Promise((resolve) => setTimeout(resolve, 3000)),
+              ]);
+            } catch { /* continue to redirect anyway */ }
             session = { access_token: result.access_token, refresh_token: result.refresh_token };
           } else {
             setError(result.error || 'Sign in failed');
