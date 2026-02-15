@@ -18,11 +18,9 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
     // Strip any other HTML tags that may have been generated
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/?(p|div|span|strong|em|b|i)[^>]*>/gi, '')
-    // Clean content: remove citation markers and bare URLs
+    // Clean content: remove citation markers and bare URLs (but preserve URLs inside markdown links)
     .replace(/\[\[\d+\]\]/g, '')
-    .replace(/https?:\/\/\S+/g, '')
-    // Strip URL-encoded artifacts from broken markdown link parsing
-    .replace(/%20[A-Za-z%0-9]+(?:%20[A-Za-z%0-9]+)*\)/g, '')
+    .replace(/(?<!\]\()https?:\/\/\S+/g, '')
     // Replace em dashes with period and space
     .replace(/\s*—\s*/g, '. ')
     // Fix double periods
