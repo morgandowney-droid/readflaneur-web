@@ -5,6 +5,11 @@
 
 ## 2026-02-15
 
+**Fix Sunday Edition Not Sending:**
+- Daily Brief cron now skips on Sundays (`getUTCDay() === 0`). Previously, the Daily Brief and Sunday Edition both used `resolveRecipients()` which dedup-checks `daily_brief_sends`. The Daily Brief ran ~17s before the Sunday Edition, marking recipients as "already sent", causing Sunday Edition to find 0 recipients every week.
+- `sync-weekly-brief` batch size increased from 10 to 500 (effectively all neighborhoods). The old batch=10 with a once-per-week schedule was a starvation bug - only 10 out of 270 neighborhoods got Sunday Edition content each week. At 10/week, it took 27 weeks to cycle through all neighborhoods.
+- Sunday Edition uses `weekly_brief_sends` for its own dedup (not affected by daily brief sends).
+
 **Fix Login/Auth Split-Brain State:**
 - Login page now checks for existing session on mount (3s timeout). Authenticated users are redirected to `/feed` instead of seeing the sign-in form. Shows spinner while checking.
 - Account page auto-heals stale sessions: when `getSession()` returns no user, calls `supabase.auth.signOut()` to clear orphaned localStorage tokens. Prevents the "ACCOUNT" nav link + "Sign in to view your account" dead-end.
