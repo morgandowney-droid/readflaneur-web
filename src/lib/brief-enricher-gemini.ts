@@ -235,11 +235,13 @@ After your prose, include this JSON with ONLY the verified stories:
 }
 \`\`\`
 
-LINK CANDIDATES RULES:
+LINK CANDIDATES RULES (MANDATORY - you MUST include these):
 - Include 3-6 key entities worth hyperlinking from your prose
+- This is REQUIRED for all content types including weekly recaps
 - Use the EXACT text as it appears in your prose (case-sensitive matching)
 - Prioritize: business names, venue names, notable people, referenced articles
-- Only include entities that readers would want to learn more about`;
+- Only include entities that readers would want to learn more about
+- If your prose mentions specific places, restaurants, events, or people by name, those MUST appear in link_candidates`;
 
   try {
     // Use gemini-2.5-pro with Google Search grounding (gemini-3-pro-preview quota is 0)
