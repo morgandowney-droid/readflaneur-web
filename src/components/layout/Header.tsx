@@ -59,52 +59,37 @@ export function Header() {
   useEffect(() => {
     const supabase = createClient();
     let mounted = true;
-    let retryCount = 0;
-    const maxRetries = 3;
 
-    // Get initial session with retry logic for AbortError
-    const initAuth = async () => {
-      while (retryCount < maxRetries && mounted) {
-        try {
-          const { data: { session }, error } = await supabase.auth.getSession();
-
-          if (error) {
-            // If it's an AbortError, retry
-            if (error.name === 'AbortError' || error.message?.includes('aborted')) {
-              retryCount++;
-              console.log(`Header: Retry ${retryCount}/${maxRetries} after AbortError`);
-              await new Promise(resolve => setTimeout(resolve, 100 * retryCount));
-              continue;
-            }
-            throw error;
-          }
-
-          if (!mounted) return;
-
-          setUser(session?.user ?? null);
-
-          if (session?.user) {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('id', session.user.id)
-              .single();
-            if (mounted) {
-              setIsAdmin(profile?.role === 'admin');
-            }
-          }
-          break; // Success, exit retry loop
-        } catch (err) {
-          // Check if it's an AbortError
-          if (err instanceof Error && (err.name === 'AbortError' || err.message?.includes('aborted'))) {
-            retryCount++;
-            console.log(`Header: Retry ${retryCount}/${maxRetries} after AbortError`);
-            await new Promise(resolve => setTimeout(resolve, 100 * retryCount));
-            continue;
-          }
-          console.error('Header: Auth check error:', err);
-          break;
+    const fetchAdminRole = async (userId: string) => {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+        if (mounted) {
+          setIsAdmin(profile?.role === 'admin');
         }
+      } catch {
+        // Ignore errors
+      }
+    };
+
+    // Get initial session with 3s timeout — getSession() uses navigator.locks
+    // which can deadlock if _initialize() (from constructor) holds the lock
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+        ]);
+        if (!mounted) return;
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          fetchAdminRole(session.user.id);
+        }
+      } catch {
+        // getSession hung or errored — onAuthStateChange will catch login events
       }
       if (mounted) {
         setLoading(false);
@@ -115,83 +100,64 @@ export function Header() {
 
     // Fetch sections
     const fetchSections = async () => {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('sections')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order', { ascending: true });
-      if (data && mounted) {
-        setSections(data as Section[]);
+      try {
+        const { data } = await supabase
+          .from('sections')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+        if (data && mounted) {
+          setSections(data as Section[]);
+        }
+      } catch {
+        // Ignore
       }
     };
     fetchSections();
 
-    // Fetch selected neighborhoods
+    // Fetch selected neighborhoods — use localStorage directly (no getSession lock)
     const fetchSelectedNeighborhoods = async () => {
-      const supabase = createClient();
-
-      // Get selected IDs from localStorage or database
       let selectedIds: string[] = [];
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data } = await supabase
-          .from('user_neighborhood_preferences')
-          .select('neighborhood_id')
-          .eq('user_id', session.user.id);
-        if (data) {
-          selectedIds = data.map(p => p.neighborhood_id);
-        }
-      } else {
-        const stored = localStorage.getItem(PREFS_KEY);
-        if (stored) {
-          try {
-            selectedIds = JSON.parse(stored);
-          } catch {
-            // Invalid stored data
-          }
+      const stored = localStorage.getItem(PREFS_KEY);
+      if (stored) {
+        try {
+          selectedIds = JSON.parse(stored);
+        } catch {
+          // Invalid stored data
         }
       }
 
-      // Fetch neighborhood details for selected IDs
       if (selectedIds.length > 0) {
-        const { data: neighborhoods } = await supabase
-          .from('neighborhoods')
-          .select('*')
-          .in('id', selectedIds);
-        if (neighborhoods && mounted) {
-          setSelectedNeighborhoods(neighborhoods as Neighborhood[]);
+        try {
+          const { data: neighborhoods } = await supabase
+            .from('neighborhoods')
+            .select('*')
+            .in('id', selectedIds);
+          if (neighborhoods && mounted) {
+            setSelectedNeighborhoods(neighborhoods as Neighborhood[]);
+          }
+        } catch {
+          // Ignore
         }
       }
     };
     fetchSelectedNeighborhoods();
 
-    // Listen for auth changes - ONLY positive session updates (token refresh, sign-in)
-    // Never set user to null from here: Supabase's internal _initialize() races with
-    // initAuth() and can emit false SIGNED_OUT before getSession() resolves, clearing
-    // a valid session. Sign-out works via full page reload from /account.
+    // Listen for auth changes — handles:
+    // 1. Login events via shared singleton (router.push flow from /login)
+    // 2. Token refreshes
+    // 3. Sessions that initAuth missed (getSession timeout)
+    // Never sets user to null: sign-out works via full page reload from /account.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
 
-        // Only handle events that carry a valid session
         if (session?.user) {
           setUser(session.user);
-          try {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('id', session.user.id)
-              .single();
-            if (mounted) {
-              setIsAdmin(profile?.role === 'admin');
-            }
-          } catch {
-            // Ignore errors in auth state change
-          }
+          setLoading(false); // Clear loading in case initAuth timed out
+          fetchAdminRole(session.user.id);
         }
-        // Deliberately ignore null-session events (INITIAL_SESSION, false SIGNED_OUT)
       }
     );
 
@@ -212,38 +178,31 @@ export function Header() {
 
     if (!wasOpen || modalIsOpen) return;
 
+    // Read from localStorage directly — avoids getSession() lock hang
     const refetchSelectedNeighborhoods = async () => {
       const supabase = createClient();
-
       let selectedIds: string[] = [];
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data } = await supabase
-          .from('user_neighborhood_preferences')
-          .select('neighborhood_id')
-          .eq('user_id', session.user.id);
-        if (data) {
-          selectedIds = data.map(p => p.neighborhood_id);
-        }
-      } else {
-        const stored = localStorage.getItem(PREFS_KEY);
-        if (stored) {
-          try {
-            selectedIds = JSON.parse(stored);
-          } catch {
-            // Invalid stored data
-          }
+      const stored = localStorage.getItem(PREFS_KEY);
+      if (stored) {
+        try {
+          selectedIds = JSON.parse(stored);
+        } catch {
+          // Invalid stored data
         }
       }
 
       if (selectedIds.length > 0) {
-        const { data: neighborhoods } = await supabase
-          .from('neighborhoods')
-          .select('*')
-          .in('id', selectedIds);
-        if (neighborhoods) {
-          setSelectedNeighborhoods(neighborhoods as Neighborhood[]);
+        try {
+          const { data: neighborhoods } = await supabase
+            .from('neighborhoods')
+            .select('*')
+            .in('id', selectedIds);
+          if (neighborhoods) {
+            setSelectedNeighborhoods(neighborhoods as Neighborhood[]);
+          }
+        } catch {
+          // Ignore
         }
       } else {
         setSelectedNeighborhoods([]);
