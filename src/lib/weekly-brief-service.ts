@@ -155,8 +155,10 @@ export async function generateWeeklyBrief(
     narrative = `A quiet week in ${neighborhoodName}. No drama, no surprises - just the neighborhood humming along in its familiar rhythm.\n\nSometimes the absence of news is itself a signal. The streets are calm, the cafes are full, and nothing has disrupted the daily routine worth reporting.`;
   }
 
-  // ─── Sections 2, 3, Holiday: Run in parallel for speed ───
-  console.log(`[SundayEdition] ${neighborhoodName}: generating horizon, data point, holiday in parallel...`);
+  // ─── Sections 2, 3, Holiday: Run sequentially ───
+  // Parallelization caused Gemini rate limit failures (233/245 briefs empty on 2026-02-15).
+  // Each section uses Gemini, and concurrent calls overwhelm the API quota.
+  console.log(`[SundayEdition] ${neighborhoodName}: generating horizon, data point, holiday...`);
 
   // Determine time format based on country (US uses 12h, most others 24h)
   const uses12h = ['USA', 'US', 'Canada', 'Australia', 'Philippines'].includes(country);
@@ -166,52 +168,44 @@ export async function generateWeeklyBrief(
   const isoWeek = getISOWeekNumber(new Date());
   const dataPointType = DATA_POINT_ROTATION[isoWeek % 4];
 
-  // Run all three sections concurrently
-  const [horizonResult, dataPointResult, holidayResult] = await Promise.allSettled([
-    // Section 2: The Horizon
-    (async () => {
-      let events: HorizonEvent[] = [];
-      if (grokKey) {
-        const rawEvents = await huntUpcomingEvents(grokKey, neighborhoodName, city, country);
-        if (rawEvents) {
-          events = await curateEvents(genAI, rawEvents, neighborhoodName, city, timeFormat);
-        }
+  // Section 2: The Horizon
+  let horizonEvents: HorizonEvent[] = [];
+  try {
+    if (grokKey) {
+      const rawEvents = await huntUpcomingEvents(grokKey, neighborhoodName, city, country);
+      if (rawEvents) {
+        horizonEvents = await curateEvents(genAI, rawEvents, neighborhoodName, city, timeFormat);
       }
-      if (events.length === 0) {
-        events = await huntEventsWithGemini(genAI, neighborhoodName, city, timeFormat);
-      }
-      events.sort((a, b) => parseEventDayForSort(a.day) - parseEventDayForSort(b.day));
-      return events;
-    })(),
-    // Section 3: The Weekly Data Point
-    generateDataPoint(genAI, dataPointType, neighborhoodName, city, country),
-    // Holiday Section (if applicable)
-    (async (): Promise<HolidaySection | null> => {
-      if (!upcomingHoliday) return null;
-      console.log(`[SundayEdition] ${neighborhoodName}: detected holiday "${upcomingHoliday.name}"`);
-      try {
-        const section = await generateHolidaySection(
-          genAI, grokKey, upcomingHoliday, neighborhoodName, city, country, timeFormat,
-        );
-        return section.events.length > 0 ? section : null;
-      } catch (err) {
-        console.error(`[SundayEdition] Holiday section error:`, err);
-        return null;
-      }
-    })(),
-  ]);
-
-  const horizonEvents = horizonResult.status === 'fulfilled' ? horizonResult.value : [];
-  const dataPoint: WeeklyDataPoint = dataPointResult.status === 'fulfilled'
-    ? dataPointResult.value
-    : { type: dataPointType, label: 'Data Unavailable', value: 'N/A', context: '' };
-  const holidaySection = holidayResult.status === 'fulfilled' ? holidayResult.value : null;
-
-  if (horizonResult.status === 'rejected') {
-    console.error(`[SundayEdition] ${neighborhoodName}: horizon failed:`, horizonResult.reason);
+    }
+    if (horizonEvents.length === 0) {
+      horizonEvents = await huntEventsWithGemini(genAI, neighborhoodName, city, timeFormat);
+    }
+    horizonEvents.sort((a, b) => parseEventDayForSort(a.day) - parseEventDayForSort(b.day));
+  } catch (err) {
+    console.error(`[SundayEdition] ${neighborhoodName}: horizon failed:`, err);
   }
-  if (dataPointResult.status === 'rejected') {
-    console.error(`[SundayEdition] ${neighborhoodName}: data point failed:`, dataPointResult.reason);
+
+  // Section 3: The Weekly Data Point
+  let dataPoint: WeeklyDataPoint;
+  try {
+    dataPoint = await generateDataPoint(genAI, dataPointType, neighborhoodName, city, country);
+  } catch (err) {
+    console.error(`[SundayEdition] ${neighborhoodName}: data point failed:`, err);
+    dataPoint = { type: dataPointType, label: 'Data Unavailable', value: 'N/A', context: '' };
+  }
+
+  // Holiday Section (if applicable)
+  let holidaySection: HolidaySection | null = null;
+  if (upcomingHoliday) {
+    console.log(`[SundayEdition] ${neighborhoodName}: detected holiday "${upcomingHoliday.name}"`);
+    try {
+      const section = await generateHolidaySection(
+        genAI, grokKey, upcomingHoliday, neighborhoodName, city, country, timeFormat,
+      );
+      holidaySection = section.events.length > 0 ? section : null;
+    } catch (err) {
+      console.error(`[SundayEdition] Holiday section error:`, err);
+    }
   }
 
   return {

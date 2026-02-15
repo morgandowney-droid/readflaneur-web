@@ -109,8 +109,10 @@ export async function GET(request: Request) {
       console.error('[SundayEdition] Failed to get image');
     }
 
-    // Process neighborhoods in concurrent batches of 3 for throughput
-    const CONCURRENCY = 3;
+    // Process neighborhoods sequentially - Gemini rate limits can't handle concurrent
+    // neighborhood generation (each needs 4-6 AI calls). Concurrency=3 caused 233/245
+    // briefs to silently fail on 2026-02-15.
+    const CONCURRENCY = 1;
     const queue = [...toProcess];
 
     while (queue.length > 0) {
