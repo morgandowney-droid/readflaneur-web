@@ -293,7 +293,12 @@ export function Header() {
           >
             {t('nav.neighborhoods')}
           </button>
-          {user ? (
+          {loading ? (
+            // Invisible placeholder while auth loads - prevents "SIGN IN" flash
+            <span className="text-[11px] tracking-[0.2em] uppercase text-transparent min-h-[44px] flex items-center select-none" aria-hidden>
+              {t('nav.account')}
+            </span>
+          ) : user ? (
             <div className="flex items-center gap-4">
               {isAdmin && (
                 <Link
@@ -477,7 +482,7 @@ export function Header() {
               {t('nav.stories')}
             </Link>
 
-            {user ? (
+            {!loading && user ? (
               <>
                 {isAdmin && (
                   <Link
@@ -514,7 +519,7 @@ export function Header() {
                   {t('nav.account')}
                 </Link>
               </>
-            ) : (
+            ) : !loading ? (
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
@@ -525,7 +530,7 @@ export function Header() {
               >
                 {t('nav.signIn')}
               </Link>
-            )}
+            ) : null}
           </nav>
         </div>
       )}

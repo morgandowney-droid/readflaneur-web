@@ -97,9 +97,12 @@ function LoginForm() {
 
     try {
       const supabase = createClient();
+      const target = redirect === '/' ? '/feed' : redirect;
 
       // Try client-side sign-in first (with CAPTCHA if available)
-      let session = null;
+      // signInWithPassword stores session in cookies AND emits SIGNED_IN
+      // on the shared singleton client, so Header's onAuthStateChange picks it up
+      let clientSignInOk = false;
       try {
         const opts = captchaToken ? { captchaToken } : undefined;
         const { data, error: authError } = await Promise.race([
@@ -110,15 +113,14 @@ function LoginForm() {
         ]);
 
         if (!authError && data?.session) {
-          session = data.session;
+          clientSignInOk = true;
         }
       } catch {
         // Client-side auth timed out or failed - will try server fallback
       }
 
       // Fallback: server-side sign-in (bypasses CAPTCHA via service role key + direct REST)
-      // The server response includes Set-Cookie headers that persist the session
-      if (!session) {
+      if (!clientSignInOk) {
         try {
           const res = await fetch('/api/auth/signin', {
             method: 'POST',
@@ -129,9 +131,23 @@ function LoginForm() {
           const result = await res.json();
 
           if (res.ok && result.access_token) {
-            // Server already set auth cookies in the response headers
-            // Browser stored them automatically - no setSession() needed
-            session = result;
+            // Server set auth cookies via Set-Cookie headers.
+            // Also try to hydrate the in-memory client so onAuthStateChange fires.
+            // setSession may hang (getUser call), so race with 3s timeout.
+            try {
+              await Promise.race([
+                supabase.auth.setSession({
+                  access_token: result.access_token,
+                  refresh_token: result.refresh_token,
+                }),
+                new Promise<never>((_, reject) =>
+                  setTimeout(() => reject(new Error('timeout')), 3000)
+                ),
+              ]);
+              clientSignInOk = true;
+            } catch {
+              // setSession timed out - cookies are set by server, fall back to full reload
+            }
           } else {
             setError(result.error || 'Sign in failed');
             setIsLoading(false);
@@ -149,7 +165,15 @@ function LoginForm() {
       }
 
       setSuccess(true);
-      window.location.href = redirect;
+
+      if (clientSignInOk) {
+        // Client-side nav: Header stays mounted, receives SIGNED_IN event via
+        // shared singleton client - no cookie read needed for immediate nav
+        router.push(target);
+      } else {
+        // Full reload fallback: server cookies are set, next page reads them
+        window.location.href = target;
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       setIsLoading(false);
