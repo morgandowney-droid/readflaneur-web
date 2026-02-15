@@ -5,6 +5,10 @@
 
 ## 2026-02-15
 
+**Fix Login/Signout Infinite Hang:**
+- `signInWithPassword()` could hang indefinitely, leaving user stuck at "SIGNING IN..." forever. Added 10s timeout on auth call, 5s timeout on session POST. Shows error message on timeout instead of infinite spinner.
+- Sign out fetch also gets 5s timeout; redirects to homepage regardless of success/failure.
+
 **Add Account Link to Desktop Nav:**
 - Authenticated users can now reach Account (and Sign Out) from the desktop header nav. Previously only accessible via mobile hamburger menu.
 
