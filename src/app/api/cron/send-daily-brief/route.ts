@@ -70,6 +70,16 @@ export async function GET(request: Request) {
   };
 
   try {
+    // Skip Sundays - the Sunday Edition replaces the Daily Brief
+    // (unless test/force mode)
+    if (!testEmail && !forceRun && new Date().getUTCDay() === 0) {
+      await logCronExecution(supabase, { ...results, emails_skipped: 0 });
+      return NextResponse.json({
+        ...results,
+        message: 'Sunday - skipping Daily Brief (Sunday Edition sends instead)',
+      });
+    }
+
     // Test mode: send to a specific email address
     if (testEmail) {
       const recipient = await buildTestRecipient(supabase, testEmail, forceRun);

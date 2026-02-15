@@ -41,7 +41,8 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const testNeighborhoodId = url.searchParams.get('test');
-  const batchSize = parseInt(url.searchParams.get('batch') || '10');
+  // Process all neighborhoods - batch=10 caused starvation (only 10/270 per week)
+  const batchSize = parseInt(url.searchParams.get('batch') || '500');
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
