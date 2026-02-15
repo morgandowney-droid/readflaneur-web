@@ -5,6 +5,14 @@
 
 ## 2026-02-15
 
+**Translate Footer Pages (About, Legal, Standards, Contact, Careers):**
+- All 5 footer pages now use `t()` translation keys with full translations across 9 languages (en, sv, fr, de, es, pt, it, zh, ja).
+- About page: server/client split - server fetches neighborhood counts, `AboutContent` client component renders translated content with `{neighborhoodCount}`, `{cityCount}`, `{vacationCount}` placeholders.
+- Standards and Careers pages: server/client split to preserve `metadata` exports. Client components `StandardsContent` and `CareersContent` handle translations.
+- Legal and Contact pages: converted to `'use client'` with `useTranslation()` hook.
+- Added `scripts/check-translations.mjs` - sync checker that verifies all languages have the same keys as English. Run `node scripts/check-translations.mjs` after editing English strings.
+- 269 total translation keys across all 9 languages (up from 122).
+
 **Fix Inviter Detection on /invite:**
 - Inviter mode now detects existing users via three signals: `flaneur-newsletter-subscribed` localStorage, `flaneur-neighborhood-preferences` localStorage, OR active auth session (via `getSession()`). Previously only checked newsletter-subscribed flag, causing authenticated users to see the invitee join form.
 
