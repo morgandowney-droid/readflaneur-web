@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, Suspense } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
@@ -37,7 +37,29 @@ function LoginForm() {
   const [isOAuthLoading, setIsOAuthLoading] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [checkingSession, setCheckingSession] = useState(true);
   const turnstileRef = useRef<TurnstileInstance>(null);
+
+  // Redirect already-authenticated users
+  useEffect(() => {
+    async function checkSession() {
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+        ]);
+        if (session?.user) {
+          window.location.href = redirect;
+          return;
+        }
+      } catch {
+        // Timeout or error - show login form
+      }
+      setCheckingSession(false);
+    }
+    checkSession();
+  }, [redirect]);
 
   const handleOAuthLogin = async (provider: 'google' | 'apple') => {
     setError(null);
@@ -148,6 +170,14 @@ function LoginForm() {
       setCaptchaToken(null);
     }
   };
+
+  if (checkingSession) {
+    return (
+      <div className="w-full max-w-sm flex justify-center py-10">
+        <div className="w-5 h-5 border-2 border-fg-subtle border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-sm">

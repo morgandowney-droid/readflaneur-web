@@ -24,6 +24,8 @@ export default function AccountPage() {
         const { data: { session } } = await supabase.auth.getSession();
 
         if (!session?.user) {
+          // Auto-heal split-brain: clear any stale client-side auth tokens
+          try { await supabase.auth.signOut(); } catch { /* ignore */ }
           setLoading(false);
           clearTimeout(timeout);
           return;
@@ -56,16 +58,24 @@ export default function AccountPage() {
   const handleSignOut = async () => {
     setSigningOut(true);
     try {
+      // Clear client-side auth tokens first (handles split-brain)
+      try {
+        const supabase = createClient();
+        await Promise.race([
+          supabase.auth.signOut(),
+          new Promise((resolve) => setTimeout(resolve, 2000)),
+        ]);
+      } catch { /* continue */ }
+
+      // Clear server-side cookies
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
-      const response = await fetch('/api/auth/signout', { method: 'POST', signal: controller.signal });
+      await fetch('/api/auth/signout', { method: 'POST', signal: controller.signal }).catch(() => {});
       clearTimeout(timeout);
-      if (!response.ok) throw new Error('Sign out failed');
-      window.location.href = '/';
     } catch {
-      // Redirect even if signout request fails/times out
-      window.location.href = '/';
+      // Continue to redirect regardless
     }
+    window.location.href = '/';
   };
 
   if (loading) {
@@ -79,7 +89,7 @@ export default function AccountPage() {
   if (!email) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4">
-        <p className="text-fg-muted text-sm">{t('nav.signIn')} to view your account.</p>
+        <p className="text-fg-muted text-sm">Sign in to view your account.</p>
         <Link href="/login" className="text-accent text-sm hover:underline">
           {t('nav.signIn')}
         </Link>
