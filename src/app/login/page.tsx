@@ -76,16 +76,38 @@ function LoginForm() {
     try {
       const supabase = createClient();
 
-      // 10s timeout to prevent infinite hang
-      const signInPromise = supabase.auth.signInWithPassword({
-        email,
-        password,
-        options: captchaToken ? { captchaToken } : undefined,
-      });
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Sign in timed out. Please try again.')), 10000)
-      );
-      const { data, error: authError } = await Promise.race([signInPromise, timeoutPromise]);
+      const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> =>
+        Promise.race([
+          promise,
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Sign in timed out. Please try again.')), ms)
+          ),
+        ]);
+
+      // Try with CAPTCHA token first (8s timeout), fall back to without if it hangs
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let signInResult: any;
+      if (captchaToken) {
+        try {
+          signInResult = await withTimeout(
+            supabase.auth.signInWithPassword({ email, password, options: { captchaToken } }),
+            8000
+          );
+        } catch {
+          // CAPTCHA verification may be hanging at Supabase - retry without token
+          signInResult = await withTimeout(
+            supabase.auth.signInWithPassword({ email, password }),
+            10000
+          );
+        }
+      } else {
+        signInResult = await withTimeout(
+          supabase.auth.signInWithPassword({ email, password }),
+          10000
+        );
+      }
+
+      const { data, error: authError } = signInResult;
 
       if (authError) {
         setError(authError.message);
