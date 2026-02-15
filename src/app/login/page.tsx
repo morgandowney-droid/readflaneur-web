@@ -102,15 +102,12 @@ function LoginForm() {
       let session = null;
       try {
         const opts = captchaToken ? { captchaToken } : undefined;
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000);
         const { data, error: authError } = await Promise.race([
           supabase.auth.signInWithPassword({ email, password, options: opts }),
           new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('timeout')), 8000)
+            setTimeout(() => reject(new Error('timeout')), 15000)
           ),
         ]);
-        clearTimeout(timeout);
 
         if (!authError && data?.session) {
           session = data.session;
@@ -120,31 +117,21 @@ function LoginForm() {
       }
 
       // Fallback: server-side sign-in (bypasses CAPTCHA via service role key + direct REST)
+      // The server response includes Set-Cookie headers that persist the session
       if (!session) {
         try {
-          const fallbackController = new AbortController();
-          const fallbackTimeout = setTimeout(() => fallbackController.abort(), 15000);
           const res = await fetch('/api/auth/signin', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
-            signal: fallbackController.signal,
+            credentials: 'same-origin',
           });
-          clearTimeout(fallbackTimeout);
           const result = await res.json();
 
           if (res.ok && result.access_token) {
-            // Set client session from server response (with timeout - don't block)
-            try {
-              await Promise.race([
-                supabase.auth.setSession({
-                  access_token: result.access_token,
-                  refresh_token: result.refresh_token,
-                }),
-                new Promise((resolve) => setTimeout(resolve, 3000)),
-              ]);
-            } catch { /* continue to redirect anyway */ }
-            session = { access_token: result.access_token, refresh_token: result.refresh_token };
+            // Server already set auth cookies in the response headers
+            // Browser stored them automatically - no setSession() needed
+            session = result;
           } else {
             setError(result.error || 'Sign in failed');
             setIsLoading(false);
