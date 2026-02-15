@@ -5,10 +5,12 @@
 
 ## 2026-02-15
 
-**Fix Login/Signout Infinite Hang:**
-- `signInWithPassword()` could hang indefinitely, leaving user stuck at "SIGNING IN..." forever. Added 10s timeout on auth call. Shows error message on timeout instead of infinite spinner.
-- Login redirect is now immediate after auth succeeds. Server session POST (cookie setting) is fire-and-forget - no longer blocks the redirect. Root cause: the `/api/auth/session` POST could hang waiting for `setSession()` network call.
-- Sign out fetch gets 5s timeout; redirects to homepage regardless of success/failure.
+**Fix Login/Auth Split-Brain State:**
+- Login page now checks for existing session on mount (3s timeout). Authenticated users are redirected to `/feed` instead of seeing the sign-in form. Shows spinner while checking.
+- Account page auto-heals stale sessions: when `getSession()` returns no user, calls `supabase.auth.signOut()` to clear orphaned localStorage tokens. Prevents the "ACCOUNT" nav link + "Sign in to view your account" dead-end.
+- Sign-out handler clears both client-side (localStorage) and server-side (cookies) auth state. Previously only cleared server cookies, leaving stale client tokens.
+- Server-side sign-in endpoint (`/api/auth/signin`) calls GoTrue REST API directly with service role key, bypassing broken Turnstile CAPTCHA verification.
+- Login form has dual-path: client-side `signInWithPassword` with 8s timeout, then server fallback via `/api/auth/signin` with 15s timeout.
 
 **Add Account Link to Desktop Nav:**
 - Authenticated users can now reach Account (and Sign Out) from the desktop header nav. Previously only accessible via mobile hamburger menu.
