@@ -332,12 +332,10 @@ LINK CANDIDATES RULES:
     if (enrichedData.categories.length === 0) {
       console.log('No JSON found, returning raw response for manual review');
 
-      // Hyperlink injection disabled - made articles look cluttered
-      // if (linkCandidates.length > 0 && text) {
-      //   text = injectHyperlinks(text, linkCandidates, { name: neighborhoodName, city });
-      // }
+      if (linkCandidates.length > 0 && text) {
+        text = injectHyperlinks(text, linkCandidates, { name: neighborhoodName, city });
+      }
 
-      // Return raw response for debugging
       return {
         date: dateStr,
         neighborhood: neighborhoodName,
@@ -365,10 +363,9 @@ LINK CANDIDATES RULES:
       }
     }
 
-    // Hyperlink injection disabled - made articles look cluttered
-    // if (linkCandidates.length > 0 && text) {
-    //   text = injectHyperlinks(text, linkCandidates, { name: neighborhoodName, city });
-    // }
+    if (linkCandidates.length > 0 && text) {
+      text = injectHyperlinks(text, linkCandidates, { name: neighborhoodName, city });
+    }
 
     return {
       date: dateStr,

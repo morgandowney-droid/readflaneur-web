@@ -68,6 +68,7 @@ export async function GET(request: Request) {
       .eq('status', 'published')
       .gte('published_at', cutoff)
       .not('body_text', 'is', null)
+      .order('published_at', { ascending: false })
       .limit(1000);
 
     const articleIdList = (allArticleIds || []).map(a => a.id);
@@ -89,8 +90,8 @@ export async function GET(request: Request) {
         for (const e of existing || []) existingIds.add(e.article_id);
       }
 
-      // Step 3: Get IDs that need translation (take first 15 per language per run)
-      const needsIds = articleIdList.filter(id => !existingIds.has(id)).slice(0, 15);
+      // Step 3: Get IDs that need translation (newest first, 30 per language per run)
+      const needsIds = articleIdList.filter(id => !existingIds.has(id)).slice(0, 30);
       if (needsIds.length === 0) continue;
 
       // Step 4: Fetch full data only for articles that need translation
@@ -157,6 +158,7 @@ export async function GET(request: Request) {
       .select('id')
       .not('enriched_content', 'is', null)
       .gte('generated_at', cutoff)
+      .order('generated_at', { ascending: false })
       .limit(1000);
 
     const briefIdList = (allBriefIds || []).map(b => b.id);
@@ -178,7 +180,7 @@ export async function GET(request: Request) {
         for (const e of existing || []) existingIds.add(e.brief_id);
       }
 
-      const needsIds = briefIdList.filter(id => !existingIds.has(id)).slice(0, 15);
+      const needsIds = briefIdList.filter(id => !existingIds.has(id)).slice(0, 30);
       if (needsIds.length === 0) continue;
 
       const { data: briefs } = await supabase
