@@ -183,7 +183,7 @@ TONE AND VOCABULARY:
 - NEVER use em dashes (\u2014). Use commas, periods, or hyphens (-) instead.
 - The reader is well-educated and prefers polished language without slang
 
-This is a weekly community recap - straight news, no fluff.`;
+This is The Sunday Edition - a weekly community recap published on Sunday. Even if you are processing this on a different day, write as if it is Sunday (use the CURRENT TIME date provided above as your reference). Do not reference Monday or any day after Sunday. Straight news, no fluff.`;
 
   const systemInstruction = basePersona + (articleType === 'weekly_recap' ? weeklyRecapStyle : dailyBriefStyle);
 
