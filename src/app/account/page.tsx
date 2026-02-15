@@ -56,10 +56,14 @@ export default function AccountPage() {
   const handleSignOut = async () => {
     setSigningOut(true);
     try {
-      const response = await fetch('/api/auth/signout', { method: 'POST' });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const response = await fetch('/api/auth/signout', { method: 'POST', signal: controller.signal });
+      clearTimeout(timeout);
       if (!response.ok) throw new Error('Sign out failed');
       window.location.href = '/';
     } catch {
+      // Redirect even if signout request fails/times out
       window.location.href = '/';
     }
   };

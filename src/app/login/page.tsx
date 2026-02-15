@@ -76,13 +76,16 @@ function LoginForm() {
     try {
       const supabase = createClient();
 
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
+      // 10s timeout to prevent infinite hang
+      const signInPromise = supabase.auth.signInWithPassword({
         email,
         password,
         options: captchaToken ? { captchaToken } : undefined,
       });
-
-      console.log('Login response:', { data, authError });
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Sign in timed out. Please try again.')), 10000)
+      );
+      const { data, error: authError } = await Promise.race([signInPromise, timeoutPromise]);
 
       if (authError) {
         setError(authError.message);
@@ -98,10 +101,10 @@ function LoginForm() {
         return;
       }
 
-      console.log('Session created successfully:', data.session.user.email);
-
       // Set the session server-side to ensure cookies are properly set
       try {
+        const controller = new AbortController();
+        const sessionTimeout = setTimeout(() => controller.abort(), 5000);
         const response = await fetch('/api/auth/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -109,15 +112,16 @@ function LoginForm() {
             access_token: data.session.access_token,
             refresh_token: data.session.refresh_token,
           }),
+          signal: controller.signal,
         });
+        clearTimeout(sessionTimeout);
 
         if (!response.ok) {
           console.error('Failed to set server session');
-        } else {
-          console.log('Server session set successfully');
         }
       } catch (sessionErr) {
         console.error('Error setting server session:', sessionErr);
+        // Continue with redirect even if server session fails - client session is set
       }
 
       setSuccess(true);
