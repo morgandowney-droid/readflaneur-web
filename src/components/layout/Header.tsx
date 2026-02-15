@@ -61,7 +61,6 @@ export function Header() {
     let mounted = true;
     let retryCount = 0;
     const maxRetries = 3;
-    let sessionConfirmedAt = 0;
 
     // Get initial session with retry logic for AbortError
     const initAuth = async () => {
@@ -85,7 +84,6 @@ export function Header() {
           setUser(session?.user ?? null);
 
           if (session?.user) {
-            sessionConfirmedAt = Date.now();
             const { data: profile } = await supabase
               .from('profiles')
               .select('role')
@@ -169,26 +167,17 @@ export function Header() {
     };
     fetchSelectedNeighborhoods();
 
-    // Listen for auth changes
-    // Skip INITIAL_SESSION: initAuth() already handles initial state via getSession()
-    // Guard SIGNED_OUT: Supabase's internal _recoverAndRefresh can emit false
-    // SIGNED_OUT events when getUser() validation hangs or times out
+    // Listen for auth changes - ONLY positive session updates (token refresh, sign-in)
+    // Never set user to null from here: Supabase's internal _initialize() races with
+    // initAuth() and can emit false SIGNED_OUT before getSession() resolves, clearing
+    // a valid session. Sign-out works via full page reload from /account.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
 
-        // initAuth() reads session from cookies directly - skip duplicate initial event
-        if (event === 'INITIAL_SESSION') return;
-
-        // Ignore false SIGNED_OUT within 10s of a confirmed session
-        // (Supabase internals may emit this when getUser() hangs during recovery)
-        if (!session && sessionConfirmedAt && Date.now() - sessionConfirmedAt < 10000) {
-          return;
-        }
-
-        setUser(session?.user ?? null);
+        // Only handle events that carry a valid session
         if (session?.user) {
-          sessionConfirmedAt = Date.now();
+          setUser(session.user);
           try {
             const { data: profile } = await supabase
               .from('profiles')
@@ -201,9 +190,8 @@ export function Header() {
           } catch {
             // Ignore errors in auth state change
           }
-        } else {
-          setIsAdmin(false);
         }
+        // Deliberately ignore null-session events (INITIAL_SESSION, false SIGNED_OUT)
       }
     );
 

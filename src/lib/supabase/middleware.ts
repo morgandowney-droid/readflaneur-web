@@ -29,18 +29,16 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Check session — use getSession() with getUser() as a non-blocking refresh
-  // getSession() reads from cookies (fast), getUser() verifies with server (can hang)
+  // Check session from cookies (fast, no network call)
+  // Do NOT call getUser() here — it makes a network call that can hang,
+  // and if it returns 401, GoTrue internally calls _removeSession() which
+  // writes cookie-clearing headers to supabaseResponse (mutated by reference),
+  // destroying the session even though getSession() found valid cookies.
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
   const user = session?.user ?? null;
-
-  // Attempt token refresh in the background (non-blocking)
-  if (session) {
-    supabase.auth.getUser().catch(() => {});
-  }
 
   // Protected routes
   const protectedPaths = ['/advertiser', '/journalist', '/admin'];
