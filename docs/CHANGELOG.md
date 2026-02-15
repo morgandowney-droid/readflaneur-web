@@ -5,6 +5,9 @@
 
 ## 2026-02-15
 
+**Add Account Link to Desktop Nav:**
+- Authenticated users can now reach Account (and Sign Out) from the desktop header nav. Previously only accessible via mobile hamburger menu.
+
 **Translate House Ad Text (Headlines, Body, CTAs):**
 - All house ad types now use `t()` translation keys (`houseAd.{type}.headline/body/cta`) with DB fallback for unknown types.
 - Type-specific CTA buttons: "Let's Build It" (community), "Let's Place It" (advertise), "Let's Welcome Friends" (invite), "Suggest" (suggest), "Let's Take a Quick Look" (default).
