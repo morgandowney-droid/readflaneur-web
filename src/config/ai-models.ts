@@ -1,10 +1,14 @@
 /** Central AI model IDs - update here when providers release new models.
- *  Last reviewed: 2026-02-10
+ *  Last reviewed: 2026-02-16
  *  Review schedule: Monthly (1st of each month)
  *  Provider docs:
  *    Anthropic: https://docs.anthropic.com/en/docs/about-claude/models
  *    Gemini:    https://ai.google.dev/gemini-api/docs/models
  *    Grok/xAI:  https://docs.x.ai/developers/models
+ *
+ *  Gemini Paid Tier 1 quotas (ai.dev/rate-limit):
+ *    gemini-2.5-pro:   150 RPM, 1K RPD   - use sparingly (Sunday Edition only)
+ *    gemini-2.5-flash:  1K RPM, 10K RPD  - primary workhorse (enrichment, translation)
  */
 export const AI_MODELS = {
   CLAUDE_SONNET: 'claude-sonnet-4-5-20250929',
