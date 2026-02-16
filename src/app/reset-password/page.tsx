@@ -53,7 +53,7 @@ export default function ResetPasswordPage() {
 
       setSuccess(true);
       setTimeout(() => {
-        window.location.href = '/advertiser';
+        window.location.href = '/feed';
       }, 2000);
     } catch (err) {
       console.error('Password update error:', err);
@@ -75,7 +75,7 @@ export default function ResetPasswordPage() {
       <div className="min-h-[80vh] flex items-center justify-center px-4">
         <div className="w-full max-w-sm text-center">
           <h1 className="text-2xl font-light mb-4">Invalid or Expired Link</h1>
-          <p className="text-neutral-600 mb-6">
+          <p className="text-fg-muted mb-6">
             This password reset link is invalid or has expired.
             Please request a new one.
           </p>
@@ -110,9 +110,9 @@ export default function ResetPasswordPage() {
             </svg>
           </div>
           <h1 className="text-2xl font-light mb-4">Password Updated</h1>
-          <p className="text-neutral-600 mb-6">
+          <p className="text-fg-muted mb-6">
             Your password has been successfully updated.
-            Redirecting to dashboard...
+            Redirecting...
           </p>
         </div>
       </div>
