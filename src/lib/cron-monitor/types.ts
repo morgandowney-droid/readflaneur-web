@@ -11,7 +11,12 @@ export type IssueType =
   | 'job_failure'
   | 'api_rate_limit'
   | 'external_service_down'
-  | 'model_update_available';
+  | 'model_update_available'
+  | 'missing_sunday_edition'
+  | 'unenriched_brief'
+  | 'thin_brief'
+  | 'missing_hyperlinks'
+  | 'html_artifact';
 
 export type EmailFailureCause =
   | 'missing_timezone'

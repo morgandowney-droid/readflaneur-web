@@ -211,6 +211,10 @@
     {
       "path": "/api/cron/retry-missing-images",
       "schedule": "0 */2 * * *"
+    },
+    {
+      "path": "/api/cron/check-daily-health",
+      "schedule": "0 10 * * *"
     }
   ]
 }

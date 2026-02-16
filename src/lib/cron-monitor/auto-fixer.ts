@@ -460,6 +460,38 @@ export async function attemptFix(
       }
       break;
 
+    case 'unenriched_brief':
+    case 'missing_hyperlinks':
+      // Trigger re-enrichment for the neighborhood's brief
+      if (!issue.neighborhood_id) {
+        result = { success: false, message: 'No neighborhood ID provided' };
+      } else {
+        try {
+          const response = await fetch(
+            `${baseUrl}/api/cron/enrich-briefs?test=${issue.neighborhood_id}`,
+            {
+              method: 'GET',
+              headers: { 'Authorization': `Bearer ${cronSecret}` },
+            }
+          );
+          const data = await response.json();
+          if (response.ok && data.enriched > 0) {
+            result = { success: true, message: `Re-enriched brief for neighborhood` };
+          } else {
+            result = { success: false, message: data.error || 'Re-enrichment produced no results' };
+          }
+        } catch (err) {
+          result = { success: false, message: err instanceof Error ? err.message : 'Unknown error' };
+        }
+      }
+      break;
+
+    case 'missing_sunday_edition':
+    case 'thin_brief':
+    case 'html_artifact':
+      result = { success: false, message: `${issue.issue_type} requires manual review` };
+      break;
+
     case 'api_rate_limit':
     case 'external_service_down':
       result = { success: false, message: 'External issues cannot be auto-fixed' };

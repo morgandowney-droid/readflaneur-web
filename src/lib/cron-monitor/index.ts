@@ -11,3 +11,5 @@ export * from './image-validator';
 export * from './issue-detector';
 export * from './auto-fixer';
 export * from './email-monitor';
+export * from './health-checks';
+export * from './health-report-email';
