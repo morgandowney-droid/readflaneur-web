@@ -64,6 +64,8 @@ export async function enrichBriefWithGemini(
     briefGeneratedAt?: string;
     /** Article type determines writing style: 'daily_brief' includes casual intro/outro, 'weekly_recap' is direct */
     articleType?: 'daily_brief' | 'weekly_recap';
+    /** Override the model ID (used by Pro-first-Flash-fallback strategy) */
+    modelOverride?: string;
   }
 ): Promise<EnrichedBriefOutput> {
   const apiKey = options?.apiKey || process.env.GEMINI_API_KEY;
@@ -244,8 +246,8 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
 - If your prose mentions specific places, restaurants, events, or people by name, those MUST appear in link_candidates`;
 
   try {
-    // Use gemini-2.5-flash for enrichment (2.5-pro RPD limit is 1K, not enough for 270+ daily enrichments)
-    const modelId = 'gemini-2.5-flash';
+    // Pro-first, Flash-fallback: caller passes modelOverride based on daily Pro budget
+    const modelId = options?.modelOverride || 'gemini-2.5-flash';
 
     // Retry with exponential backoff on quota errors (429 RESOURCE_EXHAUSTED)
     const RETRY_DELAYS = [2000, 5000, 15000]; // 2s, 5s, 15s

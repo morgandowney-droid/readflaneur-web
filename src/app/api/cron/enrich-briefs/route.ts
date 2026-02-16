@@ -23,7 +23,13 @@ export const maxDuration = 300;
 
 const TIME_BUDGET_MS = 280_000; // 280s — leave 20s for logging + response
 const PHASE1_BUDGET_MS = 200_000; // 200s for briefs, 80s for articles
-const CONCURRENCY = 4; // parallel Gemini calls per batch (gemini-2.5-flash has 10K RPD)
+const CONCURRENCY = 4; // parallel Gemini calls per batch
+
+// Pro-first, Flash-fallback: use Pro until daily budget is near, then cascade to Flash.
+// Pro RPD limit is 1K on Paid Tier 1. Reserve 100 for Sunday Edition + manual calls.
+const PRO_DAILY_BUDGET = 900;
+const MODEL_PRO = 'gemini-2.5-pro';
+const MODEL_FLASH = 'gemini-2.5-flash';
 
 export async function GET(request: Request) {
   const functionStart = Date.now();
@@ -62,6 +68,29 @@ export async function GET(request: Request) {
 
   const startedAt = new Date().toISOString();
 
+  // ─── Pro-first, Flash-fallback: count today's Pro enrichments ───
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+
+  const { count: proUsedToday } = await supabase
+    .from('neighborhood_briefs')
+    .select('*', { count: 'exact', head: true })
+    .eq('enrichment_model', MODEL_PRO)
+    .gte('enriched_at', todayStart.toISOString());
+
+  let proRemainingToday = PRO_DAILY_BUDGET - (proUsedToday || 0);
+  const startingModel = proRemainingToday > 0 ? MODEL_PRO : MODEL_FLASH;
+  console.log(`[enrich-briefs] Pro used today: ${proUsedToday || 0}/${PRO_DAILY_BUDGET}, starting with ${startingModel}`);
+
+  // Track which model to use (decrements proRemainingToday as Pro calls are made)
+  function getModel(): string {
+    if (proRemainingToday > 0) {
+      proRemainingToday--;
+      return MODEL_PRO;
+    }
+    return MODEL_FLASH;
+  }
+
   const results = {
     briefs_processed: 0,
     briefs_enriched: 0,
@@ -71,6 +100,8 @@ export async function GET(request: Request) {
     articles_failed: 0,
     errors: [] as string[],
     skipped_time_budget: false,
+    model_pro_used: 0,
+    model_flash_used: 0,
   };
 
   const elapsed = () => Date.now() - functionStart;
@@ -156,7 +187,8 @@ export async function GET(request: Request) {
               country: string;
             };
 
-            console.log(`Enriching brief for ${hood.name}...`);
+            const model = getModel();
+            console.log(`Enriching brief for ${hood.name} [${model}]...`);
 
             const result = await enrichBriefWithGemini(
               brief.content,
@@ -166,8 +198,12 @@ export async function GET(request: Request) {
               hood.country || 'USA',
               {
                 briefGeneratedAt: brief.generated_at,
+                modelOverride: model,
               }
             );
+
+            if (model === MODEL_PRO) results.model_pro_used++;
+            else results.model_flash_used++;
 
             const { error: updateError } = await supabase
               .from('neighborhood_briefs')
@@ -183,7 +219,7 @@ export async function GET(request: Request) {
               throw new Error(`${hood.name}: ${updateError.message}`);
             }
 
-            console.log(`Successfully enriched brief for ${hood.name}`);
+            console.log(`Successfully enriched brief for ${hood.name} [${model}]`);
             return hood.name;
           })
         );
@@ -293,7 +329,8 @@ export async function GET(request: Request) {
             throw new Error(`Article ${article.id}: no neighborhood data`);
           }
 
-          console.log(`Enriching RSS article "${article.headline?.slice(0, 50)}" for ${hood.name}...`);
+          const model = getModel();
+          console.log(`Enriching RSS article "${article.headline?.slice(0, 50)}" for ${hood.name} [${model}]...`);
 
           const result = await enrichBriefWithGemini(
             article.body_text || '',
@@ -304,8 +341,12 @@ export async function GET(request: Request) {
             {
               briefGeneratedAt: article.published_at,
               articleType: 'weekly_recap',
+              modelOverride: model,
             }
           );
+
+          if (model === MODEL_PRO) results.model_pro_used++;
+          else results.model_flash_used++;
 
           const enrichedBody = result.rawResponse || article.body_text;
           // Regenerate preview_text from enriched body so it stays in sync
@@ -435,6 +476,8 @@ export async function GET(request: Request) {
           briefs_enriched: results.briefs_enriched,
           articles_processed: results.articles_processed,
           articles_enriched: results.articles_enriched,
+          model_pro_used: results.model_pro_used,
+          model_flash_used: results.model_flash_used,
           elapsed_ms: Date.now() - functionStart,
           skipped_time_budget: results.skipped_time_budget,
         },
