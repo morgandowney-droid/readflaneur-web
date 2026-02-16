@@ -248,7 +248,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           }
         />
 
-        {/* Brief discovery CTAs - right after sources on daily brief articles */}
+        {/* Brief discovery CTAs - right after sources on daily brief and Sunday Edition articles */}
         {(article.article_type === 'brief_summary' ||
           (article.category_label && article.category_label.toLowerCase().includes('daily brief'))) && (
           <BriefDiscoveryFooter
@@ -259,6 +259,18 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             citySlug={city}
             neighborhoodSlug={neighborhood}
             publishedAt={article.published_at || article.created_at}
+          />
+        )}
+        {article.category_label === 'The Sunday Edition' && (
+          <BriefDiscoveryFooter
+            neighborhoodId={neighborhoodId}
+            neighborhoodName={article.neighborhood?.name || ''}
+            city={article.neighborhood?.city || ''}
+            currentArticleSlug={article.slug || ''}
+            citySlug={city}
+            neighborhoodSlug={neighborhood}
+            publishedAt={article.published_at || article.created_at}
+            variant="sunday"
           />
         )}
 

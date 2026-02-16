@@ -16,18 +16,22 @@ interface BriefDiscoveryFooterProps {
   citySlug: string;
   neighborhoodSlug: string;
   publishedAt?: string;
+  /** 'daily' = Daily Brief article (default), 'sunday' = Sunday Edition article */
+  variant?: 'daily' | 'sunday';
 }
 
 /**
- * Unified discovery + engagement section at the bottom of daily brief articles.
- * Combines: yesterday's brief, add to neighborhoods, nearby brief,
- * "take me somewhere new", and inline email capture - all in one cohesive block.
+ * Unified discovery + engagement section at the bottom of brief articles.
+ * Daily variant: yesterday's brief, add to neighborhoods, nearby brief,
+ * "take me somewhere new", and inline email capture.
+ * Sunday variant: today's daily brief, nearby brief, "take me somewhere new".
  */
 export function BriefDiscoveryFooter({
   neighborhoodId,
   neighborhoodName,
   city,
   publishedAt,
+  variant = 'daily',
 }: BriefDiscoveryFooterProps) {
   const [isSubscribed, setIsSubscribed] = useState(true);
   const [added, setAdded] = useState(false);
@@ -80,17 +84,21 @@ export function BriefDiscoveryFooter({
         .then(data => { if (data.neighborhoodName) setRandomDiscovery(data); })
         .catch(() => {});
 
-      // Fetch yesterday's brief article for this neighborhood (before this article's date)
-      const yesterdayParams = new URLSearchParams({ neighborhoodId });
-      if (publishedAt) yesterdayParams.set('beforeDate', publishedAt);
-      fetch(`/api/briefs/yesterday?${yesterdayParams}`)
+      // Fetch a related daily brief for this neighborhood
+      // Daily variant: yesterday's brief (before this article's date)
+      // Sunday variant: today's/most recent daily brief (no beforeDate constraint)
+      const briefParams = new URLSearchParams({ neighborhoodId });
+      if (variant === 'daily' && publishedAt) {
+        briefParams.set('beforeDate', publishedAt);
+      }
+      fetch(`/api/briefs/yesterday?${briefParams}`)
         .then(res => res.json())
         .then(data => { if (data.url) setYesterdayUrl(data.url); })
         .catch(() => {});
     } catch {
       // localStorage failure - silently skip
     }
-  }, [neighborhoodId, city, publishedAt]);
+  }, [neighborhoodId, city, publishedAt, variant]);
 
   const handleAdd = () => {
     try {
@@ -133,7 +141,9 @@ export function BriefDiscoveryFooter({
   };
 
   const hasDiscovery = yesterdayUrl || nearbyDiscovery || randomDiscovery;
-  const hasAnything = hasDiscovery || !isSubscribed || showEmailCapture;
+  const hasAnything = variant === 'sunday'
+    ? hasDiscovery
+    : hasDiscovery || !isSubscribed || showEmailCapture;
   if (!hasAnything) return null;
 
   return (
@@ -142,18 +152,21 @@ export function BriefDiscoveryFooter({
       <p className="text-[10px] uppercase tracking-[0.2em] text-fg-subtle mb-4">Keep reading</p>
 
       <div className="space-y-2.5">
-        {/* Yesterday's brief */}
+        {/* Daily brief link */}
         {yesterdayUrl && (
           <Link
             href={yesterdayUrl}
             className="block text-sm text-fg-muted hover:text-accent transition-colors"
           >
-            Read yesterday&apos;s <span className="font-semibold text-fg">{neighborhoodName}</span> Daily Brief &rsaquo;
+            {variant === 'sunday'
+              ? <>Read today&apos;s <span className="font-semibold text-fg">{neighborhoodName}</span> Daily Brief &rsaquo;</>
+              : <>Read yesterday&apos;s <span className="font-semibold text-fg">{neighborhoodName}</span> Daily Brief &rsaquo;</>
+            }
           </Link>
         )}
 
-        {/* Add to neighborhoods */}
-        {!isSubscribed && !added && (
+        {/* Add to neighborhoods (daily variant only) */}
+        {variant === 'daily' && !isSubscribed && !added && (
           <button
             onClick={handleAdd}
             className="block text-sm text-fg-muted hover:text-accent transition-colors"
@@ -161,7 +174,7 @@ export function BriefDiscoveryFooter({
             Add <span className="font-semibold text-fg">{neighborhoodName}</span> to my neighborhoods
           </button>
         )}
-        {added && (
+        {variant === 'daily' && added && (
           <p className="text-sm text-accent">{neighborhoodName} added to your neighborhoods</p>
         )}
 
@@ -185,8 +198,8 @@ export function BriefDiscoveryFooter({
           </Link>
         )}
 
-        {/* Inline email capture - same block */}
-        {showEmailCapture && emailStatus !== 'success' && (
+        {/* Inline email capture (daily variant only) */}
+        {variant === 'daily' && showEmailCapture && emailStatus !== 'success' && (
           <form onSubmit={handleEmailSubmit} className="flex items-center gap-2 pt-1">
             <span className="text-sm text-fg-muted whitespace-nowrap">Get them emailed 7am daily</span>
             <input
@@ -206,7 +219,7 @@ export function BriefDiscoveryFooter({
             </button>
           </form>
         )}
-        {emailStatus === 'success' && (
+        {variant === 'daily' && emailStatus === 'success' && (
           <p className="text-sm text-accent pt-1">You&apos;re in - check your inbox.</p>
         )}
       </div>
