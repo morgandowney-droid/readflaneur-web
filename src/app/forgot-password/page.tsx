@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -16,14 +15,15 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
       });
 
-      if (resetError) {
-        setError(resetError.message);
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.error || 'Something went wrong. Please try again.');
         setIsLoading(false);
         return;
       }
@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
       setSuccess(true);
     } catch (err) {
       console.error('Password reset error:', err);
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      setError('Something went wrong. Please try again.');
       setIsLoading(false);
     }
   };
@@ -78,13 +78,13 @@ export default function ForgotPasswordPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <h1 className="text-2xl font-light text-center mb-4">Reset Password</h1>
-        <p className="text-neutral-600 text-center mb-8">
+        <p className="text-fg-muted text-center mb-8">
           Enter your email address and we&apos;ll send you a link to reset your password.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200">
+            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
               {error}
             </div>
           )}
@@ -102,7 +102,7 @@ export default function ForgotPasswordPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none"
+              className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none rounded-lg"
               placeholder="you@example.com"
             />
           </div>
@@ -110,7 +110,7 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50"
+            className="w-full bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50 rounded-lg"
           >
             {isLoading ? 'Sending...' : 'Send Reset Link'}
           </button>
@@ -118,7 +118,7 @@ export default function ForgotPasswordPage() {
 
         <p className="text-center text-sm text-fg-subtle mt-6">
           Remember your password?{' '}
-          <Link href="/login" className="text-black hover:underline">
+          <Link href="/login" className="text-fg hover:underline">
             Sign in
           </Link>
         </p>
