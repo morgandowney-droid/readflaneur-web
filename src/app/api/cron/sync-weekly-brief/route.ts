@@ -50,9 +50,8 @@ export async function GET(request: Request) {
   );
 
   const startedAt = new Date().toISOString();
-  const today = new Date();
-  // The Sunday date for this edition
-  const weekDate = today.toISOString().split('T')[0];
+  // The Sunday date for this edition - allow override for catch-up runs past midnight
+  const weekDate = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
 
   const results = {
     neighborhoods_processed: 0,
