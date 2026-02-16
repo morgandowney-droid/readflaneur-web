@@ -269,7 +269,7 @@ Respond with ONLY this JSON (no other text):
 
   try {
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-pro',
       contents: prompt,
       config: { temperature: 0.3 },
     });
@@ -333,7 +333,7 @@ STRUCTURE:
 
   try {
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-pro',
       contents: prompt,
       config: { temperature: 0.7 },
     });
@@ -460,7 +460,7 @@ Respond with ONLY this JSON:
 
   try {
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-pro',
       contents: prompt,
       config: { temperature: 0.4 },
     });
@@ -522,7 +522,7 @@ Respond with ONLY this JSON:
 
   try {
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-pro',
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
@@ -594,7 +594,7 @@ Respond with ONLY this JSON:
 
   try {
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-pro',
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
@@ -934,7 +934,7 @@ Respond with ONLY this JSON:
   try {
     const useSearch = !rawEvents;
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-pro',
       contents: prompt,
       config: {
         ...(useSearch ? { tools: [{ googleSearch: {} }] } : {}),
