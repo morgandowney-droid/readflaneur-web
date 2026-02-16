@@ -45,7 +45,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    const actionLink = linkData.properties.action_link;
+    // Supabase may override redirectTo with its Site URL if our redirect isn't in the
+    // Dashboard allowlist. Fix the redirect_to in the action link to ensure it points
+    // to our production domain.
+    const actionLink = linkData.properties.action_link.replace(
+      /redirect_to=[^&]*/,
+      `redirect_to=${encodeURIComponent(redirectTo)}`
+    );
     await sendEmail({
       to: normalizedEmail,
       subject: 'Reset your Flaneur password',
