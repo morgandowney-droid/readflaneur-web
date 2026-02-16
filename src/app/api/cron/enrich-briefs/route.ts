@@ -23,7 +23,7 @@ export const maxDuration = 300;
 
 const TIME_BUDGET_MS = 280_000; // 280s — leave 20s for logging + response
 const PHASE1_BUDGET_MS = 200_000; // 200s for briefs, 80s for articles
-const CONCURRENCY = 4; // parallel Gemini calls per batch (gemini-2.5-pro has generous quota)
+const CONCURRENCY = 4; // parallel Gemini calls per batch (gemini-2.5-flash has 10K RPD)
 
 export async function GET(request: Request) {
   const functionStart = Date.now();

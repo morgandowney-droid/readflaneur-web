@@ -244,8 +244,8 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
 - If your prose mentions specific places, restaurants, events, or people by name, those MUST appear in link_candidates`;
 
   try {
-    // Use gemini-2.5-pro with Google Search grounding (gemini-3-pro-preview quota is 0)
-    const modelId = 'gemini-2.5-pro';
+    // Use gemini-2.5-flash for enrichment (2.5-pro RPD limit is 1K, not enough for 270+ daily enrichments)
+    const modelId = 'gemini-2.5-flash';
 
     // Retry with exponential backoff on quota errors (429 RESOURCE_EXHAUSTED)
     const RETRY_DELAYS = [2000, 5000, 15000]; // 2s, 5s, 15s
