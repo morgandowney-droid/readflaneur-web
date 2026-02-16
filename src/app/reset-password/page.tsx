@@ -1,12 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
 export default function ResetPasswordPage() {
-  const router = useRouter();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -15,11 +13,28 @@ export default function ResetPasswordPage() {
   const [isValidSession, setIsValidSession] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Check if user arrived via password reset link
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsValidSession(!!session);
-    });
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+
+    if (code) {
+      // Arrived via password reset link with PKCE code - exchange it
+      supabase.auth.exchangeCodeForSession(code).then(({ error: exchangeError }) => {
+        if (exchangeError) {
+          console.error('Code exchange error:', exchangeError);
+          setIsValidSession(false);
+        } else {
+          setIsValidSession(true);
+          // Clean up URL
+          window.history.replaceState({}, '', '/reset-password');
+        }
+      });
+    } else {
+      // No code - check if already has a valid session (e.g. already logged in)
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setIsValidSession(!!session);
+      });
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,7 +96,7 @@ export default function ResetPasswordPage() {
           </p>
           <Link
             href="/forgot-password"
-            className="inline-block bg-black text-white px-6 py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors"
+            className="inline-block bg-fg text-canvas px-6 py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors rounded-lg"
           >
             Request New Link
           </Link>
@@ -126,7 +141,7 @@ export default function ResetPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200">
+            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
               {error}
             </div>
           )}
@@ -145,7 +160,7 @@ export default function ResetPasswordPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none"
+              className="w-full px-4 py-3 border border-border focus:border-fg focus:outline-none rounded-lg bg-surface text-fg"
               placeholder="At least 6 characters"
             />
           </div>
@@ -163,7 +178,7 @@ export default function ResetPasswordPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-neutral-200 focus:border-black focus:outline-none"
+              className="w-full px-4 py-3 border border-border focus:border-fg focus:outline-none rounded-lg bg-surface text-fg"
               placeholder="Re-enter your password"
             />
           </div>
@@ -171,7 +186,7 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-black text-white py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50"
+            className="w-full bg-fg text-canvas py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors disabled:opacity-50 rounded-lg"
           >
             {isLoading ? 'Updating...' : 'Update Password'}
           </button>

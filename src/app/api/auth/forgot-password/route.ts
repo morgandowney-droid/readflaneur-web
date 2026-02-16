@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     const protocol = host.includes('localhost') ? 'http' : 'https';
     const baseUrl = `${protocol}://${host}`;
 
-    const redirectTo = `${baseUrl}/auth/callback?next=/reset-password`;
+    const redirectTo = `${baseUrl}/reset-password`;
 
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
