@@ -3,6 +3,23 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-17
+
+**Continuity Context for Gemini Enrichment:**
+- Daily Brief enrichment now receives recent coverage history so Gemini can reference prior stories naturally (e.g., "as we noted Tuesday...", "following up on last week's opening...").
+- `fetchContinuityContext()` in `enrich-briefs` cron queries last 5 enriched briefs (headline + ~200-char excerpt) and last 3 days of non-brief articles (headline + article_type) per neighborhood.
+- `ContinuityItem` interface + `buildContinuityBlock()` helper format items into a labeled `RECENT COVERAGE CONTEXT` block injected into the Gemini prompt.
+- Two style instructions added to `dailyBriefStyle`: reference sparingly when relevant, ignore entirely when nothing connects.
+- ~300-800 extra tokens per prompt, 2 extra Supabase queries (~100ms) per brief - negligible vs 15-20s Gemini call.
+- Backward compatible: `continuityContext` is optional. New neighborhoods with no history enrich normally. Non-fatal on fetch failure.
+- Only applies to Phase 1 (daily briefs). Phase 2 (article enrichment via `weekly_recap` style) unchanged.
+
+**Google Search Verification Link:**
+- `SourceAttribution` shows "Single-source story - verify on Google" link when article has 0-1 sources. Google Search query = headline + neighborhood name.
+
+**Day-of-Week in Feed Date Metadata:**
+- Compact/gallery/brief cards show "Mon Feb 17" instead of "Feb 17". Auto-translated via `Intl.DateTimeFormat` locale.
+
 ## 2026-02-15
 
 **Fix Sunday Edition Not Sending:**
