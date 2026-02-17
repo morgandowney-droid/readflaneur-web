@@ -38,6 +38,11 @@ export function Header() {
   // - Not on a feed page
   const shouldHideHeader = isFeedPage && scrollDirection === 'down' && scrollY > 50 && !mobileMenuOpen;
 
+  // Sync header offset CSS variable so sticky pills can track the header position
+  useEffect(() => {
+    document.documentElement.style.setProperty('--header-offset', shouldHideHeader ? '0px' : '64px');
+  }, [shouldHideHeader]);
+
   // Close mobile menu on significant scroll (50px+ delta to avoid false triggers)
   useEffect(() => {
     if (!mobileMenuOpen) return;
