@@ -181,7 +181,10 @@ export async function generateLibraryImage(
     const message = err instanceof Error ? err.message : String(err);
     // Rate limit or quota errors
     if (message.includes('429') || message.includes('RESOURCE_EXHAUSTED')) {
-      return { success: false, error: `Rate limited: ${message}` };
+      // Distinguish daily quota exhaustion from per-minute rate limits
+      const isQuotaExhausted = message.includes('per_model_per_day') || message.includes('quota');
+      const prefix = isQuotaExhausted ? 'Quota exhausted' : 'Rate limited';
+      return { success: false, error: `${prefix}: ${message}` };
     }
     return { success: false, error: message };
   }
@@ -252,8 +255,8 @@ export async function generateNeighborhoodLibrary(
       options?.useFastModel,
     );
 
-    // Retry once on rate limit after waiting
-    if (!imageResult.success && imageResult.error?.includes('Rate limited')) {
+    // Retry once on per-minute rate limit after waiting (not daily quota exhaustion)
+    if (!imageResult.success && imageResult.error?.includes('Rate limited') && !imageResult.error?.includes('Quota exhausted')) {
       console.log(`[image-library] Rate limited on ${category}, waiting 45s and retrying...`);
       await new Promise(resolve => setTimeout(resolve, 45_000));
       imageResult = await generateLibraryImage(
@@ -269,6 +272,11 @@ export async function generateNeighborhoodLibrary(
       result.images_generated++;
     } else {
       result.errors.push(`${category}: ${imageResult.error}`);
+      // Stop immediately on daily quota exhaustion - no point continuing
+      if (imageResult.error?.includes('Quota exhausted')) {
+        result.errors.push('Stopping: daily quota exhausted');
+        break;
+      }
     }
 
     // 7s spacing between API calls (Imagen 4 has 10 RPM limit)

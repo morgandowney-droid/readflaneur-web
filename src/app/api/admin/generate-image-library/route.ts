@@ -187,9 +187,9 @@ export async function POST(request: Request) {
         results.errors.push(...genResult.errors.map(e => `${neighborhood.id}: ${e}`));
       }
 
-      // If rate limited, stop the whole batch
-      if (genResult.errors.some(e => e.includes('Rate limited') || e.includes('Stopping early'))) {
-        results.errors.push('Batch stopped due to rate limiting');
+      // If rate limited or quota exhausted, stop the whole batch
+      if (genResult.errors.some(e => e.includes('Rate limited') || e.includes('Quota exhausted'))) {
+        results.errors.push('Batch stopped: rate limited or daily quota exhausted');
         break;
       }
     }

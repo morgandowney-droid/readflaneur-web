@@ -4,14 +4,18 @@ import { generateNeighborhoodLibrary } from '@/lib/image-library-generator';
 import { sendEmail } from '@/lib/email';
 
 /**
- * Quarterly Image Library Refresh
+ * Image Library Generator / Quarterly Refresh
  *
- * Regenerates the pre-generated image library for all active neighborhoods
- * to incorporate seasonal changes. Processes in batches within time budget.
- * If incomplete after one run, continues on subsequent triggers.
+ * Generates or refreshes the pre-generated image library for all active
+ * neighborhoods. Processes in batches within time budget, respecting
+ * Imagen 4's 70 RPD daily quota limit.
  *
- * Schedule: First Sunday of Mar/Jun/Sep/Dec at 2 AM UTC
- * Cron: 0 2 1-7 3,6,9,12 0
+ * During initial generation: runs every 4 hours, ~3 neighborhoods per run,
+ * ~9 neighborhoods/day. Once all neighborhoods are complete for the current
+ * season, runs are instant no-ops.
+ *
+ * Schedule: Every 4 hours
+ * Cron: 0 every-4h * * *
  */
 
 export const runtime = 'nodejs';
@@ -119,9 +123,9 @@ export async function GET(request: Request) {
         results.errors.push(...genResult.errors.map(e => `${neighborhood.id}: ${e}`));
       }
 
-      // Stop if rate limited
-      if (genResult.errors.some(e => e.includes('Rate limited'))) {
-        results.errors.push('Stopped due to rate limiting');
+      // Stop if rate limited or quota exhausted
+      if (genResult.errors.some(e => e.includes('Rate limited') || e.includes('Quota exhausted'))) {
+        results.errors.push('Stopped: rate limited or daily quota exhausted');
         break;
       }
     }
