@@ -283,7 +283,7 @@ function cleanContent(text: string): string {
     .trim();
 }
 
-function formatTime(dateString: string) {
+function formatTime(dateString: string, locale: string = 'en') {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -294,7 +294,7 @@ function formatTime(dateString: string) {
   } else if (diffHours < 24) {
     return `${diffHours}h ago`;
   } else {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' });
   }
 }
 

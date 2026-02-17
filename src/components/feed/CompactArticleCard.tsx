@@ -12,9 +12,9 @@ interface CompactArticleCardProps {
   article: Article;
 }
 
-function formatDate(dateString: string) {
+function formatDate(dateString: string, locale: string = 'en') {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 /** Truncate text at the last full sentence boundary within maxLen chars */
@@ -85,7 +85,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
       {article.published_at && (
         <>
           <span className="shrink-0">&middot;</span>
-          <span className="shrink-0">{formatDate(article.published_at)}</span>
+          <span className="shrink-0">{formatDate(article.published_at, language)}</span>
         </>
       )}
       {article.category_label && (

@@ -14,15 +14,16 @@ export function slugify(text: string): string {
     .trim();
 }
 
-export function formatDate(date: string | Date): string {
-  return new Intl.DateTimeFormat('en-US', {
+export function formatDate(date: string | Date, locale: string = 'en'): string {
+  return new Intl.DateTimeFormat(locale, {
+    weekday: 'short',
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   }).format(new Date(date));
 }
 
-export function formatRelativeTime(date: string | Date): string {
+export function formatRelativeTime(date: string | Date, locale: string = 'en'): string {
   const now = new Date();
   const then = new Date(date);
   const diffMs = now.getTime() - then.getTime();
@@ -37,7 +38,7 @@ export function formatRelativeTime(date: string | Date): string {
   } else if (diffDays < 7) {
     return `${diffDays}d ago`;
   } else {
-    return formatDate(date);
+    return formatDate(date, locale);
   }
 }
 
@@ -98,7 +99,7 @@ export function truncateHeadline(text: string, maxLen: number = 40): string {
  * Get day-of-week abbreviation from a date string
  * e.g., "2026-02-08T..." → "Sun"
  */
-export function getDayAbbr(dateString: string): string {
+export function getDayAbbr(dateString: string, locale: string = 'en'): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { weekday: 'short' });
+  return date.toLocaleDateString(locale, { weekday: 'short' });
 }
