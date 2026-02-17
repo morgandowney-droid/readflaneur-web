@@ -833,7 +833,7 @@ function GlobalNeighborhoodModal({
       {/* Modal Content */}
       <div
         ref={modalRef}
-        className="absolute inset-x-0 top-2 bottom-0 sm:inset-8 md:inset-12 lg:inset-y-12 lg:inset-x-24 xl:inset-y-16 xl:inset-x-32 bg-surface/90 backdrop-blur-md border border-border-strong rounded-t-xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col animate-modal-slide-up"
+        className="absolute inset-x-0 top-2 bottom-0 sm:inset-8 md:inset-12 lg:inset-y-12 lg:inset-x-24 xl:inset-y-16 xl:inset-x-32 bg-surface/90 backdrop-blur-md border border-border-strong rounded-t-xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col animate-modal-slide-up select-none"
       >
         {/* Modal Header */}
         <div className="flex-shrink-0 px-6 py-5 border-b border-border-strong">
