@@ -15,7 +15,10 @@
 - `generate-image` endpoint now tries library image first (HEAD check), falls through to Gemini for uncovered neighborhoods.
 - `retry-missing-images` cron repurposed: library-first lookup, Gemini fallback.
 - Community neighborhood creation generates image library on create (Imagen 4 Fast for speed).
-- Quarterly refresh cron `refresh-image-library` (first Sunday of Mar/Jun/Sep/Dec, 2 AM UTC) with seasonal tracking and admin email notification.
+- Automated generation cron `refresh-image-library` (every 4h) processes ~3 neighborhoods per run (~9/day) within Imagen 4's 70 RPD Tier 1 limit. Quota-aware: distinguishes daily exhaustion from per-minute rate limits, only retries on per-minute. Once all complete for current season, runs are instant no-ops.
+- Manual upload tool: `scripts/upload-manual-images.mjs` processes images from Gemini mobile app - strips watermark, resizes to 1280x720 16:9, uploads to Supabase storage. Name Sunday image with "sunday" in filename.
+- Status dashboard: `scripts/image-library-status.mjs` shows neighborhoods sorted by subscriber count with complete/missing status. Priority folders in `manual-images/` numbered 01-20 for subscriber neighborhoods.
+- Prompt rules: mandatory no-text instruction on every image prompt, no aerial/drone perspectives (uncanny valley), close-up architectural detail for look-ahead-3.
 - Storage: `images/library/{neighborhood_id}/{category}.png` in Supabase storage.
 - Added `IMAGEN` and `IMAGEN_FAST` model IDs to `ai-models.ts`.
 

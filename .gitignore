@@ -45,3 +45,6 @@ next-env.d.ts
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Manual image uploads (processed and uploaded to Supabase, not needed in git)
+/manual-images/
