@@ -342,6 +342,13 @@ export async function generateLookAhead(
   const location = country
     ? getSearchLocation(neighborhoodName, city, country)
     : `${neighborhoodName}, ${city}`;
+
+  // This cron runs at 8 PM UTC but publishes at 7 AM local time the next morning.
+  // Frame the search as "tomorrow" from the reader's perspective.
+  const tomorrow = new Date();
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  const tomorrowStr = tomorrow.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
   const searchQuery = `What events, openings, and happenings are coming up in ${location} tomorrow and over the next 7 days?`;
 
   try {
@@ -358,7 +365,9 @@ export async function generateLookAhead(
             role: 'system',
             content: `You are a witty local neighborhood reporter for Flaneur, covering hyperlocal events and happenings. Write in a conversational, engaging style.
 
-Search X and the web for upcoming events, openings, and happenings in ${location} over the next 7 days. Focus on:
+IMPORTANT TIMING CONTEXT: This content will be published at 7 AM local time tomorrow morning (${tomorrowStr}). When you write "tomorrow", you mean the day AFTER ${tomorrowStr}. When you write "today", you mean ${tomorrowStr}. Frame all dates from the reader's perspective of reading this at 7 AM on ${tomorrowStr}.
+
+Search X and the web for upcoming events, openings, and happenings in ${location} starting from ${tomorrowStr} and over the following 7 days. Focus on:
 - Confirmed events with specific dates and times
 - Restaurant, bar, or cafe openings
 - Art exhibitions, gallery openings, museum events
@@ -368,7 +377,7 @@ Search X and the web for upcoming events, openings, and happenings in ${location
 - Theater, music, and performance events
 
 CRITICAL RULES:
-- ONLY include events that are CONFIRMED and upcoming (tomorrow through next 7 days)
+- ONLY include events that are CONFIRMED and upcoming (${tomorrowStr} through the following 7 days)
 - NEVER include past events or vague "coming soon" items without dates
 - Every item MUST have a specific date or date range
 - If you cannot find upcoming events, say so honestly
@@ -377,7 +386,7 @@ After searching, create a "Look Ahead" summary.
 
 Format your response EXACTLY as:
 HEADLINE: [Catchy headline, max 50 characters. Be specific - name the event or venue. Never generic.]
-CONTENT: [Organize by "Tomorrow" then "This Week". Each item: what it is, where, when, and why it matters. Separate sections with blank lines.]
+CONTENT: [Organize by "Today" (meaning ${tomorrowStr}) then "This Week". Each item: what it is, where, when, and why it matters. Separate sections with blank lines.]
 
 Writing style rules:
 - NEVER use em dashes (\u2014). Use periods or commas instead.

@@ -7,9 +7,12 @@
 
 **Look Ahead Article Feature:**
 - Daily forward-looking articles covering tomorrow + next 7 days for neighborhoods with active subscribers.
-- Single-pass cron `generate-look-ahead` (8 AM UTC): `generateLookAhead()` Grok search -> `enrichBriefWithGemini()` with `articleType: 'look_ahead'` (Gemini Flash) -> article creation (`article_type: 'look_ahead'`).
+- Single-pass cron `generate-look-ahead` (8 PM UTC, publishes for 7 AM local next morning): `generateLookAhead()` Grok search -> `enrichBriefWithGemini()` with `articleType: 'look_ahead'` (Gemini Flash) -> article creation (`article_type: 'look_ahead'`).
+- **Delivery-urgency priority:** Neighborhoods sorted by proximity to their 7 AM local delivery time - APAC/East processed first (soonest morning after 8 PM UTC), Americas last.
+- **Next-morning framing:** Grok prompt includes explicit publication date context ("this will be published at 7 AM on {tomorrowDate}"). Gemini enricher receives `briefGeneratedAt` set to tomorrow 7 AM so CURRENT TIME context matches reader's perspective. Articles use "Today" / "This Week" framing (not "Tomorrow").
+- `published_at` set to tomorrow 7 AM UTC, slug uses tomorrow's date for deterministic dedup.
 - New `getActiveNeighborhoodIds()` in `src/lib/active-neighborhoods.ts` merges subscriber IDs from `user_neighborhood_preferences` + `newsletter_subscribers` (+ combo parent IDs).
-- New `lookAheadStyle` in `brief-enricher-gemini.ts`: no greeting/sign-off, organized by Tomorrow then This Week, only verified events with dates/times/addresses.
+- New `lookAheadStyle` in `brief-enricher-gemini.ts`: no greeting/sign-off, organized by Today then This Week, only verified events with dates/times/addresses.
 - `LookAheadCard` component below daily brief in feed (single-feed and MultiFeed). Self-fetching via `/api/briefs/look-ahead`.
 - Look Ahead CTAs in `BriefDiscoveryFooter` and `NeighborhoodBrief` expanded view (between yesterday's brief and nearby discovery).
 - Look Ahead link in Daily Brief email (after stories, before satellite sections) and Sunday Edition email (after THE NEXT FEW DAYS section).

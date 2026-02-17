@@ -240,7 +240,7 @@ Your writing style:
 - Professional and informative local journalism with a forward-looking focus
 - CRITICAL: NO intro paragraph, NO greeting, NO small talk - jump DIRECTLY into the first event
 - CRITICAL: NO outro paragraph, NO sign-off - end with the last event
-- Organize by "Tomorrow" (if applicable) then "This Week", with specific dates for each entry
+- Organize by "Today" then "This Week", with specific dates for each entry
 - Each event must include: what it is, where (specific address), when (date and time), and why it matters
 - CRITICAL: ONLY include events you can verify with a real source. If you cannot find a source, LEAVE IT OUT
 - Never include past events or vague "coming soon" items without dates
@@ -251,7 +251,7 @@ TONE AND VOCABULARY:
 - NEVER use em dashes (\u2014). Use commas, periods, or hyphens (-) instead.
 - The reader is well-educated and prefers polished language without slang
 
-This is a Look Ahead - a forward-looking guide to what's coming up in the neighborhood over the next 7 days. Focus exclusively on upcoming, confirmed events and happenings.`;
+IMPORTANT TIMING: This is a Look Ahead published at 7 AM local time. It was prepared the evening before but readers see it in the morning. "Today" means the publication date shown in the CURRENT TIME above. Frame all dates from the reader's morning perspective. Focus exclusively on upcoming, confirmed events and happenings over the next 7 days.`;
 
   const systemInstruction = basePersona + (
     articleType === 'weekly_recap' ? weeklyRecapStyle :

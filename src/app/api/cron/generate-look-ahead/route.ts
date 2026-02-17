@@ -10,8 +10,11 @@ import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood
  *
  * Single-pass cron: Grok search -> Gemini Flash enrichment -> article creation.
  * Only processes neighborhoods with active subscribers.
+ * Runs at 8 PM UTC, publishes for 7 AM local time next morning.
+ * Neighborhoods are prioritized by proximity to their 7 AM delivery -
+ * those whose 7 AM comes soonest (APAC/East) are processed first.
  *
- * Schedule: 0 8 * * * (8 AM UTC daily)
+ * Schedule: 0 20 * * * (8 PM UTC daily)
  */
 
 export const runtime = 'nodejs';
@@ -26,14 +29,51 @@ interface ArticleSourceInput {
   source_url?: string;
 }
 
-function generateSlug(headline: string, neighborhoodId: string): string {
-  const date = new Date().toISOString().split('T')[0];
+function generateSlug(headline: string, neighborhoodId: string, publishDate: string): string {
   const headlineSlug = headline
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .substring(0, 50);
-  return `${neighborhoodId}-look-ahead-${date}-${headlineSlug}`;
+  return `${neighborhoodId}-look-ahead-${publishDate}-${headlineSlug}`;
+}
+
+/**
+ * Sort neighborhoods so that those whose 7 AM local time comes soonest
+ * after "now" are processed first. This ensures APAC/East neighborhoods
+ * (whose morning is hours away at 8 PM UTC) get priority over Americas
+ * (whose morning is 10+ hours away).
+ */
+function sortByDeliveryUrgency(
+  neighborhoods: Array<{ id: string; name: string; city: string; country: string | null; timezone: string | null; is_combo: boolean; is_active: boolean }>
+): typeof neighborhoods {
+  const now = Date.now();
+  return [...neighborhoods].sort((a, b) => {
+    const hoursUntilA = hoursUntil7AM(a.timezone || 'America/New_York', now);
+    const hoursUntilB = hoursUntil7AM(b.timezone || 'America/New_York', now);
+    return hoursUntilA - hoursUntilB;
+  });
+}
+
+function hoursUntil7AM(timezone: string, nowMs: number): number {
+  try {
+    // Get the current local time in the neighborhood's timezone
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour: 'numeric',
+      hour12: false,
+    });
+    const localHour = parseInt(formatter.format(new Date(nowMs)), 10);
+
+    // Hours until next 7 AM local
+    if (localHour < 7) {
+      return 7 - localHour;
+    } else {
+      return 24 - localHour + 7;
+    }
+  } catch {
+    return 12; // Default middle priority if timezone parsing fails
+  }
 }
 
 function generatePreviewText(content: string): string {
@@ -169,26 +209,32 @@ export async function GET(request: Request) {
 
     results.neighborhoods_eligible = neighborhoods.length;
 
-    // Dedup: check which neighborhoods already have a Look Ahead article today
-    const today = new Date().toISOString().split('T')[0];
+    // Compute tomorrow's date (the publication date, since cron runs at 8 PM UTC)
+    const tomorrow = new Date();
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    const tomorrowDate = tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD
+
+    // Dedup: check which neighborhoods already have a Look Ahead article for tomorrow
     const { data: existingArticles } = await supabase
       .from('articles')
       .select('neighborhood_id')
       .eq('article_type', 'look_ahead')
-      .gte('published_at', `${today}T00:00:00Z`)
-      .lt('published_at', `${today}T23:59:59Z`);
+      .gte('published_at', `${tomorrowDate}T00:00:00Z`)
+      .lt('published_at', `${tomorrowDate}T23:59:59Z`);
 
     const alreadyProcessed = new Set(
       (existingArticles || []).map(a => a.neighborhood_id)
     );
 
-    const toProcess = neighborhoods.filter(n => !alreadyProcessed.has(n.id));
+    const unprocessed = neighborhoods.filter(n => !alreadyProcessed.has(n.id));
+    // Sort by delivery urgency: neighborhoods whose 7 AM is soonest get processed first
+    const toProcess = sortByDeliveryUrgency(unprocessed);
     results.neighborhoods_skipped = neighborhoods.length - toProcess.length;
 
     if (toProcess.length === 0) {
       return NextResponse.json({
         success: true,
-        message: `All ${neighborhoods.length} neighborhoods already have Look Ahead articles today`,
+        message: `All ${neighborhoods.length} neighborhoods already have Look Ahead articles for ${tomorrowDate}`,
         ...results,
         timestamp: new Date().toISOString(),
       });
@@ -218,8 +264,23 @@ export async function GET(request: Request) {
           }
 
           // Step 2: Gemini Flash enrichment
+          // Pass tomorrow 7 AM local as the context time so Gemini frames
+          // "today"/"tomorrow" correctly from the reader's morning perspective
           console.log(`[generate-look-ahead] Enriching ${name} with Gemini Flash...`);
           const neighborhoodSlug = getNeighborhoodSlugFromId(id);
+          const tz = timezone || 'America/New_York';
+          // Build a Date representing tomorrow 7 AM in the neighborhood's timezone
+          const tomorrow7AM = new Date(tomorrow);
+          tomorrow7AM.setUTCHours(7, 0, 0, 0);
+          // Adjust for timezone offset: we want 7 AM local, so subtract the UTC offset
+          // Use a simpler approach: pass the date string and let enricher use it
+          const tomorrowDateStr = tomorrow.toLocaleDateString('en-US', {
+            timeZone: tz,
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
           const enriched = await enrichBriefWithGemini(
             lookAheadBrief.content,
             name,
@@ -229,13 +290,10 @@ export async function GET(request: Request) {
             {
               articleType: 'look_ahead',
               modelOverride: 'gemini-2.5-flash',
-              date: new Date().toLocaleDateString('en-US', {
-                timeZone: timezone || 'America/New_York',
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              }),
+              date: tomorrowDateStr,
+              // Set briefGeneratedAt to tomorrow 7 AM UTC as approximate
+              // The enricher replaces the time portion with "7:00 AM" anyway
+              briefGeneratedAt: `${tomorrowDate}T07:00:00Z`,
             }
           );
 
@@ -248,7 +306,7 @@ export async function GET(request: Request) {
           // Step 3: Create article
           const headline = lookAheadBrief.headline;
           const articleHeadline = `${name} LOOK AHEAD: ${headline}`;
-          const slug = generateSlug(headline, id);
+          const slug = generateSlug(headline, id, tomorrowDate);
           const previewText = generatePreviewText(articleBody);
 
           const { data: inserted, error: insertError } = await supabase
@@ -260,7 +318,7 @@ export async function GET(request: Request) {
               preview_text: previewText,
               slug,
               status: 'published',
-              published_at: new Date().toISOString(),
+              published_at: `${tomorrowDate}T07:00:00Z`,
               author_type: 'ai',
               ai_model: 'grok-4-1-fast + gemini-2.5-flash',
               article_type: 'look_ahead',
