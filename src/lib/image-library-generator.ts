@@ -75,9 +75,13 @@ export async function generateImagePrompts(
 
 It is currently ${month} ${year}. Incorporate seasonal context naturally - you know the climate and season for this location.
 
+CRITICAL RULE - NO TEXT OF ANY KIND:
+Every prompt you write MUST end with this exact sentence: "The image contains absolutely no text, letters, words, numbers, signs, logos, writing, or readable characters anywhere - including on building facades, storefronts, awnings, street signs, banners, plaques, or any surface."
+This is non-negotiable. AI image generators hallucinate garbled text that looks terrible.
+
 Each prompt must:
 - Reference SPECIFIC, IDENTIFIABLE landmarks, streets, or architectural features of this neighborhood (not generic city shots)
-- NEVER include text, words, letters, signs, logos, writing, or human faces
+- NEVER use aerial, overhead, drone, or bird's-eye perspectives (AI cannot accurately reproduce real street layouts - locals will immediately spot errors)
 - Be suitable for 16:9 aspect ratio
 - Vary the visual style according to the category below
 
@@ -85,11 +89,11 @@ CATEGORIES:
 1. daily-brief-1: Hyper-realistic editorial photography. Golden hour light. The most recognizable street or building in ${neighborhood.name}. Warm, inviting, magazine quality.
 2. daily-brief-2: Cinematic morning light photography. Recognizable architecture or streetscape at dawn. Crisp, fresh atmosphere. Architectural details prominent.
 3. daily-brief-3: Local artist hand-drawn streetscape illustration. Warm watercolor or ink wash style. Intimate, charming view of a characteristic corner or alley.
-4. look-ahead-1: Dawn skyline or panoramic view. Anticipatory atmosphere - the neighborhood waking up. Soft pre-sunrise colors. Wide composition.
+4. look-ahead-1: Dawn skyline or panoramic view from street level. Anticipatory atmosphere - the neighborhood waking up. Soft pre-sunrise colors. Wide composition.
 5. look-ahead-2: Evening street corner. Warm lighting beginning to glow from shops and streetlamps. Transitional twilight moment. Cozy anticipation.
-6. look-ahead-3: Elevated or aerial perspective showing urban pattern, rooftops, and street grid of the neighborhood. Geometric beauty from above.
-7. sunday-edition: Interior of a characteristic local cafe or breakfast spot. Looking out through the window at the neighborhood. A table with coffee and pastry in foreground, blurred but recognizable neighborhood view beyond. No people.
-8. rss-story: THE definitive iconic view of ${neighborhood.name}. The image that says "this IS ${neighborhood.name}" to anyone who knows it. Crystal clear, perfect conditions, the postcard shot.
+6. look-ahead-3: Close-up architectural detail - ornate doorway, ironwork balcony, carved stonework, distinctive window frame, or decorative facade element characteristic of ${neighborhood.name}. Shallow depth of field, tactile texture, warm light.
+7. sunday-edition: Interior of a characteristic local cafe or breakfast spot. Looking out through the window at the neighborhood. A table with coffee and pastry in foreground, blurred neighborhood view beyond. No people.
+8. rss-story: THE definitive iconic view of ${neighborhood.name} from street level or slight angle. The image that says "this IS ${neighborhood.name}" to anyone who knows it. Crystal clear, perfect conditions, the postcard shot.
 
 Return ONLY valid JSON with no markdown formatting:
 {"daily-brief-1":"prompt text","daily-brief-2":"prompt text","daily-brief-3":"prompt text","look-ahead-1":"prompt text","look-ahead-2":"prompt text","look-ahead-3":"prompt text","sunday-edition":"prompt text","rss-story":"prompt text"}`;
