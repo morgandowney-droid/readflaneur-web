@@ -92,6 +92,24 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
             </Section>
           )}
 
+          {/* Look Ahead link */}
+          {content.lookAheadUrl && primary && (
+            <Section style={{ paddingTop: '8px', paddingBottom: '16px', textAlign: 'center' as const }}>
+              <a
+                href={content.lookAheadUrl}
+                style={{
+                  color: '#C9A96E',
+                  textDecoration: 'none',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                }}
+              >
+                Read the Look Ahead for {primary.neighborhoodName} &rsaquo;
+              </a>
+            </Section>
+          )}
+
           {/* Satellite neighborhoods */}
           {content.satelliteSections.map((section, i) => (
             <SatelliteSection key={i} section={section} />

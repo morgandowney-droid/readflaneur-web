@@ -267,6 +267,34 @@ function formatDateForTimezone(timezone: string): string {
 }
 
 /**
+ * Fetch the Look Ahead article URL for a neighborhood (last 48h).
+ * Returns null if no Look Ahead article exists.
+ */
+async function fetchLookAheadUrl(
+  supabase: SupabaseClient,
+  neighborhoodId: string,
+  cityName: string
+): Promise<string | null> {
+  const cutoff = new Date();
+  cutoff.setHours(cutoff.getHours() - 48);
+
+  const { data } = await supabase
+    .from('articles')
+    .select('slug')
+    .eq('neighborhood_id', neighborhoodId)
+    .eq('status', 'published')
+    .eq('article_type', 'look_ahead')
+    .gte('published_at', cutoff.toISOString())
+    .order('published_at', { ascending: false })
+    .limit(1);
+
+  if (!data || data.length === 0) return null;
+
+  const base = neighborhoodIdToUrl(neighborhoodId, cityName);
+  return `${base}/${data[0].slug}`;
+}
+
+/**
  * Assemble the complete daily brief content for one recipient
  */
 export async function assembleDailyBrief(
@@ -399,6 +427,12 @@ export async function assembleDailyBrief(
   const allIds = subscribedNeighborhoodIds;
   const { headerAd, nativeAd } = await getEmailAds(supabase, primaryNeighborhoodId, allIds);
 
+  // Fetch Look Ahead URL for primary neighborhood
+  let lookAheadUrl: string | null = null;
+  if (primaryNeighborhood) {
+    lookAheadUrl = await fetchLookAheadUrl(supabase, primaryNeighborhood.id, primaryNeighborhood.city);
+  }
+
   return {
     recipient,
     date: formatDateForTimezone(recipient.timezone),
@@ -406,6 +440,7 @@ export async function assembleDailyBrief(
     satelliteSections,
     headerAd,
     nativeAd,
+    lookAheadUrl,
   };
 }
 

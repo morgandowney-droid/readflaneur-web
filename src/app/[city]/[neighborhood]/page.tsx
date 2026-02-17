@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { NeighborhoodFeed } from '@/components/feed/NeighborhoodFeed';
 import { NeighborhoodBrief } from '@/components/feed/NeighborhoodBrief';
+import { LookAheadCard } from '@/components/feed/LookAheadCard';
 import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { injectAds } from '@/lib/ad-engine';
 import { Article, Ad } from '@/types';
@@ -216,6 +217,10 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
                 enrichedContent={brief.enriched_content || undefined}
                 enrichedCategories={brief.enriched_categories || undefined}
                 enrichedAt={brief.enriched_at || undefined}
+              />
+              <LookAheadCard
+                neighborhoodId={neighborhoodData.id}
+                neighborhoodName={neighborhoodData.name}
               />
             </>
           ) : undefined}

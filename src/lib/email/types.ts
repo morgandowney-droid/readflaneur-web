@@ -21,6 +21,7 @@ export interface DailyBriefContent {
   satelliteSections: SatelliteNeighborhoodSection[];
   headerAd: EmailAd | null;
   nativeAd: EmailAd | null;
+  lookAheadUrl?: string | null;
 }
 
 export interface PrimaryNeighborhoodSection {

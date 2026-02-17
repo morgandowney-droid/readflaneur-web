@@ -38,6 +38,7 @@ export function BriefDiscoveryFooter({
   const [nearbyDiscovery, setNearbyDiscovery] = useState<{ url: string; neighborhoodName: string } | null>(null);
   const [randomDiscovery, setRandomDiscovery] = useState<{ url: string; neighborhoodName: string } | null>(null);
   const [yesterdayUrl, setYesterdayUrl] = useState<string | null>(null);
+  const [lookAheadUrl, setLookAheadUrl] = useState<string | null>(null);
   const [showEmailCapture, setShowEmailCapture] = useState(false);
   const [email, setEmail] = useState('');
   const [emailStatus, setEmailStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -95,6 +96,12 @@ export function BriefDiscoveryFooter({
         .then(res => res.json())
         .then(data => { if (data.url) setYesterdayUrl(data.url); })
         .catch(() => {});
+
+      // Fetch Look Ahead article
+      fetch(`/api/briefs/look-ahead?neighborhoodId=${encodeURIComponent(neighborhoodId)}`)
+        .then(res => res.json())
+        .then(data => { if (data.url) setLookAheadUrl(data.url); })
+        .catch(() => {});
     } catch {
       // localStorage failure - silently skip
     }
@@ -140,7 +147,7 @@ export function BriefDiscoveryFooter({
     } catch { setEmailStatus('error'); }
   };
 
-  const hasDiscovery = yesterdayUrl || nearbyDiscovery || randomDiscovery;
+  const hasDiscovery = yesterdayUrl || lookAheadUrl || nearbyDiscovery || randomDiscovery;
   const hasAnything = variant === 'sunday'
     ? hasDiscovery
     : hasDiscovery || !isSubscribed || showEmailCapture;
@@ -162,6 +169,16 @@ export function BriefDiscoveryFooter({
               ? <>Read today&apos;s <span className="font-semibold text-fg">{neighborhoodName}</span> Daily Brief &rsaquo;</>
               : <>Read yesterday&apos;s <span className="font-semibold text-fg">{neighborhoodName}</span> Daily Brief &rsaquo;</>
             }
+          </Link>
+        )}
+
+        {/* Look Ahead link */}
+        {lookAheadUrl && (
+          <Link
+            href={lookAheadUrl}
+            className="block text-sm text-fg-muted hover:text-accent transition-colors"
+          >
+            Read the Look Ahead for <span className="font-semibold text-fg">{neighborhoodName}</span> &rsaquo;
           </Link>
         )}
 

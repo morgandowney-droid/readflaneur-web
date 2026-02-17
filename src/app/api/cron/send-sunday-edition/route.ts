@@ -204,6 +204,27 @@ export async function GET(request: Request) {
         articleUrl = `${appUrl}/${citySlug}/${neighborhoodSlug}/${articleSlug}?ref=sunday-edition`;
       }
 
+      // Fetch Look Ahead article URL for this neighborhood
+      let lookAheadUrl: string | null = null;
+      try {
+        const cutoff = new Date();
+        cutoff.setHours(cutoff.getHours() - 48);
+        const { data: lookAheadArticles } = await supabase
+          .from('articles')
+          .select('slug')
+          .eq('neighborhood_id', primaryId)
+          .eq('status', 'published')
+          .eq('article_type', 'look_ahead')
+          .gte('published_at', cutoff.toISOString())
+          .order('published_at', { ascending: false })
+          .limit(1);
+        if (lookAheadArticles && lookAheadArticles.length > 0) {
+          const neighborhoodSlugForUrl = primaryId.split('-').slice(1).join('-');
+          const citySlugForUrl = hood.city.toLowerCase().replace(/\s+/g, '-');
+          lookAheadUrl = `${appUrl}/${citySlugForUrl}/${neighborhoodSlugForUrl}/${lookAheadArticles[0].slug}`;
+        }
+      } catch {}
+
       const emailContent: SundayEditionContent = {
         neighborhoodName: hood.name,
         cityName: hood.city,
@@ -254,6 +275,7 @@ export async function GET(request: Request) {
           .filter((x: { id: string; name: string; cityName: string } | null): x is { id: string; name: string; cityName: string } => x !== null),
         requestBaseUrl: `${appUrl}/api/email/sunday-edition-request`,
         requestToken: recipient.unsubscribeToken,
+        lookAheadUrl,
       };
 
       // Resolve sponsor ad for this neighborhood

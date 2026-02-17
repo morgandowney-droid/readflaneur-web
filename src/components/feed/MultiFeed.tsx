@@ -10,6 +10,7 @@ import { NeighborhoodHeader } from './NeighborhoodHeader';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 import { injectAds, injectEmailPrompt } from '@/lib/ad-engine';
 import { NeighborhoodBrief, NeighborhoodBriefSkeleton } from './NeighborhoodBrief';
+import { LookAheadCard } from './LookAheadCard';
 import { useTranslation } from '@/hooks/useTranslation';
 
 const VIEW_PREF_KEY = 'flaneur-feed-view';
@@ -624,10 +625,16 @@ export function MultiFeed({
           <div className="mt-2 mb-2 md:mb-6">
             {dailyBrief}
             {neighborhoods[0] && (
-              <p className="text-xs text-fg-muted mt-2 px-4">
-                {t('feed.dailyBriefForPrimary')} <span className="text-fg-subtle">{neighborhoods[0].name}</span>
-                <button onClick={() => openModal()} className="text-accent hover:underline ml-2">{t('nav.editNeighborhoods')}</button>
-              </p>
+              <>
+                <LookAheadCard
+                  neighborhoodId={neighborhoods[0].id}
+                  neighborhoodName={neighborhoods[0].name}
+                />
+                <p className="text-xs text-fg-muted mt-2 px-4">
+                  {t('feed.dailyBriefForPrimary')} <span className="text-fg-subtle">{neighborhoods[0].name}</span>
+                  <button onClick={() => openModal()} className="text-accent hover:underline ml-2">{t('nav.editNeighborhoods')}</button>
+                </p>
+              </>
             )}
           </div>
         )
@@ -649,6 +656,10 @@ export function MultiFeed({
             enrichedContent={fetchedBrief.enriched_content}
             enrichedCategories={fetchedBrief.enriched_categories}
             enrichedAt={fetchedBrief.enriched_at}
+          />
+          <LookAheadCard
+            neighborhoodId={fetchedBrief.neighborhoodId}
+            neighborhoodName={fetchedBrief.neighborhoodName}
           />
         </div>
       ) : null}

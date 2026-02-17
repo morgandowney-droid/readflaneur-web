@@ -215,6 +215,10 @@
     {
       "path": "/api/cron/check-daily-health",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/generate-look-ahead",
+      "schedule": "0 8 * * *"
     }
   ]
 }

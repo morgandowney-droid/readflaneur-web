@@ -319,6 +319,7 @@ export function NeighborhoodBrief({
   const [nearbyDiscovery, setNearbyDiscovery] = useState<{ url: string; neighborhoodName: string } | null>(null);
   const [randomDiscovery, setRandomDiscovery] = useState<{ url: string; neighborhoodName: string } | null>(null);
   const [yesterdayUrl, setYesterdayUrl] = useState<string | null>(null);
+  const [lookAheadUrl, setLookAheadUrl] = useState<string | null>(null);
   const discoveryFetched = useRef(false);
 
   // Fetch translated brief content when language changes
@@ -389,6 +390,14 @@ export function NeighborhoodBrief({
         fetch(`/api/briefs/yesterday?${params}`)
           .then(res => res.json())
           .then(data => { if (data.url) setYesterdayUrl(data.url); })
+          .catch(() => {});
+      }
+
+      // Fetch Look Ahead article
+      if (neighborhoodId) {
+        fetch(`/api/briefs/look-ahead?neighborhoodId=${encodeURIComponent(neighborhoodId)}`)
+          .then(res => res.json())
+          .then(data => { if (data.url) setLookAheadUrl(data.url); })
           .catch(() => {});
       }
     } catch {
@@ -626,7 +635,7 @@ export function NeighborhoodBrief({
       )}
 
       {/* Discovery CTAs - only show when expanded and at least one result loaded */}
-      {isExpanded && (yesterdayUrl || nearbyDiscovery || randomDiscovery) && (
+      {isExpanded && (yesterdayUrl || lookAheadUrl || nearbyDiscovery || randomDiscovery) && (
         <div className="mt-3 pt-3 border-t border-border flex flex-col gap-1.5">
           {yesterdayUrl && (
             <Link
@@ -636,6 +645,16 @@ export function NeighborhoodBrief({
               className="text-xs text-fg-muted hover:text-accent transition-colors"
             >
               Read yesterday&apos;s <span className="font-semibold text-fg">{neighborhoodName}</span> Daily Brief &rsaquo;
+            </Link>
+          )}
+          {lookAheadUrl && (
+            <Link
+              href={lookAheadUrl}
+              scroll={true}
+              onClick={(e) => e.stopPropagation()}
+              className="text-xs text-fg-muted hover:text-accent transition-colors"
+            >
+              Read the Look Ahead for <span className="font-semibold text-fg">{neighborhoodName}</span> &rsaquo;
             </Link>
           )}
           {nearbyDiscovery && (

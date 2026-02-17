@@ -38,6 +38,7 @@ export interface SundayEditionContent {
   secondaryNeighborhoods?: { id: string; name: string; cityName: string }[];
   requestBaseUrl?: string;
   requestToken?: string;
+  lookAheadUrl?: string | null;
 }
 
 export function SundayEditionTemplate(content: SundayEditionContent) {
@@ -200,6 +201,14 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
                     </Section>
                   );
                 })}
+
+                {content.lookAheadUrl && (
+                  <Text style={readMoreText}>
+                    <Link href={content.lookAheadUrl} style={readMoreLink}>
+                      Read the full Look Ahead for {content.neighborhoodName} &rsaquo;
+                    </Link>
+                  </Text>
+                )}
               </Section>
 
               <Hr style={divider} />

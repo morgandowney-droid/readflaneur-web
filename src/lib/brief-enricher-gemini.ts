@@ -103,8 +103,8 @@ export async function enrichBriefWithGemini(
     date?: string;
     /** ISO timestamp of when the brief was generated (for correct "today"/"tomorrow" context) */
     briefGeneratedAt?: string;
-    /** Article type determines writing style: 'daily_brief' includes casual intro/outro, 'weekly_recap' is direct */
-    articleType?: 'daily_brief' | 'weekly_recap';
+    /** Article type determines writing style: 'daily_brief' includes casual intro/outro, 'weekly_recap' is direct, 'look_ahead' is forward-looking */
+    articleType?: 'daily_brief' | 'weekly_recap' | 'look_ahead';
     /** Override the model ID (used by Pro-first-Flash-fallback strategy) */
     modelOverride?: string;
     /** Recent coverage history for narrative continuity (daily briefs only) */
@@ -182,7 +182,7 @@ export async function enrichBriefWithGemini(
   const articleType = options?.articleType || 'daily_brief';
   const continuityBlock = articleType === 'daily_brief'
     ? buildContinuityBlock(options?.continuityContext || [])
-    : '';
+    : ''; // Continuity context only applies to daily briefs
 
   // System instruction varies by article type
   const basePersona = `You are a well-travelled, successful 35-year-old who has lived in ${neighborhoodName}, ${city} for years. You know every corner of the neighborhood - the hidden gems, the local drama, the new openings before anyone else does.
@@ -235,7 +235,29 @@ TONE AND VOCABULARY:
 
 This is The Sunday Edition - a weekly community recap published on Sunday. Even if you are processing this on a different day, write as if it is Sunday (use the CURRENT TIME date provided above as your reference). Do not reference Monday or any day after Sunday. Straight news, no fluff.`;
 
-  const systemInstruction = basePersona + (articleType === 'weekly_recap' ? weeklyRecapStyle : dailyBriefStyle);
+  const lookAheadStyle = `
+Your writing style:
+- Professional and informative local journalism with a forward-looking focus
+- CRITICAL: NO intro paragraph, NO greeting, NO small talk - jump DIRECTLY into the first event
+- CRITICAL: NO outro paragraph, NO sign-off - end with the last event
+- Organize by "Tomorrow" (if applicable) then "This Week", with specific dates for each entry
+- Each event must include: what it is, where (specific address), when (date and time), and why it matters
+- CRITICAL: ONLY include events you can verify with a real source. If you cannot find a source, LEAVE IT OUT
+- Never include past events or vague "coming soon" items without dates
+- ALWAYS write in English. You may sprinkle in local language terms naturally but all prose MUST be in English.
+
+TONE AND VOCABULARY:
+- Do NOT use lowbrow or overly casual words like "ya", "folks", "eats", "grub", "spot" (for restaurant)
+- NEVER use em dashes (\u2014). Use commas, periods, or hyphens (-) instead.
+- The reader is well-educated and prefers polished language without slang
+
+This is a Look Ahead - a forward-looking guide to what's coming up in the neighborhood over the next 7 days. Focus exclusively on upcoming, confirmed events and happenings.`;
+
+  const systemInstruction = basePersona + (
+    articleType === 'weekly_recap' ? weeklyRecapStyle :
+    articleType === 'look_ahead' ? lookAheadStyle :
+    dailyBriefStyle
+  );
 
   console.log(`Enriching brief for ${neighborhoodName} using Gemini...`);
 

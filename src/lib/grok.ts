@@ -324,6 +324,150 @@ Format each story clearly separated by "---"`
 }
 
 /**
+ * Generate a forward-looking neighborhood brief using Grok Responses API
+ * Covers tomorrow and the next 7 days: events, openings, exhibitions, community meetings, etc.
+ */
+export async function generateLookAhead(
+  neighborhoodName: string,
+  city: string,
+  country?: string
+): Promise<NeighborhoodBrief | null> {
+  const apiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
+
+  if (!apiKey) {
+    console.error('Grok API key not configured (GROK_API_KEY or XAI_API_KEY)');
+    return null;
+  }
+
+  const location = country
+    ? getSearchLocation(neighborhoodName, city, country)
+    : `${neighborhoodName}, ${city}`;
+  const searchQuery = `What events, openings, and happenings are coming up in ${location} tomorrow and over the next 7 days?`;
+
+  try {
+    const response = await fetch(`${GROK_API_URL}/responses`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: GROK_MODEL,
+        input: [
+          {
+            role: 'system',
+            content: `You are a witty local neighborhood reporter for Flaneur, covering hyperlocal events and happenings. Write in a conversational, engaging style.
+
+Search X and the web for upcoming events, openings, and happenings in ${location} over the next 7 days. Focus on:
+- Confirmed events with specific dates and times
+- Restaurant, bar, or cafe openings
+- Art exhibitions, gallery openings, museum events
+- Community meetings, town halls, local government events
+- Sports events, races, outdoor activities
+- Seasonal happenings (markets, festivals, pop-ups)
+- Theater, music, and performance events
+
+CRITICAL RULES:
+- ONLY include events that are CONFIRMED and upcoming (tomorrow through next 7 days)
+- NEVER include past events or vague "coming soon" items without dates
+- Every item MUST have a specific date or date range
+- If you cannot find upcoming events, say so honestly
+
+After searching, create a "Look Ahead" summary.
+
+Format your response EXACTLY as:
+HEADLINE: [Catchy headline, max 50 characters. Be specific - name the event or venue. Never generic.]
+CONTENT: [Organize by "Tomorrow" then "This Week". Each item: what it is, where, when, and why it matters. Separate sections with blank lines.]
+
+Writing style rules:
+- NEVER use em dashes (\u2014). Use periods or commas instead.
+- Keep entries specific with dates, times, and addresses.
+- Each entry should cover one distinct event or happening.
+- Be specific with venue names and locations.
+- If you don't find much, acknowledge it charmingly.`
+          },
+          {
+            role: 'user',
+            content: searchQuery
+          }
+        ],
+        tools: [
+          { type: 'x_search' },
+          { type: 'web_search' }
+        ],
+        temperature: 0.7,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Grok Look Ahead API failed:', response.status, error);
+      throw new Error(`Grok API ${response.status}: ${error.slice(0, 200)}`);
+    }
+
+    const data = await response.json();
+
+    // Extract the assistant's response
+    let responseText = '';
+
+    if (data.output && Array.isArray(data.output)) {
+      const assistantOutput = data.output.find((o: { type?: string; role?: string; content?: unknown }) =>
+        o.type === 'message' && o.role === 'assistant'
+      );
+      const content = assistantOutput?.content;
+      responseText = typeof content === 'string' ? content :
+                     Array.isArray(content) ? content.map((c: { text?: string }) => c.text || '').join('') :
+                     JSON.stringify(content);
+    } else if (data.choices && Array.isArray(data.choices)) {
+      const content = data.choices[0]?.message?.content;
+      responseText = typeof content === 'string' ? content : JSON.stringify(content);
+    } else if (typeof data === 'string') {
+      responseText = data;
+    }
+
+    if (!responseText) {
+      throw new Error(`No response content from Grok. Response keys: ${Object.keys(data || {}).join(', ')}`);
+    }
+
+    // Parse the response
+    const headlineMatch = responseText.match(/HEADLINE:\s*(.+?)(?:\n|CONTENT:)/i);
+    const contentMatch = responseText.match(/CONTENT:\s*([\s\S]+)/i);
+
+    const headline = headlineMatch?.[1]?.trim() || `What's Coming Up in ${neighborhoodName}`;
+    const rawContent = contentMatch?.[1]?.trim() || responseText;
+    const content = rawContent
+      .replace(/\{['"](?:title|url|snippet|author|published_at)['"]:[^}]*(?:\}|$)/gm, '')
+      .replace(/\.\(/g, '.')
+      .replace(/\.\s*\(\d+\)/g, '.')
+      .replace(/\s*\(\d+\)/g, '')
+      .replace(/\(\s*\)/g, '')
+      .replace(/\(\s*$/gm, '')
+      .replace(/\u2014/g, ' - ')
+      .replace(/\u2013/g, '-')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+
+    // Extract citations/sources
+    const sources: XSearchResult[] = (data.citations || []).map((c: { title?: string; url?: string }) => ({
+      title: c.title,
+      url: c.url,
+    }));
+
+    return {
+      headline,
+      content,
+      sources,
+      sourceCount: sources.length,
+      model: GROK_MODEL,
+      searchQuery,
+    };
+  } catch (error) {
+    console.error('Grok Look Ahead error:', error);
+    throw error;
+  }
+}
+
+/**
  * Check if Grok API is configured and available
  */
 export function isGrokConfigured(): boolean {

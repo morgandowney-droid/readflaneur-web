@@ -263,6 +263,17 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             publishedAt={article.published_at || article.created_at}
           />
         )}
+        {article.article_type === 'look_ahead' && (
+          <BriefDiscoveryFooter
+            neighborhoodId={neighborhoodId}
+            neighborhoodName={article.neighborhood?.name || ''}
+            city={article.neighborhood?.city || ''}
+            currentArticleSlug={article.slug || ''}
+            citySlug={city}
+            neighborhoodSlug={neighborhood}
+            publishedAt={article.published_at || article.created_at}
+          />
+        )}
         {article.category_label === 'The Sunday Edition' && (
           <BriefDiscoveryFooter
             neighborhoodId={neighborhoodId}
