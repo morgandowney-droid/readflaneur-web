@@ -206,7 +206,7 @@
     },
     {
       "path": "/api/cron/translate-content",
-      "schedule": "*/30 * * * *"
+      "schedule": "*/15 * * * *"
     },
     {
       "path": "/api/cron/retry-missing-images",

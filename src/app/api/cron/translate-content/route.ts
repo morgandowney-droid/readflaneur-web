@@ -6,31 +6,32 @@ import { AI_MODELS } from '@/config/ai-models';
 /**
  * Batch pre-translate articles and briefs into supported languages via Gemini Flash.
  *
- * Schedule: every 30 minutes
- * Demand-driven: only translates into languages with active users.
+ * Schedule: every 15 minutes
  * Processes content from last 48h that lacks translations.
  *
  * Time budget: 250s (leaves 50s for logging before 300s maxDuration).
- * Concurrency: 3 parallel Gemini calls.
+ * Concurrency: 8 parallel Gemini calls (Flash has generous rate limits).
+ * Phase split: 75% articles, 25% briefs.
  */
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const TIME_BUDGET_MS = 250_000;
-const CONCURRENCY = 3;
+const PHASE1_BUDGET_RATIO = 0.75;
+const CONCURRENCY = 8;
 const ALL_LANGUAGES: LanguageCode[] = ['sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja'];
 
-/** Rotate language order based on current half-hour so all languages get fair coverage */
+/** Rotate language order based on current quarter-hour so all languages get fair coverage */
 function getRotatedLanguages(): LanguageCode[] {
-  const halfHours = Math.floor(Date.now() / (30 * 60 * 1000));
-  const offset = halfHours % ALL_LANGUAGES.length;
+  const quarterHours = Math.floor(Date.now() / (15 * 60 * 1000));
+  const offset = quarterHours % ALL_LANGUAGES.length;
   return [...ALL_LANGUAGES.slice(offset), ...ALL_LANGUAGES.slice(0, offset)];
 }
 
 export async function GET(request: Request) {
   const functionStart = Date.now();
-  const PHASE1_LANGUAGES = getRotatedLanguages();
+  const languages = getRotatedLanguages();
 
   // Auth
   const authHeader = request.headers.get('authorization');
@@ -69,13 +70,13 @@ export async function GET(request: Request) {
       .gte('published_at', cutoff)
       .not('body_text', 'is', null)
       .order('published_at', { ascending: false })
-      .limit(1000);
+      .limit(2000);
 
     const articleIdList = (allArticleIds || []).map(a => a.id);
 
-    // Phase 1: Translate articles
-    for (const lang of PHASE1_LANGUAGES) {
-      if (Date.now() - functionStart > TIME_BUDGET_MS * 0.6) break;
+    // Phase 1: Translate articles (75% of time budget)
+    for (const lang of languages) {
+      if (Date.now() - functionStart > TIME_BUDGET_MS * PHASE1_BUDGET_RATIO) break;
       if (quotaExhausted) break;
 
       // Step 2: Find which already have translations for this language
@@ -90,21 +91,21 @@ export async function GET(request: Request) {
         for (const e of existing || []) existingIds.add(e.article_id);
       }
 
-      // Step 3: Get IDs that need translation (newest first, 30 per language per run)
-      const needsIds = articleIdList.filter(id => !existingIds.has(id)).slice(0, 30);
+      // Step 3: Get IDs that need translation (newest first, no per-language cap)
+      const needsIds = articleIdList.filter(id => !existingIds.has(id));
       if (needsIds.length === 0) continue;
 
       // Step 4: Fetch full data only for articles that need translation
       const { data: articles } = await supabase
         .from('articles')
         .select('id, headline, body_text, preview_text')
-        .in('id', needsIds);
+        .in('id', needsIds.slice(0, 100));
 
       if (!articles || articles.length === 0) continue;
 
       // Process in batches of CONCURRENCY
       for (let i = 0; i < articles.length; i += CONCURRENCY) {
-        if (Date.now() - functionStart > TIME_BUDGET_MS * 0.6) break;
+        if (Date.now() - functionStart > TIME_BUDGET_MS * PHASE1_BUDGET_RATIO) break;
         if (quotaExhausted) break;
 
         const batch = articles.slice(i, i + CONCURRENCY);
@@ -159,12 +160,12 @@ export async function GET(request: Request) {
       .not('enriched_content', 'is', null)
       .gte('generated_at', cutoff)
       .order('generated_at', { ascending: false })
-      .limit(1000);
+      .limit(2000);
 
     const briefIdList = (allBriefIds || []).map(b => b.id);
 
-    // Phase 2: Translate briefs (enriched only)
-    for (const lang of PHASE1_LANGUAGES) {
+    // Phase 2: Translate briefs (remaining 25% of time budget)
+    for (const lang of languages) {
       if (Date.now() - functionStart > TIME_BUDGET_MS) break;
       if (quotaExhausted) break;
 
@@ -180,13 +181,13 @@ export async function GET(request: Request) {
         for (const e of existing || []) existingIds.add(e.brief_id);
       }
 
-      const needsIds = briefIdList.filter(id => !existingIds.has(id)).slice(0, 30);
+      const needsIds = briefIdList.filter(id => !existingIds.has(id));
       if (needsIds.length === 0) continue;
 
       const { data: briefs } = await supabase
         .from('neighborhood_briefs')
         .select('id, content, enriched_content')
-        .in('id', needsIds);
+        .in('id', needsIds.slice(0, 100));
 
       if (!briefs || briefs.length === 0) continue;
 
