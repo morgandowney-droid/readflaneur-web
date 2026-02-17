@@ -1,8 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
-import Link from 'next/link';
-import { HomeSignupEnhanced } from '@/components/home/HomeSignupEnhanced';
 import { HeroStats } from '@/components/home/HeroStats';
-import { SmartRedirect } from '@/components/home/SmartRedirect';
+import { HomepageEnterButton } from '@/components/home/HomepageEnterButton';
 import { Neighborhood } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -25,7 +23,6 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen">
-      <SmartRedirect />
       {/* Hero Section */}
       <section data-theme="dark" className="relative overflow-hidden bg-black text-white py-28 md:py-36 lg:py-48 px-6">
         {/* Gradient overlay for tonal depth */}
@@ -35,17 +32,15 @@ export default async function HomePage() {
         />
 
         <div className="relative mx-auto max-w-3xl text-center">
-          <Link href="/feed" className="hover:opacity-80 transition-opacity">
-            {/* Logo */}
-            <h1 className="hero-fade-in font-display text-6xl md:text-7xl lg:text-8xl font-light tracking-[0.3em] mb-6">
-              FLÂNEUR
-            </h1>
+          {/* Logo */}
+          <h1 className="hero-fade-in font-display text-6xl md:text-7xl lg:text-8xl font-light tracking-[0.3em] mb-6">
+            FLANEUR
+          </h1>
 
-            {/* Tagline */}
-            <p className="hero-fade-in-delay-1 text-sm md:text-base text-fg-muted mb-12 font-light tracking-[0.5em] uppercase">
-              Local stories, interesting neighborhoods.
-            </p>
-          </Link>
+          {/* Tagline */}
+          <p className="hero-fade-in-delay-1 text-sm md:text-base text-fg-muted mb-12 font-light tracking-[0.5em] uppercase">
+            Local stories, interesting neighborhoods.
+          </p>
 
           {/* Stats */}
           <div className="hero-fade-in-delay-2">
@@ -54,13 +49,11 @@ export default async function HomePage() {
 
           {/* Decorative element */}
           <div className="hero-fade-in-delay-3 w-8 h-px bg-fg-subtle mx-auto" />
-        </div>
-      </section>
 
-      {/* Neighborhood Selection */}
-      <section className="bg-canvas py-16 md:py-20 px-6">
-        <div className="mx-auto max-w-2xl text-center">
-          <HomeSignupEnhanced neighborhoods={neighborhoods} />
+          {/* Enter button */}
+          <div className="hero-fade-in-delay-4">
+            <HomepageEnterButton />
+          </div>
         </div>
       </section>
     </div>

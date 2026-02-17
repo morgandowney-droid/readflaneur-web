@@ -199,6 +199,16 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
               </svg>
               <span className="text-xs text-fg-muted">{t('feed.customizeList')}</span>
             </button>
+            <Link
+              href="/discover"
+              onClick={() => setOpen(false)}
+              className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-hover transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-fg-subtle shrink-0">
+                <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="text-xs text-fg-muted">{t('nav.frontDoor')}</span>
+            </Link>
             {isSubscribed && (
               <ShareWidget compact onDone={() => setOpen(false)} />
             )}

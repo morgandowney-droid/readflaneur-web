@@ -11,7 +11,7 @@ export function Footer() {
       <div className="mx-auto max-w-5xl px-6 text-center">
         {/* Logo */}
         <div className="mb-10">
-          <Link href="/" className="font-display text-2xl tracking-[0.35em] font-light text-fg hover:opacity-70 transition-opacity">
+          <Link href="/discover" className="font-display text-2xl tracking-[0.35em] font-light text-fg hover:opacity-70 transition-opacity">
             FLÂNEUR
           </Link>
         </div>
