@@ -34,10 +34,10 @@ export async function checkBriefCoverage(
     issues: [],
   };
 
-  // Get all active neighborhoods
+  // Get all active neighborhoods (with timezone for per-local-day checking)
   const { data: neighborhoods, error: nhError } = await supabase
     .from('neighborhoods')
-    .select('id, name, city')
+    .select('id, name, city, timezone')
     .eq('is_active', true);
 
   if (nhError || !neighborhoods) {
@@ -48,17 +48,52 @@ export async function checkBriefCoverage(
 
   result.total = neighborhoods.length;
 
-  // Get today's briefs (UTC start of day)
-  const todayStart = new Date();
-  todayStart.setUTCHours(0, 0, 0, 0);
+  // Use per-timezone local date check (matches sync-neighborhood-briefs cron logic).
+  // UTC midnight misses APAC neighborhoods whose "today" started before UTC midnight.
+  // Fetch last 36h of briefs and check each against its local "today".
+  const recentCutoff = new Date(Date.now() - 36 * 60 * 60 * 1000);
 
-  const { data: todaysBriefs } = await supabase
+  const { data: recentBriefs } = await supabase
     .from('neighborhood_briefs')
-    .select('neighborhood_id')
-    .gte('created_at', todayStart.toISOString());
+    .select('neighborhood_id, created_at')
+    .gte('created_at', recentCutoff.toISOString());
 
-  const coveredIds = new Set((todaysBriefs || []).map(b => b.neighborhood_id));
-  const missing = neighborhoods.filter(n => !coveredIds.has(n.id));
+  // Build map of neighborhood_id -> brief timestamps
+  const briefsByNeighborhood = new Map<string, string[]>();
+  for (const b of recentBriefs || []) {
+    const existing = briefsByNeighborhood.get(b.neighborhood_id) || [];
+    existing.push(b.created_at);
+    briefsByNeighborhood.set(b.neighborhood_id, existing);
+  }
+
+  function hasBriefForLocalToday(neighborhoodId: string, timezone: string | null): boolean {
+    const timestamps = briefsByNeighborhood.get(neighborhoodId);
+    if (!timestamps || timestamps.length === 0) return false;
+    const tz = timezone || 'UTC';
+    const now = new Date();
+    const localToday = now.toLocaleDateString('en-CA', { timeZone: tz });
+    return timestamps.some(ts => {
+      const briefLocalDate = new Date(ts).toLocaleDateString('en-CA', { timeZone: tz });
+      return briefLocalDate === localToday;
+    });
+  }
+
+  // Only count neighborhoods whose morning window (midnight-7 AM local) has passed
+  // as "missing". Neighborhoods still in or before their window aren't late yet.
+  function morningWindowPassed(timezone: string | null): boolean {
+    if (!timezone) return true;
+    try {
+      const now = new Date();
+      const localTime = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+      return localTime.getHours() >= 7;
+    } catch {
+      return true;
+    }
+  }
+
+  const missing = neighborhoods.filter(n =>
+    morningWindowPassed(n.timezone) && !hasBriefForLocalToday(n.id, n.timezone)
+  );
 
   result.passing = result.total - missing.length;
   result.failing = missing.length;
@@ -76,7 +111,9 @@ export async function checkBriefCoverage(
   // On Sundays, also check weekly briefs
   const isSunday = new Date().getUTCDay() === 0;
   if (isSunday) {
-    const weekDate = todayStart.toISOString().split('T')[0];
+    const todayUtc = new Date();
+    todayUtc.setUTCHours(0, 0, 0, 0);
+    const weekDate = todayUtc.toISOString().split('T')[0];
     const { data: weeklyBriefs } = await supabase
       .from('weekly_briefs')
       .select('neighborhood_id')
