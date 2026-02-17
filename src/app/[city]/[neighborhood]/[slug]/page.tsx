@@ -246,6 +246,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             article.article_type === 'brief_summary' ||
             article.author_type === 'ai'
           }
+          headline={article.headline}
+          neighborhoodName={article.neighborhood?.name}
         />
 
         {/* Brief discovery CTAs - right after sources on daily brief and Sunday Edition articles */}

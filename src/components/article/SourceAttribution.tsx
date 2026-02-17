@@ -6,6 +6,8 @@ interface SourceAttributionProps {
   sources?: ArticleSource[];
   editorNotes?: string | null;
   isAIGenerated?: boolean;
+  headline?: string;
+  neighborhoodName?: string;
 }
 
 /** Parse "Source: Name - https://url" from editor_notes */
@@ -16,9 +18,28 @@ function parseEditorNotesSource(notes: string | null | undefined): { name: strin
   return null;
 }
 
-export function SourceAttribution({ sources, editorNotes, isAIGenerated }: SourceAttributionProps) {
+export function SourceAttribution({ sources, editorNotes, isAIGenerated, headline, neighborhoodName }: SourceAttributionProps) {
   // Only show for AI-generated content
   if (!isAIGenerated) return null;
+
+  // Build a Google Search verification URL from headline + neighborhood
+  const verifyUrl = (headline && neighborhoodName)
+    ? `https://www.google.com/search?q=${encodeURIComponent(headline + ' ' + neighborhoodName)}`
+    : null;
+
+  const verifyLink = verifyUrl ? (
+    <span className="block mt-1.5 text-xs text-fg-muted">
+      Single-source story -{' '}
+      <a
+        href={verifyUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all"
+      >
+        verify on Google
+      </a>
+    </span>
+  ) : null;
 
   // If no specific sources, try to extract from editor_notes (RSS source fallback)
   if (!sources || sources.length === 0) {
@@ -37,6 +58,7 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated }: Sourc
               {rssSource.name}
             </a>
           </p>
+          {verifyLink}
         </div>
       );
     }
@@ -46,6 +68,7 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated }: Sourc
         <p className="text-xs text-fg-muted italic">
           Synthesized from public news sources and social media via AI-powered search and analysis.
         </p>
+        {verifyLink}
       </div>
     );
   }
@@ -102,6 +125,7 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated }: Sourc
         {sources.map((source, index) => formatSource(source, index))}
         <span className="italic">.</span>
       </p>
+      {sources.length <= 1 && verifyLink}
     </div>
   );
 }
