@@ -5,6 +5,18 @@
 
 ## 2026-02-17
 
+**Look Ahead Article Feature:**
+- Daily forward-looking articles covering tomorrow + next 7 days for neighborhoods with active subscribers.
+- Single-pass cron `generate-look-ahead` (8 AM UTC): `generateLookAhead()` Grok search -> `enrichBriefWithGemini()` with `articleType: 'look_ahead'` (Gemini Flash) -> article creation (`article_type: 'look_ahead'`).
+- New `getActiveNeighborhoodIds()` in `src/lib/active-neighborhoods.ts` merges subscriber IDs from `user_neighborhood_preferences` + `newsletter_subscribers` (+ combo parent IDs).
+- New `lookAheadStyle` in `brief-enricher-gemini.ts`: no greeting/sign-off, organized by Tomorrow then This Week, only verified events with dates/times/addresses.
+- `LookAheadCard` component below daily brief in feed (single-feed and MultiFeed). Self-fetching via `/api/briefs/look-ahead`.
+- Look Ahead CTAs in `BriefDiscoveryFooter` and `NeighborhoodBrief` expanded view (between yesterday's brief and nearby discovery).
+- Look Ahead link in Daily Brief email (after stories, before satellite sections) and Sunday Edition email (after THE NEXT FEW DAYS section).
+- `BriefDiscoveryFooter` rendered on `look_ahead` article pages.
+- Translation keys `feed.lookAhead` and `feed.lookAheadCta` in all 9 languages.
+- Cost: ~$0.48/day (Flash has 10K RPD, no quota pressure).
+
 **Continuity Context for Gemini Enrichment:**
 - Daily Brief enrichment now receives recent coverage history so Gemini can reference prior stories naturally (e.g., "as we noted Tuesday...", "following up on last week's opening...").
 - `fetchContinuityContext()` in `enrich-briefs` cron queries last 5 enriched briefs (headline + ~200-char excerpt) and last 3 days of non-brief articles (headline + article_type) per neighborhood.
