@@ -7,6 +7,8 @@ import { generateCommunityId, generateBriefArticleSlug, generatePreviewText } fr
 import { generateNeighborhoodBrief } from '@/lib/grok';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { performInstantResend } from '@/lib/email/instant-resend';
+import { selectLibraryImage } from '@/lib/image-library';
+import { generateNeighborhoodLibrary } from '@/lib/image-library-generator';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -386,7 +388,7 @@ export async function POST(request: NextRequest) {
             article_type: 'brief_summary',
             category_label: `${validation.name} Daily Brief`,
             brief_id: briefId,
-            image_url: '',
+            image_url: selectLibraryImage(neighborhoodId, 'brief_summary'),
             enriched_at: new Date().toISOString(),
             enrichment_model: 'gemini-2.5-flash',
           });
@@ -399,29 +401,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step D: Generate image
-    if (hasTimeBudget() && pipelineStatus.article) {
+    // Step D: Generate image library for new community neighborhood
+    if (hasTimeBudget()) {
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/[\n\r]+$/, '').replace(/\/$/, '')
-          || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-
-        const imageResponse = await fetch(`${baseUrl}/api/internal/generate-image`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-cron-secret': process.env.CRON_SECRET || '',
+        const libResult = await generateNeighborhoodLibrary(
+          admin,
+          {
+            id: neighborhoodId,
+            name: validation.name,
+            city: validation.city,
+            country: validation.country,
           },
-          body: JSON.stringify({ limit: 1 }),
-        });
-
-        if (imageResponse.ok) {
-          const imageResult = await imageResponse.json();
-          if (imageResult.successful > 0) {
-            pipelineStatus.image = true;
-          }
+          { useFastModel: true }, // Use Imagen Fast for quicker creation
+        );
+        if (libResult.images_generated > 0) {
+          pipelineStatus.image = true;
         }
       } catch (err) {
-        console.error('Image generation error:', err);
+        console.error('Image library generation error:', err);
       }
     }
 

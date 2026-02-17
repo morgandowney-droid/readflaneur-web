@@ -4,8 +4,8 @@ import {
   generateWeeklyBrief,
   formatWeeklyBriefAsArticle,
 } from '@/lib/weekly-brief-service';
-import { getCronImage } from '@/lib/cron-images';
 import { AI_MODELS } from '@/config/ai-models';
+import { selectLibraryImage } from '@/lib/image-library';
 
 /**
  * Generate "The Sunday Edition" weekly briefs for all active neighborhoods.
@@ -138,14 +138,6 @@ export async function GET(request: Request) {
 
     console.log(`[SundayEdition] Processing ${toProcess.length} neighborhoods (${existingSet.size} already done)`);
 
-    // Get or generate the Sunday Edition image
-    let imageUrl: string | null = null;
-    try {
-      imageUrl = await getCronImage('sunday-edition', supabase);
-    } catch {
-      console.error('[SundayEdition] Failed to get image');
-    }
-
     // Process neighborhoods in concurrent batches of 3 for throughput
     const CONCURRENCY = 3;
     const queue = [...toProcess];
@@ -191,7 +183,7 @@ export async function GET(request: Request) {
               category_label: 'The Sunday Edition',
               author_type: 'ai',
               ai_model: model,
-              image_url: imageUrl,
+              image_url: selectLibraryImage(neighborhood.id, 'weekly_recap', 'The Sunday Edition'),
             })
             .select('id')
             .single();

@@ -4,10 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { fetchCityFeeds, RSSItem } from '@/lib/rss-sources';
 import { generateGrokNewsStories, isGrokConfigured } from '@/lib/grok';
 import { AI_MODELS } from '@/config/ai-models';
-
-// Image generation - use local API if GEMINI_API_KEY is set, otherwise fallback to flaneur-azure
-const USE_LOCAL_IMAGE_GEN = !!process.env.GEMINI_API_KEY;
-const FLANEUR_API_URL = process.env.FLANEUR_API_URL || 'https://flaneur-azure.vercel.app';
+import { selectLibraryImage } from '@/lib/image-library';
 
 /**
  * News Aggregation Cron Job
@@ -237,7 +234,7 @@ export async function GET(request: Request) {
               slug,
               preview_text: result.rewritten_preview || item.description?.slice(0, 150),
               body_text: result.rewritten_body || item.description || '',
-              image_url: '', // Will be filled by flaneur API
+              image_url: selectLibraryImage(neighborhoodId, 'standard'),
               status: 'published',
               published_at: new Date().toISOString(),
               created_at: new Date().toISOString(),
@@ -271,31 +268,7 @@ export async function GET(request: Request) {
                 .then(null, (err: unknown) => console.error('Failed to save RSS source:', err));
             }
 
-            // Generate image for this article
-            try {
-              const imageApiUrl = USE_LOCAL_IMAGE_GEN
-                ? `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/internal/generate-image`
-                : `${FLANEUR_API_URL}/api/regenerate-images`;
-
-              const imgResponse = await fetch(imageApiUrl, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'x-cron-secret': cronSecret || '',
-                },
-                body: JSON.stringify({
-                  article_id: insertedArticle.id,
-                  provider: 'gemini',
-                }),
-              });
-
-              if (!imgResponse.ok) {
-                const imgError = await imgResponse.text();
-                results.errors.push(`Image API ${imgResponse.status}: ${imgError.slice(0, 100)}`);
-              }
-            } catch (imgErr) {
-              results.errors.push(`Image generation failed for: ${headline.slice(0, 30)}`);
-            }
+            // Image set via selectLibraryImage() at insert time
           }
 
           // Rate limiting
@@ -399,7 +372,7 @@ export async function GET(request: Request) {
               slug,
               preview_text: story.previewText,
               body_text: story.body,
-              image_url: '',
+              image_url: selectLibraryImage(hood.id, 'standard'),
               status: 'published',
               published_at: new Date().toISOString(),
               created_at: new Date().toISOString(),
@@ -420,26 +393,7 @@ export async function GET(request: Request) {
 
           results.grok_articles_created++;
 
-          // Generate image for this article
-          try {
-            const imageApiUrl = USE_LOCAL_IMAGE_GEN
-              ? `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/internal/generate-image`
-              : `${FLANEUR_API_URL}/api/regenerate-images`;
-
-            await fetch(imageApiUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-cron-secret': cronSecret || '',
-              },
-              body: JSON.stringify({
-                article_id: insertedArticle.id,
-                provider: 'gemini',
-              }),
-            });
-          } catch {
-            // Image generation failure is non-critical
-          }
+          // Image set via selectLibraryImage() at insert time
 
           // Rate limiting
           await new Promise(resolve => setTimeout(resolve, 300));

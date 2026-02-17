@@ -4,6 +4,7 @@ import { generateLookAhead } from '@/lib/grok';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
+import { selectLibraryImage } from '@/lib/image-library';
 
 /**
  * Generate Look Ahead Articles
@@ -323,7 +324,7 @@ export async function GET(request: Request) {
               ai_model: 'grok-4-1-fast + gemini-2.5-flash',
               article_type: 'look_ahead',
               category_label: `${name} Look Ahead`,
-              image_url: '',
+              image_url: selectLibraryImage(id, 'look_ahead'),
               enriched_at: new Date().toISOString(),
               enrichment_model: 'gemini-2.5-flash',
             })
@@ -355,20 +356,7 @@ export async function GET(request: Request) {
                 });
             }
 
-            // Step 5: Trigger image generation
-            try {
-              const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/[\n\r]+$/, '').replace(/\/$/, '')
-                || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-
-              fetch(`${baseUrl}/api/internal/generate-image`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'x-cron-secret': cronSecret || '',
-                },
-                body: JSON.stringify({ articleId: inserted.id }),
-              }).catch(() => {}); // Fire-and-forget
-            } catch {}
+            // Image is set via selectLibraryImage() at insert time
           }
 
           console.log(`[generate-look-ahead] Created Look Ahead article for ${name}`);

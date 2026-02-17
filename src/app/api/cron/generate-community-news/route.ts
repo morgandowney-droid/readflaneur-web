@@ -4,6 +4,7 @@ import { isGrokConfigured } from '@/lib/grok';
 import { enrichBriefWithGemini, EnrichedBriefOutput } from '@/lib/brief-enricher-gemini';
 import { getSearchLocation } from '@/lib/neighborhood-utils';
 import { getComboInfo } from '@/lib/combo-utils';
+import { selectLibraryImage } from '@/lib/image-library';
 
 interface ArticleSourceInput {
   source_name: string;
@@ -473,7 +474,7 @@ export async function GET(request: Request) {
             ai_model: enrichmentModel ? `grok-4-1-fast + ${enrichmentModel}` : 'grok-4-1-fast',
             article_type: 'community_news',
             category_label: 'Weekly Community Recap',
-            image_url: '',
+            image_url: selectLibraryImage(hood.id, 'community_news'),
           })
           .select('id')
           .single();
@@ -504,24 +505,7 @@ export async function GET(request: Request) {
           }
         }
 
-        // Generate image
-        try {
-          const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\n$/, '').replace(/\/$/, '')
-            || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-
-          await fetch(`${baseUrl}/api/internal/generate-image`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-cron-secret': cronSecret || '',
-            },
-            body: JSON.stringify({
-              article_id: insertedArticle.id,
-            }),
-          });
-        } catch {
-          // Image generation is best-effort
-        }
+        // Image set via selectLibraryImage() at insert time
 
         // Track this headline to avoid duplicates in same run
         if (!existingByNeighborhood.has(hood.id)) {

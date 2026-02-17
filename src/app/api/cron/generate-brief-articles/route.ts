@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { selectLibraryImage } from '@/lib/image-library';
 
 interface ArticleSourceInput {
   source_name: string;
@@ -312,7 +313,7 @@ export async function GET(request: Request) {
           article_type: 'brief_summary',
           category_label: `${neighborhood.name} Daily Brief`,
           brief_id: brief.id,
-          image_url: '', // Required field, can be empty
+          image_url: selectLibraryImage(brief.neighborhood_id, 'brief_summary'),
           enriched_at: new Date().toISOString(),
           enrichment_model: 'gemini-2.5-flash',
         })
@@ -357,44 +358,9 @@ export async function GET(request: Request) {
     }
   }
 
-  // Generate images for newly created articles (if any were created)
-  let imagesGenerated = 0;
-  let imagesFailed = 0;
-
-  if (results.articles_created > 0) {
-    try {
-      // Call the internal image generation endpoint
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/[\n\r]+$/, '').replace(/\/$/, '')
-        || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-
-      const imageResponse = await fetch(`${baseUrl}/api/internal/generate-image`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-cron-secret': cronSecret || '',
-        },
-        body: JSON.stringify({
-          limit: results.articles_created,
-        }),
-      });
-
-      if (imageResponse.ok) {
-        const imageResult = await imageResponse.json();
-        imagesGenerated = imageResult.successful || 0;
-        imagesFailed = imageResult.failed || 0;
-      } else {
-        results.errors.push(`Image generation failed: ${imageResponse.status}`);
-      }
-    } catch (imageErr) {
-      results.errors.push(`Image generation error: ${imageErr instanceof Error ? imageErr.message : String(imageErr)}`);
-    }
-  }
-
   return NextResponse.json({
     success: results.articles_failed === 0 || results.articles_created > 0,
     ...results,
-    images_generated: imagesGenerated,
-    images_failed: imagesFailed,
     timestamp: new Date().toISOString(),
   });
 

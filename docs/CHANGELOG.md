@@ -3,6 +3,22 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-18
+
+**Pre-Generated Neighborhood Image Library:**
+- 8 evergreen images per neighborhood, eliminating per-article Gemini Image API calls (~$750/mo -> ~$30/mo).
+- Dual-brain pipeline: Gemini 2.5 Pro "creative director" generates 8 structured prompts per neighborhood, Imagen 4 generates the actual images.
+- Categories: `daily-brief-1/2/3` (rotated by day % 3), `look-ahead-1/2/3` (rotated), `sunday-edition`, `rss-story`.
+- `selectLibraryImage()` pure function used at article insert time in 6 crons: generate-brief-articles, generate-look-ahead, sync-news (RSS + Grok), generate-community-news, generate-guide-digests, sync-weekly-brief.
+- Admin endpoint `POST /api/admin/generate-image-library` with batch pagination, status GET.
+- `image_library_status` DB table tracks generation progress and season per neighborhood.
+- `generate-image` endpoint now tries library image first (HEAD check), falls through to Gemini for uncovered neighborhoods.
+- `retry-missing-images` cron repurposed: library-first lookup, Gemini fallback.
+- Community neighborhood creation generates image library on create (Imagen 4 Fast for speed).
+- Quarterly refresh cron `refresh-image-library` (first Sunday of Mar/Jun/Sep/Dec, 2 AM UTC) with seasonal tracking and admin email notification.
+- Storage: `images/library/{neighborhood_id}/{category}.png` in Supabase storage.
+- Added `IMAGEN` and `IMAGEN_FAST` model IDs to `ai-models.ts`.
+
 ## 2026-02-17
 
 **Look Ahead Article Feature:**

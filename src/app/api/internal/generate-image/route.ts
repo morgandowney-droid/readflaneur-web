@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
 import { AI_MODELS } from '@/config/ai-models';
+import { selectLibraryImage } from '@/lib/image-library';
 
 /**
  * Generate a simple SVG placeholder image with neighborhood name
@@ -189,7 +190,7 @@ IMPORTANT: Do NOT include any text, words, letters, signs, logos, or writing in 
   // Build query - include neighborhood name for fallback
   let query = supabase
     .from('articles')
-    .select('id, headline, preview_text, body_text, neighborhood_id, image_url, neighborhood:neighborhoods(name)')
+    .select('id, headline, preview_text, body_text, neighborhood_id, image_url, article_type, category_label, neighborhood:neighborhoods(name)')
     .eq('status', 'published')
     .or('image_url.is.null,image_url.eq.')
     .order('published_at', { ascending: false });
@@ -224,6 +225,35 @@ IMPORTANT: Do NOT include any text, words, letters, signs, logos, or writing in 
   }> = [];
 
   for (const article of articles) {
+    // Try library image first (pre-generated neighborhood images)
+    if (article.neighborhood_id) {
+      const libraryUrl = selectLibraryImage(
+        article.neighborhood_id,
+        article.article_type || 'standard',
+        article.category_label || undefined,
+      );
+      // HEAD check to verify the library image exists
+      try {
+        const headResp = await fetch(libraryUrl, { method: 'HEAD' });
+        if (headResp.ok) {
+          await supabase
+            .from('articles')
+            .update({ image_url: libraryUrl })
+            .eq('id', article.id);
+
+          results.push({
+            id: article.id,
+            headline: article.headline,
+            success: true,
+            imageUrl: libraryUrl,
+          });
+          continue; // Skip Gemini generation
+        }
+      } catch {
+        // Library image doesn't exist, fall through to Gemini generation
+      }
+    }
+
     // Check if headline is sensitive - use placeholder instead of AI generation
     if (isSensitiveHeadline(article.headline)) {
       console.log(`Sensitive headline detected, using placeholder: ${article.headline}`);

@@ -2,9 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import { AI_MODELS } from '@/config/ai-models';
-
-// Flaneur backend API for image generation
-const FLANEUR_API_URL = process.env.FLANEUR_API_URL || 'https://flaneur-azure.vercel.app';
+import { selectLibraryImage } from '@/lib/image-library';
 
 /**
  * Neighborhood Guide Digest Generator
@@ -230,8 +228,8 @@ export async function GET(request: Request) {
         continue;
       }
 
-      // Insert article first
-      const { data: insertedArticle, error: insertError } = await supabase
+      // Insert article with library image
+      const { error: insertError } = await supabase
         .from('articles')
         .insert({
           neighborhood_id: neighborhood.id,
@@ -239,7 +237,7 @@ export async function GET(request: Request) {
           slug,
           preview_text: result.preview_text,
           body_text: result.body_text,
-          image_url: '', // Will be filled by flaneur API
+          image_url: selectLibraryImage(neighborhood.id, 'standard'),
           status: 'published',
           published_at: new Date().toISOString(),
           created_at: new Date().toISOString(),
@@ -252,23 +250,6 @@ export async function GET(request: Request) {
         results.errors.push(`${neighborhood.id}: ${insertError.message}`);
       } else {
         results.articles_generated++;
-
-        // Call flaneur API to generate image for this article
-        try {
-          await fetch(`${FLANEUR_API_URL}/api/regenerate-images`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-cron-secret': cronSecret || '',
-            },
-            body: JSON.stringify({
-              article_id: insertedArticle.id,
-              provider: 'gemini',
-            }),
-          });
-        } catch (imgErr) {
-          results.errors.push(`${neighborhood.id}: Image generation failed`);
-        }
       }
 
       results.neighborhoods_processed++;
