@@ -15,6 +15,7 @@ import { LiquorLicense } from '@/lib/nyc-liquor';
  * the 7 AM email send.
  *
  * Schedule: *\/15 * * * * (every 15 minutes)
+ * Concurrency: 3 parallel Grok calls (~3x throughput vs sequential)
  * Brief expiration: 24 hours (one per day per neighborhood)
  * Archive: All briefs are kept for history
  *
@@ -27,6 +28,8 @@ import { LiquorLicense } from '@/lib/nyc-liquor';
  * 28 chances per timezone to generate a brief, surviving Vercel cron
  * gaps up to ~6 hours.
  */
+
+const CONCURRENCY = 3;
 
 /**
  * Check if it's currently between midnight-7am in a given timezone.
@@ -81,8 +84,6 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const testNeighborhoodId = url.searchParams.get('test');
   const forceRun = url.searchParams.get('force') === 'true';
-  // Default batch size of 50 to handle all neighborhoods in a timezone's morning window
-  const batchSize = parseInt(url.searchParams.get('batch') || '50');
 
   // Check if Grok is configured
   if (!isGrokConfigured()) {
@@ -162,7 +163,7 @@ export async function GET(request: Request) {
 
   // Filter neighborhoods:
   // 1. Don't already have a brief for their local "today"
-  // 2. It's currently 3-9am local time (unless force=true or testing)
+  // 2. It's currently midnight-7am local time (unless force=true or testing)
   const neighborhoods = (allNeighborhoods || []).filter(n => {
     // Always process if testing specific neighborhood
     if (testNeighborhoodId) return true;
@@ -178,11 +179,10 @@ export async function GET(request: Request) {
       if (!inMorningWindow) {
         return false;
       }
-      console.log(`Processing ${n.name} - local time is ${getLocalHour(n.timezone)}:00 (in morning window)`);
     }
 
     return true;
-  }).slice(0, batchSize);
+  });
 
   if (fetchError || !allNeighborhoods) {
     return NextResponse.json({
@@ -204,7 +204,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       message: skippedTimeWindow > 0
-        ? `No neighborhoods in 3-9am window right now (${skippedTimeWindow} waiting for morning, ${alreadyHaveBrief} already have today's brief)`
+        ? `No neighborhoods in morning window right now (${skippedTimeWindow} waiting for morning, ${alreadyHaveBrief} already have today's brief)`
         : `All neighborhoods already have today's brief (${alreadyHaveBrief} total)`,
       neighborhoods_processed: 0,
       briefs_generated: 0,
@@ -221,13 +221,8 @@ export async function GET(request: Request) {
   const TIME_BUDGET_MS = 270_000; // 270s of 300s maxDuration
   const hasTimeBudget = () => Date.now() - startTime < TIME_BUDGET_MS;
 
-  // Process each neighborhood
-  for (const hood of neighborhoods) {
-    if (!hasTimeBudget()) {
-      console.log(`Time budget exhausted after ${results.neighborhoods_processed} neighborhoods (${Date.now() - startTime}ms)`);
-      break;
-    }
-
+  /** Generate a brief for one neighborhood */
+  async function processNeighborhood(hood: typeof neighborhoods[0]) {
     try {
       results.neighborhoods_processed++;
 
@@ -236,7 +231,6 @@ export async function GET(request: Request) {
       if (hood.is_combo) {
         const comboInfo = await getComboInfo(supabase, hood.id);
         if (comboInfo && comboInfo.components.length > 0) {
-          // Use component names in search: "Dumbo, Cobble Hill, Park Slope"
           searchName = comboInfo.components.map(c => c.name).join(', ');
         }
       }
@@ -245,7 +239,6 @@ export async function GET(request: Request) {
       let nycDataContext: string | undefined;
       if (hood.city === 'New York') {
         try {
-          // Get recent permits and licenses for this neighborhood
           const weekAgo = new Date();
           weekAgo.setDate(weekAgo.getDate() - 7);
 
@@ -271,13 +264,9 @@ export async function GET(request: Request) {
 
           if (permits.length > 0 || licenses.length > 0) {
             nycDataContext = await generateBriefContextSnippet(hood.id, permits, licenses) || undefined;
-            if (nycDataContext) {
-              console.log(`NYC context for ${hood.name}: ${nycDataContext}`);
-            }
           }
         } catch (nycError) {
           console.warn(`Failed to fetch NYC data for ${hood.name}:`, nycError);
-          // Continue without NYC context
         }
       }
 
@@ -292,7 +281,7 @@ export async function GET(request: Request) {
       if (!brief) {
         results.briefs_failed++;
         results.errors.push(`${hood.name}: Brief returned null`);
-        continue;
+        return;
       }
 
       // Calculate expiration (24 hours from now - one brief per day)
@@ -317,14 +306,10 @@ export async function GET(request: Request) {
       if (insertError) {
         results.briefs_failed++;
         results.errors.push(`${hood.name}: ${insertError.message}`);
-        continue;
+        return;
       }
 
       results.briefs_generated++;
-
-      // Rate limiting - avoid hitting API limits
-      // Grok has generous limits but let's be respectful
-      await new Promise(resolve => setTimeout(resolve, 500));
 
     } catch (err) {
       results.briefs_failed++;
@@ -332,14 +317,23 @@ export async function GET(request: Request) {
     }
   }
 
-  // Archive: Keep all briefs for history (no deletion)
-  // Old briefs can be queried for historical "What's Happening" data
+  // Process neighborhoods in batches of CONCURRENCY (parallel Grok calls)
+  for (let i = 0; i < neighborhoods.length; i += CONCURRENCY) {
+    if (!hasTimeBudget()) {
+      console.log(`Time budget exhausted after ${results.neighborhoods_processed} neighborhoods (${Date.now() - startTime}ms)`);
+      break;
+    }
+
+    const batch = neighborhoods.slice(i, i + CONCURRENCY);
+    console.log(`Processing batch ${Math.floor(i / CONCURRENCY) + 1}: ${batch.map(h => h.name).join(', ')}`);
+    await Promise.allSettled(batch.map(hood => processNeighborhood(hood)));
+  }
 
   // Log execution for monitoring
   const completedAt = new Date();
   await supabase.from('cron_executions').insert({
     job_name: 'sync-neighborhood-briefs',
-    started_at: new Date(completedAt.getTime() - (results.neighborhoods_processed * 600)).toISOString(),
+    started_at: new Date(startTime).toISOString(),
     completed_at: completedAt.toISOString(),
     success: results.briefs_failed === 0 || results.briefs_generated > 0,
     articles_created: results.briefs_generated,
@@ -348,6 +342,7 @@ export async function GET(request: Request) {
       neighborhoods_processed: results.neighborhoods_processed,
       briefs_generated: results.briefs_generated,
       briefs_failed: results.briefs_failed,
+      neighborhoods_eligible: neighborhoods.length,
     },
     triggered_by: testNeighborhoodId ? 'manual' : 'vercel_cron',
   }).then(null, (e: Error) => console.error('Failed to log cron execution:', e));
@@ -355,6 +350,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     success: results.briefs_failed === 0 || results.briefs_generated > 0,
     ...results,
+    neighborhoods_eligible: neighborhoods.length,
     timestamp: new Date().toISOString(),
   });
 }
