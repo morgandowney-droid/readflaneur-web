@@ -14,6 +14,7 @@ import { GoogleGenAI } from '@google/genai';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getNeighborhoodIdsForQuery } from './combo-utils';
 import { getSearchLocation } from './neighborhood-utils';
+import { AI_MODELS } from '@/config/ai-models';
 
 /**
  * Replace em dashes and en dashes with regular hyphens.
@@ -101,7 +102,8 @@ export async function generateWeeklyBrief(
   neighborhoodId: string,
   neighborhoodName: string,
   city: string,
-  country: string
+  country: string,
+  model: string = AI_MODELS.GEMINI_PRO
 ): Promise<WeeklyBriefContent> {
   const geminiKey = process.env.GEMINI_API_KEY;
   const grokKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
@@ -140,7 +142,7 @@ export async function generateWeeklyBrief(
   let narrative = '';
 
   if (articles.length > 0) {
-    const filterResult = await significanceFilter(genAI, headlineList, neighborhoodName, city);
+    const filterResult = await significanceFilter(genAI, headlineList, neighborhoodName, city, model);
     topStories = filterResult.stories;
 
     // Step C: Editorial Synthesis via Gemini
@@ -149,7 +151,8 @@ export async function generateWeeklyBrief(
       topStories,
       neighborhoodName,
       city,
-      articles
+      articles,
+      model
     );
   } else {
     narrative = `A quiet week in ${neighborhoodName}. No drama, no surprises - just the neighborhood humming along in its familiar rhythm.\n\nSometimes the absence of news is itself a signal. The streets are calm, the cafes are full, and nothing has disrupted the daily routine worth reporting.`;
@@ -174,11 +177,11 @@ export async function generateWeeklyBrief(
     if (grokKey) {
       const rawEvents = await huntUpcomingEvents(grokKey, neighborhoodName, city, country);
       if (rawEvents) {
-        horizonEvents = await curateEvents(genAI, rawEvents, neighborhoodName, city, timeFormat);
+        horizonEvents = await curateEvents(genAI, rawEvents, neighborhoodName, city, timeFormat, model);
       }
     }
     if (horizonEvents.length === 0) {
-      horizonEvents = await huntEventsWithGemini(genAI, neighborhoodName, city, timeFormat);
+      horizonEvents = await huntEventsWithGemini(genAI, neighborhoodName, city, timeFormat, model);
     }
     horizonEvents.sort((a, b) => parseEventDayForSort(a.day) - parseEventDayForSort(b.day));
   } catch (err) {
@@ -188,7 +191,7 @@ export async function generateWeeklyBrief(
   // Section 3: The Weekly Data Point
   let dataPoint: WeeklyDataPoint;
   try {
-    dataPoint = await generateDataPoint(genAI, dataPointType, neighborhoodName, city, country);
+    dataPoint = await generateDataPoint(genAI, dataPointType, neighborhoodName, city, country, model);
   } catch (err) {
     console.error(`[SundayEdition] ${neighborhoodName}: data point failed:`, err);
     dataPoint = { type: dataPointType, label: 'Data Unavailable', value: 'N/A', context: '' };
@@ -200,7 +203,7 @@ export async function generateWeeklyBrief(
     console.log(`[SundayEdition] ${neighborhoodName}: detected holiday "${upcomingHoliday.name}"`);
     try {
       const section = await generateHolidaySection(
-        genAI, grokKey, upcomingHoliday, neighborhoodName, city, country, timeFormat,
+        genAI, grokKey, upcomingHoliday, neighborhoodName, city, country, timeFormat, model,
       );
       holidaySection = section.events.length > 0 ? section : null;
     } catch (err) {
@@ -235,7 +238,8 @@ async function significanceFilter(
   genAI: GoogleGenAI,
   headlineList: string,
   neighborhoodName: string,
-  city: string
+  city: string,
+  model: string
 ): Promise<{ stories: RearviewStory[] }> {
   const prompt = `You are a well-travelled, successful 35-year-old who has lived in ${neighborhoodName}, ${city} for years. You know every corner of the neighborhood - the hidden gems, the local drama, the new openings before anyone else does.
 
@@ -269,7 +273,7 @@ Respond with ONLY this JSON (no other text):
 
   try {
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model,
       contents: prompt,
       config: { temperature: 0.3 },
     });
@@ -295,7 +299,8 @@ async function editorialSynthesis(
   topStories: RearviewStory[],
   neighborhoodName: string,
   city: string,
-  allArticles: Array<{ headline: string; body_text: string | null }>
+  allArticles: Array<{ headline: string; body_text: string | null }>,
+  model: string
 ): Promise<string> {
   // Find the full article bodies for the top stories
   const storyContext = topStories.map(s => {
@@ -333,7 +338,7 @@ STRUCTURE:
 
   try {
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model,
       contents: prompt,
       config: { temperature: 0.7 },
     });
@@ -429,7 +434,8 @@ async function curateEvents(
   rawEvents: string,
   neighborhoodName: string,
   city: string,
-  timeFormat: string
+  timeFormat: string,
+  model: string
 ): Promise<HorizonEvent[]> {
   const prompt = `You are a 35-year-old insider living in ${neighborhoodName}, ${city}. Pick the 3 events your neighbors would actually want to know about.
 
@@ -460,7 +466,7 @@ Respond with ONLY this JSON:
 
   try {
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model,
       contents: prompt,
       config: { temperature: 0.4 },
     });
@@ -485,7 +491,8 @@ async function huntEventsWithGemini(
   genAI: GoogleGenAI,
   neighborhoodName: string,
   city: string,
-  timeFormat: string
+  timeFormat: string,
+  model: string
 ): Promise<HorizonEvent[]> {
   const today = new Date();
   const nextWeek = new Date();
@@ -522,7 +529,7 @@ Respond with ONLY this JSON:
 
   try {
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model,
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
@@ -577,7 +584,8 @@ async function generateDataPoint(
   type: DataPointType,
   neighborhoodName: string,
   city: string,
-  country: string
+  country: string,
+  model: string
 ): Promise<WeeklyDataPoint> {
   const promptFn = DATA_POINT_PROMPTS[type];
   const searchPrompt = promptFn(neighborhoodName, city, country);
@@ -594,7 +602,7 @@ Respond with ONLY this JSON:
 
   try {
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model,
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
@@ -899,6 +907,7 @@ async function curateHolidayEvents(
   neighborhoodName: string,
   city: string,
   timeFormat: string,
+  model: string,
 ): Promise<HolidayEvent[]> {
   const searchContext = rawEvents
     ? `FOUND EVENTS:\n${rawEvents}`
@@ -934,7 +943,7 @@ Respond with ONLY this JSON:
   try {
     const useSearch = !rawEvents;
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model,
       contents: prompt,
       config: {
         ...(useSearch ? { tools: [{ googleSearch: {} }] } : {}),
@@ -973,6 +982,7 @@ async function generateHolidaySection(
   city: string,
   country: string,
   timeFormat: string,
+  model: string,
 ): Promise<HolidaySection> {
   const dateStr = holiday.date.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -985,7 +995,7 @@ async function generateHolidaySection(
     rawEvents = await searchHolidayEvents(grokKey, holiday.name, neighborhoodName, city, country);
   }
 
-  const events = await curateHolidayEvents(genAI, holiday.name, rawEvents, neighborhoodName, city, timeFormat);
+  const events = await curateHolidayEvents(genAI, holiday.name, rawEvents, neighborhoodName, city, timeFormat, model);
 
   return {
     holidayName: holiday.name,

@@ -5,6 +5,7 @@ import {
   formatWeeklyBriefAsArticle,
 } from '@/lib/weekly-brief-service';
 import { getCronImage } from '@/lib/cron-images';
+import { AI_MODELS } from '@/config/ai-models';
 
 /**
  * Generate "The Sunday Edition" weekly briefs for all active neighborhoods.
@@ -148,7 +149,7 @@ export async function GET(request: Request) {
               published_at: new Date().toISOString(),
               category_label: 'The Sunday Edition',
               author_type: 'ai',
-              ai_model: 'gemini-2.5-flash',
+              ai_model: AI_MODELS.GEMINI_PRO,
               image_url: imageUrl,
             })
             .select('id')

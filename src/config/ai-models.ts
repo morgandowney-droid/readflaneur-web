@@ -7,8 +7,8 @@
  *    Grok/xAI:  https://docs.x.ai/developers/models
  *
  *  Gemini Paid Tier 1 quotas (ai.dev/rate-limit):
- *    gemini-2.5-pro:   150 RPM, 1K RPD   - use sparingly (Sunday Edition only)
- *    gemini-2.5-flash:  1K RPM, 10K RPD  - primary workhorse (enrichment, translation)
+ *    gemini-2.5-pro:   150 RPM, 1K RPD   - enrichment (first 900 RPD) + Sunday Edition (reserved 100 RPD)
+ *    gemini-2.5-flash:  1K RPM, 10K RPD  - enrichment fallback + translation
  */
 export const AI_MODELS = {
   CLAUDE_SONNET: 'claude-sonnet-4-5-20250929',
