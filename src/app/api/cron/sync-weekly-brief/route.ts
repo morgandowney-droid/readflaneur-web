@@ -20,6 +20,12 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const TIME_BUDGET_MS = 280_000;
+// Each generateWeeklyBrief makes ~5 Gemini calls (significance, editorial, horizon, data point, holiday)
+const GEMINI_CALLS_PER_NEIGHBORHOOD = 5;
+const MODEL_PRO = AI_MODELS.GEMINI_PRO;
+const MODEL_FLASH = AI_MODELS.GEMINI_FLASH;
+// Pro RPD limit is 1K. enrich-briefs uses up to 900. We get the remainder.
+const PRO_RPD_LIMIT = 1000;
 
 export async function GET(request: Request) {
   const functionStart = Date.now();
@@ -54,10 +60,41 @@ export async function GET(request: Request) {
   // The Sunday date for this edition - allow override for catch-up runs past midnight
   const weekDate = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
 
+  // Pro-first, Flash-fallback: check how much Pro RPD remains today
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+
+  // Count all Pro usage today (enrichment + previous Sunday Edition runs)
+  const { count: proUsedToday } = await supabase
+    .from('neighborhood_briefs')
+    .select('*', { count: 'exact', head: true })
+    .eq('enrichment_model', MODEL_PRO)
+    .gte('enriched_at', todayStart.toISOString());
+
+  // Also count Pro usage from articles (enrich-briefs Phase 2)
+  const { count: articleProUsed } = await supabase
+    .from('articles')
+    .select('*', { count: 'exact', head: true })
+    .eq('enrichment_model', MODEL_PRO)
+    .gte('enriched_at', todayStart.toISOString());
+
+  let proRemainingToday = PRO_RPD_LIMIT - (proUsedToday || 0) - (articleProUsed || 0);
+  console.log(`[SundayEdition] Pro used today: ${(proUsedToday || 0) + (articleProUsed || 0)}/${PRO_RPD_LIMIT}, remaining: ${proRemainingToday}`);
+
+  function getModelForNeighborhood(): string {
+    if (proRemainingToday >= GEMINI_CALLS_PER_NEIGHBORHOOD) {
+      proRemainingToday -= GEMINI_CALLS_PER_NEIGHBORHOOD;
+      return MODEL_PRO;
+    }
+    return MODEL_FLASH;
+  }
+
   const results = {
     neighborhoods_processed: 0,
     briefs_generated: 0,
     articles_created: 0,
+    pro_neighborhoods: 0,
+    flash_neighborhoods: 0,
     errors: [] as string[],
   };
 
@@ -123,14 +160,18 @@ export async function GET(request: Request) {
       const batchResults = await Promise.allSettled(
         batch.map(async (neighborhood) => {
           results.neighborhoods_processed++;
-          console.log(`[SundayEdition] Generating for ${neighborhood.name}...`);
+          const model = getModelForNeighborhood();
+          if (model === MODEL_PRO) results.pro_neighborhoods++;
+          else results.flash_neighborhoods++;
+          console.log(`[SundayEdition] Generating for ${neighborhood.name} [${model}]...`);
 
           const content = await generateWeeklyBrief(
             supabase,
             neighborhood.id,
             neighborhood.name,
             neighborhood.city,
-            neighborhood.country || 'USA'
+            neighborhood.country || 'USA',
+            model
           );
 
           // Create feed article
@@ -149,7 +190,7 @@ export async function GET(request: Request) {
               published_at: new Date().toISOString(),
               category_label: 'The Sunday Edition',
               author_type: 'ai',
-              ai_model: AI_MODELS.GEMINI_PRO,
+              ai_model: model,
               image_url: imageUrl,
             })
             .select('id')
