@@ -43,6 +43,47 @@ export interface EnrichedBriefOutput {
   linkCandidates?: LinkCandidate[];
 }
 
+export interface ContinuityItem {
+  date: string;         // "Monday, February 16"
+  headline: string;
+  excerpt?: string;     // First ~200 chars, sentence-truncated (briefs only)
+  type: 'brief' | 'article';
+  articleType?: string; // 'new_opening', 'closure', 'community_news', etc.
+}
+
+/**
+ * Format continuity items into a labeled text block for the enrichment prompt.
+ * Returns empty string if no items provided.
+ */
+function buildContinuityBlock(items: ContinuityItem[]): string {
+  if (!items || items.length === 0) return '';
+
+  const briefs = items.filter(i => i.type === 'brief');
+  const articles = items.filter(i => i.type === 'article');
+
+  let block = '\nRECENT COVERAGE CONTEXT (for continuity only - do NOT repeat these stories):\n';
+
+  if (briefs.length > 0) {
+    block += '\nPrevious Daily Briefs:\n';
+    for (const b of briefs) {
+      block += `- ${b.date}: "${b.headline}"\n`;
+      if (b.excerpt) {
+        block += `  Summary: ${b.excerpt}\n`;
+      }
+    }
+  }
+
+  if (articles.length > 0) {
+    block += '\nRecent Articles:\n';
+    for (const a of articles) {
+      const typeLabel = a.articleType ? `[${a.articleType.replace(/_/g, ' ')}] ` : '';
+      block += `- ${a.date}: ${typeLabel}"${a.headline}"\n`;
+    }
+  }
+
+  return block;
+}
+
 // Blocked domains per neighborhood
 const BLOCKED_DOMAINS: Record<string, string[]> = {
   'tribeca': ['tribecacitizen.com'],
@@ -66,6 +107,8 @@ export async function enrichBriefWithGemini(
     articleType?: 'daily_brief' | 'weekly_recap';
     /** Override the model ID (used by Pro-first-Flash-fallback strategy) */
     modelOverride?: string;
+    /** Recent coverage history for narrative continuity (daily briefs only) */
+    continuityContext?: ContinuityItem[];
   }
 ): Promise<EnrichedBriefOutput> {
   const apiKey = options?.apiKey || process.env.GEMINI_API_KEY;
@@ -137,6 +180,9 @@ export async function enrichBriefWithGemini(
     : '';
 
   const articleType = options?.articleType || 'daily_brief';
+  const continuityBlock = articleType === 'daily_brief'
+    ? buildContinuityBlock(options?.continuityContext || [])
+    : '';
 
   // System instruction varies by article type
   const basePersona = `You are a well-travelled, successful 35-year-old who has lived in ${neighborhoodName}, ${city} for years. You know every corner of the neighborhood - the hidden gems, the local drama, the new openings before anyone else does.
@@ -166,7 +212,9 @@ TONE AND VOCABULARY:
 - The final sentence or paragraph must NOT be a question or seek a response from the reader
 - End with a statement, not an invitation for feedback or engagement
 
-You're the neighbor everyone wishes they had - always in the know, never boring.`;
+You're the neighbor everyone wishes they had - always in the know, never boring.
+- If a story in today's tips relates to RECENT COVERAGE CONTEXT below, you may briefly reference it (e.g., "as we noted Tuesday...", "following up on last week's opening..."). Do this sparingly - only when it adds genuine value.
+- RECENT COVERAGE CONTEXT is background knowledge only. If nothing connects to today's stories, ignore it entirely. Never list or summarize previous coverage.`;
 
   const weeklyRecapStyle = `
 Your writing style:
@@ -194,7 +242,7 @@ This is The Sunday Edition - a weekly community recap published on Sunday. Even 
   const prompt = `Here are some tips about what might be happening in ${neighborhoodName}, ${city}. Research each one and write a neighborhood update for our readers.
 
 ${briefContent}
-${blockedNote}${urbanContextNote}
+${blockedNote}${urbanContextNote}${continuityBlock}
 
 ${languageHint}
 
