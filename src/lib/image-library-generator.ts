@@ -244,7 +244,7 @@ export async function generateNeighborhoodLibrary(
 
   // Step 3: Generate images sequentially with rate limit spacing
   for (const category of categoriesToGenerate) {
-    const imageResult = await generateLibraryImage(
+    let imageResult = await generateLibraryImage(
       supabase,
       neighborhood.id,
       category,
@@ -252,19 +252,27 @@ export async function generateNeighborhoodLibrary(
       options?.useFastModel,
     );
 
+    // Retry once on rate limit after waiting
+    if (!imageResult.success && imageResult.error?.includes('Rate limited')) {
+      console.log(`[image-library] Rate limited on ${category}, waiting 45s and retrying...`);
+      await new Promise(resolve => setTimeout(resolve, 45_000));
+      imageResult = await generateLibraryImage(
+        supabase,
+        neighborhood.id,
+        category,
+        prompts[category],
+        options?.useFastModel,
+      );
+    }
+
     if (imageResult.success) {
       result.images_generated++;
     } else {
       result.errors.push(`${category}: ${imageResult.error}`);
-      // If rate limited, stop early
-      if (imageResult.error?.includes('Rate limited')) {
-        result.errors.push('Stopping early due to rate limit');
-        break;
-      }
     }
 
-    // 2s spacing between API calls for rate limits
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // 7s spacing between API calls (Imagen 4 has 10 RPM limit)
+    await new Promise(resolve => setTimeout(resolve, 7000));
   }
 
   // Step 4: Update status tracking table
