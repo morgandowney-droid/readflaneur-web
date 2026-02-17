@@ -56,6 +56,10 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
       return;
     }
 
+    // Clear stale translation from previous language before fetching new one
+    setTranslatedHeadline(null);
+    setTranslatedBlurb(null);
+
     let cancelled = false;
     fetch(`/api/translations/article?id=${article.id}&lang=${language}`)
       .then(res => {
@@ -69,7 +73,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
         }
       })
       .catch(() => {
-        // Silently fall back to English
+        // Fall back to English - state already cleared above
       });
 
     return () => { cancelled = true; };

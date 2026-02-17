@@ -21,6 +21,9 @@ export function TranslatedHeadline({ articleId, headline, className }: Translate
       return;
     }
 
+    // Clear stale translation from previous language before fetching new one
+    setTranslatedHeadline(null);
+
     let cancelled = false;
     fetch(`/api/translations/article?id=${articleId}&lang=${language}`)
       .then(res => {
@@ -31,7 +34,7 @@ export function TranslatedHeadline({ articleId, headline, className }: Translate
         if (!cancelled) setTranslatedHeadline(data.headline);
       })
       .catch(() => {
-        if (!cancelled) setTranslatedHeadline(null);
+        // Fall back to English - state already cleared above
       });
 
     return () => { cancelled = true; };
@@ -66,6 +69,9 @@ export function TranslatedArticleBody({
       return;
     }
 
+    // Clear stale translation from previous language before fetching new one
+    setTranslatedContent(null);
+
     let cancelled = false;
     setLoading(true);
 
@@ -80,7 +86,7 @@ export function TranslatedArticleBody({
         }
       })
       .catch(() => {
-        if (!cancelled) setTranslatedContent(null);
+        // Fall back to English - state already cleared above
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

@@ -328,6 +328,9 @@ export function NeighborhoodBrief({
       return;
     }
 
+    // Clear stale translation from previous language before fetching new one
+    setTranslatedContent(null);
+
     let cancelled = false;
     fetch(`/api/translations/brief?id=${briefId}&lang=${language}`)
       .then(res => {
@@ -340,7 +343,7 @@ export function NeighborhoodBrief({
         }
       })
       .catch(() => {
-        // Silently fall back to English
+        // Fall back to English - state already cleared above
       });
 
     return () => { cancelled = true; };

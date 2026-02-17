@@ -56,11 +56,17 @@ export function ArticleCard({ article }: ArticleCardProps) {
       setTranslatedHeadline(null);
       return;
     }
+
+    // Clear stale translation from previous language before fetching new one
+    setTranslatedHeadline(null);
+
     let cancelled = false;
     fetch(`/api/translations/article?id=${article.id}&lang=${language}`)
       .then(res => { if (!res.ok) throw new Error('not found'); return res.json(); })
       .then(data => { if (!cancelled) setTranslatedHeadline(data.headline || null); })
-      .catch(() => { /* Silently fall back to English */ });
+      .catch(() => {
+        // Fall back to English - state already cleared above
+      });
     return () => { cancelled = true; };
   }, [article.id, language, isTranslated]);
 
