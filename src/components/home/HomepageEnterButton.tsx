@@ -53,7 +53,7 @@ export function HomepageEnterButton() {
       disabled={loading}
       className="btn-secondary mt-10"
     >
-      {loading ? '...' : t('homepage.enter')}
+      {loading ? '...' : t('homepage.readStories')}
     </button>
   );
 }

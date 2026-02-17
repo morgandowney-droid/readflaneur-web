@@ -421,7 +421,7 @@ export function MultiFeed({
 
       {/* ── NEIGHBORHOOD NAV (above masthead for vertical stability) ── */}
       {isMultiple && (
-        <div className="md:sticky md:top-[60px] z-20 md:bg-canvas/95 md:backdrop-blur-md">
+        <div className="md:sticky md:top-[60px] z-20 md:bg-canvas">
 
           {/* MOBILE: Dropdown + manage button */}
           <div className="md:hidden relative flex items-center gap-2 py-3" ref={dropdownRef}>

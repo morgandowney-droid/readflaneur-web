@@ -34,7 +34,6 @@ export function BackToTopButton({
       onClick={handleClick}
       className={cn(
         'fixed bottom-6 right-4 z-40',
-        'md:bottom-auto md:top-20 md:left-1/2 md:right-auto md:-translate-x-1/2',
         'flex items-center gap-2 px-4 py-2.5',
         'bg-black text-white text-sm font-medium',
         'rounded-full shadow-lg',
