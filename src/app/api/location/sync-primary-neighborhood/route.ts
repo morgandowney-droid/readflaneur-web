@@ -86,12 +86,13 @@ export async function POST(request: NextRequest) {
 
     const cityChanged = profile?.primary_city !== neighborhood.city;
 
-    // Update profile with new primary city/timezone
+    // Update profile with new primary city/timezone/neighborhood
     await serviceSupabase
       .from('profiles')
       .update({
         primary_city: neighborhood.city,
         primary_timezone: timezone,
+        primary_neighborhood_id: neighborhoodId,
       })
       .eq('id', userId);
 

@@ -46,6 +46,7 @@ export async function resolveRecipients(
       id,
       email,
       primary_city,
+      primary_neighborhood_id,
       primary_timezone,
       email_unsubscribe_token,
       daily_email_enabled,
@@ -70,10 +71,12 @@ export async function resolveRecipients(
       const neighborhoodIds = prefs?.map(p => p.neighborhood_id) || [];
       if (neighborhoodIds.length === 0) continue;
 
-      // Resolve primary: first subscribed neighborhood in primary_city
+      // Resolve primary: use exact neighborhood ID if set, fall back to city match
       let primaryId: string | null = null;
-      if (profile.primary_city) {
-        // Try to find a subscribed neighborhood whose city matches
+      if (profile.primary_neighborhood_id && neighborhoodIds.includes(profile.primary_neighborhood_id)) {
+        primaryId = profile.primary_neighborhood_id;
+      } else if (profile.primary_city) {
+        // Fallback: find first subscribed neighborhood in primary_city
         const { data: neighborhoods } = await supabase
           .from('neighborhoods')
           .select('id, city')
