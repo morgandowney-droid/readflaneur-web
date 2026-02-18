@@ -69,18 +69,13 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
                 <WeatherStoryCard story={primary.weatherStory} />
               )}
 
-              {/* First story */}
+              {/* Primary stories */}
               {primary.stories.length > 0 && (
-                <StoryList stories={primary.stories.slice(0, 1)} variant="primary" />
+                <StoryList stories={primary.stories} variant="primary" />
               )}
 
-              {/* Native ad injected between story 1 and 2 */}
+              {/* Native ad after all primary stories */}
               {content.nativeAd && <NativeAd ad={content.nativeAd} />}
-
-              {/* Remaining stories */}
-              {primary.stories.length > 1 && (
-                <StoryList stories={primary.stories.slice(1)} variant="primary" />
-              )}
             </Section>
           )}
 

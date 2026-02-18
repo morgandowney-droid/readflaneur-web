@@ -451,8 +451,12 @@ export async function assembleDailyBrief(
 function cleanCategoryLabel(label: string | null, neighborhoodName: string): string | null {
   if (!label) return null;
   // Strip neighborhood name prefix (case-insensitive)
-  const cleaned = label.replace(new RegExp(`^${escapeRegex(neighborhoodName)}\\s+`, 'i'), '');
-  return cleaned || label;
+  let cleaned = label.replace(new RegExp(`^${escapeRegex(neighborhoodName)}\\s+`, 'i'), '');
+  cleaned = cleaned || label;
+  // Rename labels for email display
+  if (/^Daily Brief$/i.test(cleaned)) return 'Daily Brief (Today)';
+  if (/^Look Ahead$/i.test(cleaned)) return 'Look Ahead (next 7 days)';
+  return cleaned;
 }
 
 /**

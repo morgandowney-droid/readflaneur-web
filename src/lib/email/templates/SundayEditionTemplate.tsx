@@ -156,30 +156,26 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
 
           {/* Presenting Sponsor — NativeAd style */}
           {content.sponsorAd && (
-            <>
-              <Section style={sponsorSection}>
-                <Text style={sponsorEyebrow}>Sponsored</Text>
-                {content.sponsorAd.imageUrl && (
-                  <Link href={content.sponsorAd.clickUrl}>
-                    <Img
-                      src={content.sponsorAd.imageUrl}
-                      alt={content.sponsorAd.headline}
-                      width="100%"
-                      style={sponsorImage}
-                    />
-                  </Link>
-                )}
-                <Link href={content.sponsorAd.clickUrl} style={sponsorHeadlineLink}>
-                  <Text style={sponsorHeadline}>{content.sponsorAd.headline}</Text>
+            <Section style={sponsorSection}>
+              <Text style={sponsorEyebrow}>Sponsored</Text>
+              {content.sponsorAd.imageUrl && (
+                <Link href={content.sponsorAd.clickUrl}>
+                  <Img
+                    src={content.sponsorAd.imageUrl}
+                    alt={content.sponsorAd.headline}
+                    width="100%"
+                    style={sponsorImage}
+                  />
                 </Link>
-                {content.sponsorAd.body && (
-                  <Text style={sponsorBody}>{content.sponsorAd.body}</Text>
-                )}
-                <Text style={sponsorLabel}>{content.sponsorAd.sponsorLabel}</Text>
-              </Section>
-
-              <Hr style={divider} />
-            </>
+              )}
+              <Link href={content.sponsorAd.clickUrl} style={sponsorHeadlineLink}>
+                <Text style={sponsorHeadline}>{content.sponsorAd.headline}</Text>
+              </Link>
+              {content.sponsorAd.body && (
+                <Text style={sponsorBody}>{content.sponsorAd.body}</Text>
+              )}
+              <Text style={sponsorLabel}>{content.sponsorAd.sponsorLabel}</Text>
+            </Section>
           )}
 
           {/* Section 2: The Horizon */}
@@ -488,7 +484,11 @@ const readMoreLink = {
 // ─── Sponsor (NativeAd style) ───
 
 const sponsorSection = {
-  padding: '28px 0',
+  border: '1px solid #e8e0d4',
+  borderRadius: '4px',
+  padding: '20px 16px',
+  marginTop: '8px',
+  marginBottom: '8px',
   textAlign: 'center' as const,
 };
 

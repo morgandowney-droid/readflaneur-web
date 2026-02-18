@@ -1,4 +1,4 @@
-import { Section, Text, Img, Link, Hr } from '@react-email/components';
+import { Section, Text, Img, Link } from '@react-email/components';
 import { EmailAd } from '../../types';
 
 interface NativeAdProps {
@@ -8,7 +8,6 @@ interface NativeAdProps {
 export function NativeAd({ ad }: NativeAdProps) {
   return (
     <Section style={container}>
-      <Hr style={divider} />
       <Text style={sponsoredLabel}>Sponsored</Text>
       {ad.imageUrl && (
         <Link href={ad.clickUrl}>
@@ -30,18 +29,16 @@ export function NativeAd({ ad }: NativeAdProps) {
       {ad.impressionUrl && (
         <Img src={ad.impressionUrl} width="1" height="1" alt="" />
       )}
-      <Hr style={divider} />
     </Section>
   );
 }
 
 const container = {
-  marginBottom: '4px',
-};
-
-const divider = {
-  borderTop: '1px solid #eeeeee',
-  margin: '0 0 20px',
+  border: '1px solid #eeeeee',
+  borderRadius: '4px',
+  padding: '20px 16px',
+  marginTop: '8px',
+  marginBottom: '8px',
 };
 
 const sponsoredLabel = {
