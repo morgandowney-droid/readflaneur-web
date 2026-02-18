@@ -477,6 +477,77 @@ Writing style rules:
 }
 
 /**
+ * Generic event search using Grok Responses API with web + X search.
+ * Used by crons that need to discover real-world events (auctions, galas, exhibitions, etc.)
+ *
+ * @param systemPrompt - System prompt with search instructions
+ * @param userPrompt - User prompt describing what to search for
+ * @returns Raw text response from Grok (caller parses into its own interface), or null on failure
+ */
+export async function grokEventSearch(
+  systemPrompt: string,
+  userPrompt: string,
+): Promise<string | null> {
+  const apiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
+
+  if (!apiKey) {
+    console.error('Grok API key not configured (GROK_API_KEY or XAI_API_KEY)');
+    return null;
+  }
+
+  try {
+    const response = await fetch(`${GROK_API_URL}/responses`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: GROK_MODEL,
+        input: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        tools: [
+          { type: 'web_search' },
+          { type: 'x_search' },
+        ],
+        temperature: 0.5,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Grok event search failed:', response.status, error.slice(0, 200));
+      return null;
+    }
+
+    const data = await response.json();
+
+    // Extract response text from Responses API format
+    let responseText = '';
+
+    if (data.output && Array.isArray(data.output)) {
+      const assistantOutput = data.output.find((o: { type?: string; role?: string; content?: unknown }) =>
+        o.type === 'message' && o.role === 'assistant'
+      );
+      const content = assistantOutput?.content;
+      responseText = typeof content === 'string' ? content :
+                     Array.isArray(content) ? content.map((c: { text?: string }) => c.text || '').join('') :
+                     JSON.stringify(content);
+    } else if (data.choices && Array.isArray(data.choices)) {
+      const content = data.choices[0]?.message?.content;
+      responseText = typeof content === 'string' ? content : JSON.stringify(content);
+    }
+
+    return responseText || null;
+  } catch (error) {
+    console.error('Grok event search error:', error);
+    return null;
+  }
+}
+
+/**
  * Check if Grok API is configured and available
  */
 export function isGrokConfigured(): boolean {

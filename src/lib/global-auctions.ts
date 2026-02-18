@@ -33,6 +33,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
+import { grokEventSearch } from '@/lib/grok';
 
 /**
  * Global Art Hub identifiers
@@ -186,18 +187,6 @@ const AUCTION_URLS_BY_HUB: Record<ArtHub, Record<AuctionHouse, string>> = {
 };
 
 /**
- * Location strings for Phillips DOM filtering
- */
-const PHILLIPS_LOCATION_FILTERS: Record<ArtHub, string[]> = {
-  London: ['London', 'london'],
-  Paris: ['Paris', 'paris'],
-  Hong_Kong: ['Hong Kong', 'hong kong', 'HK'],
-  Los_Angeles: ['Los Angeles', 'los angeles', 'LA'],
-  Geneva: ['Geneva', 'geneva', 'Genève'],
-  New_York: ['New York', 'new york', 'NYC'],
-};
-
-/**
  * Extended auction event for global hubs
  */
 export interface GlobalAuctionEvent extends AuctionEvent {
@@ -259,17 +248,14 @@ function parseAuctionDate(dateStr: string): string {
 }
 
 /**
- * Fetch Sotheby's auction calendar for a specific hub
+ * Fetch all auction calendars for a specific hub using Grok web search
  */
-async function fetchSothebysForHub(
+export async function fetchAuctionCalendarsForHub(
   hub: ArtHub,
   daysAhead: number = 14
 ): Promise<GlobalAuctionEvent[]> {
-  const events: GlobalAuctionEvent[] = [];
   const hubConfig = ART_HUBS[hub];
-
-  // Map hub to Sotheby's location parameter
-  const locationMap: Record<ArtHub, string> = {
+  const displayLocation: Record<ArtHub, string> = {
     London: 'London',
     Paris: 'Paris',
     Hong_Kong: 'Hong Kong',
@@ -277,277 +263,96 @@ async function fetchSothebysForHub(
     Geneva: 'Geneva',
     New_York: 'New York',
   };
-
-  try {
-    const apiUrl = 'https://www.sothebys.com/api/v2/calendar';
-    const params = new URLSearchParams({
-      location: locationMap[hub],
-      type: 'auction',
-      limit: '50',
-    });
-
-    const response = await fetch(`${apiUrl}?${params}`, {
-      headers: {
-        Accept: 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
-    });
-
-    if (!response.ok) {
-      console.log(`Sotheby's ${hub} API returned ${response.status}`);
-      return [];
-    }
-
-    const data = await response.json();
-
-    if (data.auctions && Array.isArray(data.auctions)) {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() + daysAhead);
-
-      for (const auction of data.auctions) {
-        const auctionDate = new Date(auction.startDate || auction.date);
-        if (auctionDate > cutoffDate) continue;
-
-        const title = auction.title || auction.name || '';
-        const blueChipResult = isGlobalBlueChip(title, hub);
-
-        if (!blueChipResult.passes) continue;
-
-        const allKeywords = [...blueChipResult.keywords, ...blueChipResult.localizedKeywords];
-        const tier = determineAuctionTier(title, allKeywords);
-
-        events.push({
-          eventId: `sothebys-${hub.toLowerCase()}-${auction.id || Date.now()}`,
-          house: 'Sothebys',
-          title,
-          date: parseAuctionDate(auction.startDate || auction.date),
-          endDate: auction.endDate ? parseAuctionDate(auction.endDate) : undefined,
-          location: locationMap[hub],
-          tier,
-          category: auction.category,
-          totalLots: auction.lotCount || auction.totalLots,
-          estimateRange: auction.estimateRange,
-          url: auction.url || `https://www.sothebys.com${auction.path || ''}`,
-          targetRegions: hubConfig.targetFeeds,
-          matchedKeywords: blueChipResult.keywords,
-          rawData: auction,
-          hub,
-          currency: hubConfig.currency,
-          currencySymbol: hubConfig.currencySymbol,
-          localizedKeywords: blueChipResult.localizedKeywords,
-        });
-      }
-    }
-  } catch (error) {
-    console.error(`Sotheby's ${hub} fetch error:`, error);
-  }
-
-  return events;
-}
-
-/**
- * Fetch Christie's auction calendar for a specific hub
- */
-async function fetchChristiesForHub(
-  hub: ArtHub,
-  daysAhead: number = 14
-): Promise<GlobalAuctionEvent[]> {
-  const events: GlobalAuctionEvent[] = [];
-  const hubConfig = ART_HUBS[hub];
-
-  // Map hub to Christie's location parameter
-  const locationMap: Record<ArtHub, string> = {
-    London: 'london',
-    Paris: 'paris',
-    Hong_Kong: 'hong_kong',
-    Los_Angeles: 'los_angeles',
-    Geneva: 'geneva',
-    New_York: 'new_york',
+  const city = displayLocation[hub];
+  const houses: AuctionHouse[] = ['Sothebys', 'Christies', 'Phillips'];
+  const houseDisplayNames: Record<AuctionHouse, string> = {
+    Sothebys: "Sotheby's",
+    Christies: "Christie's",
+    Phillips: 'Phillips',
   };
 
-  try {
-    const apiUrl = 'https://www.christies.com/api/calendar';
+  console.log(`Fetching ${hub} auction calendars for next ${daysAhead} days via Grok`);
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
-      body: JSON.stringify({
-        location: locationMap[hub],
-        type: 'live_auction',
-        limit: 50,
-      }),
-    });
+  const allEvents: GlobalAuctionEvent[] = [];
 
-    if (!response.ok) {
-      console.log(`Christie's ${hub} API returned ${response.status}`);
-      return [];
+  for (const house of houses) {
+    const displayName = houseDisplayNames[house];
+
+    const raw = await grokEventSearch(
+      `You are an art market research assistant. Return ONLY a valid JSON array, no commentary.`,
+      `Search for upcoming auctions at ${displayName} in ${city} within the next ${daysAhead} days. Include live in-person auctions only (not online-only sales).
+
+Return a JSON array of objects with these fields:
+- "title": auction title (string)
+- "date": start date in YYYY-MM-DD format (string)
+- "endDate": end date in YYYY-MM-DD format if multi-day, or null
+- "category": auction category like "Contemporary Art", "Jewelry", "Watches" (string)
+- "totalLots": number of lots if known, or null
+- "estimateRange": total sale estimate if known using local currency (${hubConfig.currencySymbol}), or null
+- "url": link to the auction page if known, or null
+
+If no upcoming auctions are found, return an empty array [].`,
+    );
+
+    if (!raw) {
+      console.log(`No Grok response for ${displayName} ${city} auctions`);
+      continue;
     }
 
-    const data = await response.json();
+    try {
+      const jsonMatch = raw.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) {
+        console.log(`No JSON array found in Grok response for ${displayName} ${city}`);
+        continue;
+      }
 
-    if (data.sales && Array.isArray(data.sales)) {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() + daysAhead);
+      const parsed = JSON.parse(jsonMatch[0]) as Array<{
+        title?: string;
+        date?: string;
+        endDate?: string | null;
+        category?: string;
+        totalLots?: number | null;
+        estimateRange?: string | null;
+        url?: string | null;
+      }>;
 
-      for (const sale of data.sales) {
-        const saleDate = new Date(sale.startDate || sale.date);
-        if (saleDate > cutoffDate) continue;
+      for (const item of parsed) {
+        const title = item.title || '';
+        if (!title) continue;
 
-        const title = sale.title || sale.name || '';
         const blueChipResult = isGlobalBlueChip(title, hub);
-
         if (!blueChipResult.passes) continue;
 
         const allKeywords = [...blueChipResult.keywords, ...blueChipResult.localizedKeywords];
         const tier = determineAuctionTier(title, allKeywords);
+        const eventId = `${house.toLowerCase()}-${hub.toLowerCase()}-${title.replace(/[^a-zA-Z0-9]/g, '-').substring(0, 40)}-${item.date || Date.now()}`;
 
-        // Map back to display location
-        const displayLocation: Record<ArtHub, string> = {
-          London: 'London',
-          Paris: 'Paris',
-          Hong_Kong: 'Hong Kong',
-          Los_Angeles: 'Los Angeles',
-          Geneva: 'Geneva',
-          New_York: 'New York',
-        };
-
-        events.push({
-          eventId: `christies-${hub.toLowerCase()}-${sale.id || Date.now()}`,
-          house: 'Christies',
+        allEvents.push({
+          eventId,
+          house,
           title,
-          date: parseAuctionDate(sale.startDate || sale.date),
-          endDate: sale.endDate ? parseAuctionDate(sale.endDate) : undefined,
-          location: displayLocation[hub],
+          date: item.date ? parseAuctionDate(item.date) : new Date().toISOString().split('T')[0],
+          endDate: item.endDate ? parseAuctionDate(item.endDate) : undefined,
+          location: city,
           tier,
-          category: sale.category,
-          totalLots: sale.lotCount,
-          url: sale.url || `https://www.christies.com${sale.path || ''}`,
+          category: item.category || undefined,
+          totalLots: item.totalLots || undefined,
+          estimateRange: item.estimateRange || undefined,
+          url: item.url || AUCTION_URLS_BY_HUB[hub][house],
           targetRegions: hubConfig.targetFeeds,
           matchedKeywords: blueChipResult.keywords,
-          rawData: sale,
           hub,
           currency: hubConfig.currency,
           currencySymbol: hubConfig.currencySymbol,
           localizedKeywords: blueChipResult.localizedKeywords,
         });
       }
+
+      console.log(`${displayName} ${city}: Found ${parsed.length} auctions, ${allEvents.filter(e => e.house === house).length} passed Blue Chip filter`);
+    } catch (err) {
+      console.error(`Error parsing ${displayName} ${city} auction data:`, err);
     }
-  } catch (error) {
-    console.error(`Christie's ${hub} fetch error:`, error);
   }
-
-  return events;
-}
-
-/**
- * Fetch Phillips auction calendar for a specific hub
- */
-async function fetchPhillipsForHub(
-  hub: ArtHub,
-  daysAhead: number = 14
-): Promise<GlobalAuctionEvent[]> {
-  const events: GlobalAuctionEvent[] = [];
-  const hubConfig = ART_HUBS[hub];
-  const locationFilters = PHILLIPS_LOCATION_FILTERS[hub];
-
-  try {
-    const apiUrl = 'https://www.phillips.com/api/auctions';
-
-    const response = await fetch(apiUrl, {
-      headers: {
-        Accept: 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
-    });
-
-    if (!response.ok) {
-      console.log(`Phillips ${hub} API returned ${response.status}`);
-      return [];
-    }
-
-    const data = await response.json();
-
-    if (data.auctions && Array.isArray(data.auctions)) {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() + daysAhead);
-
-      for (const auction of data.auctions) {
-        // Filter by location using DOM-style string matching
-        const location = auction.location || auction.city || '';
-        const matchesHub = locationFilters.some((filter) =>
-          location.toLowerCase().includes(filter.toLowerCase())
-        );
-        if (!matchesHub) continue;
-
-        const auctionDate = new Date(auction.startDate || auction.date);
-        if (auctionDate > cutoffDate) continue;
-
-        const title = auction.title || auction.name || '';
-        const blueChipResult = isGlobalBlueChip(title, hub);
-
-        if (!blueChipResult.passes) continue;
-
-        const allKeywords = [...blueChipResult.keywords, ...blueChipResult.localizedKeywords];
-        const tier = determineAuctionTier(title, allKeywords);
-
-        // Map hub to display location
-        const displayLocation: Record<ArtHub, string> = {
-          London: 'London',
-          Paris: 'Paris',
-          Hong_Kong: 'Hong Kong',
-          Los_Angeles: 'Los Angeles',
-          Geneva: 'Geneva',
-          New_York: 'New York',
-        };
-
-        events.push({
-          eventId: `phillips-${hub.toLowerCase()}-${auction.id || Date.now()}`,
-          house: 'Phillips',
-          title,
-          date: parseAuctionDate(auction.startDate || auction.date),
-          endDate: auction.endDate ? parseAuctionDate(auction.endDate) : undefined,
-          location: displayLocation[hub],
-          tier,
-          category: auction.category || auction.department,
-          totalLots: auction.lotCount,
-          url: auction.url || `https://www.phillips.com${auction.path || ''}`,
-          targetRegions: hubConfig.targetFeeds,
-          matchedKeywords: blueChipResult.keywords,
-          rawData: auction,
-          hub,
-          currency: hubConfig.currency,
-          currencySymbol: hubConfig.currencySymbol,
-          localizedKeywords: blueChipResult.localizedKeywords,
-        });
-      }
-    }
-  } catch (error) {
-    console.error(`Phillips ${hub} fetch error:`, error);
-  }
-
-  return events;
-}
-
-/**
- * Fetch all auction calendars for a specific hub
- */
-export async function fetchAuctionCalendarsForHub(
-  hub: ArtHub,
-  daysAhead: number = 14
-): Promise<GlobalAuctionEvent[]> {
-  console.log(`Fetching ${hub} auction calendars for next ${daysAhead} days`);
-
-  const [sothebys, christies, phillips] = await Promise.all([
-    fetchSothebysForHub(hub, daysAhead),
-    fetchChristiesForHub(hub, daysAhead),
-    fetchPhillipsForHub(hub, daysAhead),
-  ]);
-
-  const allEvents = [...sothebys, ...christies, ...phillips];
 
   // Sort by date, then by tier (Mega first)
   allEvents.sort((a, b) => {
@@ -557,9 +362,7 @@ export async function fetchAuctionCalendarsForHub(
     return 0;
   });
 
-  console.log(
-    `${hub}: Found ${allEvents.length} Blue Chip auctions (Sotheby's: ${sothebys.length}, Christie's: ${christies.length}, Phillips: ${phillips.length})`
-  );
+  console.log(`${hub}: Found ${allEvents.length} Blue Chip auctions total`);
 
   return allEvents;
 }

@@ -23,6 +23,7 @@ import {
   injectHyperlinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
+import { grokEventSearch } from '@/lib/grok';
 
 // ============================================================================
 // TYPES
@@ -370,124 +371,98 @@ const ROUTE_KEYWORDS = [
 // ============================================================================
 
 /**
- * Scrape news source for route announcements
- */
-async function scrapeNewsSource(source: NewsSource): Promise<RouteAnnouncement[]> {
-  const announcements: RouteAnnouncement[] = [];
-
-  try {
-    const url = source.feedUrl || source.baseUrl;
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; FlaneurBot/1.0)',
-      },
-    });
-
-    if (!response.ok) {
-      console.error(`Failed to fetch ${source.name}: ${response.status}`);
-      return announcements;
-    }
-
-    const content = await response.text();
-
-    // Check for route keywords
-    const hasRouteNews = ROUTE_KEYWORDS.some((keyword) =>
-      content.toLowerCase().includes(keyword.toLowerCase())
-    );
-
-    if (!hasRouteNews) return announcements;
-
-    // Look for airline + destination combinations
-    for (const airline of LEGACY_AIRLINES) {
-      const airlinePattern = new RegExp(airline.name, 'i');
-      if (!airlinePattern.test(content)) continue;
-
-      for (const destination of LEISURE_DESTINATIONS) {
-        // Check for destination city or code
-        const destPattern = new RegExp(`\\b(${destination.city}|${destination.code})\\b`, 'i');
-        if (!destPattern.test(content)) continue;
-
-        // Check for hub airport mentions
-        for (const [hubKey, hubMapping] of Object.entries(AIRPORT_HUBS)) {
-          for (const airport of hubMapping.airports) {
-            const airportPattern = new RegExp(`\\b(${airport.code}|${airport.name}|${airport.city})\\b`, 'i');
-            if (!airportPattern.test(content)) continue;
-
-            // Find context around matches
-            const airlineMatch = content.match(airlinePattern);
-            const destMatch = content.match(destPattern);
-            const airportMatch = content.match(airportPattern);
-
-            if (airlineMatch && destMatch && airportMatch) {
-              // Check if all three are within reasonable proximity
-              const airlineIndex = content.indexOf(airlineMatch[0]);
-              const destIndex = content.indexOf(destMatch[0]);
-              const airportIndex = content.indexOf(airportMatch[0]);
-
-              const maxIndex = Math.max(airlineIndex, destIndex, airportIndex);
-              const minIndex = Math.min(airlineIndex, destIndex, airportIndex);
-              const distance = maxIndex - minIndex;
-
-              // If within 1500 characters, likely same article
-              if (distance < 1500) {
-                // Verify it's a new route announcement
-                const contextStart = Math.max(0, minIndex - 200);
-                const contextEnd = Math.min(content.length, maxIndex + 500);
-                const context = content.slice(contextStart, contextEnd);
-
-                const isNewRoute = ROUTE_KEYWORDS.some((keyword) =>
-                  context.toLowerCase().includes(keyword.toLowerCase())
-                );
-
-                if (isNewRoute) {
-                  // Extract headline
-                  const headlineMatch =
-                    context.match(/<title>([^<]+)<\/title>/i) ||
-                    context.match(/<h[12][^>]*>([^<]+)<\/h[12]>/i);
-                  const headline =
-                    headlineMatch?.[1].trim() ||
-                    `${airline.name} launches ${destination.city} service from ${airport.code}`;
-
-                  // Extract potential launch date
-                  const dateMatch = context.match(
-                    /(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:,?\s+\d{4})?/i
-                  );
-
-                  announcements.push({
-                    id: `${source.name}-${airline.code}-${airport.code}-${destination.code}-${Date.now()}`,
-                    airline,
-                    originAirport: airport,
-                    destination,
-                    launchDate: dateMatch ? new Date(dateMatch[0]) : undefined,
-                    headline,
-                    description: context.replace(/<[^>]+>/g, '').trim().substring(0, 400),
-                    source: source.name,
-                    sourceUrl: source.baseUrl,
-                    detectedAt: new Date(),
-                  });
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.error(`Error scraping ${source.name}:`, error);
-  }
-
-  return announcements;
-}
-
-/**
- * Scrape all news sources
+ * Search for route announcements using Grok web search
  */
 export async function scrapeAllSources(): Promise<RouteAnnouncement[]> {
   const allAnnouncements: RouteAnnouncement[] = [];
 
-  for (const source of NEWS_SOURCES) {
-    const announcements = await scrapeNewsSource(source);
-    allAnnouncements.push(...announcements);
+  for (const [hubKey, hubMapping] of Object.entries(AIRPORT_HUBS)) {
+    const airportCodes = hubMapping.airports.map(a => a.code).join(', ');
+
+    const systemPrompt = `You are an airline routes researcher. Search the web for new airline route announcements to or from ${hubMapping.cityName} airports (${airportCodes}) in the last 14 days.
+
+Return ONLY a JSON array (no markdown, no explanation). Each object must have:
+- airlineName: string (full airline name)
+- airlineCode: string (IATA code, e.g. "DL")
+- originCode: string (origin airport IATA code)
+- destinationCity: string
+- destinationCode: string (IATA code)
+- launchDate: string or null (ISO date if known)
+- frequency: string or null (e.g. "Daily", "3x weekly")
+- aircraft: string or null
+- headline: string (news headline)
+- description: string (1-2 sentence summary)
+- sourceUrl: string or null
+
+If no route announcements are found, return an empty array: []`;
+
+    const userPrompt = `Search for new airline route announcements, launches, and service additions involving ${hubMapping.cityName} airports (${airportCodes}) from the last 14 days. Focus on premium carriers like Delta, United, American, British Airways, Emirates, Singapore Airlines, Qantas, etc. Include airline name, origin, destination, launch date, and aircraft type.`;
+
+    console.log(`Searching Grok for route announcements from ${hubMapping.cityName}...`);
+    const raw = await grokEventSearch(systemPrompt, userPrompt);
+    if (!raw) continue;
+
+    try {
+      const jsonMatch = raw.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) continue;
+
+      const parsed = JSON.parse(jsonMatch[0]) as Array<{
+        airlineName: string;
+        airlineCode?: string;
+        originCode?: string;
+        destinationCity?: string;
+        destinationCode?: string;
+        launchDate?: string | null;
+        frequency?: string | null;
+        aircraft?: string | null;
+        headline?: string;
+        description?: string;
+        sourceUrl?: string | null;
+      }>;
+
+      for (const p of parsed) {
+        if (!p.airlineName) continue;
+
+        // Match airline to our config
+        const airline = LEGACY_AIRLINES.find(a =>
+          a.name.toLowerCase() === p.airlineName.toLowerCase() ||
+          a.code === (p.airlineCode || '').toUpperCase()
+        );
+        if (!airline) continue;
+
+        // Match origin airport
+        const originAirport = hubMapping.airports.find(a =>
+          a.code === (p.originCode || '').toUpperCase()
+        ) || hubMapping.airports[0];
+
+        // Match destination
+        const destination = LEISURE_DESTINATIONS.find(d =>
+          d.code === (p.destinationCode || '').toUpperCase() ||
+          d.city.toLowerCase() === (p.destinationCity || '').toLowerCase()
+        );
+        if (!destination) continue;
+
+        allAnnouncements.push({
+          id: `grok-${airline.code}-${originAirport.code}-${destination.code}-${Date.now()}`,
+          airline,
+          originAirport,
+          destination,
+          launchDate: p.launchDate ? new Date(p.launchDate) : undefined,
+          frequency: p.frequency || undefined,
+          aircraft: p.aircraft || undefined,
+          headline: p.headline || `${airline.name} launches ${destination.city} service from ${originAirport.code}`,
+          description: p.description || '',
+          source: 'Grok Search',
+          sourceUrl: p.sourceUrl || '',
+          detectedAt: new Date(),
+        });
+      }
+    } catch (error) {
+      console.error(`Error parsing Grok response for ${hubMapping.cityName} routes:`, error);
+    }
+
+    // Rate limit between hubs
+    await new Promise((resolve) => setTimeout(resolve, 500));
   }
 
   // Deduplicate by airline + origin + destination

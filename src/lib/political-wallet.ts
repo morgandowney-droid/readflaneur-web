@@ -255,9 +255,9 @@ export const NEIGHBORHOOD_ZIPS: Record<string, { name: string; zips: string[]; r
 };
 
 // Thresholds
-export const POWER_DONOR_THRESHOLD = 1000; // $1,000 minimum
-export const STORY_TRIGGER_THRESHOLD = 10000; // $10k from single neighborhood triggers story
-export const LOOKBACK_DAYS = 7;
+export const POWER_DONOR_THRESHOLD = 500; // $500 minimum
+export const STORY_TRIGGER_THRESHOLD = 2500; // $2.5k from single neighborhood triggers story
+export const LOOKBACK_DAYS = 30;
 
 // ============================================================================
 // FEC API ADAPTER (US)

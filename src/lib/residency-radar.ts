@@ -27,6 +27,7 @@ import {
   injectHyperlinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
+import { grokEventSearch } from '@/lib/grok';
 
 // ============================================================================
 // TYPES
@@ -355,111 +356,92 @@ const SEARCH_KEYWORDS = [
 // ============================================================================
 
 /**
- * Scrape news sources for residency announcements
- */
-async function scrapeNewsSource(source: NewsSource): Promise<ResidencyAnnouncement[]> {
-  const announcements: ResidencyAnnouncement[] = [];
-
-  try {
-    const url = source.feedUrl || source.baseUrl;
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; FlaneurBot/1.0)',
-      },
-    });
-
-    if (!response.ok) {
-      console.error(`Failed to fetch ${source.name}: ${response.status}`);
-      return announcements;
-    }
-
-    const content = await response.text();
-
-    // Look for brand + location combinations
-    for (const brand of MIGRATING_BRANDS) {
-      if (!brand.pattern.test(content)) continue;
-
-      for (const hotspot of SEASONAL_HOTSPOTS) {
-        // Check if both brand and location are mentioned together
-        const locationPattern = new RegExp(hotspot.name, 'i');
-        if (!locationPattern.test(content)) continue;
-
-        // Find the context around the match
-        const brandMatch = content.match(brand.pattern);
-        const locationMatch = content.match(locationPattern);
-
-        if (brandMatch && locationMatch) {
-          // Check if they're within reasonable proximity (same article)
-          const brandIndex = content.indexOf(brandMatch[0]);
-          const locationIndex = content.indexOf(locationMatch[0]);
-          const distance = Math.abs(brandIndex - locationIndex);
-
-          // If within 2000 characters, likely same article
-          if (distance < 2000) {
-            // Look for keywords indicating a residency
-            const hasKeyword = SEARCH_KEYWORDS.some((keyword) =>
-              content.slice(Math.min(brandIndex, locationIndex), Math.max(brandIndex, locationIndex) + 500)
-                .toLowerCase()
-                .includes(keyword.toLowerCase())
-            );
-
-            if (hasKeyword) {
-              // Extract headline from surrounding context
-              const contextStart = Math.max(0, Math.min(brandIndex, locationIndex) - 200);
-              const contextEnd = Math.min(content.length, Math.max(brandIndex, locationIndex) + 500);
-              const context = content.slice(contextStart, contextEnd);
-
-              // Try to find a headline
-              const headlineMatch = context.match(/<title>([^<]+)<\/title>/i) ||
-                context.match(/<h[12][^>]*>([^<]+)<\/h[12]>/i);
-              const headline = headlineMatch ? headlineMatch[1].trim() : `${brand.name} opens in ${hotspot.name}`;
-
-              // Determine residency type
-              let residencyType: ResidencyType = 'Pop_Up_Shop';
-              if (brand.category === 'Hospitality') {
-                if (/beach\s*club/i.test(context)) {
-                  residencyType = 'Beach_Club';
-                } else {
-                  residencyType = 'Restaurant';
-                }
-              } else if (/spa/i.test(context)) {
-                residencyType = 'Spa';
-              } else if (/hotel|takeover/i.test(context)) {
-                residencyType = 'Hotel_Takeover';
-              }
-
-              announcements.push({
-                id: `${source.name}-${brand.name}-${hotspot.id}-${Date.now()}`,
-                brand,
-                location: hotspot,
-                residencyType,
-                headline,
-                description: context.replace(/<[^>]+>/g, '').trim().substring(0, 300),
-                source: source.name,
-                sourceUrl: source.baseUrl,
-                detectedAt: new Date(),
-              });
-            }
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.error(`Error scraping ${source.name}:`, error);
-  }
-
-  return announcements;
-}
-
-/**
- * Scrape all news sources
+ * Search for residency announcements using Grok web search
  */
 export async function scrapeAllSources(): Promise<ResidencyAnnouncement[]> {
   const allAnnouncements: ResidencyAnnouncement[] = [];
+  const currentSeason = getCurrentSeason();
 
-  for (const source of NEWS_SOURCES) {
-    const announcements = await scrapeNewsSource(source);
-    allAnnouncements.push(...announcements);
+  // Search for brand residencies in seasonal hotspots
+  const relevantHotspots = SEASONAL_HOTSPOTS.filter(h =>
+    h.peakMonths.includes(new Date().getMonth() + 1)
+  );
+
+  // Group hotspots by region to reduce API calls
+  const hotspotNames = relevantHotspots.map(h => h.name).join(', ');
+  const brandNames = MIGRATING_BRANDS.slice(0, 15).map(b => b.name).join(', ');
+
+  const systemPrompt = `You are a luxury hospitality researcher. Search the web and X for recent announcements of luxury brands opening seasonal pop-ups, restaurants, beach clubs, or hotel residencies at vacation destinations.
+
+Return ONLY a JSON array (no markdown, no explanation). Each object must have:
+- brandName: string (luxury brand name)
+- locationName: string (destination name)
+- residencyType: "Restaurant" | "Beach_Club" | "Pop_Up_Shop" | "Spa" | "Hotel_Takeover"
+- headline: string
+- description: string (1-2 sentences)
+- openingDate: string or null (ISO date)
+- closingDate: string or null (ISO date)
+- sourceUrl: string or null
+
+If no announcements are found, return an empty array: []`;
+
+  const userPrompt = `Search for luxury brand hospitality announcements in the last 30 days: new hotel restaurants, branded residences, pop-up cafes by fashion houses, seasonal beach clubs, or branded experiences at vacation destinations. Focus on brands like ${brandNames} opening in destinations like ${hotspotNames}. Examples: Dior cafe opening in St. Tropez, Louis Vuitton restaurant in St. Moritz, Gucci beach club in Mykonos.`;
+
+  console.log(`Searching Grok for residency announcements (${currentSeason} season)...`);
+  const raw = await grokEventSearch(systemPrompt, userPrompt);
+  if (!raw) return [];
+
+  try {
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return [];
+
+    const parsed = JSON.parse(jsonMatch[0]) as Array<{
+      brandName: string;
+      locationName?: string;
+      residencyType?: string;
+      headline?: string;
+      description?: string;
+      openingDate?: string | null;
+      closingDate?: string | null;
+      sourceUrl?: string | null;
+    }>;
+
+    for (const p of parsed) {
+      if (!p.brandName || !p.locationName) continue;
+
+      // Match brand to our config
+      const brand = MIGRATING_BRANDS.find(b =>
+        b.pattern.test(p.brandName)
+      );
+      if (!brand) continue;
+
+      // Match location to our hotspots
+      const location = SEASONAL_HOTSPOTS.find(h =>
+        h.name.toLowerCase() === (p.locationName || '').toLowerCase() ||
+        (p.locationName || '').toLowerCase().includes(h.name.toLowerCase())
+      );
+      if (!location) continue;
+
+      const validTypes: ResidencyType[] = ['Restaurant', 'Beach_Club', 'Pop_Up_Shop', 'Spa', 'Hotel_Takeover'];
+      const residencyType = validTypes.includes(p.residencyType as ResidencyType)
+        ? p.residencyType as ResidencyType : 'Pop_Up_Shop';
+
+      allAnnouncements.push({
+        id: `grok-${brand.name.replace(/\W/g, '-').toLowerCase()}-${location.id}-${Date.now()}`,
+        brand,
+        location,
+        residencyType,
+        headline: p.headline || `${brand.name} opens in ${location.name}`,
+        description: p.description || '',
+        openingDate: p.openingDate ? new Date(p.openingDate) : undefined,
+        closingDate: p.closingDate ? new Date(p.closingDate) : undefined,
+        source: 'Grok Search',
+        sourceUrl: p.sourceUrl || '',
+        detectedAt: new Date(),
+      });
+    }
+  } catch (error) {
+    console.error('Error parsing Grok response for residency announcements:', error);
   }
 
   // Deduplicate by brand + location

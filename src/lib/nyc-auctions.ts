@@ -20,6 +20,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
+import { grokEventSearch } from '@/lib/grok';
 
 /**
  * Auction house identifiers
@@ -250,255 +251,95 @@ function parseAuctionDate(dateStr: string): string {
 }
 
 /**
- * Fetch Sotheby's auction calendar
- * Note: In production, use Playwright for full SPA rendering
- */
-async function fetchSothebysCalendar(daysAhead: number = 14): Promise<AuctionEvent[]> {
-  const events: AuctionEvent[] = [];
-
-  try {
-    // Sotheby's has an API endpoint for calendar data
-    const apiUrl = 'https://www.sothebys.com/api/v2/calendar';
-    const params = new URLSearchParams({
-      location: 'New York',
-      type: 'auction',
-      limit: '50',
-    });
-
-    const response = await fetch(`${apiUrl}?${params}`, {
-      headers: {
-        Accept: 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
-    });
-
-    if (!response.ok) {
-      console.log(`Sotheby's API returned ${response.status}, trying HTML fallback`);
-      return await fetchSothebysHtmlFallback(daysAhead);
-    }
-
-    const data = await response.json();
-
-    if (data.auctions && Array.isArray(data.auctions)) {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() + daysAhead);
-
-      for (const auction of data.auctions) {
-        const auctionDate = new Date(auction.startDate || auction.date);
-        if (auctionDate > cutoffDate) continue;
-
-        const title = auction.title || auction.name || '';
-        const blueChipResult = isBlueChip(title);
-
-        if (!blueChipResult.passes) continue;
-
-        const tier = determineAuctionTier(title, blueChipResult.keywords);
-
-        events.push({
-          eventId: `sothebys-${auction.id || Date.now()}`,
-          house: 'Sothebys',
-          title,
-          date: parseAuctionDate(auction.startDate || auction.date),
-          endDate: auction.endDate ? parseAuctionDate(auction.endDate) : undefined,
-          location: auction.location || 'New York',
-          tier,
-          category: auction.category,
-          totalLots: auction.lotCount || auction.totalLots,
-          estimateRange: auction.estimateRange,
-          url: auction.url || `https://www.sothebys.com${auction.path || ''}`,
-          targetRegions: ['NYC', 'CT', 'NJ', 'MA'],
-          matchedKeywords: blueChipResult.keywords,
-          rawData: auction,
-        });
-      }
-    }
-  } catch (error) {
-    console.error("Sotheby's fetch error:", error);
-    return await fetchSothebysHtmlFallback(daysAhead);
-  }
-
-  return events;
-}
-
-/**
- * HTML fallback for Sotheby's when API is unavailable
- */
-async function fetchSothebysHtmlFallback(daysAhead: number): Promise<AuctionEvent[]> {
-  // This would use Playwright in production
-  console.log("Sotheby's HTML fallback - would use Playwright in production");
-  return [];
-}
-
-/**
- * Fetch Christie's auction calendar
- */
-async function fetchChristiesCalendar(daysAhead: number = 14): Promise<AuctionEvent[]> {
-  const events: AuctionEvent[] = [];
-
-  try {
-    // Christie's has a GraphQL API
-    const apiUrl = 'https://www.christies.com/api/calendar';
-
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
-      body: JSON.stringify({
-        location: 'new_york',
-        type: 'live_auction',
-        limit: 50,
-      }),
-    });
-
-    if (!response.ok) {
-      console.log(`Christie's API returned ${response.status}, trying HTML fallback`);
-      return await fetchChristiesHtmlFallback(daysAhead);
-    }
-
-    const data = await response.json();
-
-    if (data.sales && Array.isArray(data.sales)) {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() + daysAhead);
-
-      for (const sale of data.sales) {
-        const saleDate = new Date(sale.startDate || sale.date);
-        if (saleDate > cutoffDate) continue;
-
-        const title = sale.title || sale.name || '';
-        const blueChipResult = isBlueChip(title);
-
-        if (!blueChipResult.passes) continue;
-
-        const tier = determineAuctionTier(title, blueChipResult.keywords);
-
-        events.push({
-          eventId: `christies-${sale.id || Date.now()}`,
-          house: 'Christies',
-          title,
-          date: parseAuctionDate(sale.startDate || sale.date),
-          endDate: sale.endDate ? parseAuctionDate(sale.endDate) : undefined,
-          location: sale.location || 'New York',
-          tier,
-          category: sale.category,
-          totalLots: sale.lotCount,
-          url: sale.url || `https://www.christies.com${sale.path || ''}`,
-          targetRegions: ['NYC', 'CT', 'NJ', 'MA'],
-          matchedKeywords: blueChipResult.keywords,
-          rawData: sale,
-        });
-      }
-    }
-  } catch (error) {
-    console.error("Christie's fetch error:", error);
-    return await fetchChristiesHtmlFallback(daysAhead);
-  }
-
-  return events;
-}
-
-/**
- * HTML fallback for Christie's
- */
-async function fetchChristiesHtmlFallback(daysAhead: number): Promise<AuctionEvent[]> {
-  console.log("Christie's HTML fallback - would use Playwright in production");
-  return [];
-}
-
-/**
- * Fetch Phillips auction calendar
- */
-async function fetchPhillipsCalendar(daysAhead: number = 14): Promise<AuctionEvent[]> {
-  const events: AuctionEvent[] = [];
-
-  try {
-    // Phillips has a REST API
-    const apiUrl = 'https://www.phillips.com/api/auctions';
-
-    const response = await fetch(apiUrl, {
-      headers: {
-        Accept: 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
-    });
-
-    if (!response.ok) {
-      console.log(`Phillips API returned ${response.status}, trying HTML fallback`);
-      return await fetchPhillipsHtmlFallback(daysAhead);
-    }
-
-    const data = await response.json();
-
-    if (data.auctions && Array.isArray(data.auctions)) {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() + daysAhead);
-
-      for (const auction of data.auctions) {
-        // Filter for New York
-        const location = auction.location || auction.city || '';
-        if (!location.toLowerCase().includes('new york')) continue;
-
-        const auctionDate = new Date(auction.startDate || auction.date);
-        if (auctionDate > cutoffDate) continue;
-
-        const title = auction.title || auction.name || '';
-        const blueChipResult = isBlueChip(title);
-
-        if (!blueChipResult.passes) continue;
-
-        const tier = determineAuctionTier(title, blueChipResult.keywords);
-
-        events.push({
-          eventId: `phillips-${auction.id || Date.now()}`,
-          house: 'Phillips',
-          title,
-          date: parseAuctionDate(auction.startDate || auction.date),
-          endDate: auction.endDate ? parseAuctionDate(auction.endDate) : undefined,
-          location: 'New York',
-          tier,
-          category: auction.category || auction.department,
-          totalLots: auction.lotCount,
-          url: auction.url || `https://www.phillips.com${auction.path || ''}`,
-          targetRegions: ['NYC', 'CT', 'NJ', 'MA'],
-          matchedKeywords: blueChipResult.keywords,
-          rawData: auction,
-        });
-      }
-    }
-  } catch (error) {
-    console.error('Phillips fetch error:', error);
-    return await fetchPhillipsHtmlFallback(daysAhead);
-  }
-
-  return events;
-}
-
-/**
- * HTML fallback for Phillips
- */
-async function fetchPhillipsHtmlFallback(daysAhead: number): Promise<AuctionEvent[]> {
-  console.log('Phillips HTML fallback - would use Playwright in production');
-  return [];
-}
-
-/**
- * Fetch all auction calendars from the Big Three
+ * Fetch all auction calendars from the Big Three using Grok web search
  */
 export async function fetchAllAuctionCalendars(
   daysAhead: number = 14
 ): Promise<AuctionEvent[]> {
-  console.log(`Fetching auction calendars for next ${daysAhead} days`);
+  console.log(`Fetching NYC auction calendars for next ${daysAhead} days via Grok`);
 
-  const [sothebys, christies, phillips] = await Promise.all([
-    fetchSothebysCalendar(daysAhead),
-    fetchChristiesCalendar(daysAhead),
-    fetchPhillipsCalendar(daysAhead),
-  ]);
+  const houses: AuctionHouse[] = ['Sothebys', 'Christies', 'Phillips'];
+  const houseDisplayNames: Record<AuctionHouse, string> = {
+    Sothebys: "Sotheby's",
+    Christies: "Christie's",
+    Phillips: 'Phillips',
+  };
 
-  const allEvents = [...sothebys, ...christies, ...phillips];
+  const allEvents: AuctionEvent[] = [];
+
+  for (const house of houses) {
+    const displayName = houseDisplayNames[house];
+
+    const raw = await grokEventSearch(
+      `You are an art market research assistant. Return ONLY a valid JSON array, no commentary.`,
+      `Search for upcoming auctions at ${displayName} in New York within the next ${daysAhead} days. Include live in-person auctions only (not online-only sales).
+
+Return a JSON array of objects with these fields:
+- "title": auction title (string)
+- "date": start date in YYYY-MM-DD format (string)
+- "endDate": end date in YYYY-MM-DD format if multi-day, or null
+- "category": auction category like "Contemporary Art", "Jewelry", "Watches" (string)
+- "totalLots": number of lots if known, or null
+- "estimateRange": total sale estimate if known like "$50M - $75M", or null
+- "url": link to the auction page if known, or null
+
+If no upcoming auctions are found, return an empty array [].`,
+    );
+
+    if (!raw) {
+      console.log(`No Grok response for ${displayName} NYC auctions`);
+      continue;
+    }
+
+    try {
+      const jsonMatch = raw.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) {
+        console.log(`No JSON array found in Grok response for ${displayName}`);
+        continue;
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]) as Array<{
+        title?: string;
+        date?: string;
+        endDate?: string | null;
+        category?: string;
+        totalLots?: number | null;
+        estimateRange?: string | null;
+        url?: string | null;
+      }>;
+
+      for (const item of parsed) {
+        const title = item.title || '';
+        if (!title) continue;
+
+        const blueChipResult = isBlueChip(title);
+        if (!blueChipResult.passes) continue;
+
+        const tier = determineAuctionTier(title, blueChipResult.keywords);
+        const eventId = `${house.toLowerCase()}-${title.replace(/[^a-zA-Z0-9]/g, '-').substring(0, 40)}-${item.date || Date.now()}`;
+
+        allEvents.push({
+          eventId,
+          house,
+          title,
+          date: item.date ? parseAuctionDate(item.date) : new Date().toISOString().split('T')[0],
+          endDate: item.endDate ? parseAuctionDate(item.endDate) : undefined,
+          location: 'New York',
+          tier,
+          category: item.category || undefined,
+          totalLots: item.totalLots || undefined,
+          estimateRange: item.estimateRange || undefined,
+          url: item.url || AUCTION_URLS[house],
+          targetRegions: ['NYC', 'CT', 'NJ', 'MA'],
+          matchedKeywords: blueChipResult.keywords,
+        });
+      }
+
+      console.log(`${displayName}: Found ${parsed.length} auctions, ${allEvents.filter(e => e.house === house).length} passed Blue Chip filter`);
+    } catch (err) {
+      console.error(`Error parsing ${displayName} auction data:`, err);
+    }
+  }
 
   // Sort by date, then by tier (Mega first)
   allEvents.sort((a, b) => {
@@ -508,7 +349,7 @@ export async function fetchAllAuctionCalendars(
     return 0;
   });
 
-  console.log(`Found ${allEvents.length} Blue Chip auctions (Sotheby's: ${sothebys.length}, Christie's: ${christies.length}, Phillips: ${phillips.length})`);
+  console.log(`Found ${allEvents.length} Blue Chip NYC auctions total`);
 
   return allEvents;
 }

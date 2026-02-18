@@ -24,6 +24,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
+import { grokEventSearch } from '@/lib/grok';
 
 // ============================================================================
 // PERFORMANCE HUBS CONFIGURATION
@@ -540,24 +541,86 @@ Include 2-4 link candidates for key entities mentioned in the body (venue, perfo
 // ============================================================================
 
 /**
- * Fetch upcoming performances from a venue's calendar
- * In production, this would scrape the actual venue websites
+ * Fetch upcoming performances from a venue using Grok web search
  */
 export async function fetchVenuePerformances(
   venue: PerformanceVenue,
-  _hoursAhead: number = 48
+  hoursAhead: number = 48
 ): Promise<Performance[]> {
-  // TODO: Implement actual web scraping for each venue
-  // Each venue has different calendar structure
-  //
-  // For now, return empty array - in production, this would:
-  // 1. Fetch the venue's calendar page
-  // 2. Parse performance titles, dates, times
-  // 3. Filter for premieres using the premiere filter
-  // 4. Check for star power
+  const cityName = venue.city.replace(/_/g, ' ');
 
-  console.log(`Would fetch performances from ${venue.name} at ${venue.calendarUrl}`);
-  return [];
+  const systemPrompt = `You are a performing arts calendar researcher. Search the web for upcoming premiere performances at ${venue.name} in ${cityName}. Focus on opening nights, new productions, galas, and season openers happening in the next 14 days.
+
+Return ONLY a JSON array (no markdown, no explanation). Each object must have these fields:
+- title: string (name of the work)
+- composer: string or null
+- choreographer: string or null
+- conductor: string or null
+- performers: string[] (notable cast members)
+- performanceType: "Opera" | "Ballet" | "Symphony" | "Concert"
+- date: string (ISO date, e.g. "2026-02-20")
+- time: string (e.g. "7:30 PM")
+- premiereType: "opening_night" | "new_production" | "premiere" | "gala" | "season_opener" or null
+- url: string or null
+
+If no upcoming premieres are found, return an empty array: []`;
+
+  const userPrompt = `Search for upcoming premiere performances, opening nights, and new productions at ${venue.name} (${venue.calendarUrl}) in the next 14 days. Only include confirmed premieres, galas, or season openers.`;
+
+  console.log(`Searching Grok for performances at ${venue.name}...`);
+  const raw = await grokEventSearch(systemPrompt, userPrompt);
+  if (!raw) return [];
+
+  try {
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return [];
+
+    const parsed = JSON.parse(jsonMatch[0]) as Array<{
+      title: string;
+      composer?: string | null;
+      choreographer?: string | null;
+      conductor?: string | null;
+      performers?: string[];
+      performanceType?: string;
+      date?: string;
+      time?: string;
+      premiereType?: string | null;
+      url?: string | null;
+    }>;
+
+    return parsed
+      .filter(p => p.title && p.date)
+      .map(p => {
+        const starPower = checkStarPower(p.conductor || undefined, p.performers || []);
+        const premiereCheck = isPremierePerformance(
+          p.title,
+          `${p.premiereType || ''} ${p.conductor || ''}`
+        );
+
+        return {
+          id: `grok-${venue.id}-${(p.title || '').slice(0, 20).replace(/\W/g, '-').toLowerCase()}-${Date.now()}`,
+          venueId: venue.id,
+          title: p.title,
+          composer: p.composer || undefined,
+          choreographer: p.choreographer || undefined,
+          conductor: p.conductor || undefined,
+          performers: p.performers || [],
+          performanceType: (['Opera', 'Ballet', 'Symphony', 'Concert'].includes(p.performanceType || '')
+            ? p.performanceType as PerformanceType
+            : venue.type[0]) || 'Opera',
+          date: new Date(p.date!),
+          time: p.time || 'TBA',
+          isPremiere: !!p.premiereType || premiereCheck.isPremiere,
+          premiereType: (p.premiereType as Performance['premiereType']) || premiereCheck.premiereType as Performance['premiereType'],
+          hasStarPower: starPower.hasStarPower,
+          starNames: starPower.starNames,
+          url: p.url || undefined,
+        };
+      });
+  } catch (error) {
+    console.error(`Error parsing Grok response for ${venue.name}:`, error);
+    return [];
+  }
 }
 
 /**

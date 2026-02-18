@@ -25,6 +25,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
+import { grokEventSearch } from '@/lib/grok';
 
 // ============================================================================
 // MUSEUM TARGETS CONFIGURATION
@@ -550,25 +551,78 @@ Include 2-4 link candidates for key entities mentioned in the body (museum name,
 // ============================================================================
 
 /**
- * Fetch exhibitions from a museum's calendar page
- * In production, this would scrape the actual museum websites
- * For now, returns mock data that can be replaced with real scraping
+ * Fetch exhibitions from a museum using Grok web search
  */
 export async function fetchMuseumExhibitions(
   museum: Museum,
-  _daysAhead: number = 7
+  daysAhead: number = 7
 ): Promise<Exhibition[]> {
-  // TODO: Implement actual web scraping for each museum
-  // Each museum has different page structure, so we'd need specific parsers
-  //
-  // For now, return empty array - in production, this would:
-  // 1. Fetch the museum's exhibitions page
-  // 2. Parse exhibition titles, dates, descriptions
-  // 3. Filter for "new" exhibitions (opening in next 7 days)
-  // 4. Check for member preview dates in description
+  const cityName = museum.city.replace(/_/g, ' ');
 
-  console.log(`Would fetch exhibitions from ${museum.name} at ${museum.calendarUrl}`);
-  return [];
+  const systemPrompt = `You are a museum exhibitions researcher. Search the web for new or upcoming exhibitions opening at ${museum.name} in ${cityName} within the next 30 days.
+
+Return ONLY a JSON array (no markdown, no explanation). Each object must have:
+- title: string (exhibition title)
+- artist: string or null (primary artist if applicable)
+- description: string (1-2 sentence description)
+- publicOpeningDate: string (ISO date)
+- closingDate: string (ISO date)
+- memberPreviewDate: string or null (ISO date if known)
+- url: string or null
+
+If no upcoming exhibitions are found, return an empty array: []`;
+
+  const userPrompt = `Search for new exhibitions opening at ${museum.name} (${museum.calendarUrl}) in the next 30 days. Focus on major exhibitions, retrospectives, and blockbuster shows. Include opening dates, closing dates, and member preview dates if available.`;
+
+  console.log(`Searching Grok for exhibitions at ${museum.name}...`);
+  const raw = await grokEventSearch(systemPrompt, userPrompt);
+  if (!raw) return [];
+
+  try {
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return [];
+
+    const parsed = JSON.parse(jsonMatch[0]) as Array<{
+      title: string;
+      artist?: string | null;
+      description?: string;
+      publicOpeningDate?: string;
+      closingDate?: string;
+      memberPreviewDate?: string | null;
+      url?: string | null;
+    }>;
+
+    return parsed
+      .filter(e => e.title && e.publicOpeningDate && e.closingDate)
+      .map(e => {
+        const openDate = new Date(e.publicOpeningDate!);
+        const closeDate = new Date(e.closingDate!);
+        const durationMonths = calculateDurationMonths(openDate, closeDate);
+        const blockbuster = isBlockbusterExhibition(
+          e.title,
+          e.description || '',
+          durationMonths
+        );
+
+        return {
+          id: `grok-${museum.id}-${e.title.slice(0, 20).replace(/\W/g, '-').toLowerCase()}-${Date.now()}`,
+          museumId: museum.id,
+          title: e.title,
+          artist: e.artist || undefined,
+          description: e.description || '',
+          publicOpeningDate: openDate,
+          closingDate: closeDate,
+          memberPreviewDate: e.memberPreviewDate ? new Date(e.memberPreviewDate) : undefined,
+          isBlockbuster: blockbuster.isBlockbuster,
+          blockbusterKeywords: blockbuster.matchedKeywords,
+          durationMonths,
+          url: e.url || undefined,
+        };
+      });
+  } catch (error) {
+    console.error(`Error parsing Grok response for ${museum.name}:`, error);
+    return [];
+  }
 }
 
 /**

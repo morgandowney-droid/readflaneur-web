@@ -26,6 +26,7 @@ import {
   injectHyperlinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
+import { grokEventSearch } from '@/lib/grok';
 
 // =============================================================================
 // TYPES
@@ -350,266 +351,94 @@ export function isLuxuryBrandSale(title: string): { isLuxury: boolean; brand: Lu
 // =============================================================================
 
 /**
- * Scrape Chicmi sample sales
+ * Search for sample sales in a city using Grok web search
  */
-export async function scrapeChicmi(config: SourceConfig): Promise<DetectedSale[]> {
-  const sales: DetectedSale[] = [];
+async function searchSalesForCity(city: SaleCity): Promise<DetectedSale[]> {
+  const cityName = city.replace(/_/g, ' ');
+
+  const systemPrompt = `You are a fashion industry researcher. Search the web and X for current and upcoming luxury sample sales in ${cityName}. Focus on designer brands, private sales, and warehouse sales.
+
+Return ONLY a JSON array (no markdown, no explanation). Each object must have:
+- brand: string (brand name)
+- venue: string (venue name)
+- venueAddress: string or null
+- startDate: string (ISO date)
+- endDate: string (ISO date)
+- discount: string (e.g. "Up to 80% off")
+- saleType: "sample_sale" | "trunk_show" | "warehouse_sale" | "private_sale" | "flash_sale"
+- isInviteOnly: boolean
+- url: string or null
+
+If no sales are found, return an empty array: []`;
+
+  const userPrompt = `Search for current and upcoming luxury designer sample sales happening in ${cityName} right now or in the next 2 weeks. Include sales from brands like Hermès, Chanel, Prada, Gucci, The Row, Bottega Veneta, Saint Laurent, Celine, Valentino, Dior, and other high-end fashion houses. Check sites like Chicmi, 260 Sample Sale, and fashion news outlets.`;
+
+  console.log(`Searching Grok for sample sales in ${cityName}...`);
+  const raw = await grokEventSearch(systemPrompt, userPrompt);
+  if (!raw) return [];
 
   try {
-    const response = await fetch(config.baseUrl, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      },
-    });
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return [];
 
-    if (!response.ok) {
-      console.log(`Chicmi fetch failed for ${config.city}:`, response.status);
-      return [];
-    }
+    const parsed = JSON.parse(jsonMatch[0]) as Array<{
+      brand: string;
+      venue?: string;
+      venueAddress?: string | null;
+      startDate?: string;
+      endDate?: string;
+      discount?: string;
+      saleType?: string;
+      isInviteOnly?: boolean;
+      url?: string | null;
+    }>;
 
-    const html = await response.text();
+    const sales: DetectedSale[] = [];
 
-    // Extract sale entries - Chicmi uses structured data
-    // Pattern: "Brand Name Sample Sale" with dates and location
-    const salePatterns = [
-      /<article[^>]*>[\s\S]*?<h[23][^>]*>([^<]+)<\/h[23]>[\s\S]*?<\/article>/gi,
-      /<div[^>]*class="[^"]*sale[^"]*"[^>]*>[\s\S]*?<\/div>/gi,
-    ];
+    for (const p of parsed) {
+      if (!p.brand) continue;
 
-    // Extract potential sale blocks
-    const saleBlocks = html.match(/<div[^>]*class="[^"]*event[^"]*"[^>]*>[\s\S]*?<\/div>/gi) || [];
-
-    for (const block of saleBlocks) {
-      // Extract title
-      const titleMatch = block.match(/<h[23][^>]*>([^<]+)<\/h[23]>/i) ||
-        block.match(/class="[^"]*title[^"]*"[^>]*>([^<]+)</i);
-
-      if (!titleMatch) continue;
-      const title = titleMatch[1].trim();
-
-      // Check if luxury brand
-      const { isLuxury, brand } = isLuxuryBrandSale(title);
+      // Validate against luxury brand whitelist
+      const { isLuxury, brand } = isLuxuryBrandSale(p.brand);
       if (!isLuxury || !brand) continue;
 
-      // Extract dates
-      const dateMatch = block.match(/(\w+\s+\d{1,2})\s*[-–]\s*(\w+\s+\d{1,2})/i) ||
-        block.match(/(\d{1,2}\s+\w+)\s*[-–]\s*(\d{1,2}\s+\w+)/i);
+      const venue = p.venue || 'TBA';
+      const neighborhoodMatch = matchToNeighborhood(`${p.brand} ${venue} ${p.venueAddress || ''}`, city);
 
-      let startDate = new Date();
-      let endDate = new Date();
-      endDate.setDate(endDate.getDate() + 3); // Default 3-day sale
+      const startDate = p.startDate ? new Date(p.startDate) : new Date();
+      const endDate = p.endDate ? new Date(p.endDate) : new Date(startDate.getTime() + 3 * 24 * 60 * 60 * 1000);
 
-      if (dateMatch) {
-        const year = new Date().getFullYear();
-        startDate = new Date(`${dateMatch[1]} ${year}`);
-        endDate = new Date(`${dateMatch[2]} ${year}`);
+      const validSaleTypes: SaleType[] = ['sample_sale', 'trunk_show', 'warehouse_sale', 'private_sale', 'flash_sale'];
+      const saleType = validSaleTypes.includes(p.saleType as SaleType) ? p.saleType as SaleType : 'sample_sale';
 
-        // If dates are in the past, assume next year
-        if (startDate < new Date()) {
-          startDate.setFullYear(year + 1);
-          endDate.setFullYear(year + 1);
-        }
-      }
-
-      // Extract venue
-      const venueMatch = block.match(/(?:at|venue|location)[:\s]*([^<,]+)/i);
-      const venue = venueMatch ? venueMatch[1].trim() : 'TBA';
-
-      // Match to neighborhood
-      const neighborhoodMatch = matchToNeighborhood(title + ' ' + venue, config.city);
-
-      const sale: DetectedSale = {
-        id: `chicmi-${config.city}-${Buffer.from(title).toString('base64').substring(0, 12)}`,
-        source: 'Chicmi',
-        sourceDisplayName: config.name,
-        city: config.city,
+      sales.push({
+        id: `grok-${city}-${brand.name.replace(/\W/g, '-').toLowerCase()}-${Date.now()}`,
+        source: 'Sample_Sale_Guide',
+        sourceDisplayName: `Grok Search (${cityName})`,
+        city,
         brand: brand.name,
         brandTier: brand.tier,
         brandCategory: brand.category,
-        title,
+        title: `${brand.name} ${saleType === 'private_sale' ? 'Private Sale' : 'Sample Sale'}`,
         venue,
+        venueAddress: p.venueAddress || undefined,
         neighborhood: neighborhoodMatch?.name,
         neighborhoodId: neighborhoodMatch?.id,
         startDate,
         endDate,
-        saleType: 'sample_sale',
-        discount: 'Up to 80% off',
-        isInviteOnly: false,
-        url: config.baseUrl,
-      };
-
-      sales.push(sale);
+        saleType,
+        discount: p.discount || 'Up to 70% off',
+        isInviteOnly: p.isInviteOnly || false,
+        url: p.url || undefined,
+      });
     }
 
-    console.log(`Chicmi ${config.city}: Found ${sales.length} luxury sales`);
+    console.log(`Grok ${cityName}: Found ${sales.length} luxury sales`);
+    return sales;
   } catch (error) {
-    console.error(`Error scraping Chicmi ${config.city}:`, error);
+    console.error(`Error parsing Grok response for ${cityName} sales:`, error);
+    return [];
   }
-
-  return sales;
-}
-
-/**
- * Scrape 260 Sample Sale
- */
-export async function scrape260SampleSale(): Promise<DetectedSale[]> {
-  const sales: DetectedSale[] = [];
-
-  try {
-    const response = await fetch('https://260samplesale.com/', {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      },
-    });
-
-    if (!response.ok) {
-      console.log('260 Sample Sale fetch failed:', response.status);
-      return [];
-    }
-
-    const html = await response.text();
-
-    // 260 Sample Sale typically shows "Upcoming" sales prominently
-    // Pattern: Brand name + dates + "260 Fifth Avenue" venue
-    const salePatterns = [
-      /(?:upcoming|current|now)[^<]*<[^>]*>[\s\S]*?(\w+(?:\s+\w+)*)\s*(?:sample\s*sale)?[\s\S]*?(\w+\s+\d{1,2})\s*[-–]\s*(\w+\s+\d{1,2})/gi,
-      /<div[^>]*class="[^"]*sale[^"]*"[^>]*>([^<]+)</gi,
-    ];
-
-    // Look for brand names followed by dates
-    const brandDatePattern = /([A-Z][a-zA-Z\s&]+?)(?:\s+Sample\s+Sale)?[:\s]+(\w+\s+\d{1,2})\s*[-–]\s*(\w+\s+\d{1,2})/gi;
-    let match;
-
-    while ((match = brandDatePattern.exec(html)) !== null) {
-      const title = match[1].trim();
-      const { isLuxury, brand } = isLuxuryBrandSale(title);
-
-      if (!isLuxury || !brand) continue;
-
-      const year = new Date().getFullYear();
-      let startDate = new Date(`${match[2]} ${year}`);
-      let endDate = new Date(`${match[3]} ${year}`);
-
-      if (startDate < new Date()) {
-        startDate.setFullYear(year + 1);
-        endDate.setFullYear(year + 1);
-      }
-
-      const sale: DetectedSale = {
-        id: `260-${Buffer.from(title).toString('base64').substring(0, 12)}`,
-        source: '260_Sample_Sale',
-        sourceDisplayName: '260 Sample Sale',
-        city: 'New_York',
-        brand: brand.name,
-        brandTier: brand.tier,
-        brandCategory: brand.category,
-        title: `${brand.name} Sample Sale`,
-        venue: '260 Fifth Avenue',
-        venueAddress: '260 5th Ave, New York, NY 10001',
-        neighborhood: 'Chelsea',
-        neighborhoodId: 'nyc-chelsea',
-        startDate,
-        endDate,
-        saleType: 'sample_sale',
-        discount: 'Up to 80% off',
-        isInviteOnly: false,
-        url: 'https://260samplesale.com/',
-      };
-
-      sales.push(sale);
-    }
-
-    console.log(`260 Sample Sale: Found ${sales.length} luxury sales`);
-  } catch (error) {
-    console.error('Error scraping 260 Sample Sale:', error);
-  }
-
-  return sales;
-}
-
-/**
- * Scrape Arlettie (Paris/London private sales)
- */
-export async function scrapeArlettie(config: SourceConfig): Promise<DetectedSale[]> {
-  const sales: DetectedSale[] = [];
-
-  try {
-    const response = await fetch(config.baseUrl, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      },
-    });
-
-    if (!response.ok) {
-      console.log(`Arlettie fetch failed for ${config.city}:`, response.status);
-      return [];
-    }
-
-    const html = await response.text();
-
-    // Arlettie shows private sales - often "Invite Only"
-    // Pattern: Brand names in sale listings
-    const saleBlocks = html.match(/<div[^>]*class="[^"]*vente[^"]*"[^>]*>[\s\S]*?<\/div>/gi) || [];
-
-    for (const block of saleBlocks) {
-      // Extract brand name
-      const brandMatch = block.match(/<h[23][^>]*>([^<]+)<\/h[23]>/i);
-      if (!brandMatch) continue;
-
-      const title = brandMatch[1].trim();
-      const { isLuxury, brand } = isLuxuryBrandSale(title);
-
-      if (!isLuxury || !brand) continue;
-
-      // Extract dates
-      const dateMatch = block.match(/(\d{1,2})\s*[-–]\s*(\d{1,2})\s+(\w+)/i);
-      let startDate = new Date();
-      let endDate = new Date();
-
-      if (dateMatch) {
-        const month = dateMatch[3];
-        const year = new Date().getFullYear();
-        startDate = new Date(`${month} ${dateMatch[1]}, ${year}`);
-        endDate = new Date(`${month} ${dateMatch[2]}, ${year}`);
-      }
-
-      // Arlettie sales are typically invite-only
-      const isInviteOnly = /invite|privée|exclusive|member/i.test(block);
-
-      const neighborhoodMatch = matchToNeighborhood(title, config.city);
-
-      const sale: DetectedSale = {
-        id: `arlettie-${config.city}-${Buffer.from(title).toString('base64').substring(0, 12)}`,
-        source: 'Arlettie',
-        sourceDisplayName: `Arlettie ${config.city === 'Paris' ? 'Paris' : 'London'}`,
-        city: config.city,
-        brand: brand.name,
-        brandTier: brand.tier,
-        brandCategory: brand.category,
-        title: `${brand.name} Private Sale`,
-        venue: 'Arlettie Showroom',
-        neighborhood: neighborhoodMatch?.name,
-        neighborhoodId: neighborhoodMatch?.id || CITY_NEIGHBORHOODS[config.city][0],
-        startDate,
-        endDate,
-        saleType: 'private_sale',
-        discount: 'Up to 70% off',
-        isInviteOnly,
-        url: config.baseUrl,
-      };
-
-      sales.push(sale);
-    }
-
-    console.log(`Arlettie ${config.city}: Found ${sales.length} luxury sales`);
-  } catch (error) {
-    console.error(`Error scraping Arlettie ${config.city}:`, error);
-  }
-
-  return sales;
 }
 
 /**
@@ -803,24 +632,13 @@ export async function processSampleSales(): Promise<SampleSaleProcessResult> {
 
   const allSales: DetectedSale[] = [];
 
-  // Scrape each source
-  for (const config of SAMPLE_SALE_SOURCES) {
+  // Search each city for sample sales via Grok
+  const cities = [...new Set(SAMPLE_SALE_SOURCES.map(s => s.city))];
+  for (const city of cities) {
     result.sourcesScraped++;
 
     try {
-      let sales: DetectedSale[] = [];
-
-      switch (config.source) {
-        case 'Chicmi':
-          sales = await scrapeChicmi(config);
-          break;
-        case '260_Sample_Sale':
-          sales = await scrape260SampleSale();
-          break;
-        case 'Arlettie':
-          sales = await scrapeArlettie(config);
-          break;
-      }
+      const sales = await searchSalesForCity(city);
 
       for (const sale of sales) {
         result.bySource[sale.source] = (result.bySource[sale.source] || 0) + 1;
@@ -828,10 +646,10 @@ export async function processSampleSales(): Promise<SampleSaleProcessResult> {
 
       allSales.push(...sales);
 
-      // Rate limit between sources
+      // Rate limit between cities
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
-      result.errors.push(`${config.name}: ${error instanceof Error ? error.message : String(error)}`);
+      result.errors.push(`${city}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

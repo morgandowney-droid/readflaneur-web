@@ -21,6 +21,7 @@ import {
   injectHyperlinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
+import { grokEventSearch } from '@/lib/grok';
 
 // =============================================================================
 // TYPES
@@ -558,102 +559,87 @@ interface EventbriteEvent {
 }
 
 /**
- * Fetch events from Eventbrite API for a specific hub
- * Note: Requires EVENTBRITE_API_KEY environment variable
+ * Search for gala events in a hub city using Grok web search
  */
-export async function fetchEventbriteEvents(
+async function searchGalaEventsForHub(
   hub: GalaHub,
   daysAhead: number = 30
 ): Promise<GalaEvent[]> {
-  const apiKey = process.env.EVENTBRITE_API_KEY;
-  if (!apiKey) {
-    console.log('EVENTBRITE_API_KEY not configured, skipping Eventbrite fetch');
-    return [];
-  }
-
   const config = GALA_HUBS[hub];
   if (!config) return [];
 
-  const events: GalaEvent[] = [];
+  const cityName = hub.replace(/_/g, ' ');
+
+  const systemPrompt = `You are a society events researcher. Search the web and X for upcoming charity galas, benefit dinners, museum fundraisers, and black-tie events in ${cityName} within the next ${daysAhead} days.
+
+Return ONLY a JSON array (no markdown, no explanation). Each object must have:
+- name: string (event name)
+- venue: string (venue name)
+- venueAddress: string or null
+- date: string (ISO date)
+- price: number (ticket price in local currency, estimate if unknown)
+- currency: "${config.currency}"
+- description: string (1-2 sentences)
+- organization: string or null (hosting charity or organization)
+- isBlackTie: boolean
+- url: string or null
+
+If no events are found, return an empty array: []`;
+
+  const userPrompt = `Search for upcoming charity galas, benefit dinners, museum fundraisers, and black-tie society events in ${cityName} this month and next month. Focus on high-end events at prestigious venues with ticket prices above $500. Include event name, venue, date, ticket price, and hosting organization.`;
+
+  console.log(`Searching Grok for gala events in ${cityName}...`);
+  const raw = await grokEventSearch(systemPrompt, userPrompt);
+  if (!raw) return [];
 
   try {
-    // Build search query
-    const keywords = GALA_KEYWORDS.slice(0, 5).join(' OR '); // Eventbrite has query limits
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + daysAhead);
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return [];
 
-    // Eventbrite API endpoint
-    const params = new URLSearchParams({
-      q: keywords,
-      'start_date.range_start': startDate.toISOString(),
-      'start_date.range_end': endDate.toISOString(),
-      expand: 'venue,ticket_availability',
-    });
+    const parsed = JSON.parse(jsonMatch[0]) as Array<{
+      name: string;
+      venue?: string;
+      venueAddress?: string | null;
+      date?: string;
+      price?: number;
+      currency?: string;
+      description?: string;
+      organization?: string | null;
+      isBlackTie?: boolean;
+      url?: string | null;
+    }>;
 
-    // Add location based on hub
-    const hubLocations: Record<string, string> = {
-      New_York: 'New York, NY',
-      London: 'London, UK',
-      Paris: 'Paris, France',
-      Los_Angeles: 'Los Angeles, CA',
-      Sydney: 'Sydney, Australia',
-      Miami: 'Miami, FL',
-      Hong_Kong: 'Hong Kong',
-      Milan: 'Milan, Italy',
-      Toronto: 'Toronto, Canada',
-    };
+    const events: GalaEvent[] = [];
 
-    if (hubLocations[hub]) {
-      params.append('location.address', hubLocations[hub]);
-      params.append('location.within', `${config.searchRadius || 50}km`);
-    }
+    for (const p of parsed) {
+      if (!p.name || !p.date) continue;
 
-    const response = await fetch(
-      `https://www.eventbriteapi.com/v3/events/search/?${params.toString()}`,
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      console.error(`Eventbrite API error for ${hub}:`, response.status);
-      return [];
-    }
-
-    const data = await response.json();
-    const ebEvents: EventbriteEvent[] = data.events || [];
-
-    for (const eb of ebEvents) {
-      // Extract price
-      const priceStr = eb.ticket_availability?.minimum_ticket_price?.major_value;
-      const currencyStr = eb.ticket_availability?.minimum_ticket_price?.currency || 'USD';
-      const price = priceStr ? parseFloat(priceStr) : 0;
-      const currency = currencyStr as GalaCurrency;
-
-      const eventText = `${eb.name.text} ${eb.description?.text || ''}`;
+      const eventText = `${p.name} ${p.description || ''} ${p.organization || ''}`;
 
       // Skip excluded events
       if (shouldExcludeEvent(eventText)) continue;
 
+      const price = p.price || 500;
+      const currency = (p.currency || config.currency) as GalaCurrency;
+      const priceUSD = normalizeCurrency(price, currency);
+
       const galaEvent: GalaEvent = {
-        id: `eventbrite-${eb.id}`,
-        name: eb.name.text,
-        venue: eb.venue?.name || 'Venue TBA',
-        venueAddress: eb.venue?.address?.localized_address_display,
-        date: new Date(eb.start.local),
+        id: `grok-${hub}-${p.name.slice(0, 20).replace(/\W/g, '-').toLowerCase()}-${Date.now()}`,
+        name: p.name,
+        venue: p.venue || 'Venue TBA',
+        venueAddress: p.venueAddress || undefined,
+        date: new Date(p.date),
         price,
         currency,
-        priceUSD: normalizeCurrency(price, currency),
-        description: eb.description?.text,
-        url: eb.url,
+        priceUSD,
+        description: p.description,
+        url: p.url || undefined,
         source: `Eventbrite_${hub === 'New_York' ? 'NYC' : hub.substring(0, 3).toUpperCase()}` as GalaSource,
         hub,
         keywords: GALA_KEYWORDS.filter((k) => eventText.toLowerCase().includes(k)),
-        isBlackTie: isBlackTie(eventText),
+        isBlackTie: p.isBlackTie || isBlackTie(eventText),
         isBenefit: isBenefitEvent(eventText),
+        organization: p.organization || undefined,
       };
 
       // Apply High Ticket filter
@@ -661,162 +647,13 @@ export async function fetchEventbriteEvents(
         events.push(galaEvent);
       }
     }
+
+    console.log(`Grok ${cityName}: Found ${events.length} gala events`);
+    return events;
   } catch (error) {
-    console.error(`Error fetching Eventbrite events for ${hub}:`, error);
+    console.error(`Error parsing Grok response for ${cityName} galas:`, error);
+    return [];
   }
-
-  return events;
-}
-
-// =============================================================================
-// DATA SOURCE B: SOCIETY PAGE SCRAPERS
-// =============================================================================
-
-/**
- * Scrape New York Social Diary calendar
- * URL: https://www.newyorksocialdiary.com/calendar/
- */
-export async function scrapeNYSocialDiary(): Promise<GalaEvent[]> {
-  const events: GalaEvent[] = [];
-
-  try {
-    const response = await fetch('https://www.newyorksocialdiary.com/calendar/', {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      },
-    });
-
-    if (!response.ok) {
-      console.log('NY Social Diary fetch failed:', response.status);
-      return [];
-    }
-
-    const html = await response.text();
-
-    // Extract benefit events using regex patterns
-    // Looking for patterns like: "Event Name at Venue - Date"
-    const eventPatterns = [
-      // Pattern: "Benefit for Organization at Venue"
-      /(?:benefit|gala|ball|dinner)\s+(?:for|at|celebrating)\s+([^<]+?)(?:\s+at\s+([^<]+?))?(?:\s*[-–]\s*(\w+\s+\d+))?/gi,
-      // Pattern: "Annual Gala at Venue"
-      /(\d+(?:st|nd|rd|th)?\s+annual\s+[^<]+?(?:gala|ball|benefit))\s+(?:at\s+)?([^<]+?)(?:\s*[-–]\s*(\w+\s+\d+))?/gi,
-    ];
-
-    for (const pattern of eventPatterns) {
-      let match;
-      while ((match = pattern.exec(html)) !== null) {
-        const eventName = match[1]?.trim();
-        const venue = match[2]?.trim() || 'TBA';
-        const dateStr = match[3]?.trim();
-
-        if (eventName && eventName.length > 5) {
-          // Parse date or use upcoming date
-          let eventDate = new Date();
-          if (dateStr) {
-            const parsed = new Date(dateStr + ' ' + new Date().getFullYear());
-            if (!isNaN(parsed.getTime())) {
-              eventDate = parsed;
-            }
-          }
-
-          // NY Social Diary events are typically high-end ($500+)
-          const event: GalaEvent = {
-            id: `nysd-${Buffer.from(eventName).toString('base64').substring(0, 12)}`,
-            name: eventName,
-            venue: venue,
-            date: eventDate,
-            price: 500, // Assumed minimum for NYSD events
-            currency: 'USD',
-            priceUSD: 500,
-            url: 'https://www.newyorksocialdiary.com/calendar/',
-            source: 'NY_Social_Diary',
-            hub: 'New_York',
-            keywords: GALA_KEYWORDS.filter((k) => eventName.toLowerCase().includes(k)),
-            isBlackTie: isBlackTie(eventName),
-            isBenefit: true, // NYSD focuses on benefits
-          };
-
-          events.push(event);
-        }
-      }
-    }
-
-    console.log(`NY Social Diary: Found ${events.length} events`);
-  } catch (error) {
-    console.error('Error scraping NY Social Diary:', error);
-  }
-
-  return events;
-}
-
-/**
- * Scrape Tatler UK parties/events
- * URL: https://www.tatler.com/topic/parties
- */
-export async function scrapeTatler(): Promise<GalaEvent[]> {
-  const events: GalaEvent[] = [];
-
-  try {
-    const response = await fetch('https://www.tatler.com/topic/parties', {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      },
-    });
-
-    if (!response.ok) {
-      console.log('Tatler fetch failed:', response.status);
-      return [];
-    }
-
-    const html = await response.text();
-
-    // Extract article titles that mention upcoming events
-    // Tatler format: "Save the date for X" or "Inside the Y Ball"
-    const titlePatterns = [
-      /<h[23][^>]*>([^<]*(?:ball|gala|benefit|charity dinner)[^<]*)<\/h[23]>/gi,
-      /save the date[^<]*for[^<]*([^<]+)/gi,
-      /upcoming[^<]*([^<]+(?:ball|gala|benefit)[^<]*)/gi,
-    ];
-
-    for (const pattern of titlePatterns) {
-      let match;
-      while ((match = pattern.exec(html)) !== null) {
-        const eventName = match[1]?.trim().replace(/<[^>]+>/g, '');
-
-        if (eventName && eventName.length > 5 && eventName.length < 150) {
-          // Extract venue if mentioned
-          const venueMatch = eventName.match(/at\s+(?:the\s+)?([^,]+)/i);
-          const venue = venueMatch ? venueMatch[1].trim() : 'London';
-
-          const event: GalaEvent = {
-            id: `tatler-${Buffer.from(eventName).toString('base64').substring(0, 12)}`,
-            name: eventName,
-            venue: venue,
-            date: new Date(), // Tatler doesn't always have exact dates
-            price: 400, // UK equivalent of $500
-            currency: 'GBP',
-            priceUSD: normalizeCurrency(400, 'GBP'),
-            url: 'https://www.tatler.com/topic/parties',
-            source: 'Tatler_Bystander',
-            hub: 'London',
-            keywords: GALA_KEYWORDS.filter((k) => eventName.toLowerCase().includes(k)),
-            isBlackTie: isBlackTie(eventName),
-            isBenefit: isBenefitEvent(eventName),
-          };
-
-          events.push(event);
-        }
-      }
-    }
-
-    console.log(`Tatler: Found ${events.length} events`);
-  } catch (error) {
-    console.error('Error scraping Tatler:', error);
-  }
-
-  return events;
 }
 
 // =============================================================================
@@ -942,34 +779,21 @@ export async function processGalaWatch(daysAhead: number = 30): Promise<GalaProc
 
   const allEvents: GalaEvent[] = [];
 
-  // Fetch from all hubs
-  for (const [hubName, config] of Object.entries(GALA_HUBS)) {
+  // Search for events in each hub city via Grok
+  for (const [hubName] of Object.entries(GALA_HUBS)) {
     const hub = hubName as GalaHub;
     if (hub === 'Global') continue; // Skip global for now
 
     try {
-      // Fetch from Eventbrite
-      if (config.sources.some((s) => s.startsWith('Eventbrite'))) {
-        const ebEvents = await fetchEventbriteEvents(hub, daysAhead);
-        allEvents.push(...ebEvents);
+      const events = await searchGalaEventsForHub(hub, daysAhead);
+      allEvents.push(...events);
 
-        for (const event of ebEvents) {
-          result.bySource[event.source] = (result.bySource[event.source] || 0) + 1;
-        }
+      for (const event of events) {
+        result.bySource[event.source] = (result.bySource[event.source] || 0) + 1;
       }
 
-      // Fetch from society pages
-      if (config.sources.includes('NY_Social_Diary')) {
-        const nysdEvents = await scrapeNYSocialDiary();
-        allEvents.push(...nysdEvents);
-        result.bySource['NY_Social_Diary'] = (result.bySource['NY_Social_Diary'] || 0) + nysdEvents.length;
-      }
-
-      if (config.sources.includes('Tatler_Bystander')) {
-        const tatlerEvents = await scrapeTatler();
-        allEvents.push(...tatlerEvents);
-        result.bySource['Tatler_Bystander'] = (result.bySource['Tatler_Bystander'] || 0) + tatlerEvents.length;
-      }
+      // Rate limit between hubs
+      await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
       result.errors.push(`${hub}: ${error instanceof Error ? error.message : String(error)}`);
     }

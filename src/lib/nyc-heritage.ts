@@ -214,7 +214,7 @@ function formatOwnerName(filing: RawDOBFiling): string {
  * Filters for heritage-relevant filings in Flâneur coverage areas
  */
 export async function fetchHeritageFilings(
-  hoursBack: number = 24
+  hoursBack: number = 336
 ): Promise<HeritageEvent[]> {
   const since = new Date();
   since.setHours(since.getHours() - hoursBack);
@@ -271,12 +271,13 @@ export async function fetchHeritageFilings(
       const neighborhoodKey = getNeighborhoodKeyFromZip(zipCode, address);
       if (!neighborhoodKey) continue;
 
-      // Get neighborhood ID (URL slug)
-      const neighborhoodId = Object.entries(NEIGHBORHOOD_ID_TO_CONFIG).find(
+      // Get neighborhood ID (URL slug) - prepend nyc- since NEIGHBORHOOD_ID_TO_CONFIG keys lack it
+      const rawNeighborhoodId = Object.entries(NEIGHBORHOOD_ID_TO_CONFIG).find(
         ([, configKey]) => configKey === neighborhoodKey
       )?.[0];
 
-      if (!neighborhoodId) continue;
+      if (!rawNeighborhoodId) continue;
+      const neighborhoodId = `nyc-${rawNeighborhoodId}`;
 
       const jobNumber = filing.job__ || `heritage-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
@@ -504,7 +505,7 @@ export async function processHeritageFilings(
  */
 export async function getHeritageEventsForNeighborhood(
   neighborhoodId: string,
-  hoursBack: number = 24
+  hoursBack: number = 336
 ): Promise<HeritageEvent[]> {
   const events = await fetchHeritageFilings(hoursBack);
   return events.filter((e) => e.neighborhoodId === neighborhoodId);

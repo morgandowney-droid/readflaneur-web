@@ -25,6 +25,7 @@ import {
   injectHyperlinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
+import { grokEventSearch } from '@/lib/grok';
 
 // ============================================================================
 // TYPES
@@ -297,329 +298,95 @@ export const STORE_LOCATIONS: StoreLocation[] = [
 ];
 
 // ============================================================================
-// INVENTORY SCRAPING
+// INVENTORY SEARCH (via Grok)
 // ============================================================================
 
 /**
- * Scrape The RealReal new arrivals for a specific store
+ * Scrape inventory for a specific store location using Grok web search
  */
-async function scrapeTheRealReal(location: StoreLocation): Promise<ArchiveItem[]> {
-  const items: ArchiveItem[] = [];
+export async function scrapeStoreInventory(location: StoreLocation): Promise<ArchiveItem[]> {
+  const brandNames = Object.keys(INVESTMENT_BRANDS).join(', ');
+
+  const systemPrompt = `You are a luxury resale market researcher. Search the web for notable rare or investment-grade vintage luxury items recently listed at ${location.name} (${location.address}, ${location.city}). Focus on high-value items from brands like ${brandNames}.
+
+Return ONLY a JSON array (no markdown, no explanation). Each object must have:
+- brand: string (brand name)
+- name: string (item name, e.g. "Birkin 25 Togo Gold Hardware")
+- category: "Handbags" | "Watches" | "Jewelry" | "RTW" | "Accessories"
+- price: number (price in USD)
+- condition: string (e.g. "Excellent", "Very Good")
+- description: string or null
+- itemUrl: string or null
+
+If no notable items are found, return an empty array: []`;
+
+  const userPrompt = `Search for notable rare or investment-grade luxury items recently listed or available at ${location.name} in ${location.city}. Focus on Hermès Birkin/Kelly, Chanel Classic Flap, Rolex Submariner/Daytona, Patek Philippe Nautilus, Cartier Love/Juste un Clou, Van Cleef Alhambra, and other grail-tier items priced over $3,000. Check ${location.inventoryUrl} and related listings.`;
+
+  console.log(`Searching Grok for inventory at ${location.name}...`);
+  const raw = await grokEventSearch(systemPrompt, userPrompt);
+  if (!raw) return [];
 
   try {
-    // Note: In production, this would use Playwright for dynamic content
-    // For now, we simulate the API structure
-    const response = await fetch(location.newArrivalsUrl || location.inventoryUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; FlaneurBot/1.0)',
-      },
-    });
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return [];
 
-    if (!response.ok) {
-      console.error(`Failed to fetch ${location.name}: ${response.status}`);
-      return items;
-    }
+    const parsed = JSON.parse(jsonMatch[0]) as Array<{
+      brand: string;
+      name?: string;
+      category?: string;
+      price?: number;
+      condition?: string;
+      description?: string | null;
+      itemUrl?: string | null;
+    }>;
 
-    const html = await response.text();
+    const items: ArchiveItem[] = [];
 
-    // Parse product listings from HTML
-    // Look for patterns in TRR's product cards
-    const productPattern = /<div[^>]*class="[^"]*product-card[^"]*"[^>]*>([\s\S]*?)<\/div>/gi;
-    const pricePattern = /\$[\d,]+(?:\.\d{2})?/g;
-    const brandPattern = new RegExp(
-      Object.values(INVESTMENT_BRANDS).map((b) => b.pattern.source).join('|'),
-      'gi'
-    );
+    for (const p of parsed) {
+      if (!p.brand || !p.name || !p.price) continue;
 
-    let match;
-    while ((match = productPattern.exec(html)) !== null) {
-      const cardHtml = match[1];
+      // Validate against investment brands
+      const brandEntry = Object.entries(INVESTMENT_BRANDS).find(([, config]) =>
+        config.pattern.test(p.brand)
+      );
+      if (!brandEntry) continue;
 
-      // Extract price
-      const priceMatch = cardHtml.match(pricePattern);
-      if (!priceMatch) continue;
+      const [brandName, brandConfig] = brandEntry;
+      const price = p.price;
 
-      const price = parseFloat(priceMatch[0].replace(/[$,]/g, ''));
+      // Check minimum price threshold
       if (price < TROPHY_PRICE_THRESHOLD) continue;
 
-      // Extract brand
-      const brandMatch = cardHtml.match(brandPattern);
-      if (!brandMatch) continue;
-
-      // Find matching brand config
-      let brandName = '';
-      let brandTier: 'Grail' | 'Investment' | 'Collectible' = 'Collectible';
-      for (const [name, config] of Object.entries(INVESTMENT_BRANDS)) {
-        if (config.pattern.test(brandMatch[0])) {
-          brandName = name;
-          brandTier = config.tier;
-          break;
-        }
-      }
-
-      if (!brandName) continue;
-
-      // Extract item name (simplified)
-      const nameMatch = cardHtml.match(/<h\d[^>]*>([^<]+)<\/h\d>/i);
-      const itemName = nameMatch ? nameMatch[1].trim() : 'Luxury Item';
-
       // Check if it's a grail item
-      const isRare = GRAIL_ITEMS.some((pattern) => pattern.test(itemName));
-      const investmentGrade = brandTier === 'Grail' || (brandTier === 'Investment' && price >= GRAIL_PRICE_THRESHOLD) || isRare;
+      const isRare = GRAIL_ITEMS.some(pattern => pattern.test(p.name || ''));
+      const investmentGrade = brandConfig.tier === 'Grail' || (brandConfig.tier === 'Investment' && price >= GRAIL_PRICE_THRESHOLD) || isRare;
 
-      // Determine category
-      let category: LuxuryCategory = 'Accessories';
-      if (/bag|birkin|kelly|flap|speedy|neverfull/i.test(itemName)) {
-        category = 'Handbags';
-      } else if (/watch|rolex|patek|daytona|submariner/i.test(itemName)) {
-        category = 'Watches';
-      } else if (/ring|necklace|bracelet|earring|alhambra|love|juste/i.test(itemName)) {
-        category = 'Jewelry';
-      } else if (/dress|jacket|coat|suit/i.test(itemName)) {
-        category = 'RTW';
-      }
+      const validCategories: LuxuryCategory[] = ['Handbags', 'Watches', 'Jewelry', 'RTW', 'Accessories'];
+      const category = validCategories.includes(p.category as LuxuryCategory)
+        ? p.category as LuxuryCategory : 'Accessories';
 
       items.push({
-        id: `trr-${location.id}-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        id: `grok-${location.id}-${brandName.replace(/\W/g, '-').toLowerCase()}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         brand: brandName,
-        name: itemName,
+        name: p.name,
         category,
         price,
         currency: 'USD',
-        condition: 'Excellent', // TRR provides condition
-        itemUrl: location.inventoryUrl,
+        condition: p.condition || 'Good',
+        description: p.description || undefined,
+        itemUrl: p.itemUrl || location.inventoryUrl,
         storeLocation: location,
         dateAdded: new Date(),
         isRare,
         investmentGrade,
       });
     }
+
+    console.log(`Grok ${location.name}: Found ${items.length} investment-grade items`);
+    return items;
   } catch (error) {
-    console.error(`Error scraping ${location.name}:`, error);
-  }
-
-  return items;
-}
-
-/**
- * Scrape What Goes Around Comes Around
- */
-async function scrapeWGACA(location: StoreLocation): Promise<ArchiveItem[]> {
-  const items: ArchiveItem[] = [];
-
-  try {
-    const response = await fetch(location.newArrivalsUrl || location.inventoryUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; FlaneurBot/1.0)',
-      },
-    });
-
-    if (!response.ok) {
-      return items;
-    }
-
-    const html = await response.text();
-
-    // WGACA specializes in vintage Chanel and Hermès
-    const productPattern = /<article[^>]*class="[^"]*product[^"]*"[^>]*>([\s\S]*?)<\/article>/gi;
-    const pricePattern = /\$[\d,]+/g;
-
-    let match;
-    while ((match = productPattern.exec(html)) !== null) {
-      const cardHtml = match[1];
-
-      const priceMatch = cardHtml.match(pricePattern);
-      if (!priceMatch) continue;
-
-      const price = parseFloat(priceMatch[0].replace(/[$,]/g, ''));
-      if (price < TROPHY_PRICE_THRESHOLD) continue;
-
-      // WGACA focuses on specific brands
-      for (const [brandName, config] of Object.entries(INVESTMENT_BRANDS)) {
-        if (config.pattern.test(cardHtml)) {
-          const nameMatch = cardHtml.match(/title['"]\s*:\s*['"]([^'"]+)/i);
-          const itemName = nameMatch ? nameMatch[1] : `${brandName} Vintage Piece`;
-
-          const isRare = GRAIL_ITEMS.some((pattern) => pattern.test(itemName));
-
-          items.push({
-            id: `wgaca-${location.id}-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-            brand: brandName,
-            name: itemName,
-            category: 'Handbags',
-            price,
-            currency: 'USD',
-            condition: 'Vintage Excellent',
-            itemUrl: location.inventoryUrl,
-            storeLocation: location,
-            dateAdded: new Date(),
-            isRare,
-            investmentGrade: config.tier === 'Grail' || isRare,
-          });
-          break;
-        }
-      }
-    }
-  } catch (error) {
-    console.error(`Error scraping ${location.name}:`, error);
-  }
-
-  return items;
-}
-
-/**
- * Scrape Rebag
- */
-async function scrapeRebag(location: StoreLocation): Promise<ArchiveItem[]> {
-  const items: ArchiveItem[] = [];
-
-  try {
-    const response = await fetch(location.newArrivalsUrl || location.inventoryUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; FlaneurBot/1.0)',
-      },
-    });
-
-    if (!response.ok) {
-      return items;
-    }
-
-    const html = await response.text();
-
-    // Rebag has structured data
-    const productPattern = /<div[^>]*data-product[^>]*>([\s\S]*?)<\/div>/gi;
-    const pricePattern = /\$[\d,]+/g;
-
-    let match;
-    while ((match = productPattern.exec(html)) !== null) {
-      const cardHtml = match[1];
-
-      const priceMatch = cardHtml.match(pricePattern);
-      if (!priceMatch) continue;
-
-      const price = parseFloat(priceMatch[0].replace(/[$,]/g, ''));
-      if (price < TROPHY_PRICE_THRESHOLD) continue;
-
-      for (const [brandName, config] of Object.entries(INVESTMENT_BRANDS)) {
-        if (config.pattern.test(cardHtml)) {
-          const nameMatch = cardHtml.match(/<span[^>]*class="[^"]*name[^"]*"[^>]*>([^<]+)/i);
-          const itemName = nameMatch ? nameMatch[1] : `${brandName} Handbag`;
-
-          const isRare = GRAIL_ITEMS.some((pattern) => pattern.test(itemName));
-
-          items.push({
-            id: `rebag-${location.id}-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-            brand: brandName,
-            name: itemName,
-            category: 'Handbags',
-            price,
-            currency: 'USD',
-            condition: 'Excellent',
-            itemUrl: location.inventoryUrl,
-            storeLocation: location,
-            dateAdded: new Date(),
-            isRare,
-            investmentGrade: config.tier === 'Grail' || isRare,
-          });
-          break;
-        }
-      }
-    }
-  } catch (error) {
-    console.error(`Error scraping ${location.name}:`, error);
-  }
-
-  return items;
-}
-
-/**
- * Scrape Fashionphile
- */
-async function scrapeFashionphile(location: StoreLocation): Promise<ArchiveItem[]> {
-  const items: ArchiveItem[] = [];
-
-  try {
-    const response = await fetch(location.newArrivalsUrl || location.inventoryUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; FlaneurBot/1.0)',
-      },
-    });
-
-    if (!response.ok) {
-      return items;
-    }
-
-    const html = await response.text();
-
-    // Fashionphile product grid
-    const productPattern = /<li[^>]*class="[^"]*product-item[^"]*"[^>]*>([\s\S]*?)<\/li>/gi;
-    const pricePattern = /\$[\d,]+/g;
-
-    let match;
-    while ((match = productPattern.exec(html)) !== null) {
-      const cardHtml = match[1];
-
-      const priceMatch = cardHtml.match(pricePattern);
-      if (!priceMatch) continue;
-
-      const price = parseFloat(priceMatch[0].replace(/[$,]/g, ''));
-      if (price < TROPHY_PRICE_THRESHOLD) continue;
-
-      for (const [brandName, config] of Object.entries(INVESTMENT_BRANDS)) {
-        if (config.pattern.test(cardHtml)) {
-          const nameMatch = cardHtml.match(/product-name['"]\s*>([^<]+)/i);
-          const itemName = nameMatch ? nameMatch[1] : `${brandName} Item`;
-
-          const isRare = GRAIL_ITEMS.some((pattern) => pattern.test(itemName));
-
-          // Fashionphile has watch section
-          let category: LuxuryCategory = 'Handbags';
-          if (/watch|rolex|patek|omega/i.test(cardHtml)) {
-            category = 'Watches';
-          } else if (/jewelry|ring|necklace|bracelet/i.test(cardHtml)) {
-            category = 'Jewelry';
-          }
-
-          items.push({
-            id: `fp-${location.id}-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-            brand: brandName,
-            name: itemName,
-            category,
-            price,
-            currency: 'USD',
-            condition: 'Excellent',
-            itemUrl: location.inventoryUrl,
-            storeLocation: location,
-            dateAdded: new Date(),
-            isRare,
-            investmentGrade: config.tier === 'Grail' || isRare,
-          });
-          break;
-        }
-      }
-    }
-  } catch (error) {
-    console.error(`Error scraping ${location.name}:`, error);
-  }
-
-  return items;
-}
-
-/**
- * Scrape inventory for a specific store location
- */
-export async function scrapeStoreInventory(location: StoreLocation): Promise<ArchiveItem[]> {
-  switch (location.store) {
-    case 'TheRealReal':
-      return scrapeTheRealReal(location);
-    case 'WhatGoesAroundComesAround':
-      return scrapeWGACA(location);
-    case 'Rebag':
-      return scrapeRebag(location);
-    case 'Fashionphile':
-      return scrapeFashionphile(location);
-    default:
-      return [];
+    console.error(`Error parsing Grok response for ${location.name}:`, error);
+    return [];
   }
 }
 
