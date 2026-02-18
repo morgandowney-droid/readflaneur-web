@@ -122,7 +122,7 @@ function getNeighborhoodFromZip(
   )?.[0];
 
   if (!neighborhoodId) return null;
-  return { key: neighborhoodKey, id: neighborhoodId };
+  return { key: neighborhoodKey, id: `nyc-${neighborhoodId}` };
 }
 
 /**
@@ -399,21 +399,30 @@ export async function processLiquorLicenses(
 
   console.log(`${uniqueEvents.length} unique events after dedup`);
 
-  // Generate stories (limit to top 15 to manage API costs)
+  // Generate stories in batches of 5 to stay within function timeout
   const topEvents = uniqueEvents.slice(0, 15);
+  const BATCH_SIZE = 5;
 
-  for (const event of topEvents) {
-    try {
-      const story = await generateLiquorStory(event);
-      if (story) {
-        stories.push(story);
+  for (let i = 0; i < topEvents.length; i += BATCH_SIZE) {
+    const batch = topEvents.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.allSettled(
+      batch.map((event) => generateLiquorStory(event))
+    );
+
+    for (let j = 0; j < batchResults.length; j++) {
+      const result = batchResults[j];
+      if (result.status === 'fulfilled' && result.value) {
+        stories.push(result.value);
+      } else if (result.status === 'rejected') {
+        errors.push(
+          `${batch[j].businessName}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`
+        );
       }
-      // Rate limiting
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    } catch (err) {
-      errors.push(
-        `${event.businessName}: ${err instanceof Error ? err.message : String(err)}`
-      );
+    }
+
+    // Brief pause between batches
+    if (i + BATCH_SIZE < topEvents.length) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
     }
   }
 

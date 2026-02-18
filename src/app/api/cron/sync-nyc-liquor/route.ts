@@ -112,15 +112,18 @@ export async function GET(request: Request) {
           .single();
 
         if (!neighborhood) {
-          const shortId = story.neighborhoodId.replace(/^nyc-/, '');
-          const { data: shortNeighborhood } = await supabase
+          // Try without nyc- prefix, or with it if missing
+          const altId = story.neighborhoodId.startsWith('nyc-')
+            ? story.neighborhoodId.replace(/^nyc-/, '')
+            : `nyc-${story.neighborhoodId}`;
+          const { data: altNeighborhood } = await supabase
             .from('neighborhoods')
             .select('id')
-            .eq('id', shortId)
+            .eq('id', altId)
             .single();
 
-          if (shortNeighborhood) {
-            finalNeighborhoodId = shortId;
+          if (altNeighborhood) {
+            finalNeighborhoodId = altId;
           } else {
             results.errors.push(`${story.businessName}: Neighborhood ${story.neighborhoodId} not found`);
             continue;
