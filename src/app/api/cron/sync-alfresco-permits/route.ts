@@ -152,6 +152,7 @@ export async function GET(request: Request) {
             ai_model: 'gemini-2.5-flash',
             ai_prompt: `Al Fresco Alert: ${event.restaurantName} (${event.seatingType})`,
             category_label: 'Al Fresco',
+            editor_notes: 'Source: NYC Open Restaurants - https://data.cityofnewyork.us/Transportation/Open-Restaurant-Applications/pitm-atqc',
             enriched_at: new Date().toISOString(),
             enrichment_model: 'gemini-2.5-flash',
           });

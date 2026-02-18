@@ -29,36 +29,36 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated, headlin
 
   const verifyLink = verifyUrl ? (
     <span className="block mt-1.5 text-xs text-fg-muted">
-      Single-source story -{' '}
+      Single-source story - verify{' '}
       <a
         href={verifyUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all"
       >
-        verify on Google
+        here
       </a>
     </span>
   ) : null;
 
-  // If no specific sources, try to extract from editor_notes (RSS source fallback)
+  // If no specific sources, try to extract from editor_notes (RSS or government source)
   if (!sources || sources.length === 0) {
-    const rssSource = parseEditorNotesSource(editorNotes);
-    if (rssSource) {
+    const parsedSource = parseEditorNotesSource(editorNotes);
+    if (parsedSource) {
+      // Government/authoritative source - link directly, no verify needed
       return (
         <div className="mt-8 pt-6 border-t border-border">
           <p className="text-xs text-fg-muted">
             <span className="italic">Source: </span>
             <a
-              href={rssSource.url}
+              href={parsedSource.url}
               target="_blank"
               rel="noopener noreferrer"
               className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all"
             >
-              {rssSource.name}
+              {parsedSource.name}
             </a>
           </p>
-          {verifyLink}
         </div>
       );
     }

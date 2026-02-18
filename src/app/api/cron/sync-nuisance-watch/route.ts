@@ -227,6 +227,7 @@ export async function GET(request: Request) {
           ai_model: 'gemini-2.5-flash',
           ai_prompt: `Nuisance Watch: ${story.category} at ${story.displayLocation}`,
           category_label: categoryLabel,
+          editor_notes: 'Source: NYC 311 Open Data - https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9',
           enriched_at: new Date().toISOString(),
           enrichment_model: 'gemini-2.5-flash',
         });

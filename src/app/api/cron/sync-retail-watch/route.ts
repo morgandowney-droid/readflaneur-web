@@ -188,6 +188,7 @@ export async function GET(request: Request) {
           ai_model: 'gemini-2.5-flash',
           ai_prompt: `Retail Watch: ${story.brandName} at ${story.address}`,
           category_label: categoryLabel,
+          editor_notes: 'Source: NYC DOB Signage Permits - https://data.cityofnewyork.us/Housing-Development/DOB-Permit-Issuance/ipu4-2q9a',
           enriched_at: new Date().toISOString(),
           enrichment_model: 'gemini-2.5-flash',
         });

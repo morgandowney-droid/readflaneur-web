@@ -209,6 +209,7 @@ export async function GET(request: Request) {
             ai_model: 'gemini-2.5-flash',
             ai_prompt: `NIMBY Alert: ${story.alert.board.name} - ${story.alert.meeting.meetingType} (${story.alert.meeting.meetingDate.toLocaleDateString()})`,
             category_label: story.categoryLabel,
+            editor_notes: `Source: ${story.alert.board.name} - ${story.alert.meeting.agendaUrl || story.alert.board.agendaUrl}`,
             enriched_at: new Date().toISOString(),
             enrichment_model: 'gemini-2.5-flash',
           });
