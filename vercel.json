@@ -222,7 +222,7 @@
     },
     {
       "path": "/api/cron/refresh-image-library",
-      "schedule": "0 */4 * * *"
+      "schedule": "5 * * * *"
     }
   ]
 }

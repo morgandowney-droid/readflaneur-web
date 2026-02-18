@@ -67,8 +67,7 @@ async function searchUnsplash(
 
   if (!res.ok) {
     if (res.status === 403 || res.status === 429) {
-      console.error(`[unsplash] Rate limited: ${res.status}`);
-      return [];
+      throw new Error(`Rate limited: ${res.status}`);
     }
     console.error(`[unsplash] Search failed: ${res.status} ${res.statusText}`);
     return [];
