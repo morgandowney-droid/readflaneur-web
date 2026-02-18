@@ -1,23 +1,436 @@
 /**
- * NYC Liquor License Fetcher
+ * NYC Liquor License Watch Service
  *
- * Fetches liquor licenses from NY State Open Data (SLA Licenses)
- * API: https://data.ny.gov/resource/wg8y-fzsj.json (SODA API)
+ * Fetches liquor license data from NY State Open Data (public datasets)
+ * and generates "Last Call" stories for Flâneur residents.
+ *
+ * Data sources:
+ * - Pending licenses (f8i8-k2gm): New applications — most newsworthy
+ * - Active licenses (9s3h-dpkz): Recently granted — confirmed openings
  *
  * Filtered to NYC zip codes within Flâneur coverage areas.
  */
 
+import { GoogleGenAI } from '@google/genai';
 import {
   ALL_TARGET_ZIPS,
   getNeighborhoodKeyFromZip,
   NEIGHBORHOOD_ID_TO_CONFIG,
 } from '@/config/nyc-locations';
+import {
+  LinkCandidate,
+  injectHyperlinks,
+  validateLinkCandidates,
+} from './hyperlink-injector';
+import { AI_MODELS } from '@/config/ai-models';
 
-// NY State Open Data endpoint for SLA Liquor Authority licenses
-const NY_LIQUOR_API = 'https://data.ny.gov/resource/wg8y-fzsj.json';
+// NY State Open Data endpoints (public, no auth required)
+const NY_PENDING_LICENSES_API = 'https://data.ny.gov/resource/f8i8-k2gm.json';
+const NY_ACTIVE_LICENSES_API = 'https://data.ny.gov/resource/9s3h-dpkz.json';
 
-// App token for higher rate limits (optional)
-const NY_OPEN_DATA_APP_TOKEN = process.env.NY_OPEN_DATA_APP_TOKEN;
+// NYC counties for filtering
+const NYC_COUNTIES = ['New York', 'NEW YORK', 'Kings', 'KINGS', 'Queens', 'QUEENS', 'Bronx', 'BRONX', 'Richmond', 'RICHMOND'];
+
+// Newsworthy license categories (skip grocery, manufacturer, wholesaler)
+const NEWSWORTHY_DESCRIPTIONS = [
+  'restaurant',
+  'hotel',
+  'club',
+  'tavern',
+  'bar',
+  'food & beverage',
+  'catering',
+  'on-premises',
+  'on premises',
+];
+
+// Categories to skip
+const SKIP_DESCRIPTIONS = [
+  'grocery',
+  'drug store',
+  'manufacturer',
+  'wholesaler',
+  'farm',
+  'importer',
+  'warehouse',
+  'rectifier',
+  'cider',
+  'winery',
+  'distiller',
+  'brewer',
+  'bottler',
+];
+
+/**
+ * Liquor license event for story generation
+ */
+export interface LiquorLicenseEvent {
+  applicationId: string;
+  businessName: string;
+  legalName: string;
+  description: string;
+  address: string;
+  neighborhood: string;
+  neighborhoodId: string;
+  zipCode: string;
+  status: 'pending' | 'approved' | 'new';
+  receivedDate?: string;
+  effectiveDate?: string;
+  isPending: boolean;
+}
+
+/**
+ * Generated liquor license story
+ */
+export interface LiquorStory {
+  applicationId: string;
+  neighborhoodId: string;
+  headline: string;
+  body: string;
+  previewText: string;
+  businessName: string;
+  address: string;
+  description: string;
+  status: string;
+  generatedAt: string;
+}
+
+/**
+ * Check if a license description is newsworthy
+ */
+function isNewsworthy(description: string): boolean {
+  const lower = description.toLowerCase();
+  if (SKIP_DESCRIPTIONS.some((skip) => lower.includes(skip))) return false;
+  if (NEWSWORTHY_DESCRIPTIONS.some((nw) => lower.includes(nw))) return true;
+  // Also include liquor stores as they're interesting for neighborhoods
+  if (lower.includes('liquor store')) return true;
+  return false;
+}
+
+/**
+ * Get neighborhood info from zip code
+ */
+function getNeighborhoodFromZip(
+  zipCode: string,
+  address: string
+): { key: string; id: string } | null {
+  const neighborhoodKey = getNeighborhoodKeyFromZip(zipCode, address);
+  if (!neighborhoodKey) return null;
+
+  const neighborhoodId = Object.entries(NEIGHBORHOOD_ID_TO_CONFIG).find(
+    ([, configKey]) => configKey === neighborhoodKey
+  )?.[0];
+
+  if (!neighborhoodId) return null;
+  return { key: neighborhoodKey, id: neighborhoodId };
+}
+
+/**
+ * Fetch pending liquor license applications from NY State Open Data
+ */
+export async function fetchPendingLicenses(
+  daysBack: number = 90
+): Promise<LiquorLicenseEvent[]> {
+  const events: LiquorLicenseEvent[] = [];
+
+  try {
+    const zipFilter = ALL_TARGET_ZIPS.map((z) => `'${z}'`).join(',');
+    const sinceDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
+    const sinceDateStr = sinceDate.toISOString().split('T')[0];
+
+    const whereClause = `zip_code IN (${zipFilter}) AND received_date >= '${sinceDateStr}'`;
+
+    const params = new URLSearchParams({
+      $where: whereClause,
+      $order: 'received_date DESC',
+      $limit: '200',
+    });
+
+    const response = await fetch(`${NY_PENDING_LICENSES_API}?${params}`, {
+      headers: { Accept: 'application/json' },
+    });
+
+    if (!response.ok) {
+      console.error(`Pending licenses API error: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    console.log(`Fetched ${data.length} pending license records`);
+
+    for (const record of data) {
+      const description = record.description || '';
+      if (!isNewsworthy(description)) continue;
+
+      const zipCode = record.zip_code || '';
+      const address = record.actual_address_of_premises || '';
+      const neighborhoodInfo = getNeighborhoodFromZip(zipCode, address);
+      if (!neighborhoodInfo) continue;
+
+      // Filter to NYC counties
+      const county = record.premises_county || '';
+      if (!NYC_COUNTIES.some((c) => c.toLowerCase() === county.toLowerCase())) continue;
+
+      const businessName = record.dba || record.legalname || 'Unknown';
+
+      events.push({
+        applicationId: record.application_id || `pending-${Date.now()}`,
+        businessName,
+        legalName: record.legalname || '',
+        description,
+        address: address.trim(),
+        neighborhood: neighborhoodInfo.key,
+        neighborhoodId: neighborhoodInfo.id,
+        zipCode,
+        status: 'pending',
+        receivedDate: record.received_date,
+        isPending: true,
+      });
+    }
+  } catch (error) {
+    console.error('Pending licenses fetch error:', error);
+  }
+
+  return events;
+}
+
+/**
+ * Fetch recently granted active liquor licenses from NY State Open Data
+ */
+export async function fetchNewActiveLicenses(
+  daysBack: number = 60
+): Promise<LiquorLicenseEvent[]> {
+  const events: LiquorLicenseEvent[] = [];
+
+  try {
+    const zipFilter = ALL_TARGET_ZIPS.map((z) => `'${z}'`).join(',');
+    const sinceDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
+    const sinceDateStr = sinceDate.toISOString().split('T')[0];
+
+    const whereClause = `zipcode IN (${zipFilter}) AND originalissuedate >= '${sinceDateStr}'`;
+
+    const params = new URLSearchParams({
+      $where: whereClause,
+      $order: 'originalissuedate DESC',
+      $limit: '200',
+    });
+
+    const response = await fetch(`${NY_ACTIVE_LICENSES_API}?${params}`, {
+      headers: { Accept: 'application/json' },
+    });
+
+    if (!response.ok) {
+      console.error(`Active licenses API error: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    console.log(`Fetched ${data.length} new active license records`);
+
+    for (const record of data) {
+      const description = record.description || '';
+      if (!isNewsworthy(description)) continue;
+
+      const zipCode = record.zipcode || '';
+      const address = record.actualaddressofpremises || '';
+      const neighborhoodInfo = getNeighborhoodFromZip(zipCode, address);
+      if (!neighborhoodInfo) continue;
+
+      // Filter to NYC counties
+      const county = record.premisescounty || '';
+      if (!NYC_COUNTIES.some((c) => c.toLowerCase() === county.toLowerCase())) continue;
+
+      const businessName = record.dba || record.legalname || 'Unknown';
+
+      events.push({
+        applicationId: record.licensepermitid || record.legacyserialnumber || `active-${Date.now()}`,
+        businessName,
+        legalName: record.legalname || '',
+        description,
+        address: address.trim(),
+        neighborhood: neighborhoodInfo.key,
+        neighborhoodId: neighborhoodInfo.id,
+        zipCode,
+        status: 'new',
+        effectiveDate: record.effectivedate,
+        receivedDate: record.originalissuedate,
+        isPending: false,
+      });
+    }
+  } catch (error) {
+    console.error('Active licenses fetch error:', error);
+  }
+
+  return events;
+}
+
+/**
+ * Generate a "Last Call" story for a liquor license event using Gemini
+ */
+export async function generateLiquorStory(
+  event: LiquorLicenseEvent
+): Promise<LiquorStory | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error('GEMINI_API_KEY not configured');
+    return null;
+  }
+
+  const genAI = new GoogleGenAI({ apiKey });
+
+  const statusText = event.isPending
+    ? 'has filed a new liquor license application'
+    : 'has been granted a liquor license';
+
+  const toneGuidance = event.isPending
+    ? 'This is a pending application — create anticipation but note it is not yet confirmed.'
+    : 'This license has been approved — the opening is confirmed.';
+
+  const systemPrompt = `You are the Flâneur Editor writing a "Last Call" alert for ${event.neighborhood} residents.
+
+Writing Style:
+- Insider tone, useful for locals
+- Reference specific streets
+- Brief and scannable
+- No emojis
+- Focus on what this means for the neighborhood`;
+
+  const prompt = `Data:
+- Business: ${event.businessName}
+- Legal Name: ${event.legalName}
+- Type: ${event.description}
+- Address: ${event.address}
+- Neighborhood: ${event.neighborhood}
+- Status: ${event.isPending ? 'Pending application' : 'Newly granted'}
+${event.receivedDate ? `- Date: ${new Date(event.receivedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}
+
+${toneGuidance}
+
+Task: Write a 35-50 word blurb about this ${event.description.toLowerCase()} ${statusText} at ${event.address}.
+
+Return JSON:
+{
+  "headline": "Headline under 60 chars mentioning business and street",
+  "body": "35-50 word alert about the license filing",
+  "previewText": "One sentence teaser for feed",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
+}
+
+Include 1-2 link candidates for key entities mentioned in the body (business name, street).`;
+
+  try {
+    const response = await genAI.models.generateContent({
+      model: AI_MODELS.GEMINI_FLASH,
+      contents: `${systemPrompt}\n\n${prompt}`,
+      config: { temperature: 0.7 },
+    });
+
+    const rawText = response.text || '';
+
+    const jsonMatch = rawText.match(/\{[\s\S]*"headline"[\s\S]*"body"[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error('Failed to extract JSON from Gemini response for liquor story');
+      return null;
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+
+    let body = parsed.body || `${event.businessName} ${statusText} at ${event.address}.`;
+    if (linkCandidates.length > 0) {
+      body = injectHyperlinks(body, linkCandidates, { name: event.neighborhood, city: 'New York' });
+    }
+
+    return {
+      applicationId: event.applicationId,
+      neighborhoodId: event.neighborhoodId,
+      headline: parsed.headline || `${event.businessName} files for liquor license at ${event.address}`,
+      body,
+      previewText: parsed.previewText || `${event.businessName} is coming to ${event.neighborhood}.`,
+      businessName: event.businessName,
+      address: event.address,
+      description: event.description,
+      status: event.isPending ? 'pending' : 'approved',
+      generatedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error('Liquor story generation error:', error);
+    return null;
+  }
+}
+
+/**
+ * Full pipeline: fetch pending + active, generate stories
+ */
+export async function processLiquorLicenses(
+  daysBack: number = 90
+): Promise<{
+  pendingFetched: number;
+  activeFetched: number;
+  storiesGenerated: number;
+  stories: LiquorStory[];
+  errors: string[];
+}> {
+  const errors: string[] = [];
+  const stories: LiquorStory[] = [];
+
+  // Fetch from both datasets
+  const [pendingEvents, activeEvents] = await Promise.all([
+    fetchPendingLicenses(daysBack),
+    fetchNewActiveLicenses(daysBack),
+  ]);
+
+  console.log(`Liquor watch: ${pendingEvents.length} pending, ${activeEvents.length} new active`);
+
+  // Combine, prioritizing pending (more newsworthy) then active
+  const allEvents = [...pendingEvents, ...activeEvents];
+
+  // Deduplicate by business name + address (same venue may appear in both datasets)
+  const seen = new Set<string>();
+  const uniqueEvents = allEvents.filter((e) => {
+    const key = `${e.businessName.toLowerCase()}-${e.address.toLowerCase()}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  console.log(`${uniqueEvents.length} unique events after dedup`);
+
+  // Generate stories (limit to top 15 to manage API costs)
+  const topEvents = uniqueEvents.slice(0, 15);
+
+  for (const event of topEvents) {
+    try {
+      const story = await generateLiquorStory(event);
+      if (story) {
+        stories.push(story);
+      }
+      // Rate limiting
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    } catch (err) {
+      errors.push(
+        `${event.businessName}: ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
+  }
+
+  return {
+    pendingFetched: pendingEvents.length,
+    activeFetched: activeEvents.length,
+    storiesGenerated: stories.length,
+    stories,
+    errors,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Backward-compatible exports for nyc-content-generator.ts
+// and generate-nyc-weekly-digest/route.ts which read from the
+// nyc_liquor_licenses staging table.
+// ─────────────────────────────────────────────────────────────
 
 export interface LiquorLicense {
   serial_number: string;
@@ -30,264 +443,32 @@ export interface LiquorLicense {
   address: string;
   city: string;
   county: string;
-  /** Assigned Flâneur neighborhood key */
   flaneur_neighborhood: string | null;
-  /** Flâneur neighborhood ID (URL slug) */
   neighborhood_id: string | null;
-  /** Raw data from API */
   raw_data: Record<string, unknown>;
 }
 
-interface SLALicenseResponse {
-  serial_number: string;
-  license_type_name: string;
-  license_type_code: string;
-  license_class_code: string;
-  license_class_name: string;
-  license_certificate_number?: string;
-  agency_zone_office?: string;
-  county_name: string;
-  premises_name: string;
-  doing_business_as_dba?: string;
-  actual_address_of_premises_address1: string;
-  actual_address_of_premises_address2?: string;
-  actual_address_of_premises_city: string;
-  actual_address_of_premises_state: string;
-  actual_address_of_premises_zip_code: string;
-  license_original_issue_date?: string;
-  license_effective_date: string;
-  license_expiration_date: string;
-  method_of_operation?: string;
-  principal_name?: string;
-  geographic_code?: string;
-}
-
-/**
- * Build SODA query for NY liquor licenses
- */
-function buildLiquorQuery(since?: Date, limit = 1000): string {
-  const params = new URLSearchParams();
-
-  // Filter by our target zip codes (NYC only)
-  const zipFilter = ALL_TARGET_ZIPS.map((z) => `'${z}'`).join(',');
-
-  // Also filter to NYC counties for extra assurance
-  const nycCounties = ['NEW YORK', 'KINGS', 'QUEENS', 'BRONX', 'RICHMOND'];
-  const countyFilter = nycCounties.map((c) => `'${c}'`).join(',');
-
-  let whereClause = `actual_address_of_premises_zip_code IN (${zipFilter})`;
-  whereClause += ` AND county_name IN (${countyFilter})`;
-
-  // Add date filter if provided
-  if (since) {
-    const sinceStr = since.toISOString().split('T')[0];
-    whereClause += ` AND license_effective_date >= '${sinceStr}'`;
-  }
-
-  params.set('$where', whereClause);
-  params.set('$order', 'license_effective_date DESC');
-  params.set('$limit', limit.toString());
-
-  // Add app token if available
-  if (NY_OPEN_DATA_APP_TOKEN) {
-    params.set('$$app_token', NY_OPEN_DATA_APP_TOKEN);
-  }
-
-  return params.toString();
-}
-
-/**
- * Map API response to our LiquorLicense interface
- */
-function mapLicenseResponse(record: SLALicenseResponse): LiquorLicense {
-  const address = [
-    record.actual_address_of_premises_address1,
-    record.actual_address_of_premises_address2,
-  ]
-    .filter(Boolean)
-    .join(', ');
-
-  const zipCode = record.actual_address_of_premises_zip_code || '';
-  const neighborhoodKey = getNeighborhoodKeyFromZip(zipCode, address);
-
-  // Convert neighborhood key to ID (URL slug)
-  let neighborhoodId: string | null = null;
-  if (neighborhoodKey) {
-    for (const [id, key] of Object.entries(NEIGHBORHOOD_ID_TO_CONFIG)) {
-      if (key === neighborhoodKey) {
-        neighborhoodId = id;
-        break;
-      }
-    }
-  }
-
-  return {
-    serial_number: record.serial_number || '',
-    license_type: record.license_type_name || '',
-    license_type_code: record.license_type_code || '',
-    premises_name: record.doing_business_as_dba || record.premises_name || '',
-    effective_date: record.license_effective_date || '',
-    expiration_date: record.license_expiration_date || '',
-    zip_code: zipCode,
-    address,
-    city: record.actual_address_of_premises_city || '',
-    county: record.county_name || '',
-    flaneur_neighborhood: neighborhoodKey,
-    neighborhood_id: neighborhoodId,
-    raw_data: record as unknown as Record<string, unknown>,
-  };
-}
-
-/**
- * Fetch NY State liquor licenses from Open Data API
- *
- * @param since - Only fetch licenses effective after this date
- * @param limit - Maximum number of records to fetch (default 1000)
- */
-export async function fetchLiquorLicenses(
-  since?: Date,
-  limit = 1000
-): Promise<LiquorLicense[]> {
-  const query = buildLiquorQuery(since, limit);
-  const url = `${NY_LIQUOR_API}?${query}`;
-
-  console.log(`Fetching liquor licenses from: ${url.substring(0, 100)}...`);
-
-  try {
-    const response = await fetch(url, {
-      headers: {
-        Accept: 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `NY Open Data API error: ${response.status} - ${errorText.substring(0, 200)}`
-      );
-    }
-
-    const data: SLALicenseResponse[] = await response.json();
-    console.log(`Fetched ${data.length} liquor license records`);
-
-    // Map and filter to our target neighborhoods
-    const licenses = data
-      .map(mapLicenseResponse)
-      .filter((l) => l.flaneur_neighborhood !== null);
-
-    console.log(`${licenses.length} licenses matched to Flâneur neighborhoods`);
-
-    return licenses;
-  } catch (error) {
-    console.error('Failed to fetch liquor licenses:', error);
-    throw error;
-  }
-}
-
-/**
- * Get licenses for a specific neighborhood
- */
-export async function fetchLicensesForNeighborhood(
-  neighborhoodId: string,
-  since?: Date,
-  limit = 100
-): Promise<LiquorLicense[]> {
-  const allLicenses = await fetchLiquorLicenses(since, limit * 3);
-  return allLicenses.filter((l) => l.neighborhood_id === neighborhoodId);
-}
-
-/**
- * Categorize license by type for content generation
- */
 export function categorizeLicense(license: LiquorLicense): string {
   const type = license.license_type.toLowerCase();
-  const code = license.license_type_code.toUpperCase();
-
-  // On-premises licenses (restaurants, bars)
-  if (code === 'OP' || type.includes('on-premises') || type.includes('on premises')) {
-    return 'restaurant_bar';
-  }
-
-  // Wine & beer (typically restaurants)
-  if (code === 'WB' || type.includes('wine') || type.includes('beer')) {
-    return 'wine_beer';
-  }
-
-  // Club licenses
-  if (code === 'CL' || type.includes('club')) {
-    return 'club';
-  }
-
-  // Hotel licenses
-  if (code === 'HL' || type.includes('hotel')) {
-    return 'hotel';
-  }
-
-  // Retail/package store
-  if (
-    code === 'L' ||
-    code === 'RL' ||
-    type.includes('liquor store') ||
-    type.includes('package')
-  ) {
-    return 'retail';
-  }
-
-  // Grocery/wine store
-  if (code === 'A' || code === 'AX' || type.includes('grocery')) {
-    return 'grocery';
-  }
-
-  // Manufacturer/wholesaler
-  if (
-    type.includes('manufacturer') ||
-    type.includes('wholesaler') ||
-    type.includes('farm')
-  ) {
-    return 'manufacturer';
-  }
-
+  if (type.includes('restaurant') || type.includes('on-premises') || type.includes('on premises')) return 'restaurant_bar';
+  if (type.includes('wine') || type.includes('beer')) return 'wine_beer';
+  if (type.includes('club')) return 'club';
+  if (type.includes('hotel')) return 'hotel';
+  if (type.includes('liquor store') || type.includes('package')) return 'retail';
+  if (type.includes('grocery')) return 'grocery';
+  if (type.includes('manufacturer') || type.includes('wholesaler') || type.includes('farm')) return 'manufacturer';
   return 'other';
 }
 
-/**
- * Get notable licenses worth mentioning in content
- * Filters for interesting license types (new restaurants, bars, etc.)
- */
-export function filterNotableLicenses(licenses: LiquorLicense[]): LiquorLicense[] {
-  const notableCategories = ['restaurant_bar', 'wine_beer', 'club', 'hotel'];
-
-  return licenses.filter((l) => {
-    const category = categorizeLicense(l);
-    return notableCategories.includes(category);
-  });
-}
-
-/**
- * Check if a license is new (recently issued vs renewal)
- * New licenses are more newsworthy than renewals
- */
 export function isNewLicense(license: LiquorLicense): boolean {
-  // Check raw data for original issue date
-  const raw = license.raw_data as unknown as SLALicenseResponse;
-
-  if (raw.license_original_issue_date) {
-    // If original issue date equals effective date, it's a new license
-    const original = new Date(raw.license_original_issue_date);
+  const raw = license.raw_data as Record<string, string>;
+  if (raw.license_original_issue_date || raw.originalissuedate) {
+    const original = new Date(raw.license_original_issue_date || raw.originalissuedate);
     const effective = new Date(license.effective_date);
-
-    // Within 90 days = new license
-    const daysDiff = Math.abs(
-      (effective.getTime() - original.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    const daysDiff = Math.abs((effective.getTime() - original.getTime()) / (1000 * 60 * 60 * 24));
     return daysDiff < 90;
   }
-
-  // If no original date, assume it's new if effective date is recent
   const effective = new Date(license.effective_date);
-  const now = new Date();
-  const daysSinceEffective =
-    (now.getTime() - effective.getTime()) / (1000 * 60 * 60 * 24);
-
-  return daysSinceEffective < 90;
+  const daysSince = (Date.now() - effective.getTime()) / (1000 * 60 * 60 * 24);
+  return daysSince < 90;
 }

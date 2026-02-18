@@ -48,7 +48,8 @@ export type CronImageCategory =
   | 'museum-watch'
   | 'overture-alert'
   | 'design-week'
-  | 'sunday-edition';
+  | 'sunday-edition'
+  | 'liquor-watch';
 
 interface CategoryConfig {
   prompt: string;
@@ -210,6 +211,12 @@ export const CRON_IMAGE_CATEGORIES: Record<CronImageCategory, CategoryConfig> = 
       'Elegant Sunday morning still life: broadsheet newspaper folded on marble cafe table, espresso cup and saucer, croissant on plate, morning light streaming through cafe window. Warm golden tones, editorial lifestyle photography. No text, logos, or people.',
     fallbackColor: '#1a1a1a',
     label: 'THE SUNDAY EDITION',
+  },
+  'liquor-watch': {
+    prompt:
+      'Moody cocktail bar interior at golden hour: polished brass fixtures, amber bottles on backlit shelves, marble bartop with single craft cocktail. Warm amber tones, editorial hospitality photography. No text, logos, or people.',
+    fallbackColor: '#78350f',
+    label: 'LAST CALL',
   },
 };
 
