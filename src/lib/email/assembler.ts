@@ -469,6 +469,12 @@ function cleanHeadline(headline: string, neighborhoodName: string): string {
   // Also handle abbreviated neighborhood names (e.g., "Bev Hills DAILY BRIEF:")
   // by stripping any "... DAILY BRIEF:" prefix
   cleaned = cleaned.replace(/^[^:]*DAILY\s+BRIEF\s*:\s*/i, '');
+  // Strip "Name LOOK AHEAD:" prefix (metadata already shows "Look Ahead")
+  cleaned = cleaned.replace(
+    new RegExp(`^${escapeRegex(neighborhoodName)}\\s+LOOK\\s+AHEAD\\s*:\\s*`, 'i'),
+    ''
+  );
+  cleaned = cleaned.replace(/^[^:]*LOOK\s+AHEAD\s*:\s*/i, '');
   // Strip bare neighborhood name prefix if headline starts with it
   // e.g., "West Village Vibes: Thai Gems..." → "Vibes: Thai Gems..."
   // e.g., "Nantucket Buzz: Reopenings..." → "Buzz: Reopenings..."

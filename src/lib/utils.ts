@@ -65,12 +65,15 @@ export function categoryLabelToSlug(label: string): string {
 }
 
 /**
- * Strip redundant "Neighborhood DAILY BRIEF:" prefix from article headlines
+ * Strip redundant "Neighborhood DAILY BRIEF:" or "Neighborhood LOOK AHEAD:" prefix from article headlines
  * e.g., "Östermalm DAILY BRIEF: Hockey Puck Drop" → "Hockey Puck Drop"
+ * e.g., "Sweden LOOK AHEAD: Gothenburg Horse Show" → "Gothenburg Horse Show"
  */
 export function cleanArticleHeadline(headline: string): string {
   // Strip patterns like "Neighborhood DAILY BRIEF:" or "Neighborhood Daily Brief:"
   let cleaned = headline.replace(/^[^:]*DAILY\s+BRIEF\s*:\s*/i, '');
+  // Strip patterns like "Neighborhood LOOK AHEAD:" or "Neighborhood Look Ahead:"
+  cleaned = cleaned.replace(/^[^:]*LOOK\s+AHEAD\s*:\s*/i, '');
   return cleaned || headline;
 }
 
