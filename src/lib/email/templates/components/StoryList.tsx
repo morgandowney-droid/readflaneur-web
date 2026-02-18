@@ -92,20 +92,12 @@ const headlinePrimary = {
   fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
 };
 
-const previewClamp = {
-  overflow: 'hidden' as const,
-  display: '-webkit-box',
-  WebkitLineClamp: 2,
-  WebkitBoxOrient: 'vertical' as const,
-};
-
 const preview = {
   fontSize: '15px',
   color: '#555555',
   lineHeight: '1.6',
   margin: '0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
-  ...previewClamp,
 };
 
 const previewPrimary = {
@@ -114,7 +106,6 @@ const previewPrimary = {
   lineHeight: '1.6',
   margin: '0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
-  ...previewClamp,
 };
 
 const locationTag = {

@@ -83,8 +83,4 @@ const preview = {
   lineHeight: '1.6',
   margin: '4px 0 0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
-  overflow: 'hidden' as const,
-  display: '-webkit-box',
-  WebkitLineClamp: 2,
-  WebkitBoxOrient: 'vertical' as const,
 };
