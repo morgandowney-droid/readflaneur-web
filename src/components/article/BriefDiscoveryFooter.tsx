@@ -16,13 +16,15 @@ interface BriefDiscoveryFooterProps {
   citySlug: string;
   neighborhoodSlug: string;
   publishedAt?: string;
-  /** 'daily' = Daily Brief article (default), 'sunday' = Sunday Edition article */
-  variant?: 'daily' | 'sunday';
+  /** 'daily' = Daily Brief article (default), 'sunday' = Sunday Edition article, 'look_ahead' = Look Ahead article */
+  variant?: 'daily' | 'sunday' | 'look_ahead';
 }
 
 /**
  * Unified discovery + engagement section at the bottom of brief articles.
  * Daily variant: yesterday's brief, add to neighborhoods, nearby brief,
+ * "take me somewhere new", and inline email capture.
+ * Look Ahead variant: today's daily brief, add to neighborhoods, nearby brief,
  * "take me somewhere new", and inline email capture.
  * Sunday variant: today's daily brief, nearby brief, "take me somewhere new".
  */
@@ -87,7 +89,7 @@ export function BriefDiscoveryFooter({
 
       // Fetch a related daily brief for this neighborhood
       // Daily variant: yesterday's brief (before this article's date)
-      // Sunday variant: today's/most recent daily brief (no beforeDate constraint)
+      // Look Ahead / Sunday variant: today's/most recent daily brief (no beforeDate constraint)
       const briefParams = new URLSearchParams({ neighborhoodId });
       if (variant === 'daily' && publishedAt) {
         briefParams.set('beforeDate', publishedAt);
@@ -150,7 +152,7 @@ export function BriefDiscoveryFooter({
   const hasDiscovery = yesterdayUrl || lookAheadUrl || nearbyDiscovery || randomDiscovery;
   const hasAnything = variant === 'sunday'
     ? hasDiscovery
-    : hasDiscovery || !isSubscribed || showEmailCapture;
+    : hasDiscovery || !isSubscribed || showEmailCapture; // daily + look_ahead show add + email
   if (!hasAnything) return null;
 
   return (
@@ -165,15 +167,15 @@ export function BriefDiscoveryFooter({
             href={yesterdayUrl}
             className="block text-sm text-fg-muted hover:text-accent transition-colors"
           >
-            {variant === 'sunday'
-              ? <>Read today&apos;s <span className="font-semibold text-fg">{neighborhoodName}</span> Daily Brief &rsaquo;</>
-              : <>Read yesterday&apos;s <span className="font-semibold text-fg">{neighborhoodName}</span> Daily Brief &rsaquo;</>
+            {variant === 'daily'
+              ? <>Read yesterday&apos;s <span className="font-semibold text-fg">{neighborhoodName}</span> Daily Brief &rsaquo;</>
+              : <>Read today&apos;s <span className="font-semibold text-fg">{neighborhoodName}</span> Daily Brief &rsaquo;</>
             }
           </Link>
         )}
 
-        {/* Look Ahead link */}
-        {lookAheadUrl && (
+        {/* Look Ahead link (skip if we're already on a Look Ahead article) */}
+        {lookAheadUrl && variant !== 'look_ahead' && (
           <Link
             href={lookAheadUrl}
             className="block text-sm text-fg-muted hover:text-accent transition-colors"
@@ -182,8 +184,8 @@ export function BriefDiscoveryFooter({
           </Link>
         )}
 
-        {/* Add to neighborhoods (daily variant only) */}
-        {variant === 'daily' && !isSubscribed && !added && (
+        {/* Add to neighborhoods (daily + look_ahead variants) */}
+        {variant !== 'sunday' && !isSubscribed && !added && (
           <button
             onClick={handleAdd}
             className="block text-sm text-fg-muted hover:text-accent transition-colors"
@@ -191,7 +193,7 @@ export function BriefDiscoveryFooter({
             Add <span className="font-semibold text-fg">{neighborhoodName}</span> to my neighborhoods
           </button>
         )}
-        {variant === 'daily' && added && (
+        {variant !== 'sunday' && added && (
           <p className="text-sm text-accent">{neighborhoodName} added to your neighborhoods</p>
         )}
 
@@ -215,8 +217,8 @@ export function BriefDiscoveryFooter({
           </Link>
         )}
 
-        {/* Inline email capture (daily variant only) */}
-        {variant === 'daily' && showEmailCapture && emailStatus !== 'success' && (
+        {/* Inline email capture (daily + look_ahead variants) */}
+        {variant !== 'sunday' && showEmailCapture && emailStatus !== 'success' && (
           <form onSubmit={handleEmailSubmit} className="flex items-center gap-2 pt-1">
             <span className="text-sm text-fg-muted whitespace-nowrap">Get them emailed 7am daily</span>
             <input
@@ -236,7 +238,7 @@ export function BriefDiscoveryFooter({
             </button>
           </form>
         )}
-        {variant === 'daily' && emailStatus === 'success' && (
+        {variant !== 'sunday' && emailStatus === 'success' && (
           <p className="text-sm text-accent pt-1">You&apos;re in - check your inbox.</p>
         )}
       </div>

@@ -254,7 +254,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         {(article.article_type === 'brief_summary' ||
           (article.category_label && article.category_label.toLowerCase().includes('daily brief'))) && (
           <BriefDiscoveryFooter
-            neighborhoodId={neighborhoodId}
+            neighborhoodId={article.neighborhood_id || neighborhoodId}
             neighborhoodName={article.neighborhood?.name || ''}
             city={article.neighborhood?.city || ''}
             currentArticleSlug={article.slug || ''}
@@ -265,18 +265,19 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         )}
         {article.article_type === 'look_ahead' && (
           <BriefDiscoveryFooter
-            neighborhoodId={neighborhoodId}
+            neighborhoodId={article.neighborhood_id || neighborhoodId}
             neighborhoodName={article.neighborhood?.name || ''}
             city={article.neighborhood?.city || ''}
             currentArticleSlug={article.slug || ''}
             citySlug={city}
             neighborhoodSlug={neighborhood}
             publishedAt={article.published_at || article.created_at}
+            variant="look_ahead"
           />
         )}
         {article.category_label === 'The Sunday Edition' && (
           <BriefDiscoveryFooter
-            neighborhoodId={neighborhoodId}
+            neighborhoodId={article.neighborhood_id || neighborhoodId}
             neighborhoodName={article.neighborhood?.name || ''}
             city={article.neighborhood?.city || ''}
             currentArticleSlug={article.slug || ''}
