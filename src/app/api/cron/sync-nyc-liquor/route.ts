@@ -74,8 +74,10 @@ export async function GET(request: Request) {
       });
     }
 
-    // Get cached image for liquor watch
-    const cachedImageUrl = await getCronImage('liquor-watch', supabase);
+    // Get cached image for liquor watch (use placeholder to avoid AI gen timeout)
+    const cachedImageUrl = await getCronImage('liquor-watch', supabase, {
+      usePlaceholderOnly: true,
+    });
 
     // Create articles for each story
     for (const story of stories) {
