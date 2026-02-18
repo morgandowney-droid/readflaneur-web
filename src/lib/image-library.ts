@@ -72,18 +72,25 @@ function getDayOfYear(date?: Date): number {
 
 /**
  * Select the appropriate library image URL for an article.
- * Pure function - no DB or network calls.
+ * Returns null if the neighborhood doesn't have a generated image library.
  *
  * @param neighborhoodId - The neighborhood's slug ID
  * @param articleType - The article_type value from the articles table
  * @param categoryLabel - Optional category_label for disambiguation (e.g., 'The Sunday Edition')
- * @returns Full public URL to the library image
+ * @param libraryReadyIds - Set of neighborhood IDs that have generated image libraries. If provided, returns '' for neighborhoods not in the set (retry-missing-images will fill them).
+ * @returns Full public URL to the library image, or '' if no library exists
  */
 export function selectLibraryImage(
   neighborhoodId: string,
   articleType: string,
   categoryLabel?: string,
+  libraryReadyIds?: Set<string>,
 ): string {
+  // If we know which neighborhoods have libraries, skip those that don't
+  if (libraryReadyIds && !libraryReadyIds.has(neighborhoodId)) {
+    return '';
+  }
+
   const variant = (getDayOfYear() % 3) + 1;
 
   let category: ImageCategory;
@@ -103,6 +110,25 @@ export function selectLibraryImage(
   }
 
   return getLibraryUrl(neighborhoodId, category);
+}
+
+// ============================================================================
+// LIBRARY READINESS
+// ============================================================================
+
+/**
+ * Fetch the set of neighborhood IDs that have complete image libraries.
+ * Call once at cron startup, pass the result to selectLibraryImage().
+ */
+export async function getLibraryReadyIds(
+  supabase: SupabaseClient,
+): Promise<Set<string>> {
+  const { data } = await supabase
+    .from('image_library_status')
+    .select('neighborhood_id')
+    .gte('images_generated', IMAGE_CATEGORIES.length);
+
+  return new Set((data || []).map(r => r.neighborhood_id));
 }
 
 // ============================================================================

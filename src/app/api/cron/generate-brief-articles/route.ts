@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { selectLibraryImage } from '@/lib/image-library';
+import { selectLibraryImage, getLibraryReadyIds } from '@/lib/image-library';
 
 interface ArticleSourceInput {
   source_name: string;
@@ -153,6 +153,7 @@ export async function GET(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  const libraryReadyIds = await getLibraryReadyIds(supabase);
   const startedAt = new Date().toISOString();
   const deadline = Date.now() + 270_000; // 270s budget (leave 30s for logging + images)
   const results = {
@@ -313,7 +314,7 @@ export async function GET(request: Request) {
           article_type: 'brief_summary',
           category_label: `${neighborhood.name} Daily Brief`,
           brief_id: brief.id,
-          image_url: selectLibraryImage(brief.neighborhood_id, 'brief_summary'),
+          image_url: selectLibraryImage(brief.neighborhood_id, 'brief_summary', undefined, libraryReadyIds),
           enriched_at: new Date().toISOString(),
           enrichment_model: 'gemini-2.5-flash',
         })

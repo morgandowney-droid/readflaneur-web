@@ -4,7 +4,7 @@ import { isGrokConfigured } from '@/lib/grok';
 import { enrichBriefWithGemini, EnrichedBriefOutput } from '@/lib/brief-enricher-gemini';
 import { getSearchLocation } from '@/lib/neighborhood-utils';
 import { getComboInfo } from '@/lib/combo-utils';
-import { selectLibraryImage } from '@/lib/image-library';
+import { selectLibraryImage, getLibraryReadyIds } from '@/lib/image-library';
 
 interface ArticleSourceInput {
   source_name: string;
@@ -332,6 +332,7 @@ export async function GET(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  const libraryReadyIds = await getLibraryReadyIds(supabase);
   const results = {
     neighborhoods_processed: 0,
     briefs_generated: 0,
@@ -474,7 +475,7 @@ export async function GET(request: Request) {
             ai_model: enrichmentModel ? `grok-4-1-fast + ${enrichmentModel}` : 'grok-4-1-fast',
             article_type: 'community_news',
             category_label: 'Weekly Community Recap',
-            image_url: selectLibraryImage(hood.id, 'community_news'),
+            image_url: selectLibraryImage(hood.id, 'community_news', undefined, libraryReadyIds),
           })
           .select('id')
           .single();

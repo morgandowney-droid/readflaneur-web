@@ -5,7 +5,7 @@ import {
   formatWeeklyBriefAsArticle,
 } from '@/lib/weekly-brief-service';
 import { AI_MODELS } from '@/config/ai-models';
-import { selectLibraryImage } from '@/lib/image-library';
+import { selectLibraryImage, getLibraryReadyIds } from '@/lib/image-library';
 
 /**
  * Generate "The Sunday Edition" weekly briefs for all active neighborhoods.
@@ -56,6 +56,7 @@ export async function GET(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  const libraryReadyIds = await getLibraryReadyIds(supabase);
   const startedAt = new Date().toISOString();
   // The Sunday date for this edition - allow override for catch-up runs past midnight
   const weekDate = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
@@ -183,7 +184,7 @@ export async function GET(request: Request) {
               category_label: 'The Sunday Edition',
               author_type: 'ai',
               ai_model: model,
-              image_url: selectLibraryImage(neighborhood.id, 'weekly_recap', 'The Sunday Edition'),
+              image_url: selectLibraryImage(neighborhood.id, 'weekly_recap', 'The Sunday Edition', libraryReadyIds),
             })
             .select('id')
             .single();

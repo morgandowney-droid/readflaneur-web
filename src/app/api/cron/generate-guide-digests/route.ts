@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import { AI_MODELS } from '@/config/ai-models';
-import { selectLibraryImage } from '@/lib/image-library';
+import { selectLibraryImage, getLibraryReadyIds } from '@/lib/image-library';
 
 /**
  * Neighborhood Guide Digest Generator
@@ -75,6 +75,7 @@ export async function GET(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  const libraryReadyIds = await getLibraryReadyIds(supabase);
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
   if (!anthropicApiKey) {
     return NextResponse.json({
@@ -237,7 +238,7 @@ export async function GET(request: Request) {
           slug,
           preview_text: result.preview_text,
           body_text: result.body_text,
-          image_url: selectLibraryImage(neighborhood.id, 'standard'),
+          image_url: selectLibraryImage(neighborhood.id, 'standard', undefined, libraryReadyIds),
           status: 'published',
           published_at: new Date().toISOString(),
           created_at: new Date().toISOString(),

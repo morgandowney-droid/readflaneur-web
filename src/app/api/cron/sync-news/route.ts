@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { fetchCityFeeds, RSSItem } from '@/lib/rss-sources';
 import { generateGrokNewsStories, isGrokConfigured } from '@/lib/grok';
 import { AI_MODELS } from '@/config/ai-models';
-import { selectLibraryImage } from '@/lib/image-library';
+import { selectLibraryImage, getLibraryReadyIds } from '@/lib/image-library';
 
 /**
  * News Aggregation Cron Job
@@ -78,6 +78,7 @@ export async function GET(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  const libraryReadyIds = await getLibraryReadyIds(supabase);
   const startedAt = new Date().toISOString();
 
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
@@ -234,7 +235,7 @@ export async function GET(request: Request) {
               slug,
               preview_text: result.rewritten_preview || item.description?.slice(0, 150),
               body_text: result.rewritten_body || item.description || '',
-              image_url: selectLibraryImage(neighborhoodId, 'standard'),
+              image_url: selectLibraryImage(neighborhoodId, 'standard', undefined, libraryReadyIds),
               status: 'published',
               published_at: new Date().toISOString(),
               created_at: new Date().toISOString(),
@@ -372,7 +373,7 @@ export async function GET(request: Request) {
               slug,
               preview_text: story.previewText,
               body_text: story.body,
-              image_url: selectLibraryImage(hood.id, 'standard'),
+              image_url: selectLibraryImage(hood.id, 'standard', undefined, libraryReadyIds),
               status: 'published',
               published_at: new Date().toISOString(),
               created_at: new Date().toISOString(),

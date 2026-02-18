@@ -4,7 +4,7 @@ import { generateLookAhead } from '@/lib/grok';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
-import { selectLibraryImage } from '@/lib/image-library';
+import { selectLibraryImage, getLibraryReadyIds } from '@/lib/image-library';
 
 /**
  * Generate Look Ahead Articles
@@ -15,14 +15,14 @@ import { selectLibraryImage } from '@/lib/image-library';
  * Neighborhoods are prioritized by proximity to their 7 AM delivery -
  * those whose 7 AM comes soonest (APAC/East) are processed first.
  *
- * Schedule: 0 20 * * * (8 PM UTC daily)
+ * Schedule: 0 17-22 * * * (hourly 5 PM - 10 PM UTC, dedup skips already-processed)
  */
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const TIME_BUDGET_MS = 270_000; // 270s budget (leave 30s for logging)
-const CONCURRENCY = 3;
+const CONCURRENCY = 5;
 
 interface ArticleSourceInput {
   source_name: string;
@@ -166,6 +166,7 @@ export async function GET(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  const libraryReadyIds = await getLibraryReadyIds(supabase);
   const startedAt = new Date().toISOString();
   const results = {
     neighborhoods_eligible: 0,
@@ -324,7 +325,7 @@ export async function GET(request: Request) {
               ai_model: 'grok-4-1-fast + gemini-2.5-flash',
               article_type: 'look_ahead',
               category_label: `${name} Look Ahead`,
-              image_url: selectLibraryImage(id, 'look_ahead'),
+              image_url: selectLibraryImage(id, 'look_ahead', undefined, libraryReadyIds),
               enriched_at: new Date().toISOString(),
               enrichment_model: 'gemini-2.5-flash',
             })
