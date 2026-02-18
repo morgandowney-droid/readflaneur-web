@@ -614,6 +614,128 @@ Include 1-2 link candidates for key locations mentioned in the body (streets, bl
 }
 
 /**
+ * Generate a consolidated roundup story for a neighborhood with multiple hotspots.
+ * Instead of 5 separate articles, produces one "Noise Watch: 5 hotspots across {neighborhood}" article.
+ */
+export async function generateNuisanceRoundup(
+  clusters: ComplaintCluster[],
+  neighborhoodName: string,
+  neighborhoodId: string
+): Promise<NuisanceStory | null> {
+  if (clusters.length < 2) return null;
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error('GEMINI_API_KEY not configured');
+    return null;
+  }
+
+  const genAI = new GoogleGenAI({ apiKey });
+
+  const totalComplaints = clusters.reduce((sum, c) => sum + c.count, 0);
+  const hotspotCount = clusters.length;
+
+  // Sort clusters by complaint count descending
+  const sorted = [...clusters].sort((a, b) => b.count - a.count);
+
+  // Build location list for the prompt
+  const locationList = sorted
+    .map((c) => `- ${c.displayLocation}: ${c.count} complaints (${c.category}${c.isCommercial ? ', commercial venue' : ''})`)
+    .join('\n');
+
+  // Collect all descriptor types
+  const allDescriptors = [
+    ...new Set(sorted.flatMap((c) => c.complaints.slice(0, 3).map((comp) => comp.descriptor || comp.complaintType))),
+  ].slice(0, 6);
+
+  // Determine overall severity
+  const hasHighSeverity = sorted.some((c) => c.severity === 'High');
+  const hasSpike = sorted.some((c) => c.trend === 'spike');
+
+  const systemPrompt = `You are the Community Editor for Flâneur, writing a neighborhood-wide noise roundup.
+
+This is a ROUNDUP of ${hotspotCount} complaint hotspots across ${neighborhoodName}, totaling ${totalComplaints} complaints this week.
+
+Writing Style:
+- Factual, concise, informative
+- Mention the total complaint count and number of hotspots
+- Reference the top 2-3 locations by name with their counts
+- Note the types of complaints (construction noise, nightlife, etc.)
+- No accusatory language, no emojis
+- Civic-engagement tone: "Neighbors are making their voices heard"`;
+
+  const prompt = `Neighborhood: ${neighborhoodName}
+Total Complaints: ${totalComplaints} across ${hotspotCount} locations in 7 days
+${hasSpike ? 'TREND: Spike detected at multiple locations' : 'TREND: Elevated activity'}
+
+Hotspot Locations:
+${locationList}
+
+Complaint Types: ${allDescriptors.join(', ')}
+
+Task: Write a consolidated "Neighborhood Noise Roundup" blurb (60-80 words).
+
+Headline: "Noise Watch: ${hotspotCount} hotspots, ${totalComplaints} complaints across ${neighborhoodName}"
+
+Body: Summarize the week's noise activity across the neighborhood. Mention the top 2-3 locations by name with their complaint counts. Note the predominant complaint types.
+
+Return JSON:
+{
+  "headline": "Under 70 chars",
+  "body": "60-80 word roundup mentioning specific locations and counts",
+  "previewText": "One sentence teaser for feed",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
+}`;
+
+  try {
+    const response = await genAI.models.generateContent({
+      model: AI_MODELS.GEMINI_FLASH,
+      contents: `${systemPrompt}\n\n${prompt}`,
+      config: { temperature: 0.6 },
+    });
+
+    const rawText = response.text || '';
+    const jsonMatch = rawText.match(/\{[\s\S]*"headline"[\s\S]*"body"[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error('Failed to extract JSON from roundup response');
+      return null;
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    // Inject hyperlinks
+    const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
+    let body = parsed.body || `${totalComplaints} complaints filed across ${hotspotCount} locations in ${neighborhoodName} this week.`;
+    if (linkCandidates.length > 0) {
+      body = injectHyperlinks(body, linkCandidates, { name: neighborhoodName, city: 'New York' });
+    }
+
+    const fallbackHeadline = `Noise Watch: ${hotspotCount} hotspots, ${totalComplaints} complaints across ${neighborhoodName}`;
+
+    return {
+      clusterId: `roundup-${neighborhoodId}`,
+      category: sorted[0].category, // Use the top cluster's category
+      headline: parsed.headline || fallbackHeadline,
+      body,
+      previewText: parsed.previewText || `${totalComplaints} noise complaints across ${hotspotCount} locations in ${neighborhoodName}.`,
+      location: neighborhoodName,
+      displayLocation: neighborhoodName,
+      neighborhood: neighborhoodName,
+      neighborhoodId,
+      complaintCount: totalComplaints,
+      severity: hasHighSeverity ? 'High' : 'Medium',
+      trend: hasSpike ? 'spike' : 'elevated',
+      generatedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error(`Nuisance roundup generation error for ${neighborhoodName}:`, error);
+    return null;
+  }
+}
+
+/**
  * Full pipeline: fetch, cluster, detect trends, generate stories
  */
 export async function processNuisanceWatch(
@@ -623,6 +745,7 @@ export async function processNuisanceWatch(
   clustersDetected: number;
   storiesGenerated: number;
   stories: NuisanceStory[];
+  clusters: ComplaintCluster[];
   byCategory: Record<ComplaintCategory, number>;
   bySeverity: Record<SeverityLevel, number>;
   byTrend: Record<'spike' | 'elevated' | 'normal', number>;
@@ -680,6 +803,7 @@ export async function processNuisanceWatch(
       clustersDetected: 0,
       storiesGenerated: 0,
       stories: [],
+      clusters: [],
       byCategory,
       bySeverity,
       byTrend,
@@ -714,6 +838,7 @@ export async function processNuisanceWatch(
     clustersDetected,
     storiesGenerated: stories.length,
     stories,
+    clusters: topClusters,
     byCategory,
     bySeverity,
     byTrend,

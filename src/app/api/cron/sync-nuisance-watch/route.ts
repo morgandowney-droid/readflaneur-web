@@ -18,9 +18,11 @@ import {
   generateNuisanceStory,
   createSampleCluster,
   NuisanceStory,
+  ComplaintCluster,
   ComplaintCategory,
   SeverityLevel,
   NUISANCE_THRESHOLD,
+  generateNuisanceRoundup,
 } from '@/lib/nuisance-watch';
 import { getCronImage } from '@/lib/cron-images';
 
@@ -87,12 +89,14 @@ export async function GET(request: Request) {
 
   try {
     let stories: NuisanceStory[];
+    let allClusters: ComplaintCluster[] = [];
 
     if (useSampleData) {
       console.log('Using sample nuisance data for testing');
       const sampleCluster = createSampleCluster();
       const sampleStory = await generateNuisanceStory(sampleCluster);
       stories = sampleStory ? [sampleStory] : [];
+      allClusters = [sampleCluster];
       results.complaints_scanned = sampleCluster.complaints.length;
       results.clusters_detected = 1;
       results.by_category[sampleCluster.category]++;
@@ -121,6 +125,7 @@ export async function GET(request: Request) {
       results.errors.push(...processResult.errors);
 
       stories = processResult.stories;
+      allClusters = processResult.clusters;
 
       // Build hotspots list for response
       for (const story of stories) {
@@ -150,21 +155,72 @@ export async function GET(request: Request) {
     // Get cached image for nuisance watch (reused across all stories)
     const cachedImageUrl = await getCronImage('nuisance-watch', supabase);
 
-    // Create articles for each story
+    // Group stories by neighborhood for consolidation
+    const storiesByNeighborhood = new Map<string, NuisanceStory[]>();
+    const clustersByNeighborhood = new Map<string, ComplaintCluster[]>();
+
     for (const story of stories) {
+      if (testNeighborhood && story.neighborhoodId !== testNeighborhood) continue;
+      const existing = storiesByNeighborhood.get(story.neighborhoodId) || [];
+      existing.push(story);
+      storiesByNeighborhood.set(story.neighborhoodId, existing);
+    }
+
+    for (const cluster of allClusters) {
+      if (testNeighborhood && cluster.neighborhoodId !== testNeighborhood) continue;
+      const existing = clustersByNeighborhood.get(cluster.neighborhoodId) || [];
+      existing.push(cluster);
+      clustersByNeighborhood.set(cluster.neighborhoodId, existing);
+    }
+
+    // Process each neighborhood: roundup for 2+, single article for 1
+    for (const [neighborhoodId, neighborhoodStories] of storiesByNeighborhood.entries()) {
       try {
-        // Filter by test neighborhood if specified
-        if (testNeighborhood && story.neighborhoodId !== testNeighborhood) {
-          continue;
+        const dateStr = new Date().toISOString().split('T')[0];
+
+        // Determine the final story to publish
+        let finalStory: NuisanceStory;
+
+        if (neighborhoodStories.length >= 2) {
+          // Consolidate into a roundup
+          const neighborhoodClusters = clustersByNeighborhood.get(neighborhoodId) || [];
+          const roundup = await generateNuisanceRoundup(
+            neighborhoodClusters.length >= 2 ? neighborhoodClusters : neighborhoodStories.map((s) => ({
+              id: s.clusterId,
+              location: s.location,
+              displayLocation: s.displayLocation,
+              street: '',
+              neighborhood: s.neighborhood,
+              neighborhoodId: s.neighborhoodId,
+              category: s.category,
+              severity: s.severity,
+              count: s.complaintCount,
+              complaints: [],
+              isCommercial: s.category.includes('Commercial'),
+              trend: s.trend,
+            })),
+            neighborhoodStories[0].neighborhood,
+            neighborhoodId
+          );
+
+          if (!roundup) {
+            // Fallback: just use the first story
+            finalStory = neighborhoodStories[0];
+          } else {
+            finalStory = roundup;
+          }
+
+          console.log(`Consolidated ${neighborhoodStories.length} stories into roundup for ${neighborhoodId}`);
+        } else {
+          finalStory = neighborhoodStories[0];
         }
 
-        // Create unique slug
-        const cleanCategory = story.category.toLowerCase().replace(/[^a-z]/g, '-');
-        const cleanLocation = story.displayLocation.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 30);
-        const dateStr = new Date().toISOString().split('T')[0];
-        const slug = `nuisance-${cleanCategory}-${cleanLocation}-${dateStr}`;
+        // Build slug
+        const slug = neighborhoodStories.length >= 2
+          ? `nuisance-roundup-${neighborhoodId}-${dateStr}`
+          : `nuisance-${finalStory.category.toLowerCase().replace(/[^a-z]/g, '-')}-${finalStory.displayLocation.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 30)}-${dateStr}`;
 
-        // Check if we already have an article for this cluster today
+        // Check if article already exists
         const { data: existingArticle } = await supabase
           .from('articles')
           .select('id')
@@ -177,17 +233,16 @@ export async function GET(request: Request) {
         }
 
         // Verify neighborhood exists
-        let finalNeighborhoodId = story.neighborhoodId;
+        let finalNeighborhoodId = neighborhoodId;
 
         const { data: neighborhood } = await supabase
           .from('neighborhoods')
           .select('id')
-          .eq('id', story.neighborhoodId)
+          .eq('id', neighborhoodId)
           .single();
 
         if (!neighborhood) {
-          // Try without city prefix
-          const shortId = story.neighborhoodId.replace(/^nyc-/, '');
+          const shortId = neighborhoodId.replace(/^nyc-/, '');
           const { data: shortNeighborhood } = await supabase
             .from('neighborhoods')
             .select('id')
@@ -197,35 +252,36 @@ export async function GET(request: Request) {
           if (shortNeighborhood) {
             finalNeighborhoodId = shortId;
           } else {
-            results.errors.push(`${story.category}: Neighborhood ${story.neighborhoodId} not found`);
+            results.errors.push(`Neighborhood ${neighborhoodId} not found`);
             continue;
           }
         }
 
-        // Determine category label based on severity and trend
+        // Determine category label
         let categoryLabel: string;
-        if (story.trend === 'spike' && story.severity === 'High') {
+        if (finalStory.trend === 'spike' && finalStory.severity === 'High') {
           categoryLabel = 'Community Alert';
-        } else if (story.trend === 'spike') {
+        } else if (finalStory.trend === 'spike') {
           categoryLabel = 'Nuisance Watch';
         } else {
           categoryLabel = 'Block Watch';
         }
 
-        // Create article with cached image
-        // Set enriched_at so enrich-briefs cron skips these (already complete)
+        // Create article
         const { error: insertError } = await supabase.from('articles').insert({
           neighborhood_id: finalNeighborhoodId,
-          headline: story.headline,
-          body_text: story.body,
-          preview_text: story.previewText,
-          image_url: cachedImageUrl, // Reuse cached category image
+          headline: finalStory.headline,
+          body_text: finalStory.body,
+          preview_text: finalStory.previewText,
+          image_url: cachedImageUrl,
           slug,
           status: 'published',
           published_at: new Date().toISOString(),
           author_type: 'ai',
           ai_model: 'gemini-2.5-flash',
-          ai_prompt: `Nuisance Watch: ${story.category} at ${story.displayLocation}`,
+          ai_prompt: neighborhoodStories.length >= 2
+            ? `Nuisance Roundup: ${neighborhoodStories.length} hotspots in ${finalStory.neighborhood}`
+            : `Nuisance Watch: ${finalStory.category} at ${finalStory.displayLocation}`,
           category_label: categoryLabel,
           editor_notes: 'Source: NYC 311 Open Data - https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9',
           enriched_at: new Date().toISOString(),
@@ -233,14 +289,14 @@ export async function GET(request: Request) {
         });
 
         if (insertError) {
-          results.errors.push(`${story.category}/${story.displayLocation}: ${insertError.message}`);
+          results.errors.push(`${neighborhoodId}: ${insertError.message}`);
           continue;
         }
 
         results.articles_created++;
       } catch (err) {
         results.errors.push(
-          `${story.category}: ${err instanceof Error ? err.message : String(err)}`
+          `${neighborhoodId}: ${err instanceof Error ? err.message : String(err)}`
         );
       }
     }
