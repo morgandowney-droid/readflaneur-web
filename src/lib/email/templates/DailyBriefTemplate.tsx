@@ -43,12 +43,26 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
             <Section>
               {/* Location + Weather as one grouped thought */}
               <Section style={heroBlock}>
-                <Text style={locationLabel}>
-                  {primary.neighborhoodName}
-                  {primary.cityName && (
-                    <span style={locationCity}> &middot; {primary.cityName}</span>
-                  )}
-                </Text>
+                {(() => {
+                  const combined = primary.cityName ? `${primary.neighborhoodName} · ${primary.cityName}` : primary.neighborhoodName;
+                  const stack = combined.length > 25;
+                  if (stack && primary.cityName) {
+                    return (
+                      <>
+                        <Text style={locationLabelStacked}>{primary.neighborhoodName}</Text>
+                        <Text style={locationCityLine}>{primary.cityName}</Text>
+                      </>
+                    );
+                  }
+                  return (
+                    <Text style={locationLabel}>
+                      {primary.neighborhoodName}
+                      {primary.cityName && (
+                        <span style={locationCity}> &middot; {primary.cityName}</span>
+                      )}
+                    </Text>
+                  );
+                })()}
                 {(primary.weather || primary.weatherStory) && (() => {
                   const tempC = primary.weatherStory?.temperatureC ?? primary.weather?.temperatureC ?? null;
                   const tempF = primary.weatherStory?.temperatureF ?? primary.weather?.temperatureF ?? null;
@@ -145,6 +159,26 @@ const locationLabel = {
   textTransform: 'uppercase' as const,
   color: '#1a1a1a',
   margin: '0 0 8px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const locationLabelStacked = {
+  fontSize: '12px',
+  fontWeight: '400' as const,
+  letterSpacing: '0.2em',
+  textTransform: 'uppercase' as const,
+  color: '#1a1a1a',
+  margin: '0',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const locationCityLine = {
+  fontSize: '12px',
+  fontWeight: '400' as const,
+  letterSpacing: '0.15em',
+  textTransform: 'uppercase' as const,
+  color: '#b0b0b0',
+  margin: '2px 0 8px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
