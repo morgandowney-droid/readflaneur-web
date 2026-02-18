@@ -241,6 +241,8 @@ export async function GET(request: Request) {
         content,
         enriched_content,
         enriched_categories,
+        enrichment_model,
+        ai_model,
         generated_at,
         neighborhoods!inner(id, name, city)
       `)
@@ -263,8 +265,26 @@ export async function GET(request: Request) {
     });
   }
 
-  // Process each brief (all are pre-filtered to need articles)
+  // Dedup: only keep the latest brief per neighborhood per day
+  // This prevents duplicate articles when multiple briefs exist for the same neighborhood
+  const dedupMap = new Map<string, typeof briefs[0]>();
   for (const brief of briefs) {
+    const date = new Date(brief.generated_at).toISOString().split('T')[0];
+    const key = `${brief.neighborhood_id}::${date}`;
+    const existing = dedupMap.get(key);
+    if (!existing || new Date(brief.generated_at) > new Date(existing.generated_at)) {
+      dedupMap.set(key, brief);
+    }
+  }
+  const dedupedBriefs = Array.from(dedupMap.values());
+  const dedupSkipped = briefs.length - dedupedBriefs.length;
+  if (dedupSkipped > 0) {
+    console.log(`[generate-brief-articles] Deduped ${dedupSkipped} duplicate briefs (${briefs.length} → ${dedupedBriefs.length})`);
+    results.articles_skipped += dedupSkipped;
+  }
+
+  // Process each brief (all are pre-filtered and deduped)
+  for (const brief of dedupedBriefs) {
     // Time budget check - stop before we run out of time
     if (Date.now() > deadline) {
       results.errors.push(`Time budget exhausted after ${results.articles_created} articles`);
@@ -310,13 +330,13 @@ export async function GET(request: Request) {
           status: 'published',
           published_at: brief.generated_at,
           author_type: 'ai',
-          ai_model: 'grok-3-fast + gemini-3-pro',
+          ai_model: brief.ai_model ? `${brief.ai_model} + ${brief.enrichment_model || 'gemini'}` : `grok + ${brief.enrichment_model || 'gemini'}`,
           article_type: 'brief_summary',
           category_label: `${neighborhood.name} Daily Brief`,
           brief_id: brief.id,
           image_url: selectLibraryImage(brief.neighborhood_id, 'brief_summary', undefined, libraryReadyIds),
           enriched_at: new Date().toISOString(),
-          enrichment_model: 'gemini-2.5-flash',
+          enrichment_model: brief.enrichment_model || 'gemini-2.5-flash',
         })
         .select('id')
         .single();

@@ -279,6 +279,7 @@ IMPORTANT RULES:
    - Any backstory or context
 
 FORMATTING RULES:
+- CRITICAL: Your very first line MUST be a "Good morning" greeting to the neighborhood (e.g., "Good morning, ${neighborhoodName}."). This is non-negotiable - every Daily Brief opens with "Good morning". Do NOT skip it, do NOT jump straight into section headers.
 - Organize your update into sections with creative, punchy section headers
 - IMPORTANT: Wrap each section header in double brackets like this: [[Section Header Here]]
 - Section headers should be catchy and conversational (e.g., "[[The Bagel Wars Begin]]", "[[Lunch Spot of the Week]]")

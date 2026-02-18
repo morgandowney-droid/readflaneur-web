@@ -100,10 +100,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const topAd = ads[0] || null;
   const bottomAd = ads[1] || ads[0] || null; // Reuse first ad if only one available
 
+  // Session check (instant — reads cookies, no network call)
+  const { data: { session } } = await supabase.auth.getSession();
+  const isAdmin = session?.user?.email === 'morgan.downey@gmail.com';
+
   // Resolve fallback when no paid ads exist
   let fallbackData: FallbackData | undefined;
   if (ads.length === 0) {
-    const { data: { session } } = await supabase.auth.getSession();
     fallbackData = await getFallback(supabase, neighborhoodId, {
       isAuthenticated: !!session?.user,
     });
@@ -217,7 +220,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   {(article.article_type === 'community_news' || article.article_type === 'brief_summary' || article.author_type === 'ai') && (
                     <>
                       <span>&middot;</span>
-                      <span className="text-fg-muted">AI-Synthesized Brief</span>
+                      <span className="text-fg-muted" title={isAdmin ? (article.enrichment_model || '') : ''}>AI-Synthesized Brief{isAdmin && article.enrichment_model ? ` · ${article.enrichment_model.replace('gemini-', '').replace('2.5-', '')}` : ''}</span>
                     </>
                   )}
                 </div>
