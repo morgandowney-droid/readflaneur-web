@@ -4,24 +4,17 @@ import { generateNeighborhoodLibrary } from '@/lib/image-library-generator';
 import { sendEmail } from '@/lib/email';
 
 /**
- * Image Library Generator / Quarterly Refresh
+ * Image Library Refresh — Unsplash Photos
  *
- * Generates or refreshes the pre-generated image library for all active
- * neighborhoods. Processes in batches within time budget, respecting
- * Imagen 4's 70 RPD daily quota limit.
+ * Searches Unsplash for real neighborhood photos across all active
+ * neighborhoods. ~2s per neighborhood, can process all ~272 in a single
+ * run (~55s). No more Imagen rate limit bottleneck.
  *
- * During initial generation: runs every 4 hours, ~3 neighborhoods per run,
- * ~9 neighborhoods/day. Once all neighborhoods are complete for the current
- * season, runs are instant no-ops.
- *
- * Schedule: Every 4 hours
- * Cron: 0 every-4h * * *
+ * Schedule: Daily at 6am UTC (or manual trigger)
  */
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
-
-const TIME_BUDGET_MS = 270_000; // 270s budget
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
@@ -36,8 +29,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!process.env.GEMINI_API_KEY) {
-    return NextResponse.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 });
+  if (!process.env.UNSPLASH_ACCESS_KEY) {
+    return NextResponse.json({ error: 'UNSPLASH_ACCESS_KEY not configured' }, { status: 500 });
   }
 
   const supabase = createClient(
@@ -52,14 +45,13 @@ export async function GET(request: Request) {
 
   const results = {
     processed: 0,
-    images_generated: 0,
+    photos_found: 0,
     remaining: 0,
     errors: [] as string[],
   };
 
   try {
-    // Find neighborhoods that need seasonal refresh
-    // Either: no library at all, or library from a previous season
+    // Find neighborhoods that need refresh
     const { data: neighborhoods, error: fetchError } = await supabase
       .from('neighborhoods')
       .select('id, name, city, country')
@@ -73,24 +65,24 @@ export async function GET(request: Request) {
     // Get current library status
     const { data: statuses } = await supabase
       .from('image_library_status')
-      .select('neighborhood_id, generation_season, images_generated');
+      .select('neighborhood_id, generation_season, unsplash_photos');
 
     const statusMap = new Map(
       (statuses || []).map(s => [s.neighborhood_id, s])
     );
 
-    // Filter to neighborhoods needing refresh
+    // Filter to neighborhoods needing refresh:
+    // - No Unsplash photos at all
+    // - Different season (quarterly variety refresh)
     const needsRefresh = neighborhoods.filter(n => {
       const status = statusMap.get(n.id);
-      if (!status) return true; // No library at all
-      if (status.images_generated < 8) return true; // Incomplete
-      return status.generation_season !== currentSeason; // Different season
+      if (!status?.unsplash_photos) return true;
+      return status.generation_season !== currentSeason;
     });
 
     results.remaining = needsRefresh.length;
 
     if (needsRefresh.length === 0) {
-      // All neighborhoods are up to date for this season
       return NextResponse.json({
         success: true,
         message: `All ${neighborhoods.length} neighborhoods are up to date for ${currentSeason}`,
@@ -100,50 +92,40 @@ export async function GET(request: Request) {
 
     console.log(`[refresh-image-library] ${needsRefresh.length} neighborhoods need refresh for ${currentSeason}`);
 
-    // Process sequentially within time budget
+    // Process all neighborhoods — fast enough for a single run
     for (const neighborhood of needsRefresh) {
-      if (Date.now() - functionStart > TIME_BUDGET_MS) {
-        results.errors.push(`Time budget exhausted after ${results.processed} neighborhoods`);
+      // Safety: stop if approaching 280s (leave buffer for logging)
+      if (Date.now() - functionStart > 280_000) {
+        results.errors.push(`Time limit approaching after ${results.processed} neighborhoods`);
         break;
       }
 
-      console.log(`[refresh-image-library] Refreshing ${neighborhood.name}, ${neighborhood.city}...`);
-
-      const genResult = await generateNeighborhoodLibrary(
-        supabase,
-        neighborhood,
-        { useFastModel: false }, // Use standard model for quality
-      );
+      const genResult = await generateNeighborhoodLibrary(supabase, neighborhood);
 
       results.processed++;
-      results.images_generated += genResult.images_generated;
+      results.photos_found += genResult.photos_found;
       results.remaining--;
 
       if (genResult.errors.length > 0) {
         results.errors.push(...genResult.errors.map(e => `${neighborhood.id}: ${e}`));
       }
 
-      // Stop if rate limited or quota exhausted
-      if (genResult.errors.some(e => e.includes('Rate limited') || e.includes('Quota exhausted'))) {
-        results.errors.push('Stopped: rate limited or daily quota exhausted');
+      // Stop if rate limited
+      if (genResult.errors.some(e => e.includes('Rate limited'))) {
+        results.errors.push('Stopped: Unsplash rate limited');
         break;
       }
     }
 
-    // Email admin on completion or significant progress
-    if (results.remaining === 0 || results.processed > 10) {
+    // Email admin on completion
+    if (results.remaining === 0) {
       try {
-        const subject = results.remaining === 0
-          ? `Image Library Refresh Complete - ${currentSeason}`
-          : `Image Library Refresh Progress - ${results.processed} done, ${results.remaining} remaining`;
-
         await sendEmail({
           to: 'morgan.downey@gmail.com',
-          subject,
+          subject: `Image Library Refresh Complete - ${currentSeason} (Unsplash)`,
           html: `<p>Season: ${currentSeason}</p>
 <p>Processed: ${results.processed}</p>
-<p>Images generated: ${results.images_generated}</p>
-<p>Remaining: ${results.remaining}</p>
+<p>Photos found: ${results.photos_found}</p>
 ${results.errors.length > 0 ? `<p>Errors: ${results.errors.slice(0, 10).join(', ')}</p>` : ''}`,
         });
       } catch {
@@ -162,19 +144,19 @@ ${results.errors.length > 0 ? `<p>Errors: ${results.errors.slice(0, 10).join(', 
       job_name: 'refresh-image-library',
       started_at: startedAt,
       completed_at: new Date().toISOString(),
-      success: results.images_generated > 0 || results.errors.length === 0,
+      success: results.photos_found > 0 || results.errors.length === 0,
       errors: results.errors.length > 0 ? results.errors.slice(0, 10) : null,
       response_data: {
         season: currentSeason,
         processed: results.processed,
-        images_generated: results.images_generated,
+        photos_found: results.photos_found,
         remaining: results.remaining,
       },
     })
     .then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
 
   return NextResponse.json({
-    success: results.images_generated > 0 || results.errors.length === 0,
+    success: results.photos_found > 0 || results.errors.length === 0,
     season: currentSeason,
     ...results,
     duration_seconds: parseFloat(((Date.now() - functionStart) / 1000).toFixed(1)),

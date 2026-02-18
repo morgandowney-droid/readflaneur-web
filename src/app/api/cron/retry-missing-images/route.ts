@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { selectLibraryImage } from '@/lib/image-library';
+import { selectLibraryImage, preloadUnsplashCache } from '@/lib/image-library';
 
 /**
  * Retry Missing Images
  *
  * Finds published articles with empty image_url and fills them from the
- * pre-generated image library. Falls back to the internal generate-image
- * endpoint for articles without library coverage (e.g., new community
- * neighborhoods whose library hasn't been generated yet).
+ * pre-generated image library (Unsplash photos). No AI generation fallback —
+ * if no library image exists, the article waits for the next refresh cycle.
  *
  * Schedule: Every 2 hours
  */
@@ -38,9 +37,11 @@ export async function GET(request: Request) {
   let success = false;
   const errors: string[] = [];
   let libraryFilled = 0;
-  let fallbackFilled = 0;
 
   try {
+    // Preload Unsplash cache for fast lookups
+    await preloadUnsplashCache(supabase);
+
     // Find articles with missing images (empty string or null)
     const { data: articles, error: fetchError } = await supabase
       .from('articles')
@@ -70,54 +71,29 @@ export async function GET(request: Request) {
         article.category_label || undefined,
       );
 
-      // Verify the library image exists via HEAD check
-      let exists = false;
-      try {
-        const headResp = await fetch(libraryUrl, { method: 'HEAD' });
-        exists = headResp.ok;
-      } catch {
-        // Library image doesn't exist
-      }
+      if (!libraryUrl) continue;
 
-      if (exists) {
-        const { error: updateError } = await supabase
-          .from('articles')
-          .update({ image_url: libraryUrl })
-          .eq('id', article.id);
-
-        if (!updateError) {
-          libraryFilled++;
-        } else {
-          errors.push(`Update ${article.id}: ${updateError.message}`);
+      // For Unsplash URLs, no HEAD check needed — CDN is reliable
+      // For legacy Supabase URLs, verify existence
+      const isUnsplash = libraryUrl.includes('images.unsplash.com');
+      if (!isUnsplash) {
+        try {
+          const headResp = await fetch(libraryUrl, { method: 'HEAD' });
+          if (!headResp.ok) continue;
+        } catch {
+          continue;
         }
       }
-      // If library image doesn't exist, leave it for the internal
-      // generate-image endpoint which still handles Gemini fallback
-    }
 
-    // For articles that couldn't be filled from library, call generate-image
-    // to handle via Gemini fallback (community neighborhoods, etc.)
-    const remainingCount = articles.length - libraryFilled;
-    if (remainingCount > 0) {
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\n$/, '').replace(/\/$/, '')
-          || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+      const { error: updateError } = await supabase
+        .from('articles')
+        .update({ image_url: libraryUrl })
+        .eq('id', article.id);
 
-        const res = await fetch(`${baseUrl}/api/internal/generate-image`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-cron-secret': cronSecret || '',
-          },
-          body: JSON.stringify({ limit: Math.min(remainingCount, 10) }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          fallbackFilled = data.successful || 0;
-        }
-      } catch (err) {
-        errors.push(`Fallback generation: ${err instanceof Error ? err.message : String(err)}`);
+      if (!updateError) {
+        libraryFilled++;
+      } else {
+        errors.push(`Update ${article.id}: ${updateError.message}`);
       }
     }
 
@@ -127,8 +103,7 @@ export async function GET(request: Request) {
       success: true,
       articles_found: articles.length,
       library_filled: libraryFilled,
-      fallback_filled: fallbackFilled,
-      total_filled: libraryFilled + fallbackFilled,
+      total_filled: libraryFilled,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -143,7 +118,6 @@ export async function GET(request: Request) {
       errors: errors.length > 0 ? errors : null,
       response_data: {
         library_filled: libraryFilled,
-        fallback_filled: fallbackFilled,
       },
     }).then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
   }

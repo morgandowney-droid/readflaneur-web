@@ -412,9 +412,8 @@ export async function POST(request: NextRequest) {
             city: validation.city,
             country: validation.country,
           },
-          { useFastModel: true }, // Use Imagen Fast for quicker creation
         );
-        if (libResult.images_generated > 0) {
+        if (libResult.photos_found > 0) {
           pipelineStatus.image = true;
         }
       } catch (err) {
