@@ -654,7 +654,7 @@ export function NeighborhoodBrief({
               onClick={(e) => e.stopPropagation()}
               className="text-xs text-fg-muted hover:text-accent transition-colors"
             >
-              Read the Look Ahead for <span className="font-semibold text-fg">{neighborhoodName}</span> &rsaquo;
+              Read the Look Ahead (next 7 days) for <span className="font-semibold text-fg">{neighborhoodName}</span> &rsaquo;
             </Link>
           )}
           {nearbyDiscovery && (

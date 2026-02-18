@@ -105,7 +105,7 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
                   fontFamily: "'Playfair Display', Georgia, serif",
                 }}
               >
-                Read the Look Ahead for {primary.neighborhoodName} &rsaquo;
+                Read the Look Ahead (next 7 days) for {primary.neighborhoodName} &rsaquo;
               </a>
             </Section>
           )}
