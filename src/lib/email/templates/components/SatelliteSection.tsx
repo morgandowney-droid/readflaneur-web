@@ -2,6 +2,18 @@ import { Section, Text, Link } from '@react-email/components';
 import { SatelliteNeighborhoodSection as SatelliteSectionData } from '../../types';
 import { SectionDivider } from './SectionDivider';
 
+function truncateAtSentence(text: string, max: number): string {
+  if (text.length <= max) return text;
+  const slice = text.slice(0, max);
+  const lastPeriod = slice.lastIndexOf('.');
+  const lastExcl = slice.lastIndexOf('!');
+  const lastQuestion = slice.lastIndexOf('?');
+  const lastEnd = Math.max(lastPeriod, lastExcl, lastQuestion);
+  if (lastEnd > 0) return text.slice(0, lastEnd + 1);
+  const lastSpace = slice.lastIndexOf(' ');
+  return lastSpace > 0 ? text.slice(0, lastSpace) : slice;
+}
+
 interface SatelliteSectionProps {
   section: SatelliteSectionData;
 }
@@ -23,6 +35,11 @@ export function SatelliteSection({ section }: SatelliteSectionProps) {
               {story.headline}
             </Text>
           </Link>
+          {story.previewText && (
+            <Text style={preview}>
+              {truncateAtSentence(story.previewText, 160)}
+            </Text>
+          )}
         </Section>
       ))}
     </Section>
@@ -58,4 +75,16 @@ const categoryLine = {
   color: '#b0b0b0',
   margin: '0 0 2px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const preview = {
+  fontSize: '15px',
+  color: '#555555',
+  lineHeight: '1.6',
+  margin: '4px 0 0',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+  overflow: 'hidden' as const,
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical' as const,
 };
