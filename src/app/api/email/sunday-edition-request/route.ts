@@ -309,7 +309,8 @@ export async function GET(request: Request) {
   try {
     const html = await render(SundayEditionTemplate(emailContent));
     const subject = buildSundaySubject(hood.name, emailContent);
-    const from = process.env.EMAIL_FROM || 'Flaneur News <hello@readflaneur.com>';
+    const emailAddr = (process.env.EMAIL_FROM || 'hello@readflaneur.com').replace(/.*<([^>]+)>.*/, '$1').trim();
+    const from = `Flaneur News <${emailAddr}>`;
 
     const sent = await sendEmail({ from, to: recipientEmail, subject, html });
 

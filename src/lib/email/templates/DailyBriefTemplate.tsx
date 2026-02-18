@@ -24,7 +24,8 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
     : undefined;
 
   const primaryName = content.primarySection?.neighborhoodName || 'your neighborhoods';
-  const previewText = `Your morning brief from ${primaryName}`;
+  const hasSatellites = content.satelliteSections.length > 0;
+  const previewText = `Your morning brief from ${primaryName}${hasSatellites ? '+' : ''}`;
 
   const primary = content.primarySection;
 

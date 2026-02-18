@@ -41,38 +41,30 @@ function buildSubject(content: DailyBriefContent): string {
 }
 
 /**
- * Extract short key phrases from headlines and join into a teaser.
- * Aims to reference 2-3 stories within the character budget.
+ * Build enticing teaser from story headlines.
+ * Uses the lead headline (as complete as possible) plus "& more" if room.
  */
 function buildTeaser(headlines: string[], budget: number): string {
   if (headlines.length === 0 || budget < 15) return '';
 
-  // Take first few words from each headline as a short phrase
-  const phrases: string[] = [];
-  for (const h of headlines.slice(0, 4)) {
-    const words = h.replace(/["""'']/g, '').split(/\s+/);
-    // Take 2-4 words depending on word length
-    let phrase = '';
-    for (let i = 0; i < Math.min(words.length, 4); i++) {
-      const next = phrase ? `${phrase} ${words[i]}` : words[i];
-      if (next.length > 25) break;
-      phrase = next;
-    }
-    if (phrase.length >= 4) phrases.push(phrase);
+  // Clean quotes from headlines
+  const clean = headlines.map(h => h.replace(/["""'']/g, '').trim()).filter(h => h.length > 0);
+  if (clean.length === 0) return '';
+
+  // Use the lead headline as fully as possible - truncate at word boundary
+  const lead = clean[0];
+  let teaser = lead;
+  if (teaser.length > budget) {
+    // Truncate at last full word within budget
+    teaser = lead.slice(0, budget).replace(/\s+\S*$/, '');
   }
 
-  if (phrases.length === 0) return '';
-
-  // Join phrases: "A, B & C" format, fitting within budget
-  let result = phrases[0];
-  for (let i = 1; i < phrases.length; i++) {
-    const sep = i === phrases.length - 1 ? ' & ' : ', ';
-    const candidate = result + sep + phrases[i];
-    if (candidate.length > budget) break;
-    result = candidate;
+  // If there are more stories, try to append "& more"
+  if (clean.length > 1 && teaser.length + 7 <= budget) {
+    teaser += ' & more';
   }
 
-  return result.length <= budget ? result : '';
+  return teaser.length <= budget ? teaser : '';
 }
 
 /**
@@ -95,9 +87,9 @@ export async function sendDailyBrief(
     const html = await render(DailyBriefTemplate(content));
     const subject = buildSubject(content);
 
-    // Send via existing Resend integration with proper display name
-    const fromAddress = process.env.EMAIL_FROM?.replace(/^[^<]*$/, 'Flaneur News <$&>')
-      || 'Flaneur News <hello@readflaneur.com>';
+    // Send via existing Resend integration - always force "Flaneur News" display name
+    const emailAddr = (process.env.EMAIL_FROM || 'hello@readflaneur.com').replace(/.*<([^>]+)>.*/, '$1').trim();
+    const fromAddress = `Flaneur News <${emailAddr}>`;
     const success = await sendEmail({
       to: content.recipient.email,
       subject,

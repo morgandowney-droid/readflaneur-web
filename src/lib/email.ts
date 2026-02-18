@@ -23,7 +23,7 @@ export async function sendEmail({ to, subject, html, from }: SendEmailParams): P
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: from || process.env.EMAIL_FROM || 'Flaneur News <noreply@readflaneur.com>',
+        from: from || `Flaneur News <${(process.env.EMAIL_FROM || 'noreply@readflaneur.com').replace(/.*<([^>]+)>.*/, '$1').trim()}>`,
         to,
         subject,
         html,
