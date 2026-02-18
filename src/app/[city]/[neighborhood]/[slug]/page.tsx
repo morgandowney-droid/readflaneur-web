@@ -109,6 +109,34 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     });
   }
 
+  // Look up Unsplash photo credit if image is from Unsplash
+  let unsplashCredit: { photographer: string; photographer_url: string } | null = null;
+  if (article.image_url?.includes('images.unsplash.com') && article.neighborhood_id) {
+    const { data: libStatus } = await supabase
+      .from('image_library_status')
+      .select('unsplash_photos')
+      .eq('neighborhood_id', article.neighborhood_id)
+      .single();
+
+    if (libStatus?.unsplash_photos) {
+      const photos = libStatus.unsplash_photos as Record<string, { url: string; photographer: string; photographer_url: string }>;
+      // Find the photo entry matching this article's image URL
+      for (const photo of Object.values(photos)) {
+        if (photo.url === article.image_url) {
+          unsplashCredit = { photographer: photo.photographer, photographer_url: photo.photographer_url };
+          break;
+        }
+      }
+      // If no exact match (URL params may differ), use first photo's credit as fallback
+      if (!unsplashCredit) {
+        const firstPhoto = Object.values(photos)[0];
+        if (firstPhoto) {
+          unsplashCredit = { photographer: firstPhoto.photographer, photographer_url: firstPhoto.photographer_url };
+        }
+      }
+    }
+  }
+
   // Fetch nearby neighborhoods in the same city for exploration
   const { data: nearbyNeighborhoods } = await supabase
     .from('neighborhoods')
@@ -208,9 +236,12 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
         {/* Featured Image - only show if image exists */}
         {article.image_url && (() => {
-          const isAIGenerated = article.article_type === 'community_news' ||
-                                article.article_type === 'brief_summary' ||
-                                article.author_type === 'ai';
+          const isUnsplash = article.image_url.includes('images.unsplash.com');
+          const isAIGenerated = !isUnsplash && (
+            article.article_type === 'community_news' ||
+            article.article_type === 'brief_summary' ||
+            article.author_type === 'ai'
+          );
           return (
             <>
               <div className="relative aspect-video w-full mb-2">
@@ -225,6 +256,18 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 {isAIGenerated && <AIImageBadge position="bottom-left" />}
               </div>
               {isAIGenerated && <AIImageDisclaimer className="mb-6" />}
+              {isUnsplash && unsplashCredit && (
+                <p className="text-xs text-fg-muted mb-6">
+                  Photo by{' '}
+                  <a href={`${unsplashCredit.photographer_url}?utm_source=flaneur&utm_medium=referral`} target="_blank" rel="noopener noreferrer" className="underline">
+                    {unsplashCredit.photographer}
+                  </a>
+                  {' '}on{' '}
+                  <a href="https://unsplash.com/?utm_source=flaneur&utm_medium=referral" target="_blank" rel="noopener noreferrer" className="underline">
+                    Unsplash
+                  </a>
+                </p>
+              )}
             </>
           );
         })()}
