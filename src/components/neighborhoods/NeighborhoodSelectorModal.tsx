@@ -279,6 +279,23 @@ function GlobalNeighborhoodModal({
   const [communityCreatedName, setCommunityCreatedName] = useState('');
   const communityInputRef = useRef<HTMLInputElement>(null);
 
+  // Executive status application state
+  const [showExecutiveForm, setShowExecutiveForm] = useState(false);
+  const [executiveReason, setExecutiveReason] = useState('');
+  const [executiveStatus, setExecutiveStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [executiveError, setExecutiveError] = useState('');
+
+  // Delete eligibility state
+  const [deleteEligible, setDeleteEligible] = useState<Record<string, boolean>>({});
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  // Report state
+  const [reportingId, setReportingId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState('');
+  const [reportStatus, setReportStatus] = useState<Record<string, 'idle' | 'submitting' | 'success' | 'error'>>({});
+  const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
+
   // Handle suggestion submission via API
   const handleSuggestionSubmit = async () => {
     if (!suggestionText.trim() || suggestionText.trim().length < 3) return;
@@ -384,6 +401,108 @@ function GlobalNeighborhoodModal({
       setCommunityCreateStatus('error');
     }
   };
+
+  // Handle executive status application
+  const handleExecutiveSubmit = async () => {
+    if (!executiveReason.trim() || executiveReason.trim().length < 10) return;
+    setExecutiveStatus('submitting');
+    setExecutiveError('');
+    try {
+      const res = await fetch('/api/neighborhoods/apply-executive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: executiveReason.trim() }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setExecutiveError(data.error || 'Failed to submit');
+        setExecutiveStatus('error');
+        return;
+      }
+      setExecutiveStatus('success');
+    } catch {
+      setExecutiveError('Network error. Please try again.');
+      setExecutiveStatus('error');
+    }
+  };
+
+  // Handle community neighborhood deletion
+  const handleDeleteCommunity = async (neighborhoodId: string) => {
+    setDeletingId(neighborhoodId);
+    try {
+      const res = await fetch('/api/neighborhoods/delete-community', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ neighborhoodId }),
+      });
+      if (res.ok) {
+        // Remove from selected set and update count
+        const newSelected = new Set(selected);
+        newSelected.delete(neighborhoodId);
+        setSelected(newSelected);
+        saveToLocalStorage(newSelected, primaryId === neighborhoodId ? null : primaryId);
+        if (primaryId === neighborhoodId) setPrimaryId(null);
+        setCommunityCount(prev => Math.max(0, prev - 1));
+        // Refresh neighborhoods list
+        try {
+          const freshData = await fetchNeighborhoodsData(8000);
+          setNeighborhoods(freshData.neighborhoods);
+        } catch { /* will refresh on next open */ }
+      }
+    } catch { /* silent */ }
+    setDeletingId(null);
+    setConfirmDeleteId(null);
+  };
+
+  // Handle reporting a community neighborhood
+  const handleReport = async (neighborhoodId: string) => {
+    if (!reportReason.trim() || reportReason.trim().length < 3) return;
+    setReportStatus(prev => ({ ...prev, [neighborhoodId]: 'submitting' }));
+    try {
+      const res = await fetch('/api/neighborhoods/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ neighborhoodId, reason: reportReason.trim() }),
+      });
+      if (res.ok) {
+        setReportStatus(prev => ({ ...prev, [neighborhoodId]: 'success' }));
+        setReportedIds(prev => new Set(prev).add(neighborhoodId));
+        setReportingId(null);
+        setReportReason('');
+      } else {
+        const data = await res.json();
+        if (data.error?.includes('already reported')) {
+          setReportedIds(prev => new Set(prev).add(neighborhoodId));
+          setReportingId(null);
+          setReportReason('');
+        }
+        setReportStatus(prev => ({ ...prev, [neighborhoodId]: 'error' }));
+      }
+    } catch {
+      setReportStatus(prev => ({ ...prev, [neighborhoodId]: 'error' }));
+    }
+  };
+
+  // Fetch delete eligibility when community tab loads
+  useEffect(() => {
+    if (activeTab !== 'community' || !isOpen || !userId) return;
+    fetch('/api/neighborhoods/delete-community')
+      .then(res => res.json())
+      .then(data => setDeleteEligible(data.eligible || {}))
+      .catch(() => {});
+  }, [activeTab, isOpen, userId]);
+
+  // Fetch user's existing reports when community tab loads
+  useEffect(() => {
+    if (activeTab !== 'community' || !isOpen || !userId) return;
+    const supabase = createClient();
+    supabase
+      .from('neighborhood_reports')
+      .select('neighborhood_id')
+      .then(({ data }) => {
+        if (data) setReportedIds(new Set(data.map(r => r.neighborhood_id)));
+      });
+  }, [activeTab, isOpen, userId]);
 
   // Get user location when sorting by nearest
   const handleSortByNearest = () => {
@@ -1104,9 +1223,48 @@ function GlobalNeighborhoodModal({
                   </div>
 
                   {communityCount >= 2 ? (
-                    <p className="text-sm text-fg-subtle">
-                      You have reached the limit of 2 community neighborhoods.
-                    </p>
+                    <div>
+                      <p className="text-sm text-fg-subtle leading-relaxed">
+                        You have utilized your complimentary 2 Neighborhood Credits.{' '}
+                        To expand your coverage map,{' '}
+                        <button
+                          onClick={() => setShowExecutiveForm(!showExecutiveForm)}
+                          className="text-accent hover:underline font-medium"
+                        >
+                          apply for executive status here
+                        </button>.
+                      </p>
+                      {showExecutiveForm && (
+                        executiveStatus === 'success' ? (
+                          <p className="text-xs text-green-400 mt-3">
+                            Application received. We will review within 48 hours.
+                          </p>
+                        ) : (
+                          <div className="mt-3 space-y-3">
+                            <textarea
+                              value={executiveReason}
+                              onChange={(e) => { setExecutiveReason(e.target.value); setExecutiveError(''); }}
+                              placeholder="e.g., I split my time between London and Zurich"
+                              rows={2}
+                              className="w-full bg-transparent border border-border-strong rounded-lg text-sm text-fg placeholder-fg-subtle p-3 focus:outline-none focus:border-amber-500/50 transition-colors resize-none max-w-[400px]"
+                              disabled={executiveStatus === 'submitting'}
+                            />
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={handleExecutiveSubmit}
+                                disabled={!executiveReason.trim() || executiveReason.trim().length < 10 || executiveStatus === 'submitting'}
+                                className="px-4 py-2 text-[11px] tracking-[0.1em] uppercase font-medium bg-fg text-canvas hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-all rounded-lg"
+                              >
+                                {executiveStatus === 'submitting' ? 'Submitting...' : 'Submit Application'}
+                              </button>
+                              {executiveError && (
+                                <span className="text-xs text-red-400">{executiveError}</span>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      )}
+                    </div>
                   ) : communityCreateStatus === 'success' ? (
                     <div className="py-3">
                       <div className="flex items-center gap-2">
@@ -1200,21 +1358,96 @@ function GlobalNeighborhoodModal({
                           <div className="space-y-0.5">
                             {hoods.map(hood => {
                               const isSelected = selected.has(hood.id);
+                              const isCreator = hood.created_by === userId;
+                              const canDelete = isCreator && deleteEligible[hood.id];
+                              const isReported = reportedIds.has(hood.id);
                               return (
-                                <div key={hood.id} data-neighborhood-id={hood.id} className="flex items-center gap-1 group/item">
-                                  <button
-                                    onClick={() => toggleNeighborhood(hood.id)}
-                                    className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${
-                                      isSelected ? 'text-accent font-medium' : 'text-fg-muted hover:text-fg'
-                                    }`}
-                                  >
-                                    {isSelected && (
-                                      <svg className="w-3 h-3 shrink-0 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                      </svg>
+                                <div key={hood.id} data-neighborhood-id={hood.id} className="group/item">
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      onClick={() => toggleNeighborhood(hood.id)}
+                                      className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${
+                                        isSelected ? 'text-accent font-medium' : 'text-fg-muted hover:text-fg'
+                                      }`}
+                                    >
+                                      {isSelected && (
+                                        <svg className="w-3 h-3 shrink-0 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      )}
+                                      {hood.name}
+                                    </button>
+                                    {/* Delete button for eligible creator neighborhoods */}
+                                    {canDelete && confirmDeleteId !== hood.id && (
+                                      <button
+                                        onClick={() => setConfirmDeleteId(hood.id)}
+                                        className="text-fg-subtle hover:text-red-400 transition-colors opacity-0 group-hover/item:opacity-100 shrink-0 p-0.5"
+                                        title="Delete neighborhood"
+                                      >
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                      </button>
                                     )}
-                                    {hood.name}
-                                  </button>
+                                    {/* Report link for non-creator community neighborhoods */}
+                                    {!isCreator && userId && !isReported && reportingId !== hood.id && (
+                                      <button
+                                        onClick={() => { setReportingId(hood.id); setReportReason(''); }}
+                                        className="text-[10px] text-fg-subtle hover:text-fg-muted transition-colors opacity-0 group-hover/item:opacity-100 shrink-0"
+                                      >
+                                        Report
+                                      </button>
+                                    )}
+                                    {isReported && (
+                                      <span className="text-[10px] text-fg-subtle shrink-0">Reported</span>
+                                    )}
+                                  </div>
+                                  {/* Confirm delete dialog */}
+                                  {confirmDeleteId === hood.id && (
+                                    <div className="flex items-center gap-2 mt-1 ml-4">
+                                      <span className="text-xs text-fg-muted">Delete {hood.name}?</span>
+                                      <button
+                                        onClick={() => handleDeleteCommunity(hood.id)}
+                                        disabled={deletingId === hood.id}
+                                        className="text-[10px] text-red-400 hover:text-red-300 font-medium"
+                                      >
+                                        {deletingId === hood.id ? 'Deleting...' : 'Yes'}
+                                      </button>
+                                      <button
+                                        onClick={() => setConfirmDeleteId(null)}
+                                        className="text-[10px] text-fg-subtle hover:text-fg"
+                                      >
+                                        No
+                                      </button>
+                                    </div>
+                                  )}
+                                  {/* Report inline form */}
+                                  {reportingId === hood.id && (
+                                    <div className="flex items-center gap-2 mt-1 ml-4">
+                                      <input
+                                        type="text"
+                                        value={reportReason}
+                                        onChange={(e) => setReportReason(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleReport(hood.id)}
+                                        placeholder="Why is this inappropriate?"
+                                        className="flex-1 bg-transparent border-b border-border-strong text-xs text-fg placeholder-fg-subtle py-1 focus:outline-none focus:border-amber-500/50 max-w-[200px]"
+                                        autoFocus
+                                      />
+                                      <button
+                                        onClick={() => handleReport(hood.id)}
+                                        disabled={!reportReason.trim() || reportReason.trim().length < 3 || reportStatus[hood.id] === 'submitting'}
+                                        className="text-[10px] text-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed"
+                                      >
+                                        {reportStatus[hood.id] === 'submitting' ? '...' : 'Send'}
+                                      </button>
+                                      <button
+                                        onClick={() => { setReportingId(null); setReportReason(''); }}
+                                        className="text-[10px] text-fg-subtle hover:text-fg"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })}

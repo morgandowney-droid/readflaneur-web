@@ -163,7 +163,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   // Get full neighborhood data for display (including combo info)
   const { data: neighborhoodsRaw } = await supabase
     .from('neighborhoods')
-    .select('id, name, city, is_combo, timezone, country, latitude, longitude')
+    .select('id, name, city, is_combo, timezone, country, latitude, longitude, is_community')
     .in('id', neighborhoodIds);
 
   // Fetch combo component names for combo neighborhoods
@@ -325,14 +325,27 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
                 sectionSlug={sectionSlug}
               />
             )}
-            {feedItems.length === 0 && (
+            {feedItems.length === 0 && singleNeighborhood?.is_community ? (
+              <div className="text-center py-16 px-4">
+                <div className="flex justify-center mb-6">
+                  <div className="w-3 h-3 rounded-full bg-neutral-900 dark:bg-neutral-100 animate-pulse" />
+                </div>
+                <h2 className="text-sm tracking-[0.25em] uppercase font-light text-fg mb-3">
+                  Initializing Coverage Protocol
+                </h2>
+                <p className="text-sm text-fg-subtle max-w-sm mx-auto leading-relaxed">
+                  The editorial engine is currently sweeping local sources for {singleNeighborhood.name}.
+                  The first intelligence brief will be synthesized shortly.
+                </p>
+              </div>
+            ) : feedItems.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-fg-subtle mb-4">No articles yet for this neighborhood.</p>
                 <Link href="/neighborhoods" className="text-sm underline hover:no-underline">
                   Explore all neighborhoods
                 </Link>
               </div>
-            )}
+            ) : null}
           </>
         ) : (
           <>
