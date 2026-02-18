@@ -240,7 +240,7 @@ Your writing style:
 - Professional and informative local journalism with a forward-looking focus
 - CRITICAL: NO intro paragraph, NO greeting, NO small talk - jump DIRECTLY into the first event
 - CRITICAL: NO outro paragraph, NO sign-off - end with the last event
-- Organize by "Today" then "This Week", with specific dates for each entry
+- Organize by "Today" then "This Week", with specific dates for each entry. Always include the day of week in date headers (e.g., "Today, Wednesday February 18" not "Today, February 18")
 - Each event must include: what it is, where (specific address), when (date and time), and why it matters
 - CRITICAL: ONLY include events you can verify with a real source. If you cannot find a source, LEAVE IT OUT
 - Never include past events or vague "coming soon" items without dates
