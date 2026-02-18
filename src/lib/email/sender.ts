@@ -12,20 +12,67 @@ import { checkDailyEmailLimit } from './daily-email-limit';
 
 /**
  * Build the email subject line
+ * Format: "Daily Brief: {neighborhood}. {teaser from story headlines}"
+ * Under 70 characters total, referencing several stories to entice opens.
  */
 function buildSubject(content: DailyBriefContent): string {
   const primary = content.primarySection?.neighborhoodName;
-  const satelliteCount = content.satelliteSections.length;
 
   if (!primary) {
     return 'Daily Brief';
   }
 
-  if (satelliteCount > 0) {
-    return `Daily Brief: ${primary}+`;
+  const prefix = `Daily Brief: ${primary}. `;
+  const stories = content.primarySection?.stories || [];
+
+  if (stories.length === 0) {
+    return `Daily Brief: ${primary}`;
   }
 
-  return `Daily Brief: ${primary}`;
+  // Build teaser from story headlines - take short phrases from each
+  const budget = 70 - prefix.length;
+  const teaser = buildTeaser(stories.map(s => s.headline), budget);
+
+  if (!teaser) {
+    return `Daily Brief: ${primary}`;
+  }
+
+  return `${prefix}${teaser}`;
+}
+
+/**
+ * Extract short key phrases from headlines and join into a teaser.
+ * Aims to reference 2-3 stories within the character budget.
+ */
+function buildTeaser(headlines: string[], budget: number): string {
+  if (headlines.length === 0 || budget < 15) return '';
+
+  // Take first few words from each headline as a short phrase
+  const phrases: string[] = [];
+  for (const h of headlines.slice(0, 4)) {
+    const words = h.replace(/["""'']/g, '').split(/\s+/);
+    // Take 2-4 words depending on word length
+    let phrase = '';
+    for (let i = 0; i < Math.min(words.length, 4); i++) {
+      const next = phrase ? `${phrase} ${words[i]}` : words[i];
+      if (next.length > 25) break;
+      phrase = next;
+    }
+    if (phrase.length >= 4) phrases.push(phrase);
+  }
+
+  if (phrases.length === 0) return '';
+
+  // Join phrases: "A, B & C" format, fitting within budget
+  let result = phrases[0];
+  for (let i = 1; i < phrases.length; i++) {
+    const sep = i === phrases.length - 1 ? ' & ' : ', ';
+    const candidate = result + sep + phrases[i];
+    if (candidate.length > budget) break;
+    result = candidate;
+  }
+
+  return result.length <= budget ? result : '';
 }
 
 /**
@@ -49,8 +96,8 @@ export async function sendDailyBrief(
     const subject = buildSubject(content);
 
     // Send via existing Resend integration with proper display name
-    const fromAddress = process.env.EMAIL_FROM?.replace(/^[^<]*$/, 'Flaneur <$&>')
-      || 'Flaneur <hello@readflaneur.com>';
+    const fromAddress = process.env.EMAIL_FROM?.replace(/^[^<]*$/, 'Flaneur News <$&>')
+      || 'Flaneur News <hello@readflaneur.com>';
     const success = await sendEmail({
       to: content.recipient.email,
       subject,

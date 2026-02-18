@@ -9,6 +9,56 @@ import { resolveSundayAd } from '@/lib/email/sunday-ad-resolver';
 import { fetchWeather } from '@/lib/email/weather';
 
 /**
+ * Build Sunday Edition subject line.
+ * Format: "Sunday Edition: {name}. {teaser}" under 70 chars.
+ */
+function buildSundaySubject(name: string, content: SundayEditionContent): string {
+  const prefix = `Sunday Edition: ${name}. `;
+  const budget = 70 - prefix.length;
+
+  // Collect phrases from rearview stories and horizon events
+  const phrases: string[] = [];
+  for (const s of (content.rearviewStories || []).slice(0, 3)) {
+    if (s.headline) {
+      const words = s.headline.replace(/["""'']/g, '').split(/\s+/);
+      let phrase = '';
+      for (let i = 0; i < Math.min(words.length, 4); i++) {
+        const next = phrase ? `${phrase} ${words[i]}` : words[i];
+        if (next.length > 25) break;
+        phrase = next;
+      }
+      if (phrase.length >= 4) phrases.push(phrase);
+    }
+  }
+  for (const e of (content.horizonEvents || []).slice(0, 2)) {
+    if (e.name) {
+      const words = e.name.replace(/["""'']/g, '').split(/\s+/);
+      let phrase = '';
+      for (let i = 0; i < Math.min(words.length, 4); i++) {
+        const next = phrase ? `${phrase} ${words[i]}` : words[i];
+        if (next.length > 25) break;
+        phrase = next;
+      }
+      if (phrase.length >= 4) phrases.push(phrase);
+    }
+  }
+
+  if (phrases.length === 0 || budget < 15) {
+    return `Sunday Edition: ${name}`;
+  }
+
+  let result = phrases[0];
+  for (let i = 1; i < phrases.length; i++) {
+    const sep = i === phrases.length - 1 ? ' & ' : ', ';
+    const candidate = result + sep + phrases[i];
+    if (candidate.length > budget) break;
+    result = candidate;
+  }
+
+  return result.length <= budget ? `${prefix}${result}` : `Sunday Edition: ${name}`;
+}
+
+/**
  * Send "The Sunday Edition" weekly email to subscribers.
  *
  * Runs hourly on Sundays, sending at 7 AM local time for each recipient.
@@ -303,8 +353,9 @@ export async function GET(request: Request) {
         }
 
         const html = await render(SundayEditionTemplate(emailContent));
-        const subject = `The Sunday Edition: ${hood.name}`;
-        const from = process.env.EMAIL_FROM || 'Flaneur <hello@readflaneur.com>';
+        const subject = buildSundaySubject(hood.name, emailContent);
+        const from = process.env.EMAIL_FROM?.replace(/^[^<]*$/, 'Flaneur News <$&>')
+          || 'Flaneur News <hello@readflaneur.com>';
 
         const sent = await sendEmail({
           from,

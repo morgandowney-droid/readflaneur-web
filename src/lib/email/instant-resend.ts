@@ -139,7 +139,7 @@ async function sendRateLimitNotice(email: string): Promise<void> {
     await sendEmail({
       to: email,
       subject: 'Settings saved — updated email tomorrow',
-      from: 'Flaneur <noreply@readflaneur.com>',
+      from: 'Flaneur News <noreply@readflaneur.com>',
       html: `
         <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
           <h1 style="font-weight: 300; letter-spacing: 0.1em; font-size: 18px;">FLANEUR</h1>
