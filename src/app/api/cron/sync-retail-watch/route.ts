@@ -127,12 +127,12 @@ export async function GET(request: Request) {
           continue;
         }
 
-        // Create unique slug
+        // Create unique slug based on brand + address (not permit ID) to dedup
         const cleanBrand = story.brandName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-        const cleanAddress = story.address.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 20);
-        const slug = `retail-${cleanBrand}-${cleanAddress}-${story.permitId}`;
+        const cleanAddress = story.address.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 30);
+        const slug = `retail-${cleanBrand}-${cleanAddress}`;
 
-        // Check if we already have an article for this permit
+        // Check if we already have an article for this brand+address
         const { data: existingArticle } = await supabase
           .from('articles')
           .select('id')
@@ -188,7 +188,7 @@ export async function GET(request: Request) {
           ai_model: 'gemini-2.5-flash',
           ai_prompt: `Retail Watch: ${story.brandName} at ${story.address}`,
           category_label: categoryLabel,
-          editor_notes: 'Source: NYC DOB Signage Permits - https://data.cityofnewyork.us/Housing-Development/DOB-Permit-Issuance/ipu4-2q9a',
+          editor_notes: 'Source: NYC DOB NOW Signage Permits - https://data.cityofnewyork.us/Housing-Development/DOB-NOW-Build-Approved-Permits/rbx6-tga4',
           enriched_at: new Date().toISOString(),
           enrichment_model: 'gemini-2.5-flash',
         });
