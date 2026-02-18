@@ -42,7 +42,7 @@ export function StoryList({ stories, variant = 'default' }: StoryListProps) {
           </Link>
           {story.previewText && (
             <Text style={isPrimary ? previewPrimary : preview}>
-              {truncateAtSentence(story.previewText, 160)}
+              {truncateAtSentence(story.previewText, 280)}
             </Text>
           )}
         </Section>
@@ -95,7 +95,7 @@ const headlinePrimary = {
 const previewClamp = {
   overflow: 'hidden' as const,
   display: '-webkit-box',
-  WebkitLineClamp: 2,
+  WebkitLineClamp: 3,
   WebkitBoxOrient: 'vertical' as const,
 };
 

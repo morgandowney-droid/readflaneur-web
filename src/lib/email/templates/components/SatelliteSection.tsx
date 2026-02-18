@@ -37,7 +37,7 @@ export function SatelliteSection({ section }: SatelliteSectionProps) {
           </Link>
           {story.previewText && (
             <Text style={preview}>
-              {truncateAtSentence(story.previewText, 160)}
+              {truncateAtSentence(story.previewText, 280)}
             </Text>
           )}
         </Section>
@@ -85,6 +85,6 @@ const preview = {
   fontFamily: 'system-ui, -apple-system, sans-serif',
   overflow: 'hidden' as const,
   display: '-webkit-box',
-  WebkitLineClamp: 2,
+  WebkitLineClamp: 3,
   WebkitBoxOrient: 'vertical' as const,
 };
