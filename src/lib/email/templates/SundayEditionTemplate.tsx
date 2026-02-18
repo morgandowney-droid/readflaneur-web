@@ -8,7 +8,6 @@ import {
   Link,
   Img,
   Hr,
-  Preview,
 } from '@react-email/components';
 import type { HorizonEvent, WeeklyDataPoint, RearviewStory, HolidaySection } from '../../weekly-brief-service';
 
@@ -69,7 +68,7 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
       <Head>
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap');`}</style>
       </Head>
-      <Preview>{preview}</Preview>
+      <div style={previewHidden}>{preview}</div>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
           {/* Masthead — Letterhead style */}
@@ -695,4 +694,14 @@ const copyrightText = {
   letterSpacing: '0.15em',
   textTransform: 'uppercase' as const,
   fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const previewHidden = {
+  display: 'none',
+  fontSize: '1px',
+  lineHeight: '1px',
+  maxHeight: '0',
+  maxWidth: '0',
+  opacity: 0,
+  overflow: 'hidden',
 };

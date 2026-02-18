@@ -1,7 +1,6 @@
 import {
   Html,
   Head,
-  Preview,
   Body,
   Container,
   Section,
@@ -34,7 +33,7 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
       <Head>
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap');`}</style>
       </Head>
-      <Preview>{previewText}</Preview>
+      <div style={previewHidden}>{previewText}</div>
       <Body style={main}>
         <Container style={container}>
           <Header date={content.date} headerAd={content.headerAd} />
@@ -210,4 +209,14 @@ const emptyState = {
   textAlign: 'center' as const,
   padding: '40px 0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const previewHidden = {
+  display: 'none',
+  fontSize: '1px',
+  lineHeight: '1px',
+  maxHeight: '0',
+  maxWidth: '0',
+  opacity: 0,
+  overflow: 'hidden',
 };
