@@ -160,6 +160,56 @@ export const LUXURY_BRANDS: LuxuryBrand[] = [
   { name: 'De Gournay', pattern: /de\s*gournay/i, category: 'Home & Design', tier: 'Ultra' },
   { name: 'Flos', pattern: /\bflos\b/i, category: 'Home & Design', tier: 'Ultra' },
   { name: 'Artemide', pattern: /artemide/i, category: 'Home & Design', tier: 'Ultra' },
+  { name: 'CB2', pattern: /\bcb2\b/i, category: 'Home & Design', tier: 'Aspirational' },
+  { name: 'West Elm', pattern: /west\s*elm/i, category: 'Home & Design', tier: 'Aspirational' },
+  { name: 'Design Within Reach', pattern: /design\s*within\s*reach|dwr/i, category: 'Home & Design', tier: 'Aspirational' },
+
+  // ─────────────────────────────────────────────────────────────
+  // HOSPITALITY - Restaurant Groups & Notable Openings
+  // ─────────────────────────────────────────────────────────────
+  { name: 'Major Food Group', pattern: /major\s*food\s*group/i, category: 'Hospitality', tier: 'Ultra' },
+  { name: "Balthazar", pattern: /balthazar/i, category: 'Hospitality', tier: 'Ultra' },
+  { name: "Le Coucou", pattern: /le\s*coucou/i, category: 'Hospitality', tier: 'Ultra' },
+  { name: 'Pastis', pattern: /\bpastis\b/i, category: 'Hospitality', tier: 'Ultra' },
+  { name: "L'Artusi", pattern: /l'?\s*artusi/i, category: 'Hospitality', tier: 'Aspirational' },
+  { name: 'Via Carota', pattern: /via\s*carota/i, category: 'Hospitality', tier: 'Ultra' },
+  { name: 'Ritz-Carlton', pattern: /ritz[\s-]*carlton/i, category: 'Hospitality', tier: 'Ultra' },
+  { name: 'St. Regis', pattern: /st\.?\s*regis/i, category: 'Hospitality', tier: 'Ultra' },
+  { name: 'Mandarin Oriental', pattern: /mandarin\s*oriental/i, category: 'Hospitality', tier: 'Ultra' },
+  { name: 'Park Hyatt', pattern: /park\s*hyatt/i, category: 'Hospitality', tier: 'Ultra' },
+  { name: '1 Hotel', pattern: /1\s*hotel/i, category: 'Hospitality', tier: 'Aspirational' },
+  { name: 'Sweetgreen', pattern: /sweetgreen/i, category: 'Hospitality', tier: 'Aspirational' },
+  { name: 'Blank Street Coffee', pattern: /blank\s*street/i, category: 'Hospitality', tier: 'Aspirational' },
+
+  // ─────────────────────────────────────────────────────────────
+  // FASHION - Popular DTC & Premium Retail
+  // ─────────────────────────────────────────────────────────────
+  { name: 'Warby Parker', pattern: /warby\s*parker/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Allbirds', pattern: /allbirds/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Glossier', pattern: /glossier/i, category: 'Beauty & Fragrance', tier: 'Aspirational' },
+  { name: 'Everlane', pattern: /everlane/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Reformation', pattern: /reformation/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Sézane', pattern: /s[eé]zane/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'COS', pattern: /\bcos\b/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Aritzia', pattern: /aritzia/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Lululemon', pattern: /lululemon/i, category: 'Fitness & Wellness', tier: 'Aspirational' },
+  { name: 'Apple', pattern: /\bapple\b/i, category: 'Home & Design', tier: 'Aspirational' },
+  { name: 'Nike', pattern: /\bnike\b/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Moncler', pattern: /moncler/i, category: 'Fashion', tier: 'Ultra' },
+  { name: 'Canada Goose', pattern: /canada\s*goose/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Arc\'teryx', pattern: /arc'?\s*teryx/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Vuori', pattern: /\bvuori\b/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'James Perse', pattern: /james\s*perse/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Vince', pattern: /\bvince\b/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Theory', pattern: /\btheory\b/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Scotch & Soda', pattern: /scotch\s*&?\s*soda/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'AllSaints', pattern: /allsaints|all\s*saints/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Maje', pattern: /\bmaje\b/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Sandro', pattern: /\bsandro\b/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Isabel Marant', pattern: /isabel\s*marant/i, category: 'Fashion', tier: 'Ultra' },
+  { name: 'Zimmermann', pattern: /zimmermann/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Veronica Beard', pattern: /veronica\s*beard/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Rag & Bone', pattern: /rag\s*&?\s*bone/i, category: 'Fashion', tier: 'Aspirational' },
 ];
 
 /**
@@ -270,7 +320,7 @@ export async function fetchNYCSignagePermits(
     const baseUrl = 'https://data.cityofnewyork.us/resource/ipu4-2q9a.json';
 
     // Build date filter
-    const sinceDate = since || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const sinceDate = since || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const dateFilter = sinceDate.toISOString().split('T')[0];
 
     // Filter for signage permits (SG) in our target zips

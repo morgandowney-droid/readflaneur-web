@@ -38,7 +38,7 @@ export async function GET(request: Request) {
   // Support ?neighborhood=west-village for testing single neighborhood
   const url = new URL(request.url);
   const testNeighborhood = url.searchParams.get('neighborhood');
-  const hoursAhead = parseInt(url.searchParams.get('hours') || '48', 10);
+  const hoursAhead = parseInt(url.searchParams.get('hours') || '168', 10);
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

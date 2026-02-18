@@ -42,7 +42,7 @@ export async function GET(request: Request) {
   // Support query params for testing
   const url = new URL(request.url);
   const useSampleData = url.searchParams.get('sample') === 'true';
-  const daysBack = parseInt(url.searchParams.get('days') || '7', 10);
+  const daysBack = parseInt(url.searchParams.get('days') || '30', 10);
   const testNeighborhood = url.searchParams.get('neighborhood');
 
   const supabase = createClient(

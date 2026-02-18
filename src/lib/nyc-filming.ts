@@ -65,10 +65,10 @@ const KNOWN_PRODUCTIONS = [
 ];
 
 // Categories to include
-const PREMIUM_CATEGORIES = ['Television', 'Feature', 'Commercial', 'WEB'];
+const PREMIUM_CATEGORIES = ['Television', 'Feature', 'Commercial', 'WEB', 'Documentary', 'Music Video', 'Theater'];
 
 // Categories to exclude
-const EXCLUDED_CATEGORIES = ['Student', 'Still Photography', 'Theater'];
+const EXCLUDED_CATEGORIES = ['Student', 'Still Photography'];
 
 /**
  * Raw film permit from NYC Open Data
@@ -132,7 +132,7 @@ export interface FilmingStory {
  * Filters for premium productions in Flâneur coverage areas
  */
 export async function fetchFilmingPermits(
-  hoursAhead: number = 48
+  hoursAhead: number = 168
 ): Promise<FilmingEvent[]> {
   const now = new Date();
   const futureDate = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);
@@ -473,7 +473,7 @@ Include 1-3 link candidates for key entities mentioned in the body (production n
  * Fetch permits and generate stories for all affected neighborhoods
  */
 export async function processFilmingPermits(
-  hoursAhead: number = 48
+  hoursAhead: number = 168
 ): Promise<{
   events: FilmingEvent[];
   stories: FilmingStory[];
@@ -516,7 +516,7 @@ export async function processFilmingPermits(
  */
 export async function getFilmingEventsForNeighborhood(
   neighborhoodId: string,
-  hoursAhead: number = 48
+  hoursAhead: number = 168
 ): Promise<FilmingEvent[]> {
   const events = await fetchFilmingPermits(hoursAhead);
   return events.filter((e) => e.neighborhoodId === neighborhoodId);

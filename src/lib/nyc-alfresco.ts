@@ -123,6 +123,7 @@ export interface OutdoorDiningEvent {
   neighborhoodId: string;
   seatingType: 'Sidewalk' | 'Roadway' | 'Both';
   hasAlcohol: boolean;
+  isPending: boolean;
   sidewalkArea: number | null;
   roadwayArea: number | null;
   totalSeats: number;
@@ -195,7 +196,7 @@ function getCurrentSeason(): 'Spring' | 'Summer' | 'Fall' | 'Winter' {
  * Filters for approved applications in Flâneur coverage areas
  */
 export async function fetchAlfrescoPermits(
-  daysBack: number = 7
+  daysBack: number = 30
 ): Promise<OutdoorDiningEvent[]> {
   const since = new Date();
   since.setDate(since.getDate() - daysBack);
@@ -205,11 +206,12 @@ export async function fetchAlfrescoPermits(
   const zipFilter = ALL_TARGET_ZIPS.map((z) => `'${z}'`).join(',');
 
   try {
-    // SoQL query for recent approved applications in our zip codes
+    // SoQL query for recent applications in our zip codes
+    // Include both approved AND pending (interest expressed) applications
     const whereClause = [
       `time_submitted >= '${sinceStr}'`,
       `zip IN (${zipFilter})`,
-      `(approved_for_sidewalk_seating = 'yes' OR approved_for_roadway_seating = 'yes')`,
+      `(approved_for_sidewalk_seating = 'yes' OR approved_for_roadway_seating = 'yes' OR seating_interest_sidewalk = 'yes' OR seating_interest_roadway = 'yes')`,
     ].join(' AND ');
 
     const params = new URLSearchParams({
@@ -265,12 +267,17 @@ export async function fetchAlfrescoPermits(
 
       if (!neighborhoodId) continue;
 
-      // Check approval status
+      // Check approval status (approved OR interest expressed)
       const sidewalkApproved = app.approved_for_sidewalk_seating?.toLowerCase() === 'yes';
       const roadwayApproved = app.approved_for_roadway_seating?.toLowerCase() === 'yes';
+      const sidewalkInterest = app.seating_interest_sidewalk?.toLowerCase() === 'yes';
+      const roadwayInterest = app.seating_interest_roadway?.toLowerCase() === 'yes';
 
-      // Skip if neither approved (shouldn't happen with our filter, but safety check)
-      if (!sidewalkApproved && !roadwayApproved) continue;
+      const isApproved = sidewalkApproved || roadwayApproved;
+      const isPending = !isApproved && (sidewalkInterest || roadwayInterest);
+
+      // Skip if neither approved nor pending interest
+      if (!isApproved && !isPending) continue;
 
       // Parse areas
       const sidewalkArea = parseFloat(app.sidewalk_dimensions_area || '0') || null;
@@ -279,8 +286,10 @@ export async function fetchAlfrescoPermits(
       // Check alcohol qualification
       const hasAlcohol = app.qualify_alcohol?.toLowerCase() === 'yes';
 
-      // Determine seating type
-      const seatingType = getSeatingType(sidewalkApproved, roadwayApproved);
+      // Determine seating type (use approved status if available, otherwise interest)
+      const seatingType = isApproved
+        ? getSeatingType(sidewalkApproved, roadwayApproved)
+        : getSeatingType(sidewalkInterest, roadwayInterest);
 
       // Estimate seats
       const totalSeats = estimateSeats(sidewalkArea, roadwayArea);
@@ -294,6 +303,7 @@ export async function fetchAlfrescoPermits(
         neighborhoodId,
         seatingType,
         hasAlcohol,
+        isPending,
         sidewalkArea,
         roadwayArea,
         totalSeats,
@@ -381,19 +391,25 @@ Writing Style:
 - Keep it brief and scannable
 - No emojis`;
 
+  const statusNote = event.isPending
+    ? 'This restaurant has APPLIED for outdoor seating but is not yet approved. Use language like "has applied for" or "is seeking approval for" rather than stating it as confirmed.'
+    : 'This restaurant has been APPROVED for outdoor seating.';
+
   const prompt = `Data:
 - Restaurant: ${event.restaurantName}
 - Address: ${event.address}
 - Neighborhood: ${event.neighborhood}
 - Seating Type: ${event.seatingType} (${seatingDesc})
+- Status: ${event.isPending ? 'Application Pending' : 'Approved'}
 - Alcohol Service: ${event.hasAlcohol ? 'Yes' : 'No'}
 - Estimated Seats: ${event.totalSeats > 0 ? event.totalSeats : 'Unknown'}
 - Season: ${season}
 
+${statusNote}
 ${seasonalContext}
 ${alcoholNote}
 
-Task: Write a 35-40 word blurb about this new outdoor dining spot.
+Task: Write a 35-40 word blurb about this ${event.isPending ? 'pending outdoor dining application' : 'new outdoor dining spot'}.
 
 Return JSON:
 {
@@ -458,7 +474,7 @@ Include 1-3 link candidates for key entities mentioned in the body (restaurant n
  * Fetch permits and generate stories for all affected neighborhoods
  */
 export async function processAlfrescoPermits(
-  daysBack: number = 7
+  daysBack: number = 30
 ): Promise<{
   events: OutdoorDiningEvent[];
   stories: AlfrescoStory[];
@@ -501,7 +517,7 @@ export async function processAlfrescoPermits(
  */
 export async function getAlfrescoEventsForNeighborhood(
   neighborhoodId: string,
-  daysBack: number = 7
+  daysBack: number = 30
 ): Promise<OutdoorDiningEvent[]> {
   const events = await fetchAlfrescoPermits(daysBack);
   return events.filter((e) => e.neighborhoodId === neighborhoodId);
