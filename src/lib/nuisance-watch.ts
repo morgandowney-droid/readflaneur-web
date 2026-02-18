@@ -144,6 +144,7 @@ export interface RawComplaint {
   descriptor?: string;
   address: string;
   street: string;
+  crossStreets?: string; // "CROSS ST 1 and CROSS ST 2" fallback
   city: string;
   zipCode: string;
   borough?: string;
@@ -220,17 +221,45 @@ function mapComplaintType(nycType: string): ComplaintCategory | null {
 }
 
 /**
- * Anonymize residential address to "100 Block" format
+ * Title-case a string ("BLEECKER STREET" → "Bleecker Street")
  */
-function anonymizeAddress(address: string, street: string): string {
-  // Extract house number
+function titleCase(s: string): string {
+  return s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Extract the street name from an address like "123 BLEECKER STREET"
+ */
+function extractStreetFromAddress(address: string): string {
+  // Remove house number prefix to get street name
+  return address.replace(/^\d+[-\s]*/, '').trim();
+}
+
+/**
+ * Anonymize residential address to "100 Block" format
+ * Falls back to street extraction from address, then cross streets
+ */
+function anonymizeAddress(address: string, street: string, crossStreets?: string): string {
+  // Resolve the street name: prefer street_name, fall back to parsing address
+  const resolvedStreet = titleCase(street || extractStreetFromAddress(address));
+
+  // If we have a house number, round to block
   const match = address.match(/^(\d+)/);
-  if (!match) return street;
+  if (match && resolvedStreet) {
+    const houseNumber = parseInt(match[1], 10);
+    const block = Math.floor(houseNumber / 100) * 100;
+    // "0 Block" looks odd — use just the street name for low numbers
+    if (block === 0) return resolvedStreet;
+    return `${block} Block of ${resolvedStreet}`;
+  }
 
-  const houseNumber = parseInt(match[1], 10);
-  const block = Math.floor(houseNumber / 100) * 100;
+  // No house number but have a street
+  if (resolvedStreet) return resolvedStreet;
 
-  return `${block} Block of ${street}`;
+  // Last resort: cross streets
+  if (crossStreets) return titleCase(crossStreets);
+
+  return '';
 }
 
 /**
@@ -290,6 +319,11 @@ export async function fetchNYC311Complaints(
 
       const address = record.incident_address || '';
       const street = record.street_name || '';
+      const cross1 = record.cross_street_1 || '';
+      const cross2 = record.cross_street_2 || '';
+      const crossStreets = cross1 && cross2
+        ? `${cross1.trim()} and ${cross2.trim()}`
+        : (cross1 || cross2).trim();
 
       complaints.push({
         complaintId: record.unique_key || `311-${Date.now()}`,
@@ -299,6 +333,7 @@ export async function fetchNYC311Complaints(
         descriptor: record.descriptor,
         address: address.trim(),
         street: street.trim(),
+        crossStreets: crossStreets || undefined,
         city: record.city || 'New York',
         zipCode,
         borough: record.borough,
@@ -344,9 +379,12 @@ export function clusterComplaints(
       displayLocation = complaint.address;
     } else {
       // Round to 100 block for privacy
-      locationKey = anonymizeAddress(complaint.address, complaint.street).toLowerCase();
-      displayLocation = anonymizeAddress(complaint.address, complaint.street);
+      displayLocation = anonymizeAddress(complaint.address, complaint.street, complaint.crossStreets);
+      locationKey = displayLocation.toLowerCase();
     }
+
+    // Skip complaints with no resolvable location — they produce empty headlines
+    if (!displayLocation) continue;
 
     const clusterId = generateClusterId(locationKey, category);
 
