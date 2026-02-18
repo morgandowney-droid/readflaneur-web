@@ -316,21 +316,21 @@ export async function fetchNYCSignagePermits(
   const permits: SignagePermit[] = [];
 
   try {
-    // NYC DOB NOW API for signage permits
-    const baseUrl = 'https://data.cityofnewyork.us/resource/ipu4-2q9a.json';
+    // NYC DOB NOW API for signage permits (newer dataset with current data)
+    const baseUrl = 'https://data.cityofnewyork.us/resource/rbx6-tga4.json';
 
     // Build date filter
     const sinceDate = since || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const dateFilter = sinceDate.toISOString().split('T')[0];
 
-    // Filter for signage permits (SG) in our target zips
+    // Filter for Sign work type in our target zips
     const zipList = ALL_TARGET_ZIPS.map((z) => `'${z}'`).join(',');
-    const whereClause = `filing_date >= '${dateFilter}' AND job_type = 'SG' AND zip_code IN (${zipList})`;
+    const whereClause = `approved_date >= '${dateFilter}' AND work_type = 'Sign' AND zip_code IN (${zipList})`;
 
     const params = new URLSearchParams({
       $where: whereClause,
       $limit: '200',
-      $order: 'filing_date DESC',
+      $order: 'approved_date DESC',
     });
 
     const response = await fetch(`${baseUrl}?${params}`, {
@@ -353,28 +353,26 @@ export async function fetchNYCSignagePermits(
 
       if (!neighborhoodInfo) continue;
 
-      // Extract street name from address
+      // Extract street name from address (DOB NOW uses house_no + street_name)
       const address = record.house_no
         ? `${record.house_no} ${record.street_name || ''}`
         : record.street_name || '';
       const street = record.street_name || '';
 
       permits.push({
-        permitId: record.job_number || record.job__ || `NYC-${Date.now()}`,
+        permitId: record.job_filing_number || record.tracking_number || `NYC-${Date.now()}`,
         city: 'New York',
         neighborhood: neighborhoodInfo.key,
         neighborhoodId: neighborhoodInfo.id,
         address: address.trim(),
         street: street.trim(),
         zipCode,
-        filingDate: record.filing_date || new Date().toISOString(),
+        filingDate: record.approved_date || record.issued_date || new Date().toISOString(),
         description: record.job_description || '',
         applicantName: record.applicant_first_name
           ? `${record.applicant_first_name} ${record.applicant_last_name || ''}`
-          : undefined,
-        ownerName: record.owner_s_first_name
-          ? `${record.owner_s_first_name} ${record.owner_s_last_name || ''}`
-          : record.owner_s_business_name,
+          : record.applicant_business_name,
+        ownerName: record.owner_name || record.owner_business_name,
         signType: record.work_type,
         rawData: record,
       });

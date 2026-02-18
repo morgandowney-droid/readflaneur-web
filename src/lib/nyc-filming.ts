@@ -74,20 +74,20 @@ const EXCLUDED_CATEGORIES = ['Student', 'Still Photography'];
  * Raw film permit from NYC Open Data
  */
 interface RawFilmPermit {
-  event_id?: string;
-  event_type?: string;
-  start_date_time?: string;
-  end_date_time?: string;
-  entered_on?: string;
-  event_agency?: string;
-  parking_held?: string;
+  eventid?: string;
+  eventtype?: string;
+  startdatetime?: string;
+  enddatetime?: string;
+  enteredon?: string;
+  eventagency?: string;
+  parkingheld?: string;
   borough?: string;
-  community_board_s_?: string;
-  police_precinct_s_?: string;
+  communityboard_s?: string;
+  policeprecinct_s?: string;
   category?: string;
-  sub_category_name?: string;
+  subcategoryname?: string;
   country?: string;
-  zipcode_s_?: string;
+  zipcode_s?: string;
 }
 
 /**
@@ -147,13 +147,13 @@ export async function fetchFilmingPermits(
   try {
     // SoQL query for upcoming permits in our zip codes
     const whereClause = [
-      `start_date_time >= '${nowStr}'`,
-      `start_date_time <= '${futureStr}'`,
+      `startdatetime >= '${nowStr}'`,
+      `startdatetime <= '${futureStr}'`,
     ].join(' AND ');
 
     const params = new URLSearchParams({
       $where: whereClause,
-      $order: 'start_date_time ASC',
+      $order: 'startdatetime ASC',
       $limit: '500',
     });
 
@@ -189,7 +189,7 @@ export async function fetchFilmingPermits(
       if (!isPremium) continue;
 
       // Check zip codes - permits can have multiple zips
-      const permitZips = (permit.zipcode_s_ || '')
+      const permitZips = (permit.zipcode_s || '')
         .split(',')
         .map((z) => z.trim())
         .filter(Boolean);
@@ -199,7 +199,7 @@ export async function fetchFilmingPermits(
       if (matchingZips.length === 0) continue;
 
       // Get the primary neighborhood for this permit
-      const parkingHeld = permit.parking_held || '';
+      const parkingHeld = permit.parkingheld || '';
       const neighborhoodKey = getNeighborhoodKeyFromZip(matchingZips[0], parkingHeld);
       if (!neighborhoodKey) continue;
 
@@ -225,16 +225,16 @@ export async function fetchFilmingPermits(
       const impact = determineImpact(parkingHeld, streets.length);
 
       events.push({
-        eventId: permit.event_id || `film-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        eventId: permit.eventid || `film-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         projectName,
         category: permit.category || 'Unknown',
-        subCategory: permit.sub_category_name,
+        subCategory: permit.subcategoryname,
         neighborhood: neighborhoodKey,
         neighborhoodId,
         streets,
         parkingHeld,
-        startDate: permit.start_date_time || '',
-        endDate: permit.end_date_time || '',
+        startDate: permit.startdatetime || '',
+        endDate: permit.enddatetime || '',
         impact,
         isKnownProduction: isKnown,
         borough: permit.borough || 'Manhattan',
@@ -267,9 +267,9 @@ export async function fetchFilmingPermits(
  * Film permits often use code names - try to identify real productions
  */
 function extractProjectName(permit: RawFilmPermit): string {
-  // The event_type field sometimes contains the actual show name
-  const eventType = permit.event_type || '';
-  const subCategory = permit.sub_category_name || '';
+  // The eventtype field sometimes contains the actual show name
+  const eventType = permit.eventtype || '';
+  const subCategory = permit.subcategoryname || '';
   const category = permit.category || '';
 
   // Check if event_type looks like a real production name

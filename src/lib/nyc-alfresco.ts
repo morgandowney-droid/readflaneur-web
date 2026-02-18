@@ -91,11 +91,11 @@ interface RawOpenRestaurantApp {
   legal_business_name?: string;
   doing_business_as_dba?: string;
   business_address?: string;
-  building?: string;
+  bulding_number?: string; // NYC API typo: "bulding" not "building"
   street?: string;
   borough?: string;
   zip?: string;
-  time_submitted?: string;
+  time_of_submission?: string;
   approved_for_sidewalk_seating?: string;
   approved_for_roadway_seating?: string;
   qualify_alcohol?: string;
@@ -208,15 +208,18 @@ export async function fetchAlfrescoPermits(
   try {
     // SoQL query for recent applications in our zip codes
     // Include both approved AND pending (interest expressed) applications
+    // Note: seating_interest values are 'sidewalk', 'roadway', or 'both' (not 'yes')
     const whereClause = [
-      `time_submitted >= '${sinceStr}'`,
+      `time_of_submission >= '${sinceStr}'`,
       `zip IN (${zipFilter})`,
-      `(approved_for_sidewalk_seating = 'yes' OR approved_for_roadway_seating = 'yes' OR seating_interest_sidewalk = 'yes' OR seating_interest_roadway = 'yes')`,
+      `(approved_for_sidewalk_seating = 'yes' OR approved_for_roadway_seating = 'yes' OR seating_interest_sidewalk IS NOT NULL OR seating_interest_roadway IS NOT NULL)`,
     ].join(' AND ');
+
+    const orderClause = 'time_of_submission DESC';
 
     const params = new URLSearchParams({
       $where: whereClause,
-      $order: 'time_submitted DESC',
+      $order: orderClause,
       $limit: '500',
     });
 
@@ -256,7 +259,7 @@ export async function fetchAlfrescoPermits(
       if (!ALL_TARGET_ZIPS.includes(zipCode)) continue;
 
       // Get neighborhood
-      const address = app.business_address || `${app.building || ''} ${app.street || ''}`.trim();
+      const address = app.business_address || `${app.bulding_number || ''} ${app.street || ''}`.trim();
       const neighborhoodKey = getNeighborhoodKeyFromZip(zipCode, address);
       if (!neighborhoodKey) continue;
 
@@ -270,8 +273,9 @@ export async function fetchAlfrescoPermits(
       // Check approval status (approved OR interest expressed)
       const sidewalkApproved = app.approved_for_sidewalk_seating?.toLowerCase() === 'yes';
       const roadwayApproved = app.approved_for_roadway_seating?.toLowerCase() === 'yes';
-      const sidewalkInterest = app.seating_interest_sidewalk?.toLowerCase() === 'yes';
-      const roadwayInterest = app.seating_interest_roadway?.toLowerCase() === 'yes';
+      // Interest values are 'sidewalk', 'roadway', 'both' (not 'yes')
+      const sidewalkInterest = !!app.seating_interest_sidewalk && ['sidewalk', 'both'].includes(app.seating_interest_sidewalk.toLowerCase());
+      const roadwayInterest = !!app.seating_interest_roadway && ['roadway', 'both'].includes(app.seating_interest_roadway.toLowerCase());
 
       const isApproved = sidewalkApproved || roadwayApproved;
       const isPending = !isApproved && (sidewalkInterest || roadwayInterest);
@@ -307,7 +311,7 @@ export async function fetchAlfrescoPermits(
         sidewalkArea,
         roadwayArea,
         totalSeats,
-        submittedDate: app.time_submitted || '',
+        submittedDate: app.time_of_submission || '',
         borough: app.borough || 'Manhattan',
         latitude: app.latitude ? parseFloat(app.latitude) : null,
         longitude: app.longitude ? parseFloat(app.longitude) : null,
