@@ -307,7 +307,7 @@ export async function GET(request: Request) {
 
           // Step 3: Create article
           const headline = lookAheadBrief.headline;
-          const articleHeadline = `${name} LOOK AHEAD: ${headline}`;
+          const articleHeadline = `LOOK AHEAD: ${headline}`;
           const slug = generateSlug(headline, id, tomorrowDate);
           const previewText = generatePreviewText(articleBody);
 

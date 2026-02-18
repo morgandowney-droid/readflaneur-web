@@ -287,15 +287,20 @@ export async function generateNeighborhoodLibrary(
   const now = new Date();
   const season = `${now.getFullYear()}-Q${Math.ceil((now.getMonth() + 1) / 3)}`;
 
-  // Get existing count (in case we're adding to partial library)
-  const { data: existing } = await supabase
-    .from('image_library_status')
-    .select('images_generated')
-    .eq('neighborhood_id', neighborhood.id)
-    .single();
-
-  const totalGenerated = (existing?.images_generated || 0) + result.images_generated;
-  const finalCount = Math.min(totalGenerated, IMAGE_CATEGORIES.length);
+  // Count images: when doing a full refresh (not skipExisting), use only this
+  // run's count since all categories were attempted. When skipExisting, add to
+  // existing count since only missing categories were attempted.
+  let finalCount: number;
+  if (options?.skipExisting) {
+    const { data: existing } = await supabase
+      .from('image_library_status')
+      .select('images_generated')
+      .eq('neighborhood_id', neighborhood.id)
+      .single();
+    finalCount = Math.min((existing?.images_generated || 0) + result.images_generated, IMAGE_CATEGORIES.length);
+  } else {
+    finalCount = result.images_generated;
+  }
 
   await supabase
     .from('image_library_status')
