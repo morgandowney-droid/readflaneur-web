@@ -295,6 +295,11 @@ Writing Style:
 - No emojis
 - Focus on what this means for the neighborhood`;
 
+  const dateLabel = event.isPending ? 'Filed' : 'Issued';
+  const dateStr = event.receivedDate
+    ? new Date(event.receivedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : null;
+
   const prompt = `Data:
 - Business: ${event.businessName}
 - Legal Name: ${event.legalName}
@@ -302,11 +307,11 @@ Writing Style:
 - Address: ${event.address}
 - Neighborhood: ${event.neighborhood}
 - Status: ${event.isPending ? 'Pending application' : 'Newly granted'}
-${event.receivedDate ? `- Date: ${new Date(event.receivedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}
+${dateStr ? `- ${dateLabel} Date: ${dateStr}` : ''}
 
 ${toneGuidance}
 
-Task: Write a 35-50 word blurb about this ${event.description.toLowerCase()} ${statusText} at ${event.address}.
+Task: Write a 35-50 word blurb about this ${event.description.toLowerCase()} ${statusText} at ${event.address}.${dateStr ? ` Mention the ${dateLabel.toLowerCase()} date (${dateStr}) in the text.` : ''}
 
 Return JSON:
 {
