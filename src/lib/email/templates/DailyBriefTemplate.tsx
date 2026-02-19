@@ -105,9 +105,9 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
 
               {/* Jump link to Family Corner */}
               {content.familyCorner && (
-                <Section style={{ paddingTop: '4px', paddingBottom: '0', textAlign: 'center' as const }}>
+                <Section style={{ paddingTop: '12px', paddingBottom: '8px', textAlign: 'center' as const }}>
                   <a href="#family-corner" style={familyCornerJumpLink}>
-                    Family Corner below &darr;
+                    Jump to Family Corner &darr;
                   </a>
                 </Section>
               )}
@@ -250,10 +250,11 @@ const emptyState = {
 };
 
 const familyCornerJumpLink = {
-  color: '#b0b0b0',
+  color: '#C9A96E',
   textDecoration: 'none',
-  fontSize: '12px',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
+  fontWeight: '600' as const,
+  fontSize: '14px',
+  fontFamily: "'Playfair Display', Georgia, serif",
 };
 
 const previewHidden = {

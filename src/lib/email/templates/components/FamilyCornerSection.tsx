@@ -7,17 +7,56 @@ interface FamilyCornerSectionProps {
   familyCorner: FamilyCornerData;
 }
 
+interface BodySection {
+  bandHeader: string | null;
+  text: string;
+}
+
+/**
+ * Parse body text into sections, splitting on **BandLabel:** markers.
+ * Handles both \n\n-separated paragraphs and inline **bold:** headers.
+ */
+function parseBodySections(bodyText: string): BodySection[] {
+  // Split on **BandLabel:** patterns (e.g., "**Infant (0-18mo):**")
+  // This regex captures the bold header and the text after it
+  const parts = bodyText.split(/\*\*([^*]+)\*\*/);
+
+  // parts alternates: [textBefore, header1, textAfter1, header2, textAfter2, ...]
+  const sections: BodySection[] = [];
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i].trim();
+    if (!part) continue;
+
+    if (i % 2 === 0) {
+      // Regular text (no bold header) - split by double newlines
+      const paragraphs = part.split(/\n\n+/).map(p => p.trim()).filter(Boolean);
+      for (const p of paragraphs) {
+        sections.push({ bandHeader: null, text: p });
+      }
+    } else {
+      // This is a bold header - combine with the text that follows
+      const nextText = (i + 1 < parts.length) ? parts[i + 1].trim() : '';
+      i++; // skip the next part since we consumed it
+      sections.push({ bandHeader: part, text: nextText });
+    }
+  }
+
+  // Fallback: if parsing produced nothing, just split on newlines
+  if (sections.length === 0) {
+    return bodyText.split(/\n\n+/).map(p => p.trim()).filter(Boolean)
+      .map(text => ({ bandHeader: null, text }));
+  }
+
+  return sections;
+}
+
 export function FamilyCornerSection({ familyCorner }: FamilyCornerSectionProps) {
   const bandSubtitle = familyCorner.ageBands
     .map(b => getBandLabel(b as AgeBand))
     .join(' + ');
 
-  // Split body into paragraphs
-  const paragraphs = familyCorner.bodyText
-    .split(/\n\n+/)
-    .map(p => p.trim())
-    .filter(Boolean);
-
+  const sections = parseBodySections(familyCorner.bodyText);
   const displayName = familyCorner.neighborhoodName.toUpperCase();
 
   return (
@@ -35,8 +74,13 @@ export function FamilyCornerSection({ familyCorner }: FamilyCornerSectionProps) 
       {/* Content */}
       <Section style={contentBlock}>
         <Text style={headline}>{familyCorner.headline}</Text>
-        {paragraphs.map((p, i) => (
-          <Text key={i} style={bodyText}>{p}</Text>
+        {sections.map((section, i) => (
+          <Text key={i} style={bodyText}>
+            {section.bandHeader && (
+              <span style={bandHeaderStyle}>{section.bandHeader} </span>
+            )}
+            {section.text}
+          </Text>
         ))}
       </Section>
     </Section>
@@ -101,6 +145,11 @@ const headline = {
   margin: '0 0 8px',
   lineHeight: '1.4',
   fontFamily: "'Playfair Display', Georgia, serif",
+};
+
+const bandHeaderStyle = {
+  fontWeight: '600' as const,
+  color: '#333333',
 };
 
 const bodyText = {
