@@ -76,13 +76,21 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
                         <a href={weatherSearchUrl} style={tempLink}>{tempValue}</a>
                       </Text>
                       {desc && <Text style={tempDesc}>{desc}</Text>}
+                      {primary.weatherStory && primary.weatherStory.priority > 1 && (
+                        <>
+                          <Text style={weatherHint}>{primary.weatherStory.headline}</Text>
+                          {primary.weatherStory.body ? (
+                            <Text style={weatherHint}>{primary.weatherStory.body}</Text>
+                          ) : null}
+                        </>
+                      )}
                     </>
                   );
                 })()}
               </Section>
 
-              {/* Weather story card (editorial headline + body) */}
-              {primary.weatherStory && (
+              {/* Weather story card — alerts only (priority 1: blizzard, extreme heat) */}
+              {primary.weatherStory && primary.weatherStory.priority === 1 && (
                 <WeatherStoryCard story={primary.weatherStory} />
               )}
 
@@ -150,7 +158,7 @@ const container = {
 };
 
 const heroBlock = {
-  padding: '24px 0 24px',
+  padding: '24px 0 16px',
   textAlign: 'center' as const,
 };
 
@@ -208,6 +216,13 @@ const tempDesc = {
   color: '#999999',
   margin: '4px 0 0',
   textTransform: 'capitalize' as const,
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const weatherHint = {
+  fontSize: '13px',
+  color: '#999999',
+  margin: '2px 0 0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 

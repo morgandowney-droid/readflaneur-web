@@ -138,8 +138,8 @@ function checkSafetyExtremes(
       const snowDisplay = useF ? `${Math.round(snowfall / 2.54)}"` : `${Math.round(snowfall)}cm`;
       return {
         priority: 1,
-        headline: `Heavy Snow ${dayLabel}: ${snowDisplay} forecast. Check transit updates.`,
-        body: '',
+        headline: `Heavy Snow ${dayLabel}: ${snowDisplay} forecast.`,
+        body: 'Check transit updates.',
         icon: 'snow',
         temperatureC: currentTemp,
         temperatureF: celsiusToFahrenheit(currentTemp),
@@ -152,8 +152,8 @@ function checkSafetyExtremes(
     if (maxTemp > 35) {
       return {
         priority: 1,
-        headline: `Heat Advisory ${dayLabel}: ${formatTemp(maxTemp, useF)}. Stay hydrated.`,
-        body: '',
+        headline: `Heat Advisory ${dayLabel}: ${formatTemp(maxTemp, useF)}.`,
+        body: 'Stay hydrated.',
         icon: 'thermometer-up',
         temperatureC: currentTemp,
         temperatureF: celsiusToFahrenheit(currentTemp),
@@ -199,8 +199,8 @@ function checkCommuteAlerts(
   if (morningAvg > 60) {
     return {
       priority: 2,
-      headline: `Rain ${dayLabel} 8-10 AM (${Math.round(morningAvg)}%). Bring an umbrella.`,
-      body: '',
+      headline: `Rain ${dayLabel} 8-10 AM (${Math.round(morningAvg)}% prob).`,
+      body: 'Bring an umbrella.',
       icon: 'rain',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
@@ -214,8 +214,8 @@ function checkCommuteAlerts(
   if (lunchAvg > 50) {
     return {
       priority: 2,
-      headline: `Rain ${dayLabel} over lunch (${Math.round(lunchAvg)}%). Order in.`,
-      body: '',
+      headline: `Rain ${dayLabel} over lunch (${Math.round(lunchAvg)}% prob).`,
+      body: 'Order in.',
       icon: 'rain',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
@@ -229,8 +229,8 @@ function checkCommuteAlerts(
   if (eveningAvg > 60) {
     return {
       priority: 2,
-      headline: `Rain ${dayLabel} 5-7 PM (${Math.round(eveningAvg)}%). Plan accordingly.`,
-      body: '',
+      headline: `Rain ${dayLabel} 5-7 PM (${Math.round(eveningAvg)}% prob).`,
+      body: 'Plan accordingly.',
       icon: 'rain',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
@@ -275,17 +275,19 @@ function checkWeekendLookahead(
 
   // Bad weekend: >5mm precipitation
   if (satPrecip > 5) {
-    let headlineText = `Rain ${satLabel}. Plan indoor activities.`;
+    let headlineText = `Rain ${satLabel}.`;
+    let bodyText = 'Plan indoor activities.';
     if (sunIndex > 0 && sunIndex < daily.time.length) {
       const sunPrecip = daily.precipitation_sum[sunIndex] ?? 0;
       if (sunPrecip > 5) {
-        headlineText = `Wet weekend ahead. Rain both days.`;
+        headlineText = `Wet weekend ahead.`;
+        bodyText = 'Rain both days.';
       }
     }
     return {
       priority: 3,
       headline: headlineText,
-      body: '',
+      body: bodyText,
       icon: 'rain',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
@@ -298,8 +300,8 @@ function checkWeekendLookahead(
   if (normal !== null && satMax > normal + 2 && satPrecip < 1) {
     return {
       priority: 3,
-      headline: `${satLabel}: ${formatTemp(satMax, useF)} and dry. Warmer than usual.`,
-      body: '',
+      headline: `${satLabel}: ${formatTemp(satMax, useF)} and dry.`,
+      body: 'Warmer than usual.',
       icon: 'sun',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
@@ -342,8 +344,8 @@ function checkAnomaly(
   if (delta > 5) {
     return {
       priority: 4,
-      headline: `Unseasonably Warm ${dayLabel}: ${formatTemp(tomorrowMax, useF)}, ${deltaDisplay} above average.`,
-      body: '',
+      headline: `Unseasonably Warm ${dayLabel}: ${formatTemp(tomorrowMax, useF)}.`,
+      body: `${deltaDisplay} above average.`,
       icon: 'thermometer-up',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
@@ -355,8 +357,8 @@ function checkAnomaly(
   if (delta < -5) {
     return {
       priority: 4,
-      headline: `Sharp Drop ${dayLabel}: ${formatTemp(tomorrowMax, useF)}, ${deltaDisplay} below average.`,
-      body: '',
+      headline: `Sharp Drop ${dayLabel}: ${formatTemp(tomorrowMax, useF)}.`,
+      body: `${deltaDisplay} below average.`,
       icon: 'thermometer-down',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
