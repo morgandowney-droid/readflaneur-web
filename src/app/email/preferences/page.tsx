@@ -698,6 +698,7 @@ function PreferencesContent() {
                       );
                     });
                   })()}
+                  <p className="text-xs text-neutral-500 mt-3">You will continue to receive the usual Daily Brief. These additional children&apos;s sections are simply added at the bottom of the standard Daily Brief.</p>
                 </div>
               )}
 
