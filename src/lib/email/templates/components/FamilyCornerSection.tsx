@@ -18,12 +18,17 @@ export function FamilyCornerSection({ familyCorner }: FamilyCornerSectionProps) 
     .map(p => p.trim())
     .filter(Boolean);
 
+  const displayName = familyCorner.neighborhoodName.toUpperCase();
+
   return (
-    <Section style={container}>
+    <Section style={container} id="family-corner">
       {/* Divider */}
       <Section style={dividerBlock}>
-        <Text style={sectionLabel}>FAMILY CORNER</Text>
+        <Text style={sectionLabel}>
+          FAMILY CORNER <span style={neighborhoodSpan}>&middot; {displayName}</span>
+        </Text>
         <Text style={bandLine}>{bandSubtitle}</Text>
+        <Text style={primaryNote}>For your primary neighborhood</Text>
         <Hr style={rule} />
       </Section>
 
@@ -57,12 +62,25 @@ const sectionLabel = {
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
+const neighborhoodSpan = {
+  color: '#b0b0b0',
+  letterSpacing: '0.15em',
+};
+
 const bandLine = {
   fontSize: '11px',
   fontWeight: '400' as const,
   letterSpacing: '0.08em',
   color: '#b0b0b0',
-  margin: '2px 0 12px',
+  margin: '2px 0 0',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const primaryNote = {
+  fontSize: '10px',
+  fontWeight: '400' as const,
+  color: '#cccccc',
+  margin: '4px 0 12px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 

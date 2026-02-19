@@ -102,6 +102,15 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
 
               {/* Native ad after all primary stories */}
               {content.nativeAd && <NativeAd ad={content.nativeAd} />}
+
+              {/* Jump link to Family Corner */}
+              {content.familyCorner && (
+                <Section style={{ paddingTop: '4px', paddingBottom: '0', textAlign: 'center' as const }}>
+                  <a href="#family-corner" style={familyCornerJumpLink}>
+                    Family Corner below &darr;
+                  </a>
+                </Section>
+              )}
             </Section>
           )}
 
@@ -237,6 +246,13 @@ const emptyState = {
   color: '#999999',
   textAlign: 'center' as const,
   padding: '40px 0',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const familyCornerJumpLink = {
+  color: '#b0b0b0',
+  textDecoration: 'none',
+  fontSize: '12px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 

@@ -347,7 +347,8 @@ async function fetchFamilyCorner(
   supabase: SupabaseClient,
   recipientId: string,
   source: 'profile' | 'newsletter',
-  neighborhoodId: string | null
+  neighborhoodId: string | null,
+  neighborhoodName: string
 ): Promise<FamilyCornerSection | null> {
   if (!neighborhoodId) return null;
 
@@ -391,6 +392,7 @@ async function fetchFamilyCorner(
     headline: content.headline,
     bodyText: content.body_text,
     ageBands: content.age_bands,
+    neighborhoodName,
   };
 }
 
@@ -538,7 +540,8 @@ export async function assembleDailyBrief(
     supabase,
     recipient.id,
     recipient.source,
-    primaryNeighborhoodId
+    primaryNeighborhoodId,
+    primaryNeighborhood?.name || 'your neighborhood'
   );
 
   return {

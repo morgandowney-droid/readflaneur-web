@@ -74,6 +74,7 @@ export interface FamilyCornerSection {
   headline: string;
   bodyText: string;
   ageBands: string[];
+  neighborhoodName: string;
 }
 
 export interface EmailAd {
