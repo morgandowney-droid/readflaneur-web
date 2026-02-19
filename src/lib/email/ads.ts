@@ -80,6 +80,7 @@ async function getHouseAd(
     .select('id, image_url, headline, body, click_url, type')
     .eq('active', true)
     .neq('type', 'newsletter') // Email recipients are already subscribed
+    .neq('type', 'family_corner') // Family Corner promoted via in-email section, not house ad
     .limit(10);
 
   if (!houseAds || houseAds.length === 0) {

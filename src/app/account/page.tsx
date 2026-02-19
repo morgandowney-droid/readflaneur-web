@@ -47,6 +47,7 @@ export default function AccountPage() {
         }
         if (profile?.childcare_mode_enabled) {
           setChildcareEnabled(true);
+          try { localStorage.setItem('flaneur-family-corner-enabled', 'true'); } catch { /* ignore */ }
         }
         if (profile?.email_unsubscribe_token) {
           setPrefsToken(profile.email_unsubscribe_token);
@@ -170,7 +171,7 @@ export default function AccountPage() {
               {childcareEnabled ? 'Enabled' : (hasChildren ? 'Paused' : 'Off')}
             </p>
             <p className="text-[11px] text-fg-muted mt-1">
-              Enabling Family Corner adds a family section to your Daily Brief with local kids&apos; events, school news, and family resources.
+              Enabling Family Corner adds a family section to your Daily Brief with local kids&apos; events, school news, and family resources tailored to your children&apos;s ages.
             </p>
             {prefsToken && (
               <Link

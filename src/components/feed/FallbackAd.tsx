@@ -228,6 +228,20 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
       return localStorage.getItem('flaneur-has-community-neighborhood') === 'true';
     } catch { return false; }
   });
+  const [familyCornerDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const count = parseInt(localStorage.getItem('flaneur-family-corner-ad-dismissed') || '0', 10);
+      return count >= 3;
+    } catch { return false; }
+  });
+  const [familyCornerEnabled] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem('flaneur-family-corner-enabled') === 'true';
+    } catch { return false; }
+  });
+  const [familyAdHidden, setFamilyAdHidden] = useState(false);
 
   // Use translated text, falling back to DB values
   const adType = houseAd.type;
@@ -369,6 +383,72 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
           >
             {cta}
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Family Corner type: links to account page, suppressed if already enabled or dismissed 3x
+  if (houseAd.type === 'family_corner') {
+    if (familyCornerEnabled || familyCornerDismissed || familyAdHidden) return null;
+
+    const handleDismiss = () => {
+      try {
+        const count = parseInt(localStorage.getItem('flaneur-family-corner-ad-dismissed') || '0', 10);
+        localStorage.setItem('flaneur-family-corner-ad-dismissed', String(count + 1));
+      } catch { /* ignore */ }
+      setFamilyAdHidden(true);
+    };
+
+    if (variant === 'story_open') {
+      return (
+        <div className="border border-border bg-surface p-6 relative">
+          <button
+            onClick={handleDismiss}
+            className="absolute top-2 right-3 text-fg-muted hover:text-fg text-lg leading-none"
+            aria-label="Dismiss"
+          >
+            &times;
+          </button>
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <div className="flex-1">
+              <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">Flaneur</p>
+              <h3 className="font-semibold text-lg mb-1 whitespace-nowrap overflow-hidden text-ellipsis">{headline}</h3>
+              {body && <p className="text-sm text-fg-muted">{body}</p>}
+            </div>
+            <a
+              href="/account"
+              className="inline-block bg-fg text-canvas px-6 py-2 text-sm tracking-widest uppercase hover:opacity-80 transition-colors whitespace-nowrap text-center"
+            >
+              {cta}
+            </a>
+          </div>
+        </div>
+      );
+    }
+
+    // Card variant
+    return (
+      <div className="border border-border bg-surface relative">
+        <button
+          onClick={handleDismiss}
+          className="absolute top-2 right-3 text-fg-muted hover:text-fg text-lg leading-none z-10"
+          aria-label="Dismiss"
+        >
+          &times;
+        </button>
+        <div className="px-3 py-2 border-b border-border">
+          <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">Flaneur</span>
+        </div>
+        <div className="p-4">
+          <h3 className="font-semibold text-sm mb-2 whitespace-nowrap overflow-hidden text-ellipsis">{headline}</h3>
+          {body && <p className="text-xs text-fg-muted mb-3">{body}</p>}
+          <a
+            href="/account"
+            className="inline-block bg-fg text-canvas px-4 py-2 text-xs tracking-widest uppercase hover:opacity-80 transition-colors"
+          >
+            {cta}
+          </a>
         </div>
       </div>
     );

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { AGE_BAND_DEFS, calculateAgeBand } from '@/lib/childcare/age-bands';
 
 interface Neighborhood {
   id: string;
@@ -138,6 +139,12 @@ function PreferencesContent() {
         setPausedTopics(d.paused_topics || []);
         setChildcareEnabled(d.childcare_mode_enabled || false);
         setChildrenList((d.children || []).map(c => ({ birth_month: c.birth_month, birth_year: c.birth_year })));
+        // Sync family corner state to localStorage for house ad suppression
+        try {
+          if (d.childcare_mode_enabled) {
+            localStorage.setItem('flaneur-family-corner-enabled', 'true');
+          }
+        } catch { /* ignore */ }
         setLoading(false);
       })
       .catch(err => {
@@ -345,6 +352,14 @@ function PreferencesContent() {
       setChildcareEnabled(enabled);
       setData(prev => prev ? { ...prev, childcare_mode_enabled: enabled } : prev);
       setChildcareSaved(true);
+      // Sync to localStorage so house ad suppression works
+      try {
+        if (enabled) {
+          localStorage.setItem('flaneur-family-corner-enabled', 'true');
+        } else {
+          localStorage.removeItem('flaneur-family-corner-enabled');
+        }
+      } catch { /* ignore */ }
     } catch {
       // Error saving
     } finally {
@@ -555,7 +570,7 @@ function PreferencesContent() {
             Family Corner
           </h2>
           <p className="text-xs text-neutral-400 mb-3">
-            Enabling Family Corner adds a family section to your Daily Brief with local kids&apos; events, school news, and family resources.
+            Enabling Family Corner adds a family section to your Daily Brief with local kids&apos; events, school news, and family resources tailored to your children&apos;s ages.
           </p>
           <div className="space-y-2">
             <label className="flex items-center gap-3 p-3 border border-white/[0.08] rounded-lg cursor-pointer hover:border-white/20 transition-colors">
@@ -592,13 +607,17 @@ function PreferencesContent() {
             </label>
           </div>
           {childcareSaved && (
-            <p className="text-xs text-green-600 mt-2">
+            <div className={`mt-3 p-3 rounded-lg text-sm ${
+              childcareEnabled
+                ? 'bg-green-950/20 border border-green-800/30 text-green-400'
+                : 'bg-neutral-800/50 border border-white/[0.08] text-neutral-400'
+            }`}>
               {childcareEnabled
-                ? 'Family Corner enabled! Add your children below.'
+                ? '\u2713 Family Corner enabled! Add your children below to personalize content.'
                 : (data.children || []).length > 0 || childrenList.length > 0
-                  ? 'Family Corner paused. Your children\u2019s details are still saved.'
-                  : 'Family Corner disabled.'}
-            </p>
+                  ? '\u2713 Family Corner paused. Your children\u2019s details are still saved.'
+                  : '\u2713 Family Corner disabled.'}
+            </div>
           )}
 
           {childcareEnabled && (
@@ -673,10 +692,32 @@ function PreferencesContent() {
 
               {childrenSaved && !hasChildrenChanges && (
                 <div className="mt-3 p-3 border border-green-800/30 rounded-lg bg-green-950/20">
-                  <p className="text-sm text-green-400 font-medium">Thank you!</p>
+                  <p className="text-sm text-green-400 font-medium">{'\u2713'} Saved!</p>
                   <p className="text-xs text-neutral-400 mt-1">
                     We&apos;re preparing your first Family Corner content now. It will appear in your next Daily Brief email.
                   </p>
+                  {childrenList.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-green-800/20">
+                      <p className="text-xs text-neutral-500 mb-2">Content tailored for your family:</p>
+                      {(() => {
+                        const now = new Date();
+                        const seen = new Set<string>();
+                        return childrenList.map((child, i) => {
+                          const band = calculateAgeBand(child.birth_month, child.birth_year, now);
+                          if (!band || seen.has(band)) return null;
+                          seen.add(band);
+                          const def = AGE_BAND_DEFS.find(d => d.band === band);
+                          if (!def) return null;
+                          return (
+                            <div key={i} className="text-xs text-neutral-400 mb-1">
+                              <span className="text-neutral-300">{def.label}</span>
+                              <span className="text-neutral-500"> — {def.contentFocus}</span>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
