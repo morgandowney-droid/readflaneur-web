@@ -231,6 +231,7 @@ Recent work: Fix feed ordering stability (added `created_at DESC` as secondary s
 - **Dedup:** `hasBriefForLocalToday()` uses `toLocaleDateString('en-CA', { timeZone })` per neighborhood
 - **NOT UTC midnight:** Fetches last 36h of briefs, checks each against its local "today"
 - **Content sanitization:** Both `grok.ts` and `NeighborhoodBrief.cleanContent()` strip raw Grok search result objects (`{'title': ..., 'url': ...}`) that occasionally leak into brief text
+- **Grok citation stripping:** All Grok headline parsing must strip citation markers (`[[1]](url)`, `[1]`, `(1)`) via a 4-pattern regex chain (remove `[[n]](url)`, remove `[n]`, remove `(n)`, collapse double spaces). Applied in `generateNeighborhoodBrief()`, `generateGrokNewsStories()`, and `generateLookAhead()`. Without this, URLs leak into headlines and slugs.
 
 ### Image Library (Unsplash Stock Photos)
 - **Core:** `src/lib/image-library.ts` - types, `selectLibraryImage()`, `getLibraryReadyIds()`, `checkLibraryStatus()`, module-level LRU cache (1hr TTL) for Unsplash photos
