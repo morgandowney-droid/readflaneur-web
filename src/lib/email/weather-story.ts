@@ -6,7 +6,7 @@
  *
  * Priority hierarchy:
  *   1. Safety & Extremes (blizzard, extreme heat)
- *   2. Commute & Lunch Check (weekdays only, hourly rain probability)
+ *   2. Travel & Lunch Check (weekdays only, hourly rain probability)
  *   3. Weekend Lookahead (Thursday/Friday emails only)
  *   4. General Anomaly (forecast vs climate normals)
  *
@@ -138,8 +138,8 @@ function checkSafetyExtremes(
       const snowDisplay = useF ? `${Math.round(snowfall / 2.54)}"` : `${Math.round(snowfall)}cm`;
       return {
         priority: 1,
-        headline: `Alert: Heavy Snow Expected ${dayLabel}.`,
-        body: `${snowDisplay} of snow forecast. Consider adjusting plans and checking transit updates.`,
+        headline: `Heavy Snow ${dayLabel}: ${snowDisplay} forecast. Check transit updates.`,
+        body: '',
         icon: 'snow',
         temperatureC: currentTemp,
         temperatureF: celsiusToFahrenheit(currentTemp),
@@ -152,8 +152,8 @@ function checkSafetyExtremes(
     if (maxTemp > 35) {
       return {
         priority: 1,
-        headline: `Heat Advisory: ${formatTemp(maxTemp, useF)} Expected ${dayLabel}.`,
-        body: `Temperatures reaching ${formatTemp(maxTemp, useF)}. Stay hydrated and avoid prolonged outdoor exposure midday.`,
+        headline: `Heat Advisory ${dayLabel}: ${formatTemp(maxTemp, useF)}. Stay hydrated.`,
+        body: '',
         icon: 'thermometer-up',
         temperatureC: currentTemp,
         temperatureF: celsiusToFahrenheit(currentTemp),
@@ -166,7 +166,7 @@ function checkSafetyExtremes(
   return null;
 }
 
-// ─── Priority 2: Commute & Lunch Check (weekdays only) ───
+// ─── Priority 2: Travel & Lunch Check (weekdays only) ───
 
 function checkCommuteAlerts(
   forecast: ForecastData,
@@ -194,13 +194,13 @@ function checkCommuteAlerts(
   const dayLabel = formatForecastDay(targetDate, now, timezone);
   const currentTemp = Math.round(forecast.current?.temperature_2m ?? 0);
 
-  // Morning commute: 8–10am, >60%
+  // Morning travel: 8–10am, >60%
   const morningAvg = averageForRange(tomorrowHours, 8, 10);
   if (morningAvg > 60) {
     return {
       priority: 2,
-      headline: `Morning Commute Alert: Rain Likely ${dayLabel}.`,
-      body: `${Math.round(morningAvg)}% chance of rain between 8–10 AM. Bring an umbrella.`,
+      headline: `Rain ${dayLabel} 8-10 AM (${Math.round(morningAvg)}%). Bring an umbrella.`,
+      body: '',
       icon: 'rain',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
@@ -214,8 +214,8 @@ function checkCommuteAlerts(
   if (lunchAvg > 50) {
     return {
       priority: 2,
-      headline: `Lunch Forecast: Order In ${dayLabel}.`,
-      body: `${Math.round(lunchAvg)}% chance of rain over the lunch hour. Save yourself the umbrella battle.`,
+      headline: `Rain ${dayLabel} over lunch (${Math.round(lunchAvg)}%). Order in.`,
+      body: '',
       icon: 'rain',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
@@ -224,13 +224,13 @@ function checkCommuteAlerts(
     };
   }
 
-  // Evening commute: 5–7pm, >60%
+  // Evening travel: 5–7pm, >60%
   const eveningAvg = averageForRange(tomorrowHours, 17, 19);
   if (eveningAvg > 60) {
     return {
       priority: 2,
-      headline: `Evening Commute Alert: Rain Expected ${dayLabel}.`,
-      body: `${Math.round(eveningAvg)}% precipitation chance between 5–7 PM. Plan accordingly.`,
+      headline: `Rain ${dayLabel} 5-7 PM (${Math.round(eveningAvg)}%). Plan accordingly.`,
+      body: '',
       icon: 'rain',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
@@ -275,21 +275,17 @@ function checkWeekendLookahead(
 
   // Bad weekend: >5mm precipitation
   if (satPrecip > 5) {
-    const precipDisplay = useF ? `${(satPrecip / 25.4).toFixed(1)}"` : `${Math.round(satPrecip)}mm`;
-    let body = `Rain expected ${satLabel} with ${precipDisplay} of precipitation.`;
+    let headlineText = `Rain ${satLabel}. Plan indoor activities.`;
     if (sunIndex > 0 && sunIndex < daily.time.length) {
       const sunPrecip = daily.precipitation_sum[sunIndex] ?? 0;
       if (sunPrecip > 5) {
-        const sunDate = new Date(daily.time[sunIndex] + 'T12:00:00');
-        const sunLabel = formatForecastDay(sunDate, now, timezone);
-        const sunPrecipDisplay = useF ? `${(sunPrecip / 25.4).toFixed(1)}"` : `${Math.round(sunPrecip)}mm`;
-        body = `Wet weekend ahead: rain both days, ${precipDisplay} ${satLabel} and ${sunPrecipDisplay} ${sunLabel}.`;
+        headlineText = `Wet weekend ahead. Rain both days.`;
       }
     }
     return {
       priority: 3,
-      headline: 'Weekend Alert: Plan Indoor Activities.',
-      body,
+      headline: headlineText,
+      body: '',
       icon: 'rain',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
@@ -302,8 +298,8 @@ function checkWeekendLookahead(
   if (normal !== null && satMax > normal + 2 && satPrecip < 1) {
     return {
       priority: 3,
-      headline: 'Weekend Outlook: Perfect Conditions.',
-      body: `${satLabel} looking ideal: ${formatTemp(satMax, useF)} and dry. Warmer than usual for this time of year.`,
+      headline: `${satLabel}: ${formatTemp(satMax, useF)} and dry. Warmer than usual.`,
+      body: '',
       icon: 'sun',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
@@ -346,8 +342,8 @@ function checkAnomaly(
   if (delta > 5) {
     return {
       priority: 4,
-      headline: `Unseasonably Warm: ${formatTemp(tomorrowMax, useF)} ${dayLabel}.`,
-      body: `${deltaDisplay} above the seasonal average. Enjoy it while it lasts.`,
+      headline: `Unseasonably Warm ${dayLabel}: ${formatTemp(tomorrowMax, useF)}, ${deltaDisplay} above average.`,
+      body: '',
       icon: 'thermometer-up',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
@@ -359,8 +355,8 @@ function checkAnomaly(
   if (delta < -5) {
     return {
       priority: 4,
-      headline: `Sharp Drop: ${formatTemp(tomorrowMax, useF)} ${dayLabel}.`,
-      body: `${deltaDisplay} below the seasonal average. Dress accordingly.`,
+      headline: `Sharp Drop ${dayLabel}: ${formatTemp(tomorrowMax, useF)}, ${deltaDisplay} below average.`,
+      body: '',
       icon: 'thermometer-down',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
@@ -397,7 +393,7 @@ export async function generateWeatherStory(
   const safety = checkSafetyExtremes(forecast, timezone, now, useF);
   if (safety) return safety;
 
-  // Priority 2: Commute & Lunch (weekdays only)
+  // Priority 2: Travel & Lunch (weekdays only)
   const commute = checkCommuteAlerts(forecast, timezone, now, useF);
   if (commute) return commute;
 

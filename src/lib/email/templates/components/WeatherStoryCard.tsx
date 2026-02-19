@@ -13,9 +13,11 @@ export function WeatherStoryCard({ story }: WeatherStoryCardProps) {
       <Text style={isAlert ? headlineAlert : headline}>
         {story.headline}
       </Text>
-      <Text style={body}>
-        {story.body}
-      </Text>
+      {story.body ? (
+        <Text style={body}>
+          {story.body}
+        </Text>
+      ) : null}
     </Section>
   );
 }

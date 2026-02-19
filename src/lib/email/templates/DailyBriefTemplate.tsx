@@ -69,9 +69,12 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
                   const desc = primary.weather?.description || '';
                   if (tempC === null && tempF === null) return null;
                   const tempValue = useF ? `${Math.round(tempF!)}°F` : `${Math.round(tempC!)}°C`;
+                  const weatherSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(primary.neighborhoodName + ' ' + (primary.cityName || '') + ' weather')}`;
                   return (
                     <>
-                      <Text style={tempHero}>{tempValue}</Text>
+                      <Text style={tempHero}>
+                        <a href={weatherSearchUrl} style={tempLink}>{tempValue}</a>
+                      </Text>
                       {desc && <Text style={tempDesc}>{desc}</Text>}
                     </>
                   );
@@ -193,6 +196,11 @@ const tempHero = {
   margin: '0',
   lineHeight: '1',
   fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
+};
+
+const tempLink = {
+  color: '#1a1a1a',
+  textDecoration: 'none',
 };
 
 const tempDesc = {
