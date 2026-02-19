@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -117,6 +117,8 @@ function PreferencesContent() {
   const [childrenList, setChildrenList] = useState<ChildEntry[]>([]);
   const [childrenSaving, setChildrenSaving] = useState(false);
   const [childrenSaved, setChildrenSaved] = useState(false);
+  const [highlightFamily, setHighlightFamily] = useState(false);
+  const familyCornerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!token) {
@@ -143,6 +145,17 @@ function PreferencesContent() {
         setLoading(false);
       });
   }, [token]);
+
+  // Scroll to and highlight Family Corner when navigating via #family-corner hash
+  useEffect(() => {
+    if (!loading && data && typeof window !== 'undefined' && window.location.hash === '#family-corner') {
+      setHighlightFamily(true);
+      setTimeout(() => {
+        familyCornerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+      setTimeout(() => setHighlightFamily(false), 3000);
+    }
+  }, [loading, data]);
 
   const handleRemove = (id: string) => {
     setSelectedIds(prev => prev.filter(n => n !== id));
@@ -533,12 +546,16 @@ function PreferencesContent() {
         </section>
 
         {/* Family Corner */}
-        <section className="mb-8">
+        <section
+          ref={familyCornerRef}
+          id="family-corner"
+          className={`mb-8 -mx-4 px-4 py-4 rounded-lg transition-colors duration-1000 ${highlightFamily ? 'bg-amber-500/10' : ''}`}
+        >
           <h2 className="text-xs font-medium tracking-[0.1em] uppercase text-neutral-400 mb-3">
             Family Corner
           </h2>
           <p className="text-xs text-neutral-400 mb-3">
-            Add a family section to your Daily Brief with local kids&apos; events, school news, and family resources tailored to your children&apos;s ages.
+            Enabling Family Corner adds a family section to your Daily Brief with local kids&apos; events, school news, and family resources.
           </p>
           <div className="space-y-2">
             <label className="flex items-center gap-3 p-3 border border-white/[0.08] rounded-lg cursor-pointer hover:border-white/20 transition-colors">
@@ -563,13 +580,25 @@ function PreferencesContent() {
                 className="accent-amber-600"
               />
               <div>
-                <div className="text-sm font-medium text-neutral-200">Disabled</div>
-                <div className="text-xs text-neutral-500">No family content</div>
+                <div className="text-sm font-medium text-neutral-200">
+                  {(data.children || []).length > 0 || (childrenSaved && childrenList.length > 0) ? 'Paused' : 'Disabled'}
+                </div>
+                <div className="text-xs text-neutral-500">
+                  {(data.children || []).length > 0 || (childrenSaved && childrenList.length > 0)
+                    ? 'Family Corner paused — your children\u2019s details are saved'
+                    : 'No family content'}
+                </div>
               </div>
             </label>
           </div>
           {childcareSaved && (
-            <p className="text-xs text-green-600 mt-2">{childcareEnabled ? 'Family Corner enabled! Add your children below.' : 'Family Corner disabled.'}</p>
+            <p className="text-xs text-green-600 mt-2">
+              {childcareEnabled
+                ? 'Family Corner enabled! Add your children below.'
+                : (data.children || []).length > 0 || childrenList.length > 0
+                  ? 'Family Corner paused. Your children\u2019s details are still saved.'
+                  : 'Family Corner disabled.'}
+            </p>
           )}
 
           {childcareEnabled && (
@@ -587,9 +616,12 @@ function PreferencesContent() {
               </div>
 
               {childrenList.length === 0 ? (
-                <p className="text-sm text-neutral-400 py-3 text-center border border-dashed border-white/[0.08] rounded-lg">
-                  Add your children to personalize content by age.
-                </p>
+                <div className="py-3 text-center border border-dashed border-white/[0.08] rounded-lg px-4">
+                  <p className="text-sm text-neutral-400">Add your children to get started.</p>
+                  <p className="text-xs text-neutral-500 mt-1">
+                    Family Corner content is tailored by age — add at least one child to see local kids&apos; events and family resources in your Daily Brief.
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-2">
                   {childrenList.map((child, i) => (

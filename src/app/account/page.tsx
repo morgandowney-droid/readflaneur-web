@@ -13,6 +13,7 @@ export default function AccountPage() {
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
   const [childcareEnabled, setChildcareEnabled] = useState(false);
+  const [hasChildren, setHasChildren] = useState(false);
   const [prefsToken, setPrefsToken] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,6 +51,14 @@ export default function AccountPage() {
         if (profile?.email_unsubscribe_token) {
           setPrefsToken(profile.email_unsubscribe_token);
         }
+
+        // Check if user has saved children (for Paused vs Off label)
+        const { count: childCount } = await supabase
+          .from('user_children')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', session.user.id)
+          .eq('user_source', 'profile');
+        if (childCount && childCount > 0) setHasChildren(true);
       } catch {
         // Silent fail
       }
@@ -143,17 +152,29 @@ export default function AccountPage() {
             </p>
           </div>
 
+          {prefsToken && (
+            <div>
+              <p className="text-[10px] tracking-[0.2em] uppercase text-fg-subtle mb-1">Email Preferences</p>
+              <Link
+                href={`/email/preferences?token=${prefsToken}`}
+                className="text-[11px] text-accent hover:underline"
+              >
+                Manage neighborhoods, topics, and email settings &rsaquo;
+              </Link>
+            </div>
+          )}
+
           <div>
             <p className="text-[10px] tracking-[0.2em] uppercase text-fg-subtle mb-1">Family Corner</p>
             <p className="text-sm text-fg">
-              {childcareEnabled ? 'Enabled' : 'Off'}
+              {childcareEnabled ? 'Enabled' : (hasChildren ? 'Paused' : 'Off')}
             </p>
             <p className="text-[11px] text-fg-muted mt-1">
-              Adds local kids&apos; events, school news, and family resources to your Daily Brief, tailored to your children&apos;s ages.
+              Enabling Family Corner adds a family section to your Daily Brief with local kids&apos; events, school news, and family resources.
             </p>
             {prefsToken && (
               <Link
-                href={`/email/preferences?token=${prefsToken}`}
+                href={`/email/preferences?token=${prefsToken}#family-corner`}
                 className="text-[11px] text-accent hover:underline mt-1.5 inline-block"
               >
                 {childcareEnabled ? 'Manage Family Corner' : 'Enable Family Corner'} &rsaquo;
