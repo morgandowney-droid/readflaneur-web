@@ -489,15 +489,11 @@ export async function generateNuisanceStory(
   const genAI = new GoogleGenAI({ apiKey });
   const categoryConfig = COMPLAINT_CATEGORIES[cluster.category];
 
-  // Build trend context
-  let trendContext: string;
-  if (cluster.trend === 'spike' && cluster.percentChange) {
-    trendContext = `This represents a ${cluster.percentChange}% increase over the baseline. This is a SPIKE worth noting.`;
-  } else if (cluster.trend === 'spike') {
-    trendContext = `This is an unusually high volume for this location. This is a SPIKE worth noting.`;
-  } else {
-    trendContext = `This is elevated activity but not unusual for the area.`;
-  }
+  // Calculate actual date range
+  const endDate = new Date();
+  const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const formatDate = (d: Date) => d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  const dateRange = `${formatDate(startDate)} through ${formatDate(endDate)}`;
 
   // Build category-specific guidance
   const categoryGuidance: Record<ComplaintCategory, string> = {
@@ -518,23 +514,23 @@ ${categoryGuidance[cluster.category]}
 
 Context:
 - We found a cluster of ${cluster.count} complaints at ${cluster.displayLocation} in ${cluster.neighborhood}.
-- ${trendContext}
+- Period: ${dateRange} (7 days)
 - Signal: ${categoryConfig.signal}
 - Severity: ${categoryConfig.severity}
 
 Writing Style:
 - Factual but engaged
+- Use the EXACT date range provided - never say vague phrases like "this week" or "recently"
+- Do NOT say "spike", "surge", or imply comparison to prior periods unless comparison data is explicitly provided
 - Mention specific complaint counts
 - No accusatory language
-- Reference the "neighbors are active" angle
 - No emojis`;
 
   const prompt = `Complaint Category: ${cluster.category}
 Location: ${cluster.displayLocation}
 Street: ${cluster.street}
 Neighborhood: ${cluster.neighborhood}
-Complaint Count: ${cluster.count} in 7 days
-Trend: ${cluster.trend}${cluster.percentChange ? ` (${cluster.percentChange}% change)` : ''}
+Complaint Count: ${cluster.count} from ${dateRange}
 Is Commercial Venue: ${cluster.isCommercial ? 'Yes' : 'No'}
 ${cluster.venueName ? `Venue Name: ${cluster.venueName}` : ''}
 
@@ -543,14 +539,19 @@ Sample Complaint Types: ${[...new Set(cluster.complaints.slice(0, 5).map((c) => 
 Headline Template: "${categoryConfig.headlineTemplate}"
 (Replace {count} with ${cluster.count} and {location} with ${cluster.displayLocation})
 
-Task: Write a 40-word "Community Watch" blurb.
+Task: Write a structured "Community Watch" blurb.
 
-Body: Contextualize the volume. Example: "Neighbors are active this week. This represents [elevated/significant] activity for [Street/Block]. The complaints cite [specific issues from descriptors]."
+Body format - use this EXACT structure:
+1. One opening sentence stating the complaint count, location, and the EXACT date range ("from [start date] through [end date]")
+2. Then list the specific complaint types cited by neighbors
+3. One closing sentence noting the neighborhood and civic context
+
+Do NOT use words like "spike", "surge", "notable increase" or any comparison language. Just state the facts.
 
 Return JSON:
 {
   "headline": "Headline under 70 chars using the template",
-  "body": "40-word description contextualizing the complaints",
+  "body": "50-word factual description with exact date range and complaint types",
   "previewText": "One sentence teaser for feed",
   "link_candidates": [
     {"text": "exact text from body"}
@@ -583,7 +584,7 @@ Include 1-2 link candidates for key locations mentioned in the body (streets, bl
     const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
 
     // Get body and inject hyperlinks
-    let body = parsed.body || `${cluster.count} complaints filed near ${cluster.displayLocation} this week.`;
+    let body = parsed.body || `${cluster.count} complaints filed near ${cluster.displayLocation} from ${dateRange}.`;
     if (linkCandidates.length > 0) {
       body = injectHyperlinks(body, linkCandidates, { name: cluster.neighborhood, city: 'New York' });
     }
@@ -639,9 +640,20 @@ export async function generateNuisanceRoundup(
   // Sort clusters by complaint count descending
   const sorted = [...clusters].sort((a, b) => b.count - a.count);
 
-  // Build location list for the prompt
+  // Calculate actual date range for the prompt
+  const endDate = new Date();
+  const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const formatDate = (d: Date) => d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  const dateRange = `${formatDate(startDate)} through ${formatDate(endDate)}`;
+
+  // Build location list for the prompt (structured with counts)
   const locationList = sorted
     .map((c) => `- ${c.displayLocation}: ${c.count} complaints (${c.category}${c.isCommercial ? ', commercial venue' : ''})`)
+    .join('\n');
+
+  // Build bullet-point summary for the body
+  const bulletList = sorted
+    .map((c) => `${c.displayLocation}: ${c.count} complaints`)
     .join('\n');
 
   // Collect all descriptor types
@@ -651,39 +663,41 @@ export async function generateNuisanceRoundup(
 
   // Determine overall severity
   const hasHighSeverity = sorted.some((c) => c.severity === 'High');
-  const hasSpike = sorted.some((c) => c.trend === 'spike');
 
   const systemPrompt = `${insiderPersona(neighborhoodName, 'Community Editor')}
 
-This is a ROUNDUP of ${hotspotCount} complaint hotspots across ${neighborhoodName}, totaling ${totalComplaints} complaints this week.
-
 Writing Style:
 - Factual, concise, informative
-- Mention the total complaint count and number of hotspots
-- Reference the top 2-3 locations by name with their counts
-- Note the types of complaints (construction noise, nightlife, etc.)
+- Use the EXACT date range provided - never say vague phrases like "this week" or "recently"
+- Do NOT say "spike", "surge", or imply comparison to prior periods unless comparison data is explicitly provided
+- Present raw numbers and let readers draw their own conclusions
 - No accusatory language, no emojis
-- Civic-engagement tone: "Neighbors are making their voices heard"`;
+- Civic-engagement tone`;
 
   const prompt = `Neighborhood: ${neighborhoodName}
-Total Complaints: ${totalComplaints} across ${hotspotCount} locations in 7 days
-${hasSpike ? 'TREND: Spike detected at multiple locations' : 'TREND: Elevated activity'}
+Period: ${dateRange} (7 days)
+Total Complaints: ${totalComplaints} across ${hotspotCount} locations
 
 Hotspot Locations:
 ${locationList}
 
 Complaint Types: ${allDescriptors.join(', ')}
 
-Task: Write a consolidated "Neighborhood Noise Roundup" blurb (60-80 words).
+Task: Write a structured "Noise Watch" roundup.
 
-Headline: "Noise Watch: ${hotspotCount} hotspots, ${totalComplaints} complaints across ${neighborhoodName}"
+Headline: "Noise Watch: ${totalComplaints} complaints across ${hotspotCount} locations in ${neighborhoodName}"
 
-Body: Summarize the week's noise activity across the neighborhood. Mention the top 2-3 locations by name with their complaint counts. Note the predominant complaint types.
+Body format - use this EXACT structure:
+1. One opening sentence stating the total complaints, the neighborhood name, and the EXACT date range ("from [start date] through [end date]")
+2. Then a blank line followed by a bullet-point list of EVERY location with its count, one per line, formatted as "- [Address]: [count] complaints"
+3. One closing sentence noting the predominant complaint types
+
+Do NOT use words like "spike", "surge", "notable increase" or any comparison language. Just state the facts.
 
 Return JSON:
 {
   "headline": "Under 70 chars",
-  "body": "60-80 word roundup mentioning specific locations and counts",
+  "body": "Structured roundup with opening line, bullet list, closing line",
   "previewText": "One sentence teaser for feed",
   "link_candidates": [
     {"text": "exact text from body"}
@@ -708,7 +722,7 @@ Return JSON:
 
     // Inject hyperlinks
     const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
-    let body = parsed.body || `${totalComplaints} complaints filed across ${hotspotCount} locations in ${neighborhoodName} this week.`;
+    let body = parsed.body || `${neighborhoodName} residents filed ${totalComplaints} complaints across ${hotspotCount} locations from ${dateRange}.\n\n${bulletList}`;
     if (linkCandidates.length > 0) {
       body = injectHyperlinks(body, linkCandidates, { name: neighborhoodName, city: 'New York' });
     }
@@ -727,7 +741,7 @@ Return JSON:
       neighborhoodId,
       complaintCount: totalComplaints,
       severity: hasHighSeverity ? 'High' : 'Medium',
-      trend: hasSpike ? 'spike' : 'elevated',
+      trend: sorted.some((c) => c.trend === 'spike') ? 'spike' : 'elevated',
       generatedAt: new Date().toISOString(),
     };
   } catch (error) {
