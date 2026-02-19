@@ -1,22 +1,19 @@
 /**
  * NYC Weekly Digest Generator Cron Job
  *
- * Aggregates the week's NYC Open Data and generates full articles
- * with AI-generated content for each NYC neighborhood.
+ * Reads House Story articles published that week from the articles table
+ * and fetches crime stats live from the NYC Open Data API, then generates
+ * a weekly digest article for each NYC neighborhood using Gemini.
  *
  * Schedule: Weekly on Saturdays at 10 AM UTC (5 AM EST)
  * Vercel Cron: 0 10 * * 6
- *
- * This runs after the crime stats sync (8 AM) to have all data available.
  */
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { generateWeeklyDigest } from '@/lib/nyc-content-generator';
+import { generateWeeklyDigest, WeekArticle } from '@/lib/nyc-content-generator';
 import { NEIGHBORHOOD_ID_TO_CONFIG } from '@/config/nyc-locations';
-import { NYCPermit } from '@/lib/nyc-permits';
-import { LiquorLicense } from '@/lib/nyc-liquor';
-import { CrimeStats } from '@/lib/nyc-crime';
+import { fetchCrimeStatsForNeighborhood } from '@/lib/nyc-crime';
 import { getCronImage } from '@/lib/cron-images';
 
 export const runtime = 'nodejs';
@@ -64,7 +61,6 @@ export async function GET(request: Request) {
     }
 
     // Calculate date range for the week
-    const weekEnd = new Date();
     const weekStart = new Date();
     weekStart.setDate(weekStart.getDate() - 7);
 
@@ -77,7 +73,12 @@ export async function GET(request: Request) {
     // Get cached image for civic data (reused across all digests)
     const cachedImageUrl = await getCronImage('civic-data', supabase);
 
-    for (const neighborhoodId of neighborhoodIds) {
+    for (const configKey of neighborhoodIds) {
+      // NEIGHBORHOOD_ID_TO_CONFIG keys lack `nyc-` prefix (e.g. "chelsea")
+      // but DB neighborhood IDs are "nyc-chelsea"
+      const dbNeighborhoodId = `nyc-${configKey}`;
+      const neighborhoodConfigValue = NEIGHBORHOOD_ID_TO_CONFIG[configKey];
+
       try {
         results.neighborhoods_processed++;
 
@@ -85,69 +86,78 @@ export async function GET(request: Request) {
         const { data: neighborhood } = await supabase
           .from('neighborhoods')
           .select('id, name, city')
-          .eq('id', neighborhoodId)
+          .eq('id', dbNeighborhoodId)
           .single();
 
         if (!neighborhood || neighborhood.city !== 'New York') {
-          console.log(`Skipping ${neighborhoodId} - not a NYC neighborhood`);
+          console.log(`Skipping ${dbNeighborhoodId} - not a NYC neighborhood`);
           results.articles_skipped++;
           continue;
         }
 
-        // Fetch this week's data for the neighborhood
-        const [permitsResult, licensesResult, crimeResult] = await Promise.all([
-          supabase
-            .from('nyc_permits')
-            .select('*')
-            .eq('neighborhood_id', neighborhoodId)
-            .gte('filing_date', weekStartStr)
-            .order('filing_date', { ascending: false }),
-          supabase
-            .from('nyc_liquor_licenses')
-            .select('*')
-            .eq('neighborhood_id', neighborhoodId)
-            .gte('effective_date', weekStartStr)
-            .order('effective_date', { ascending: false }),
-          supabase
-            .from('nyc_crime_stats')
-            .select('*')
-            .eq('neighborhood_id', neighborhoodId)
-            .gte('period_start', weekStartStr)
-            .order('period_start', { ascending: false })
-            .limit(1),
-        ]);
+        // Fetch this week's House Stories from the articles table
+        const { data: articlesData } = await supabase
+          .from('articles')
+          .select('headline, body_text, category_label, published_at')
+          .eq('neighborhood_id', dbNeighborhoodId)
+          .gte('published_at', weekStartStr)
+          .eq('status', 'published')
+          .eq('author_type', 'ai')
+          .not('category_label', 'in', '("Daily Brief","Look Ahead","The Sunday Edition","Weekly Community Recap","Civic Data","News Brief")')
+          .order('published_at', { ascending: false })
+          .limit(20);
 
-        const permits = (permitsResult.data || []) as NYCPermit[];
-        const licenses = (licensesResult.data || []) as LiquorLicense[];
-        const crimeStats = crimeResult.data?.[0] as CrimeStats | undefined;
+        const weekArticles: WeekArticle[] = (articlesData || []).map(
+          (a: { headline: string; body_text: string; category_label: string; published_at: string }) => ({
+            headline: a.headline,
+            body_text: a.body_text,
+            category_label: a.category_label,
+            published_at: a.published_at,
+          })
+        );
+
+        // Fetch crime stats live from NYC Open Data API
+        let crimeStats = null;
+        try {
+          crimeStats = await fetchCrimeStatsForNeighborhood(
+            neighborhoodConfigValue,
+            'week'
+          );
+        } catch (crimeErr) {
+          console.warn(
+            `Failed to fetch crime stats for ${configKey}:`,
+            crimeErr instanceof Error ? crimeErr.message : String(crimeErr)
+          );
+        }
 
         // Skip if no data
-        if (permits.length === 0 && licenses.length === 0 && !crimeStats) {
-          console.log(`Skipping ${neighborhoodId} - no data this week`);
+        if (weekArticles.length === 0 && !crimeStats) {
+          console.log(`Skipping ${dbNeighborhoodId} - no data this week`);
           results.articles_skipped++;
           continue;
         }
 
         console.log(
-          `Generating digest for ${neighborhoodId}: ${permits.length} permits, ${licenses.length} licenses`
+          `Generating digest for ${dbNeighborhoodId}: ${weekArticles.length} articles, ${crimeStats?.total_incidents || 0} incidents`
         );
 
-        // Generate the weekly digest
+        // Generate the weekly digest using this week's articles + crime stats
+        // Pass configKey (without nyc- prefix) since generateWeeklyDigest
+        // looks up NEIGHBORHOOD_ID_TO_CONFIG[neighborhoodId]
         const digest = await generateWeeklyDigest(
-          neighborhoodId,
-          permits,
-          licenses,
-          crimeStats
+          configKey,
+          weekArticles,
+          crimeStats ?? undefined
         );
 
         if (!digest) {
-          results.errors.push(`${neighborhoodId}: Digest generation returned null`);
+          results.errors.push(`${dbNeighborhoodId}: Digest generation returned null`);
           continue;
         }
 
         // Generate a unique slug
         const dateSlug = weekStart.toISOString().split('T')[0];
-        const slug = `nyc-weekly-${neighborhoodId}-${dateSlug}`;
+        const slug = `nyc-weekly-${dbNeighborhoodId}-${dateSlug}`;
 
         // Check if article already exists
         const { data: existingArticle } = await supabase
@@ -157,14 +167,14 @@ export async function GET(request: Request) {
           .single();
 
         if (existingArticle) {
-          console.log(`Article already exists for ${neighborhoodId} this week`);
+          console.log(`Article already exists for ${dbNeighborhoodId} this week`);
           results.articles_skipped++;
           continue;
         }
 
         // Create the article with cached image
         const { error: insertError } = await supabase.from('articles').insert({
-          neighborhood_id: neighborhoodId,
+          neighborhood_id: dbNeighborhoodId,
           headline: digest.headline,
           body_text: digest.body,
           preview_text: digest.previewText,
@@ -174,25 +184,25 @@ export async function GET(request: Request) {
           published_at: new Date().toISOString(),
           author_type: 'ai',
           ai_model: 'gemini-2.5-pro',
-          ai_prompt: `NYC Weekly Digest: ${permits.length} permits, ${licenses.length} licenses, ${crimeStats?.total_incidents || 0} incidents`,
+          ai_prompt: `NYC Weekly Digest: ${weekArticles.length} articles, ${crimeStats?.total_incidents || 0} incidents`,
           category_label: 'Civic Data',
           enriched_at: new Date().toISOString(),
           enrichment_model: 'gemini-2.5-flash',
         });
 
         if (insertError) {
-          results.errors.push(`${neighborhoodId}: ${insertError.message}`);
+          results.errors.push(`${dbNeighborhoodId}: ${insertError.message}`);
           continue;
         }
 
         results.articles_created++;
-        console.log(`Created weekly digest article for ${neighborhoodId}`);
+        console.log(`Created weekly digest article for ${dbNeighborhoodId}`);
 
         // Rate limiting between AI calls
         await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (err) {
         results.errors.push(
-          `${neighborhoodId}: ${err instanceof Error ? err.message : String(err)}`
+          `${dbNeighborhoodId}: ${err instanceof Error ? err.message : String(err)}`
         );
       }
     }

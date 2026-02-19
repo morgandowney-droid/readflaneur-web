@@ -33,14 +33,20 @@ export interface GeneratedStory {
   sourcesCount: number;
 }
 
+export interface WeekArticle {
+  headline: string;
+  body_text: string;
+  category_label: string;
+  published_at: string;
+}
+
 export interface WeeklyDigest {
   neighborhoodKey: string;
   neighborhoodId: string;
   headline: string;
   body: string;
   previewText: string;
-  permitCount: number;
-  licenseCount: number;
+  articleCount: number;
   crimeIncidents: number;
   generatedAt: string;
 }
@@ -223,12 +229,25 @@ Return your response in this JSON format:
 }
 
 /**
- * Generate a weekly digest combining all NYC data sources
+ * Format week articles for the prompt
+ */
+function formatWeekArticlesForPrompt(articles: WeekArticle[]): string {
+  if (articles.length === 0) return 'No notable stories this week.';
+
+  const formatted = articles.slice(0, 20).map((a) => {
+    const bodyPreview = a.body_text.substring(0, 200).replace(/\n/g, ' ');
+    return `- [${a.category_label}] ${a.headline}\n  ${bodyPreview}...`;
+  });
+
+  return formatted.join('\n');
+}
+
+/**
+ * Generate a weekly digest combining the week's House Story articles and crime stats
  */
 export async function generateWeeklyDigest(
   neighborhoodId: string,
-  permits: NYCPermit[],
-  licenses: LiquorLicense[],
+  weekArticles: WeekArticle[],
   crimeStats?: CrimeStats
 ): Promise<WeeklyDigest | null> {
   const neighborhoodKey = NEIGHBORHOOD_ID_TO_CONFIG[neighborhoodId];
@@ -248,19 +267,24 @@ export async function generateWeeklyDigest(
   const contextualInstruction = getContextualInstructions(neighborhoodKey);
 
   // Build comprehensive data section
-  let dataSection = `# Weekly Data Summary for ${neighborhoodKey}\n\n`;
+  let dataSection = `# Weekly Summary for ${neighborhoodKey}\n\n`;
 
-  if (permits.length > 0) {
-    dataSection += `## Building Permits (${permits.length} total)\n`;
-    dataSection += formatPermitsForPrompt(permits);
-    dataSection += '\n\n';
-  }
+  if (weekArticles.length > 0) {
+    // Group articles by category
+    const byCategory: Record<string, WeekArticle[]> = {};
+    for (const article of weekArticles) {
+      const cat = article.category_label || 'Other';
+      if (!byCategory[cat]) byCategory[cat] = [];
+      byCategory[cat].push(article);
+    }
 
-  if (licenses.length > 0) {
-    const newLicenses = licenses.filter(isNewLicense);
-    dataSection += `## Liquor Licenses (${licenses.length} total, ${newLicenses.length} new)\n`;
-    dataSection += formatLicensesForPrompt(licenses);
-    dataSection += '\n\n';
+    dataSection += `## This Week's Stories (${weekArticles.length} total)\n`;
+    for (const [category, articles] of Object.entries(byCategory)) {
+      dataSection += `\n### ${category} (${articles.length})\n`;
+      dataSection += formatWeekArticlesForPrompt(articles);
+      dataSection += '\n';
+    }
+    dataSection += '\n';
   }
 
   if (crimeStats) {
@@ -282,17 +306,18 @@ Writing Style:
 - Use section headers like "[[Development Watch]]", "[[New on the Block]]", "[[Safety Snapshot]]"
 - Be factual about crime stats - no editorializing
 - End with something forward-looking if possible
+- Synthesize the week's stories into a cohesive narrative, don't just list them
 
 This is a weekly recap digest - substantive but readable in 3-4 minutes.`;
 
-  const prompt = `Write a comprehensive weekly digest for ${neighborhoodKey} based on this week's public data.
+  const prompt = `Write a comprehensive weekly digest for ${neighborhoodKey} based on this week's neighborhood stories and public data.
 
 ${dataSection}
 
 Structure your article with:
 1. A compelling headline (under 70 chars)
 2. A brief intro (1-2 sentences)
-3. Sections for notable permits/developments, liquor license news, and safety stats
+3. Sections covering the week's highlights by theme (development, nightlife, safety, etc.)
 4. Use [[Section Header]] format for headers
 
 Return JSON:
@@ -328,8 +353,7 @@ Return JSON:
       headline: parsed.headline || `This Week in ${neighborhoodKey}`,
       body: parsed.body || rawText,
       previewText: parsed.previewText || '',
-      permitCount: permits.length,
-      licenseCount: licenses.length,
+      articleCount: weekArticles.length,
       crimeIncidents: crimeStats?.total_incidents || 0,
       generatedAt: new Date().toISOString(),
     };
