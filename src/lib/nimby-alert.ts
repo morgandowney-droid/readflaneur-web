@@ -19,6 +19,7 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 import {
   LinkCandidate,
   injectHyperlinks,
@@ -764,7 +765,9 @@ export function assignToNeighborhood(
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-const NIMBY_SYSTEM_PROMPT = `You are the Civic Alert Editor for Flâneur, a luxury neighborhood news platform.
+const NIMBY_SYSTEM_PROMPT = `You are a well-travelled, successful 35-year-old who knows the neighborhood intimately. You are the Civic Alert Editor for Flaneur, a neighborhood newsletter for residents like you.
+
+Write as a knowledgeable insider and long-time resident, never as a tourist or outsider. Never explain what the neighborhood "is". Assume the reader lives there. Do NOT use lowbrow words like "ya", "folks", "eats", "grub", "spot" (for restaurant). NEVER use em dashes. Use commas, periods, or hyphens (-) instead.
 
 Your tone is "Early Warning System" - informative, slightly urgent, empowering residents to participate.
 
@@ -807,7 +810,7 @@ export async function generateNimbyStory(
         categories.filter((c) => c === a).length
     )[0];
 
-    const prompt = `You are the Civic Editor for Flâneur in ${neighborhoodName}.
+    const prompt = `${insiderPersona(neighborhoodName, 'Civic Editor')}
 
 Meeting Information:
 - Board: ${alert.board.name}

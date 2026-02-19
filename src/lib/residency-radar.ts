@@ -28,6 +28,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { grokEventSearch } from '@/lib/grok';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // ============================================================================
 // TYPES
@@ -524,7 +525,9 @@ export function getTargetNeighborhoods(announcement: ResidencyAnnouncement): str
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-const RESIDENCY_SYSTEM_PROMPT = `You are the Lifestyle Editor for Flâneur, a luxury neighborhood news platform.
+const RESIDENCY_SYSTEM_PROMPT = `You are a well-travelled, successful 35-year-old who knows the neighborhood intimately. You are the Lifestyle Editor for Flaneur, a neighborhood newsletter for residents like you.
+
+Write as a knowledgeable insider and long-time resident, never as a tourist or outsider. Never explain what the neighborhood "is". Assume the reader lives there. Do NOT use lowbrow words like "ya", "folks", "eats", "grub", "spot" (for restaurant). NEVER use em dashes. Use commas, periods, or hyphens (-) instead.
 
 Your tone is "Scene Watch" - knowing where the familiar crowd will be, tracking the migration of city life to vacation spots.
 
@@ -546,7 +549,7 @@ export async function generateResidencyStory(
     const season = announcement.location.season;
     const targetNeighborhoods = getTargetNeighborhoods(announcement);
 
-    const prompt = `You are the Lifestyle Editor for Flâneur.
+    const prompt = `${insiderPersona(announcement.location.name, 'Lifestyle Editor')}
 
 Brand: ${announcement.brand.name}
 - Category: ${announcement.brand.category}

@@ -22,6 +22,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 
 /**
  * Luxury brand categories
@@ -469,7 +470,7 @@ export async function generateRetailStory(
     'Home & Design': 'Focus on design aesthetics, interior trends, and home as sanctuary.',
   };
 
-  const systemPrompt = `You are the Style Editor for Flâneur, covering retail and luxury lifestyle.
+  const systemPrompt = `${insiderPersona(permit.neighborhood, 'Style Editor')}
 
 ${tierGuidance}
 ${categoryAngles[brand.category]}

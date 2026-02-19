@@ -25,6 +25,7 @@ import {
 } from './hyperlink-injector';
 
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // NYC Open Data - DOB NOW: Build Job Application Filings
 const NYC_DOB_FILINGS_API = 'https://data.cityofnewyork.us/resource/w9ak-ipjd.json';
@@ -362,7 +363,7 @@ export async function generateHeritageStory(
       break;
   }
 
-  const systemPrompt = `You are the Flâneur Editor writing a heritage alert for preservation-minded residents of ${event.neighborhood}.
+  const systemPrompt = `${insiderPersona(event.neighborhood, 'Editor')}
 
 Writing Style:
 - ${toneGuidance}

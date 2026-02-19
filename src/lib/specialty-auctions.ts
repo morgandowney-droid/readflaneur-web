@@ -24,6 +24,7 @@ import {
   ART_HUBS,
   fetchAllGlobalAuctionCalendars,
 } from './global-auctions';
+import { insiderPersona } from '@/lib/ai-persona';
 import { AuctionTier, isBlueChip, determineAuctionTier } from './nyc-auctions';
 import {
   LinkCandidate,
@@ -1001,7 +1002,7 @@ export async function generateNationalChampionStory(
     day: 'numeric',
   });
 
-  const systemPrompt = `You are the Flâneur Editor for ${event.city}, ${event.country}.
+  const systemPrompt = `${insiderPersona(`${event.city}, ${event.country}`, 'Art Market Editor')}
 
 This is a NATIONAL CHAMPION auction house - the premier local institution.
 
@@ -1112,7 +1113,7 @@ export async function generateVacationMappedStory(
     day: 'numeric',
   });
 
-  const systemPrompt = `You are the Flâneur Editor for ${vacationMapping.name}.
+  const systemPrompt = `${insiderPersona(vacationMapping.name, 'Art Market Editor')}
 
 There is NO auction house in ${vacationMapping.name}, but this sale in ${sourceEvent.location} is relevant to your readers.
 

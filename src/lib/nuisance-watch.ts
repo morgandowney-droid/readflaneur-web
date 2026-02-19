@@ -21,6 +21,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 
 /**
  * Nuisance thresholds
@@ -511,7 +512,7 @@ export async function generateNuisanceStory(
     'Illegal Dumping': `Focus on enforcement. Someone is treating the street as a dump. Residents are frustrated.`,
   };
 
-  const systemPrompt = `You are the Community Editor for Flâneur, covering quality of life issues.
+  const systemPrompt = `${insiderPersona(cluster.neighborhood, 'Community Editor')}
 
 ${categoryGuidance[cluster.category]}
 
@@ -652,7 +653,7 @@ export async function generateNuisanceRoundup(
   const hasHighSeverity = sorted.some((c) => c.severity === 'High');
   const hasSpike = sorted.some((c) => c.trend === 'spike');
 
-  const systemPrompt = `You are the Community Editor for Flâneur, writing a neighborhood-wide noise roundup.
+  const systemPrompt = `${insiderPersona(neighborhoodName, 'Community Editor')}
 
 This is a ROUNDUP of ${hotspotCount} complaint hotspots across ${neighborhoodName}, totaling ${totalComplaints} complaints this week.
 

@@ -29,6 +29,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 
 /**
  * Generated fair story
@@ -144,7 +145,7 @@ Focus on:
     Paris: `Reference the Grand Palais, Saint-Germain, or Le Marais. Intellectual and chic. European sophistication. Dinners at Café de Flore or Lipp. Art history matters here.`,
   };
 
-  const systemPrompt = `You are the Editor-in-Chief of Flâneur, covering ${fair.name} in ${fair.city}.
+  const systemPrompt = `${insiderPersona(fair.city.replace('_', ' '), 'Arts Editor')}
 
 This is THE event of the year for these residents. This is the key thing that matters this week.
 

@@ -26,6 +26,7 @@ import {
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
 import { grokEventSearch } from '@/lib/grok';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // ============================================================================
 // MUSEUM TARGETS CONFIGURATION
@@ -443,7 +444,7 @@ export async function generateExhibitionStory(
     Los_Angeles: `Reference Beverly Hills, Brentwood, or the Westside. Hollywood collectors and patrons. Opening galas with celebrity sightings.`,
   };
 
-  const systemPrompt = `You are the Culture Editor for Flâneur in ${museum.city.replace('_', ' ')}.
+  const systemPrompt = `${insiderPersona(museum.city.replace('_', ' '), 'Culture Editor')}
 
 Context:
 - A major cultural event is opening at ${museum.name}.

@@ -22,6 +22,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // LTA DataMall API
 const LTA_DATAMALL_API = 'https://datamall2.mytransport.sg/ltaodataservice';
@@ -401,7 +402,7 @@ export async function generateMotorWatchAlert(
   const premium = coeResult.premium.toLocaleString();
   const percentDrop = Math.abs(coeResult.changePercent).toFixed(1);
 
-  const systemPrompt = `You are the Flâneur Editor writing a "Motor Watch" alert for wealthy Singapore residents who might be timing their luxury car purchases.
+  const systemPrompt = `${insiderPersona('Singapore', 'Editor')}
 
 Writing Style:
 - Tone: 'Knowing Wink' - everyone in Nassim has multiple cars
@@ -491,7 +492,7 @@ export async function generateGCBAlert(
   const psfFormatted = transaction.pricePerSqFt.toLocaleString();
   const landFormatted = transaction.landSize.toLocaleString();
 
-  const systemPrompt = `You are the Flâneur Editor writing a "GCB Alert" about a Good Class Bungalow transaction in Singapore.
+  const systemPrompt = `${insiderPersona('Singapore', 'Editor')}
 
 Writing Style:
 - Tone: 'Reverent Awe' - GCBs are Singapore's most exclusive properties

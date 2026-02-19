@@ -13,6 +13,7 @@ import {
 } from '@/config/global-locations';
 import { StoryData, SafetyStats, CityVocabulary } from '@/lib/adapters/types';
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 
 export interface GlobalStoryInput {
   neighborhoodId: string;
@@ -163,8 +164,7 @@ export async function generateGlobalStory(
     return null;
   }
 
-  const systemPrompt = `You are the Editor for Flâneur, a luxury hyper-local newsletter.
-You are writing for the "${zone.name}" feed in ${input.city}.
+  const systemPrompt = `${insiderPersona(`${zone.name}, ${input.city}`, 'Editor')}
 
 Target Audience Vibe: ${zone.tone}
 
@@ -287,7 +287,7 @@ export async function generateGlobalWeeklyDigest(
     dataSection += '\n\n';
   }
 
-  const systemPrompt = `You are the Editor for Flâneur writing a weekly civic digest for ${zone.name}, ${city}.
+  const systemPrompt = `${insiderPersona(`${zone.name}, ${city}`, 'Editor')}
 
 Editorial Tone: ${zone.tone}
 

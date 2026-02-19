@@ -22,6 +22,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { grokEventSearch } from '@/lib/grok';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // =============================================================================
 // TYPES
@@ -730,7 +731,7 @@ export async function generateGalaStory(event: GalaEvent): Promise<GalaStory | n
   // Determine event type
   const eventType = event.isBenefit ? 'charity benefit' : 'high-society gala';
 
-  const prompt = `You are the Society Editor for Flâneur in ${cityName}.
+  const prompt = `${insiderPersona(cityName, 'Society Editor')}
 Data: ${JSON.stringify({
     name: event.name,
     venue: event.venue,

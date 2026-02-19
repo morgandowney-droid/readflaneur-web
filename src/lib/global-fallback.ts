@@ -25,6 +25,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // Open-Meteo API for weather fallback
 const OPEN_METEO_API = 'https://api.open-meteo.com/v1/forecast';
@@ -210,7 +211,7 @@ export async function generateDevelopmentWatchStory(
 
   const searchQuery = `"${neighborhood.name}" AND ("real estate" OR "development" OR "zoning" OR "opening" OR "new restaurant" OR "new store")`;
 
-  const systemPrompt = `You are the Flâneur Editor writing a "Development Watch" story for ${neighborhood.name}, ${neighborhood.city}.
+  const systemPrompt = `${insiderPersona(`${neighborhood.name}, ${neighborhood.city}`, 'Editor')}
 
 Context: ${neighborhood.tone}
 
@@ -307,7 +308,7 @@ export async function generateLifestyleWatchStory(
 
   const genAI = new GoogleGenAI({ apiKey });
 
-  const systemPrompt = `You are the Flâneur Editor writing a "Lifestyle Watch" story for ${neighborhood.name}, ${neighborhood.city}.
+  const systemPrompt = `${insiderPersona(`${neighborhood.name}, ${neighborhood.city}`, 'Editor')}
 
 Context: ${neighborhood.tone}
 

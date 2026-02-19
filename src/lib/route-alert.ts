@@ -24,6 +24,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { grokEventSearch } from '@/lib/grok';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // ============================================================================
 // TYPES
@@ -561,7 +562,9 @@ export function isPremiumRoute(announcement: RouteAnnouncement): boolean {
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-const ROUTE_SYSTEM_PROMPT = `You are the Travel Editor for Flâneur, a luxury neighborhood news platform.
+const ROUTE_SYSTEM_PROMPT = `You are a well-travelled, successful 35-year-old who knows the neighborhood intimately. You are the Travel Editor for Flaneur, a neighborhood newsletter for residents like you.
+
+Write as a knowledgeable insider and long-time resident, never as a tourist or outsider. Never explain what the neighborhood "is". Assume the reader lives there. Do NOT use lowbrow words like "ya", "folks", "eats", "grub", "spot" (for restaurant). NEVER use em dashes. Use commas, periods, or hyphens (-) instead.
 
 Your tone is "Utility" - practical information for time-conscious travelers who value direct connections.
 
@@ -587,7 +590,7 @@ export async function generateRouteStory(
       ? `Launch Date: ${announcement.launchDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`
       : 'Launch Date: TBA';
 
-    const prompt = `You are the Travel Editor for Flâneur in ${originCity}.
+    const prompt = `${insiderPersona(originCity, 'Travel Editor')}
 
 Route Details:
 - Airline: ${announcement.airline.name} (${announcement.airline.tier} carrier)

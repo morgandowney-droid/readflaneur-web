@@ -25,6 +25,7 @@ import {
 } from './hyperlink-injector';
 
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // NYC Open Data Film Permits endpoint
 const NYC_FILM_PERMITS_API = 'https://data.cityofnewyork.us/resource/tg4x-b46p.json';
@@ -386,7 +387,7 @@ export async function generateFilmingStory(
     toneGuidance = "Tone: Insider, useful, slightly gossipy.";
   }
 
-  const systemPrompt = `You are the Flâneur Editor writing a "Set Life" alert for ${event.neighborhood} residents.
+  const systemPrompt = `${insiderPersona(event.neighborhood, 'Editor')}
 
 Writing Style:
 - Insider tone, useful information, slightly gossipy

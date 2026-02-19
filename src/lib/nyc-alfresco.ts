@@ -28,6 +28,7 @@ import {
 } from './hyperlink-injector';
 
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // NYC Open Data - Open Restaurants Applications endpoint
 const NYC_OPEN_RESTAURANTS_API = 'https://data.cityofnewyork.us/resource/pitm-atqc.json';
@@ -385,7 +386,7 @@ export async function generateAlfrescoStory(
     ? 'Licensed for outdoor alcohol service.'
     : '';
 
-  const systemPrompt = `You are the Flâneur Editor writing an "Alfresco Alert" for ${event.neighborhood} residents.
+  const systemPrompt = `${insiderPersona(event.neighborhood, 'Editor')}
 
 Writing Style:
 - Breezy, social, inviting tone

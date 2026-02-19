@@ -23,6 +23,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // NY State Open Data endpoints (public, no auth required)
 const NY_PENDING_LICENSES_API = 'https://data.ny.gov/resource/f8i8-k2gm.json';
@@ -286,7 +287,7 @@ export async function generateLiquorStory(
     ? 'This is a pending application — create anticipation but note it is not yet confirmed.'
     : 'This license has been approved — the opening is confirmed.';
 
-  const systemPrompt = `You are the Flâneur Editor writing a "Last Call" alert for ${event.neighborhood} residents.
+  const systemPrompt = `${insiderPersona(event.neighborhood, 'Editor')}
 
 Writing Style:
 - Insider tone, useful for locals

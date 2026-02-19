@@ -22,6 +22,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // ============================================================================
 // DESIGN CALENDAR CONFIGURATION
@@ -527,7 +528,7 @@ Focus on:
     New_York: `Reference SoHo showrooms, Brooklyn makers, and the ICFF trade show. American design's biggest week. Commerce and creativity collide.`,
   };
 
-  const systemPrompt = `You are the Design Editor for Flâneur in ${event.city.replace('_', ' ')}.
+  const systemPrompt = `${insiderPersona(event.city.replace('_', ' '), 'Design Editor')}
 
 Event: ${event.name}
 Vibe: ${event.vibe}

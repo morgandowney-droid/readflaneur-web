@@ -34,6 +34,7 @@ import {
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
 import { grokEventSearch } from '@/lib/grok';
+import { insiderPersona } from '@/lib/ai-persona';
 
 /**
  * Global Art Hub identifiers
@@ -459,7 +460,7 @@ export async function generateGlobalAuctionStory(
     toneGuidance = `A solid sale for engaged collectors. Mention specific categories that might appeal to local tastes.`;
   }
 
-  const systemPrompt = `You are the Art Market Editor for Flâneur in ${event.location}.
+  const systemPrompt = `${insiderPersona(event.location, 'Art Market Editor')}
 
 ${hubContextMap[event.hub]}
 

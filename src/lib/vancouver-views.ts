@@ -18,6 +18,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // Vancouver Open Data - Development Permits
 const VANCOUVER_PERMITS_API =
@@ -284,7 +285,7 @@ export async function generateViewConeStory(
   const streetMatch = permit.address.match(/\d+\s+(.+)/);
   const streetName = streetMatch ? streetMatch[1] : permit.address;
 
-  const systemPrompt = `You are the Flâneur Editor writing a "View Watch" alert for affluent residents of Vancouver who care deeply about their mountain and water views.
+  const systemPrompt = `${insiderPersona('Vancouver', 'Editor')}
 
 Writing Style:
 - Tone: 'Concerned Neighbor' meets 'Urban Planning Wonk'

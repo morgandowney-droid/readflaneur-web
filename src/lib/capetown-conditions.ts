@@ -18,6 +18,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // External APIs
 const OPEN_METEO_API = 'https://api.open-meteo.com/v1/forecast';
@@ -245,7 +246,7 @@ export async function generateCalmAlertStory(
       ? 'The notorious Cape Doctor has taken a rare break.'
       : '';
 
-  const systemPrompt = `You are the Flâneur Editor writing a "Calm Alert" for wealthy Cape Town residents on the Atlantic Seaboard.
+  const systemPrompt = `${insiderPersona('Cape Town', 'Editor')}
 
 Writing Style:
 - Tone: 'Excited Local' - Calm days are precious in Cape Town
@@ -338,7 +339,7 @@ export async function generateGridWatchStory(
   const severity =
     status.stage >= 6 ? 'critical' : status.stage >= 4 ? 'warning' : 'info';
 
-  const systemPrompt = `You are the Flâneur Editor writing a "Grid Watch" alert for Cape Town residents about load shedding.
+  const systemPrompt = `${insiderPersona('Cape Town', 'Editor')}
 
 Writing Style:
 - Tone: ${severity === 'critical' ? 'Urgent' : 'Matter-of-fact'}

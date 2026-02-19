@@ -23,6 +23,7 @@ import {
   injectHyperlinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // =============================================================================
 // TYPES
@@ -1001,7 +1002,7 @@ export async function generateEscapeStory(
     }
   }
 
-  const prompt = `You are the Lifestyle Editor for Flâneur in ${cityName}.
+  const prompt = `${insiderPersona(cityName, 'Lifestyle Editor')}
 Data: ${JSON.stringify(condition)}
 Destination: ${destName}
 

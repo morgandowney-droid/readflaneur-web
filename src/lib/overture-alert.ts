@@ -25,6 +25,7 @@ import {
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
 import { grokEventSearch } from '@/lib/grok';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // ============================================================================
 // PERFORMANCE HUBS CONFIGURATION
@@ -417,7 +418,7 @@ export async function generateOvertureStory(
     starPowerNote = `Star Power: ${performance.starNames.join(', ')} - mention this draws the cognoscenti.`;
   }
 
-  const systemPrompt = `You are the Arts Editor for Flâneur in ${venue.city.replace('_', ' ')}.
+  const systemPrompt = `${insiderPersona(venue.city.replace('_', ' '), 'Arts Editor')}
 
 Context:
 - It is Opening Night at ${venue.name}.

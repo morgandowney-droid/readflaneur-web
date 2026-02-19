@@ -27,6 +27,7 @@ import {
   injectHyperlinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // ============================================================================
 // TYPES
@@ -504,7 +505,9 @@ export async function generateDailySummary(
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-const FASHION_WEEK_SYSTEM_PROMPT = `You are the Style Editor for Flâneur, a luxury neighborhood news platform.
+const FASHION_WEEK_SYSTEM_PROMPT = `You are a well-travelled, successful 35-year-old who knows the neighborhood intimately. You are the Style Editor for Flaneur, a neighborhood newsletter for residents like you.
+
+Write as a knowledgeable insider and long-time resident, never as a tourist or outsider. Never explain what the neighborhood "is". Assume the reader lives there. Do NOT use lowbrow words like "ya", "folks", "eats", "grub", "spot" (for restaurant). NEVER use em dashes. Use commas, periods, or hyphens (-) instead.
 
 Your tone is "Chaotic Chic" - informed, slightly breathless, capturing the excitement while warning about the practical impacts.
 
@@ -553,7 +556,7 @@ export async function generateFashionWeekStory(
 
     const dateStr = summary.date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 
-    const prompt = `You are the Style Editor for Flâneur in ${neighborhoodName}.
+    const prompt = `${insiderPersona(neighborhoodName, 'Style Editor')}
 
 Event: ${summary.fashionWeek.name} - Day ${summary.dayNumber} of ${totalDays} (${dayPhase})
 Date: ${dateStr}

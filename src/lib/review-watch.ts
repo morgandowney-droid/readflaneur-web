@@ -29,6 +29,7 @@ import {
   injectHyperlinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // =============================================================================
 // TYPES
@@ -632,7 +633,7 @@ export async function generateReviewStory(review: DetectedReview): Promise<Revie
       headlineTemplate = `Critic's Pick: ${review.restaurantName} Gets Reviewed`;
   }
 
-  const prompt = `You are the Dining Editor for Flâneur in ${neighborhoodName}.
+  const prompt = `${insiderPersona(neighborhoodName, 'Dining Editor')}
 Data: ${JSON.stringify({
     restaurant: review.restaurantName,
     source: review.sourceDisplayName,

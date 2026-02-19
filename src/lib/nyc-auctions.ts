@@ -20,6 +20,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 import { grokEventSearch } from '@/lib/grok';
 
 /**
@@ -392,7 +393,7 @@ export async function generateAuctionStory(
     Phillips: "Phillips' contemporary edge and emerging categories",
   };
 
-  const systemPrompt = `You are the Art Market Editor for Flâneur, writing for wealthy collectors across the Tri-State area and the Hamptons/Nantucket.
+  const systemPrompt = `${insiderPersona('the Tri-State area and the Hamptons/Nantucket', 'Art Market Editor')}
 
 Writing Style:
 - ${toneGuidance}

@@ -27,6 +27,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { grokEventSearch } from '@/lib/grok';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // =============================================================================
 // TYPES
@@ -559,7 +560,7 @@ export async function generateSampleSaleStory(sale: DetectedSale): Promise<Sampl
     ? 'This is a heritage luxury house. Sample sales for this brand are rare.'
     : 'This is a sought-after contemporary label.';
 
-  const prompt = `You are the Fashion Editor for Flâneur in ${neighborhoodName}.
+  const prompt = `${insiderPersona(neighborhoodName, 'Fashion Editor')}
 Data: ${JSON.stringify({
     brand: sale.brand,
     venue: sale.venue,

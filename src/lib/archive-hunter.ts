@@ -26,6 +26,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { grokEventSearch } from '@/lib/grok';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // ============================================================================
 // TYPES
@@ -465,7 +466,9 @@ If no notable items are found at any store, return an empty array: []`;
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-const ARCHIVE_SYSTEM_PROMPT = `You are the Shopping Editor for Flâneur, a luxury neighborhood news platform.
+const ARCHIVE_SYSTEM_PROMPT = `You are a well-travelled, successful 35-year-old who knows the neighborhood intimately. You are the Shopping Editor for Flaneur, a neighborhood newsletter for residents like you.
+
+Write as a knowledgeable insider and long-time resident, never as a tourist or outsider. Never explain what the neighborhood "is". Assume the reader lives there. Do NOT use lowbrow words like "ya", "folks", "eats", "grub", "spot" (for restaurant). NEVER use em dashes. Use commas, periods, or hyphens (-) instead.
 
 Your tone is "Urgent" - informing collectors about rare finds before they sell.
 
@@ -492,7 +495,7 @@ export async function generateArchiveStory(item: ArchiveItem): Promise<ArchiveSt
 
     const brandTier = INVESTMENT_BRANDS[item.brand]?.tier || 'Collectible';
 
-    const prompt = `You are the Shopping Editor for Flâneur in ${neighborhoodName}.
+    const prompt = `${insiderPersona(neighborhoodName, 'Shopping Editor')}
 
 Item Details:
 - Brand: ${item.brand}

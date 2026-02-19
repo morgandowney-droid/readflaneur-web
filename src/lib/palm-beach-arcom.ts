@@ -19,6 +19,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 
 // Town of Palm Beach agenda URLs
 const ARCOM_AGENDA_URL =
@@ -408,7 +409,7 @@ export async function generateARCOMAlert(
         "Tone: 'Informed Neighbor'. Changes affect the streetscape.";
   }
 
-  const systemPrompt = `You are the Flâneur Editor writing a "Design Watch" alert for Palm Beach Island residents about an upcoming ARCOM (Architectural Commission) review.
+  const systemPrompt = `${insiderPersona('Palm Beach Island', 'Design Editor')}
 
 Writing Style:
 - ${toneGuidance}

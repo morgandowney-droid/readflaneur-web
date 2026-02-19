@@ -12,6 +12,7 @@
 import { grokEventSearch } from './grok';
 import { GoogleGenAI } from '@google/genai';
 import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 import {
   LinkCandidate,
   injectHyperlinks,
@@ -126,7 +127,7 @@ export async function generateBlotterStory(
     )
     .join('\n\n');
 
-  const systemPrompt = `You are the Flaneur Editor writing a daily crime blotter for ${neighborhoodName} residents.
+  const systemPrompt = `${insiderPersona(neighborhoodName, 'Editor')}
 
 Writing Style:
 - Factual, concise, no sensationalism
