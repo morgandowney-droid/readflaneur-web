@@ -569,8 +569,11 @@ function PreferencesContent() {
           <h2 className="text-xs font-medium tracking-[0.1em] uppercase text-neutral-400 mb-3">
             Family Corner
           </h2>
-          <p className="text-xs text-neutral-400 mb-3">
+          <p className="text-xs text-neutral-400 mb-2">
             Enabling Family Corner adds a family section to your Daily Brief with local kids&apos; events, school news, and family resources tailored to your children&apos;s ages.
+          </p>
+          <p className="text-[11px] text-neutral-500 italic mb-3">
+            The Family Corner content is delivered in your 7 am Daily Brief email each morning and will contain family events for your primary neighborhood only. The family content is in the email only and is not here on readflaneur.com.
           </p>
           <div className="space-y-2">
             <label className="flex items-center gap-3 p-3 border border-white/[0.08] rounded-lg cursor-pointer hover:border-white/20 transition-colors">
@@ -680,7 +683,7 @@ function PreferencesContent() {
 
               {childrenList.length > 0 && (
                 <div className="mt-3 p-3 border border-white/[0.06] rounded-lg bg-neutral-800/30">
-                  <p className="text-xs text-neutral-500 mb-2">Your Daily Brief will include:</p>
+                  <p className="text-xs text-neutral-500 mb-2">Your 7 am Daily Brief will include:</p>
                   {(() => {
                     const now = new Date();
                     const seen = new Set<string>();
