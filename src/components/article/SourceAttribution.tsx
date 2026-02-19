@@ -10,6 +10,8 @@ interface SourceAttributionProps {
   neighborhoodName?: string;
   /** Article category — brief_summary, look_ahead, weekly_recap etc. */
   category?: string;
+  /** Raw category_label from article (e.g., "Auction Watch", "Noise Watch") */
+  categoryLabel?: string;
 }
 
 /** Parse "Source: Name - https://url" from editor_notes */
@@ -20,7 +22,26 @@ function parseEditorNotesSource(notes: string | null | undefined): { name: strin
   return null;
 }
 
-export function SourceAttribution({ sources, editorNotes, isAIGenerated, headline, neighborhoodName, category }: SourceAttributionProps) {
+/**
+ * Build a smarter search query based on article type.
+ * Globally syndicated stories (auctions, galas, etc.) should not include
+ * the neighborhood name since it's irrelevant to verifying the story.
+ */
+function buildSearchQuery(headline: string, neighborhoodName: string, categoryLabel?: string): string {
+  const cleanHeadline = headline.replace(/^[^:]{1,30}:\s+/, '');
+  const label = categoryLabel?.toLowerCase() || '';
+
+  // Globally syndicated categories — search headline only, no neighborhood
+  if (label.includes('auction') || label.includes('gala') || label.includes('overture')
+    || label.includes('route') || label.includes('sample sale') || label.includes('archive')
+    || label.includes('residency') || label.includes('museum') || label.includes('fashion week')) {
+    return cleanHeadline;
+  }
+
+  return `${cleanHeadline} ${neighborhoodName}`;
+}
+
+export function SourceAttribution({ sources, editorNotes, isAIGenerated, headline, neighborhoodName, category, categoryLabel }: SourceAttributionProps) {
   // Only show for AI-generated content
   if (!isAIGenerated) return null;
 
@@ -28,11 +49,10 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated, headlin
   // They are multi-source editorial products, not single-source RSS rewrites
   const isEditorial = category === 'brief_summary' || category === 'look_ahead' || category === 'weekly_recap';
 
-  // Build a Google Search verification URL from headline + neighborhood
-  // Strip category prefixes like "Style Alert: ", "Last Call: ", "LOOK AHEAD: " from search query
-  const searchHeadline = headline?.replace(/^[^:]{1,30}:\s+/, '') || '';
-  const verifyUrl = (!isEditorial && searchHeadline && neighborhoodName)
-    ? `https://www.google.com/search?q=${encodeURIComponent(searchHeadline + ' ' + neighborhoodName)}`
+  // Build a Google Search verification URL
+  const searchQuery = (headline && neighborhoodName) ? buildSearchQuery(headline, neighborhoodName, categoryLabel) : '';
+  const verifyUrl = (!isEditorial && searchQuery)
+    ? `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`
     : null;
 
   const verifyLink = verifyUrl ? (

@@ -315,6 +315,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             : article.article_type === 'brief_summary' ? 'brief_summary'
             : article.category_label?.toLowerCase().includes('sunday edition') ? 'weekly_recap'
             : undefined}
+          categoryLabel={article.category_label}
         />
 
         {/* Brief discovery CTAs - right after sources on daily brief and Sunday Edition articles */}
