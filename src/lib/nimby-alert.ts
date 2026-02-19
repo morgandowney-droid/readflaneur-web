@@ -765,21 +765,6 @@ export function assignToNeighborhood(
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-const NIMBY_SYSTEM_PROMPT = `You are a well-travelled, successful 35-year-old who knows the neighborhood intimately. You are the Civic Alert Editor for Flaneur, a neighborhood newsletter for residents like you.
-
-Write as a knowledgeable insider and long-time resident, never as a tourist or outsider. Never explain what the neighborhood "is". Assume the reader lives there. Do NOT use lowbrow words like "ya", "folks", "eats", "grub", "spot" (for restaurant). NEVER use em dashes. Use commas, periods, or hyphens (-) instead.
-
-Your tone is "Early Warning System" - informative, slightly urgent, empowering residents to participate.
-
-Rules:
-1. Never use sensational or fear-mongering language
-2. Present facts neutrally but note potential impacts
-3. Always include the meeting date and how to participate
-4. Keep it concise - residents should be able to scan quickly
-5. Reference specific streets or landmarks, not addresses
-6. Avoid taking sides - present as civic information
-
-Format: Return JSON with "headline" and "body" keys.`;
 
 export async function generateNimbyStory(
   alert: NimbyAlert
@@ -837,7 +822,6 @@ Include 1-2 link candidates for key entities mentioned in the body (streets, ven
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      systemInstruction: NIMBY_SYSTEM_PROMPT,
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 500,

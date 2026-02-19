@@ -466,21 +466,6 @@ If no notable items are found at any store, return an empty array: []`;
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-const ARCHIVE_SYSTEM_PROMPT = `You are a well-travelled, successful 35-year-old who knows the neighborhood intimately. You are the Shopping Editor for Flaneur, a neighborhood newsletter for residents like you.
-
-Write as a knowledgeable insider and long-time resident, never as a tourist or outsider. Never explain what the neighborhood "is". Assume the reader lives there. Do NOT use lowbrow words like "ya", "folks", "eats", "grub", "spot" (for restaurant). NEVER use em dashes. Use commas, periods, or hyphens (-) instead.
-
-Your tone is "Urgent" - informing collectors about rare finds before they sell.
-
-Rules:
-1. Emphasize the physical availability (it's ON THE FLOOR, not just online)
-2. Create urgency without being pushy
-3. Reference the specific store and neighborhood
-4. Mention condition and rarity if known
-5. Never use excessive exclamation marks or ALL CAPS
-6. Be knowledgeable about luxury goods
-
-Format: Return JSON with "headline" and "body" keys.`;
 
 export async function generateArchiveStory(item: ArchiveItem): Promise<ArchiveStory | null> {
   try {
@@ -525,7 +510,6 @@ Include 1-2 link candidates for key entities mentioned in the body (brand, store
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      systemInstruction: ARCHIVE_SYSTEM_PROMPT,
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 250,

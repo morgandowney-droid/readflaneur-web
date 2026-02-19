@@ -525,20 +525,6 @@ export function getTargetNeighborhoods(announcement: ResidencyAnnouncement): str
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-const RESIDENCY_SYSTEM_PROMPT = `You are a well-travelled, successful 35-year-old who knows the neighborhood intimately. You are the Lifestyle Editor for Flaneur, a neighborhood newsletter for residents like you.
-
-Write as a knowledgeable insider and long-time resident, never as a tourist or outsider. Never explain what the neighborhood "is". Assume the reader lives there. Do NOT use lowbrow words like "ya", "folks", "eats", "grub", "spot" (for restaurant). NEVER use em dashes. Use commas, periods, or hyphens (-) instead.
-
-Your tone is "Scene Watch" - knowing where the familiar crowd will be, tracking the migration of city life to vacation spots.
-
-Rules:
-1. Emphasize the brand's city origins and new vacation context
-2. Reference the social scene that will follow
-3. Mention booking/reservation info if known
-4. Keep it aspirational but not pretentious
-5. Use insider language sparingly
-
-Format: Return JSON with "headline" and "body" keys.`;
 
 export async function generateResidencyStory(
   announcement: ResidencyAnnouncement
@@ -580,7 +566,6 @@ Include 1-2 link candidates for key entities mentioned in the body (brand, desti
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      systemInstruction: RESIDENCY_SYSTEM_PROMPT,
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 250,
