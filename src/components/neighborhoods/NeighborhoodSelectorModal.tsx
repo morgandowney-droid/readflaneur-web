@@ -173,6 +173,11 @@ async function fetchNeighborhoodsData(timeoutMs: number = 8000): Promise<{
       }
     }
 
+    // Filter out any selected IDs not present in the API response
+    // (handles stale test neighborhood IDs in localStorage/DB after API filtering)
+    const validIds = new Set(neighborhoods.map(n => n.id));
+    selected = new Set([...selected].filter(id => validIds.has(id)));
+
     return { neighborhoods, selected, userId };
   } catch (err) {
     clearTimeout(timeoutId);

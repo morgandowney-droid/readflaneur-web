@@ -23,6 +23,18 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
+  // Check if current user is admin
+  const { data: { session } } = await supabase.auth.getSession();
+  let isAdmin = false;
+  if (session?.user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+    isAdmin = profile?.role === 'admin';
+  }
+
   let query = supabase
     .from('neighborhoods')
     .select('*')
@@ -36,6 +48,11 @@ export async function GET(request: NextRequest) {
 
   // Exclude removed community neighborhoods
   query = query.or('community_status.is.null,community_status.neq.removed');
+
+  // Hide test neighborhoods from non-admin users
+  if (!isAdmin) {
+    query = query.neq('region', 'test');
+  }
 
   // Apply filters if provided
   if (region) {
