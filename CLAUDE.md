@@ -238,7 +238,8 @@ Recent work: Fix feed ordering stability (added `created_at DESC` as secondary s
 - **Generator:** `src/lib/image-library-generator.ts` - calls `searchAllCategories()`, stores results in `image_library_status.unsplash_photos` JSONB. ~200ms per neighborhood. Returns `{ photos_found, errors }`.
 - **Unsplash CDN URLs:** Hotlinked per Unsplash terms (no downloading/re-hosting). Format: `images.unsplash.com/...&w=1200&q=80&fm=webp`. Already in `next.config.ts` remotePatterns.
 - **Categories (8 per neighborhood):** `daily-brief-1/2/3` (rotated by day % 3), `look-ahead-1/2/3` (rotated by day % 3), `sunday-edition` (single), `rss-story` (single)
-- **Selection:** `selectLibraryImage(neighborhoodId, articleType, categoryLabel?, libraryReadyIds?)` - checks Unsplash cache first, falls back to old Supabase Storage URLs. All 6 article-creating crons need zero changes.
+- **Selection:** `selectLibraryImage(neighborhoodId, articleType, categoryLabel?, libraryReadyIds?)` - checks Unsplash cache first, falls back to old Supabase Storage URLs.
+- **Cache preload required:** All crons using `selectLibraryImage()` must call `preloadUnsplashCache(supabase)` at startup. The Unsplash photos live in `image_library_status.unsplash_photos` JSONB and are loaded into an in-memory module-level cache. Without preloading, `selectLibraryImage()` falls back to legacy Supabase Storage AI images. Applies to 7 crons: generate-brief-articles, generate-look-ahead, generate-guide-digests, sync-news, sync-weekly-brief, generate-community-news, retry-missing-images.
 - **Attribution:** Article pages (`[slug]/page.tsx`) display "Photo by [Name] on Unsplash" with UTM-tagged links below Unsplash images. Credit resolved from `image_library_status.unsplash_photos` JSONB.
 - **Admin endpoint:** `POST /api/admin/generate-image-library` - single (`neighborhoodId`) or batch mode. `GET` returns status counts.
 - **Automated refresh:** `refresh-image-library` cron (hourly at :05 during backfill, revert to every 4h after production API approved). Stops on rate limit. Quarterly seasonal refresh for variety. Emails admin on completion.
@@ -247,7 +248,7 @@ Recent work: Fix feed ordering stability (added `created_at DESC` as secondary s
 - **DB:** `image_library_status` table - `unsplash_photos` JSONB column stores `{ "category": { id, url, photographer, photographer_url, download_location } }` per neighborhood. Legacy `images_generated` column kept for backward compat.
 - **Fallback chain:** Unsplash cache → DB Unsplash lookup → old Supabase Storage URLs → empty string (retry-missing-images fills later)
 - **generate-image endpoint:** Library lookup + sensitive headline check + SVG placeholder only (no more Gemini Image generation)
-- **retry-missing-images cron:** Library-only (no generate-image fallback). Preloads Unsplash cache at startup. Skips HEAD check for Unsplash CDN URLs.
+- **retry-missing-images cron:** Library-only (no generate-image fallback). Skips HEAD check for Unsplash CDN URLs.
 - **Cron category images:** `src/lib/cron-images.ts` (22 categories for specialized crons - fashion-week, escape-index, etc. - unchanged)
 
 ### Email System
