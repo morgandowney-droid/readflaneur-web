@@ -743,17 +743,15 @@ Data: ${JSON.stringify({
   })}
 
 Context:
-- This is a high-status ${eventType} (Ticket price: ${priceDisplay}).
-- Audience: People who go to these to be photographed, and those who need to know what's happening.
-- Tone: 'Insider & Exclusive'. Even if readers aren't attending, they need to know it's happening (to avoid traffic, or to mention it knowledgeably).
+- This is a ${eventType} (Ticket price: ${priceDisplay}).
 - ${dressCode}
 
-Task: Write a blurb for the Flâneur Social Calendar.
+Task: Write a blurb for the Flaneur Social Calendar.
 
 Format your response as JSON:
 {
   "headline": "Social Calendar: [Event Name] at [Venue]",
-  "body": "[35-40 word blurb mentioning the venue, expected crowd, and ticket price]",
+  "body": "[35-40 word blurb mentioning the venue, date, and ticket price]",
   "previewText": "[15-word teaser for feed cards]",
   "link_candidates": [
     {"text": "exact text from body"}
@@ -766,8 +764,8 @@ Constraints:
 - Headline MUST start with "Social Calendar:"
 - Body MUST mention the specific venue name
 - Body MUST mention the ticket price
-- Tone: Knowing, not breathless. Like insider gossip.
-- Example body: "The city's philanthropists descend on [Venue] tonight. Expect heavy black cars and high fashion. Tickets started at [Price]."`;
+- Body MUST use the actual event date provided in the data (e.g. "March 20th" or "Saturday, March 14th"). NEVER say "tonight" or "this evening" unless the event is literally today.
+- Tone: Matter-of-fact, understated. State what is happening and where, not who is attending or how exclusive it is.`;
 
   try {
     const result = await model.generateContent(prompt);
