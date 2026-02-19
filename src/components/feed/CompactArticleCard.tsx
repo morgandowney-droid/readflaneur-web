@@ -83,10 +83,15 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
   const metadataRow = (
     <div className="flex items-center gap-2 text-xs text-fg-muted mb-1 overflow-hidden whitespace-nowrap">
       <span className="uppercase tracking-wider shrink-0">{article.neighborhood?.name}</span>
-      {article.published_at && article.article_type !== 'look_ahead' && (
+      {(article.published_at || article.created_at) && (
         <>
           <span className="shrink-0">&middot;</span>
-          <span className="shrink-0">{formatDate(article.published_at, language)}</span>
+          <span className="shrink-0">{formatDate(
+            article.article_type === 'look_ahead' && article.created_at
+              ? article.created_at
+              : article.published_at || article.created_at!,
+            language
+          )}</span>
         </>
       )}
       {article.category_label && (
