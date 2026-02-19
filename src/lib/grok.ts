@@ -392,7 +392,9 @@ Rules:
 - Be specific with venue names, addresses, dates, and times.
 - Each entry should cover one distinct event or happening.
 - Prioritize verified facts over rumors.
-- If you don't find much, say so.`
+- If you don't find much, say so.
+- Do NOT include any greeting like "Good morning" or sign-off. Jump directly into the content.
+- Do NOT include citation references like [[1]] or (1) in the HEADLINE.`
           },
           {
             role: 'user',
@@ -441,7 +443,15 @@ Rules:
     const headlineMatch = responseText.match(/HEADLINE:\s*(.+?)(?:\n|CONTENT:)/i);
     const contentMatch = responseText.match(/CONTENT:\s*([\s\S]+)/i);
 
-    const headline = headlineMatch?.[1]?.trim() || `What's Coming Up in ${neighborhoodName}`;
+    const rawHeadline = headlineMatch?.[1]?.trim() || `What's Coming Up in ${neighborhoodName}`;
+    // Strip citation markers and URLs from headline (e.g., "[[1]](https://...)" or "(1)")
+    const headline = rawHeadline
+      .replace(/\[\[\d+\]\]\([^)]*\)/g, '') // [[1]](url)
+      .replace(/\[\d+\]/g, '')              // [1]
+      .replace(/\s*\(\d+\)/g, '')           // (1)
+      .replace(/https?:\/\/\S+/g, '')       // bare URLs
+      .replace(/\s{2,}/g, ' ')              // collapse whitespace
+      .trim();
     const rawContent = contentMatch?.[1]?.trim() || responseText;
     const content = rawContent
       .replace(/\{['"](?:title|url|snippet|author|published_at)['"]:[^}]*(?:\}|$)/gm, '')
@@ -452,6 +462,8 @@ Rules:
       .replace(/\(\s*$/gm, '')
       .replace(/\u2014/g, ' - ')
       .replace(/\u2013/g, '-')
+      // Strip greeting lines (Grok sometimes adds these despite instructions)
+      .replace(/^(Good morning|God morgon|Bonjour|Buongiorno|Goedemorgen|Buenos d[ií]as|Guten Morgen|Bom dia|Morning),?\s*[^\n]*\.\s*\n+/i, '')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
 
