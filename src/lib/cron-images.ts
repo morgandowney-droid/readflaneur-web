@@ -49,7 +49,8 @@ export type CronImageCategory =
   | 'overture-alert'
   | 'design-week'
   | 'sunday-edition'
-  | 'liquor-watch';
+  | 'liquor-watch'
+  | 'crime-blotter';
 
 interface CategoryConfig {
   prompt: string;
@@ -217,6 +218,12 @@ export const CRON_IMAGE_CATEGORIES: Record<CronImageCategory, CategoryConfig> = 
       'Moody cocktail bar interior at golden hour: polished brass fixtures, amber bottles on backlit shelves, marble bartop with single craft cocktail. Warm amber tones, editorial hospitality photography. No text, logos, or people.',
     fallbackColor: '#78350f',
     label: 'LAST CALL',
+  },
+  'crime-blotter': {
+    prompt:
+      'Empty urban street at dawn with blue police lights reflected on wet pavement, city skyline silhouette. Cinematic noir mood, cool blue tones, editorial photography. No text, logos, or people.',
+    fallbackColor: '#1e3a5f',
+    label: 'BLOTTER',
   },
 };
 
