@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { fetchCityFeeds, RSSItem } from '@/lib/rss-sources';
 import { generateGrokNewsStories, isGrokConfigured } from '@/lib/grok';
 import { AI_MODELS } from '@/config/ai-models';
-import { selectLibraryImage, getLibraryReadyIds } from '@/lib/image-library';
+import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 
 /**
  * News Aggregation Cron Job
@@ -84,6 +84,7 @@ export async function GET(request: Request) {
   );
 
   const libraryReadyIds = await getLibraryReadyIds(supabase);
+  await preloadUnsplashCache(supabase);
   const startedAt = new Date().toISOString();
 
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY;

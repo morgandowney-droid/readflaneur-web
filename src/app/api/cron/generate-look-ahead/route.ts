@@ -4,7 +4,7 @@ import { generateLookAhead } from '@/lib/grok';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
-import { selectLibraryImage, getLibraryReadyIds } from '@/lib/image-library';
+import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 
 /**
  * Generate Look Ahead Articles
@@ -167,6 +167,7 @@ export async function GET(request: Request) {
   );
 
   const libraryReadyIds = await getLibraryReadyIds(supabase);
+  await preloadUnsplashCache(supabase);
   const startedAt = new Date().toISOString();
   const results = {
     neighborhoods_eligible: 0,

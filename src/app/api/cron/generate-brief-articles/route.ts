@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { selectLibraryImage, getLibraryReadyIds } from '@/lib/image-library';
+import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 
 interface ArticleSourceInput {
   source_name: string;
@@ -154,6 +154,7 @@ export async function GET(request: Request) {
   );
 
   const libraryReadyIds = await getLibraryReadyIds(supabase);
+  await preloadUnsplashCache(supabase);
   const startedAt = new Date().toISOString();
   const deadline = Date.now() + 270_000; // 270s budget (leave 30s for logging + images)
   const results = {

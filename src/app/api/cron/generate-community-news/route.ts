@@ -4,7 +4,7 @@ import { isGrokConfigured } from '@/lib/grok';
 import { enrichBriefWithGemini, EnrichedBriefOutput } from '@/lib/brief-enricher-gemini';
 import { getSearchLocation } from '@/lib/neighborhood-utils';
 import { getComboInfo } from '@/lib/combo-utils';
-import { selectLibraryImage, getLibraryReadyIds } from '@/lib/image-library';
+import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 
 interface ArticleSourceInput {
   source_name: string;
@@ -333,6 +333,7 @@ export async function GET(request: Request) {
   );
 
   const libraryReadyIds = await getLibraryReadyIds(supabase);
+  await preloadUnsplashCache(supabase);
   const results = {
     neighborhoods_processed: 0,
     briefs_generated: 0,
