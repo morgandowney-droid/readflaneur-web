@@ -192,8 +192,8 @@ export function ArticleCard({ article }: ArticleCardProps) {
               </h2>
             </div>
           )}
-          {/* AI badge for AI-generated content - right aligned to not cover headlines */}
-          {(article.article_type === 'community_news' || article.article_type === 'brief_summary' || article.author_type === 'ai') && article.image_url && (
+          {/* AI badge for AI-generated content - skip for real photos (Unsplash) */}
+          {(article.article_type === 'community_news' || article.article_type === 'brief_summary' || article.author_type === 'ai') && article.image_url && !article.image_url.includes('unsplash.com') && (
             <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[9px] px-1.5 py-0.5 rounded" title="AI-generated illustration">
               AI
             </div>
