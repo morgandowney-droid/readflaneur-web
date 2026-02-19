@@ -12,6 +12,8 @@ export default function AccountPage() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
+  const [childcareEnabled, setChildcareEnabled] = useState(false);
+  const [prefsToken, setPrefsToken] = useState<string | null>(null);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -35,12 +37,18 @@ export default function AccountPage() {
 
         const { data: profile } = await supabase
           .from('profiles')
-          .select('primary_timezone')
+          .select('primary_timezone, childcare_mode_enabled, email_unsubscribe_token')
           .eq('id', session.user.id)
           .single();
 
         if (profile?.primary_timezone) {
           setTimezone(profile.primary_timezone);
+        }
+        if (profile?.childcare_mode_enabled) {
+          setChildcareEnabled(true);
+        }
+        if (profile?.email_unsubscribe_token) {
+          setPrefsToken(profile.email_unsubscribe_token);
         }
       } catch {
         // Silent fail
@@ -124,6 +132,7 @@ export default function AccountPage() {
             <div>
               <p className="text-[10px] tracking-[0.2em] uppercase text-fg-subtle mb-1">Timezone</p>
               <p className="text-sm text-fg">{timezone.replace(/_/g, ' ')}</p>
+              <p className="text-[11px] text-fg-muted mt-1">Your Daily Brief and Sunday Edition emails arrive at 7 am in this timezone.</p>
             </div>
           )}
 
@@ -132,6 +141,24 @@ export default function AccountPage() {
             <p className="text-sm text-fg">
               {isSubscribed ? 'Subscribed' : 'Not subscribed'}
             </p>
+          </div>
+
+          <div>
+            <p className="text-[10px] tracking-[0.2em] uppercase text-fg-subtle mb-1">Family Corner</p>
+            <p className="text-sm text-fg">
+              {childcareEnabled ? 'Enabled' : 'Off'}
+            </p>
+            <p className="text-[11px] text-fg-muted mt-1">
+              Adds local kids&apos; events, school news, and family resources to your Daily Brief, tailored to your children&apos;s ages.
+            </p>
+            {prefsToken && (
+              <Link
+                href={`/email/preferences?token=${prefsToken}`}
+                className="text-[11px] text-accent hover:underline mt-1.5 inline-block"
+              >
+                {childcareEnabled ? 'Manage Family Corner' : 'Enable Family Corner'} &rsaquo;
+              </Link>
+            )}
           </div>
         </div>
 

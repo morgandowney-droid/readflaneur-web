@@ -1006,7 +1006,9 @@ function GlobalNeighborhoodModal({
               </div>
               {/* Inline timezone selector */}
               {showTimezone && (
-                <div className="flex items-center gap-3 mt-3">
+                <div className="mt-3">
+                <p className="text-[11px] text-fg-muted mb-2">Sets when your Daily Brief and Sunday Edition emails arrive (7 am local time). Does not affect your neighborhood selection.</p>
+                <div className="flex items-center gap-3">
                   <label className="text-[11px] tracking-[0.15em] uppercase text-fg-subtle shrink-0">City</label>
                   <select
                     value={settingsCity}
@@ -1062,6 +1064,7 @@ function GlobalNeighborhoodModal({
                   >
                     {settingsSaved ? 'Saved' : 'Save'}
                   </button>
+                </div>
                 </div>
               )}
               {/* Inline suggestion form */}
