@@ -175,7 +175,14 @@ Rules:
     const headlineMatch = responseText.match(/HEADLINE:\s*(.+?)(?:\n|CONTENT:)/i);
     const contentMatch = responseText.match(/CONTENT:\s*([\s\S]+)/i);
 
-    const headline = headlineMatch?.[1]?.trim() || `What's Happening in ${neighborhoodName}`;
+    // Strip citation markers and URLs from headline (e.g., "[[1]](https://...)" or "[1]" or "(1)")
+    const rawHeadline = headlineMatch?.[1]?.trim() || `What's Happening in ${neighborhoodName}`;
+    const headline = rawHeadline
+      .replace(/\[\[\d+\]\]\([^)]*\)/g, '') // [[1]](url)
+      .replace(/\[\d+\]/g, '')              // [1]
+      .replace(/\s*\(\d+\)/g, '')           // (1)
+      .replace(/\s{2,}/g, ' ')              // collapse double spaces
+      .trim();
     // Clean citation artifacts from Grok response
     const rawContent = contentMatch?.[1]?.trim() || responseText;
     const content = rawContent
@@ -306,8 +313,15 @@ Format each story clearly separated by "---"`
       if (headlineMatch && bodyMatch) {
         // Strip em/en dashes from all text fields
         const stripDashes = (s: string) => s.replace(/\u2014/g, ' - ').replace(/\u2013/g, '-');
+        // Strip citation markers from headline
+        const cleanedHeadline = headlineMatch[1].trim()
+          .replace(/\[\[\d+\]\]\([^)]*\)/g, '')
+          .replace(/\[\d+\]/g, '')
+          .replace(/\s*\(\d+\)/g, '')
+          .replace(/\s{2,}/g, ' ')
+          .trim();
         stories.push({
-          headline: stripDashes(headlineMatch[1].trim()),
+          headline: stripDashes(cleanedHeadline),
           category: categoryMatch?.[1]?.trim().toLowerCase() || 'community',
           previewText: stripDashes(previewMatch?.[1]?.trim() || ''),
           body: stripDashes(bodyMatch[1].trim()),
