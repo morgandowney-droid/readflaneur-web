@@ -13,6 +13,7 @@ import { AIImageDisclaimer, AIImageBadge } from '@/components/article/AIImageDis
 import { SourceAttribution } from '@/components/article/SourceAttribution';
 import { Ad } from '@/types';
 import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
+import { getComboForComponent } from '@/lib/combo-utils';
 import { getFallback } from '@/lib/FallbackService';
 import type { FallbackData } from '@/components/feed/FallbackAd';
 import { BackToFeedLink, MoreStoriesButton, TranslatedDailyBriefLabel } from '@/components/article/TranslatedArticleNav';
@@ -86,6 +87,11 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   if (!article) {
     notFound();
   }
+
+  // Check if this article's neighborhood is a component of a combo neighborhood
+  const parentCombo = !article.neighborhood?.is_combo
+    ? await getComboForComponent(supabase, article.neighborhood_id)
+    : null;
 
   // Fetch story open ads (global or for this neighborhood)
   const { data: storyOpenAds } = await supabase
@@ -204,6 +210,17 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   >
                     {article.neighborhood?.name}
                   </Link>
+                  {parentCombo && (
+                    <>
+                      <span className="text-fg-muted/40">&middot;</span>
+                      <Link
+                        href={`/${city}/${neighborhoodToSlug(parentCombo.comboId)}`}
+                        className="uppercase tracking-wider text-amber-600/70 hover:text-amber-500 transition-colors"
+                      >
+                        {parentCombo.comboName}
+                      </Link>
+                    </>
+                  )}
                   <span>&middot;</span>
                   <span>{formatRelativeTime(article.created_at)}</span>
                   {article.category_label && (

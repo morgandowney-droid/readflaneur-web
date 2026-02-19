@@ -53,6 +53,28 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     }
   }
 
+  // Expand combo neighborhood IDs to include component neighborhoods
+  // (e.g., nyc-tribeca -> [nyc-tribeca, nyc-tribeca-core, nyc-fidi])
+  let expandedQueryIds = [...neighborhoodIds];
+  const comboComponentIdsMap: Record<string, string[]> = {};
+  if (neighborhoodIds.length > 0) {
+    const { data: comboLinks } = await supabase
+      .from('combo_neighborhoods')
+      .select('combo_id, component_id')
+      .in('combo_id', neighborhoodIds);
+
+    if (comboLinks && comboLinks.length > 0) {
+      for (const link of comboLinks) {
+        if (!comboComponentIdsMap[link.combo_id]) {
+          comboComponentIdsMap[link.combo_id] = [];
+        }
+        comboComponentIdsMap[link.combo_id].push(link.component_id);
+      }
+      const allComponentIds = comboLinks.map(l => l.component_id);
+      expandedQueryIds = [...new Set([...neighborhoodIds, ...allComponentIds])];
+    }
+  }
+
   // Fetch articles from selected neighborhoods
   let query = supabase
     .from('articles')
@@ -68,8 +90,8 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     .order('published_at', { ascending: false })
     .limit(INITIAL_PAGE_SIZE);
 
-  if (neighborhoodIds.length > 0) {
-    query = query.in('neighborhood_id', neighborhoodIds);
+  if (expandedQueryIds.length > 0) {
+    query = query.in('neighborhood_id', expandedQueryIds);
   }
 
   // Apply section filter if specified
@@ -144,8 +166,8 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     .select('*', { count: 'exact', head: true })
     .eq('status', 'published');
 
-  if (neighborhoodIds.length > 0) {
-    countQuery = countQuery.in('neighborhood_id', neighborhoodIds);
+  if (expandedQueryIds.length > 0) {
+    countQuery = countQuery.in('neighborhood_id', expandedQueryIds);
   }
 
   // Apply section filter to count query
@@ -199,6 +221,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     .map((n: any) => ({
       ...n,
       combo_component_names: comboComponentNames[n.id] || undefined,
+      combo_component_ids: comboComponentIdsMap[n.id] || undefined,
     }))
     .sort((a: any, b: any) => (neighborhoodOrder.get(a.id) ?? 999) - (neighborhoodOrder.get(b.id) ?? 999));
 
@@ -207,7 +230,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     ? await supabase
         .from('ads')
         .select('*')
-        .or(`is_global.eq.true,neighborhood_id.in.(${neighborhoodIds.join(',')})`)
+        .or(`is_global.eq.true,neighborhood_id.in.(${expandedQueryIds.join(',')})`)
     : await supabase
         .from('ads')
         .select('*')
@@ -373,7 +396,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
             />
             {hasMoreArticles && neighborhoodIds.length > 0 && (
               <MultiLoadMoreButton
-                neighborhoodIds={neighborhoodIds}
+                neighborhoodIds={expandedQueryIds}
                 initialOffset={INITIAL_PAGE_SIZE}
                 pageSize={INITIAL_PAGE_SIZE}
                 sectionSlug={sectionSlug}

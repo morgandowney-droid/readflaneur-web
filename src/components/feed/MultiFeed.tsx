@@ -21,6 +21,7 @@ interface Neighborhood {
   city: string;
   is_combo?: boolean;
   combo_component_names?: string[];
+  combo_component_ids?: string[];
   timezone?: string;
   country?: string;
   latitude?: number;
@@ -210,8 +211,14 @@ export function MultiFeed({
       'Authorization': `Bearer ${supabaseKey}`,
     };
 
-    const articlesUrl = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city)&status=eq.published&neighborhood_id=eq.${encodeURIComponent(activeFilter)}&order=published_at.desc.nullsfirst&limit=20`;
-    const adsUrl = `${supabaseUrl}/rest/v1/ads?select=*&or=(is_global.eq.true,neighborhood_id.eq.${encodeURIComponent(activeFilter)})`;
+    // Expand combo neighborhoods to include component IDs
+    const activeHoodData = neighborhoods.find(n => n.id === activeFilter);
+    const filterIds = activeHoodData?.combo_component_ids
+      ? [activeFilter, ...activeHoodData.combo_component_ids]
+      : [activeFilter];
+
+    const articlesUrl = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city)&status=eq.published&neighborhood_id=in.(${filterIds.join(',')})&order=published_at.desc.nullsfirst&limit=20`;
+    const adsUrl = `${supabaseUrl}/rest/v1/ads?select=*&or=(is_global.eq.true,${filterIds.map(id => `neighborhood_id.eq.${id}`).join(',')})`;
 
     Promise.all([
       fetch(articlesUrl, { headers }).then(r => r.json()),
@@ -392,7 +399,12 @@ export function MultiFeed({
       const articleCount = fetchedArticles.filter(i => i.type === 'article').length;
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-      const url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city)&status=eq.published&neighborhood_id=eq.${encodeURIComponent(activeFilter)}&order=published_at.desc.nullsfirst&offset=${articleCount}&limit=20`;
+      // Expand combo neighborhoods to include component IDs
+      const loadHood = neighborhoods.find(n => n.id === activeFilter);
+      const loadIds = loadHood?.combo_component_ids
+        ? [activeFilter!, ...loadHood.combo_component_ids]
+        : [activeFilter!];
+      const url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city)&status=eq.published&neighborhood_id=in.(${loadIds.join(',')})&order=published_at.desc.nullsfirst&offset=${articleCount}&limit=20`;
 
       const res = await fetch(url, {
         headers: {
