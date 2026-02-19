@@ -267,6 +267,7 @@ export function Header() {
               {isAdmin && (
                 <Link
                   href="/admin/ads"
+                  data-admin
                   className={cn(
                     'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
                     pathname.startsWith('/admin') ? 'text-fg font-medium border-amber-500' : 'text-fg-subtle border-transparent'
@@ -278,6 +279,7 @@ export function Header() {
               {isAdmin && (
                 <Link
                   href="/advertiser"
+                  data-admin
                   className={cn(
                     'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
                     pathname.startsWith('/advertiser') ? 'text-fg font-medium border-amber-500' : 'text-fg-subtle border-transparent'
@@ -451,6 +453,7 @@ export function Header() {
                 {isAdmin && (
                   <Link
                     href="/admin/ads"
+                    data-admin
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
                       'text-sm tracking-widest uppercase transition-colors hover:text-fg py-3 border-b border-border block text-right',
@@ -463,6 +466,7 @@ export function Header() {
                 {isAdmin && (
                   <Link
                     href="/advertiser"
+                    data-admin
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
                       'text-sm tracking-widest uppercase transition-colors hover:text-fg py-3 border-b border-border block text-right',
