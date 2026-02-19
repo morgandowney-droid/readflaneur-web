@@ -106,6 +106,7 @@ Recent work: Require local language greetings/sign-offs/phrases in briefs (chang
 - **Metadata no-wrap:** `CompactArticleCard` metadata row gets `overflow-hidden whitespace-nowrap`. Category label strips redundant neighborhood prefix via regex, truncates at 120px.
 - **Neighborhood selector:** Search input no auto-focus on mobile (desktop only via `window.innerWidth >= 768`). Attempts geolocation on open for default nearest sort. "Set as Primary" always visible on mobile (`opacity-100 md:opacity-0 md:group-hover/item:opacity-100`). "Go to Stories >" escape link in modal header.
 - **Auth flow:** `emailRedirectTo: window.location.origin/auth/callback` prevents localhost redirect. "Check spam" hint on confirmation screen.
+- **AI badge on feed images:** `ArticleCard.tsx` skips the AI badge when `image_url` contains `unsplash.com` since those are real photos, not AI-generated.
 - **Ad grace period:** `useNewUserGracePeriod` hook (`src/hooks/useNewUserGracePeriod.ts`) checks `flaneur-first-visit` localStorage timestamp. `FeedList` filters out ads and email prompts during first 5 days.
 - **New localStorage key:** `flaneur-first-visit` (timestamp, set on first visit)
 
