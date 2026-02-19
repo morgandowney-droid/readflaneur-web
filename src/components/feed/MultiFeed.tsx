@@ -35,6 +35,8 @@ interface MultiFeedProps {
   reminder?: ReactNode;
   dailyBrief?: ReactNode;
   initialWeather?: { tempC: number; weatherCode: number };
+  /** Rendered below the feed only when no pill filter is active ("All Neighborhoods" mode) */
+  loadMoreAll?: ReactNode;
 }
 
 export function MultiFeed({
@@ -44,6 +46,7 @@ export function MultiFeed({
   reminder,
   dailyBrief,
   initialWeather,
+  loadMoreAll,
 }: MultiFeedProps) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -728,6 +731,9 @@ export function MultiFeed({
           </button>
         </div>
       )}
+
+      {/* Load More for "All Neighborhoods" (no pill filter active) */}
+      {!activeFilter && loadMoreAll}
     </div>
   );
 }

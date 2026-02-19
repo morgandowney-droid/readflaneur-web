@@ -393,15 +393,15 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
                   enrichedAt={multiBrief.enriched_at || undefined}
                 />
               ) : undefined}
+              loadMoreAll={hasMoreArticles && neighborhoodIds.length > 0 ? (
+                <MultiLoadMoreButton
+                  neighborhoodIds={expandedQueryIds}
+                  initialOffset={INITIAL_PAGE_SIZE}
+                  pageSize={INITIAL_PAGE_SIZE}
+                  sectionSlug={sectionSlug}
+                />
+              ) : undefined}
             />
-            {hasMoreArticles && neighborhoodIds.length > 0 && (
-              <MultiLoadMoreButton
-                neighborhoodIds={expandedQueryIds}
-                initialOffset={INITIAL_PAGE_SIZE}
-                pageSize={INITIAL_PAGE_SIZE}
-                sectionSlug={sectionSlug}
-              />
-            )}
             {feedItems.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-fg-subtle mb-4">No articles yet for your selected neighborhoods.</p>
