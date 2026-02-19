@@ -108,7 +108,7 @@ export function MultiLoadMoreButton({
       }
 
       // Build articles URL
-      let url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city)&status=eq.published&order=published_at.desc.nullsfirst&offset=${offset}&limit=${pageSize}`;
+      let url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city)&status=eq.published&order=published_at.desc.nullsfirst,created_at.desc.nullsfirst&offset=${offset}&limit=${pageSize}`;
 
       if (neighborhoodIds.length > 0) {
         url += `&neighborhood_id=in.(${neighborhoodIds.join(',')})`;

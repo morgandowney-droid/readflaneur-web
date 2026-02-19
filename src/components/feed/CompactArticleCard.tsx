@@ -83,7 +83,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
   const metadataRow = (
     <div className="flex items-center gap-2 text-xs text-fg-muted mb-1 overflow-hidden whitespace-nowrap">
       <span className="uppercase tracking-wider shrink-0">{article.neighborhood?.name}</span>
-      {article.published_at && (
+      {article.published_at && article.article_type !== 'look_ahead' && (
         <>
           <span className="shrink-0">&middot;</span>
           <span className="shrink-0">{formatDate(article.published_at, language)}</span>
@@ -127,7 +127,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
         className="object-cover"
         sizes="96px"
       />
-      {(article.article_type === 'community_news' || article.article_type === 'brief_summary' || article.author_type === 'ai') && (
+      {(article.article_type === 'community_news' || article.article_type === 'brief_summary' || article.author_type === 'ai') && article.image_url && !article.image_url.includes('unsplash.com') && (
         <div className="absolute bottom-1 left-1 bg-black/70 text-white text-[9px] px-1.5 py-0.5 rounded" title="AI-generated illustration">
           AI
         </div>

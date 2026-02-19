@@ -678,6 +678,29 @@ function PreferencesContent() {
                 </div>
               )}
 
+              {childrenList.length > 0 && (
+                <div className="mt-3 p-3 border border-white/[0.06] rounded-lg bg-neutral-800/30">
+                  <p className="text-xs text-neutral-500 mb-2">Your Daily Brief will include:</p>
+                  {(() => {
+                    const now = new Date();
+                    const seen = new Set<string>();
+                    return childrenList.map((child, i) => {
+                      const band = calculateAgeBand(child.birth_month, child.birth_year, now);
+                      if (!band || seen.has(band)) return null;
+                      seen.add(band);
+                      const def = AGE_BAND_DEFS.find(d => d.band === band);
+                      if (!def) return null;
+                      return (
+                        <div key={i} className="text-xs text-neutral-400 mb-1">
+                          <span className="text-neutral-300">{def.label}</span>
+                          <span className="text-neutral-500"> — {def.contentFocus}</span>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              )}
+
               {hasChildrenChanges && childrenList.length > 0 && (
                 <div className="mt-3 flex items-center gap-3">
                   <button
@@ -685,39 +708,14 @@ function PreferencesContent() {
                     disabled={childrenSaving}
                     className="bg-white text-neutral-900 px-6 py-2 text-xs tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50 rounded-lg"
                   >
-                    {childrenSaving ? 'Saving...' : 'Save Children'}
+                    {childrenSaving ? 'Saving...' : 'Save Children Changes'}
                   </button>
                 </div>
               )}
 
               {childrenSaved && !hasChildrenChanges && (
-                <div className="mt-3 p-3 border border-green-800/30 rounded-lg bg-green-950/20">
-                  <p className="text-sm text-green-400 font-medium">{'\u2713'} Saved!</p>
-                  <p className="text-xs text-neutral-400 mt-1">
-                    We&apos;re preparing your first Family Corner content now. It will appear in your next Daily Brief email.
-                  </p>
-                  {childrenList.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-green-800/20">
-                      <p className="text-xs text-neutral-500 mb-2">Content tailored for your family:</p>
-                      {(() => {
-                        const now = new Date();
-                        const seen = new Set<string>();
-                        return childrenList.map((child, i) => {
-                          const band = calculateAgeBand(child.birth_month, child.birth_year, now);
-                          if (!band || seen.has(band)) return null;
-                          seen.add(band);
-                          const def = AGE_BAND_DEFS.find(d => d.band === band);
-                          if (!def) return null;
-                          return (
-                            <div key={i} className="text-xs text-neutral-400 mb-1">
-                              <span className="text-neutral-300">{def.label}</span>
-                              <span className="text-neutral-500"> — {def.contentFocus}</span>
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
-                  )}
+                <div className="mt-3 p-2.5 border border-green-800/30 rounded-lg bg-green-950/20">
+                  <p className="text-sm text-green-400 font-medium">{'\u2713'} Children changes saved</p>
                 </div>
               )}
             </div>

@@ -94,6 +94,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     `)
     .eq('status', 'published')
     .order('published_at', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(feedLimit);
 
   if (expandedQueryIds.length > 0) {
