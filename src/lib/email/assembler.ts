@@ -151,7 +151,7 @@ async function fetchBriefAsStory(
   // Fallback: use neighborhood_briefs table and create an article on-the-fly
   const { data: brief } = await supabase
     .from('neighborhood_briefs')
-    .select('id, headline, content, enriched_content, generated_at')
+    .select('id, headline, content, enriched_content, enriched_categories, enrichment_model, model, generated_at')
     .eq('neighborhood_id', neighborhoodId)
     .gte('expires_at', new Date().toISOString())
     .order('created_at', { ascending: false })
@@ -219,16 +219,58 @@ async function fetchBriefAsStory(
       status: 'published',
       published_at: brief.generated_at || new Date().toISOString(),
       author_type: 'ai',
-      ai_model: 'grok-3-fast',
+      ai_model: brief.model ? `${brief.model} + ${brief.enrichment_model || 'gemini'}` : 'grok + gemini',
       article_type: 'brief_summary',
       category_label: `${neighborhoodName} Daily Brief`,
       brief_id: brief.id,
       image_url: '',
+      enriched_at: new Date().toISOString(),
+      enrichment_model: brief.enrichment_model || 'gemini-2.5-flash',
     })
-    .select('headline, preview_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
+    .select('id, headline, preview_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
     .single();
 
   if (newArticle) {
+    // Insert sources from enriched categories (best-effort)
+    if (brief.enriched_categories && Array.isArray(brief.enriched_categories)) {
+      const sources: { article_id: string; source_name: string; source_type: string; source_url?: string }[] = [];
+      const seen = new Set<string>();
+      for (const cat of brief.enriched_categories as any[]) {
+        for (const story of cat.stories || []) {
+          if (story.source?.name && !seen.has(story.source.name.toLowerCase())) {
+            seen.add(story.source.name.toLowerCase());
+            const url = story.source.url;
+            const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
+            sources.push({
+              article_id: newArticle.id,
+              source_name: story.source.name,
+              source_type: story.source.name.startsWith('@') || url?.includes('x.com') ? 'x_user' : 'publication',
+              source_url: isValidUrl ? url : undefined,
+            });
+          }
+          if (story.secondarySource?.name && !seen.has(story.secondarySource.name.toLowerCase())) {
+            seen.add(story.secondarySource.name.toLowerCase());
+            const url = story.secondarySource.url;
+            const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
+            sources.push({
+              article_id: newArticle.id,
+              source_name: story.secondarySource.name,
+              source_type: story.secondarySource.name.startsWith('@') || url?.includes('x.com') ? 'x_user' : 'publication',
+              source_url: isValidUrl ? url : undefined,
+            });
+          }
+        }
+      }
+      if (sources.length === 0) {
+        sources.push(
+          { article_id: newArticle.id, source_name: 'X (Twitter)', source_type: 'platform' },
+          { article_id: newArticle.id, source_name: 'Google News', source_type: 'platform' },
+        );
+      }
+      await supabase.from('article_sources').insert(sources).then(null, (e: Error) =>
+        console.error(`[assembler] Failed to insert sources for ${newArticle.id}:`, e)
+      );
+    }
     return toEmailStory(newArticle, neighborhoodName, cityName);
   }
 

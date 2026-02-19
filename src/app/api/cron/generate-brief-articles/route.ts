@@ -242,7 +242,7 @@ export async function GET(request: Request) {
         enriched_content,
         enriched_categories,
         enrichment_model,
-        ai_model,
+        model,
         generated_at,
         neighborhoods!inner(id, name, city)
       `)
@@ -330,7 +330,7 @@ export async function GET(request: Request) {
           status: 'published',
           published_at: brief.generated_at,
           author_type: 'ai',
-          ai_model: brief.ai_model ? `${brief.ai_model} + ${brief.enrichment_model || 'gemini'}` : `grok + ${brief.enrichment_model || 'gemini'}`,
+          ai_model: brief.model ? `${brief.model} + ${brief.enrichment_model || 'gemini'}` : `grok + ${brief.enrichment_model || 'gemini'}`,
           article_type: 'brief_summary',
           category_label: `${neighborhood.name} Daily Brief`,
           brief_id: brief.id,

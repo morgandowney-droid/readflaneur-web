@@ -16,7 +16,9 @@ export type IssueType =
   | 'unenriched_brief'
   | 'thin_brief'
   | 'missing_hyperlinks'
-  | 'html_artifact';
+  | 'html_artifact'
+  | 'missing_sources'
+  | 'url_encoded_text';
 
 export type EmailFailureCause =
   | 'missing_timezone'

@@ -294,6 +294,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           }
           headline={article.headline}
           neighborhoodName={article.neighborhood?.name}
+          category={article.category_label?.toLowerCase().includes('look ahead') ? 'look_ahead'
+            : article.article_type === 'brief_summary' ? 'brief_summary'
+            : article.category_label?.toLowerCase().includes('sunday edition') ? 'weekly_recap'
+            : undefined}
         />
 
         {/* Brief discovery CTAs - right after sources on daily brief and Sunday Edition articles */}

@@ -9,6 +9,7 @@ import { GoogleGenAI } from '@google/genai';
 import {
   LinkCandidate,
   injectHyperlinks,
+  sanitizeMarkdownLinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
 
@@ -437,6 +438,9 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
         story.googleFallbackUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
       }
     }
+
+    // Sanitize any Gemini-generated markdown links with unencoded parens in URLs
+    text = sanitizeMarkdownLinks(text);
 
     if (linkCandidates.length > 0 && text) {
       text = injectHyperlinks(text, linkCandidates, { name: neighborhoodName, city });

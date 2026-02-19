@@ -600,7 +600,173 @@ export async function checkStoryImages(
 }
 
 /**
- * Run all 7 health checks and return results
+ * Check 8: Editorial articles (brief_summary, look_ahead, weekly_recap) must have sources
+ */
+export async function checkEditorialSources(
+  supabase: SupabaseClient
+): Promise<HealthCheckResult> {
+  const result: HealthCheckResult = {
+    name: 'Editorial Sources',
+    status: 'pass',
+    total: 0,
+    passing: 0,
+    failing: 0,
+    details: [],
+    issues: [],
+  };
+
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+
+  // Get today's editorial articles
+  const { data: articles, error } = await supabase
+    .from('articles')
+    .select('id, headline, neighborhood_id, article_type, category_label')
+    .eq('status', 'published')
+    .gte('published_at', todayStart.toISOString())
+    .in('article_type', ['brief_summary', 'look_ahead']);
+
+  if (error || !articles) {
+    result.status = 'fail';
+    result.details.push(`Failed to fetch articles: ${error?.message}`);
+    return result;
+  }
+
+  // Also include Sunday Edition articles (identified by category_label)
+  const { data: sundayArticles } = await supabase
+    .from('articles')
+    .select('id, headline, neighborhood_id, article_type, category_label')
+    .eq('status', 'published')
+    .gte('published_at', todayStart.toISOString())
+    .ilike('category_label', '%sunday edition%');
+
+  const allEditorial = [...(articles || []), ...(sundayArticles || [])];
+  // Deduplicate by id
+  const seen = new Set<string>();
+  const editorial = allEditorial.filter(a => {
+    if (seen.has(a.id)) return false;
+    seen.add(a.id);
+    return true;
+  });
+
+  result.total = editorial.length;
+  if (result.total === 0) {
+    result.details.push('No editorial articles published today');
+    return result;
+  }
+
+  // Check which have sources
+  const articleIds = editorial.map(a => a.id);
+  const articlesWithSources = new Set<string>();
+
+  for (let i = 0; i < articleIds.length; i += 100) {
+    const chunk = articleIds.slice(i, i + 100);
+    const { data: sources } = await supabase
+      .from('article_sources')
+      .select('article_id')
+      .in('article_id', chunk);
+    for (const s of sources || []) {
+      articlesWithSources.add(s.article_id);
+    }
+  }
+
+  for (const article of editorial) {
+    if (articlesWithSources.has(article.id)) {
+      result.passing++;
+    } else {
+      result.failing++;
+      const headline = (article.headline || '').substring(0, 50);
+      if (result.details.length < 10) {
+        result.details.push(`Missing sources: "${headline}..." (${article.article_type})`);
+      }
+      result.issues.push({
+        issue_type: 'missing_sources',
+        article_id: article.id,
+        neighborhood_id: article.neighborhood_id,
+        description: `${article.article_type} article "${headline}..." has no sources`,
+        auto_fixable: true,
+      });
+    }
+  }
+
+  if (result.failing === 0) {
+    result.status = 'pass';
+  } else if (result.total > 0 && result.failing / result.total > 0.1) {
+    result.status = 'fail';
+  } else {
+    result.status = 'warn';
+  }
+
+  return result;
+}
+
+/**
+ * Check 9: No URL-encoded text (%20, %27, etc.) in article bodies
+ */
+export async function checkUrlEncodedText(
+  supabase: SupabaseClient
+): Promise<HealthCheckResult> {
+  const result: HealthCheckResult = {
+    name: 'URL-Encoded Text',
+    status: 'pass',
+    total: 0,
+    passing: 0,
+    failing: 0,
+    details: [],
+    issues: [],
+  };
+
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+
+  const { data: articles, error } = await supabase
+    .from('articles')
+    .select('id, headline, body_text, neighborhood_id')
+    .eq('status', 'published')
+    .gte('published_at', todayStart.toISOString());
+
+  if (error || !articles) {
+    result.status = 'fail';
+    result.details.push(`Failed to fetch articles: ${error?.message}`);
+    return result;
+  }
+
+  result.total = articles.length;
+
+  // Detect URL-encoded text OUTSIDE of markdown link URLs
+  // Pattern: %20, %27, %28, %29, %2C etc. in prose text (not inside [text](url) link targets)
+  for (const article of articles) {
+    const body = article.body_text || '';
+    // Strip markdown link URLs to avoid false positives from legitimate URL encoding
+    const proseOnly = body.replace(/\[[^\]]*\]\([^)]*\)/g, '');
+    // Check for URL-encoded sequences in the remaining prose
+    const urlEncodedMatch = proseOnly.match(/%(?:20|27|28|29|2[A-Fa-f0-9]|3[A-Fa-f0-9])/);
+
+    if (urlEncodedMatch) {
+      result.failing++;
+      const headline = (article.headline || '').substring(0, 50);
+      if (result.details.length < 10) {
+        result.details.push(`URL-encoded text (${urlEncodedMatch[0]}): "${headline}..."`);
+      }
+      result.issues.push({
+        issue_type: 'url_encoded_text',
+        article_id: article.id,
+        neighborhood_id: article.neighborhood_id,
+        description: `Article "${headline}..." contains URL-encoded text in body`,
+        auto_fixable: true,
+      });
+    } else {
+      result.passing++;
+    }
+  }
+
+  result.status = result.failing > 0 ? 'fail' : 'pass';
+
+  return result;
+}
+
+/**
+ * Run all 9 health checks and return results
  */
 export async function runAllHealthChecks(
   supabase: SupabaseClient
@@ -615,6 +781,8 @@ export async function runAllHealthChecks(
     checkTranslationCoverage,
     checkEmailDelivery,
     checkStoryImages,
+    checkEditorialSources,
+    checkUrlEncodedText,
   ];
 
   for (const check of checks) {

@@ -8,6 +8,8 @@ interface SourceAttributionProps {
   isAIGenerated?: boolean;
   headline?: string;
   neighborhoodName?: string;
+  /** Article category — brief_summary, look_ahead, weekly_recap etc. */
+  category?: string;
 }
 
 /** Parse "Source: Name - https://url" from editor_notes */
@@ -18,12 +20,16 @@ function parseEditorNotesSource(notes: string | null | undefined): { name: strin
   return null;
 }
 
-export function SourceAttribution({ sources, editorNotes, isAIGenerated, headline, neighborhoodName }: SourceAttributionProps) {
+export function SourceAttribution({ sources, editorNotes, isAIGenerated, headline, neighborhoodName, category }: SourceAttributionProps) {
   // Only show for AI-generated content
   if (!isAIGenerated) return null;
 
+  // Editorial content types (briefs, look-ahead, sunday edition) never show "verify here"
+  // — they are multi-source editorial products, not single-source RSS rewrites
+  const isEditorial = category === 'brief_summary' || category === 'look_ahead' || category === 'weekly_recap';
+
   // Build a Google Search verification URL from headline + neighborhood
-  const verifyUrl = (headline && neighborhoodName)
+  const verifyUrl = (!isEditorial && headline && neighborhoodName)
     ? `https://www.google.com/search?q=${encodeURIComponent(headline + ' ' + neighborhoodName)}`
     : null;
 

@@ -292,6 +292,44 @@ export async function GET(request: Request) {
         emailFixCount++;
         await delay(FIX_CONFIG.EMAIL_RESEND_DELAY_MS);
       }
+      // Handle missing sources issues
+      else if (issue.issue_type === 'missing_sources') {
+        console.log(`[Monitor] Attempting source fix for issue ${issue.id}`);
+        const fixResult = await attemptFix(supabase, issue, baseUrl, cronSecret!);
+
+        result.details.fix_attempts.push({
+          issue_id: issue.id,
+          issue_type: issue.issue_type,
+          result: fixResult,
+        });
+
+        if (fixResult.success) {
+          result.issues_fixed++;
+          console.log(`[Monitor] Fixed: ${fixResult.message}`);
+        } else {
+          result.issues_failed++;
+          console.log(`[Monitor] Failed: ${fixResult.message}`);
+        }
+      }
+      // Handle URL-encoded text issues
+      else if (issue.issue_type === 'url_encoded_text') {
+        console.log(`[Monitor] Attempting URL-decode fix for issue ${issue.id}`);
+        const fixResult = await attemptFix(supabase, issue, baseUrl, cronSecret!);
+
+        result.details.fix_attempts.push({
+          issue_id: issue.id,
+          issue_type: issue.issue_type,
+          result: fixResult,
+        });
+
+        if (fixResult.success) {
+          result.issues_fixed++;
+          console.log(`[Monitor] Fixed: ${fixResult.message}`);
+        } else {
+          result.issues_failed++;
+          console.log(`[Monitor] Failed: ${fixResult.message}`);
+        }
+      }
       // Skip non-auto-fixable issues
       else {
         result.issues_skipped++;

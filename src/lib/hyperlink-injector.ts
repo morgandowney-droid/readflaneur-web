@@ -105,13 +105,34 @@ export function injectHyperlinks(
     }
   }
 
-  return result;
+  return sanitizeMarkdownLinks(result);
 }
 
 /**
- * Validate link candidates array
- * Filters out invalid entries and normalizes the data
+ * Sanitize markdown links to prevent broken rendering from unencoded
+ * parentheses in URLs. Gemini sometimes generates URLs containing literal
+ * (PACT), (NYC), etc. which markdown parsers interpret as closing the link.
+ *
+ * Fixes: `[text](url...(FOO)...rest)` → `[text](url...%28FOO%29...rest)`
  */
+export function sanitizeMarkdownLinks(text: string): string {
+  // Match markdown links: [text](url)
+  // Use a non-greedy match for the URL, handling nested parens
+  return text.replace(
+    /\[([^\]]+)\]\((https?:\/\/[^)]*(?:\([^)]*\)[^)]*)*)\)/g,
+    (_match, linkText: string, rawUrl: string) => {
+      // Encode any literal parentheses inside the URL query string
+      const qIndex = rawUrl.indexOf('?');
+      if (qIndex === -1) return `[${linkText}](${rawUrl})`;
+      const base = rawUrl.substring(0, qIndex);
+      const query = rawUrl.substring(qIndex)
+        .replace(/\(/g, '%28')
+        .replace(/\)/g, '%29');
+      return `[${linkText}](${base}${query})`;
+    }
+  );
+}
+
 export function validateLinkCandidates(
   candidates: unknown
 ): LinkCandidate[] {

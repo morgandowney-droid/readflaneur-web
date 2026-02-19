@@ -391,6 +391,7 @@ export async function GET(request: Request) {
         started_at: startedAt,
         completed_at: new Date().toISOString(),
         success: results.errors.length === 0,
+        articles_created: results.articles_created,
         errors: results.errors.length > 0 ? results.errors : null,
         response_data: results,
       })

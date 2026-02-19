@@ -379,6 +379,136 @@ export async function fixThinContent(
 }
 
 /**
+ * Fix missing sources by extracting from the linked brief's enriched_categories
+ */
+async function fixMissingSources(
+  supabase: SupabaseClient,
+  articleId: string
+): Promise<FixResult> {
+  try {
+    // Get the article's brief_id
+    const { data: article } = await supabase
+      .from('articles')
+      .select('brief_id')
+      .eq('id', articleId)
+      .single();
+
+    if (!article?.brief_id) {
+      return { success: false, message: 'Article has no linked brief' };
+    }
+
+    // Get the brief's enriched categories
+    const { data: brief } = await supabase
+      .from('neighborhood_briefs')
+      .select('enriched_categories')
+      .eq('id', article.brief_id)
+      .single();
+
+    if (!brief?.enriched_categories || !Array.isArray(brief.enriched_categories)) {
+      // Fall back to platform sources
+      await supabase.from('article_sources').insert([
+        { article_id: articleId, source_name: 'X (Twitter)', source_type: 'platform' },
+        { article_id: articleId, source_name: 'Google News', source_type: 'platform' },
+      ]);
+      return { success: true, message: 'Added platform fallback sources' };
+    }
+
+    // Extract sources from enriched categories
+    const sources: { article_id: string; source_name: string; source_type: string; source_url?: string }[] = [];
+    const seen = new Set<string>();
+
+    for (const cat of brief.enriched_categories as any[]) {
+      for (const story of cat.stories || []) {
+        for (const srcKey of ['source', 'secondarySource']) {
+          const src = story[srcKey];
+          if (src?.name && !seen.has(src.name.toLowerCase())) {
+            seen.add(src.name.toLowerCase());
+            const url = src.url;
+            const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
+            sources.push({
+              article_id: articleId,
+              source_name: src.name,
+              source_type: src.name.startsWith('@') || url?.includes('x.com') ? 'x_user' : 'publication',
+              source_url: isValidUrl ? url : undefined,
+            });
+          }
+        }
+      }
+    }
+
+    if (sources.length === 0) {
+      sources.push(
+        { article_id: articleId, source_name: 'X (Twitter)', source_type: 'platform' },
+        { article_id: articleId, source_name: 'Google News', source_type: 'platform' },
+      );
+    }
+
+    const { error } = await supabase.from('article_sources').insert(sources);
+    if (error) {
+      return { success: false, message: `Insert failed: ${error.message}` };
+    }
+
+    return { success: true, message: `Added ${sources.length} sources` };
+  } catch (err) {
+    return { success: false, message: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/**
+ * Fix URL-encoded text in article body by decoding %XX sequences in prose
+ */
+async function fixUrlEncodedText(
+  supabase: SupabaseClient,
+  articleId: string
+): Promise<FixResult> {
+  try {
+    const { data: article } = await supabase
+      .from('articles')
+      .select('body_text')
+      .eq('id', articleId)
+      .single();
+
+    if (!article?.body_text) {
+      return { success: false, message: 'Article has no body text' };
+    }
+
+    // Decode URL-encoded sequences in prose text (not inside markdown link URLs)
+    let fixed = article.body_text;
+    // Process segments outside of markdown links
+    fixed = fixed.replace(
+      /(\[[^\]]*\]\([^)]*\))|(%[0-9A-Fa-f]{2})/g,
+      (match: string, linkGroup: string) => {
+        // If it's a markdown link, keep it as-is
+        if (linkGroup) return linkGroup;
+        // Otherwise decode the percent-encoded sequence
+        try {
+          return decodeURIComponent(match);
+        } catch {
+          return match;
+        }
+      }
+    );
+
+    if (fixed === article.body_text) {
+      return { success: true, message: 'No URL-encoded text found to fix' };
+    }
+
+    const { error } = await supabase
+      .from('articles')
+      .update({ body_text: fixed })
+      .eq('id', articleId);
+
+    if (error) {
+      return { success: false, message: `Update failed: ${error.message}` };
+    }
+
+    return { success: true, message: 'Decoded URL-encoded text in article body' };
+  } catch (err) {
+    return { success: false, message: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/**
  * Attempt to fix an issue
  */
 export async function attemptFix(
@@ -483,6 +613,22 @@ export async function attemptFix(
         } catch (err) {
           result = { success: false, message: err instanceof Error ? err.message : 'Unknown error' };
         }
+      }
+      break;
+
+    case 'missing_sources':
+      if (!issue.article_id) {
+        result = { success: false, message: 'No article ID provided' };
+      } else {
+        result = await fixMissingSources(supabase, issue.article_id);
+      }
+      break;
+
+    case 'url_encoded_text':
+      if (!issue.article_id) {
+        result = { success: false, message: 'No article ID provided' };
+      } else {
+        result = await fixUrlEncodedText(supabase, issue.article_id);
       }
       break;
 
