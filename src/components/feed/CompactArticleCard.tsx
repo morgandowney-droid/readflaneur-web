@@ -41,7 +41,8 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
   const neighborhoodSlug = neighborhoodToSlug(article.neighborhood_id);
   const articleUrl = `/${citySlug}/${neighborhoodSlug}/${article.slug || article.id}`;
 
-  const blurb = article.preview_text ? truncateAtSentence(article.preview_text, 200) : '';
+  const rawBlurb = article.preview_text || article.body_text || '';
+  const blurb = rawBlurb ? truncateAtSentence(rawBlurb, 200) : '';
 
   // Translation support
   const { language, isTranslated } = useLanguageContext();
