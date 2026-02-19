@@ -248,13 +248,13 @@ function parseAuctionDate(dateStr: string): string {
 }
 
 /**
- * Fetch all auction calendars for a specific hub using Grok web search
+ * Fetch auction calendars for multiple hubs using a single batched Grok call.
+ * Asks about Sotheby's, Christie's, and Phillips across all cities in one prompt.
  */
-export async function fetchAuctionCalendarsForHub(
-  hub: ArtHub,
+export async function fetchAuctionCalendarsForHubs(
+  hubs: ArtHub[],
   daysAhead: number = 14
 ): Promise<GlobalAuctionEvent[]> {
-  const hubConfig = ART_HUBS[hub];
   const displayLocation: Record<ArtHub, string> = {
     London: 'London',
     Paris: 'Paris',
@@ -263,95 +263,106 @@ export async function fetchAuctionCalendarsForHub(
     Geneva: 'Geneva',
     New_York: 'New York',
   };
-  const city = displayLocation[hub];
-  const houses: AuctionHouse[] = ['Sothebys', 'Christies', 'Phillips'];
-  const houseDisplayNames: Record<AuctionHouse, string> = {
-    Sothebys: "Sotheby's",
-    Christies: "Christie's",
-    Phillips: 'Phillips',
-  };
 
-  console.log(`Fetching ${hub} auction calendars for next ${daysAhead} days via Grok`);
+  const cityList = hubs.map(h => displayLocation[h]).join(', ');
+  console.log(`Fetching auction calendars for ${cityList} via Grok`);
 
   const allEvents: GlobalAuctionEvent[] = [];
 
-  for (const house of houses) {
-    const displayName = houseDisplayNames[house];
-
-    const raw = await grokEventSearch(
-      `You are an art market research assistant. Return ONLY a valid JSON array, no commentary.`,
-      `Search for upcoming auctions at ${displayName} in ${city} within the next ${daysAhead} days. Include live in-person auctions only (not online-only sales).
+  const raw = await grokEventSearch(
+    `You are an art market research assistant. Return ONLY a valid JSON array, no commentary.`,
+    `Search for upcoming auctions at Sotheby's, Christie's, and Phillips in these cities: ${cityList}. Focus on the next ${daysAhead} days. Include live in-person auctions only (not online-only sales).
 
 Return a JSON array of objects with these fields:
+- "city": one of: ${cityList}
+- "house": "Sothebys" or "Christies" or "Phillips"
 - "title": auction title (string)
 - "date": start date in YYYY-MM-DD format (string)
 - "endDate": end date in YYYY-MM-DD format if multi-day, or null
 - "category": auction category like "Contemporary Art", "Jewelry", "Watches" (string)
 - "totalLots": number of lots if known, or null
-- "estimateRange": total sale estimate if known using local currency (${hubConfig.currencySymbol}), or null
+- "estimateRange": total sale estimate with local currency, or null
 - "url": link to the auction page if known, or null
 
 If no upcoming auctions are found, return an empty array [].`,
-    );
+  );
 
-    if (!raw) {
-      console.log(`No Grok response for ${displayName} ${city} auctions`);
-      continue;
+  if (!raw) {
+    console.log(`No Grok response for global auctions`);
+    return [];
+  }
+
+  try {
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      console.log('No JSON array found in Grok response for global auctions');
+      return [];
     }
 
-    try {
-      const jsonMatch = raw.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) {
-        console.log(`No JSON array found in Grok response for ${displayName} ${city}`);
-        continue;
-      }
+    const parsed = JSON.parse(jsonMatch[0]) as Array<{
+      city?: string;
+      house?: string;
+      title?: string;
+      date?: string;
+      endDate?: string | null;
+      category?: string;
+      totalLots?: number | null;
+      estimateRange?: string | null;
+      url?: string | null;
+    }>;
 
-      const parsed = JSON.parse(jsonMatch[0]) as Array<{
-        title?: string;
-        date?: string;
-        endDate?: string | null;
-        category?: string;
-        totalLots?: number | null;
-        estimateRange?: string | null;
-        url?: string | null;
-      }>;
+    for (const item of parsed) {
+      const title = item.title || '';
+      if (!title) continue;
 
-      for (const item of parsed) {
-        const title = item.title || '';
-        if (!title) continue;
+      // Match city to hub
+      const cityLower = (item.city || '').toLowerCase();
+      const hub = hubs.find(h => displayLocation[h].toLowerCase() === cityLower) ||
+                  hubs.find(h => cityLower.includes(displayLocation[h].toLowerCase()));
+      if (!hub) continue;
 
-        const blueChipResult = isGlobalBlueChip(title, hub);
-        if (!blueChipResult.passes) continue;
+      const hubConfig = ART_HUBS[hub];
+      const city = displayLocation[hub];
 
-        const allKeywords = [...blueChipResult.keywords, ...blueChipResult.localizedKeywords];
-        const tier = determineAuctionTier(title, allKeywords);
-        const eventId = `${house.toLowerCase()}-${hub.toLowerCase()}-${title.replace(/[^a-zA-Z0-9]/g, '-').substring(0, 40)}-${item.date || Date.now()}`;
+      // Normalize house name
+      const houseRaw = (item.house || '').replace(/['']/g, '');
+      const house: AuctionHouse =
+        houseRaw.toLowerCase().includes('sotheby') ? 'Sothebys' :
+        houseRaw.toLowerCase().includes('christie') ? 'Christies' :
+        houseRaw.toLowerCase().includes('phillips') ? 'Phillips' :
+        'Sothebys';
 
-        allEvents.push({
-          eventId,
-          house,
-          title,
-          date: item.date ? parseAuctionDate(item.date) : new Date().toISOString().split('T')[0],
-          endDate: item.endDate ? parseAuctionDate(item.endDate) : undefined,
-          location: city,
-          tier,
-          category: item.category || undefined,
-          totalLots: item.totalLots || undefined,
-          estimateRange: item.estimateRange || undefined,
-          url: item.url || AUCTION_URLS_BY_HUB[hub][house],
-          targetRegions: hubConfig.targetFeeds,
-          matchedKeywords: blueChipResult.keywords,
-          hub,
-          currency: hubConfig.currency,
-          currencySymbol: hubConfig.currencySymbol,
-          localizedKeywords: blueChipResult.localizedKeywords,
-        });
-      }
+      const blueChipResult = isGlobalBlueChip(title, hub);
+      if (!blueChipResult.passes) continue;
 
-      console.log(`${displayName} ${city}: Found ${parsed.length} auctions, ${allEvents.filter(e => e.house === house).length} passed Blue Chip filter`);
-    } catch (err) {
-      console.error(`Error parsing ${displayName} ${city} auction data:`, err);
+      const allKeywords = [...blueChipResult.keywords, ...blueChipResult.localizedKeywords];
+      const tier = determineAuctionTier(title, allKeywords);
+      const eventId = `${house.toLowerCase()}-${hub.toLowerCase()}-${title.replace(/[^a-zA-Z0-9]/g, '-').substring(0, 40)}-${item.date || Date.now()}`;
+
+      allEvents.push({
+        eventId,
+        house,
+        title,
+        date: item.date ? parseAuctionDate(item.date) : new Date().toISOString().split('T')[0],
+        endDate: item.endDate ? parseAuctionDate(item.endDate) : undefined,
+        location: city,
+        tier,
+        category: item.category || undefined,
+        totalLots: item.totalLots || undefined,
+        estimateRange: item.estimateRange || undefined,
+        url: item.url || AUCTION_URLS_BY_HUB[hub][house],
+        targetRegions: hubConfig.targetFeeds,
+        matchedKeywords: blueChipResult.keywords,
+        hub,
+        currency: hubConfig.currency,
+        currencySymbol: hubConfig.currencySymbol,
+        localizedKeywords: blueChipResult.localizedKeywords,
+      });
     }
+
+    console.log(`Global auctions: Found ${parsed.length} total, ${allEvents.length} passed Blue Chip filter`);
+  } catch (err) {
+    console.error('Error parsing global auction data:', err);
   }
 
   // Sort by date, then by tier (Mega first)
@@ -362,13 +373,11 @@ If no upcoming auctions are found, return an empty array [].`,
     return 0;
   });
 
-  console.log(`${hub}: Found ${allEvents.length} Blue Chip auctions total`);
-
   return allEvents;
 }
 
 /**
- * Fetch all auction calendars across all global hubs
+ * Fetch all auction calendars across all global hubs using 2 batched Grok calls
  */
 export async function fetchAllGlobalAuctionCalendars(
   daysAhead: number = 14,
@@ -376,13 +385,17 @@ export async function fetchAllGlobalAuctionCalendars(
 ): Promise<GlobalAuctionEvent[]> {
   const targetHubs = hubs || (['London', 'Paris', 'Hong_Kong', 'Los_Angeles', 'Geneva'] as ArtHub[]);
 
-  console.log(`Fetching global auction calendars for hubs: ${targetHubs.join(', ')}`);
+  // Split into 2 regional batches to stay within Grok timeout
+  const europeHubs = targetHubs.filter(h => ['London', 'Paris', 'Geneva'].includes(h));
+  const otherHubs = targetHubs.filter(h => ['Hong_Kong', 'Los_Angeles', 'New_York'].includes(h));
 
-  const results = await Promise.all(
-    targetHubs.map((hub) => fetchAuctionCalendarsForHub(hub, daysAhead))
-  );
+  console.log(`Fetching global auction calendars: ${europeHubs.length} Europe + ${otherHubs.length} Asia/Americas`);
 
-  const allEvents = results.flat();
+  const batches: GlobalAuctionEvent[][] = [];
+  if (europeHubs.length > 0) batches.push(await fetchAuctionCalendarsForHubs(europeHubs, daysAhead));
+  if (otherHubs.length > 0) batches.push(await fetchAuctionCalendarsForHubs(otherHubs, daysAhead));
+
+  const allEvents = batches.flat();
 
   // Sort by date, then by tier
   allEvents.sort((a, b) => {

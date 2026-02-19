@@ -258,23 +258,15 @@ export async function fetchAllAuctionCalendars(
 ): Promise<AuctionEvent[]> {
   console.log(`Fetching NYC auction calendars for next ${daysAhead} days via Grok`);
 
-  const houses: AuctionHouse[] = ['Sothebys', 'Christies', 'Phillips'];
-  const houseDisplayNames: Record<AuctionHouse, string> = {
-    Sothebys: "Sotheby's",
-    Christies: "Christie's",
-    Phillips: 'Phillips',
-  };
-
   const allEvents: AuctionEvent[] = [];
 
-  for (const house of houses) {
-    const displayName = houseDisplayNames[house];
-
-    const raw = await grokEventSearch(
-      `You are an art market research assistant. Return ONLY a valid JSON array, no commentary.`,
-      `Search for upcoming auctions at ${displayName} in New York within the next ${daysAhead} days. Include live in-person auctions only (not online-only sales).
+  // Single batched Grok call for all 3 houses (avoids 3 sequential calls that timeout)
+  const raw = await grokEventSearch(
+    `You are an art market research assistant. Return ONLY a valid JSON array, no commentary.`,
+    `Search for upcoming auctions at Sotheby's, Christie's, and Phillips in New York within the next ${daysAhead} days. Include live in-person auctions only (not online-only sales).
 
 Return a JSON array of objects with these fields:
+- "house": "Sothebys" or "Christies" or "Phillips"
 - "title": auction title (string)
 - "date": start date in YYYY-MM-DD format (string)
 - "endDate": end date in YYYY-MM-DD format if multi-day, or null
@@ -284,61 +276,69 @@ Return a JSON array of objects with these fields:
 - "url": link to the auction page if known, or null
 
 If no upcoming auctions are found, return an empty array [].`,
-    );
+  );
 
-    if (!raw) {
-      console.log(`No Grok response for ${displayName} NYC auctions`);
-      continue;
+  if (!raw) {
+    console.log('No Grok response for NYC auctions');
+    return [];
+  }
+
+  try {
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      console.log('No JSON array found in Grok response for NYC auctions');
+      return [];
     }
 
-    try {
-      const jsonMatch = raw.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) {
-        console.log(`No JSON array found in Grok response for ${displayName}`);
-        continue;
-      }
+    const parsed = JSON.parse(jsonMatch[0]) as Array<{
+      house?: string;
+      title?: string;
+      date?: string;
+      endDate?: string | null;
+      category?: string;
+      totalLots?: number | null;
+      estimateRange?: string | null;
+      url?: string | null;
+    }>;
 
-      const parsed = JSON.parse(jsonMatch[0]) as Array<{
-        title?: string;
-        date?: string;
-        endDate?: string | null;
-        category?: string;
-        totalLots?: number | null;
-        estimateRange?: string | null;
-        url?: string | null;
-      }>;
+    for (const item of parsed) {
+      const title = item.title || '';
+      if (!title) continue;
 
-      for (const item of parsed) {
-        const title = item.title || '';
-        if (!title) continue;
+      // Normalize house name
+      const houseRaw = (item.house || '').replace(/['']/g, '');
+      const house: AuctionHouse =
+        houseRaw.toLowerCase().includes('sotheby') ? 'Sothebys' :
+        houseRaw.toLowerCase().includes('christie') ? 'Christies' :
+        houseRaw.toLowerCase().includes('phillips') ? 'Phillips' :
+        'Sothebys'; // fallback
 
-        const blueChipResult = isBlueChip(title);
-        if (!blueChipResult.passes) continue;
+      const blueChipResult = isBlueChip(title);
+      if (!blueChipResult.passes) continue;
 
-        const tier = determineAuctionTier(title, blueChipResult.keywords);
-        const eventId = `${house.toLowerCase()}-${title.replace(/[^a-zA-Z0-9]/g, '-').substring(0, 40)}-${item.date || Date.now()}`;
+      const tier = determineAuctionTier(title, blueChipResult.keywords);
+      const eventId = `${house.toLowerCase()}-${title.replace(/[^a-zA-Z0-9]/g, '-').substring(0, 40)}-${item.date || Date.now()}`;
 
-        allEvents.push({
-          eventId,
-          house,
-          title,
-          date: item.date ? parseAuctionDate(item.date) : new Date().toISOString().split('T')[0],
-          endDate: item.endDate ? parseAuctionDate(item.endDate) : undefined,
-          location: 'New York',
-          tier,
-          category: item.category || undefined,
-          totalLots: item.totalLots || undefined,
-          estimateRange: item.estimateRange || undefined,
-          url: item.url || AUCTION_URLS[house],
-          targetRegions: ['NYC', 'CT', 'NJ', 'MA'],
-          matchedKeywords: blueChipResult.keywords,
-        });
-      }
-
-      console.log(`${displayName}: Found ${parsed.length} auctions, ${allEvents.filter(e => e.house === house).length} passed Blue Chip filter`);
-    } catch (err) {
-      console.error(`Error parsing ${displayName} auction data:`, err);
+      allEvents.push({
+        eventId,
+        house,
+        title,
+        date: item.date ? parseAuctionDate(item.date) : new Date().toISOString().split('T')[0],
+        endDate: item.endDate ? parseAuctionDate(item.endDate) : undefined,
+        location: 'New York',
+        tier,
+        category: item.category || undefined,
+        totalLots: item.totalLots || undefined,
+        estimateRange: item.estimateRange || undefined,
+        url: item.url || AUCTION_URLS[house],
+        targetRegions: ['NYC', 'CT', 'NJ', 'MA'],
+        matchedKeywords: blueChipResult.keywords,
+      });
     }
+
+    console.log(`NYC auctions: Found ${parsed.length} total, ${allEvents.length} passed Blue Chip filter`);
+  } catch (err) {
+    console.error('Error parsing NYC auction data:', err);
   }
 
   // Sort by date, then by tier (Mega first)

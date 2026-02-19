@@ -559,44 +559,83 @@ interface EventbriteEvent {
 }
 
 /**
- * Search for gala events in a hub city using Grok web search
+ * Display names for hub cities (used in Grok prompts and city matching)
  */
-async function searchGalaEventsForHub(
-  hub: GalaHub,
+const HUB_DISPLAY_NAMES: Record<Exclude<GalaHub, 'Global'>, string> = {
+  New_York: 'New York',
+  London: 'London',
+  Paris: 'Paris',
+  Los_Angeles: 'Los Angeles',
+  Sydney: 'Sydney',
+  Miami: 'Miami',
+  Hong_Kong: 'Hong Kong',
+  Milan: 'Milan',
+  Toronto: 'Toronto',
+};
+
+/**
+ * Source suffix mapping for hubs
+ */
+const HUB_SOURCE_SUFFIX: Record<Exclude<GalaHub, 'Global'>, string> = {
+  New_York: 'NYC',
+  London: 'LDN',
+  Paris: 'PAR',
+  Los_Angeles: 'LA',
+  Sydney: 'SYD',
+  Miami: 'MIA',
+  Hong_Kong: 'HK',
+  Milan: 'MIL',
+  Toronto: 'TOR',
+};
+
+/**
+ * Search for gala events across ALL hub cities using a single batched Grok call.
+ * One prompt asks about all 9 cities; response includes a "city" field for mapping back.
+ */
+async function searchGalaEventsForAllHubs(
+  hubs: Exclude<GalaHub, 'Global'>[],
   daysAhead: number = 30
 ): Promise<GalaEvent[]> {
-  const config = GALA_HUBS[hub];
-  if (!config) return [];
+  if (hubs.length === 0) return [];
 
-  const cityName = hub.replace(/_/g, ' ');
+  const cityList = hubs.map(h => HUB_DISPLAY_NAMES[h]).join(', ');
+  const currencyByCity = hubs.map(h => `${HUB_DISPLAY_NAMES[h]}: ${GALA_HUBS[h].currency}`).join(', ');
 
-  const systemPrompt = `You are a society events researcher. Search the web and X for upcoming charity galas, benefit dinners, museum fundraisers, and black-tie events in ${cityName} within the next ${daysAhead} days.
+  const systemPrompt = `You are a society events researcher. Search the web and X for upcoming charity galas, benefit dinners, museum fundraisers, and black-tie events in these cities: ${cityList}. Look within the next ${daysAhead} days.
 
 Return ONLY a JSON array (no markdown, no explanation). Each object must have:
+- city: string (one of: ${cityList})
 - name: string (event name)
 - venue: string (venue name)
 - venueAddress: string or null
 - date: string (ISO date)
 - price: number (ticket price in local currency, estimate if unknown)
-- currency: "${config.currency}"
+- currency: string (use local currency for each city: ${currencyByCity})
 - description: string (1-2 sentences)
 - organization: string or null (hosting charity or organization)
 - isBlackTie: boolean
 - url: string or null
 
-If no events are found, return an empty array: []`;
+If no events are found for a city, simply omit it. If no events at all, return an empty array: []`;
 
-  const userPrompt = `Search for upcoming charity galas, benefit dinners, museum fundraisers, and black-tie society events in ${cityName} this month and next month. Focus on high-end events at prestigious venues with ticket prices above $500. Include event name, venue, date, ticket price, and hosting organization.`;
+  const userPrompt = `Search for upcoming charity galas, benefit dinners, museum fundraisers, and black-tie society events in: ${cityList}. Focus on high-end events at prestigious venues with ticket prices above $500 USD equivalent. Include event name, venue, date, ticket price, and hosting organization for each city.`;
 
-  console.log(`Searching Grok for gala events in ${cityName}...`);
+  console.log(`Searching Grok for gala events across ${hubs.length} cities: ${cityList}`);
   const raw = await grokEventSearch(systemPrompt, userPrompt);
-  if (!raw) return [];
+  if (!raw) {
+    console.log('No Grok response for batched gala search');
+    return [];
+  }
 
   try {
     const jsonMatch = raw.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return [];
+    if (!jsonMatch) {
+      console.log('No JSON array found in Grok gala response');
+      return [];
+    }
 
     const parsed = JSON.parse(jsonMatch[0]) as Array<{
+      city?: string;
       name: string;
       venue?: string;
       venueAddress?: string | null;
@@ -614,6 +653,13 @@ If no events are found, return an empty array: []`;
     for (const p of parsed) {
       if (!p.name || !p.date) continue;
 
+      // Match city back to hub
+      const cityLower = (p.city || '').toLowerCase();
+      const hub = hubs.find(h => HUB_DISPLAY_NAMES[h].toLowerCase() === cityLower) ||
+                  hubs.find(h => cityLower.includes(HUB_DISPLAY_NAMES[h].toLowerCase()));
+      if (!hub) continue;
+
+      const config = GALA_HUBS[hub];
       const eventText = `${p.name} ${p.description || ''} ${p.organization || ''}`;
 
       // Skip excluded events
@@ -634,7 +680,7 @@ If no events are found, return an empty array: []`;
         priceUSD,
         description: p.description,
         url: p.url || undefined,
-        source: `Eventbrite_${hub === 'New_York' ? 'NYC' : hub.substring(0, 3).toUpperCase()}` as GalaSource,
+        source: `Eventbrite_${HUB_SOURCE_SUFFIX[hub]}` as GalaSource,
         hub,
         keywords: GALA_KEYWORDS.filter((k) => eventText.toLowerCase().includes(k)),
         isBlackTie: p.isBlackTie || isBlackTie(eventText),
@@ -648,10 +694,10 @@ If no events are found, return an empty array: []`;
       }
     }
 
-    console.log(`Grok ${cityName}: Found ${events.length} gala events`);
+    console.log(`Grok batched gala search: Found ${parsed.length} total, ${events.length} passed High Ticket filter`);
     return events;
   } catch (error) {
-    console.error(`Error parsing Grok response for ${cityName} galas:`, error);
+    console.error('Error parsing batched Grok gala response:', error);
     return [];
   }
 }
@@ -777,26 +823,20 @@ export async function processGalaWatch(daysAhead: number = 30): Promise<GalaProc
     errors: [],
   };
 
-  const allEvents: GalaEvent[] = [];
+  // Collect all non-Global hubs
+  const activeHubs = (Object.keys(GALA_HUBS) as GalaHub[])
+    .filter((h): h is Exclude<GalaHub, 'Global'> => h !== 'Global');
 
-  // Search for events in each hub city via Grok
-  for (const [hubName] of Object.entries(GALA_HUBS)) {
-    const hub = hubName as GalaHub;
-    if (hub === 'Global') continue; // Skip global for now
+  // Single batched Grok call for all hub cities
+  let allEvents: GalaEvent[] = [];
+  try {
+    allEvents = await searchGalaEventsForAllHubs(activeHubs, daysAhead);
 
-    try {
-      const events = await searchGalaEventsForHub(hub, daysAhead);
-      allEvents.push(...events);
-
-      for (const event of events) {
-        result.bySource[event.source] = (result.bySource[event.source] || 0) + 1;
-      }
-
-      // Rate limit between hubs
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    } catch (error) {
-      result.errors.push(`${hub}: ${error instanceof Error ? error.message : String(error)}`);
+    for (const event of allEvents) {
+      result.bySource[event.source] = (result.bySource[event.source] || 0) + 1;
     }
+  } catch (error) {
+    result.errors.push(`Batched gala search: ${error instanceof Error ? error.message : String(error)}`);
   }
 
   result.eventsFound = allEvents.length;

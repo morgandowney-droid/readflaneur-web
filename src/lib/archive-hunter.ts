@@ -302,14 +302,29 @@ export const STORE_LOCATIONS: StoreLocation[] = [
 // ============================================================================
 
 /**
- * Scrape inventory for a specific store location using Grok web search
+ * Scrape inventory for ALL store locations in a single batched Grok call.
+ * Returns a Map of location.id -> ArchiveItem[] so callers can attribute items to stores.
  */
-export async function scrapeStoreInventory(location: StoreLocation): Promise<ArchiveItem[]> {
+export async function scrapeAllStoreInventory(
+  locations: StoreLocation[] = STORE_LOCATIONS,
+): Promise<Map<string, ArchiveItem[]>> {
+  const resultMap = new Map<string, ArchiveItem[]>();
+  for (const loc of locations) resultMap.set(loc.id, []);
+
   const brandNames = Object.keys(INVESTMENT_BRANDS).join(', ');
 
-  const systemPrompt = `You are a luxury resale market researcher. Search the web for notable rare or investment-grade vintage luxury items recently listed at ${location.name} (${location.address}, ${location.city}). Focus on high-value items from brands like ${brandNames}.
+  // Build a numbered store list for the prompt
+  const storeList = locations
+    .map((loc, i) => `${i + 1}. ${loc.name} (${loc.city}) - ${loc.inventoryUrl}`)
+    .join('\n');
+
+  const systemPrompt = `You are a luxury resale market researcher. Search the web for notable rare or investment-grade vintage luxury items recently listed at any of the following resale stores. Focus on high-value items from brands like ${brandNames}.
+
+STORES TO CHECK:
+${storeList}
 
 Return ONLY a JSON array (no markdown, no explanation). Each object must have:
+- store: string (the store name EXACTLY as listed above, e.g. "The RealReal SoHo", "Rebag Miami Design District")
 - brand: string (brand name)
 - name: string (item name, e.g. "Birkin 25 Togo Gold Hardware")
 - category: "Handbags" | "Watches" | "Jewelry" | "RTW" | "Accessories"
@@ -318,19 +333,23 @@ Return ONLY a JSON array (no markdown, no explanation). Each object must have:
 - description: string or null
 - itemUrl: string or null
 
-If no notable items are found, return an empty array: []`;
+If no notable items are found at any store, return an empty array: []`;
 
-  const userPrompt = `Search for notable rare or investment-grade luxury items recently listed or available at ${location.name} in ${location.city}. Focus on Hermès Birkin/Kelly, Chanel Classic Flap, Rolex Submariner/Daytona, Patek Philippe Nautilus, Cartier Love/Juste un Clou, Van Cleef Alhambra, and other grail-tier items priced over $3,000. Check ${location.inventoryUrl} and related listings.`;
+  const storeNameList = locations.map((loc) => `${loc.name} (${loc.city})`).join(', ');
+  const urlList = locations.map((loc) => loc.inventoryUrl).join(' , ');
 
-  console.log(`Searching Grok for inventory at ${location.name}...`);
+  const userPrompt = `Search for notable rare or investment-grade luxury items recently listed or available at these resale stores: ${storeNameList}. Focus on Hermès Birkin/Kelly, Chanel Classic Flap, Rolex Submariner/Daytona, Patek Philippe Nautilus, Cartier Love/Juste un Clou, Van Cleef Alhambra, and other grail-tier items priced over $3,000. Check these URLs: ${urlList}`;
+
+  console.log(`Searching Grok for inventory across ${locations.length} stores (batched)...`);
   const raw = await grokEventSearch(systemPrompt, userPrompt);
-  if (!raw) return [];
+  if (!raw) return resultMap;
 
   try {
     const jsonMatch = raw.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return [];
+    if (!jsonMatch) return resultMap;
 
     const parsed = JSON.parse(jsonMatch[0]) as Array<{
+      store?: string;
       brand: string;
       name?: string;
       category?: string;
@@ -340,10 +359,49 @@ If no notable items are found, return an empty array: []`;
       itemUrl?: string | null;
     }>;
 
-    const items: ArchiveItem[] = [];
+    // Build a lookup: lowercase store name -> StoreLocation
+    const storeNameLookup = new Map<string, StoreLocation>();
+    for (const loc of locations) {
+      storeNameLookup.set(loc.name.toLowerCase(), loc);
+      // Also index by shorter variants for fuzzy matching
+      // e.g. "The RealReal SoHo" -> also match "realreal soho"
+      const simplified = loc.name.toLowerCase().replace(/^the\s+/, '');
+      storeNameLookup.set(simplified, loc);
+    }
+
+    /**
+     * Match a store name string from Grok's response to one of our StoreLocations.
+     * Tries exact match first, then substring/fuzzy matching.
+     */
+    function matchStoreLocation(storeName: string | undefined): StoreLocation | null {
+      if (!storeName) return null;
+      const lower = storeName.toLowerCase().trim();
+
+      // Exact match
+      if (storeNameLookup.has(lower)) return storeNameLookup.get(lower)!;
+
+      // Substring match: check if any location name is contained in the response value or vice versa
+      for (const loc of locations) {
+        const locLower = loc.name.toLowerCase();
+        if (lower.includes(locLower) || locLower.includes(lower)) return loc;
+        // Also try without "The " prefix
+        const locSimplified = locLower.replace(/^the\s+/, '');
+        const inputSimplified = lower.replace(/^the\s+/, '');
+        if (inputSimplified.includes(locSimplified) || locSimplified.includes(inputSimplified)) return loc;
+      }
+
+      return null;
+    }
 
     for (const p of parsed) {
       if (!p.brand || !p.name || !p.price) continue;
+
+      // Match to a store location
+      const location = matchStoreLocation(p.store);
+      if (!location) {
+        console.warn(`Grok returned unmatched store: "${p.store}" - skipping item "${p.name}"`);
+        continue;
+      }
 
       // Validate against investment brands
       const brandEntry = Object.entries(INVESTMENT_BRANDS).find(([, config]) =>
@@ -365,7 +423,7 @@ If no notable items are found, return an empty array: []`;
       const category = validCategories.includes(p.category as LuxuryCategory)
         ? p.category as LuxuryCategory : 'Accessories';
 
-      items.push({
+      const item: ArchiveItem = {
         id: `grok-${location.id}-${brandName.replace(/\W/g, '-').toLowerCase()}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         brand: brandName,
         name: p.name,
@@ -379,14 +437,25 @@ If no notable items are found, return an empty array: []`;
         dateAdded: new Date(),
         isRare,
         investmentGrade,
-      });
+      };
+
+      resultMap.get(location.id)!.push(item);
     }
 
-    console.log(`Grok ${location.name}: Found ${items.length} investment-grade items`);
-    return items;
+    // Log per-store results
+    for (const loc of locations) {
+      const items = resultMap.get(loc.id) || [];
+      if (items.length > 0) {
+        console.log(`Grok ${loc.name}: Found ${items.length} investment-grade items`);
+      }
+    }
+    const totalItems = Array.from(resultMap.values()).reduce((sum, arr) => sum + arr.length, 0);
+    console.log(`Grok batched search complete: ${totalItems} items across ${locations.length} stores`);
+
+    return resultMap;
   } catch (error) {
-    console.error(`Error parsing Grok response for ${location.name}:`, error);
-    return [];
+    console.error('Error parsing batched Grok response:', error);
+    return resultMap;
   }
 }
 
@@ -520,7 +589,8 @@ export interface ProcessResult {
 }
 
 /**
- * Process all store locations and generate archive alerts
+ * Process all store locations and generate archive alerts.
+ * Uses a single batched Grok call for all stores instead of per-store calls.
  */
 export async function processArchiveHunter(): Promise<ProcessResult> {
   const result: ProcessResult = {
@@ -535,12 +605,20 @@ export async function processArchiveHunter(): Promise<ProcessResult> {
     errors: [],
   };
 
+  // Single batched Grok call for all store locations
+  let inventoryMap: Map<string, ArchiveItem[]>;
+  try {
+    inventoryMap = await scrapeAllStoreInventory(STORE_LOCATIONS);
+  } catch (error) {
+    result.errors.push(`Batched Grok search: ${error instanceof Error ? error.message : String(error)}`);
+    return result;
+  }
+
+  result.storesScanned = STORE_LOCATIONS.length;
+
   for (const location of STORE_LOCATIONS) {
     try {
-      console.log(`Scanning ${location.name}...`);
-      result.storesScanned++;
-
-      const items = await scrapeStoreInventory(location);
+      const items = inventoryMap.get(location.id) || [];
       result.itemsFound += items.length;
       result.byStore[location.store] = (result.byStore[location.store] || 0) + items.length;
 

@@ -371,17 +371,29 @@ const ROUTE_KEYWORDS = [
 // ============================================================================
 
 /**
- * Search for route announcements using Grok web search
+ * Search for route announcements using a single batched Grok web search
+ * across all airport hubs simultaneously.
  */
 export async function scrapeAllSources(): Promise<RouteAnnouncement[]> {
   const allAnnouncements: RouteAnnouncement[] = [];
 
-  for (const [hubKey, hubMapping] of Object.entries(AIRPORT_HUBS)) {
-    const airportCodes = hubMapping.airports.map(a => a.code).join(', ');
+  // Build a hub summary listing all cities and their airports for a single batched query
+  const hubSummaryLines = Object.entries(AIRPORT_HUBS).map(([, hub]) => {
+    const codes = hub.airports.map(a => `${a.code}`).join(', ');
+    return `- ${hub.cityName}: ${codes}`;
+  });
+  const hubSummary = hubSummaryLines.join('\n');
 
-    const systemPrompt = `You are an airline routes researcher. Search the web for new airline route announcements to or from ${hubMapping.cityName} airports (${airportCodes}) in the last 14 days.
+  const allAirportCodes = Object.values(AIRPORT_HUBS)
+    .flatMap(hub => hub.airports.map(a => a.code))
+    .join(', ');
+
+  const systemPrompt = `You are an airline routes researcher. Search the web for new airline route announcements to or from ANY of the following hub cities and airports in the last 14 days:
+
+${hubSummary}
 
 Return ONLY a JSON array (no markdown, no explanation). Each object must have:
+- city: string (the hub city name EXACTLY as listed above, e.g. "New York", "London", "Los Angeles", "Sydney", "Paris", "Miami", "San Francisco", "Chicago")
 - airlineName: string (full airline name)
 - airlineCode: string (IATA code, e.g. "DL")
 - originCode: string (origin airport IATA code)
@@ -394,75 +406,101 @@ Return ONLY a JSON array (no markdown, no explanation). Each object must have:
 - description: string (1-2 sentence summary)
 - sourceUrl: string or null
 
-If no route announcements are found, return an empty array: []`;
+IMPORTANT: The "city" field must match one of the hub city names listed above so results can be mapped back to the correct hub. If a route involves multiple hubs (e.g. JFK to LAX), use the origin city.
 
-    const userPrompt = `Search for new airline route announcements, launches, and service additions involving ${hubMapping.cityName} airports (${airportCodes}) from the last 14 days. Focus on premium carriers like Delta, United, American, British Airways, Emirates, Singapore Airlines, Qantas, etc. Include airline name, origin, destination, launch date, and aircraft type.`;
+If no route announcements are found for any hub, return an empty array: []`;
 
-    console.log(`Searching Grok for route announcements from ${hubMapping.cityName}...`);
-    const raw = await grokEventSearch(systemPrompt, userPrompt);
-    if (!raw) continue;
+  const userPrompt = `Search for new airline route announcements, launches, and service additions involving ALL of these airports (${allAirportCodes}) from the last 14 days. Cover all hub cities: ${Object.values(AIRPORT_HUBS).map(h => h.cityName).join(', ')}. Focus on premium carriers like Delta, United, American, British Airways, Emirates, Singapore Airlines, Qantas, etc. Include airline name, origin, destination, launch date, and aircraft type.`;
 
+  console.log(`Searching Grok for route announcements across all ${Object.keys(AIRPORT_HUBS).length} hubs in a single batched call...`);
+  const raw = await grokEventSearch(systemPrompt, userPrompt);
+
+  if (raw) {
     try {
       const jsonMatch = raw.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) continue;
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]) as Array<{
+          city?: string;
+          airlineName: string;
+          airlineCode?: string;
+          originCode?: string;
+          destinationCity?: string;
+          destinationCode?: string;
+          launchDate?: string | null;
+          frequency?: string | null;
+          aircraft?: string | null;
+          headline?: string;
+          description?: string;
+          sourceUrl?: string | null;
+        }>;
 
-      const parsed = JSON.parse(jsonMatch[0]) as Array<{
-        airlineName: string;
-        airlineCode?: string;
-        originCode?: string;
-        destinationCity?: string;
-        destinationCode?: string;
-        launchDate?: string | null;
-        frequency?: string | null;
-        aircraft?: string | null;
-        headline?: string;
-        description?: string;
-        sourceUrl?: string | null;
-      }>;
+        // Build a lookup: cityName (lowercase) -> hubMapping
+        const cityToHub = new Map<string, HubMapping>();
+        for (const [, hubMapping] of Object.entries(AIRPORT_HUBS)) {
+          cityToHub.set(hubMapping.cityName.toLowerCase(), hubMapping);
+        }
+        // Also build airport code -> hubMapping for fallback matching
+        const codeToHub = new Map<string, HubMapping>();
+        for (const [, hubMapping] of Object.entries(AIRPORT_HUBS)) {
+          for (const airport of hubMapping.airports) {
+            codeToHub.set(airport.code.toUpperCase(), hubMapping);
+          }
+        }
 
-      for (const p of parsed) {
-        if (!p.airlineName) continue;
+        for (const p of parsed) {
+          if (!p.airlineName) continue;
 
-        // Match airline to our config
-        const airline = LEGACY_AIRLINES.find(a =>
-          a.name.toLowerCase() === p.airlineName.toLowerCase() ||
-          a.code === (p.airlineCode || '').toUpperCase()
-        );
-        if (!airline) continue;
+          // Resolve hub mapping: try "city" field first, then fall back to originCode
+          let hubMapping: HubMapping | undefined;
+          if (p.city) {
+            hubMapping = cityToHub.get(p.city.toLowerCase());
+          }
+          if (!hubMapping && p.originCode) {
+            hubMapping = codeToHub.get(p.originCode.toUpperCase());
+          }
+          if (!hubMapping) {
+            console.warn(`Skipping route result: could not map city="${p.city}" / originCode="${p.originCode}" to any hub`);
+            continue;
+          }
 
-        // Match origin airport
-        const originAirport = hubMapping.airports.find(a =>
-          a.code === (p.originCode || '').toUpperCase()
-        ) || hubMapping.airports[0];
+          // Match airline to our config
+          const airline = LEGACY_AIRLINES.find(a =>
+            a.name.toLowerCase() === p.airlineName.toLowerCase() ||
+            a.code === (p.airlineCode || '').toUpperCase()
+          );
+          if (!airline) continue;
 
-        // Match destination
-        const destination = LEISURE_DESTINATIONS.find(d =>
-          d.code === (p.destinationCode || '').toUpperCase() ||
-          d.city.toLowerCase() === (p.destinationCity || '').toLowerCase()
-        );
-        if (!destination) continue;
+          // Match origin airport
+          const originAirport = hubMapping.airports.find(a =>
+            a.code === (p.originCode || '').toUpperCase()
+          ) || hubMapping.airports[0];
 
-        allAnnouncements.push({
-          id: `grok-${airline.code}-${originAirport.code}-${destination.code}-${Date.now()}`,
-          airline,
-          originAirport,
-          destination,
-          launchDate: p.launchDate ? new Date(p.launchDate) : undefined,
-          frequency: p.frequency || undefined,
-          aircraft: p.aircraft || undefined,
-          headline: p.headline || `${airline.name} launches ${destination.city} service from ${originAirport.code}`,
-          description: p.description || '',
-          source: 'Grok Search',
-          sourceUrl: p.sourceUrl || '',
-          detectedAt: new Date(),
-        });
+          // Match destination
+          const destination = LEISURE_DESTINATIONS.find(d =>
+            d.code === (p.destinationCode || '').toUpperCase() ||
+            d.city.toLowerCase() === (p.destinationCity || '').toLowerCase()
+          );
+          if (!destination) continue;
+
+          allAnnouncements.push({
+            id: `grok-${airline.code}-${originAirport.code}-${destination.code}-${Date.now()}`,
+            airline,
+            originAirport,
+            destination,
+            launchDate: p.launchDate ? new Date(p.launchDate) : undefined,
+            frequency: p.frequency || undefined,
+            aircraft: p.aircraft || undefined,
+            headline: p.headline || `${airline.name} launches ${destination.city} service from ${originAirport.code}`,
+            description: p.description || '',
+            source: 'Grok Search',
+            sourceUrl: p.sourceUrl || '',
+            detectedAt: new Date(),
+          });
+        }
       }
     } catch (error) {
-      console.error(`Error parsing Grok response for ${hubMapping.cityName} routes:`, error);
+      console.error('Error parsing batched Grok response for route announcements:', error);
     }
-
-    // Rate limit between hubs
-    await new Promise((resolve) => setTimeout(resolve, 500));
   }
 
   // Deduplicate by airline + origin + destination

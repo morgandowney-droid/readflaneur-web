@@ -551,17 +551,22 @@ Include 2-4 link candidates for key entities mentioned in the body (museum name,
 // ============================================================================
 
 /**
- * Fetch exhibitions from a museum using Grok web search
+ * Fetch exhibitions from a batch of museums using a single Grok call
+ * Returns a map of museumId → Exhibition[]
  */
-export async function fetchMuseumExhibitions(
-  museum: Museum,
+export async function fetchMuseumExhibitionsBatch(
+  museums: Museum[],
   daysAhead: number = 7
-): Promise<Exhibition[]> {
-  const cityName = museum.city.replace(/_/g, ' ');
+): Promise<Map<string, Exhibition[]>> {
+  const results = new Map<string, Exhibition[]>();
+  for (const m of museums) results.set(m.id, []);
 
-  const systemPrompt = `You are a museum exhibitions researcher. Search the web for new or upcoming exhibitions opening at ${museum.name} in ${cityName} within the next 30 days.
+  const museumList = museums.map(m => `${m.name} (${m.shortName}, ${m.city.replace(/_/g, ' ')})`).join('; ');
+
+  const systemPrompt = `You are a museum exhibitions researcher. Search the web for new or upcoming exhibitions opening at these museums within the next 30 days: ${museumList}
 
 Return ONLY a JSON array (no markdown, no explanation). Each object must have:
+- museum: string (must be one of: ${museums.map(m => m.name).join(', ')})
 - title: string (exhibition title)
 - artist: string or null (primary artist if applicable)
 - description: string (1-2 sentence description)
@@ -572,17 +577,18 @@ Return ONLY a JSON array (no markdown, no explanation). Each object must have:
 
 If no upcoming exhibitions are found, return an empty array: []`;
 
-  const userPrompt = `Search for new exhibitions opening at ${museum.name} (${museum.calendarUrl}) in the next 30 days. Focus on major exhibitions, retrospectives, and blockbuster shows. Include opening dates, closing dates, and member preview dates if available.`;
+  const userPrompt = `Search for new exhibitions opening at all of these museums in the next 30 days. Focus on major exhibitions, retrospectives, and blockbuster shows.`;
 
-  console.log(`Searching Grok for exhibitions at ${museum.name}...`);
+  console.log(`Searching Grok for exhibitions at ${museums.length} museums...`);
   const raw = await grokEventSearch(systemPrompt, userPrompt);
-  if (!raw) return [];
+  if (!raw) return results;
 
   try {
     const jsonMatch = raw.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return [];
+    if (!jsonMatch) return results;
 
     const parsed = JSON.parse(jsonMatch[0]) as Array<{
+      museum?: string;
       title: string;
       artist?: string | null;
       description?: string;
@@ -592,37 +598,52 @@ If no upcoming exhibitions are found, return an empty array: []`;
       url?: string | null;
     }>;
 
-    return parsed
-      .filter(e => e.title && e.publicOpeningDate && e.closingDate)
-      .map(e => {
-        const openDate = new Date(e.publicOpeningDate!);
-        const closeDate = new Date(e.closingDate!);
-        const durationMonths = calculateDurationMonths(openDate, closeDate);
-        const blockbuster = isBlockbusterExhibition(
-          e.title,
-          e.description || '',
-          durationMonths
-        );
+    for (const e of parsed) {
+      if (!e.title || !e.publicOpeningDate || !e.closingDate) continue;
 
-        return {
-          id: `grok-${museum.id}-${e.title.slice(0, 20).replace(/\W/g, '-').toLowerCase()}-${Date.now()}`,
-          museumId: museum.id,
-          title: e.title,
-          artist: e.artist || undefined,
-          description: e.description || '',
-          publicOpeningDate: openDate,
-          closingDate: closeDate,
-          memberPreviewDate: e.memberPreviewDate ? new Date(e.memberPreviewDate) : undefined,
-          isBlockbuster: blockbuster.isBlockbuster,
-          blockbusterKeywords: blockbuster.matchedKeywords,
-          durationMonths,
-          url: e.url || undefined,
-        };
-      });
+      // Match to museum by name similarity
+      const museumName = (e.museum || '').toLowerCase();
+      const museum = museums.find(m =>
+        museumName.includes(m.name.toLowerCase()) ||
+        museumName.includes(m.shortName.toLowerCase()) ||
+        m.name.toLowerCase().includes(museumName) ||
+        m.shortName.toLowerCase().includes(museumName)
+      );
+      if (!museum) continue; // skip unmatched
+
+      const openDate = new Date(e.publicOpeningDate);
+      const closeDate = new Date(e.closingDate);
+      const durationMonths = calculateDurationMonths(openDate, closeDate);
+      const blockbuster = isBlockbusterExhibition(
+        e.title,
+        e.description || '',
+        durationMonths
+      );
+
+      const exhibition: Exhibition = {
+        id: `grok-${museum.id}-${e.title.slice(0, 20).replace(/\W/g, '-').toLowerCase()}-${Date.now()}`,
+        museumId: museum.id,
+        title: e.title,
+        artist: e.artist || undefined,
+        description: e.description || '',
+        publicOpeningDate: openDate,
+        closingDate: closeDate,
+        memberPreviewDate: e.memberPreviewDate ? new Date(e.memberPreviewDate) : undefined,
+        isBlockbuster: blockbuster.isBlockbuster,
+        blockbusterKeywords: blockbuster.matchedKeywords,
+        durationMonths,
+        url: e.url || undefined,
+      };
+
+      const existing = results.get(museum.id) || [];
+      existing.push(exhibition);
+      results.set(museum.id, existing);
+    }
   } catch (error) {
-    console.error(`Error parsing Grok response for ${museum.name}:`, error);
-    return [];
+    console.error('Error parsing batched Grok response for exhibitions:', error);
   }
+
+  return results;
 }
 
 /**
@@ -650,13 +671,29 @@ export async function processMuseumWatch(
 
   const currentDate = new Date();
 
+  // Batch museums into 2 regional groups to stay within timeout
+  const americasMuseums = MUSEUM_TARGETS.filter(m => ['New_York', 'Los_Angeles'].includes(m.city));
+  const euroAsiaMuseums = MUSEUM_TARGETS.filter(m => ['London', 'Paris', 'Tokyo'].includes(m.city));
+
+  console.log(`Museum Watch: ${americasMuseums.length} Americas + ${euroAsiaMuseums.length} Europe/Asia museums`);
+
+  const [americasResults, euroAsiaResults] = await Promise.all([
+    fetchMuseumExhibitionsBatch(americasMuseums, daysAhead),
+    fetchMuseumExhibitionsBatch(euroAsiaMuseums, daysAhead),
+  ]);
+
+  // Merge results
+  const allExhibitions = new Map<string, Exhibition[]>();
+  for (const [k, v] of americasResults) allExhibitions.set(k, v);
+  for (const [k, v] of euroAsiaResults) allExhibitions.set(k, v);
+
   for (const museum of MUSEUM_TARGETS) {
     try {
       result.museumsScanned++;
       result.byMuseum[museum.id] = 0;
 
-      // Fetch exhibitions
-      const exhibitions = await fetchMuseumExhibitions(museum, daysAhead);
+      // Get exhibitions from batched results
+      const exhibitions = allExhibitions.get(museum.id) || [];
       result.exhibitionsFound += exhibitions.length;
 
       // Process each exhibition

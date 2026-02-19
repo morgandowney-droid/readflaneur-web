@@ -351,14 +351,45 @@ export function isLuxuryBrandSale(title: string): { isLuxury: boolean; brand: Lu
 // =============================================================================
 
 /**
- * Search for sample sales in a city using Grok web search
+ * City key -> display name mapping for the batched Grok prompt
  */
-async function searchSalesForCity(city: SaleCity): Promise<DetectedSale[]> {
-  const cityName = city.replace(/_/g, ' ');
+const CITY_DISPLAY_NAMES: Record<SaleCity, string> = {
+  New_York: 'New York',
+  London: 'London',
+  Paris: 'Paris',
+  Los_Angeles: 'Los Angeles',
+  Milan: 'Milan',
+};
 
-  const systemPrompt = `You are a fashion industry researcher. Search the web and X for current and upcoming luxury sample sales in ${cityName}. Focus on designer brands, private sales, and warehouse sales.
+/**
+ * Reverse lookup: display name -> SaleCity key
+ * Normalises to lowercase for fuzzy matching
+ */
+function resolveCityKey(rawCity: string): SaleCity | null {
+  const lower = rawCity.trim().toLowerCase();
+  for (const [key, display] of Object.entries(CITY_DISPLAY_NAMES)) {
+    if (display.toLowerCase() === lower) return key as SaleCity;
+  }
+  // Fallback: try matching underscore key directly (e.g. "New_York")
+  if (lower.replace(/\s+/g, '_') in CITY_DISPLAY_NAMES) {
+    return lower.replace(/\s+/g, '_') as SaleCity;
+  }
+  return null;
+}
+
+/**
+ * Search for sample sales across ALL cities in a single batched Grok call.
+ * Returns a flat array of DetectedSale with the correct `city` populated
+ * by matching the "city" field in Grok's JSON response back to our SaleCity keys.
+ */
+async function searchSalesAllCities(cities: SaleCity[]): Promise<DetectedSale[]> {
+  const cityNames = cities.map(c => CITY_DISPLAY_NAMES[c] || c.replace(/_/g, ' '));
+  const cityList = cityNames.join(', ');
+
+  const systemPrompt = `You are a fashion industry researcher. Search the web and X for current and upcoming luxury sample sales in ALL of the following cities: ${cityList}. Focus on designer brands, private sales, and warehouse sales.
 
 Return ONLY a JSON array (no markdown, no explanation). Each object must have:
+- city: string (one of: ${cityNames.map(n => `"${n}"`).join(', ')})
 - brand: string (brand name)
 - venue: string (venue name)
 - venueAddress: string or null
@@ -369,11 +400,13 @@ Return ONLY a JSON array (no markdown, no explanation). Each object must have:
 - isInviteOnly: boolean
 - url: string or null
 
-If no sales are found, return an empty array: []`;
+IMPORTANT: The "city" field MUST be included for every entry so results can be attributed to the correct city.
 
-  const userPrompt = `Search for current and upcoming luxury designer sample sales happening in ${cityName} right now or in the next 2 weeks. Include sales from brands like Hermès, Chanel, Prada, Gucci, The Row, Bottega Veneta, Saint Laurent, Celine, Valentino, Dior, and other high-end fashion houses. Check sites like Chicmi, 260 Sample Sale, and fashion news outlets.`;
+If no sales are found for any city, return an empty array: []`;
 
-  console.log(`Searching Grok for sample sales in ${cityName}...`);
+  const userPrompt = `Search for current and upcoming luxury designer sample sales happening right now or in the next 2 weeks in ALL of these cities: ${cityList}. Include sales from brands like Hermès, Chanel, Prada, Gucci, The Row, Bottega Veneta, Saint Laurent, Celine, Valentino, Dior, and other high-end fashion houses. Check sites like Chicmi, 260 Sample Sale, Arlettie, and fashion news outlets. Make sure to search for each city individually and include the city name in every result.`;
+
+  console.log(`Searching Grok for sample sales in all cities: ${cityList}...`);
   const raw = await grokEventSearch(systemPrompt, userPrompt);
   if (!raw) return [];
 
@@ -382,6 +415,7 @@ If no sales are found, return an empty array: []`;
     if (!jsonMatch) return [];
 
     const parsed = JSON.parse(jsonMatch[0]) as Array<{
+      city?: string;
       brand: string;
       venue?: string;
       venueAddress?: string | null;
@@ -398,6 +432,13 @@ If no sales are found, return an empty array: []`;
     for (const p of parsed) {
       if (!p.brand) continue;
 
+      // Resolve city from response back to SaleCity key
+      const city = p.city ? resolveCityKey(p.city) : null;
+      if (!city) {
+        console.warn(`Skipping sale "${p.brand}" - unrecognised city: "${p.city}"`);
+        continue;
+      }
+
       // Validate against luxury brand whitelist
       const { isLuxury, brand } = isLuxuryBrandSale(p.brand);
       if (!isLuxury || !brand) continue;
@@ -410,6 +451,8 @@ If no sales are found, return an empty array: []`;
 
       const validSaleTypes: SaleType[] = ['sample_sale', 'trunk_show', 'warehouse_sale', 'private_sale', 'flash_sale'];
       const saleType = validSaleTypes.includes(p.saleType as SaleType) ? p.saleType as SaleType : 'sample_sale';
+
+      const cityName = CITY_DISPLAY_NAMES[city] || city.replace(/_/g, ' ');
 
       sales.push({
         id: `grok-${city}-${brand.name.replace(/\W/g, '-').toLowerCase()}-${Date.now()}`,
@@ -433,10 +476,10 @@ If no sales are found, return an empty array: []`;
       });
     }
 
-    console.log(`Grok ${cityName}: Found ${sales.length} luxury sales`);
+    console.log(`Grok batched search: Found ${sales.length} luxury sales across ${cityList}`);
     return sales;
   } catch (error) {
-    console.error(`Error parsing Grok response for ${cityName} sales:`, error);
+    console.error(`Error parsing batched Grok response for sample sales:`, error);
     return [];
   }
 }
@@ -630,27 +673,20 @@ export async function processSampleSales(): Promise<SampleSaleProcessResult> {
     errors: [],
   };
 
-  const allSales: DetectedSale[] = [];
+  let allSales: DetectedSale[] = [];
 
-  // Search each city for sample sales via Grok
+  // Search ALL cities for sample sales in a single batched Grok call
   const cities = [...new Set(SAMPLE_SALE_SOURCES.map(s => s.city))];
-  for (const city of cities) {
-    result.sourcesScraped++;
+  result.sourcesScraped = cities.length;
 
-    try {
-      const sales = await searchSalesForCity(city);
+  try {
+    allSales = await searchSalesAllCities(cities);
 
-      for (const sale of sales) {
-        result.bySource[sale.source] = (result.bySource[sale.source] || 0) + 1;
-      }
-
-      allSales.push(...sales);
-
-      // Rate limit between cities
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    } catch (error) {
-      result.errors.push(`${city}: ${error instanceof Error ? error.message : String(error)}`);
+    for (const sale of allSales) {
+      result.bySource[sale.source] = (result.bySource[sale.source] || 0) + 1;
     }
+  } catch (error) {
+    result.errors.push(`Batched search: ${error instanceof Error ? error.message : String(error)}`);
   }
 
   result.salesDetected = allSales.length;
