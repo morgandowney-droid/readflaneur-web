@@ -569,7 +569,7 @@ function PreferencesContent() {
             </label>
           </div>
           {childcareSaved && (
-            <p className="text-xs text-green-600 mt-2">Preference saved!</p>
+            <p className="text-xs text-green-600 mt-2">{childcareEnabled ? 'Family Corner enabled! Add your children below.' : 'Family Corner disabled.'}</p>
           )}
 
           {childcareEnabled && (
@@ -636,14 +636,16 @@ function PreferencesContent() {
                   >
                     {childrenSaving ? 'Saving...' : 'Save Children'}
                   </button>
-                  {childrenSaved && (
-                    <span className="text-xs text-green-600">Saved!</span>
-                  )}
                 </div>
               )}
 
               {childrenSaved && !hasChildrenChanges && (
-                <p className="text-xs text-green-600 mt-2">Children saved!</p>
+                <div className="mt-3 p-3 border border-green-800/30 rounded-lg bg-green-950/20">
+                  <p className="text-sm text-green-400 font-medium">Thank you!</p>
+                  <p className="text-xs text-neutral-400 mt-1">
+                    We&apos;re preparing your first Family Corner content now. It will appear in your next Daily Brief email.
+                  </p>
+                </div>
               )}
             </div>
           )}

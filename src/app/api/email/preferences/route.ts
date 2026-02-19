@@ -356,6 +356,14 @@ export async function POST(request: Request) {
       }
     }
 
+    // Fire-and-forget: trigger childcare content generation for this user's neighborhoods
+    if (children.length > 0) {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://readflaneur.com';
+      fetch(`${baseUrl}/api/cron/generate-childcare-content`, {
+        headers: { 'Authorization': `Bearer ${process.env.CRON_SECRET}` },
+      }).catch(() => {});
+    }
+
     return NextResponse.json({ success: true });
   }
 
