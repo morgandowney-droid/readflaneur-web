@@ -186,6 +186,11 @@ export function selectLibraryImage(
     if (photo?.url) {
       return photo.url;
     }
+    // Exact category not available - use any available Unsplash photo
+    const available = Object.values(cached.photos).find(p => p?.url);
+    if (available?.url) {
+      return available.url;
+    }
   }
 
   // Fallback to old Supabase Storage URL

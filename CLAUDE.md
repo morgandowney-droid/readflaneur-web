@@ -443,7 +443,7 @@ Never use em dashes (—) in user-facing text. Use hyphens (-) instead. Em dashe
 - **political-wallet thresholds:** FEC API works but original thresholds were too restrictive. `LOOKBACK_DAYS` 7→30, `STORY_TRIGGER_THRESHOLD` $10K→$2.5K, `POWER_DONOR_THRESHOLD` $1K→$500.
 - **heritage-filings fixes:** NYC DOB heritage filings had 24h lookback (too short for lagging dataset) — changed to 336h (14 days). Missing `nyc-` prefix on neighborhood IDs (same systemic bug as liquor-watch).
 - **Liquor license cron rewrite:** Old cron used NY State dataset `wg8y-fzsj` requiring authentication (always 0 results). Switched to two public datasets: pending licenses (`f8i8-k2gm`) for new applications and active licenses (`9s3h-dpkz`) for recently granted. Full pipeline: fetch → filter newsworthy (restaurants, bars, hotels, clubs — skip grocery/manufacturer/wholesaler) → generate "Last Call" stories via Gemini Flash → create articles with brand+address dedup. Category labels: "Last Call: Application" / "Last Call: Approved". `NEIGHBORHOOD_ID_TO_CONFIG` keys lack `nyc-` prefix so `getNeighborhoodFromZip()` prepends it. Story generation parallelized in batches of 5. Uses placeholder image (not AI-generated) to stay within 120s function timeout.
-- **Non-government single-source:** Text reads "Single-source story - verify here" with "here" linking to Google Search (`headline + neighborhoodName`).
+- **Non-government single-source:** Text reads "This is a single-source story. It's always wise to double-check here" with "here" linking to Google Search (`headline + neighborhoodName`).
 
 ### Article Body Typography ("Effortless Legibility")
 - **Font:** Merriweather (Google Fonts, screen-optimized serif) via `--font-body-serif` CSS variable, fallback Georgia/Times New Roman

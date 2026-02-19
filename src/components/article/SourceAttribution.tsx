@@ -25,7 +25,7 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated, headlin
   if (!isAIGenerated) return null;
 
   // Editorial content types (briefs, look-ahead, sunday edition) never show "double-check here"
-  // — they are multi-source editorial products, not single-source RSS rewrites
+  // They are multi-source editorial products, not single-source RSS rewrites
   const isEditorial = category === 'brief_summary' || category === 'look_ahead' || category === 'weekly_recap';
 
   // Build a Google Search verification URL from headline + neighborhood
@@ -37,7 +37,7 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated, headlin
 
   const verifyLink = verifyUrl ? (
     <span className="block mt-1.5 text-xs text-fg-muted">
-      Single-source story — double-check{' '}
+      This is a single-source story. It&apos;s always wise to double-check{' '}
       <a
         href={verifyUrl}
         target="_blank"
