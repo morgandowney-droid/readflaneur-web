@@ -625,7 +625,7 @@ export function MultiFeed({
         neighborhoodSlug=""
         neighborhoodId={activeHood?.id || ''}
         hideControlDeck
-        neighborhoodCount={activeHood ? undefined : neighborhoods.length}
+        neighborhoodCount={activeHood ? undefined : (neighborhoods.length || undefined)}
         timezone={activeHood?.timezone}
         country={activeHood?.country}
         latitude={activeHood?.latitude}

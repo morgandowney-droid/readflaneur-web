@@ -15,6 +15,7 @@ import { fetchCurrentWeather } from '@/lib/weather';
 export const dynamic = 'force-dynamic';
 
 const INITIAL_PAGE_SIZE = 10;
+const LOAD_MORE_PAGE_SIZE = 20;
 
 interface FeedPageProps {
   searchParams: Promise<{ neighborhoods?: string; section?: string; welcome?: string }>;
@@ -75,6 +76,11 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     }
   }
 
+  // For multi-neighborhood feeds, load more articles so each neighborhood is represented
+  const feedLimit = neighborhoodIds.length > 3
+    ? Math.min(neighborhoodIds.length * 3, 60)
+    : INITIAL_PAGE_SIZE;
+
   // Fetch articles from selected neighborhoods
   let query = supabase
     .from('articles')
@@ -88,7 +94,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     `)
     .eq('status', 'published')
     .order('published_at', { ascending: false })
-    .limit(INITIAL_PAGE_SIZE);
+    .limit(feedLimit);
 
   if (expandedQueryIds.length > 0) {
     query = query.in('neighborhood_id', expandedQueryIds);
@@ -180,7 +186,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   }
 
   const { count: totalCount } = await countQuery;
-  const hasMoreArticles = (totalCount || 0) > INITIAL_PAGE_SIZE;
+  const hasMoreArticles = (totalCount || 0) > feedLimit;
 
   // Get full neighborhood data for display (including combo info)
   const { data: neighborhoodsRaw } = await supabase
@@ -396,8 +402,8 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               loadMoreAll={hasMoreArticles && neighborhoodIds.length > 0 ? (
                 <MultiLoadMoreButton
                   neighborhoodIds={expandedQueryIds}
-                  initialOffset={INITIAL_PAGE_SIZE}
-                  pageSize={INITIAL_PAGE_SIZE}
+                  initialOffset={feedLimit}
+                  pageSize={LOAD_MORE_PAGE_SIZE}
                   sectionSlug={sectionSlug}
                 />
               ) : undefined}
