@@ -22,6 +22,7 @@ export interface DailyBriefContent {
   headerAd: EmailAd | null;
   nativeAd: EmailAd | null;
   lookAheadUrl?: string | null;
+  familyCorner?: FamilyCornerSection | null;
 }
 
 export interface PrimaryNeighborhoodSection {
@@ -67,6 +68,12 @@ export interface WeatherStory {
   temperatureF: number;
   forecastDay: string; // "Tomorrow (Sat)" or "Sunday"
   useFahrenheit?: boolean;
+}
+
+export interface FamilyCornerSection {
+  headline: string;
+  bodyText: string;
+  ageBands: string[];
 }
 
 export interface EmailAd {

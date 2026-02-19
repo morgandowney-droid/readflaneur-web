@@ -12,10 +12,13 @@ import {
   PrimaryNeighborhoodSection,
   SatelliteNeighborhoodSection,
   EmailStory,
+  FamilyCornerSection,
 } from './types';
 import { fetchWeather } from './weather';
 import { generateWeatherStory } from './weather-story';
 import { getEmailAds } from './ads';
+import { getUniqueBands, getBandLabel } from '@/lib/childcare/age-bands';
+import type { AgeBand } from '@/lib/childcare/age-bands';
 
 const PRIMARY_STORY_COUNT = 5;
 const SATELLITE_STORY_COUNT = 2;
@@ -337,6 +340,61 @@ async function fetchLookAheadUrl(
 }
 
 /**
+ * Fetch Family Corner content for a recipient (if opted in).
+ * Returns null for non-opted-in users (zero cost).
+ */
+async function fetchFamilyCorner(
+  supabase: SupabaseClient,
+  recipientId: string,
+  source: 'profile' | 'newsletter',
+  neighborhoodId: string | null
+): Promise<FamilyCornerSection | null> {
+  if (!neighborhoodId) return null;
+
+  // Check if childcare mode is enabled (early return for non-opted users)
+  const table = source === 'newsletter' ? 'newsletter_subscribers' : 'profiles';
+  const { data: user } = await supabase
+    .from(table)
+    .select('childcare_mode_enabled')
+    .eq('id', recipientId)
+    .single();
+
+  if (!user?.childcare_mode_enabled) return null;
+
+  // Fetch children
+  const userSource = source === 'profile' ? 'profile' : 'newsletter';
+  const { data: children } = await supabase
+    .from('user_children')
+    .select('birth_month, birth_year')
+    .eq('user_id', recipientId)
+    .eq('user_source', userSource);
+
+  if (!children || children.length === 0) return null;
+
+  const bands = getUniqueBands(children);
+  if (bands.length === 0) return null;
+
+  // Look up cached content for today
+  const today = new Date().toISOString().split('T')[0];
+  const { data: content } = await supabase
+    .from('childcare_content')
+    .select('headline, body_text, age_bands')
+    .eq('neighborhood_id', neighborhoodId)
+    .eq('content_date', today)
+    .contains('age_bands', bands)
+    .limit(1)
+    .single();
+
+  if (!content) return null;
+
+  return {
+    headline: content.headline,
+    bodyText: content.body_text,
+    ageBands: content.age_bands,
+  };
+}
+
+/**
  * Assemble the complete daily brief content for one recipient
  */
 export async function assembleDailyBrief(
@@ -475,6 +533,14 @@ export async function assembleDailyBrief(
     lookAheadUrl = await fetchLookAheadUrl(supabase, primaryNeighborhood.id, primaryNeighborhood.city);
   }
 
+  // Fetch Family Corner (zero cost for non-opted-in users)
+  const familyCorner = await fetchFamilyCorner(
+    supabase,
+    recipient.id,
+    recipient.source,
+    primaryNeighborhoodId
+  );
+
   return {
     recipient,
     date: formatDateForTimezone(recipient.timezone),
@@ -483,6 +549,7 @@ export async function assembleDailyBrief(
     headerAd,
     nativeAd,
     lookAheadUrl,
+    familyCorner,
   };
 }
 

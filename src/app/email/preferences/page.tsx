@@ -13,6 +13,11 @@ interface Neighborhood {
   combo_component_names?: string[];
 }
 
+interface ChildEntry {
+  birth_month: number;
+  birth_year: number;
+}
+
 interface PreferencesData {
   email: string;
   source: string;
@@ -23,6 +28,8 @@ interface PreferencesData {
   primary_city: string | null;
   all_neighborhoods: Neighborhood[];
   paused_topics: string[];
+  childcare_mode_enabled: boolean;
+  children: (ChildEntry & { id: string; display_order: number })[];
 }
 
 interface TopicDef {
@@ -105,6 +112,11 @@ function PreferencesContent() {
   const [suggestionSent, setSuggestionSent] = useState(false);
   const [emailResendNote, setEmailResendNote] = useState<string | null>(null);
   const [sundayEditionSaved, setSundayEditionSaved] = useState(false);
+  const [childcareEnabled, setChildcareEnabled] = useState(false);
+  const [childcareSaved, setChildcareSaved] = useState(false);
+  const [childrenList, setChildrenList] = useState<ChildEntry[]>([]);
+  const [childrenSaving, setChildrenSaving] = useState(false);
+  const [childrenSaved, setChildrenSaved] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -122,6 +134,8 @@ function PreferencesContent() {
         setData(d);
         setSelectedIds(d.neighborhood_ids);
         setPausedTopics(d.paused_topics || []);
+        setChildcareEnabled(d.childcare_mode_enabled || false);
+        setChildrenList((d.children || []).map(c => ({ birth_month: c.birth_month, birth_year: c.birth_year })));
         setLoading(false);
       })
       .catch(err => {
@@ -299,6 +313,79 @@ function PreferencesContent() {
     }
   };
 
+  const handleToggleChildcare = async (enabled: boolean) => {
+    if (!token) return;
+    setSaving(true);
+    setChildcareSaved(false);
+
+    try {
+      await fetch('/api/email/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          action: 'update_childcare_mode',
+          childcare_mode_enabled: enabled,
+        }),
+      });
+
+      setChildcareEnabled(enabled);
+      setData(prev => prev ? { ...prev, childcare_mode_enabled: enabled } : prev);
+      setChildcareSaved(true);
+    } catch {
+      // Error saving
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddChild = () => {
+    if (childrenList.length >= 4) return;
+    const now = new Date();
+    setChildrenList(prev => [...prev, { birth_month: now.getMonth() + 1, birth_year: now.getFullYear() }]);
+    setChildrenSaved(false);
+  };
+
+  const handleRemoveChild = (index: number) => {
+    setChildrenList(prev => prev.filter((_, i) => i !== index));
+    setChildrenSaved(false);
+  };
+
+  const handleChildChange = (index: number, field: 'birth_month' | 'birth_year', value: number) => {
+    setChildrenList(prev => prev.map((c, i) => i === index ? { ...c, [field]: value } : c));
+    setChildrenSaved(false);
+  };
+
+  const handleSaveChildren = async () => {
+    if (!token) return;
+    setChildrenSaving(true);
+    setChildrenSaved(false);
+
+    try {
+      const res = await fetch('/api/email/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          action: 'update_children',
+          children: childrenList,
+        }),
+      });
+
+      if (res.ok) {
+        setChildrenSaved(true);
+      }
+    } catch {
+      // Error saving
+    } finally {
+      setChildrenSaving(false);
+    }
+  };
+
+  const hasChildrenChanges = data
+    ? JSON.stringify(childrenList) !== JSON.stringify((data.children || []).map(c => ({ birth_month: c.birth_month, birth_year: c.birth_year })))
+    : false;
+
   const hasTopicChanges = data
     ? JSON.stringify([...pausedTopics].sort()) !== JSON.stringify([...(data.paused_topics || [])].sort())
     : false;
@@ -442,6 +529,123 @@ function PreferencesContent() {
           </div>
           {sundayEditionSaved && (
             <p className="text-xs text-green-600 mt-2">Preference saved!</p>
+          )}
+        </section>
+
+        {/* Family Corner */}
+        <section className="mb-8">
+          <h2 className="text-xs font-medium tracking-[0.1em] uppercase text-neutral-400 mb-3">
+            Family Corner
+          </h2>
+          <p className="text-xs text-neutral-400 mb-3">
+            Add a family section to your Daily Brief with local kids&apos; events, school news, and family resources tailored to your children&apos;s ages.
+          </p>
+          <div className="space-y-2">
+            <label className="flex items-center gap-3 p-3 border border-white/[0.08] rounded-lg cursor-pointer hover:border-white/20 transition-colors">
+              <input
+                type="radio"
+                name="childcare"
+                checked={childcareEnabled === true}
+                onChange={() => handleToggleChildcare(true)}
+                className="accent-amber-600"
+              />
+              <div>
+                <div className="text-sm font-medium text-neutral-200">Enabled</div>
+                <div className="text-xs text-neutral-500">Show Family Corner in my Daily Brief</div>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 p-3 border border-white/[0.08] rounded-lg cursor-pointer hover:border-white/20 transition-colors">
+              <input
+                type="radio"
+                name="childcare"
+                checked={childcareEnabled === false}
+                onChange={() => handleToggleChildcare(false)}
+                className="accent-amber-600"
+              />
+              <div>
+                <div className="text-sm font-medium text-neutral-200">Disabled</div>
+                <div className="text-xs text-neutral-500">No family content</div>
+              </div>
+            </label>
+          </div>
+          {childcareSaved && (
+            <p className="text-xs text-green-600 mt-2">Preference saved!</p>
+          )}
+
+          {childcareEnabled && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-medium text-neutral-500">Your Children</h3>
+                {childrenList.length < 4 && (
+                  <button
+                    onClick={handleAddChild}
+                    className="text-xs bg-white text-neutral-900 px-3 py-1 tracking-wider uppercase hover:bg-neutral-200 transition-colors rounded-lg"
+                  >
+                    + Add Child
+                  </button>
+                )}
+              </div>
+
+              {childrenList.length === 0 ? (
+                <p className="text-sm text-neutral-400 py-3 text-center border border-dashed border-white/[0.08] rounded-lg">
+                  Add your children to personalize content by age.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {childrenList.map((child, i) => (
+                    <div key={i} className="flex items-center gap-2 p-3 border border-white/[0.08] rounded-lg">
+                      <span className="text-xs text-neutral-400 flex-shrink-0">Child {i + 1}:</span>
+                      <select
+                        value={child.birth_month}
+                        onChange={e => handleChildChange(i, 'birth_month', parseInt(e.target.value))}
+                        className="flex-1 px-2 py-1 border border-white/20 rounded text-sm bg-neutral-900 text-white"
+                      >
+                        {Array.from({ length: 12 }, (_, m) => (
+                          <option key={m + 1} value={m + 1}>
+                            {new Date(2000, m).toLocaleString('en', { month: 'long' })}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        value={child.birth_year}
+                        onChange={e => handleChildChange(i, 'birth_year', parseInt(e.target.value))}
+                        className="px-2 py-1 border border-white/20 rounded text-sm bg-neutral-900 text-white"
+                      >
+                        {Array.from({ length: 22 }, (_, y) => {
+                          const year = 2006 + y;
+                          return <option key={year} value={year}>{year}</option>;
+                        })}
+                      </select>
+                      <button
+                        onClick={() => handleRemoveChild(i)}
+                        className="text-xs text-neutral-400 hover:text-red-600 transition-colors flex-shrink-0"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {hasChildrenChanges && childrenList.length > 0 && (
+                <div className="mt-3 flex items-center gap-3">
+                  <button
+                    onClick={handleSaveChildren}
+                    disabled={childrenSaving}
+                    className="bg-white text-neutral-900 px-6 py-2 text-xs tracking-widest uppercase hover:bg-neutral-200 transition-colors disabled:opacity-50 rounded-lg"
+                  >
+                    {childrenSaving ? 'Saving...' : 'Save Children'}
+                  </button>
+                  {childrenSaved && (
+                    <span className="text-xs text-green-600">Saved!</span>
+                  )}
+                </div>
+              )}
+
+              {childrenSaved && !hasChildrenChanges && (
+                <p className="text-xs text-green-600 mt-2">Children saved!</p>
+              )}
+            </div>
           )}
         </section>
 

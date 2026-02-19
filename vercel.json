@@ -227,6 +227,10 @@
     {
       "path": "/api/cron/refresh-image-library",
       "schedule": "5 * * * *"
+    },
+    {
+      "path": "/api/cron/generate-childcare-content",
+      "schedule": "0 4 * * *"
     }
   ]
 }

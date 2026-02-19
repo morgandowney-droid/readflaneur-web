@@ -20,7 +20,7 @@ async function findSubscriber(supabase: ReturnType<typeof getSupabase>, token: s
   // Try newsletter_subscribers first
   const { data: subscriber } = await supabase
     .from('newsletter_subscribers')
-    .select('id, email, neighborhood_ids, daily_email_enabled, sunday_edition_enabled, unsubscribe_token, paused_topics')
+    .select('id, email, neighborhood_ids, daily_email_enabled, sunday_edition_enabled, unsubscribe_token, paused_topics, childcare_mode_enabled')
     .eq('unsubscribe_token', token)
     .single();
 
@@ -31,7 +31,7 @@ async function findSubscriber(supabase: ReturnType<typeof getSupabase>, token: s
   // Try profiles
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, email, primary_city, daily_email_enabled, sunday_edition_enabled, email_unsubscribe_token, paused_topics')
+    .select('id, email, primary_city, daily_email_enabled, sunday_edition_enabled, email_unsubscribe_token, paused_topics, childcare_mode_enabled')
     .eq('email_unsubscribe_token', token)
     .single();
 
@@ -180,6 +180,15 @@ export async function GET(request: Request) {
     combo_component_names: comboComponentNames[n.id] || undefined,
   }));
 
+  // Fetch children for Family Corner
+  const userSource = subscriber.source === 'profile' ? 'profile' : 'newsletter';
+  const { data: children } = await supabase
+    .from('user_children')
+    .select('id, birth_month, birth_year, display_order')
+    .eq('user_id', subscriber.id)
+    .eq('user_source', userSource)
+    .order('display_order');
+
   return NextResponse.json({
     email: subscriber.email,
     source: subscriber.source,
@@ -190,12 +199,14 @@ export async function GET(request: Request) {
     primary_city: subscriber.source === 'profile' ? (subscriber as { primary_city?: string }).primary_city : null,
     all_neighborhoods: neighborhoodsWithCombo,
     paused_topics: subscriber.paused_topics || [],
+    childcare_mode_enabled: (subscriber as { childcare_mode_enabled?: boolean }).childcare_mode_enabled || false,
+    children: children || [],
   });
 }
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { token, action, neighborhood_ids, daily_email_enabled, sunday_edition_enabled, paused_topics, suggestion } = body;
+  const { token, action, neighborhood_ids, daily_email_enabled, sunday_edition_enabled, paused_topics, suggestion, childcare_mode_enabled, children } = body;
 
   if (!token) {
     return NextResponse.json({ error: 'Missing token' }, { status: 400 });
@@ -294,6 +305,58 @@ export async function POST(request: Request) {
     const emailResend = await triggerInstantResend(supabase, subscriber.id, subscriber.source, 'topic_change');
 
     return NextResponse.json({ success: true, emailResend });
+  }
+
+  if (action === 'update_childcare_mode') {
+    if (subscriber.source === 'newsletter') {
+      await supabase
+        .from('newsletter_subscribers')
+        .update({ childcare_mode_enabled })
+        .eq('unsubscribe_token', token);
+    } else {
+      await supabase
+        .from('profiles')
+        .update({ childcare_mode_enabled })
+        .eq('email_unsubscribe_token', token);
+    }
+
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === 'update_children') {
+    if (!Array.isArray(children) || children.length > 4) {
+      return NextResponse.json({ error: 'children must be an array of 1-4 items' }, { status: 400 });
+    }
+
+    const userSource = subscriber.source === 'profile' ? 'profile' : 'newsletter';
+
+    // Delete existing children
+    await supabase
+      .from('user_children')
+      .delete()
+      .eq('user_id', subscriber.id)
+      .eq('user_source', userSource);
+
+    // Insert new children
+    if (children.length > 0) {
+      const rows = children.map((child: { birth_month: number; birth_year: number }, i: number) => ({
+        user_id: subscriber.id,
+        user_source: userSource,
+        birth_month: child.birth_month,
+        birth_year: child.birth_year,
+        display_order: i + 1,
+      }));
+
+      const { error: insertError } = await supabase
+        .from('user_children')
+        .insert(rows);
+
+      if (insertError) {
+        return NextResponse.json({ error: insertError.message }, { status: 400 });
+      }
+    }
+
+    return NextResponse.json({ success: true });
   }
 
   if (action === 'suggest_topic') {

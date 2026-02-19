@@ -12,6 +12,7 @@ import { WeatherStoryCard } from './components/WeatherStoryCard';
 import { StoryList } from './components/StoryList';
 import { NativeAd } from './components/NativeAd';
 import { SatelliteSection } from './components/SatelliteSection';
+import { FamilyCornerSection } from './components/FamilyCornerSection';
 import { Footer } from './components/Footer';
 
 export function DailyBriefTemplate(content: DailyBriefContent) {
@@ -134,6 +135,11 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
           {content.satelliteSections.map((section, i) => (
             <SatelliteSection key={i} section={section} />
           ))}
+
+          {/* Family Corner */}
+          {content.familyCorner && (
+            <FamilyCornerSection familyCorner={content.familyCorner} />
+          )}
 
           <Footer
             unsubscribeUrl={unsubscribeUrl}
