@@ -107,7 +107,7 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
               {content.familyCorner && (
                 <Section style={{ paddingTop: '12px', paddingBottom: '8px', textAlign: 'center' as const }}>
                   <a href="#family-corner" style={familyCornerJumpLink}>
-                    Jump to Family Corner &darr;
+                    Jump to your Family Corner &darr;
                   </a>
                 </Section>
               )}
