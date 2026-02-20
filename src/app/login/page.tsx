@@ -96,10 +96,8 @@ function LoginForm() {
     e.preventDefault();
     setError(null);
 
-    if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken) {
-      setError('Please complete the verification check.');
-      return;
-    }
+    // Turnstile token is sent to server if available, but not required.
+    // Server validates it when present; skips if widget didn't render.
 
     setIsLoading(true);
 
@@ -238,7 +236,7 @@ function LoginForm() {
 
         <button
           type="submit"
-          disabled={isLoading || success || (!!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken)}
+          disabled={isLoading || success}
           className="w-full bg-fg text-canvas py-3 text-sm tracking-widest uppercase hover:opacity-80 transition-colors disabled:opacity-50 rounded-lg"
         >
           {isLoading ? 'Signing in...' : success ? 'Redirecting...' : 'Sign In'}
