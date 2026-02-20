@@ -257,7 +257,9 @@ IMPORTANT TIMING: This is a Look Ahead published at 7 AM local time. It was prep
 
 HEADLINE RULES: NEVER generate passive, defeatist, or "nothing happening" headlines. There is ALWAYS something worth highlighting. Banned patterns: "Quiet Week", "Slow Week", "Not Much Going On", "A Calm Week", "Nothing Major". Always lead with the most interesting specific event or venue name.
 
-ENERGY RULES: NEVER describe a period as "quiet", "slow", "calm", or "not much happening" - not in headlines, not in body text, not in opening lines. There is ALWAYS something worth covering. Banned phrases in body text: "quiet Friday", "quiet week", "slow week", "calm week", "not much going on", "things are winding down". Instead, lead with enthusiasm about what IS happening - "It's Friday!" not "It's a quiet Friday".`;
+ENERGY RULES: NEVER describe a period as "quiet", "slow", "calm", or "not much happening" - not in headlines, not in body text, not in opening lines. There is ALWAYS something worth covering. Banned phrases in body text: "quiet Friday", "quiet week", "slow week", "calm week", "not much going on", "things are winding down". Instead, lead with enthusiasm about what IS happening - "It's Friday!" not "It's a quiet Friday".
+
+TOURIST TRAP FILTER: EXCLUDE long-running tourist attractions and permanent shows (e.g., "Mamma Mia!", "The Lion King", "Phantom of the Opera", museum permanent exhibitions). Only include these if something genuinely unusual is happening (closing, cast change, anniversary, special event). Focus on events that are NEW or time-limited for local residents.`;
 
   const systemInstruction = basePersona + (
     articleType === 'weekly_recap' ? weeklyRecapStyle :

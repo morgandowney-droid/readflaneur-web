@@ -409,7 +409,8 @@ Rules:
 - If you don't find much, say so.
 - Do NOT include any greeting like "Good morning" or sign-off. Jump directly into the content.
 - Do NOT include citation references like [[1]] or (1) in the HEADLINE.
-- NEVER use passive, defeatist, or "nothing happening" headlines. There is ALWAYS something worth highlighting. Banned headline patterns: "Quiet Week", "Slow Week", "Not Much Going On", "A Calm Week", "Nothing Major". Always lead with the most interesting specific event or venue name.`
+- NEVER use passive, defeatist, or "nothing happening" headlines. There is ALWAYS something worth highlighting. Banned headline patterns: "Quiet Week", "Slow Week", "Not Much Going On", "A Calm Week", "Nothing Major". Always lead with the most interesting specific event or venue name.
+- EXCLUDE long-running tourist attractions and permanent shows (e.g., "Mamma Mia!", "The Lion King", "Phantom of the Opera", museum permanent exhibitions). Only include these if something genuinely unusual is happening (closing, cast change, anniversary, special event). Focus on events that are NEW or time-limited for local residents.`
           },
           {
             role: 'user',

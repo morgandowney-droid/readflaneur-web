@@ -631,6 +631,43 @@ function isGreetingOnly(text: string): boolean {
 }
 
 /**
+ * Split text into sentences, handling abbreviations and initials.
+ * "The Solomon R. Guggenheim Museum opens." → ["The Solomon R. Guggenheim Museum opens."]
+ * Not split on single-letter initials (A. B. C.) or common abbreviations (St. Dr. Mr.)
+ */
+function extractSentences(text: string): string[] {
+  // Split on sentence-ending punctuation followed by a space and uppercase letter,
+  // but NOT after single-letter initials or common abbreviations
+  const sentences: string[] = [];
+  // Regex: period/excl/question followed by space and uppercase, but not preceded by single letter
+  const parts = text.split(/(?<=[^A-Z][.!?])\s+(?=[A-Z])/);
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (trimmed.length > 5) sentences.push(trimmed);
+  }
+  return sentences;
+}
+
+/**
+ * Find the last real sentence boundary in text (not an initial like "R.")
+ */
+function findSentenceEnd(text: string): number {
+  // Walk backwards to find a period/!/? that's a real sentence end
+  for (let i = text.length - 1; i > 30; i--) {
+    const ch = text[i];
+    if (ch === '!' || ch === '?') return i;
+    if (ch === '.' && i >= 2) {
+      // Skip single-letter initials: check if preceded by space+letter
+      const prev = text[i - 1];
+      const prevPrev = i >= 2 ? text[i - 2] : '';
+      if (/[A-Z]/.test(prev) && (prevPrev === ' ' || prevPrev === '.')) continue;
+      return i;
+    }
+  }
+  return -1;
+}
+
+/**
  * Convert a DB article row to an EmailStory
  */
 function toEmailStory(
@@ -652,7 +689,7 @@ function toEmailStory(
   const dateline = formatDateline(article.published_at || article.created_at);
   const labelWithDate = cleanedLabel ? `${cleanedLabel} - ${dateline}` : null;
 
-  // If preview text is just a greeting, try to extract more from body_text
+  // If preview text is just a greeting, extract 2-3 real sentences from body_text
   let previewText = article.preview_text || '';
   if (isGreetingOnly(previewText) && article.body_text) {
     const bodyPlain = article.body_text
@@ -661,10 +698,20 @@ function toEmailStory(
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
       .replace(/\n+/g, ' ')
       .trim();
-    // Take up to 200 chars, truncated at sentence boundary
-    const extended = bodyPlain.substring(0, 200);
-    const lastEnd = Math.max(extended.lastIndexOf('.'), extended.lastIndexOf('!'), extended.lastIndexOf('?'));
-    previewText = lastEnd > 30 ? extended.slice(0, lastEnd + 1) : previewText;
+    // Extract real sentences (skip greetings, skip single initials like "R.")
+    const sentences = extractSentences(bodyPlain);
+    const nonGreeting = sentences.filter(s => !isGreetingOnly(s));
+    if (nonGreeting.length >= 2) {
+      previewText = nonGreeting.slice(0, 2).join(' ');
+    } else if (nonGreeting.length === 1) {
+      previewText = nonGreeting[0];
+    }
+    // Truncate if too long
+    if (previewText.length > 250) {
+      const truncated = previewText.substring(0, 250);
+      const lastEnd = findSentenceEnd(truncated);
+      if (lastEnd > 50) previewText = truncated.slice(0, lastEnd + 1);
+    }
   }
 
   return {

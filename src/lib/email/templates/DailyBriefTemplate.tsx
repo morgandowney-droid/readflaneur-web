@@ -104,11 +104,11 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
               {/* Native ad after all primary stories */}
               {content.nativeAd && <NativeAd ad={content.nativeAd} />}
 
-              {/* Family Corner visual indicator */}
+              {/* Family Corner indicator (plain text — Gmail strips anchor links) */}
               {content.familyCorner && (
                 <Section style={{ paddingTop: '12px', paddingBottom: '8px', textAlign: 'center' as const }}>
                   <Text style={familyCornerJumpLink}>
-                    Family Corner below &darr;
+                    Jump to your Family Corner &darr;
                   </Text>
                 </Section>
               )}
