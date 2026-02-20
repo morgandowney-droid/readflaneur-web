@@ -12,6 +12,7 @@ import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSel
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { LanguageToggle } from '@/components/layout/LanguageToggle';
 import { useTranslation } from '@/hooks/useTranslation';
+import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
 
@@ -374,7 +375,7 @@ export function Header() {
                   {selectedNeighborhoods.slice(0, 6).map((hood) => (
                     <Link
                       key={hood.id}
-                      href={`/feed?neighborhoods=${hood.id}`}
+                      href={`/${getCitySlugFromId(hood.id)}/${getNeighborhoodSlugFromId(hood.id)}`}
                       onClick={() => setMobileMenuOpen(false)}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-elevated text-fg rounded"
                     >

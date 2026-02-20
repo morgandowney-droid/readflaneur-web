@@ -62,8 +62,8 @@ export default function RootLayout({
       <body className={`${inter.variable} ${cormorant.variable} ${merriweather.variable} font-sans antialiased bg-canvas text-fg`}>
         {/* Inline theme + language: set before first paint to prevent flash */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem("flaneur-theme");if(t==="light"||t==="dark"){document.documentElement.setAttribute("data-theme",t)}var l=localStorage.getItem("flaneur-language");if(l&&l!=="en"){document.documentElement.lang=l}}catch(e){}})()` }} />
-        {/* Inline redirect: returning users go straight to feed before React hydration */}
-        <script dangerouslySetInnerHTML={{ __html: `(function(){try{if(location.pathname!=="/")return;var s=localStorage.getItem("flaneur-neighborhood-preferences");if(!s)return;var ids=JSON.parse(s);if(Array.isArray(ids)&&ids.length>0){window.location.replace("/feed?neighborhoods="+ids.join(","))}}catch(e){}})()` }} />
+        {/* Sync neighborhood cookie + redirect returning users to feed before React hydration */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var k="flaneur-neighborhood-preferences",c="flaneur-neighborhoods",s=localStorage.getItem(k);if(s){var ids=JSON.parse(s);if(Array.isArray(ids)&&ids.length>0){document.cookie=c+"="+ids.join(",")+";path=/;max-age=31536000;SameSite=Strict";if(location.pathname==="/")window.location.replace("/feed")}}else{document.cookie=c+"=;path=/;max-age=0;SameSite=Strict"}}catch(e){}})()` }} />
         <LanguageProvider>
           <NeighborhoodModalProvider>
             <Header />

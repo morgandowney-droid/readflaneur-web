@@ -79,10 +79,20 @@ export async function GET(request: Request) {
         }
 
         // Redirect to feed with success message
+        // Neighborhoods are read from cookie (set by client before auth flow)
         const feedUrl = neighborhoodIds.length > 0
-          ? `/feed?neighborhoods=${neighborhoodIds.join(',')}&subscribed=true`
+          ? '/feed?subscribed=true'
           : '/?subscribed=true';
-        return NextResponse.redirect(new URL(feedUrl, requestUrl.origin));
+        const response = NextResponse.redirect(new URL(feedUrl, requestUrl.origin));
+        // Also set cookie server-side so feed page can read it immediately
+        if (neighborhoodIds.length > 0) {
+          response.cookies.set('flaneur-neighborhoods', neighborhoodIds.join(','), {
+            path: '/',
+            maxAge: 31536000,
+            sameSite: 'strict',
+          });
+        }
+        return response;
       } catch (err) {
         console.error('Newsletter subscription completion error:', err);
         // Still redirect, but without success flag

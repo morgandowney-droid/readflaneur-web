@@ -95,6 +95,7 @@ export function useNeighborhoodPreferences(): {
       // Move id to front
       const reordered = [id, ...ids.filter(i => i !== id)];
       localStorage.setItem(PREFS_KEY, JSON.stringify(reordered));
+      document.cookie = `flaneur-neighborhoods=${reordered.join(',')};path=/;max-age=31536000;SameSite=Strict`;
 
       // Sync to DB for email scheduler (fire-and-forget)
       fetch('/api/location/sync-primary-neighborhood', {

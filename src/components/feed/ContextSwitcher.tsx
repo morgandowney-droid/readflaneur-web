@@ -48,8 +48,7 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
   const handleSelectAll = () => {
     setOpen(false);
     if (neighborhoods.length > 0) {
-      const ids = neighborhoods.map(n => n.id).join(',');
-      router.push(`/feed?neighborhoods=${ids}`);
+      router.push('/feed');
     } else {
       router.push('/');
     }
@@ -65,15 +64,16 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
   const handleSetPrimary = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     setPrimary(id);
-    // Navigate with reordered IDs so MultiFeed reflects new primary
-    const stored = localStorage.getItem('flaneur-neighborhood-preferences');
-    if (stored) {
-      try {
+    // Sync cookie with reordered IDs and refresh so server reflects new primary
+    try {
+      const stored = localStorage.getItem('flaneur-neighborhood-preferences');
+      if (stored) {
         const ids = JSON.parse(stored) as string[];
-        router.push(`/feed?neighborhoods=${ids.join(',')}`);
-      } catch { /* ignore */ }
-    }
+        document.cookie = `flaneur-neighborhoods=${ids.join(',')};path=/;max-age=31536000;SameSite=Strict`;
+      }
+    } catch { /* ignore */ }
     setOpen(false);
+    router.refresh();
   };
 
   const handleCustomize = () => {

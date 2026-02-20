@@ -908,12 +908,13 @@ function GlobalNeighborhoodModal({
       const orderedIds = stored ? JSON.parse(stored) as string[] : Array.from(selected);
 
       // If user just added a neighborhood, put it first so feed shows it
-      if (lastAddedId && selected.has(lastAddedId)) {
-        const reordered = [lastAddedId, ...orderedIds.filter(id => id !== lastAddedId)];
-        router.push(`/feed?neighborhoods=${reordered.join(',')}`);
-      } else {
-        router.push(`/feed?neighborhoods=${orderedIds.join(',')}`);
-      }
+      const finalIds = lastAddedId && selected.has(lastAddedId)
+        ? [lastAddedId, ...orderedIds.filter(id => id !== lastAddedId)]
+        : orderedIds;
+      // Sync cookie + localStorage so server reads updated neighborhoods
+      localStorage.setItem(PREFS_KEY, JSON.stringify(finalIds));
+      document.cookie = `flaneur-neighborhoods=${finalIds.join(',')};path=/;max-age=31536000;SameSite=Strict`;
+      router.push('/feed');
     } else {
       router.push('/neighborhoods');
     }
@@ -925,6 +926,7 @@ function GlobalNeighborhoodModal({
     setSelected(new Set());
     setPrimaryId(null);
     localStorage.removeItem(PREFS_KEY);
+    document.cookie = 'flaneur-neighborhoods=;path=/;max-age=0;SameSite=Strict';
     if (userId) {
       const supabase = createClient();
       Promise.resolve(
@@ -941,9 +943,9 @@ function GlobalNeighborhoodModal({
       if (!ids.includes(id)) return;
       const reordered = [id, ...ids.filter(i => i !== id)];
       localStorage.setItem(PREFS_KEY, JSON.stringify(reordered));
+      document.cookie = `flaneur-neighborhoods=${reordered.join(',')};path=/;max-age=31536000;SameSite=Strict`;
       setPrimaryId(id);
-      // Navigate so the feed page reflects the new primary order
-      router.push(`/feed?neighborhoods=${reordered.join(',')}`);
+      router.push('/feed');
     } catch { /* ignore */ }
   };
 

@@ -146,7 +146,9 @@ export function HomeSignupEnhanced({ neighborhoods }: HomeSignupEnhancedProps) {
 
   const handleExplore = () => {
     if (selected.size > 0) {
-      router.push(`/feed?neighborhoods=${Array.from(selected).join(',')}`);
+      const ids = Array.from(selected);
+      document.cookie = `flaneur-neighborhoods=${ids.join(',')};path=/;max-age=31536000;SameSite=Strict`;
+      router.push('/feed');
     } else {
       // Open global modal to choose neighborhoods
       openModal();

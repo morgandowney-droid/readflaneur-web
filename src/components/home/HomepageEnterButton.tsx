@@ -32,10 +32,9 @@ export function HomepageEnterButton() {
       if (data.success && data.neighborhoods?.length) {
         const ids = data.neighborhoods.map((n: { id: string }) => n.id);
         localStorage.setItem(PREFS_KEY, JSON.stringify(ids));
+        document.cookie = `flaneur-neighborhoods=${ids.join(',')};path=/;max-age=31536000;SameSite=Strict`;
         const welcomeCity = data.city || data.neighborhoods[0].city;
-        router.push(
-          `/feed?neighborhoods=${ids.join(',')}&welcome=${encodeURIComponent(welcomeCity)}`
-        );
+        router.push(`/feed?welcome=${encodeURIComponent(welcomeCity)}`);
         return;
       }
     } catch {

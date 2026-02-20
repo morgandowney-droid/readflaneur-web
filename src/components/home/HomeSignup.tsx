@@ -126,9 +126,9 @@ export function HomeSignup({ neighborhoods }: HomeSignupProps) {
         setEmail('');
         localStorage.setItem(SUBSCRIBED_KEY, 'true');
         setIsSubscribed(true);
-        // Redirect to feed with selected neighborhoods
-        const feedUrl = `/feed?neighborhoods=${selected.join(',')}`;
-        router.push(feedUrl);
+        // Redirect to feed
+        document.cookie = `flaneur-neighborhoods=${selected.join(',')};path=/;max-age=31536000;SameSite=Strict`;
+        router.push('/feed');
       } else {
         setErrorMessage(data.error || 'Failed to subscribe');
         setStatus('error');
@@ -147,8 +147,8 @@ export function HomeSignup({ neighborhoods }: HomeSignupProps) {
 
   const handleExplore = () => {
     if (selected.length > 0) {
-      // Go directly to feed with selected neighborhoods
-      router.push(`/feed?neighborhoods=${selected.join(',')}`);
+      document.cookie = `flaneur-neighborhoods=${selected.join(',')};path=/;max-age=31536000;SameSite=Strict`;
+      router.push('/feed');
     } else {
       // No selection, go to neighborhoods page
       router.push('/neighborhoods');

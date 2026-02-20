@@ -46,9 +46,10 @@ export function SmartRedirect() {
 
         const ids = data.neighborhoods.map((n: { id: string }) => n.id);
         localStorage.setItem(PREFS_KEY, JSON.stringify(ids));
+        document.cookie = `flaneur-neighborhoods=${ids.join(',')};path=/;max-age=31536000;SameSite=Strict`;
 
         const welcomeCity = data.city || data.neighborhoods[0].city;
-        router.replace(`/feed?neighborhoods=${ids.join(',')}&welcome=${encodeURIComponent(welcomeCity)}`);
+        router.replace(`/feed?welcome=${encodeURIComponent(welcomeCity)}`);
       })
       .catch(() => {
         // Silent fail - user sees normal homepage

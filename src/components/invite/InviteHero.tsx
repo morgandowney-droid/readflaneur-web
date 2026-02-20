@@ -185,6 +185,7 @@ export function InviteHero() {
             neighborhoodIds = detectData.neighborhoods.map((n: { id: string }) => n.id);
             welcomeCity = detectData.city || detectData.neighborhoods[0].city;
             localStorage.setItem(PREFS_KEY, JSON.stringify(neighborhoodIds));
+            document.cookie = `flaneur-neighborhoods=${neighborhoodIds.join(',')};path=/;max-age=31536000;SameSite=Strict`;
           }
         }
       } catch {

@@ -126,8 +126,8 @@ export function MultiFeed({
     setIsHydrated(true);
   }, []);
 
-  // Redirect to include neighborhoods from localStorage when URL has none
-  // (e.g., user clicked "← All Stories" or "More Stories" from an article page)
+  // When server didn't get neighborhoods from cookie (e.g., first visit before cookie set),
+  // sync cookie and soft-refresh so server can read it
   useEffect(() => {
     if (neighborhoods.length > 0) return;
     try {
@@ -135,8 +135,10 @@ export function MultiFeed({
       if (stored) {
         const ids = JSON.parse(stored);
         if (Array.isArray(ids) && ids.length > 0) {
+          // Sync cookie then refresh to let server read it
+          document.cookie = `flaneur-neighborhoods=${ids.join(',')};path=/;max-age=31536000;SameSite=Strict`;
           window.scrollTo(0, 0);
-          router.replace(`/feed?neighborhoods=${ids.join(',')}`);
+          router.refresh();
         }
       }
     } catch {}
@@ -337,11 +339,12 @@ export function MultiFeed({
       const [movedId] = ids.splice(from, 1);
       ids.splice(to, 0, movedId);
 
-      // Save to localStorage (first item = primary)
+      // Save to localStorage (first item = primary) and sync cookie
       localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(ids));
+      document.cookie = `flaneur-neighborhoods=${ids.join(',')};path=/;max-age=31536000;SameSite=Strict`;
 
-      // Navigate with new order
-      router.push(`/feed?neighborhoods=${ids.join(',')}`);
+      // Refresh to reflect new order
+      router.refresh();
     }
     dragIndexRef.current = null;
     overIndexRef.current = null;

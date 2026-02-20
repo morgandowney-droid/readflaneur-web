@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { MagicLinkReminder } from '@/components/feed/MagicLinkReminder';
@@ -11,6 +12,7 @@ import { FeedItem, Article, Ad } from '@/types';
 import { injectAds, injectEmailPrompt } from '@/lib/ad-engine';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { fetchCurrentWeather } from '@/lib/weather';
+import { NEIGHBORHOODS_COOKIE } from '@/lib/neighborhood-cookie';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,13 +20,17 @@ const INITIAL_PAGE_SIZE = 10;
 const LOAD_MORE_PAGE_SIZE = 20;
 
 interface FeedPageProps {
-  searchParams: Promise<{ neighborhoods?: string; section?: string; welcome?: string }>;
+  searchParams: Promise<{ section?: string; welcome?: string }>;
 }
 
 export default async function FeedPage({ searchParams }: FeedPageProps) {
   const params = await searchParams;
-  const neighborhoodIds = params.neighborhoods?.split(',').filter(Boolean) || [];
   const sectionSlug = params.section;
+
+  // Read neighborhood IDs from cookie (set by client-side sync in layout.tsx)
+  const cookieStore = await cookies();
+  const neighborhoodCookie = cookieStore.get(NEIGHBORHOODS_COOKIE);
+  const neighborhoodIds = neighborhoodCookie?.value?.split(',').filter(Boolean) || [];
 
   const supabase = await createClient();
 
@@ -313,7 +319,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               <h2 className="text-lg font-light tracking-wide">{sectionFilter.name}</h2>
             </div>
             <Link
-              href={neighborhoodIds.length > 0 ? `/feed?neighborhoods=${neighborhoodIds.join(',')}` : '/feed'}
+              href="/feed"
               className="text-xs tracking-widest uppercase text-fg-muted hover:text-fg transition-colors"
             >
               Clear Filter
