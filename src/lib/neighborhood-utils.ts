@@ -59,9 +59,14 @@ export function buildNeighborhoodId(city: string, neighborhood: string): string 
 }
 
 // Reverse map: prefix → city slug (built from CITY_PREFIX_MAP)
-const PREFIX_TO_CITY_SLUG: Record<string, string> = Object.fromEntries(
-  Object.entries(CITY_PREFIX_MAP).map(([slug, prefix]) => [prefix, slug])
-);
+// Keep the first (primary) slug for each prefix — later entries like 'new-york-enclaves'
+// are aliases and should not override the canonical 'new-york' slug
+const PREFIX_TO_CITY_SLUG: Record<string, string> = {};
+for (const [slug, prefix] of Object.entries(CITY_PREFIX_MAP)) {
+  if (!PREFIX_TO_CITY_SLUG[prefix]) {
+    PREFIX_TO_CITY_SLUG[prefix] = slug;
+  }
+}
 
 /**
  * Get URL city slug from a neighborhood ID
