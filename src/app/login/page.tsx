@@ -168,11 +168,17 @@ function LoginForm() {
 
       // Sync DB neighborhood preferences to localStorage + cookie before navigating.
       // This ensures a new device (empty localStorage) picks up the user's saved neighborhoods.
+      // 5s timeout: useNeighborhoodPreferences will also sync on mount, so this is best-effort.
       try {
-        const { data: dbPrefs } = await supabase
-          .from('user_neighborhood_preferences')
-          .select('neighborhood_id, sort_order')
-          .order('sort_order', { ascending: true });
+        const { data: dbPrefs } = await Promise.race([
+          Promise.resolve(
+            supabase
+              .from('user_neighborhood_preferences')
+              .select('neighborhood_id, sort_order')
+              .order('sort_order', { ascending: true })
+          ),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+        ]);
 
         if (dbPrefs && dbPrefs.length > 0) {
           const dbIds = dbPrefs.map(p => p.neighborhood_id);
@@ -180,7 +186,7 @@ function LoginForm() {
           document.cookie = `flaneur-neighborhoods=${dbIds.join(',')};path=/;max-age=31536000;SameSite=Strict`;
         }
       } catch {
-        // Non-critical - feed will work with whatever localStorage has
+        // Timeout or error - useNeighborhoodPreferences will sync on feed mount
       }
 
       if (clientSignInOk) {
