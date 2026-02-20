@@ -56,7 +56,7 @@ export async function generateNeighborhoodLibrary(
 
   let photos: UnsplashPhotosMap;
   try {
-    photos = await searchAllCategories(neighborhood.name, neighborhood.city);
+    photos = await searchAllCategories(neighborhood.name, neighborhood.city, neighborhood.country ?? undefined);
     result.photos_found = Object.keys(photos).length;
   } catch (err) {
     result.errors.push(`Search failed: ${err instanceof Error ? err.message : String(err)}`);

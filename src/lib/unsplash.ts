@@ -115,36 +115,37 @@ export async function triggerDownload(downloadLocation: string): Promise<void> {
 export async function searchAllCategories(
   neighborhoodName: string,
   city: string,
+  country?: string,
 ): Promise<UnsplashPhotosMap> {
   const { IMAGE_CATEGORIES } = await import('./image-library');
   const accessKey = getAccessKey();
+  const needed = IMAGE_CATEGORIES.length;
 
-  // Tier 1: neighborhood-specific search
-  let results = await searchUnsplash(
-    accessKey,
-    `${neighborhoodName} ${city}`,
-    10,
-  );
+  // Build fallback query chain — stop as soon as we have enough photos
+  const queries = [
+    `${neighborhoodName} ${city}`,           // Tier 1: "Sotogrande Andalusia"
+    `${city} ${neighborhoodName}`,            // Tier 2: "Andalusia Sotogrande" (word order matters)
+    city,                                      // Tier 3: "Andalusia" (just the city/region)
+    ...(country ? [`${city} ${country}`] : []), // Tier 4: "Andalusia Spain" (if country available)
+  ];
 
-  // Tier 2: broader city search if not enough results
-  if (results.length < IMAGE_CATEGORIES.length) {
-    const broadResults = await searchUnsplash(
-      accessKey,
-      `${city} street neighborhood`,
-      10,
-    );
+  let results: UnsplashSearchResult[] = [];
+  const existingIds = new Set<string>();
 
-    // Deduplicate by photo ID
-    const existingIds = new Set(results.map(r => r.id));
-    for (const r of broadResults) {
+  for (const query of queries) {
+    if (results.length >= needed) break;
+
+    if (results.length > 0) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    const batch = await searchUnsplash(accessKey, query, 10);
+    for (const r of batch) {
       if (!existingIds.has(r.id)) {
         results.push(r);
         existingIds.add(r.id);
       }
     }
-
-    // 200ms spacing between API calls
-    await new Promise(resolve => setTimeout(resolve, 200));
   }
 
   if (results.length === 0) return {};
