@@ -250,7 +250,8 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
   const ctaKey = `houseAd.${adType}.cta`;
   const headline = t(headlineKey) !== headlineKey ? t(headlineKey) : houseAd.headline;
   const body = t(bodyKey) !== bodyKey ? t(bodyKey) : houseAd.body;
-  const cta = t(ctaKey) !== ctaKey ? t(ctaKey) : 'Learn More';
+  const defaultCta = adType === 'escape_mode' ? 'Take Me Somewhere New' : 'Learn More';
+  const cta = t(ctaKey) !== ctaKey ? t(ctaKey) : defaultCta;
 
   // For app_download and escape_mode house ads, resolve a dynamic discovery URL
   useEffect(() => {
