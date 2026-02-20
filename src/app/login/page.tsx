@@ -146,10 +146,36 @@ function LoginForm() {
         // Non-critical — cookies are already set by server response
       }
 
+      // Sync DB neighborhood prefs to localStorage + cookie BEFORE redirect.
+      // Feed page reads cookie server-side — without this, feed renders empty
+      // after logout+login because localStorage was cleared on sign-out.
+      // Direct REST call: no GoTrue SDK, no navigator.locks.
+      try {
+        const prefsRes = await fetch(
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/user_neighborhood_preferences?select=neighborhood_id,sort_order&order=sort_order.asc`,
+          {
+            headers: {
+              'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+              'Authorization': `Bearer ${result.access_token}`,
+            },
+          }
+        );
+        if (prefsRes.ok) {
+          const dbPrefs = await prefsRes.json();
+          if (dbPrefs && dbPrefs.length > 0) {
+            const dbIds = dbPrefs.map((p: { neighborhood_id: string }) => p.neighborhood_id);
+            localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(dbIds));
+            document.cookie = `flaneur-neighborhoods=${dbIds.join(',')};path=/;max-age=31536000;SameSite=Strict`;
+          }
+        }
+      } catch {
+        // Non-critical — Header's onAuthStateChange SIGNED_IN will sync later
+      }
+
       setSuccess(true);
 
       // Full page navigation — cookies are set, flaneur-auth is set,
-      // Header will read flaneur-auth instantly on next page load.
+      // neighborhood prefs synced, Header shows Account instantly.
       window.location.href = target;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
