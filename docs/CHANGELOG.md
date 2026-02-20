@@ -5,6 +5,13 @@
 
 ## 2026-02-24
 
+**Inline Article Reactions with Source Attribution:**
+- Bookmark/heart buttons moved from standalone section below bottom ad to right-aligned on the same row as source attribution text.
+- `SourceAttribution` accepts new `actions` ReactNode prop rendered right-aligned via flexbox.
+- `ArticleReactions` component stripped of top margin (`mt-6` removed, `shrink-0` added) for inline use.
+- Non-AI articles (rare) still show reactions via fallback wrapper in SourceAttribution.
+- Password reset email expiry text corrected from "24 hours" to "1 hour" to match actual Supabase `otp_expiry` setting (3600s).
+
 **Explicit Calendar Dates in AI-Generated Content:**
 - All AI prompts now require explicit calendar dates alongside relative time references (e.g., "yesterday (February 19)", "this Thursday, February 20").
 - Affects 6 prompt locations: Gemini enrichment (FORMATTING RULES), Grok brief generation, Grok news stories, Grok Look Ahead, Claude RSS rewrites, crime blotter Gemini.
