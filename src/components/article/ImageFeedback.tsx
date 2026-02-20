@@ -94,7 +94,7 @@ export function ImageFeedback({ imageUrl }: ImageFeedbackProps) {
             ? 'text-amber-600'
             : 'text-fg-subtle hover:text-fg'
         }`}
-        title="Good photo"
+        title="I like this image"
         aria-label="Thumbs up"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill={userFeedback === 1 ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -115,7 +115,7 @@ export function ImageFeedback({ imageUrl }: ImageFeedbackProps) {
             ? 'text-red-500'
             : 'text-fg-subtle hover:text-fg'
         }`}
-        title="Bad photo"
+        title="I don't like this image"
         aria-label="Thumbs down"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill={userFeedback === -1 ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

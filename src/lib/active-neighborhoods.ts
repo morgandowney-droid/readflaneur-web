@@ -55,5 +55,23 @@ export async function getActiveNeighborhoodIds(
     }
   }
 
+  // 4. Expand combo IDs to include their component IDs
+  // Users subscribe to combo IDs (e.g., nyc-tribeca) but articles are stored
+  // under component IDs (e.g., nyc-tribeca-core, nyc-fidi). Crons that filter
+  // out combos need the components in the active set to generate content.
+  const allIds = Array.from(ids);
+  for (const id of allIds) {
+    const { data: components } = await supabase
+      .from('combo_neighborhoods')
+      .select('component_id')
+      .eq('combo_id', id);
+
+    if (components && components.length > 0) {
+      for (const c of components) {
+        ids.add(c.component_id);
+      }
+    }
+  }
+
   return ids;
 }

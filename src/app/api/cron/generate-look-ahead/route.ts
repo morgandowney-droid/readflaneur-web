@@ -199,11 +199,13 @@ export async function GET(request: Request) {
     }
 
     // Fetch neighborhood data
+    // No is_active filter: combo components may have is_active=false but still
+    // need Look Ahead articles since their parent combo has subscribers.
+    // getActiveNeighborhoodIds() already determines which neighborhoods need content.
     const { data: neighborhoods, error: fetchError } = await supabase
       .from('neighborhoods')
       .select('id, name, city, country, timezone, is_combo, is_active')
       .in('id', neighborhoodIds)
-      .eq('is_active', true)
       .eq('is_combo', false); // Skip combo neighborhoods (components are processed individually)
 
     if (fetchError || !neighborhoods) {
