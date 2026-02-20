@@ -173,7 +173,7 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
       {isExpanded && bodyText ? (
         <>
           {/* Full content */}
-          <div className="text-sm text-fg-muted leading-relaxed space-y-3 mt-2">
+          <div className="text-lg text-fg-muted leading-relaxed space-y-4 mt-2">
             {paragraphs.map((p, i) => {
               // Detect [[Day, Date]] headers
               const headerMatch = p.match(/^\[\[(.+)\]\]$/);
@@ -245,7 +245,7 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
         <>
           {/* Compact preview - same as before but with expand hint */}
           {bodyText && previewText ? (
-            <p className="text-sm text-fg-muted">
+            <p className="text-lg text-fg-muted">
               {renderParagraph(previewText, 'la-preview')}
               {hasMore && (
                 <>
@@ -260,7 +260,7 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
             <Link
               href={url}
               onClick={(e) => e.stopPropagation()}
-              className="text-sm text-fg-muted hover:text-accent transition-colors"
+              className="text-lg text-fg-muted hover:text-accent transition-colors"
             >
               {t('feed.lookAheadCta').replace('{name}', neighborhoodName)} &rsaquo;
             </Link>
