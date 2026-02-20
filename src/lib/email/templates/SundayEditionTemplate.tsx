@@ -258,8 +258,25 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
             </>
           )}
 
+          {/* Inline referral CTA */}
+          {content.referralUrl && (
+            <Section style={referralCard}>
+              <Text style={referralText}>
+                Know someone who&apos;d enjoy this?{' '}
+                <Link href={content.referralUrl} style={referralLinkStyle}>Share Flaneur</Link>{' '}
+                or forward this email.
+              </Text>
+            </Section>
+          )}
+
           {/* Footer */}
           <Section style={footerSection}>
+            <Text style={forwardedText}>
+              Was this forwarded to you?{' '}
+              <Link href="https://readflaneur.com" style={forwardedLinkStyle}>Subscribe here</Link>
+              {' '}&mdash; it&apos;s free.
+            </Text>
+            <Hr style={footerLightDivider} />
             <Text style={footerText}>
               The Sunday Edition is published weekly by{' '}
               <Link href="https://readflaneur.com" style={footerLink}>Flaneur</Link>.
@@ -660,7 +677,48 @@ const otherEditionLink = {
   fontWeight: '600' as const,
 };
 
+// ─── Referral CTA ───
+
+const referralCard = {
+  padding: '16px 0',
+  textAlign: 'center' as const,
+};
+
+const referralText = {
+  fontSize: '13px',
+  color: '#999999',
+  margin: '0',
+  lineHeight: '1.5',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const referralLinkStyle = {
+  color: '#1a1a1a',
+  fontWeight: '600' as const,
+  textDecoration: 'underline' as const,
+};
+
 // ─── Footer ───
+
+const forwardedText = {
+  fontSize: '14px',
+  color: '#666666',
+  textAlign: 'center' as const,
+  margin: '0 0 12px',
+  lineHeight: '1.5',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const forwardedLinkStyle = {
+  color: '#1a1a1a',
+  fontWeight: '600' as const,
+  textDecoration: 'underline' as const,
+};
+
+const footerLightDivider = {
+  borderTop: '1px solid #e8e0d4',
+  margin: '0 0 12px',
+};
 
 const footerSection = {
   padding: '24px 0',

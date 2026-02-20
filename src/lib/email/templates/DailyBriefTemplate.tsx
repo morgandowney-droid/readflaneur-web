@@ -111,6 +111,17 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
                   </a>
                 </Section>
               )}
+
+              {/* Inline referral CTA */}
+              {referralUrl && (
+                <Section style={referralCard}>
+                  <Text style={referralText}>
+                    Know someone who&apos;d enjoy this?{' '}
+                    <a href={referralUrl} style={referralLink}>Share Flaneur</a>{' '}
+                    or forward this email.
+                  </Text>
+                </Section>
+              )}
             </Section>
           )}
 
@@ -255,6 +266,25 @@ const familyCornerJumpLink = {
   fontWeight: '600' as const,
   fontSize: '14px',
   fontFamily: "'Playfair Display', Georgia, serif",
+};
+
+const referralCard = {
+  padding: '16px 0',
+  textAlign: 'center' as const,
+};
+
+const referralText = {
+  fontSize: '13px',
+  color: '#999999',
+  margin: '0',
+  lineHeight: '1.5',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const referralLink = {
+  color: '#171717',
+  fontWeight: 600 as const,
+  textDecoration: 'underline',
 };
 
 const previewHidden = {
