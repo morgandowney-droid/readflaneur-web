@@ -65,15 +65,22 @@ export default function AccountPage() {
 
       setEmail(userEmail);
 
-      // Load profile data - queries work if cookies have a valid JWT
+      // Load profile data. Try Supabase client first (uses cookies).
+      // If that fails (mobile Safari navigator.locks deadlock), fall back
+      // to direct REST calls using the access token from GoTrue localStorage.
+      let profileLoaded = false;
       try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('primary_timezone, childcare_mode_enabled, email_unsubscribe_token')
-          .eq('id', userId)
-          .single();
+        const { data: profile } = await Promise.race([
+          supabase
+            .from('profiles')
+            .select('primary_timezone, childcare_mode_enabled, email_unsubscribe_token')
+            .eq('id', userId)
+            .single(),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+        ]);
 
         if (!cancelled && profile) {
+          profileLoaded = true;
           if (profile.primary_timezone) setTimezone(profile.primary_timezone);
           if (profile.childcare_mode_enabled) {
             setChildcareEnabled(true);
@@ -82,18 +89,66 @@ export default function AccountPage() {
           if (profile.email_unsubscribe_token) setPrefsToken(profile.email_unsubscribe_token);
         }
       } catch {
-        // Profile query may fail without active GoTrue session - graceful degradation
+        // Supabase client deadlocked or timed out
       }
 
-      // Check if user has saved children (for Paused vs Off label)
-      try {
-        const { count: childCount } = await supabase
-          .from('user_children')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .eq('user_source', 'profile');
-        if (!cancelled && childCount && childCount > 0) setHasChildren(true);
-      } catch { /* ignore */ }
+      // Fallback: direct REST calls using GoTrue localStorage token
+      if (!profileLoaded && !cancelled) {
+        try {
+          const ref = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0];
+          const storageKey = `sb-${ref}-auth-token`;
+          const stored = localStorage.getItem(storageKey);
+          const token = stored ? JSON.parse(stored)?.access_token : null;
+
+          if (token) {
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+            const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+            const headers = { 'apikey': anonKey, 'Authorization': `Bearer ${token}` };
+
+            const [profileRes, childRes] = await Promise.all([
+              fetch(
+                `${supabaseUrl}/rest/v1/profiles?select=primary_timezone,childcare_mode_enabled,email_unsubscribe_token&id=eq.${userId}&limit=1`,
+                { headers }
+              ),
+              fetch(
+                `${supabaseUrl}/rest/v1/user_children?select=id&user_id=eq.${userId}&user_source=eq.profile&limit=1`,
+                { headers }
+              ),
+            ]);
+
+            if (!cancelled && profileRes.ok) {
+              const profiles = await profileRes.json();
+              const profile = profiles?.[0];
+              if (profile) {
+                if (profile.primary_timezone) setTimezone(profile.primary_timezone);
+                if (profile.childcare_mode_enabled) {
+                  setChildcareEnabled(true);
+                  try { localStorage.setItem('flaneur-family-corner-enabled', 'true'); } catch { /* ignore */ }
+                }
+                if (profile.email_unsubscribe_token) setPrefsToken(profile.email_unsubscribe_token);
+              }
+            }
+            if (!cancelled && childRes.ok) {
+              const children = await childRes.json();
+              if (Array.isArray(children) && children.length > 0) setHasChildren(true);
+            }
+          }
+        } catch {
+          // Direct REST also failed - graceful degradation
+        }
+      }
+
+      // Check children via Supabase client (if not already loaded by REST fallback)
+      if (profileLoaded) {
+        try {
+          const { count: childCount } = await supabase
+            .from('user_children')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .eq('user_source', 'profile');
+          if (!cancelled && childCount && childCount > 0) setHasChildren(true);
+        } catch { /* ignore */ }
+      }
 
       if (!cancelled) {
         setIsSubscribed(localStorage.getItem('flaneur-newsletter-subscribed') === 'true');

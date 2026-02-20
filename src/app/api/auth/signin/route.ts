@@ -65,7 +65,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No session created' }, { status: 500 });
     }
 
-    // Build response with full session data
+    // Fetch user's neighborhood preferences + profile server-side (service role key,
+    // no navigator.locks). Returned to client so login page can write to localStorage
+    // before redirect — ensures feed renders with correct neighborhoods immediately.
+    let neighborhoodIds: string[] = [];
+    let isSubscribed = false;
+    try {
+      const userId = tokenData.user?.id;
+      if (userId) {
+        const [prefsRes, subRes] = await Promise.all([
+          fetch(
+            `${supabaseUrl}/rest/v1/user_neighborhood_preferences?select=neighborhood_id,sort_order&order=sort_order.asc&user_id=eq.${userId}`,
+            { headers: { 'apikey': serviceRoleKey, 'Authorization': `Bearer ${serviceRoleKey}` } }
+          ),
+          fetch(
+            `${supabaseUrl}/rest/v1/newsletter_subscribers?select=id&email=eq.${encodeURIComponent(email)}&limit=1`,
+            { headers: { 'apikey': serviceRoleKey, 'Authorization': `Bearer ${serviceRoleKey}` } }
+          ),
+        ]);
+        if (prefsRes.ok) {
+          const prefs = await prefsRes.json();
+          neighborhoodIds = prefs.map((p: { neighborhood_id: string }) => p.neighborhood_id);
+        }
+        if (subRes.ok) {
+          const subs = await subRes.json();
+          isSubscribed = Array.isArray(subs) && subs.length > 0;
+        }
+      }
+    } catch {
+      // Non-critical — client-side sync will fill later
+    }
+
+    // Build response with full session data + user state
     const response = NextResponse.json({
       access_token: tokenData.access_token,
       refresh_token: tokenData.refresh_token,
@@ -73,6 +104,8 @@ export async function POST(request: NextRequest) {
       expires_at: tokenData.expires_at,
       token_type: tokenData.token_type || 'bearer',
       user: tokenData.user,
+      neighborhood_ids: neighborhoodIds,
+      is_subscribed: isSubscribed,
     });
 
     // Set auth cookies directly in the response (bypasses setSession's getUser hang)
