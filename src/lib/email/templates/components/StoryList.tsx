@@ -22,6 +22,20 @@ interface StoryListProps {
   variant?: 'primary' | 'default';
 }
 
+function ShareLinks({ story }: { story: EmailStory }) {
+  const text = encodeURIComponent(story.headline);
+  const url = encodeURIComponent(story.articleUrl);
+  const xUrl = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+  const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+  return (
+    <Text style={shareRow}>
+      <Link href={xUrl} style={shareLink}>Share on X</Link>
+      <span style={shareDot}>{' '}&middot;{' '}</span>
+      <Link href={fbUrl} style={shareLink}>Facebook</Link>
+    </Text>
+  );
+}
+
 export function StoryList({ stories, variant = 'default' }: StoryListProps) {
   if (stories.length === 0) return null;
 
@@ -45,6 +59,7 @@ export function StoryList({ stories, variant = 'default' }: StoryListProps) {
               {truncateAtSentence(story.previewText, 160)}
             </Text>
           )}
+          {isPrimary && i === 0 && <ShareLinks story={story} />}
         </Section>
       ))}
     </Section>
@@ -112,4 +127,21 @@ const locationTag = {
   fontWeight: '400' as const,
   color: '#bbbbbb',
   letterSpacing: '0.05em',
+};
+
+const shareRow = {
+  fontSize: '12px',
+  margin: '8px 0 0',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+  color: '#bbbbbb',
+};
+
+const shareLink = {
+  color: '#999999',
+  textDecoration: 'none' as const,
+  fontSize: '12px',
+};
+
+const shareDot = {
+  color: '#cccccc',
 };
