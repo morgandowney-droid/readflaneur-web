@@ -96,9 +96,24 @@ export function useNeighborhoodPreferences(): {
           if (ids && ids.length > 0) {
             syncLocal(ids);
           } else if (ids !== null) {
-            // Logged in but DB is empty - clear local
-            localStorage.removeItem(PREFS_KEY);
-            document.cookie = `${COOKIE_KEY}=;path=/;max-age=0;SameSite=Strict`;
+            // Logged in but DB is empty. Don't clear localStorage —
+            // user may have neighborhoods from before they signed up.
+            // Instead, push localStorage to DB to bootstrap preferences.
+            const stored = localStorage.getItem(PREFS_KEY);
+            if (stored) {
+              try {
+                const localIds = JSON.parse(stored) as string[];
+                if (localIds.length > 0) {
+                  // Fire-and-forget: push local prefs to DB
+                  fetch('/api/neighborhoods/sync-to-db', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ neighborhoodIds: localIds }),
+                    credentials: 'same-origin',
+                  }).catch(() => {});
+                }
+              } catch { /* ignore */ }
+            }
           }
           // ids === null means not authenticated, keep localStorage as-is
         }
