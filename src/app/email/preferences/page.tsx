@@ -84,7 +84,6 @@ const TOPIC_GROUPS: { group: string; topics: TopicDef[] }[] = [
     topics: [
       { label: 'Heritage Watch', description: 'Landmark and preservation alerts' },
       { label: 'Community Watch', description: 'Quality-of-life issue reports' },
-      { label: 'Social Calendar', description: 'Charity galas and society events' },
       { label: 'Civic Alert', description: 'Community board meeting controversies' },
       { label: 'Set Life', description: 'Film and TV production in your neighborhood' },
     ],

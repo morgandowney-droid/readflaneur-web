@@ -196,7 +196,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                     <TranslatedHeadline articleId={article.id} headline={cleanArticleHeadline(article.headline)} />
                   </h1>
                   <p className="text-xs text-fg-muted">
-                    {formatRelativeTime(article.created_at, 'en', article.neighborhood?.timezone)}
+                    {formatRelativeTime(
+                      article.article_type === 'look_ahead' ? (article.published_at || article.created_at) : article.created_at,
+                      'en', article.neighborhood?.timezone
+                    )}
                   </p>
                 </>
               );
@@ -223,7 +226,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                     </>
                   )}
                   <span>&middot;</span>
-                  <span>{formatRelativeTime(article.created_at, 'en', article.neighborhood?.timezone)}</span>
+                  <span>{formatRelativeTime(
+                    article.article_type === 'look_ahead' ? (article.published_at || article.created_at) : article.created_at,
+                    'en', article.neighborhood?.timezone
+                  )}</span>
                   {article.category_label && (
                     <>
                       <span>&middot;</span>
