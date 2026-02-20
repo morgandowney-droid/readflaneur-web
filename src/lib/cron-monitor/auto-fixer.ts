@@ -168,7 +168,7 @@ export async function batchFixMissingBriefs(
   // Fetch neighborhood details in one query
   const { data: neighborhoods, error: fetchErr } = await supabase
     .from('neighborhoods')
-    .select('id, name, city, country, is_combo')
+    .select('id, name, city, country, timezone, is_combo')
     .in('id', neighborhoodIds);
 
   if (fetchErr || !neighborhoods) {
@@ -199,6 +199,8 @@ export async function batchFixMissingBriefs(
         searchName,
         hood.city,
         hood.country,
+        undefined,
+        hood.timezone,
       );
 
       if (!brief) {

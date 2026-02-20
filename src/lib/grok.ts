@@ -70,7 +70,8 @@ export async function generateNeighborhoodBrief(
   neighborhoodName: string,
   city: string,
   country?: string,
-  nycDataContext?: string
+  nycDataContext?: string,
+  timezone?: string
 ): Promise<NeighborhoodBrief | null> {
   const apiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
 
@@ -82,7 +83,19 @@ export async function generateNeighborhoodBrief(
   const location = country
     ? getSearchLocation(neighborhoodName, city, country)
     : `${neighborhoodName}, ${city}`;
-  const searchQuery = `What is happening in ${location} today? Local news, events, restaurant openings, community happenings.`;
+
+  // Calculate the local "today" date in the neighborhood's timezone
+  const tz = timezone || 'America/New_York';
+  const now = new Date();
+  const localDateStr = now.toLocaleDateString('en-US', {
+    timeZone: tz,
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const searchQuery = `What is happening in ${location} today ${localDateStr}? Local news, events, restaurant openings, community happenings.`;
 
   try {
     // Use the Responses API with built-in search tools
@@ -98,6 +111,8 @@ export async function generateNeighborhoodBrief(
           {
             role: 'system',
             content: `You are a local news researcher for ${location}. Your job is to find factual, recent news and happenings in the neighborhood by searching X and the web thoroughly.
+
+IMPORTANT DATE CONTEXT: Today's date in ${location} is ${localDateStr}. When you say "today", you mean ${localDateStr}. All date references must match this local date.
 
 Search for recent posts and news about ${location}. Focus on:
 - Restaurant/bar/cafe openings or closings

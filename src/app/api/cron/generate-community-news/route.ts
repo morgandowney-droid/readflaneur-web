@@ -346,7 +346,7 @@ export async function GET(request: Request) {
   // Get active neighborhoods (id is used as slug)
   let query = supabase
     .from('neighborhoods')
-    .select('id, name, city, country, is_combo')
+    .select('id, name, city, country, timezone, is_combo')
     .eq('is_active', true)
     .order('name')
     .limit(batchSize);
@@ -430,7 +430,7 @@ export async function GET(request: Request) {
               hood.id,
               hood.city,
               hood.country,
-              { articleType: 'weekly_recap' }
+              { articleType: 'weekly_recap', timezone: hood.timezone }
             );
             if (enrichResult.rawResponse) {
               enrichedContent = enrichResult.rawResponse;

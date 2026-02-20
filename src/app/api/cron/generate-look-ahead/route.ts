@@ -295,6 +295,7 @@ export async function GET(request: Request) {
             {
               articleType: 'look_ahead',
               modelOverride: 'gemini-2.5-flash',
+              timezone: tz,
               date: tomorrowDateStr,
               // Set briefGeneratedAt to tomorrow 7 AM UTC as approximate
               // The enricher replaces the time portion with "7:00 AM" anyway

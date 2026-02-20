@@ -287,7 +287,9 @@ export async function POST(request: NextRequest) {
         const brief = await generateNeighborhoodBrief(
           validation.name,
           validation.city,
-          validation.country
+          validation.country,
+          undefined,
+          validation.timezone,
         );
 
         if (brief) {
@@ -328,7 +330,7 @@ export async function POST(request: NextRequest) {
           neighborhoodId,
           validation.city,
           validation.country,
-          { briefGeneratedAt: new Date().toISOString() }
+          { briefGeneratedAt: new Date().toISOString(), timezone: validation.timezone }
         );
 
         if (enriched) {

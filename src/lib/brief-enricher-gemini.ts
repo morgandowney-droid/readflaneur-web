@@ -104,6 +104,8 @@ export async function enrichBriefWithGemini(
     date?: string;
     /** ISO timestamp of when the brief was generated (for correct "today"/"tomorrow" context) */
     briefGeneratedAt?: string;
+    /** IANA timezone string (e.g., 'Asia/Tokyo') - use this instead of country-based lookup */
+    timezone?: string;
     /** Article type determines writing style: 'daily_brief' includes casual intro/outro, 'weekly_recap' is direct, 'look_ahead' is forward-looking */
     articleType?: 'daily_brief' | 'weekly_recap' | 'look_ahead';
     /** Override the model ID (used by Pro-first-Flash-fallback strategy) */
@@ -126,8 +128,9 @@ export async function enrichBriefWithGemini(
     ? new Date(options.briefGeneratedAt)
     : new Date();
 
-  // Get timezone name based on country
-  const timezoneMap: Record<string, string> = {
+  // Use the IANA timezone from DB (e.g., 'Asia/Tokyo') directly.
+  // Fall back to country-based lookup only if timezone not provided.
+  const countryTimezoneMap: Record<string, string> = {
     'Sweden': 'Europe/Stockholm',
     'USA': 'America/New_York',
     'France': 'Europe/Paris',
@@ -135,8 +138,42 @@ export async function enrichBriefWithGemini(
     'Spain': 'Europe/Madrid',
     'Italy': 'Europe/Rome',
     'UK': 'Europe/London',
+    'Japan': 'Asia/Tokyo',
+    'Australia': 'Australia/Sydney',
+    'Singapore': 'Asia/Singapore',
+    'UAE': 'Asia/Dubai',
+    'South Africa': 'Africa/Johannesburg',
+    'Brazil': 'America/Sao_Paulo',
+    'Mexico': 'America/Mexico_City',
+    'India': 'Asia/Kolkata',
+    'China': 'Asia/Shanghai',
+    'South Korea': 'Asia/Seoul',
+    'Thailand': 'Asia/Bangkok',
+    'Netherlands': 'Europe/Amsterdam',
+    'Ireland': 'Europe/Dublin',
+    'Portugal': 'Europe/Lisbon',
+    'Switzerland': 'Europe/Zurich',
+    'Austria': 'Europe/Vienna',
+    'Denmark': 'Europe/Copenhagen',
+    'Norway': 'Europe/Oslo',
+    'Finland': 'Europe/Helsinki',
+    'Belgium': 'Europe/Brussels',
+    'Greece': 'Europe/Athens',
+    'Turkey': 'Europe/Istanbul',
+    'Israel': 'Asia/Jerusalem',
+    'Canada': 'America/Toronto',
+    'Argentina': 'America/Argentina/Buenos_Aires',
+    'Chile': 'America/Santiago',
+    'Colombia': 'America/Bogota',
+    'New Zealand': 'Pacific/Auckland',
+    'Hong Kong': 'Asia/Hong_Kong',
+    'Taiwan': 'Asia/Taipei',
+    'Philippines': 'Asia/Manila',
+    'Indonesia': 'Asia/Jakarta',
+    'Malaysia': 'Asia/Kuala_Lumpur',
+    'Vietnam': 'Asia/Ho_Chi_Minh',
   };
-  const timezone = timezoneMap[country] || 'America/New_York';
+  const timezone = options?.timezone || countryTimezoneMap[country] || 'America/New_York';
 
   // Format date for display (use neighborhood's timezone, not server timezone)
   const dateStr = options?.date || contextTime.toLocaleDateString('en-US', {
@@ -188,7 +225,8 @@ export async function enrichBriefWithGemini(
   // System instruction varies by article type
   const basePersona = `You are a well-travelled, successful 35-year-old who has lived in ${neighborhoodName}, ${city} for years. You know every corner of the neighborhood - the hidden gems, the local drama, the new openings before anyone else does.
 
-CRITICAL CONTEXT - CURRENT TIME: It is currently ${contextTimeStr}. When you refer to "today", "tomorrow", "this week", etc., use this timestamp as your reference point. This is when readers will see your update.
+CRITICAL CONTEXT - CURRENT TIME: It is currently ${contextTimeStr} in ${neighborhoodName}. The LOCAL date today is ${dateStr}. When you refer to "today", "tomorrow", "this week", etc., use this timestamp as your reference point. This is when readers will see your update.
+DATE CORRECTION: The source material below may reference dates/days from when data was collected (which could be a different calendar day in a different timezone). You MUST correct ALL date references to match the LOCAL date above. If the source says "Friday" but the local date is a Saturday, write "Saturday". If the source says "February 20" but the local date is February 21, write "February 21". The local date is always authoritative.
 
 IMPORTANT: Your response will be published directly to readers in a neighborhood newsletter. You are NOT responding to the person who submitted this query - you are writing content for third-party readers who live in ${neighborhoodName}.`;
 

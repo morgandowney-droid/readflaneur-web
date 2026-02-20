@@ -297,6 +297,7 @@ export async function GET(request: Request) {
               hood.country || 'USA',
               {
                 briefGeneratedAt: brief.generated_at,
+                timezone: hood.timezone,
                 modelOverride: MODEL_PRO,
                 continuityContext: continuityItems.length > 0 ? continuityItems : undefined,
               }
@@ -367,7 +368,8 @@ export async function GET(request: Request) {
           name,
           id,
           city,
-          country
+          country,
+          timezone
         )
       `)
       .eq('status', 'published')
@@ -394,7 +396,8 @@ export async function GET(request: Request) {
             name,
             id,
             city,
-            country
+            country,
+            timezone
           )
         `)
         .eq('id', testArticleId);
@@ -424,6 +427,7 @@ export async function GET(request: Request) {
             id: string;
             city: string;
             country: string;
+            timezone: string;
           };
 
           if (!hood) {
@@ -440,6 +444,7 @@ export async function GET(request: Request) {
             hood.country || 'USA',
             {
               briefGeneratedAt: article.published_at,
+              timezone: hood.timezone,
               articleType: 'weekly_recap',
               modelOverride: MODEL_FLASH,
             }

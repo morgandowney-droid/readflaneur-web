@@ -270,12 +270,13 @@ export async function GET(request: Request) {
         }
       }
 
-      // Generate brief using Grok
+      // Generate brief using Grok (pass timezone for correct local date context)
       const brief = await generateNeighborhoodBrief(
         searchName,
         hood.city,
         hood.country,
-        nycDataContext
+        nycDataContext,
+        hood.timezone
       );
 
       if (!brief) {

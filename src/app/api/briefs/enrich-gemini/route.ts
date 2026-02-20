@@ -39,7 +39,8 @@ export async function POST(request: Request) {
             name,
             id,
             city,
-            country
+            country,
+            timezone
           )
         `)
         .eq('id', briefId)
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const hood = brief.neighborhoods as unknown as { name: string; id: string; city: string; country: string };
+      const hood = brief.neighborhoods as unknown as { name: string; id: string; city: string; country: string; timezone: string };
 
       // Enrich with Gemini, passing the brief's generation timestamp for correct time context
       const result = await enrichBriefWithGemini(
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
         hood.country || 'USA',
         {
           briefGeneratedAt: brief.generated_at,
+          timezone: hood.timezone,
         }
       );
 
