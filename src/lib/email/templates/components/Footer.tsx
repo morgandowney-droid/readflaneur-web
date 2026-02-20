@@ -10,6 +10,12 @@ export function Footer({ unsubscribeUrl, preferencesUrl, referralUrl }: FooterPr
   return (
     <Section style={container}>
       <Hr style={divider} />
+      <Text style={forwardedText}>
+        Was this forwarded to you?{' '}
+        <Link href="https://readflaneur.com" style={forwardedLink}>Subscribe here</Link>
+        {' '}— it&apos;s free.
+      </Text>
+      <Hr style={lightDivider} />
       <Text style={footerText}>
         You are receiving this because you subscribed to{' '}
         <Link href="https://readflaneur.com" style={link}>Flaneur</Link>.
@@ -40,6 +46,26 @@ const container = {
 const divider = {
   borderTop: '1px solid #e5e5e5',
   margin: '0 0 16px',
+};
+
+const lightDivider = {
+  borderTop: '1px solid #f0f0f0',
+  margin: '0 0 12px',
+};
+
+const forwardedText = {
+  fontSize: '14px',
+  color: '#666666',
+  textAlign: 'center' as const,
+  margin: '0 0 12px',
+  lineHeight: '1.5',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const forwardedLink = {
+  color: '#171717',
+  fontWeight: 600 as const,
+  textDecoration: 'underline',
 };
 
 const footerText = {

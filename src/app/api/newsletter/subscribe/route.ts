@@ -130,10 +130,42 @@ function buildMagicLinkEmail(actionLink: string): string {
           </tr>
           <!-- CTA Button -->
           <tr>
-            <td align="center" style="padding-bottom:40px;">
+            <td align="center" style="padding-bottom:48px;">
               <a href="${actionLink}" style="display:inline-block; background-color:#ffffff; color:#171717; padding:14px 32px; font-size:14px; font-weight:600; text-decoration:none; border-radius:6px; letter-spacing:0.05em;">
                 Verify Email
               </a>
+            </td>
+          </tr>
+          <!-- Deliverability Coaching -->
+          <tr>
+            <td style="padding-bottom:12px;">
+              <div style="width:32px; height:1px; background-color:#525252; margin:0 auto;"></div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom:8px; color:#a3a3a3; font-size:15px; line-height:1.6; text-align:center; font-family:'Playfair Display',Georgia,serif;">
+              Make sure Flaneur lands in your inbox
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom:32px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding:8px 0; color:#737373; font-size:13px; line-height:1.6;">
+                    <strong style="color:#a3a3a3;">Gmail:</strong> Move this email to your Primary tab. On mobile, tap the three dots and select &ldquo;Move to&rdquo; &rarr; &ldquo;Primary.&rdquo;
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0; color:#737373; font-size:13px; line-height:1.6;">
+                    <strong style="color:#a3a3a3;">Apple Mail:</strong> Tap on our email address at the top and select &ldquo;Add to VIPs.&rdquo;
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0; color:#737373; font-size:13px; line-height:1.6;">
+                    <strong style="color:#a3a3a3;">Everyone else:</strong> Add hello@readflaneur.com to your contacts.
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           <!-- Footer -->
