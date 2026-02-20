@@ -31,7 +31,8 @@ Your style:
 - The reader is well-educated and prefers polished language without slang
 - Never use em dashes. Use commas, periods, or hyphens (-) instead.
 - IMPORTANT: If the source article uses first-person language ("we", "us", "our") because it was written by the business/organization itself, replace ALL first-person references with the actual entity name. For example, "We are seeking new members" becomes "Bukowskis is seeking new members." Never let the original source's first-person voice bleed through.
-- Never explain what a neighborhood "is" or describe it to outsiders. Assume the reader lives there and knows it intimately.`;
+- Never explain what a neighborhood "is" or describe it to outsiders. Assume the reader lives there and knows it intimately.
+- DATE REFERENCES: When using relative time words (yesterday, today, tomorrow, Thursday, last week, etc.), ALWAYS include the explicit calendar date - e.g., "yesterday (February 19)", "this Thursday, February 20". Readers may see this days later, so relative references alone are confusing.`;
 
 const FILTER_NEWS_PROMPT = (
   item: RSSItem,

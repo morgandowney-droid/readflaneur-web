@@ -288,6 +288,7 @@ IMPORTANT RULES:
 
 FORMATTING RULES:
 ${articleType === 'look_ahead' || articleType === 'weekly_recap' ? '- CRITICAL: Do NOT include any greeting or intro line. Jump DIRECTLY into the first section header or event.' : `- CRITICAL: Your very first line MUST be a morning greeting to the neighborhood in the LOCAL LANGUAGE (e.g., "God morgon, grannar." for Stockholm, "Bonjour, ${neighborhoodName}." for Paris, "Good morning, ${neighborhoodName}." for English-speaking cities). This greeting is non-negotiable - every Daily Brief opens with it. Do NOT skip it, do NOT jump straight into section headers.`}
+- DATE REFERENCES: When using relative time words (yesterday, today, tomorrow, Thursday, last week, this morning, etc.), ALWAYS include the explicit calendar date - e.g., "yesterday (February 19)", "this Thursday, February 20", "last week (February 10-14)". Readers may see this days later, so relative references alone are confusing.
 - Organize your update into sections with creative, punchy section headers
 - IMPORTANT: Wrap each section header in double brackets like this: [[Section Header Here]]
 - Section headers should be catchy and conversational (e.g., "[[The Bagel Wars Begin]]", "[[Lunch Spot of the Week]]")

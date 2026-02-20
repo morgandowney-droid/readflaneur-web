@@ -158,7 +158,7 @@ export async function GET(request: Request) {
         }
 
         // Insert article
-        const { error: insertError } = await supabase.from('articles').insert({
+        const { data: newArticle, error: insertError } = await supabase.from('articles').insert({
           neighborhood_id: dbNeighborhoodId,
           headline: story.headline,
           body_text: story.body,
@@ -173,11 +173,22 @@ export async function GET(request: Request) {
           category_label: 'Blotter',
           enriched_at: new Date().toISOString(),
           enrichment_model: 'gemini-2.5-flash',
-        });
+        }).select('id').single();
 
         if (insertError) {
           results.errors.push(`${dbNeighborhoodId}: ${insertError.message}`);
           continue;
+        }
+
+        // Insert sources from incident data
+        if (newArticle && story.sources.length > 0) {
+          const sourceRows = story.sources.map(s => ({
+            article_id: newArticle.id,
+            source_name: s.name,
+            source_type: s.type,
+          }));
+          await supabase.from('article_sources').insert(sourceRows)
+            .then(null, (e: Error) => console.error(`Failed to insert sources for ${newArticle.id}:`, e));
         }
 
         results.articles_created++;

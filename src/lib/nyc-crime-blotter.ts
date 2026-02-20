@@ -28,6 +28,11 @@ export interface BlotterIncident {
   source?: string;
 }
 
+export interface BlotterSource {
+  name: string;
+  type: 'publication' | 'x_user' | 'platform';
+}
+
 export interface BlotterStory {
   neighborhoodId: string;
   neighborhoodName: string;
@@ -36,6 +41,7 @@ export interface BlotterStory {
   previewText: string;
   incidentCount: number;
   generatedAt: string;
+  sources: BlotterSource[];
 }
 
 /**
@@ -136,7 +142,8 @@ Writing Style:
 - Each incident gets 1-2 sentences
 - Lead with the most serious incident
 - No emojis, no editorializing
-- Do NOT speculate about motives or suspects beyond what is reported`;
+- Do NOT speculate about motives or suspects beyond what is reported
+- DATE REFERENCES: When using relative time words (yesterday, today, overnight, Thursday, etc.), ALWAYS include the explicit calendar date - e.g., "yesterday (February 19)", "overnight Tuesday (February 18)". Readers may see this days later.`;
 
   const prompt = `Based on these incidents reported in ${neighborhoodName} in the last 24 hours, write a brief crime blotter.
 
@@ -179,6 +186,23 @@ Include 1-3 link_candidates for key locations or venues mentioned.`;
       });
     }
 
+    // Collect unique sources from incidents
+    const sourceMap = new Map<string, BlotterSource>();
+    for (const incident of incidents) {
+      if (incident.source) {
+        const name = incident.source.trim();
+        if (!name) continue;
+        const isXUser = name.startsWith('@') || name.toLowerCase().includes('nypd') && name.startsWith('@');
+        sourceMap.set(name.toLowerCase(), {
+          name,
+          type: isXUser ? 'x_user' : 'publication',
+        });
+      }
+    }
+    const sources = sourceMap.size > 0
+      ? Array.from(sourceMap.values())
+      : [{ name: 'Local news & police reports', type: 'platform' as const }];
+
     return {
       neighborhoodId,
       neighborhoodName,
@@ -187,6 +211,7 @@ Include 1-3 link_candidates for key locations or venues mentioned.`;
       previewText: parsed.previewText || `Crime and safety activity in ${neighborhoodName}.`,
       incidentCount: incidents.length,
       generatedAt: new Date().toISOString(),
+      sources,
     };
   } catch (error) {
     console.error('Blotter story generation error:', error);

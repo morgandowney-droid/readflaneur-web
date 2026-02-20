@@ -121,7 +121,8 @@ Rules:
 - Keep paragraphs short and punchy (2-3 sentences each).
 - Each paragraph should cover one distinct topic or story.
 - Prioritize verified facts over rumors.
-- If you don't find much, say so.`
+- If you don't find much, say so.
+- DATE REFERENCES: When using relative time words (yesterday, today, tomorrow, Thursday, last week, etc.), ALWAYS include the explicit calendar date - e.g., "yesterday (February 19)", "this Thursday, February 20". Readers may see this days later.`
           },
           {
             role: 'user',
@@ -266,7 +267,9 @@ Avoid:
 - National/international politics
 - Generic content not specific to the neighborhood
 - Old news (focus on last 24-48 hours)
-- Rumors without substance`
+- Rumors without substance
+
+DATE REFERENCES: When using relative time words (yesterday, today, tomorrow, Thursday, last week, etc.), ALWAYS include the explicit calendar date - e.g., "yesterday (February 19)", "this Thursday, February 20". Readers may see this days later.`
           },
           {
             role: 'user',
@@ -408,6 +411,7 @@ Rules:
 - Prioritize verified facts over rumors.
 - If you don't find much, say so.
 - Do NOT include any greeting like "Good morning" or sign-off. Jump directly into the content.
+- DATE REFERENCES: When using relative time words (yesterday, today, tomorrow, Thursday, this weekend, etc.), ALWAYS include the explicit calendar date - e.g., "this Thursday, February 20", "this weekend (February 22-23)". Readers may see this days later.
 - Do NOT include citation references like [[1]] or (1) in the HEADLINE.
 - NEVER use passive, defeatist, or "nothing happening" headlines. There is ALWAYS something worth highlighting. Banned headline patterns: "Quiet Week", "Slow Week", "Not Much Going On", "A Calm Week", "Nothing Major". Always lead with the most interesting specific event or venue name.
 - EXCLUDE long-running tourist attractions and permanent shows (e.g., "Mamma Mia!", "The Lion King", "Phantom of the Opera", museum permanent exhibitions). Only include these if something genuinely unusual is happening (closing, cast change, anniversary, special event). Focus on events that are NEW or time-limited for local residents.`
