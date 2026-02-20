@@ -222,6 +222,7 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
               <LookAheadCard
                 neighborhoodId={neighborhoodData.id}
                 neighborhoodName={neighborhoodData.name}
+                city={neighborhoodData.city}
               />
             </>
           ) : undefined}

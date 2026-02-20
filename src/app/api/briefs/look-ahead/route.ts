@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     const { data: articles } = await supabase
       .from('articles')
-      .select('slug')
+      .select('slug, headline, body_text, preview_text, published_at')
       .eq('neighborhood_id', neighborhoodId)
       .eq('status', 'published')
       .eq('article_type', 'look_ahead')
@@ -36,11 +36,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ url: null });
     }
 
+    const article = articles[0];
     const citySlug = getCitySlugFromId(neighborhoodId);
     const neighborhoodSlug = getNeighborhoodSlugFromId(neighborhoodId);
 
     return NextResponse.json({
-      url: `/${citySlug}/${neighborhoodSlug}/${articles[0].slug}`,
+      url: `/${citySlug}/${neighborhoodSlug}/${article.slug}`,
+      headline: article.headline,
+      bodyText: article.body_text,
+      previewText: article.preview_text,
+      publishedAt: article.published_at,
     });
   } catch {
     return NextResponse.json({ url: null });

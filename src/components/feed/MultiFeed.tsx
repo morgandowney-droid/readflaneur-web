@@ -648,6 +648,7 @@ export function MultiFeed({
                 <LookAheadCard
                   neighborhoodId={neighborhoods[0].id}
                   neighborhoodName={neighborhoods[0].name}
+                  city={neighborhoods[0].city}
                 />
                 <p className="text-xs text-fg-muted mt-2 px-4">
                   {t('feed.dailyBriefForPrimary')} <span className="text-fg-subtle">{neighborhoods[0].name}</span>
@@ -680,6 +681,7 @@ export function MultiFeed({
           <LookAheadCard
             neighborhoodId={fetchedBrief.neighborhoodId}
             neighborhoodName={fetchedBrief.neighborhoodName}
+            city={fetchedBrief.city}
           />
         </div>
       ) : null}

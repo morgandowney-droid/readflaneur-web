@@ -164,8 +164,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       <ArticleViewTracker articleId={article.id} neighborhoodId={article.neighborhood_id} />
 
       <div className="mx-auto max-w-2xl">
-        {/* Back link - goes to main feed (user's neighborhoods loaded from localStorage) */}
-        <BackToFeedLink />
+        {/* Back link - goes to this neighborhood's feed */}
+        <BackToFeedLink citySlug={city} neighborhoodSlug={neighborhood} />
 
         {/* Top Story Open Ad */}
         <div className="mb-8">
@@ -420,7 +420,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
         {/* More stories */}
         <div className="mt-12 pt-8 border-t border-border text-center">
-          <MoreStoriesButton />
+          <MoreStoriesButton citySlug={city} neighborhoodSlug={neighborhood} />
         </div>
 
         {/* Explore nearby neighborhoods */}
