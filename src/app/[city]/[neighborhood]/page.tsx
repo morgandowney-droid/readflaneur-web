@@ -217,6 +217,7 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
                 enrichedContent={brief.enriched_content || undefined}
                 enrichedCategories={brief.enriched_categories || undefined}
                 enrichedAt={brief.enriched_at || undefined}
+                shareUrl={`/${city}/${neighborhood}`}
               />
               <LookAheadCard
                 neighborhoodId={neighborhoodData.id}

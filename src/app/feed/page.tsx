@@ -345,6 +345,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
                   enrichedContent={brief.enriched_content || undefined}
                   enrichedCategories={brief.enriched_categories || undefined}
                   enrichedAt={brief.enriched_at || undefined}
+                  shareUrl={`/${getCitySlugFromId(singleNeighborhood.id)}/${getNeighborhoodSlugFromId(singleNeighborhood.id)}`}
                 />
               ) : undefined}
             />
@@ -399,6 +400,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
                   enrichedContent={multiBrief.enriched_content || undefined}
                   enrichedCategories={multiBrief.enriched_categories || undefined}
                   enrichedAt={multiBrief.enriched_at || undefined}
+                  shareUrl={`/${getCitySlugFromId(multiBrief.neighborhood.id)}/${getNeighborhoodSlugFromId(multiBrief.neighborhood.id)}`}
                 />
               ) : undefined}
               loadMoreAll={hasMoreArticles && neighborhoodIds.length > 0 ? (

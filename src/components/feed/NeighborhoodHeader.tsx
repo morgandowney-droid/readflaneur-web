@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { ReactNode, useState, useEffect, useRef } from 'react';
-import { getWikipediaUrl, getMapLocation, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
+import { getWikipediaUrl, getMapLocation, getNeighborhoodSlugFromId, getCitySlugFromId } from '@/lib/neighborhood-utils';
+import { ShareButton } from '@/components/ui/ShareButton';
 import { ComboInfo } from '@/lib/combo-utils';
 import { NeighborhoodLiveStatus } from './NeighborhoodLiveStatus';
 import { ContextSwitcher } from './ContextSwitcher';
@@ -133,6 +134,13 @@ export function NeighborhoodHeader({
                   >
                     {t('header.history')}
                   </a>
+                  <ShareButton
+                    variant="text"
+                    title={neighborhoodName}
+                    text={`Stories from ${neighborhoodName}`}
+                    url={`/${getCitySlugFromId(neighborhoodId)}/${getNeighborhoodSlugFromId(neighborhoodId)}`}
+                    className="text-xs text-fg-subtle underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60 hover:text-fg-muted transition-colors"
+                  />
                 </>
               ) : '\u00A0'}
             </p>
@@ -284,6 +292,13 @@ export function NeighborhoodHeader({
                           </div>
                         )}
                       </div>
+                      <ShareButton
+                        variant="text"
+                        title={neighborhoodName}
+                        text={`Stories from ${neighborhoodName}`}
+                        url={`/${citySlug}/${neighborhoodSlug}`}
+                        className={linkClass}
+                      />
                     </>
                   ) : (
                     <>
@@ -306,6 +321,13 @@ export function NeighborhoodHeader({
                       >
                         {t('header.history').toUpperCase()}
                       </a>
+                      <ShareButton
+                        variant="text"
+                        title={neighborhoodName}
+                        text={`Stories from ${neighborhoodName}`}
+                        url={`/${citySlug}/${neighborhoodSlug}`}
+                        className={linkClass}
+                      />
                     </>
                   )}
                 </div>
@@ -350,6 +372,13 @@ export function NeighborhoodHeader({
                       >
                         {t('header.history')}
                       </a>
+                      <ShareButton
+                        variant="text"
+                        title={neighborhoodName}
+                        text={`Stories from ${neighborhoodName}`}
+                        url={`/${citySlug}/${neighborhoodSlug}`}
+                        className="block w-full text-left px-4 py-2 text-xs tracking-[0.2em] uppercase text-fg-muted hover:text-fg hover:bg-hover"
+                      />
                     </div>
                   )}
                 </div>

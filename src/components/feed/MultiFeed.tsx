@@ -12,6 +12,7 @@ import { injectAds, injectEmailPrompt } from '@/lib/ad-engine';
 import { NeighborhoodBrief, NeighborhoodBriefSkeleton } from './NeighborhoodBrief';
 import { LookAheadCard } from './LookAheadCard';
 import { useTranslation } from '@/hooks/useTranslation';
+import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 
 const VIEW_PREF_KEY = 'flaneur-feed-view';
 
@@ -671,6 +672,7 @@ export function MultiFeed({
             enrichedContent={fetchedBrief.enriched_content}
             enrichedCategories={fetchedBrief.enriched_categories}
             enrichedAt={fetchedBrief.enriched_at}
+            shareUrl={`/${getCitySlugFromId(fetchedBrief.neighborhoodId)}/${getNeighborhoodSlugFromId(fetchedBrief.neighborhoodId)}`}
           />
           <LookAheadCard
             neighborhoodId={fetchedBrief.neighborhoodId}

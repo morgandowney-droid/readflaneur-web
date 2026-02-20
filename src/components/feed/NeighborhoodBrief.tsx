@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, ReactNode } from 'react';
 import Link from 'next/link';
 import { useLanguageContext } from '@/components/providers/LanguageProvider';
 import { useTranslation } from '@/hooks/useTranslation';
+import { ShareButton } from '@/components/ui/ShareButton';
 
 interface BriefSource {
   title?: string;
@@ -223,6 +224,7 @@ interface NeighborhoodBriefProps {
   enrichedContent?: string;
   enrichedCategories?: EnrichedCategory[];
   enrichedAt?: string;
+  shareUrl?: string;
 }
 
 /**
@@ -309,6 +311,7 @@ export function NeighborhoodBrief({
   sources = [],
   enrichedContent,
   enrichedCategories,
+  shareUrl,
 }: NeighborhoodBriefProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { language, isTranslated } = useLanguageContext();
@@ -538,17 +541,28 @@ export function NeighborhoodBrief({
       onClick={() => { if (hasMore) setIsExpanded(!isExpanded); }}
     >
       {/* Eyebrow + Live Dot */}
-      <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-amber-600/80 mb-3">
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-        <span>
-          {(() => {
-            const d = new Date(generatedAt);
-            const weekday = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-            const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
-            const date = d.getDate();
-            return `${weekday} ${month} ${date} | ${t('feed.dailyBrief').toUpperCase()}`;
-          })()}
-        </span>
+      <div className="flex items-center justify-between gap-2 font-mono text-xs uppercase tracking-[0.2em] text-amber-600/80 mb-3">
+        <div className="flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+          <span>
+            {(() => {
+              const d = new Date(generatedAt);
+              const weekday = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+              const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+              const date = d.getDate();
+              return `${weekday} ${month} ${date} | ${t('feed.dailyBrief').toUpperCase()}`;
+            })()}
+          </span>
+        </div>
+        {shareUrl && (
+          <ShareButton
+            variant="icon"
+            title={`${neighborhoodName} Daily Brief`}
+            text={headline}
+            url={shareUrl}
+            className="text-amber-600/60 hover:text-amber-600"
+          />
+        )}
       </div>
 
       {/* Headline */}
