@@ -134,7 +134,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
                 {truncateName(article.neighborhood?.name || '')}
               </span>
               <span>&middot;</span>
-              <span>{formatRelativeTime(article.created_at, language)}</span>
+              <span>{formatRelativeTime(article.created_at, language, article.neighborhood?.timezone)}</span>
               {article.category_label && (
                 <>
                   <span>&middot;</span>
@@ -177,7 +177,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
                   {article.neighborhood?.name}
                 </span>
                 <span>&middot;</span>
-                <span>{formatRelativeTime(article.created_at, language)}</span>
+                <span>{formatRelativeTime(article.created_at, language, article.neighborhood?.timezone)}</span>
                 {article.category_label && (
                   <>
                     <span>&middot;</span>
@@ -232,7 +232,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
                 {article.neighborhood?.name}
               </span>
               <span>&middot;</span>
-              <span>{formatRelativeTime(article.created_at, language)}</span>
+              <span>{formatRelativeTime(article.created_at, language, article.neighborhood?.timezone)}</span>
               {article.category_label && (
                 <>
                   <span>&middot;</span>

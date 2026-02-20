@@ -220,7 +220,7 @@ export function MultiFeed({
       ? [activeFilter, ...activeHoodData.combo_component_ids]
       : [activeFilter];
 
-    const articlesUrl = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city)&status=eq.published&neighborhood_id=in.(${filterIds.join(',')})&order=published_at.desc.nullsfirst,created_at.desc.nullsfirst&limit=20`;
+    const articlesUrl = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city,timezone)&status=eq.published&neighborhood_id=in.(${filterIds.join(',')})&order=published_at.desc.nullsfirst,created_at.desc.nullsfirst&limit=20`;
     const adsUrl = `${supabaseUrl}/rest/v1/ads?select=*&or=(is_global.eq.true,${filterIds.map(id => `neighborhood_id.eq.${id}`).join(',')})`;
 
     Promise.all([
@@ -407,7 +407,7 @@ export function MultiFeed({
       const loadIds = loadHood?.combo_component_ids
         ? [activeFilter!, ...loadHood.combo_component_ids]
         : [activeFilter!];
-      const url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city)&status=eq.published&neighborhood_id=in.(${loadIds.join(',')})&order=published_at.desc.nullsfirst,created_at.desc.nullsfirst&offset=${articleCount}&limit=20`;
+      const url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city,timezone)&status=eq.published&neighborhood_id=in.(${loadIds.join(',')})&order=published_at.desc.nullsfirst,created_at.desc.nullsfirst&offset=${articleCount}&limit=20`;
 
       const res = await fetch(url, {
         headers: {

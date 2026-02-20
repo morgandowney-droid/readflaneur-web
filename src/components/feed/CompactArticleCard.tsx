@@ -12,9 +12,11 @@ interface CompactArticleCardProps {
   article: Article;
 }
 
-function formatDate(dateString: string, locale: string = 'en') {
+function formatDate(dateString: string, locale: string = 'en', timezone?: string) {
   const date = new Date(dateString);
-  return date.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' });
+  const opts: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric' };
+  if (timezone) opts.timeZone = timezone;
+  return date.toLocaleDateString(locale, opts);
 }
 
 /** Truncate text at the last full sentence boundary within maxLen chars */
@@ -90,7 +92,8 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
             article.article_type === 'look_ahead' && article.created_at
               ? article.created_at
               : article.published_at || article.created_at!,
-            language
+            language,
+            article.neighborhood?.timezone
           )}</span>
         </>
       )}

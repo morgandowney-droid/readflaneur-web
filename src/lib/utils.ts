@@ -14,16 +14,18 @@ export function slugify(text: string): string {
     .trim();
 }
 
-export function formatDate(date: string | Date, locale: string = 'en'): string {
-  return new Intl.DateTimeFormat(locale, {
+export function formatDate(date: string | Date, locale: string = 'en', timezone?: string): string {
+  const opts: Intl.DateTimeFormatOptions = {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  }).format(new Date(date));
+  };
+  if (timezone) opts.timeZone = timezone;
+  return new Intl.DateTimeFormat(locale, opts).format(new Date(date));
 }
 
-export function formatRelativeTime(date: string | Date, locale: string = 'en'): string {
+export function formatRelativeTime(date: string | Date, locale: string = 'en', timezone?: string): string {
   const now = new Date();
   const then = new Date(date);
   const diffMs = now.getTime() - then.getTime();
@@ -31,14 +33,19 @@ export function formatRelativeTime(date: string | Date, locale: string = 'en'): 
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
+  // Short local date in the neighborhood's timezone (e.g., "Feb 21")
+  const localDateOpts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+  if (timezone) localDateOpts.timeZone = timezone;
+  const localDate = new Intl.DateTimeFormat(locale, localDateOpts).format(then);
+
   if (diffMins < 60) {
-    return `${diffMins}m ago`;
+    return timezone ? `${diffMins}m ago · ${localDate}` : `${diffMins}m ago`;
   } else if (diffHours < 24) {
-    return `${diffHours}h ago`;
+    return timezone ? `${diffHours}h ago · ${localDate}` : `${diffHours}h ago`;
   } else if (diffDays < 7) {
-    return `${diffDays}d ago`;
+    return timezone ? `${diffDays}d ago · ${localDate}` : `${diffDays}d ago`;
   } else {
-    return formatDate(date, locale);
+    return formatDate(date, locale, timezone);
   }
 }
 

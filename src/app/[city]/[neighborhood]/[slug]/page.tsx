@@ -160,7 +160,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   return (
     <div className="py-8 px-4">
       {/* Track article view */}
-      <ArticleViewTracker articleId={article.id} />
+      <ArticleViewTracker articleId={article.id} neighborhoodId={article.neighborhood_id} />
 
       <div className="mx-auto max-w-2xl">
         {/* Back link - goes to main feed (user's neighborhoods loaded from localStorage) */}
@@ -195,7 +195,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                     <TranslatedHeadline articleId={article.id} headline={cleanArticleHeadline(article.headline)} />
                   </h1>
                   <p className="text-xs text-fg-muted">
-                    {formatRelativeTime(article.created_at)}
+                    {formatRelativeTime(article.created_at, 'en', article.neighborhood?.timezone)}
                   </p>
                 </>
               );
@@ -222,7 +222,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                     </>
                   )}
                   <span>&middot;</span>
-                  <span>{formatRelativeTime(article.created_at)}</span>
+                  <span>{formatRelativeTime(article.created_at, 'en', article.neighborhood?.timezone)}</span>
                   {article.category_label && (
                     <>
                       <span>&middot;</span>

@@ -76,7 +76,7 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
   // For combo neighborhoods, query all component neighborhood IDs
   let articlesQuery = supabase
     .from('articles')
-    .select('*, neighborhood:neighborhoods(id, name, city)')
+    .select('*, neighborhood:neighborhoods(id, name, city, timezone)')
     .in('neighborhood_id', queryIds)
     .eq('status', 'published');
 

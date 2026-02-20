@@ -89,7 +89,8 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       neighborhood:neighborhoods (
         id,
         name,
-        city
+        city,
+        timezone
       )
     `)
     .eq('status', 'published')
