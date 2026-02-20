@@ -12,6 +12,20 @@ function syncLocal(ids: string[]) {
   document.cookie = `${COOKIE_KEY}=${ids.join(',')};path=/;max-age=31536000;SameSite=Strict`;
 }
 
+/** Read user ID from GoTrue localStorage storage (bypasses navigator.locks deadlock) */
+function getUserIdFromStorage(): string | null {
+  try {
+    const ref = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0];
+    const storageKey = `sb-${ref}-auth-token`;
+    const raw = localStorage.getItem(storageKey);
+    if (raw) {
+      const session = JSON.parse(raw);
+      return session?.user?.id || null;
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
 export interface NeighborhoodPref {
   id: string;
   name: string;
@@ -85,12 +99,11 @@ export function useNeighborhoodPreferences(): {
       lastSyncRef.current = now;
 
       try {
-        const { data: { session } } = await Promise.race([
-          supabase.auth.getSession(),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
-        ]);
+        // Read user ID from GoTrue's localStorage (bypasses navigator.locks deadlock
+        // that causes getSession() to hang on mobile Safari)
+        const userId = getUserIdFromStorage();
 
-        if (session?.user) {
+        if (userId) {
           const { data: dbPrefs } = await Promise.resolve(
             supabase
               .from('user_neighborhood_preferences')
@@ -110,7 +123,7 @@ export function useNeighborhoodPreferences(): {
           }
         }
       } catch {
-        // Auth timeout or DB error - fall through to localStorage
+        // Storage read or DB error - fall through to localStorage
       }
 
       if (!cancelled) await loadFromLocal();

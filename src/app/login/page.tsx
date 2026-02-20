@@ -133,8 +133,28 @@ function LoginForm() {
 
           if (res.ok && result.access_token) {
             // Server set auth cookies via Set-Cookie headers.
-            // Also try to hydrate the in-memory client so onAuthStateChange fires.
-            // setSession may hang (getUser call), so race with 3s timeout.
+            // CRITICAL: Also write session to GoTrue's localStorage storage key.
+            // Without this, GoTrue's _initialize() (navigator.locks) resolves later,
+            // finds no session in its internal state, calls _removeSession() which
+            // clears our cookies — user appears logged out after 5-6 seconds.
+            try {
+              const ref = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0];
+              const storageKey = `sb-${ref}-auth-token`;
+              const session = {
+                access_token: result.access_token,
+                refresh_token: result.refresh_token,
+                token_type: result.token_type || 'bearer',
+                expires_in: result.expires_in,
+                expires_at: result.expires_at,
+                user: result.user,
+              };
+              localStorage.setItem(storageKey, JSON.stringify(session));
+            } catch {
+              // Non-critical
+            }
+
+            // Try to hydrate the in-memory client so onAuthStateChange fires.
+            // setSession may hang (navigator.locks), so race with 2s timeout.
             try {
               await Promise.race([
                 supabase.auth.setSession({
@@ -142,12 +162,12 @@ function LoginForm() {
                   refresh_token: result.refresh_token,
                 }),
                 new Promise<never>((_, reject) =>
-                  setTimeout(() => reject(new Error('timeout')), 3000)
+                  setTimeout(() => reject(new Error('timeout')), 2000)
                 ),
               ]);
               clientSignInOk = true;
             } catch {
-              // setSession timed out - cookies are set by server, fall back to full reload
+              // setSession timed out - session is in cookies + localStorage, full reload will work
             }
           } else {
             setError(result.error || 'Sign in failed');
