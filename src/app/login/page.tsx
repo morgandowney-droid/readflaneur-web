@@ -166,37 +166,23 @@ function LoginForm() {
 
       setSuccess(true);
 
-      // Sync DB neighborhood preferences to localStorage + cookie before navigating.
-      // This ensures a new device (empty localStorage) picks up the user's saved neighborhoods.
-      // 5s timeout: useNeighborhoodPreferences will also sync on mount, so this is best-effort.
-      try {
-        const { data: dbPrefs } = await Promise.race([
-          Promise.resolve(
-            supabase
-              .from('user_neighborhood_preferences')
-              .select('neighborhood_id, sort_order')
-              .order('sort_order', { ascending: true })
-          ),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
-        ]);
+      // Fire-and-forget: sync DB prefs to localStorage for the feed page.
+      // useNeighborhoodPreferences will also sync on feed mount, so no need to await.
+      supabase
+        .from('user_neighborhood_preferences')
+        .select('neighborhood_id, sort_order')
+        .order('sort_order', { ascending: true })
+        .then(({ data: dbPrefs }) => {
+          if (dbPrefs && dbPrefs.length > 0) {
+            const dbIds = dbPrefs.map(p => p.neighborhood_id);
+            localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(dbIds));
+            document.cookie = `flaneur-neighborhoods=${dbIds.join(',')};path=/;max-age=31536000;SameSite=Strict`;
+          }
+        }, () => {}); // Silent fail
 
-        if (dbPrefs && dbPrefs.length > 0) {
-          const dbIds = dbPrefs.map(p => p.neighborhood_id);
-          localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(dbIds));
-          document.cookie = `flaneur-neighborhoods=${dbIds.join(',')};path=/;max-age=31536000;SameSite=Strict`;
-        }
-      } catch {
-        // Timeout or error - useNeighborhoodPreferences will sync on feed mount
-      }
-
-      if (clientSignInOk) {
-        // Client-side nav: Header stays mounted, receives SIGNED_IN event via
-        // shared singleton client - no cookie read needed for immediate nav
-        router.push(target);
-      } else {
-        // Full reload fallback: server cookies are set, next page reads them
-        window.location.href = target;
-      }
+      // Navigate immediately - don't wait for DB sync
+      // Always use window.location.href for reliable redirect on mobile
+      window.location.href = target;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       setIsLoading(false);
