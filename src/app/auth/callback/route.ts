@@ -58,6 +58,31 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // Sync DB neighborhood preferences to cookie for feed page (server-side).
+      // The client-side layout script will sync cookie → localStorage on load.
+      try {
+        const adminClient = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        const { data: dbPrefs } = await adminClient
+          .from('user_neighborhood_preferences')
+          .select('neighborhood_id, sort_order')
+          .eq('user_id', data.session.user.id)
+          .order('sort_order', { ascending: true });
+
+        if (dbPrefs && dbPrefs.length > 0) {
+          const dbIds = dbPrefs.map(p => p.neighborhood_id);
+          cookieStore.set('flaneur-neighborhoods', dbIds.join(','), {
+            path: '/',
+            maxAge: 31536000,
+            sameSite: 'strict',
+          });
+        }
+      } catch {
+        // Non-critical
+      }
+
       // Successful login - redirect to home or specified next page
       return NextResponse.redirect(new URL(next, requestUrl.origin));
     }

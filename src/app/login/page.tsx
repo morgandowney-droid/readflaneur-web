@@ -166,6 +166,23 @@ function LoginForm() {
 
       setSuccess(true);
 
+      // Sync DB neighborhood preferences to localStorage + cookie before navigating.
+      // This ensures a new device (empty localStorage) picks up the user's saved neighborhoods.
+      try {
+        const { data: dbPrefs } = await supabase
+          .from('user_neighborhood_preferences')
+          .select('neighborhood_id, sort_order')
+          .order('sort_order', { ascending: true });
+
+        if (dbPrefs && dbPrefs.length > 0) {
+          const dbIds = dbPrefs.map(p => p.neighborhood_id);
+          localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(dbIds));
+          document.cookie = `flaneur-neighborhoods=${dbIds.join(',')};path=/;max-age=31536000;SameSite=Strict`;
+        }
+      } catch {
+        // Non-critical - feed will work with whatever localStorage has
+      }
+
       if (clientSignInOk) {
         // Client-side nav: Header stays mounted, receives SIGNED_IN event via
         // shared singleton client - no cookie read needed for immediate nav

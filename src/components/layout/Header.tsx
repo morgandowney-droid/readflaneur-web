@@ -163,6 +163,32 @@ export function Header() {
           setUser(session.user);
           setLoading(false); // Clear loading in case initAuth timed out
           fetchAdminRole(session.user.id);
+
+          // On login, sync DB neighborhood preferences to localStorage + cookie.
+          // This ensures new devices pick up the user's saved neighborhoods.
+          if (event === 'SIGNED_IN') {
+            try {
+              const { data: dbPrefs } = await supabase
+                .from('user_neighborhood_preferences')
+                .select('neighborhood_id, sort_order')
+                .order('sort_order', { ascending: true });
+
+              if (dbPrefs && dbPrefs.length > 0) {
+                const dbIds = dbPrefs.map(p => p.neighborhood_id);
+                const currentStored = localStorage.getItem(PREFS_KEY);
+                const currentIds = currentStored ? JSON.parse(currentStored) : [];
+                // DB wins if localStorage is empty or has fewer neighborhoods
+                if (!currentStored || currentIds.length < dbIds.length) {
+                  localStorage.setItem(PREFS_KEY, JSON.stringify(dbIds));
+                  document.cookie = `flaneur-neighborhoods=${dbIds.join(',')};path=/;max-age=31536000;SameSite=Strict`;
+                  // Re-fetch Header's neighborhood state
+                  fetchSelectedNeighborhoods();
+                }
+              }
+            } catch {
+              // Non-critical
+            }
+          }
         }
       }
     );
