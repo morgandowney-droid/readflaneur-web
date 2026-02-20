@@ -101,14 +101,15 @@ function LoginForm() {
 
       // Try client-side sign-in first (with CAPTCHA if available)
       // signInWithPassword stores session in cookies AND emits SIGNED_IN
-      // on the shared singleton client, so Header's onAuthStateChange picks it up
+      // on the shared singleton client, so Header's onAuthStateChange picks it up.
+      // 4s timeout: navigator.locks deadlocks on mobile Safari, fall to server fast.
       let clientSignInOk = false;
       try {
         const opts = captchaToken ? { captchaToken } : undefined;
         const { data, error: authError } = await Promise.race([
           supabase.auth.signInWithPassword({ email, password, options: opts }),
           new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('timeout')), 15000)
+            setTimeout(() => reject(new Error('timeout')), 4000)
           ),
         ]);
 

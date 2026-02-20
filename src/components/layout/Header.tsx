@@ -82,7 +82,8 @@ export function Header() {
     };
 
     // Get initial session with 3s timeout — getSession() uses navigator.locks
-    // which can deadlock if _initialize() (from constructor) holds the lock
+    // which can deadlock if _initialize() (from constructor) holds the lock.
+    // Fallback: read auth cookie directly to detect logged-in state on mobile.
     const initAuth = async () => {
       try {
         const { data: { session } } = await Promise.race([
@@ -95,7 +96,39 @@ export function Header() {
           fetchAdminRole(session.user.id);
         }
       } catch {
-        // getSession hung or errored — onAuthStateChange will catch login events
+        // getSession deadlocked (mobile Safari navigator.locks).
+        // Read auth cookie directly as fallback to show Account link.
+        if (!mounted) return;
+        try {
+          const ref = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0];
+          const storageKey = `sb-${ref}-auth-token`;
+          const cookieMatch = document.cookie.match(new RegExp(`(?:^|; )${storageKey}=([^;]*)`));
+          if (cookieMatch && cookieMatch[1]) {
+            const session = JSON.parse(decodeURIComponent(cookieMatch[1]));
+            if (session?.user) {
+              setUser(session.user);
+              fetchAdminRole(session.user.id);
+            }
+          } else {
+            // Try chunked cookies (sb-xxx-auth-token.0, .1, etc.)
+            let chunks = '';
+            for (let i = 0; i < 5; i++) {
+              const chunkMatch = document.cookie.match(new RegExp(`(?:^|; )${storageKey}\\.${i}=([^;]*)`));
+              if (chunkMatch && chunkMatch[1]) {
+                chunks += decodeURIComponent(chunkMatch[1]);
+              } else break;
+            }
+            if (chunks) {
+              const session = JSON.parse(chunks);
+              if (session?.user) {
+                setUser(session.user);
+                fetchAdminRole(session.user.id);
+              }
+            }
+          }
+        } catch {
+          // Cookie parse failed — user stays logged out visually
+        }
       }
       if (mounted) {
         setLoading(false);
