@@ -70,7 +70,6 @@ const cityText = {
 };
 
 const rule = {
-  borderTop: '1px solid rgba(120, 53, 15, 0.4)',
-  margin: '0 auto',
-  maxWidth: '32px',
+  borderTop: '1px solid #e0e0e0',
+  margin: '0 0 16px',
 };

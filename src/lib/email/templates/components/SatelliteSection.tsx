@@ -1,4 +1,4 @@
-import { Section, Text, Link } from '@react-email/components';
+import { Section, Text, Link, Hr } from '@react-email/components';
 import { SatelliteNeighborhoodSection as SatelliteSectionData } from '../../types';
 import { SectionDivider } from './SectionDivider';
 
@@ -27,6 +27,7 @@ export function SatelliteSection({ section }: SatelliteSectionProps) {
       />
       {section.stories.map((story, i) => (
         <Section key={i} style={storyRow}>
+          {i > 0 && <Hr style={storyDivider} />}
           <Link href={story.articleUrl} style={headlineLink}>
             {story.categoryLabel && (
               <Text style={categoryLine}>{story.categoryLabel}</Text>
@@ -52,6 +53,11 @@ const container = {
 
 const storyRow = {
   marginBottom: '16px',
+};
+
+const storyDivider = {
+  borderTop: '1px solid #e5e5e5',
+  margin: '0 0 16px',
 };
 
 const headlineLink = {

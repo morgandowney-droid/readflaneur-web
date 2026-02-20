@@ -5,6 +5,7 @@ import {
   Container,
   Section,
   Text,
+  Hr,
 } from '@react-email/components';
 import { DailyBriefContent } from '../types';
 import { Header } from './components/Header';
@@ -152,6 +153,9 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
           )}
 
           {/* Satellite neighborhoods */}
+          {content.satelliteSections.length > 0 && (
+            <Hr style={sectionDividerDark} />
+          )}
           {content.satelliteSections.map((section, i) => (
             <SatelliteSection key={i} section={section} />
           ))}
@@ -266,6 +270,11 @@ const familyCornerJumpLink = {
   fontWeight: '600' as const,
   fontSize: '14px',
   fontFamily: "'Playfair Display', Georgia, serif",
+};
+
+const sectionDividerDark = {
+  borderTop: '1px solid #999999',
+  margin: '8px 0 0',
 };
 
 const referralCard = {

@@ -71,7 +71,7 @@ const storyRow = {
 };
 
 const divider = {
-  borderTop: '1px solid #eeeeee',
+  borderTop: '1px solid #d5d5d5',
   margin: '0 0 20px',
 };
 
