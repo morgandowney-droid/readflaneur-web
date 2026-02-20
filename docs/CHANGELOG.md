@@ -3,6 +3,28 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-24
+
+**Move Feed Neighborhoods from URL Params to Cookie:**
+- Feed page previously received neighborhood IDs via URL query params (`/feed?neighborhoods=id1,id2,...`), creating long ugly URLs and an abuse vector where anyone could construct a custom feed URL.
+- Now uses a `SameSite=Strict` cookie (`flaneur-neighborhoods`) synced from localStorage. URLs are clean `/feed`.
+- `feed/page.tsx` reads `cookies()` from `next/headers` instead of `searchParams`.
+- Layout inline `<script>` syncs localStorage to cookie on every page load (before hydration redirect).
+- All 14 navigation points updated: `MultiFeed` (bare /feed fallback + drag reorder use `router.refresh()`), `ContextSwitcher`, `NeighborhoodSelectorModal` (explore/primary/clearAll), `HomepageEnterButton`, `SmartRedirect`, `HomeSignup`, `HomeSignupEnhanced`, `InviteHero`, `useNeighborhoodPreferences` (setPrimary), `Header` (neighborhood links now go to `/{city}/{neighborhood}` pages), `auth/callback` (server-side cookie set).
+- New utility: `src/lib/neighborhood-cookie.ts` with `NEIGHBORHOODS_COOKIE` constant and `syncNeighborhoodCookie()` helper.
+
+**Fix Look Ahead Date Display (published_at):**
+- Look Ahead articles created the evening before (e.g., Feb 19 at 10 PM) showed "20h ago - Feb 19" while content said "Today, Friday February 20".
+- Root cause: `CompactArticleCard` used `created_at` for look_ahead articles instead of `published_at` (set to next morning 7 AM UTC).
+- Fixed across CompactArticleCard, ArticleCard (3 spots), and article detail page (2 spots) to use `published_at` for look_ahead articles.
+
+**Disable Social Calendar (Gala Watch) Story Generator:**
+- Social Calendar articles looked more like advertisements than news stories.
+- Removed `sync-gala-watch` cron schedule from `vercel.json`.
+- Archived all existing Social Calendar articles via SQL migration (`category_label = 'Social Calendar'` -> `status = 'archived'`).
+- Removed Social Calendar topic from email preferences page.
+- Code left in place (`gala-watch.ts`, cron route, registry entry) for potential re-enablement.
+
 ## 2026-02-20
 
 **Fix Look Ahead Generation for Combo Neighborhoods:**
