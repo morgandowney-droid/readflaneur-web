@@ -92,9 +92,11 @@ export async function POST(request: NextRequest) {
           isSubscribed = Array.isArray(subs) && subs.length > 0;
         }
       }
-    } catch {
-      // Non-critical — client-side sync will fill later
+    } catch (syncErr) {
+      console.error('Failed to fetch user state:', syncErr);
     }
+
+    console.log('[signin] user:', tokenData.user?.id, 'neighborhoods:', neighborhoodIds.length, 'subscribed:', isSubscribed);
 
     // Build response with full session data + user state
     const response = NextResponse.json({

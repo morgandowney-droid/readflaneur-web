@@ -148,6 +148,7 @@ function LoginForm() {
 
       // Write neighborhood prefs + subscription status from server response.
       // Server fetches these with service role key (no navigator.locks).
+      console.log('[login] server returned neighborhoods:', result.neighborhood_ids?.length, 'subscribed:', result.is_subscribed);
       if (result.neighborhood_ids?.length > 0) {
         localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(result.neighborhood_ids));
         document.cookie = `flaneur-neighborhoods=${result.neighborhood_ids.join(',')};path=/;max-age=31536000;SameSite=Strict`;
