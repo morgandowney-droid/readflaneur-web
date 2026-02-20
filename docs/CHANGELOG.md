@@ -3,6 +3,19 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-25
+
+**Fix Global Neighborhood Date Stamping:**
+- Briefs for non-US/EU neighborhoods (e.g., Tokyo, Singapore, Sydney) had wrong day-of-week and dates because Gemini enrichment's timezone map only covered 7 countries, defaulting everything else to America/New_York.
+- Expanded `countryTimezoneMap` from 7 to 42 countries as fallback, but primary fix is passing IANA timezone from DB directly via `options.timezone`.
+- Grok brief generation now receives explicit local date string in search query and system prompt (prevents "today" ambiguity across timezones).
+- Gemini enrichment gets DATE CORRECTION instruction: "If the source says Friday but the local date is Saturday, write Saturday."
+- 9 files updated: `brief-enricher-gemini.ts`, `grok.ts`, 5 cron routes, `neighborhoods/create/route.ts`, `briefs/enrich-gemini/route.ts`, `auto-fixer.ts`.
+
+**Fix Account Page Auth:**
+- Three compounding bugs: (1) no timeout on `getSession()` (could hang indefinitely), (2) `[loading]` useEffect dependency caused double execution, (3) destructive `signOut()` auto-heal destroyed sessions when `getSession()` returned null.
+- Added 3s `Promise.race` timeout matching Header pattern, `flaneur-auth` localStorage fallback for userId/email, empty dependency array.
+
 ## 2026-02-24
 
 **Full Bidirectional Neighborhood Sync:**
