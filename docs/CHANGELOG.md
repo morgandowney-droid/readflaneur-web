@@ -5,10 +5,11 @@
 
 ## 2026-02-24
 
-**Cross-Device Neighborhood Sync on Login:**
-- Logging in on a new device (empty localStorage) now correctly loads user's saved neighborhoods from DB instead of showing auto-detected ones.
-- 4-point sync: (1) login page fetches `user_neighborhood_preferences` after `signInWithPassword` and writes to localStorage + cookie, (2) auth callback sets `flaneur-neighborhoods` cookie from DB via admin client, (3) layout inline script does cookie-to-localStorage reverse sync before React hydration, (4) Header `onAuthStateChange` SIGNED_IN event fetches DB prefs and overwrites localStorage when DB has more neighborhoods.
-- DB is authoritative - local preferences only win if they have more neighborhoods (prevents wiping manual additions on other devices).
+**Full Bidirectional Neighborhood Sync:**
+- DB (`user_neighborhood_preferences`) is now the single source of truth for logged-in users. Removals on one device propagate to others.
+- `useNeighborhoodPreferences` hook fetches DB prefs on mount and on `visibilitychange` (tab focus), overwrites localStorage + cookie. 30s throttle prevents excessive DB calls.
+- 4-point login sync: (1) login page fetches DB prefs after `signInWithPassword`, (2) auth callback sets cookie from DB via admin client, (3) layout inline script does cookie-to-localStorage reverse sync pre-hydration, (4) Header `onAuthStateChange` SIGNED_IN always overwrites localStorage from DB.
+- Anonymous users continue to use localStorage as sole source (no DB sync).
 
 **Inline Article Reactions with Source Attribution:**
 - Bookmark/heart buttons moved from standalone section below bottom ad to right-aligned on the same row as source attribution text.
