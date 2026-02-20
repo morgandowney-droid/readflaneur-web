@@ -1,5 +1,6 @@
 'use client';
 
+import { type ReactNode } from 'react';
 import { ArticleSource } from '@/types';
 
 interface SourceAttributionProps {
@@ -12,6 +13,8 @@ interface SourceAttributionProps {
   category?: string;
   /** Raw category_label from article (e.g., "Auction Watch", "Noise Watch") */
   categoryLabel?: string;
+  /** Slot for actions (e.g., reactions) rendered right-aligned on the same row */
+  actions?: ReactNode;
 }
 
 /** Parse "Source: Name - https://url" from editor_notes */
@@ -41,9 +44,18 @@ function buildSearchQuery(headline: string, neighborhoodName: string, categoryLa
   return `${cleanHeadline} ${neighborhoodName}`;
 }
 
-export function SourceAttribution({ sources, editorNotes, isAIGenerated, headline, neighborhoodName, category, categoryLabel }: SourceAttributionProps) {
-  // Only show for AI-generated content
-  if (!isAIGenerated) return null;
+export function SourceAttribution({ sources, editorNotes, isAIGenerated, headline, neighborhoodName, category, categoryLabel, actions }: SourceAttributionProps) {
+  // For non-AI content, still render actions if provided
+  if (!isAIGenerated) {
+    if (actions) {
+      return (
+        <div className="mt-8 pt-6 border-t border-border flex items-start justify-end">
+          {actions}
+        </div>
+      );
+    }
+    return null;
+  }
 
   // Editorial content types (briefs, look-ahead, sunday edition) never show "double-check here"
   // They are multi-source editorial products, not single-source RSS rewrites
@@ -75,7 +87,7 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated, headlin
     if (parsedSource) {
       // Government/authoritative source - link directly, no verify needed
       return (
-        <div className="mt-8 pt-6 border-t border-border">
+        <div className="mt-8 pt-6 border-t border-border flex items-start justify-between gap-4">
           <p className="text-xs text-fg-muted">
             <span className="italic">Source: </span>
             <a
@@ -87,16 +99,20 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated, headlin
               {parsedSource.name}
             </a>
           </p>
+          {actions}
         </div>
       );
     }
 
     return (
-      <div className="mt-8 pt-6 border-t border-border">
-        <p className="text-xs text-fg-muted italic">
-          Synthesized from public news sources and social media via AI-powered search and analysis.
-        </p>
-        {verifyLink}
+      <div className="mt-8 pt-6 border-t border-border flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs text-fg-muted italic">
+            Synthesized from public news sources and social media via AI-powered search and analysis.
+          </p>
+          {verifyLink}
+        </div>
+        {actions}
       </div>
     );
   }
@@ -147,13 +163,16 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated, headlin
   };
 
   return (
-    <div className="mt-8 pt-6 border-t border-border">
-      <p className="text-xs text-fg-muted">
-        <span className="italic">Synthesized from reporting by </span>
-        {sources.map((source, index) => formatSource(source, index))}
-        <span className="italic">.</span>
-      </p>
-      {sources.length <= 1 && verifyLink}
+    <div className="mt-8 pt-6 border-t border-border flex items-start justify-between gap-4">
+      <div>
+        <p className="text-xs text-fg-muted">
+          <span className="italic">Synthesized from reporting by </span>
+          {sources.map((source, index) => formatSource(source, index))}
+          <span className="italic">.</span>
+        </p>
+        {sources.length <= 1 && verifyLink}
+      </div>
+      {actions}
     </div>
   );
 }

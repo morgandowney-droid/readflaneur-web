@@ -315,7 +315,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           city={article.neighborhood?.city || ''}
         />
 
-        {/* Source Attribution for AI-generated content */}
+        {/* Source Attribution + Reactions (inline) */}
         <SourceAttribution
           sources={article.sources}
           editorNotes={article.editor_notes}
@@ -331,6 +331,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             : article.category_label?.toLowerCase().includes('sunday edition') ? 'weekly_recap'
             : undefined}
           categoryLabel={article.category_label}
+          actions={<ArticleReactions articleId={article.id} />}
         />
 
         {/* Brief discovery CTAs - right after sources on daily brief and Sunday Edition articles */}
@@ -411,9 +412,6 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             />
           )}
         </div>
-
-        {/* Reactions */}
-        <ArticleReactions articleId={article.id} />
 
         {/* Email capture for engaged readers */}
         <PostReadEmailCapture neighborhoodName={article.neighborhood?.name || 'neighborhood'} />

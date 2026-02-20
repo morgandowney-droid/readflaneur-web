@@ -95,7 +95,7 @@ export function ArticleReactions({ articleId }: ArticleReactionsProps) {
   };
 
   return (
-    <div className="mt-6 flex items-center gap-3">
+    <div className="flex items-center gap-3 shrink-0">
       {REACTIONS.map((reaction) => {
         const isActive = active.has(reaction.type);
         const count = counts[reaction.type] || 0;

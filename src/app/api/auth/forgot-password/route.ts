@@ -99,7 +99,7 @@ function buildPasswordResetEmail(actionLink: string): string {
           <!-- Body -->
           <tr>
             <td style="padding-bottom:32px; color:#a3a3a3; font-size:16px; line-height:1.7; text-align:center;">
-              Click below to reset your password. This link expires in 24 hours.
+              Click below to reset your password. This link expires in 1 hour.
             </td>
           </tr>
           <!-- CTA Button -->
