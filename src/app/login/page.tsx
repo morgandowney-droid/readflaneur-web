@@ -43,6 +43,16 @@ function LoginForm() {
   // Redirect already-authenticated users
   useEffect(() => {
     async function checkSession() {
+      // Check simple auth flag first (no GoTrue, instant)
+      try {
+        const authFlag = localStorage.getItem('flaneur-auth');
+        if (authFlag && JSON.parse(authFlag)?.id) {
+          window.location.href = redirect;
+          return;
+        }
+      } catch { /* continue to GoTrue check */ }
+
+      // GoTrue check with short timeout (may deadlock on mobile Safari)
       try {
         const supabase = createClient();
         const { data: { session } } = await Promise.race([
@@ -115,6 +125,13 @@ function LoginForm() {
 
         if (!authError && data?.session) {
           clientSignInOk = true;
+          // Set simple auth flag for Header (bypasses GoTrue on next page load)
+          if (data.session.user) {
+            localStorage.setItem('flaneur-auth', JSON.stringify({
+              id: data.session.user.id,
+              email: data.session.user.email,
+            }));
+          }
         }
       } catch {
         // Client-side auth timed out or failed - will try server fallback
@@ -132,11 +149,9 @@ function LoginForm() {
           const result = await res.json();
 
           if (res.ok && result.access_token) {
-            // Server set auth cookies via Set-Cookie headers.
-            // CRITICAL: Also write session to GoTrue's localStorage storage key.
-            // Without this, GoTrue's _initialize() (navigator.locks) resolves later,
-            // finds no session in its internal state, calls _removeSession() which
-            // clears our cookies — user appears logged out after 5-6 seconds.
+            // Write session to GoTrue's localStorage + simple auth flag.
+            // GoTrue's _initialize() (navigator.locks) can deadlock on mobile Safari.
+            // The auth flag lets Header show "Account" without any GoTrue calls.
             try {
               const ref = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0];
               const storageKey = `sb-${ref}-auth-token`;
@@ -149,6 +164,13 @@ function LoginForm() {
                 user: result.user,
               };
               localStorage.setItem(storageKey, JSON.stringify(session));
+              // Simple auth flag readable without GoTrue
+              if (result.user) {
+                localStorage.setItem('flaneur-auth', JSON.stringify({
+                  id: result.user.id,
+                  email: result.user.email,
+                }));
+              }
             } catch {
               // Non-critical
             }

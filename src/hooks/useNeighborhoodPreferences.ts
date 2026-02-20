@@ -12,20 +12,6 @@ function syncLocal(ids: string[]) {
   document.cookie = `${COOKIE_KEY}=${ids.join(',')};path=/;max-age=31536000;SameSite=Strict`;
 }
 
-/** Read user ID from GoTrue localStorage storage (bypasses navigator.locks deadlock) */
-function getUserIdFromStorage(): string | null {
-  try {
-    const ref = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0];
-    const storageKey = `sb-${ref}-auth-token`;
-    const raw = localStorage.getItem(storageKey);
-    if (raw) {
-      const session = JSON.parse(raw);
-      return session?.user?.id || null;
-    }
-  } catch { /* ignore */ }
-  return null;
-}
-
 export interface NeighborhoodPref {
   id: string;
   name: string;
@@ -88,9 +74,9 @@ export function useNeighborhoodPreferences(): {
       setIsLoading(false);
     }
 
-    /** Fetch DB prefs for authenticated user, overwrite localStorage, then loadFromLocal */
+    /** Fetch DB prefs via server API (bypasses GoTrue/navigator.locks entirely) */
     async function syncFromDb() {
-      // Throttle DB calls: at most once per 30s. Still calls loadFromLocal when throttled.
+      // Throttle: at most once per 30s
       const now = Date.now();
       if (now - lastSyncRef.current < 30_000) {
         if (!cancelled) await loadFromLocal();
@@ -99,31 +85,25 @@ export function useNeighborhoodPreferences(): {
       lastSyncRef.current = now;
 
       try {
-        // Read user ID from GoTrue's localStorage (bypasses navigator.locks deadlock
-        // that causes getSession() to hang on mobile Safari)
-        const userId = getUserIdFromStorage();
-
-        if (userId) {
-          const { data: dbPrefs } = await Promise.resolve(
-            supabase
-              .from('user_neighborhood_preferences')
-              .select('neighborhood_id, sort_order')
-              .order('sort_order', { ascending: true })
-          ).catch(() => ({ data: null }));
-
+        // Use server API that reads auth from cookies (no GoTrue on client)
+        const res = await fetch('/api/neighborhoods/my-preferences', {
+          credentials: 'same-origin',
+        });
+        if (res.ok) {
+          const { ids } = await res.json();
           if (cancelled) return;
 
-          if (dbPrefs && dbPrefs.length > 0) {
-            const dbIds = dbPrefs.map(p => p.neighborhood_id);
-            syncLocal(dbIds);
-          } else if (dbPrefs) {
-            // DB is empty - clear local too (user removed all on another device)
+          if (ids && ids.length > 0) {
+            syncLocal(ids);
+          } else if (ids !== null) {
+            // Logged in but DB is empty - clear local
             localStorage.removeItem(PREFS_KEY);
             document.cookie = `${COOKIE_KEY}=;path=/;max-age=0;SameSite=Strict`;
           }
+          // ids === null means not authenticated, keep localStorage as-is
         }
       } catch {
-        // Storage read or DB error - fall through to localStorage
+        // Network error - fall through to localStorage
       }
 
       if (!cancelled) await loadFromLocal();

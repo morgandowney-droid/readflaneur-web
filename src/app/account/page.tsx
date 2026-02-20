@@ -93,6 +93,8 @@ export default function AccountPage() {
     } catch {
       // Continue to redirect regardless
     }
+    // Clear simple auth flag
+    localStorage.removeItem('flaneur-auth');
     window.location.href = '/';
   };
 

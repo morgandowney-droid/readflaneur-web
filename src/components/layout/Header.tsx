@@ -97,37 +97,20 @@ export function Header() {
         }
       } catch {
         // getSession deadlocked (mobile Safari navigator.locks).
-        // Read auth cookie directly as fallback to show Account link.
+        // Read simple auth flag from localStorage as fallback.
         if (!mounted) return;
         try {
-          const ref = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0];
-          const storageKey = `sb-${ref}-auth-token`;
-          const cookieMatch = document.cookie.match(new RegExp(`(?:^|; )${storageKey}=([^;]*)`));
-          if (cookieMatch && cookieMatch[1]) {
-            const session = JSON.parse(decodeURIComponent(cookieMatch[1]));
-            if (session?.user) {
-              setUser(session.user);
-              fetchAdminRole(session.user.id);
-            }
-          } else {
-            // Try chunked cookies (sb-xxx-auth-token.0, .1, etc.)
-            let chunks = '';
-            for (let i = 0; i < 5; i++) {
-              const chunkMatch = document.cookie.match(new RegExp(`(?:^|; )${storageKey}\\.${i}=([^;]*)`));
-              if (chunkMatch && chunkMatch[1]) {
-                chunks += decodeURIComponent(chunkMatch[1]);
-              } else break;
-            }
-            if (chunks) {
-              const session = JSON.parse(chunks);
-              if (session?.user) {
-                setUser(session.user);
-                fetchAdminRole(session.user.id);
-              }
+          const authFlag = localStorage.getItem('flaneur-auth');
+          if (authFlag) {
+            const { id, email } = JSON.parse(authFlag);
+            if (id) {
+              // Create a minimal User object for the Header to show "Account"
+              setUser({ id, email } as User);
+              fetchAdminRole(id);
             }
           }
         } catch {
-          // Cookie parse failed — user stays logged out visually
+          // Auth flag missing or invalid — user stays logged out visually
         }
       }
       if (mounted) {
