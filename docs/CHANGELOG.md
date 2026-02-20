@@ -5,6 +5,21 @@
 
 ## 2026-02-24
 
+**Expandable Look Ahead Card with Discovery CTAs:**
+- Look Ahead card below Daily Brief now expands/collapses like the Daily Brief card does.
+- Compact closed state unchanged (user explicitly liked the smaller scale).
+- Expanded state shows full article body text with `[[Day, Date]]` section headers, markdown links rendered as `<a>` tags, "Show Less" button, "Read the full Look Ahead article" link.
+- Discovery CTAs lazy-loaded on first expand: yesterday's Daily Brief, nearby neighborhood brief, "Take me somewhere new".
+- API `/api/briefs/look-ahead` expanded to return `headline`, `bodyText`, `previewText`, `publishedAt` alongside `url`.
+- Removed redundant Look Ahead CTA from NeighborhoodBrief expanded view (the card itself now provides this).
+- `city` prop added to LookAheadCard for `excludeCity` in random discovery. Passed from all 3 render sites.
+
+**Neighborhood-Aware Article Back Links:**
+- `BackToFeedLink` ("All My Neighborhood Stories") and `MoreStoriesButton` now accept `citySlug`/`neighborhoodSlug` props.
+- When provided, links go to `/{city}/{neighborhood}` (the article's specific neighborhood feed) instead of bare `/feed`.
+- Article page passes route params (`city`, `neighborhood`) to both components.
+- Fallback to `/feed` when props are missing (backwards compatible).
+
 **Move Feed Neighborhoods from URL Params to Cookie:**
 - Feed page previously received neighborhood IDs via URL query params (`/feed?neighborhoods=id1,id2,...`), creating long ugly URLs and an abuse vector where anyone could construct a custom feed URL.
 - Now uses a `SameSite=Strict` cookie (`flaneur-neighborhoods`) synced from localStorage. URLs are clean `/feed`.
