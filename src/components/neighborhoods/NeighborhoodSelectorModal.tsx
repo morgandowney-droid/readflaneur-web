@@ -254,6 +254,7 @@ function GlobalNeighborhoodModal({
   const bodyRef = useRef<HTMLDivElement>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [primaryId, setPrimaryId] = useState<string | null>(null);
+  const [lastAddedId, setLastAddedId] = useState<string | null>(null);
 
   // Settings state (city/timezone)
   const [settingsCity, setSettingsCity] = useState('');
@@ -545,6 +546,7 @@ function GlobalNeighborhoodModal({
     if (isOpen) {
       setConfirmClear(false);
       setSettingsSaved(false);
+      setLastAddedId(null);
       setActiveTab(initialTab);
       const stored = getStoredLocation();
       if (stored?.city) setSettingsCity(stored.city);
@@ -801,8 +803,10 @@ function GlobalNeighborhoodModal({
 
     if (wasSelected) {
       newSelected.delete(id);
+      setLastAddedId(null);
     } else {
       newSelected.add(id);
+      setLastAddedId(id);
     }
 
     setSelected(newSelected);
@@ -863,6 +867,7 @@ function GlobalNeighborhoodModal({
     }
 
     setSelected(newSelected);
+    setLastAddedId(null); // Bulk action, no single focus
 
     // Update primary if needed
     let newPrimary = primaryId;
@@ -901,7 +906,14 @@ function GlobalNeighborhoodModal({
       // Use localStorage order (primary-first) instead of Set insertion order
       const stored = localStorage.getItem(PREFS_KEY);
       const orderedIds = stored ? JSON.parse(stored) as string[] : Array.from(selected);
-      router.push(`/feed?neighborhoods=${orderedIds.join(',')}`);
+
+      // If user just added a neighborhood, put it first so feed shows it
+      if (lastAddedId && selected.has(lastAddedId)) {
+        const reordered = [lastAddedId, ...orderedIds.filter(id => id !== lastAddedId)];
+        router.push(`/feed?neighborhoods=${reordered.join(',')}`);
+      } else {
+        router.push(`/feed?neighborhoods=${orderedIds.join(',')}`);
+      }
     } else {
       router.push('/neighborhoods');
     }

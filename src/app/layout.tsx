@@ -7,6 +7,7 @@ import { PersonaSwitcher } from '@/components/admin/PersonaSwitcher';
 import { NeighborhoodModalProvider } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 import { LocationPrompt } from '@/components/location/LocationPrompt';
 import { ReturnVisitPrompt } from '@/components/feed/ReturnVisitPrompt';
+import { PrimaryChangeSuggestion } from '@/components/feed/PrimaryChangeSuggestion';
 import { LanguageProvider } from '@/components/providers/LanguageProvider';
 
 const inter = Inter({
@@ -71,6 +72,7 @@ export default function RootLayout({
             <PersonaSwitcher />
             <LocationPrompt />
             <ReturnVisitPrompt />
+            <PrimaryChangeSuggestion />
           </NeighborhoodModalProvider>
         </LanguageProvider>
       </body>
