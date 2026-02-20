@@ -72,10 +72,10 @@ STRUCTURE RULES:
 1. Write a single concise headline (max 80 chars) capturing the best family activity
 2. For EACH age group, organize into TWO sub-sections:
    - **[Age Group] - Today:** 1 specific activity happening today (with time, location). If nothing today, write "No specific events today - [suggest an ongoing/drop-in option]."
-   - **[Age Group] - This Week:** 1-2 activities happening in the next few days (with dates, times, locations)
+   - **[Age Group] - Next 2 Days:** 1-2 activities happening tomorrow or the day after (with dates, times, locations)
 3. Keep each sub-section to 1-2 sentences max
 4. Keep total body under 300 words
-5. ONLY mention events happening in the next 7 days or ongoing programs available NOW
+5. ONLY mention events happening today, tomorrow, or the day after (3-day window) plus ongoing drop-in programs
 6. Remove any enrollment deadlines months away or seasonal camps not yet open
 7. Do NOT include any URLs, citations, or source references
 
@@ -139,7 +139,7 @@ export async function generateChildcareContent(
 
 ${bandSections}
 
-Today's date: ${today}. ONLY include events happening in the next 7 days or ongoing programs available NOW. Do NOT include future enrollment dates, programs starting months from now, or seasonal camps not yet open.
+Today's date: ${today}. ONLY include events happening TODAY, TOMORROW, or the day after (3-day window) plus ongoing drop-in programs available NOW. Do NOT include future enrollment dates, programs starting months from now, or seasonal camps not yet open.
 
 IMPORTANT: You MUST find at least one relevant activity for EACH age group listed above. Structure your response with a dedicated section for each age group.
 
