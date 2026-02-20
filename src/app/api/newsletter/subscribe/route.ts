@@ -136,6 +136,43 @@ function buildMagicLinkEmail(actionLink: string): string {
               </a>
             </td>
           </tr>
+          <!-- What to Expect -->
+          <tr>
+            <td style="padding-bottom:12px;">
+              <div style="width:32px; height:1px; background-color:#525252; margin:0 auto;"></div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom:20px; color:#a3a3a3; font-size:15px; line-height:1.6; text-align:center; font-family:'Playfair Display',Georgia,serif;">
+              Here&rsquo;s what to expect
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom:40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="50%" style="padding:12px 8px 12px 0; vertical-align:top;">
+                    <div style="font-size:13px; font-weight:600; color:#C9A96E; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px;">Daily Brief</div>
+                    <div style="font-size:13px; color:#737373; line-height:1.5;">Your neighborhood&rsquo;s morning news, every day at 7 AM.</div>
+                  </td>
+                  <td width="50%" style="padding:12px 0 12px 8px; vertical-align:top;">
+                    <div style="font-size:13px; font-weight:600; color:#C9A96E; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px;">Look Ahead</div>
+                    <div style="font-size:13px; color:#737373; line-height:1.5;">Events and happenings for the next 7 days.</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="50%" style="padding:12px 8px 12px 0; vertical-align:top;">
+                    <div style="font-size:13px; font-weight:600; color:#C9A96E; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px;">Sunday Edition</div>
+                    <div style="font-size:13px; color:#737373; line-height:1.5;">Your week in review and the week ahead.</div>
+                  </td>
+                  <td width="50%" style="padding:12px 0 12px 8px; vertical-align:top;">
+                    <div style="font-size:13px; font-weight:600; color:#C9A96E; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px;">Local Intel</div>
+                    <div style="font-size:13px; color:#737373; line-height:1.5;">Real estate, permits, crime, culture &amp; more.</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
           <!-- Deliverability Coaching -->
           <tr>
             <td style="padding-bottom:12px;">
