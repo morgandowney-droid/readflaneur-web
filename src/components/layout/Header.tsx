@@ -165,7 +165,7 @@ export function Header() {
           fetchAdminRole(session.user.id);
 
           // On login, sync DB neighborhood preferences to localStorage + cookie.
-          // This ensures new devices pick up the user's saved neighborhoods.
+          // DB is authoritative - overwrites whatever localStorage has.
           if (event === 'SIGNED_IN') {
             try {
               const { data: dbPrefs } = await supabase
@@ -175,15 +175,9 @@ export function Header() {
 
               if (dbPrefs && dbPrefs.length > 0) {
                 const dbIds = dbPrefs.map(p => p.neighborhood_id);
-                const currentStored = localStorage.getItem(PREFS_KEY);
-                const currentIds = currentStored ? JSON.parse(currentStored) : [];
-                // DB wins if localStorage is empty or has fewer neighborhoods
-                if (!currentStored || currentIds.length < dbIds.length) {
-                  localStorage.setItem(PREFS_KEY, JSON.stringify(dbIds));
-                  document.cookie = `flaneur-neighborhoods=${dbIds.join(',')};path=/;max-age=31536000;SameSite=Strict`;
-                  // Re-fetch Header's neighborhood state
-                  fetchSelectedNeighborhoods();
-                }
+                localStorage.setItem(PREFS_KEY, JSON.stringify(dbIds));
+                document.cookie = `flaneur-neighborhoods=${dbIds.join(',')};path=/;max-age=31536000;SameSite=Strict`;
+                fetchSelectedNeighborhoods();
               }
             } catch {
               // Non-critical
