@@ -153,21 +153,29 @@ function buildMagicLinkEmail(actionLink: string): string {
                 <tr>
                   <td width="50%" style="padding:12px 8px 12px 0; vertical-align:top;">
                     <div style="font-size:13px; font-weight:600; color:#C9A96E; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px;">Daily Brief</div>
-                    <div style="font-size:13px; color:#737373; line-height:1.5;">Your neighborhood&rsquo;s morning news, every day at 7 AM.</div>
+                    <div style="font-size:13px; color:#737373; line-height:1.5;">Your neighborhoods&rsquo; morning news, emailed daily at 7 AM.</div>
                   </td>
                   <td width="50%" style="padding:12px 0 12px 8px; vertical-align:top;">
                     <div style="font-size:13px; font-weight:600; color:#C9A96E; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px;">Look Ahead</div>
-                    <div style="font-size:13px; color:#737373; line-height:1.5;">Events and happenings for the next 7 days.</div>
+                    <div style="font-size:13px; color:#737373; line-height:1.5;">What&rsquo;s happening in the next 7 days, delivered each morning.</div>
                   </td>
                 </tr>
                 <tr>
                   <td width="50%" style="padding:12px 8px 12px 0; vertical-align:top;">
                     <div style="font-size:13px; font-weight:600; color:#C9A96E; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px;">Sunday Edition</div>
-                    <div style="font-size:13px; color:#737373; line-height:1.5;">Your week in review and the week ahead.</div>
+                    <div style="font-size:13px; color:#737373; line-height:1.5;">Your week in review and the week ahead, every Sunday at 7 AM.</div>
                   </td>
                   <td width="50%" style="padding:12px 0 12px 8px; vertical-align:top;">
-                    <div style="font-size:13px; font-weight:600; color:#C9A96E; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px;">Local Intel</div>
-                    <div style="font-size:13px; color:#737373; line-height:1.5;">Real estate, permits, crime, culture &amp; more.</div>
+                    <div style="font-size:13px; font-weight:600; color:#C9A96E; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px;">Family Corner</div>
+                    <div style="font-size:13px; color:#737373; line-height:1.5;">Opt-in childcare events and activities tailored to your kids&rsquo; ages.</div>
+                  </td>
+                </tr>
+              </table>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:4px;">
+                <tr>
+                  <td style="padding:12px 0; text-align:center;">
+                    <div style="font-size:13px; font-weight:600; color:#C9A96E; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px;">Escape Mode</div>
+                    <div style="font-size:13px; color:#737373; line-height:1.5;">Take a mini vacation to luxury neighborhoods around the world. Live like a local for 5 minutes.</div>
                   </td>
                 </tr>
               </table>
