@@ -10,10 +10,12 @@ export function Footer({ unsubscribeUrl, preferencesUrl, referralUrl }: FooterPr
   return (
     <Section style={container}>
       <Hr style={divider} />
+      <Text style={{...forwardedText, margin: '0'}}>
+        Was this forwarded to you?
+      </Text>
       <Text style={forwardedText}>
-        Was this forwarded to you?{' '}
         <Link href="https://readflaneur.com" style={forwardedLink}>Subscribe here</Link>
-        {' '}— it&apos;s free.
+        {' '}- it&apos;s free.
       </Text>
       <Hr style={lightDivider} />
       <Text style={footerText}>

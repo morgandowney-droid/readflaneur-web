@@ -4,7 +4,6 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { getNeighborhoodIdsForQuery } from '@/lib/combo-utils';
 import { CITY_PREFIX_MAP } from '@/lib/neighborhood-utils';
 import {
   EmailRecipient,
@@ -17,11 +16,9 @@ import {
 import { fetchWeather } from './weather';
 import { generateWeatherStory } from './weather-story';
 import { getEmailAds } from './ads';
-import { getUniqueBands, getBandLabel } from '@/lib/childcare/age-bands';
-import type { AgeBand } from '@/lib/childcare/age-bands';
+import { getUniqueBands } from '@/lib/childcare/age-bands';
 
-const PRIMARY_STORY_COUNT = 5;
-const SATELLITE_STORY_COUNT = 2;
+// Each section gets exactly 1 Daily Brief + 1 Look Ahead
 
 // Reverse map: neighborhood ID prefix -> city URL slug
 const REVERSE_PREFIX_MAP: Record<string, string> = {};
@@ -73,55 +70,6 @@ function buildArticleUrl(
 }
 
 /**
- * Fetch recent articles for given neighborhood IDs
- * Tries 24h, then 48h, then 7d lookback windows
- */
-async function fetchStories(
-  supabase: SupabaseClient,
-  neighborhoodIds: string[],
-  limit: number,
-  pausedTopics: string[] = []
-): Promise<{ id: string; headline: string; preview_text: string; image_url: string; category_label: string; slug: string; neighborhood_id: string; published_at?: string; created_at?: string }[]> {
-  const lookbacks = [24, 48, 168]; // hours
-  // Fetch extra to ensure Daily Brief is included even if not in top N by recency
-  const fetchLimit = Math.max(limit + 3, 8);
-
-  for (const hours of lookbacks) {
-    const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
-
-    const { data } = await supabase
-      .from('articles')
-      .select('id, headline, preview_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
-      .eq('status', 'published')
-      .in('neighborhood_id', neighborhoodIds)
-      .gte('published_at', since)
-      .order('published_at', { ascending: false })
-      .limit(fetchLimit);
-
-    if (data && data.length > 0) {
-      // Filter out paused topics (but never filter Daily Brief)
-      const filtered = pausedTopics.length > 0
-        ? data.filter(s => {
-            const label = (s.category_label || '').toLowerCase();
-            if (label.includes('daily brief')) return true; // Always keep Daily Brief
-            return !pausedTopics.some(pt => label.includes(pt.toLowerCase()));
-          })
-        : data;
-
-      // Sort: Daily Brief articles first, then by recency
-      const sorted = filtered.sort((a, b) => {
-        const aIsBrief = (a.category_label || '').toLowerCase().includes('daily brief') ? 0 : 1;
-        const bIsBrief = (b.category_label || '').toLowerCase().includes('daily brief') ? 0 : 1;
-        return aIsBrief - bIsBrief;
-      });
-      return sorted.slice(0, limit);
-    }
-  }
-
-  return [];
-}
-
-/**
  * Fetch the latest neighborhood brief and convert to an EmailStory.
  * First checks for a brief article in the articles table (links to full article page).
  * Falls back to neighborhood_briefs table and creates an article on-the-fly so the
@@ -138,7 +86,7 @@ async function fetchBriefAsStory(
   const since14h = new Date(Date.now() - 14 * 60 * 60 * 1000).toISOString();
   const { data: briefArticle } = await supabase
     .from('articles')
-    .select('headline, preview_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
+    .select('headline, preview_text, body_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
     .eq('status', 'published')
     .eq('neighborhood_id', neighborhoodId)
     .ilike('category_label', '%daily brief%')
@@ -202,7 +150,7 @@ async function fetchBriefAsStory(
   // Check if an article with this slug already exists (from a previous email run)
   const { data: existingArticle } = await supabase
     .from('articles')
-    .select('headline, preview_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
+    .select('headline, preview_text, body_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
     .eq('slug', slug)
     .single();
 
@@ -230,7 +178,7 @@ async function fetchBriefAsStory(
       enriched_at: new Date().toISOString(),
       enrichment_model: brief.enrichment_model || 'gemini-2.5-flash',
     })
-    .select('id, headline, preview_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
+    .select('id, headline, preview_text, body_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
     .single();
 
   if (newArticle) {
@@ -286,6 +234,33 @@ async function fetchBriefAsStory(
     slug,
     neighborhood_id: neighborhoodId,
   }, neighborhoodName, cityName);
+}
+
+/**
+ * Fetch the latest Look Ahead article as an EmailStory.
+ * Uses a 48h window to find the most recent look_ahead article.
+ */
+async function fetchLookAheadAsStory(
+  supabase: SupabaseClient,
+  neighborhoodId: string,
+  neighborhoodName: string,
+  cityName: string
+): Promise<EmailStory | null> {
+  const since48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const { data: lookAheadArticle } = await supabase
+    .from('articles')
+    .select('headline, preview_text, body_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
+    .eq('status', 'published')
+    .eq('neighborhood_id', neighborhoodId)
+    .eq('article_type', 'look_ahead')
+    .gte('published_at', since48h)
+    .order('published_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!lookAheadArticle) return null;
+
+  return toEmailStory(lookAheadArticle, neighborhoodName, cityName);
 }
 
 /**
@@ -403,7 +378,7 @@ export async function assembleDailyBrief(
   supabase: SupabaseClient,
   recipient: EmailRecipient
 ): Promise<DailyBriefContent> {
-  const { primaryNeighborhoodId, subscribedNeighborhoodIds, pausedTopics } = recipient;
+  const { primaryNeighborhoodId, subscribedNeighborhoodIds } = recipient;
 
   // Fetch all subscribed neighborhoods from DB
   const { data: neighborhoods } = await supabase
@@ -427,10 +402,6 @@ export async function assembleDailyBrief(
   // Build primary section
   let primarySection: PrimaryNeighborhoodSection | null = null;
   if (primaryNeighborhood) {
-    // Expand combo neighborhoods
-    const queryIds = await getNeighborhoodIdsForQuery(supabase, primaryNeighborhood.id);
-    const stories = await fetchStories(supabase, queryIds, PRIMARY_STORY_COUNT, pausedTopics);
-
     // Fetch weather (current conditions for widget fallback)
     const neighborhoodCountry = primaryNeighborhood.country || 'USA';
     let weather = null;
@@ -455,19 +426,18 @@ export async function assembleDailyBrief(
       );
     }
 
-    const emailStories = stories.map(s => toEmailStory(s, primaryNeighborhood.name, primaryNeighborhood.city));
-
-    // Always try to fetch today's fresh brief (not just check if any brief exists)
-    // Old briefs from previous days should be replaced by today's fresh one
+    // Fetch exactly 1 Daily Brief + 1 Look Ahead
     const briefStory = await fetchBriefAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city);
-    if (briefStory) {
-      // Remove any stale brief articles from the stories list, then prepend today's
-      const withoutOldBriefs = emailStories.filter(s => !s.categoryLabel?.toLowerCase().includes('daily brief'));
-      emailStories.length = 0;
-      emailStories.push(briefStory, ...withoutOldBriefs);
-      if (emailStories.length > PRIMARY_STORY_COUNT) {
-        emailStories.length = PRIMARY_STORY_COUNT;
-      }
+    const lookAheadStory = await fetchLookAheadAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city);
+
+    const emailStories: EmailStory[] = [];
+    if (briefStory) emailStories.push(briefStory);
+    if (lookAheadStory) emailStories.push(lookAheadStory);
+
+    if (emailStories.length === 0) {
+      console.warn(`[assembler] No brief or look ahead found for primary ${primaryNeighborhood.id}`);
+    } else if (emailStories.length === 1) {
+      console.warn(`[assembler] Missing ${briefStory ? 'look ahead' : 'daily brief'} for primary ${primaryNeighborhood.id}`);
     }
 
     primarySection = {
@@ -488,25 +458,23 @@ export async function assembleDailyBrief(
     }
   }
 
-  // Build satellite sections
+  // Build satellite sections: exactly 1 Daily Brief + 1 Look Ahead each
   const satelliteSections: SatelliteNeighborhoodSection[] = [];
   for (const satId of satelliteIds) {
     const neighborhood = neighborhoodMap.get(satId);
     if (!neighborhood) continue;
 
-    const queryIds = await getNeighborhoodIdsForQuery(supabase, satId);
-    const stories = await fetchStories(supabase, queryIds, SATELLITE_STORY_COUNT, pausedTopics);
-    const emailStories = stories.map(s => toEmailStory(s, neighborhood.name, neighborhood.city));
-
-    // Always try to fetch today's fresh brief (replace stale briefs from previous days)
     const briefStory = await fetchBriefAsStory(supabase, satId, neighborhood.name, neighborhood.city);
-    if (briefStory) {
-      const withoutOldBriefs = emailStories.filter(s => !s.categoryLabel?.toLowerCase().includes('daily brief'));
-      emailStories.length = 0;
-      emailStories.push(briefStory, ...withoutOldBriefs);
-      if (emailStories.length > SATELLITE_STORY_COUNT + 1) {
-        emailStories.length = SATELLITE_STORY_COUNT + 1;
-      }
+    const lookAheadStory = await fetchLookAheadAsStory(supabase, satId, neighborhood.name, neighborhood.city);
+
+    const emailStories: EmailStory[] = [];
+    if (briefStory) emailStories.push(briefStory);
+    if (lookAheadStory) emailStories.push(lookAheadStory);
+
+    if (emailStories.length === 0) {
+      console.warn(`[assembler] No brief or look ahead found for satellite ${satId}`);
+    } else if (emailStories.length === 1) {
+      console.warn(`[assembler] Missing ${briefStory ? 'look ahead' : 'daily brief'} for satellite ${satId}`);
     }
 
     // Deduplicate: remove stories already shown in primary or earlier satellites
@@ -559,16 +527,28 @@ export async function assembleDailyBrief(
 /**
  * Strip the neighborhood name prefix from a category label
  * e.g., "Beverly Hills Daily Brief" → "Daily Brief"
+ * publishedAt is used to determine if "(Today)" is accurate
  */
-function cleanCategoryLabel(label: string | null, neighborhoodName: string): string | null {
+function cleanCategoryLabel(label: string | null, neighborhoodName: string, publishedAt?: string): string | null {
   if (!label) return null;
   // Strip neighborhood name prefix (case-insensitive)
   let cleaned = label.replace(new RegExp(`^${escapeRegex(neighborhoodName)}\\s+`, 'i'), '');
   cleaned = cleaned || label;
   // Rename labels for email display
-  if (/^Daily Brief$/i.test(cleaned)) return 'Daily Brief (Today)';
+  if (/^Daily Brief$/i.test(cleaned)) {
+    // Only say "(Today)" if the article was actually published today
+    const isToday = publishedAt ? isSameDay(new Date(publishedAt), new Date()) : true;
+    return isToday ? 'Daily Brief (Today)' : 'Daily Brief';
+  }
   if (/^Look Ahead$/i.test(cleaned)) return 'Look Ahead (next 7 days)';
   return cleaned;
+}
+
+/** Check if two dates are the same calendar day */
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
 }
 
 /**
@@ -617,6 +597,15 @@ function formatDateline(dateString?: string): string {
   return `${day} ${month} ${dayNum}`;
 }
 
+/** Check if a preview text is just a greeting with no substance */
+function isGreetingOnly(text: string): boolean {
+  // Match patterns like "Good morning, Nolita." or "Bonjour, voisins." with nothing after
+  const stripped = text.trim().replace(/\s+/g, ' ');
+  // If it's a single short sentence (under 40 chars) that looks like a greeting
+  if (stripped.length > 60) return false;
+  return /^(good morning|god morgon|bonjour|buongiorno|guten morgen|buenos d[ií]as|bom dia|goedemorgen|morning|gr[üu]ezi)[,.]?\s*[^.!?]*[.!?]?\s*$/i.test(stripped);
+}
+
 /**
  * Convert a DB article row to an EmailStory
  */
@@ -624,6 +613,7 @@ function toEmailStory(
   article: {
     headline: string;
     preview_text: string;
+    body_text?: string;
     image_url: string;
     category_label: string;
     slug: string;
@@ -634,13 +624,28 @@ function toEmailStory(
   neighborhoodName: string,
   cityName: string
 ): EmailStory {
-  const cleanedLabel = cleanCategoryLabel(article.category_label, neighborhoodName);
+  const cleanedLabel = cleanCategoryLabel(article.category_label, neighborhoodName, article.published_at);
   const dateline = formatDateline(article.published_at || article.created_at);
   const labelWithDate = cleanedLabel ? `${cleanedLabel} - ${dateline}` : null;
 
+  // If preview text is just a greeting, try to extract more from body_text
+  let previewText = article.preview_text || '';
+  if (isGreetingOnly(previewText) && article.body_text) {
+    const bodyPlain = article.body_text
+      .replace(/\[\[[^\]]+\]\]/g, '')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/\n+/g, ' ')
+      .trim();
+    // Take up to 200 chars, truncated at sentence boundary
+    const extended = bodyPlain.substring(0, 200);
+    const lastEnd = Math.max(extended.lastIndexOf('.'), extended.lastIndexOf('!'), extended.lastIndexOf('?'));
+    previewText = lastEnd > 30 ? extended.slice(0, lastEnd + 1) : previewText;
+  }
+
   return {
     headline: cleanHeadline(article.headline, neighborhoodName),
-    previewText: article.preview_text || '',
+    previewText,
     imageUrl: article.image_url && !article.image_url.endsWith('.svg') ? article.image_url : null,
     categoryLabel: labelWithDate,
     articleUrl: buildArticleUrl(article.neighborhood_id, cityName, article.slug) + '?ref=email',

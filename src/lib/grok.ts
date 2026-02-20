@@ -408,7 +408,8 @@ Rules:
 - Prioritize verified facts over rumors.
 - If you don't find much, say so.
 - Do NOT include any greeting like "Good morning" or sign-off. Jump directly into the content.
-- Do NOT include citation references like [[1]] or (1) in the HEADLINE.`
+- Do NOT include citation references like [[1]] or (1) in the HEADLINE.
+- NEVER use passive, defeatist, or "nothing happening" headlines. There is ALWAYS something worth highlighting. Banned headline patterns: "Quiet Week", "Slow Week", "Not Much Going On", "A Calm Week", "Nothing Major". Always lead with the most interesting specific event or venue name.`
           },
           {
             role: 'user',

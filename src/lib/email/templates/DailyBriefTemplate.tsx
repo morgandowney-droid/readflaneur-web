@@ -79,12 +79,12 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
                       </Text>
                       {desc && <Text style={tempDesc}>{desc}</Text>}
                       {primary.weatherStory && primary.weatherStory.priority > 1 && (
-                        <>
+                        <Section style={tomorrowBox}>
                           <Text style={weatherHint}>{primary.weatherStory.headline}</Text>
                           {primary.weatherStory.body ? (
                             <Text style={weatherHint}>{primary.weatherStory.body}</Text>
                           ) : null}
-                        </>
+                        </Section>
                       )}
                     </>
                   );
@@ -117,7 +117,9 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
               {referralUrl && (
                 <Section style={referralCard}>
                   <Text style={referralText}>
-                    Know someone who&apos;d enjoy this?{' '}
+                    Know someone who&apos;d enjoy this?
+                  </Text>
+                  <Text style={referralText}>
                     <a href={referralUrl} style={referralLink}>Share Flaneur</a>{' '}
                     or forward this email.
                   </Text>
@@ -134,8 +136,8 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
             </Section>
           )}
 
-          {/* Look Ahead link */}
-          {content.lookAheadUrl && primary && (
+          {/* Look Ahead link (only if Look Ahead not already shown as a story) */}
+          {content.lookAheadUrl && primary && !primary.stories.some(s => s.categoryLabel?.includes('Look Ahead')) && (
             <Section style={{ paddingTop: '8px', paddingBottom: '16px', textAlign: 'center' as const }}>
               <a
                 href={content.lookAheadUrl}
@@ -247,6 +249,14 @@ const tempDesc = {
   margin: '4px 0 0',
   textTransform: 'capitalize' as const,
   fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const tomorrowBox = {
+  border: '1px solid #e5e5e5',
+  borderRadius: '6px',
+  padding: '8px 16px',
+  margin: '10px auto 0',
+  maxWidth: '280px',
 };
 
 const weatherHint = {

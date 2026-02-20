@@ -48,8 +48,20 @@ export function StoryList({ stories, variant = 'default' }: StoryListProps) {
           <Hr style={divider} />
           <Text style={category}>
             {story.categoryLabel || ''}
-            {story.categoryLabel && story.location && <span style={locationTag}> &middot; </span>}
-            {story.location && <span style={locationTag}>{story.location}</span>}
+            {story.categoryLabel && story.location && (() => {
+              const label = story.categoryLabel || '';
+              const loc = story.location || '';
+              // If combined line is too long for mobile, drop the city (keep just neighborhood)
+              const full = `${label} · ${loc}`;
+              const displayLoc = full.length > 50 ? loc.split(',')[0] : loc;
+              return (
+                <>
+                  <span style={locationTag}> &middot; </span>
+                  <span style={locationTag}>{displayLoc}</span>
+                </>
+              );
+            })()}
+            {!story.categoryLabel && story.location && <span style={locationTag}>{story.location}</span>}
           </Text>
           <Link href={story.articleUrl} style={headlineLink}>
             <Text style={isPrimary ? headlinePrimary : headline}>{story.headline}</Text>

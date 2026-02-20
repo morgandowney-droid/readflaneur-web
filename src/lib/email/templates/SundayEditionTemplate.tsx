@@ -271,10 +271,12 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
 
           {/* Footer */}
           <Section style={footerSection}>
+            <Text style={{...forwardedText, margin: '0'}}>
+              Was this forwarded to you?
+            </Text>
             <Text style={forwardedText}>
-              Was this forwarded to you?{' '}
               <Link href="https://readflaneur.com" style={forwardedLinkStyle}>Subscribe here</Link>
-              {' '}&mdash; it&apos;s free.
+              {' '}- it&apos;s free.
             </Text>
             <Hr style={footerLightDivider} />
             <Text style={footerText}>

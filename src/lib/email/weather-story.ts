@@ -301,7 +301,7 @@ function checkWeekendLookahead(
     return {
       priority: 3,
       headline: `${satLabel}: ${formatTemp(satMax, useF)} and dry.`,
-      body: 'Warmer than usual.',
+      body: `Warmer than usual ${satLabel.toLowerCase()}.`,
       icon: 'sun',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
@@ -345,7 +345,7 @@ function checkAnomaly(
     return {
       priority: 4,
       headline: `Unseasonably Warm ${dayLabel}: ${formatTemp(tomorrowMax, useF)}.`,
-      body: `${deltaDisplay} above average.`,
+      body: `${deltaDisplay} above average ${dayLabel.toLowerCase()}.`,
       icon: 'thermometer-up',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),
@@ -358,7 +358,7 @@ function checkAnomaly(
     return {
       priority: 4,
       headline: `Sharp Drop ${dayLabel}: ${formatTemp(tomorrowMax, useF)}.`,
-      body: `${deltaDisplay} below average.`,
+      body: `${deltaDisplay} below average ${dayLabel.toLowerCase()}.`,
       icon: 'thermometer-down',
       temperatureC: currentTemp,
       temperatureF: celsiusToFahrenheit(currentTemp),

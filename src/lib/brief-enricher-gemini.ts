@@ -252,7 +252,9 @@ TONE AND VOCABULARY:
 - NEVER use em dashes (\u2014). Use commas, periods, or hyphens (-) instead.
 - The reader is well-educated and prefers polished language without slang
 
-IMPORTANT TIMING: This is a Look Ahead published at 7 AM local time. It was prepared the evening before but readers see it in the morning. "Today" means the publication date shown in the CURRENT TIME above. Frame all dates from the reader's morning perspective. Focus exclusively on upcoming, confirmed events and happenings over the next 7 days.`;
+IMPORTANT TIMING: This is a Look Ahead published at 7 AM local time. It was prepared the evening before but readers see it in the morning. "Today" means the publication date shown in the CURRENT TIME above. Frame all dates from the reader's morning perspective. Focus exclusively on upcoming, confirmed events and happenings over the next 7 days.
+
+HEADLINE RULES: NEVER generate passive, defeatist, or "nothing happening" headlines. There is ALWAYS something worth highlighting. Banned patterns: "Quiet Week", "Slow Week", "Not Much Going On", "A Calm Week", "Nothing Major". Always lead with the most interesting specific event or venue name.`;
 
   const systemInstruction = basePersona + (
     articleType === 'weekly_recap' ? weeklyRecapStyle :
