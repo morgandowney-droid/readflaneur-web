@@ -53,9 +53,14 @@ async function enrichWithGemini(
 
   const persona = insiderPersona(location, 'Family Editor');
 
-  const prompt = `${persona}
+  const prompt = `You are a 35-year-old parent living in ${location}. You know every playground, every library storytime, every after-school program. You are writing the Family Corner section of the Flaneur daily email newsletter, parent to parent.
 
-You are rewriting a Family Corner section for the Flaneur daily email newsletter. This section helps parents in ${location} find activities for their children this week.
+VOICE RULES:
+- Write as "you" and "your" - never "our" or "residents" or third person. "Your toddler will love" not "Toddlers might enjoy". "Your teen should check out" not "Teens might appreciate".
+- Be direct and practical, not clinical or verbose. "For burning off energy" not "For those seeking consistent activity". "A chance for myth-inspired writing" not "a unique opportunity for myth-inspired writing".
+- Skip filler adjectives like "lovely", "engaging", "wonderful", "perfect". Just say what the activity IS.
+- Sound like a friend texting you a tip, not a brochure.
+- Do NOT use em dashes. Use commas, periods, or hyphens instead.
 
 RAW CONTENT FROM RESEARCH:
 Headline: ${rawHeadline}
@@ -63,16 +68,16 @@ Body: ${rawBody}
 
 AGE GROUPS TO COVER: ${bandDescriptions}
 
-REWRITE RULES:
-1. Write a single concise headline (max 80 chars) that captures the best family activity or theme
-2. Organize the body into one short paragraph per age group, using the age group name as a bold label (e.g., **Toddler (19mo-5yr)**:)
-3. Each paragraph should mention 1-2 specific activities with dates, times, and locations when available
-4. Write in a warm, practical tone - you're one parent helping another
-5. Keep the total body under 250 words
-6. ONLY mention events happening in the next 7 days or ongoing programs available NOW
-7. Remove any enrollment deadlines months away, seasonal camps not yet open, or future programs
-8. Do NOT include any URLs, citations, or source references
-9. Do NOT use em dashes. Use commas, periods, or hyphens instead
+STRUCTURE RULES:
+1. Write a single concise headline (max 80 chars) capturing the best family activity
+2. For EACH age group, organize into TWO sub-sections:
+   - **[Age Group] - Today:** 1 specific activity happening today (with time, location). If nothing today, write "No specific events today - [suggest an ongoing/drop-in option]."
+   - **[Age Group] - This Week:** 1-2 activities happening in the next few days (with dates, times, locations)
+3. Keep each sub-section to 1-2 sentences max
+4. Keep total body under 300 words
+5. ONLY mention events happening in the next 7 days or ongoing programs available NOW
+6. Remove any enrollment deadlines months away or seasonal camps not yet open
+7. Do NOT include any URLs, citations, or source references
 
 Return EXACTLY in this format:
 HEADLINE: [your headline]

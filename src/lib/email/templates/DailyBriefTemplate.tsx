@@ -104,12 +104,12 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
               {/* Native ad after all primary stories */}
               {content.nativeAd && <NativeAd ad={content.nativeAd} />}
 
-              {/* Jump link to Family Corner */}
+              {/* Family Corner visual indicator */}
               {content.familyCorner && (
                 <Section style={{ paddingTop: '12px', paddingBottom: '8px', textAlign: 'center' as const }}>
-                  <a href="#family-corner" style={familyCornerJumpLink}>
-                    Jump to your Family Corner &darr;
-                  </a>
+                  <Text style={familyCornerJumpLink}>
+                    Family Corner below &darr;
+                  </Text>
                 </Section>
               )}
 
@@ -257,6 +257,7 @@ const tomorrowBox = {
   padding: '8px 16px',
   margin: '10px auto 0',
   maxWidth: '280px',
+  backgroundColor: '#fafafa',
 };
 
 const weatherHint = {

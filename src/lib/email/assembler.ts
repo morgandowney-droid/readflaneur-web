@@ -20,6 +20,25 @@ import { getUniqueBands } from '@/lib/childcare/age-bands';
 
 // Each section gets exactly 1 Daily Brief + 1 Look Ahead
 
+/**
+ * Expand a neighborhood ID to include combo component IDs.
+ * For combo neighborhoods, articles may be stored under component IDs.
+ * Returns an array of IDs to query with `.in()`.
+ */
+async function expandNeighborhoodIds(
+  supabase: SupabaseClient,
+  neighborhoodId: string,
+  isCombo?: boolean
+): Promise<string[]> {
+  if (!isCombo) return [neighborhoodId];
+  const { data } = await supabase
+    .from('combo_neighborhoods')
+    .select('component_id')
+    .eq('combo_id', neighborhoodId);
+  const componentIds = (data || []).map(r => r.component_id);
+  return [neighborhoodId, ...componentIds];
+}
+
 // Reverse map: neighborhood ID prefix -> city URL slug
 const REVERSE_PREFIX_MAP: Record<string, string> = {};
 for (const [slug, prefix] of Object.entries(CITY_PREFIX_MAP)) {
@@ -244,14 +263,16 @@ async function fetchLookAheadAsStory(
   supabase: SupabaseClient,
   neighborhoodId: string,
   neighborhoodName: string,
-  cityName: string
+  cityName: string,
+  isCombo?: boolean
 ): Promise<EmailStory | null> {
   const since48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const ids = await expandNeighborhoodIds(supabase, neighborhoodId, isCombo);
   const { data: lookAheadArticle } = await supabase
     .from('articles')
     .select('headline, preview_text, body_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
     .eq('status', 'published')
-    .eq('neighborhood_id', neighborhoodId)
+    .in('neighborhood_id', ids)
     .eq('article_type', 'look_ahead')
     .gte('published_at', since48h)
     .order('published_at', { ascending: false })
@@ -293,15 +314,17 @@ function formatDateForTimezone(timezone: string): string {
 async function fetchLookAheadUrl(
   supabase: SupabaseClient,
   neighborhoodId: string,
-  cityName: string
+  cityName: string,
+  isCombo?: boolean
 ): Promise<string | null> {
   const cutoff = new Date();
   cutoff.setHours(cutoff.getHours() - 48);
 
+  const ids = await expandNeighborhoodIds(supabase, neighborhoodId, isCombo);
   const { data } = await supabase
     .from('articles')
-    .select('slug')
-    .eq('neighborhood_id', neighborhoodId)
+    .select('slug, neighborhood_id')
+    .in('neighborhood_id', ids)
     .eq('status', 'published')
     .eq('article_type', 'look_ahead')
     .gte('published_at', cutoff.toISOString())
@@ -310,7 +333,8 @@ async function fetchLookAheadUrl(
 
   if (!data || data.length === 0) return null;
 
-  const base = neighborhoodIdToUrl(neighborhoodId, cityName);
+  // Use the actual article's neighborhood_id for the URL (may be a component)
+  const base = neighborhoodIdToUrl(data[0].neighborhood_id, cityName);
   return `${base}/${data[0].slug}`;
 }
 
@@ -428,7 +452,7 @@ export async function assembleDailyBrief(
 
     // Fetch exactly 1 Daily Brief + 1 Look Ahead
     const briefStory = await fetchBriefAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city);
-    const lookAheadStory = await fetchLookAheadAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city);
+    const lookAheadStory = await fetchLookAheadAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city, primaryNeighborhood.is_combo);
 
     const emailStories: EmailStory[] = [];
     if (briefStory) emailStories.push(briefStory);
@@ -465,7 +489,7 @@ export async function assembleDailyBrief(
     if (!neighborhood) continue;
 
     const briefStory = await fetchBriefAsStory(supabase, satId, neighborhood.name, neighborhood.city);
-    const lookAheadStory = await fetchLookAheadAsStory(supabase, satId, neighborhood.name, neighborhood.city);
+    const lookAheadStory = await fetchLookAheadAsStory(supabase, satId, neighborhood.name, neighborhood.city, neighborhood.is_combo);
 
     const emailStories: EmailStory[] = [];
     if (briefStory) emailStories.push(briefStory);
@@ -500,7 +524,7 @@ export async function assembleDailyBrief(
   // Fetch Look Ahead URL for primary neighborhood
   let lookAheadUrl: string | null = null;
   if (primaryNeighborhood) {
-    lookAheadUrl = await fetchLookAheadUrl(supabase, primaryNeighborhood.id, primaryNeighborhood.city);
+    lookAheadUrl = await fetchLookAheadUrl(supabase, primaryNeighborhood.id, primaryNeighborhood.city, primaryNeighborhood.is_combo);
   }
 
   // Fetch Family Corner (zero cost for non-opted-in users)

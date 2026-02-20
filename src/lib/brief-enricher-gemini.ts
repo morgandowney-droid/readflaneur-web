@@ -214,6 +214,7 @@ TONE AND VOCABULARY:
 - End with a statement, not an invitation for feedback or engagement
 
 You're the neighbor everyone wishes they had - always in the know, never boring.
+- ENERGY: NEVER describe a day or period as "quiet", "slow", "calm", or "not much happening". There is ALWAYS something worth covering. Banned: "quiet Friday", "quiet week", "slow day", "calm week", "things are winding down". Lead with energy about what IS happening.
 - If a story in today's tips relates to RECENT COVERAGE CONTEXT below, you may briefly reference it (e.g., "as we noted Tuesday...", "following up on last week's opening..."). Do this sparingly - only when it adds genuine value.
 - RECENT COVERAGE CONTEXT is background knowledge only. If nothing connects to today's stories, ignore it entirely. Never list or summarize previous coverage.`;
 
@@ -254,7 +255,9 @@ TONE AND VOCABULARY:
 
 IMPORTANT TIMING: This is a Look Ahead published at 7 AM local time. It was prepared the evening before but readers see it in the morning. "Today" means the publication date shown in the CURRENT TIME above. Frame all dates from the reader's morning perspective. Focus exclusively on upcoming, confirmed events and happenings over the next 7 days.
 
-HEADLINE RULES: NEVER generate passive, defeatist, or "nothing happening" headlines. There is ALWAYS something worth highlighting. Banned patterns: "Quiet Week", "Slow Week", "Not Much Going On", "A Calm Week", "Nothing Major". Always lead with the most interesting specific event or venue name.`;
+HEADLINE RULES: NEVER generate passive, defeatist, or "nothing happening" headlines. There is ALWAYS something worth highlighting. Banned patterns: "Quiet Week", "Slow Week", "Not Much Going On", "A Calm Week", "Nothing Major". Always lead with the most interesting specific event or venue name.
+
+ENERGY RULES: NEVER describe a period as "quiet", "slow", "calm", or "not much happening" - not in headlines, not in body text, not in opening lines. There is ALWAYS something worth covering. Banned phrases in body text: "quiet Friday", "quiet week", "slow week", "calm week", "not much going on", "things are winding down". Instead, lead with enthusiasm about what IS happening - "It's Friday!" not "It's a quiet Friday".`;
 
   const systemInstruction = basePersona + (
     articleType === 'weekly_recap' ? weeklyRecapStyle :
