@@ -3,6 +3,15 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-20
+
+**Fix Look Ahead Generation for Combo Neighborhoods:**
+- Combo neighborhoods (Tribeca, Hamptons, Ostermalm) never received Look Ahead articles in daily brief emails.
+- Root cause: `getActiveNeighborhoodIds()` returned combo IDs (e.g., `nyc-tribeca`) but not their component IDs (`nyc-tribeca-core`, `nyc-fidi`). The generate-look-ahead cron correctly filters out combos (`.eq('is_combo', false)`) but components were never in the eligible set.
+- Fix 1: Added step 4 to `getActiveNeighborhoodIds()` in `active-neighborhoods.ts` - expands combo IDs to include component IDs via `combo_neighborhoods` table.
+- Fix 2: Removed `.eq('is_active', true)` filter from `generate-look-ahead/route.ts` - combo components have `is_active=false` by design (they're not standalone neighborhoods), but still need articles for combo subscribers.
+- Image feedback tooltip text updated to "I like this image" / "I don't like this image".
+
 ## 2026-02-18
 
 **Pre-Generated Neighborhood Image Library:**
