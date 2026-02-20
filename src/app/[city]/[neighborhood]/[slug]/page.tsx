@@ -10,6 +10,7 @@ import { ArticleReactions } from '@/components/article/ArticleReactions';
 import { PostReadEmailCapture } from '@/components/article/PostReadEmailCapture';
 import { TranslatedArticleBody, TranslatedHeadline } from '@/components/article/TranslatedArticleBody';
 import { AIImageDisclaimer, AIImageBadge } from '@/components/article/AIImageDisclaimer';
+import { ImageFeedback } from '@/components/article/ImageFeedback';
 import { SourceAttribution } from '@/components/article/SourceAttribution';
 import { Ad } from '@/types';
 import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
@@ -275,18 +276,26 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 />
                 {isAIGenerated && <AIImageBadge position="bottom-left" />}
               </div>
-              {isAIGenerated && <AIImageDisclaimer className="mb-6" />}
+              {isAIGenerated && <AIImageDisclaimer className="mb-2" />}
+              {isAIGenerated && (
+                <div className="flex justify-end mb-6">
+                  <ImageFeedback imageUrl={article.image_url} />
+                </div>
+              )}
               {isUnsplash && unsplashCredit && (
-                <p className="text-xs text-fg-muted mb-6">
-                  Photo by{' '}
-                  <a href={`${unsplashCredit.photographer_url}?utm_source=flaneur&utm_medium=referral`} target="_blank" rel="noopener noreferrer" className="underline">
-                    {unsplashCredit.photographer}
-                  </a>
-                  {' '}on{' '}
-                  <a href="https://unsplash.com/?utm_source=flaneur&utm_medium=referral" target="_blank" rel="noopener noreferrer" className="underline">
-                    Unsplash
-                  </a>
-                </p>
+                <div className="flex items-center justify-between mb-6">
+                  <p className="text-xs text-fg-muted">
+                    Photo by{' '}
+                    <a href={`${unsplashCredit.photographer_url}?utm_source=flaneur&utm_medium=referral`} target="_blank" rel="noopener noreferrer" className="underline">
+                      {unsplashCredit.photographer}
+                    </a>
+                    {' '}on{' '}
+                    <a href="https://unsplash.com/?utm_source=flaneur&utm_medium=referral" target="_blank" rel="noopener noreferrer" className="underline">
+                      Unsplash
+                    </a>
+                  </p>
+                  <ImageFeedback imageUrl={article.image_url} />
+                </div>
               )}
             </>
           );
