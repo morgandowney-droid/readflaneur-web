@@ -3,6 +3,14 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-26
+
+**Fix Login Auth - Header SIGN IN Bug + Mobile Login Hang:**
+- Three compounding auth issues fixed: (1) Header showed SIGN IN when user IS authenticated (expired JWT cookies caused `getSession()` to return null, but flaneur-auth fallback was only checked on timeout/error, not on null session), (2) Login page redirect loop (flaneur-auth found → redirect to `/` → layout redirects to `/feed` → Header shows SIGN IN → back to `/login`), (3) Mobile login hung ~7-8s (`signInWithPassword` 4s timeout + `setSession` 2s timeout via navigator.locks).
+- **Header.tsx:** `initAuth` now checks `flaneur-auth` localStorage FIRST (synchronous, instant "Account" display), then tries `getSession()` in background (3s timeout) to upgrade to full User object. Never clears user if getSession returns null - expired JWT is gracefully degraded. No more 3s SIGN IN flash.
+- **Login page:** Removed flaneur-auth redirect shortcut from `checkSession` (was creating the redirect loop). Now only redirects if `getSession()` returns a valid session. If session null (expired cookies), clears stale flaneur-auth and shows login form. `handleSubmit` rewritten to server-only: single `POST /api/auth/signin` (zero `signInWithPassword`, zero `setSession`, zero `navigator.locks` calls). Writes flaneur-auth + GoTrue localStorage, then `window.location.href`. Mobile login: ~1-2s instead of ~7-8s.
+- **Signin API:** Added server-side Cloudflare Turnstile token validation via `siteverify` endpoint before GoTrue password check. Gracefully degrades if Cloudflare unreachable. New env var: `TURNSTILE_SECRET_KEY`.
+
 ## 2026-02-25
 
 **Fix Global Neighborhood Date Stamping:**
