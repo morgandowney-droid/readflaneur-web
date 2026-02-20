@@ -25,6 +25,13 @@ export function NativeAd({ ad }: NativeAdProps) {
       {ad.body && (
         <Text style={body}>{ad.body}</Text>
       )}
+      {ad.ctaText && (
+        <Text style={ctaRow}>
+          <Link href={ad.clickUrl} style={ctaButton}>
+            {ad.ctaText} &rsaquo;
+          </Link>
+        </Text>
+      )}
       <Text style={sponsor}>{ad.sponsorLabel}</Text>
       {ad.impressionUrl && (
         <Img src={ad.impressionUrl} width="1" height="1" alt="" />
@@ -81,10 +88,29 @@ const body = {
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 
+const ctaRow = {
+  textAlign: 'center' as const,
+  margin: '4px 0 0',
+};
+
+const ctaButton = {
+  display: 'inline-block' as const,
+  backgroundColor: '#1a1a1a',
+  color: '#ffffff',
+  padding: '10px 24px',
+  fontSize: '12px',
+  fontWeight: '600' as const,
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase' as const,
+  textDecoration: 'none',
+  borderRadius: '4px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
 const sponsor = {
   fontSize: '11px',
   color: '#999999',
-  margin: '0 0 8px',
+  margin: '8px 0',
   textAlign: 'center' as const,
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };

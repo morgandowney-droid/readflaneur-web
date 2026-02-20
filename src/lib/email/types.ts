@@ -85,4 +85,5 @@ export interface EmailAd {
   clickUrl: string;
   sponsorLabel: string;
   impressionUrl: string;
+  ctaText?: string;
 }

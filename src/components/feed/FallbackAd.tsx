@@ -252,9 +252,9 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
   const body = t(bodyKey) !== bodyKey ? t(bodyKey) : houseAd.body;
   const cta = t(ctaKey) !== ctaKey ? t(ctaKey) : 'Learn More';
 
-  // For app_download house ads, resolve a dynamic discovery URL
+  // For app_download and escape_mode house ads, resolve a dynamic discovery URL
   useEffect(() => {
-    if (houseAd.type !== 'app_download') return;
+    if (houseAd.type !== 'app_download' && houseAd.type !== 'escape_mode') return;
 
     try {
       const stored = localStorage.getItem('flaneur-neighborhood-preferences');
@@ -263,7 +263,11 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
 
       const params = new URLSearchParams();
       if (ids.length > 0) params.set('subscribedIds', ids.join(','));
-      if (primaryId) params.set('referenceId', primaryId);
+      if (houseAd.type === 'escape_mode') {
+        params.set('mode', 'random');
+      } else if (primaryId) {
+        params.set('referenceId', primaryId);
+      }
 
       fetch(`/api/discover-neighborhood?${params}`)
         .then(res => res.json())
