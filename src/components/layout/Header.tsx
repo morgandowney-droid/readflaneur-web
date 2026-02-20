@@ -81,39 +81,49 @@ export function Header() {
       }
     };
 
-    // Get initial session with 3s timeout — getSession() uses navigator.locks
-    // which can deadlock if _initialize() (from constructor) holds the lock.
-    // Fallback: read auth cookie directly to detect logged-in state on mobile.
+    // Auth strategy: flaneur-auth localStorage flag FIRST (instant, no locks),
+    // then getSession() in background to upgrade to full User object.
+    // This prevents the "SIGN IN" flash when JWT cookies have expired but
+    // the user is still authenticated (refresh token + flaneur-auth exist).
     const initAuth = async () => {
+      // Step 1: Check flaneur-auth synchronously (instant)
+      let authFlagUser: { id: string; email: string } | null = null;
+      try {
+        const authFlag = localStorage.getItem('flaneur-auth');
+        if (authFlag) {
+          const parsed = JSON.parse(authFlag);
+          if (parsed?.id) {
+            authFlagUser = parsed;
+            // Show "Account" immediately — no 3s spinner
+            setUser({ id: parsed.id, email: parsed.email } as User);
+            fetchAdminRole(parsed.id);
+            setLoading(false);
+          }
+        }
+      } catch {
+        // Auth flag missing or invalid
+      }
+
+      // Step 2: Try getSession in background (3s timeout) to upgrade to full User
       try {
         const { data: { session } } = await Promise.race([
           supabase.auth.getSession(),
           new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
         ]);
         if (!mounted) return;
-        setUser(session?.user ?? null);
         if (session?.user) {
+          // Upgrade to full User object (has metadata, confirmed_at, etc.)
+          setUser(session.user);
           fetchAdminRole(session.user.id);
         }
+        // If session is null (expired JWT), keep flaneur-auth user — don't clear.
+        // Sign-out goes through /account which clears everything explicitly.
       } catch {
-        // getSession deadlocked (mobile Safari navigator.locks).
-        // Read simple auth flag from localStorage as fallback.
-        if (!mounted) return;
-        try {
-          const authFlag = localStorage.getItem('flaneur-auth');
-          if (authFlag) {
-            const { id, email } = JSON.parse(authFlag);
-            if (id) {
-              // Create a minimal User object for the Header to show "Account"
-              setUser({ id, email } as User);
-              fetchAdminRole(id);
-            }
-          }
-        } catch {
-          // Auth flag missing or invalid — user stays logged out visually
-        }
+        // getSession deadlocked or timed out — keep flaneur-auth user if set
       }
-      if (mounted) {
+
+      // If no flaneur-auth was found either, clear loading
+      if (mounted && !authFlagUser) {
         setLoading(false);
       }
     };

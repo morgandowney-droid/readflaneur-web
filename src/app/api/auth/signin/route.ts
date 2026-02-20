@@ -1,19 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Server-side sign-in that bypasses CAPTCHA by calling GoTrue REST API
-// directly with the service role key. Used when client-side auth fails/times out.
+// Server-side sign-in via GoTrue REST API with service role key.
+// Primary login path — client sends credentials + optional Turnstile token.
+// Validates Turnstile server-side, then authenticates with GoTrue.
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, captchaToken } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password required' }, { status: 400 });
     }
 
+    // Validate Turnstile token server-side (if configured + token provided)
+    const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+    if (turnstileSecret && captchaToken) {
+      try {
+        const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            secret: turnstileSecret,
+            response: captchaToken,
+          }),
+        });
+        const verifyData = await verifyRes.json();
+        if (!verifyData.success) {
+          return NextResponse.json({ error: 'Verification failed. Please try again.' }, { status: 403 });
+        }
+      } catch {
+        // Turnstile verification failed — allow login to proceed
+        // (don't block real users due to Cloudflare outage)
+      }
+    }
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-    // Call GoTrue REST API directly - service role key bypasses CAPTCHA
+    // Call GoTrue REST API directly
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
 

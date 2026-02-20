@@ -40,31 +40,29 @@ function LoginForm() {
   const [checkingSession, setCheckingSession] = useState(true);
   const turnstileRef = useRef<TurnstileInstance>(null);
 
-  // Redirect already-authenticated users
+  // Redirect already-authenticated users — only via getSession (real cookie check).
+  // Do NOT check flaneur-auth here: if cookies expired, flaneur-auth creates a
+  // redirect loop (login → / → /feed → sees SIGN IN → /login → flaneur-auth → /).
+  // If getSession returns null (expired), clear stale flaneur-auth and show form.
   useEffect(() => {
     async function checkSession() {
-      // Check simple auth flag first (no GoTrue, instant)
-      try {
-        const authFlag = localStorage.getItem('flaneur-auth');
-        if (authFlag && JSON.parse(authFlag)?.id) {
-          window.location.href = redirect;
-          return;
-        }
-      } catch { /* continue to GoTrue check */ }
-
-      // GoTrue check with short timeout (may deadlock on mobile Safari)
       try {
         const supabase = createClient();
         const { data: { session } } = await Promise.race([
           supabase.auth.getSession(),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000)),
         ]);
         if (session?.user) {
-          window.location.href = redirect;
+          // Real valid session — redirect
+          window.location.href = redirect === '/' ? '/feed' : redirect;
           return;
         }
+        // Session null = expired cookies. Clear stale flaneur-auth so Header
+        // doesn't show "Account" pointing to a broken session.
+        localStorage.removeItem('flaneur-auth');
       } catch {
-        // Timeout or error - show login form
+        // Timeout or error — show login form, don't clear flaneur-auth
+        // (could be a transient navigator.locks issue)
       }
       setCheckingSession(false);
     }
@@ -106,125 +104,54 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
       const target = redirect === '/' ? '/feed' : redirect;
 
-      // Try client-side sign-in first (with CAPTCHA if available)
-      // signInWithPassword stores session in cookies AND emits SIGNED_IN
-      // on the shared singleton client, so Header's onAuthStateChange picks it up.
-      // 4s timeout: navigator.locks deadlocks on mobile Safari, fall to server fast.
-      let clientSignInOk = false;
-      try {
-        const opts = captchaToken ? { captchaToken } : undefined;
-        const { data, error: authError } = await Promise.race([
-          supabase.auth.signInWithPassword({ email, password, options: opts }),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('timeout')), 4000)
-          ),
-        ]);
+      // Server-only sign-in: zero navigator.locks calls.
+      // POST to /api/auth/signin which validates credentials via GoTrue REST API
+      // (service role key) and sets auth cookies on the response.
+      const res = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, captchaToken }),
+        credentials: 'same-origin',
+      });
+      const result = await res.json();
 
-        if (!authError && data?.session) {
-          clientSignInOk = true;
-          // Set simple auth flag for Header (bypasses GoTrue on next page load)
-          if (data.session.user) {
-            localStorage.setItem('flaneur-auth', JSON.stringify({
-              id: data.session.user.id,
-              email: data.session.user.email,
-            }));
-          }
-        }
-      } catch {
-        // Client-side auth timed out or failed - will try server fallback
+      if (!res.ok || !result.access_token) {
+        setError(result.error || 'Sign in failed');
+        setIsLoading(false);
+        turnstileRef.current?.reset();
+        setCaptchaToken(null);
+        return;
       }
 
-      // Fallback: server-side sign-in (bypasses CAPTCHA via service role key + direct REST)
-      if (!clientSignInOk) {
-        try {
-          const res = await fetch('/api/auth/signin', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-            credentials: 'same-origin',
-          });
-          const result = await res.json();
-
-          if (res.ok && result.access_token) {
-            // Write session to GoTrue's localStorage + simple auth flag.
-            // GoTrue's _initialize() (navigator.locks) can deadlock on mobile Safari.
-            // The auth flag lets Header show "Account" without any GoTrue calls.
-            try {
-              const ref = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0];
-              const storageKey = `sb-${ref}-auth-token`;
-              const session = {
-                access_token: result.access_token,
-                refresh_token: result.refresh_token,
-                token_type: result.token_type || 'bearer',
-                expires_in: result.expires_in,
-                expires_at: result.expires_at,
-                user: result.user,
-              };
-              localStorage.setItem(storageKey, JSON.stringify(session));
-              // Simple auth flag readable without GoTrue
-              if (result.user) {
-                localStorage.setItem('flaneur-auth', JSON.stringify({
-                  id: result.user.id,
-                  email: result.user.email,
-                }));
-              }
-            } catch {
-              // Non-critical
-            }
-
-            // Try to hydrate the in-memory client so onAuthStateChange fires.
-            // setSession may hang (navigator.locks), so race with 2s timeout.
-            try {
-              await Promise.race([
-                supabase.auth.setSession({
-                  access_token: result.access_token,
-                  refresh_token: result.refresh_token,
-                }),
-                new Promise<never>((_, reject) =>
-                  setTimeout(() => reject(new Error('timeout')), 2000)
-                ),
-              ]);
-              clientSignInOk = true;
-            } catch {
-              // setSession timed out - session is in cookies + localStorage, full reload will work
-            }
-          } else {
-            setError(result.error || 'Sign in failed');
-            setIsLoading(false);
-            turnstileRef.current?.reset();
-            setCaptchaToken(null);
-            return;
-          }
-        } catch {
-          setError('Sign in failed. Please try again.');
-          setIsLoading(false);
-          turnstileRef.current?.reset();
-          setCaptchaToken(null);
-          return;
+      // Write flaneur-auth flag + GoTrue localStorage key for Header.
+      // No navigator.locks — just plain localStorage writes.
+      try {
+        if (result.user) {
+          localStorage.setItem('flaneur-auth', JSON.stringify({
+            id: result.user.id,
+            email: result.user.email,
+          }));
         }
+        const ref = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0];
+        const storageKey = `sb-${ref}-auth-token`;
+        localStorage.setItem(storageKey, JSON.stringify({
+          access_token: result.access_token,
+          refresh_token: result.refresh_token,
+          token_type: result.token_type || 'bearer',
+          expires_in: result.expires_in,
+          expires_at: result.expires_at,
+          user: result.user,
+        }));
+      } catch {
+        // Non-critical — cookies are already set by server response
       }
 
       setSuccess(true);
 
-      // Fire-and-forget: sync DB prefs to localStorage for the feed page.
-      // useNeighborhoodPreferences will also sync on feed mount, so no need to await.
-      supabase
-        .from('user_neighborhood_preferences')
-        .select('neighborhood_id, sort_order')
-        .order('sort_order', { ascending: true })
-        .then(({ data: dbPrefs }) => {
-          if (dbPrefs && dbPrefs.length > 0) {
-            const dbIds = dbPrefs.map(p => p.neighborhood_id);
-            localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(dbIds));
-            document.cookie = `flaneur-neighborhoods=${dbIds.join(',')};path=/;max-age=31536000;SameSite=Strict`;
-          }
-        }, () => {}); // Silent fail
-
-      // Navigate immediately - don't wait for DB sync
-      // Always use window.location.href for reliable redirect on mobile
+      // Full page navigation — cookies are set, flaneur-auth is set,
+      // Header will read flaneur-auth instantly on next page load.
       window.location.href = target;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
