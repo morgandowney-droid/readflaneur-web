@@ -5,6 +5,17 @@
 
 ## 2026-02-24
 
+**Explicit Calendar Dates in AI-Generated Content:**
+- All AI prompts now require explicit calendar dates alongside relative time references (e.g., "yesterday (February 19)", "this Thursday, February 20").
+- Affects 6 prompt locations: Gemini enrichment (FORMATTING RULES), Grok brief generation, Grok news stories, Grok Look Ahead, Claude RSS rewrites, crime blotter Gemini.
+- Prevents confusing articles that say "yesterday" or "Thursday" without specifying which date.
+
+**Crime Blotter Source Attribution:**
+- `sync-nyc-crime-blotter` cron now collects unique sources from Grok incident data (e.g., "NY Post", "@NYPDnews", "Citizen").
+- Sources inserted into `article_sources` table after article creation. Falls back to generic "Local news & police reports" if no sources in incident data.
+- `BlotterStory` type extended with `sources: BlotterSource[]`. Article insert now returns ID via `.select('id').single()` for source linking.
+- SourceAttribution now shows "Synthesized from reporting by NY Post, @NYPDnews, and Citizen" instead of generic text.
+
 **Expandable Look Ahead Card with Discovery CTAs:**
 - Look Ahead card below Daily Brief now expands/collapses like the Daily Brief card does.
 - Compact closed state unchanged (user explicitly liked the smaller scale).
