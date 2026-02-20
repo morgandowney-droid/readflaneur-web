@@ -104,15 +104,6 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
               {/* Native ad after all primary stories */}
               {content.nativeAd && <NativeAd ad={content.nativeAd} />}
 
-              {/* Family Corner indicator (plain text — Gmail strips anchor links) */}
-              {content.familyCorner && (
-                <Section style={{ paddingTop: '12px', paddingBottom: '8px', textAlign: 'center' as const }}>
-                  <Text style={familyCornerJumpLink}>
-                    Jump to your Family Corner &darr;
-                  </Text>
-                </Section>
-              )}
-
               {/* Inline referral CTA */}
               {referralUrl && (
                 <Section style={referralCard}>
@@ -273,14 +264,6 @@ const emptyState = {
   textAlign: 'center' as const,
   padding: '40px 0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
-};
-
-const familyCornerJumpLink = {
-  color: '#C9A96E',
-  textDecoration: 'none',
-  fontWeight: '600' as const,
-  fontSize: '14px',
-  fontFamily: "'Playfair Display', Georgia, serif",
 };
 
 const sectionDividerDark = {
