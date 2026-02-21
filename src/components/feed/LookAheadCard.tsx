@@ -154,8 +154,12 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
 
   // Parse body text into paragraphs, handling [[Day, Date]] headers
   const paragraphs = bodyText ? bodyText.split('\n\n').filter(p => p.trim()) : [];
-  const previewText = paragraphs[0] || '';
-  const hasMore = paragraphs.length > 1;
+
+  // One-sentence teaser for closed card
+  const firstParagraph = paragraphs[0] || '';
+  const sentenceMatch = firstParagraph.match(/^[^.!?]*[.!?]/);
+  const previewSentence = sentenceMatch ? sentenceMatch[0] : firstParagraph;
+  const hasMore = paragraphs.length > 1 || firstParagraph.length > previewSentence.length;
 
   const handleToggle = () => {
     setIsExpanded(prev => !prev);
@@ -175,11 +179,11 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
           {/* Full content */}
           <div className="text-lg text-fg-muted leading-relaxed space-y-4 mt-2">
             {paragraphs.map((p, i) => {
-              // Detect [[Day, Date]] headers
+              // Detect [[Day, Date]] headers - extra top margin for section breaks
               const headerMatch = p.match(/^\[\[(.+)\]\]$/);
               if (headerMatch) {
                 return (
-                  <h3 key={i} className="text-xs font-semibold text-fg uppercase tracking-widest mt-4 mb-1">
+                  <h3 key={i} className="text-xs font-semibold text-fg uppercase tracking-widest mt-6 mb-1">
                     {headerMatch[1]}
                   </h3>
                 );
@@ -243,10 +247,10 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
         </>
       ) : (
         <>
-          {/* Compact preview - same as before but with expand hint */}
-          {bodyText && previewText ? (
+          {/* Compact preview - one sentence teaser */}
+          {bodyText && previewSentence ? (
             <p className="text-lg text-fg-muted">
-              {renderParagraph(previewText, 'la-preview')}
+              {renderParagraph(previewSentence, 'la-preview')}
               {hasMore && (
                 <>
                   {' '}
