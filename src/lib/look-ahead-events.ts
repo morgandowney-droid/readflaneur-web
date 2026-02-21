@@ -23,11 +23,11 @@ export interface StructuredEvent {
  * Output format:
  * [[Event Listing]]
  *
- * **Today, Sat Feb 21**
+ * [[Today, Sat Feb 21]]
  * 10:00, 14:00; Stockholm Food; Guided Walking Tour; Ostermalms Saluhall.
  * 12:00-15:00; "Near and Far"; Art exhibition; Djurgarden.
  *
- * **Fri, Feb 27**
+ * [[Fri, Feb 27]]
  * 19:00; Nordic world music concert; Stallet, Stallgatan 7.
  *
  * ---
@@ -66,15 +66,16 @@ export function formatEventListing(
       return timeA.localeCompare(timeB);
     });
 
-    // Format date header
+    // Format date header using [[header]] syntax so ArticleBody renders as <h3>
     const dateHeader = formatDateHeader(date, localDate);
-    const lines: string[] = [`**${dateHeader}**`];
+    const lines: string[] = [`[[${dateHeader}]]`];
 
     for (const event of dateEvents) {
       lines.push(formatEventLine(event));
     }
 
-    sections.push(lines.join('\n'));
+    // Use \n\n between all lines so ArticleBody splits them into separate paragraphs
+    sections.push(lines.join('\n\n'));
   }
 
   return `[[Event Listing]]\n\n${sections.join('\n\n')}\n\n---`;
