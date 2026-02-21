@@ -3,7 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { generateLookAhead } from '@/lib/grok';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
-import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
+import { getComboInfo } from '@/lib/combo-utils';
+import { getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 
 /**
@@ -218,37 +219,49 @@ export async function GET(request: Request) {
 
   try {
     // Determine which neighborhoods to process
-    let neighborhoodIds: string[];
+    // Use is_active=true (same as Daily Brief cron): combos are is_active=true,
+    // their components are is_active=false. This naturally generates one Look Ahead
+    // per combo covering all components, instead of separate articles per component.
+    let neighborhoods: Array<{ id: string; name: string; city: string; country: string | null; timezone: string | null; is_combo: boolean; is_active: boolean }>;
 
     if (testNeighborhoodId) {
-      neighborhoodIds = [testNeighborhoodId];
+      // Test mode: process a single neighborhood directly
+      const { data, error: fetchError } = await supabase
+        .from('neighborhoods')
+        .select('id, name, city, country, timezone, is_combo, is_active')
+        .eq('id', testNeighborhoodId);
+
+      if (fetchError || !data || data.length === 0) {
+        return NextResponse.json({ success: false, error: `Neighborhood ${testNeighborhoodId} not found` }, { status: 404 });
+      }
+
+      neighborhoods = data;
     } else {
-      // Only process neighborhoods with active subscribers
-      const activeIds = await getActiveNeighborhoodIds(supabase);
-      neighborhoodIds = Array.from(activeIds);
+      // Get active subscriber set for filtering
+      const activeSubscriberIds = await getActiveNeighborhoodIds(supabase);
+
+      // Fetch is_active=true neighborhoods (combos + standalone, excludes components)
+      const { data, error: fetchError } = await supabase
+        .from('neighborhoods')
+        .select('id, name, city, country, timezone, is_combo, is_active')
+        .eq('is_active', true)
+        .order('name');
+
+      if (fetchError || !data) {
+        throw new Error(`Failed to fetch neighborhoods: ${fetchError?.message}`);
+      }
+
+      // Filter to only neighborhoods with active subscribers
+      neighborhoods = data.filter(n => activeSubscriberIds.has(n.id));
     }
 
-    if (neighborhoodIds.length === 0) {
+    if (neighborhoods.length === 0) {
       return NextResponse.json({
         success: true,
         message: 'No active neighborhoods to process',
         ...results,
         timestamp: new Date().toISOString(),
       });
-    }
-
-    // Fetch neighborhood data
-    // No is_active filter: combo components may have is_active=false but still
-    // need Look Ahead articles since their parent combo has subscribers.
-    // getActiveNeighborhoodIds() already determines which neighborhoods need content.
-    const { data: neighborhoods, error: fetchError } = await supabase
-      .from('neighborhoods')
-      .select('id, name, city, country, timezone, is_combo, is_active')
-      .in('id', neighborhoodIds)
-      .eq('is_combo', false); // Skip combo neighborhoods (components are processed individually)
-
-    if (fetchError || !neighborhoods) {
-      throw new Error(`Failed to fetch neighborhoods: ${fetchError?.message}`);
     }
 
     results.neighborhoods_eligible = neighborhoods.length;
@@ -316,9 +329,19 @@ export async function GET(request: Request) {
           const dates = neighborhoodDates.get(id) || getLocalPublishDate(tz);
           const localDate = dates.localDate; // YYYY-MM-DD in neighborhood's timezone
 
+          // For combo neighborhoods, build search name from component names
+          // (same pattern as sync-neighborhood-briefs)
+          let searchName = name;
+          if (neighborhood.is_combo) {
+            const comboInfo = await getComboInfo(supabase, id);
+            if (comboInfo && comboInfo.components.length > 0) {
+              searchName = comboInfo.components.map(c => c.name).join(', ');
+            }
+          }
+
           // Step 1: Grok search for upcoming events
-          console.log(`[generate-look-ahead] Grok search for ${name}, ${city} (local date: ${localDate})...`);
-          const lookAheadBrief = await generateLookAhead(name, city, country || undefined, tz, localDate);
+          console.log(`[generate-look-ahead] Grok search for ${searchName}, ${city} (local date: ${localDate})...`);
+          const lookAheadBrief = await generateLookAhead(searchName, city, country || undefined, tz, localDate);
 
           if (!lookAheadBrief || !lookAheadBrief.content) {
             console.log(`[generate-look-ahead] No content from Grok for ${name}`);
