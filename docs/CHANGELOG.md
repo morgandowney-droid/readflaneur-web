@@ -15,6 +15,10 @@
 - Suppressed duplicate CTA buttons on editorial article pages (PostReadEmailCapture and FallbackAd "Add to Collection" hidden when BriefDiscoveryFooter already present for look_ahead/brief_summary articles).
 - Files: `src/lib/look-ahead-events.ts` (new), `src/lib/grok.ts`, `src/app/api/cron/generate-look-ahead/route.ts`, `src/components/article/ArticleBody.tsx`, `src/components/feed/LookAheadCard.tsx`, `src/app/[city]/[neighborhood]/[slug]/page.tsx`.
 
+**Expand Tourist Trap Filter:**
+- Grok prompt and Gemini enrichment `lookAheadStyle` now explicitly exclude guided walking tours, food tours, food hall tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms, and any activity primarily marketed to tourists (in addition to existing permanent show exclusions).
+- Added `isTouristActivity()` safety-net filter in `look-ahead-events.ts` that catches common tourist patterns via regex on event name/category before formatting.
+
 ## 2026-02-26
 
 **Fix Nuisance Watch Date Precision, Spacing, and Images:**
