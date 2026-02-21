@@ -5,6 +5,19 @@
 
 ## 2026-02-26
 
+**Fix Nuisance Watch Date Precision, Spacing, and Images:**
+- Date range now ends yesterday (today's 311 data isn't complete) with precise "from and including X, through and including Y" language.
+- Bullet list prompt requires blank line after list for proper spacing before closing sentence.
+- Switched from `getCronImage` (AI-generated) to `selectLibraryImage` + `preloadUnsplashCache` for real Unsplash neighborhood photos.
+
+**Update Look Ahead and Primary Brief Labels:**
+- "Look Ahead (next 7 days)" changed to "Look Ahead (today and next 7 days)" across all 9 languages in translations.ts, email templates (DailyBriefTemplate, SundayEditionTemplate), BriefDiscoveryFooter, assembler cleanCategoryLabel, and welcome email.
+- "Above is the Daily Brief for your primary neighborhood" changed to "Above are the Daily Brief and Look Ahead for your primary neighborhood" across all 9 languages.
+
+**Update Sunday Edition House Ad Text:**
+- Body: "native in" changed to "living in" across all 9 languages + DB `house_ads` table.
+- CTA: "Let's Take a Quick Look" changed to "Place it Now" across all 9 languages.
+
 **Fix Look Ahead Cron: Generate for Combos, Not Components:**
 - Combo neighborhoods (Tribeca, Ostermalm, Hamptons) were getting fragmented Look Ahead articles - one per component (FiDi, Tribeca Core, LES) instead of one consolidated article per combo.
 - Root cause: cron used `getActiveNeighborhoodIds()` which returns both combo and component IDs, then filtered `.eq('is_combo', false)` so only components were processed.
