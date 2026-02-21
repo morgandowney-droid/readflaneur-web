@@ -225,6 +225,7 @@ interface NeighborhoodBriefProps {
   enrichedCategories?: EnrichedCategory[];
   enrichedAt?: string;
   shareUrl?: string;
+  timezone?: string;
 }
 
 /**
@@ -312,6 +313,7 @@ export function NeighborhoodBrief({
   enrichedContent,
   enrichedCategories,
   shareUrl,
+  timezone,
 }: NeighborhoodBriefProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { language, isTranslated } = useLanguageContext();
@@ -539,9 +541,10 @@ export function NeighborhoodBrief({
           <span>
             {(() => {
               const d = new Date(generatedAt);
-              const weekday = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-              const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
-              const date = d.getDate();
+              const tzOpts = timezone ? { timeZone: timezone } : {};
+              const weekday = d.toLocaleDateString('en-US', { weekday: 'short', ...tzOpts }).toUpperCase();
+              const month = d.toLocaleDateString('en-US', { month: 'short', ...tzOpts }).toUpperCase();
+              const date = d.toLocaleDateString('en-US', { day: 'numeric', ...tzOpts });
               return `${weekday} ${month} ${date} | ${t('feed.dailyBrief').toUpperCase()}`;
             })()}
           </span>

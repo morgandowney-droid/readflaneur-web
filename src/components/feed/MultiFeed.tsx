@@ -66,6 +66,7 @@ export function MultiFeed({
     neighborhoodName: string;
     neighborhoodId: string;
     city: string;
+    timezone?: string;
   } | null>(null);
   const [briefLoading, setBriefLoading] = useState(false);
   const [fetchedArticles, setFetchedArticles] = useState<FeedItem[] | null>(null);
@@ -186,6 +187,7 @@ export function MultiFeed({
             neighborhoodName: hood?.name || '',
             neighborhoodId: activeFilter,
             city: hood?.city || '',
+            timezone: hood?.timezone,
           });
         }
         setBriefLoading(false);
@@ -677,6 +679,7 @@ export function MultiFeed({
             enrichedCategories={fetchedBrief.enriched_categories}
             enrichedAt={fetchedBrief.enriched_at}
             shareUrl={`/${getCitySlugFromId(fetchedBrief.neighborhoodId)}/${getNeighborhoodSlugFromId(fetchedBrief.neighborhoodId)}`}
+            timezone={fetchedBrief.timezone}
           />
           <LookAheadCard
             neighborhoodId={fetchedBrief.neighborhoodId}

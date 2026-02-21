@@ -5,6 +5,38 @@
 
 ## 2026-02-26
 
+**Fix Look Ahead Same-Day Local Time Generation:**
+- Look Ahead articles were appearing a day early because cron used UTC date math (`new Date().setUTCDate(+1)`) - at 5 PM UTC (12 PM NYC), UTC tomorrow = Saturday but NYC today = Friday. Article said "today Feb 21" while being visible on Feb 20.
+- Added `getLocalPublishDate(timezone)` helper using `toLocaleDateString('en-CA', { timeZone })` for per-neighborhood local date computation. Each article gets `published_at` set to 7 AM in neighborhood's local timezone (converted to UTC).
+- `generateLookAhead()` in `grok.ts` now accepts optional `timezone` and `targetLocalDate` params. Uses local date instead of UTC tomorrow.
+- Cron schedule changed from `0 17-22 * * *` (evening UTC, generated for "tomorrow") to `0 0-7 * * *` (morning UTC, generated for "today"). Articles now refer to the same local day they're published.
+- Dedup uses per-neighborhood local dates instead of global UTC date.
+
+**Look Ahead Card Formatting:**
+- Label changed from "Look Ahead" to "Look Ahead (next 7 days)" in all 9 languages via `feed.lookAhead` translation key.
+- Closed card now shows one-sentence teaser (regex `^[^.!?]*[.!?]`) instead of full first paragraph, with "Read more" suffix when more content exists.
+- Expanded card day headers (`[[Day, Date]]`) get extra top margin (`mt-6`) for clearer section breaks.
+
+**Newsletter Auto-Subscribe on Login and Signup:**
+- Registered users are now automatically inserted into `newsletter_subscribers` table during both login (`/api/auth/signin`) and signup (`/auth/callback` after PKCE code exchange).
+- Uses admin client (service role) to bypass RLS. Checks for existing subscription first. Sets `email_verified: true` and `verified_at` immediately.
+- Ensures all registered users receive Daily Brief emails without needing a separate newsletter subscribe action.
+
+**Fix sort_order Column References (24h Outage):**
+- `user_neighborhood_preferences` table only has `id`, `user_id`, `neighborhood_id`, `created_at` - NO `sort_order` column.
+- All 8 files referencing `sort_order` silently failed because Supabase REST API returns error objects (not data) with 200 HTTP status for non-existent columns.
+- Removed `sort_order` from: `signin/route.ts`, `auth/callback/route.ts`, `my-preferences/route.ts`, `save-preferences/route.ts`, `sync-to-db/route.ts`, `add/route.ts`, `create/route.ts`.
+- This broke ALL neighborhood sync for 24 hours.
+
+**Profile Data Caching for Instant Account Page:**
+- Signin API now fetches profile data (timezone, childcare mode, email unsubscribe token) in parallel with prefs/newsletter queries.
+- Login page caches profile to `flaneur-profile` localStorage after successful login.
+- Account page reads cached profile synchronously on mount - instant rendering instead of grey flash while DB queries resolve.
+
+**Turnstile Sitekey Trim:**
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` env var had trailing `\n` causing Cloudflare widget error.
+- Added `.trim()` to sitekey references in both login and signup pages.
+
 **Fix Login Auth - Header SIGN IN Bug + Mobile Login Hang:**
 - Three compounding auth issues fixed: (1) Header showed SIGN IN when user IS authenticated (expired JWT cookies caused `getSession()` to return null, but flaneur-auth fallback was only checked on timeout/error, not on null session), (2) Login page redirect loop (flaneur-auth found → redirect to `/` → layout redirects to `/feed` → Header shows SIGN IN → back to `/login`), (3) Mobile login hung ~7-8s (`signInWithPassword` 4s timeout + `setSession` 2s timeout via navigator.locks).
 - **Header.tsx:** `initAuth` now checks `flaneur-auth` localStorage FIRST (synchronous, instant "Account" display), then tries `getSession()` in background (3s timeout) to upgrade to full User object. Never clears user if getSession returns null - expired JWT is gracefully degraded. No more 3s SIGN IN flash.
