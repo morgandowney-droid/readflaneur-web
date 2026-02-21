@@ -399,22 +399,38 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         )}
 
         {/* Bottom Story Open Ad */}
-        <div className="mt-12 pt-8 border-t border-border">
-          {bottomAd ? (
-            <StoryOpenAd ad={bottomAd} position="bottom" />
-          ) : (
-            <FallbackAd
-              variant="story_open"
-              position="bottom"
-              fallback={fallbackData}
-              articleNeighborhoodId={neighborhoodId}
-              articleNeighborhoodName={article.neighborhood?.name}
-            />
-          )}
-        </div>
+        {/* For articles with BriefDiscoveryFooter (brief_summary, look_ahead, sunday edition),
+            skip "Add to Collection" CTA since the footer already has "Add to neighborhoods" */}
+        {(() => {
+          const hasBriefDiscoveryFooter =
+            article.article_type === 'look_ahead' ||
+            article.article_type === 'brief_summary' ||
+            (article.category_label && article.category_label.toLowerCase().includes('daily brief')) ||
+            article.category_label === 'The Sunday Edition';
+          return (
+            <div className="mt-12 pt-8 border-t border-border">
+              {bottomAd ? (
+                <StoryOpenAd ad={bottomAd} position="bottom" />
+              ) : (
+                <FallbackAd
+                  variant="story_open"
+                  position="bottom"
+                  fallback={fallbackData}
+                  articleNeighborhoodId={hasBriefDiscoveryFooter ? undefined : neighborhoodId}
+                  articleNeighborhoodName={hasBriefDiscoveryFooter ? undefined : article.neighborhood?.name}
+                />
+              )}
+            </div>
+          );
+        })()}
 
-        {/* Email capture for engaged readers */}
-        <PostReadEmailCapture neighborhoodName={article.neighborhood?.name || 'neighborhood'} />
+        {/* Email capture for engaged readers - skip when BriefDiscoveryFooter already has inline email capture */}
+        {article.article_type !== 'look_ahead' &&
+         article.article_type !== 'brief_summary' &&
+         article.category_label !== 'The Sunday Edition' &&
+         !(article.category_label && article.category_label.toLowerCase().includes('daily brief')) && (
+          <PostReadEmailCapture neighborhoodName={article.neighborhood?.name || 'neighborhood'} />
+        )}
 
         {/* More stories */}
         <div className="mt-12 pt-8 border-t border-border text-center">
