@@ -136,7 +136,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
     'houseAd.suggest_neighborhood.cta': 'Suggest',
     'houseAd.advertise.headline': 'Your Brand Here',
     'houseAd.advertise.body': 'Reach the most discerning readers in {neighborhoodCount} neighborhoods worldwide.',
-    'houseAd.advertise.cta': "Let's Place It",
+    'houseAd.advertise.cta': 'Place It',
     'houseAd.waitlist.headline': 'Send an Invitation',
     'houseAd.waitlist.body': "Invite a friend to the world's most exclusive local intel.",
     'houseAd.waitlist.cta': "Let's Welcome Friends",
