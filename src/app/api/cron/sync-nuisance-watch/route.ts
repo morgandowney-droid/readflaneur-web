@@ -24,7 +24,7 @@ import {
   NUISANCE_THRESHOLD,
   generateNuisanceRoundup,
 } from '@/lib/nuisance-watch';
-import { getCronImage } from '@/lib/cron-images';
+import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 
 export const runtime = 'nodejs';
 export const maxDuration = 180; // 3 minutes for clustering + generation
@@ -86,6 +86,10 @@ export async function GET(request: Request) {
     hotspots: [] as Array<{ location: string; category: string; count: number }>,
     errors: [] as string[],
   };
+
+  // Preload Unsplash image cache for neighborhood photos
+  const libraryReadyIds = await getLibraryReadyIds(supabase);
+  await preloadUnsplashCache(supabase);
 
   try {
     let stories: NuisanceStory[];
@@ -151,9 +155,6 @@ export async function GET(request: Request) {
         timestamp: new Date().toISOString(),
       });
     }
-
-    // Get cached image for nuisance watch (reused across all stories)
-    const cachedImageUrl = await getCronImage('nuisance-watch', supabase);
 
     // Group stories by neighborhood for consolidation
     const storiesByNeighborhood = new Map<string, NuisanceStory[]>();
@@ -273,7 +274,7 @@ export async function GET(request: Request) {
           headline: finalStory.headline,
           body_text: finalStory.body,
           preview_text: finalStory.previewText,
-          image_url: cachedImageUrl,
+          image_url: selectLibraryImage(finalNeighborhoodId, 'rss-story', categoryLabel, libraryReadyIds),
           slug,
           status: 'published',
           published_at: new Date().toISOString(),

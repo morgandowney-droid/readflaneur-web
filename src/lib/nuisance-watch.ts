@@ -489,11 +489,11 @@ export async function generateNuisanceStory(
   const genAI = new GoogleGenAI({ apiKey });
   const categoryConfig = COMPLAINT_CATEGORIES[cluster.category];
 
-  // Calculate actual date range
-  const endDate = new Date();
-  const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  // Calculate actual date range (7 days ending yesterday - today's data isn't complete)
+  const endDate = new Date(Date.now() - 24 * 60 * 60 * 1000); // yesterday
+  const startDate = new Date(endDate.getTime() - 6 * 24 * 60 * 60 * 1000); // 7 days total
   const formatDate = (d: Date) => d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-  const dateRange = `${formatDate(startDate)} through ${formatDate(endDate)}`;
+  const dateRange = `from and including ${formatDate(startDate)}, through and including ${formatDate(endDate)}`;
 
   // Build category-specific guidance
   const categoryGuidance: Record<ComplaintCategory, string> = {
@@ -542,7 +542,7 @@ Headline Template: "${categoryConfig.headlineTemplate}"
 Task: Write a structured "Community Watch" blurb.
 
 Body format - use this EXACT structure:
-1. One opening sentence stating the complaint count, location, and the EXACT date range ("from [start date] through [end date]")
+1. One opening sentence stating the complaint count, location, and the EXACT date range ("during the 7 days, from and including [start date], through and including [end date]")
 2. Then list the specific complaint types cited by neighbors
 3. One closing sentence noting the neighborhood and civic context
 
@@ -640,11 +640,11 @@ export async function generateNuisanceRoundup(
   // Sort clusters by complaint count descending
   const sorted = [...clusters].sort((a, b) => b.count - a.count);
 
-  // Calculate actual date range for the prompt
-  const endDate = new Date();
-  const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  // Calculate actual date range for the prompt (7 days ending yesterday - today's data isn't complete)
+  const endDate = new Date(Date.now() - 24 * 60 * 60 * 1000); // yesterday
+  const startDate = new Date(endDate.getTime() - 6 * 24 * 60 * 60 * 1000); // 7 days total
   const formatDate = (d: Date) => d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-  const dateRange = `${formatDate(startDate)} through ${formatDate(endDate)}`;
+  const dateRange = `from and including ${formatDate(startDate)}, through and including ${formatDate(endDate)}`;
 
   // Build location list for the prompt (structured with counts)
   const locationList = sorted
@@ -688,9 +688,9 @@ Task: Write a structured "Noise Watch" roundup.
 Headline: "Noise Watch: ${totalComplaints} complaints across ${hotspotCount} locations in ${neighborhoodName}"
 
 Body format - use this EXACT structure:
-1. One opening sentence stating the total complaints, the neighborhood name, and the EXACT date range ("from [start date] through [end date]")
-2. Then a blank line followed by a bullet-point list of EVERY location with its count, one per line, formatted as "- [Address]: [count] complaints"
-3. One closing sentence noting the predominant complaint types
+1. One opening sentence stating the total complaints, the neighborhood name, and the EXACT date range ("during the 7 days, from and including [start date], through and including [end date]")
+2. Then a blank line, followed by a bullet-point list of EVERY location with its count, one per line, formatted as "- [Address]: [count] complaints"
+3. Then a blank line, followed by one closing sentence noting the predominant complaint types
 
 Do NOT use words like "spike", "surge", "notable increase" or any comparison language. Just state the facts.
 
@@ -722,7 +722,7 @@ Return JSON:
 
     // Inject hyperlinks
     const linkCandidates: LinkCandidate[] = validateLinkCandidates(parsed.link_candidates);
-    let body = parsed.body || `${neighborhoodName} residents filed ${totalComplaints} complaints across ${hotspotCount} locations from ${dateRange}.\n\n${bulletList}`;
+    let body = parsed.body || `${neighborhoodName} residents filed ${totalComplaints} complaints across ${hotspotCount} locations during the 7 days, ${dateRange}.\n\n${bulletList}\n\n`;
     if (linkCandidates.length > 0) {
       body = injectHyperlinks(body, linkCandidates, { name: neighborhoodName, city: 'New York' });
     }
