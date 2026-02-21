@@ -10,7 +10,7 @@ export default function AccountPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [timezone, setTimezone] = useState<string | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [authReady, setAuthReady] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [childcareEnabled, setChildcareEnabled] = useState(false);
   const [hasChildren, setHasChildren] = useState(false);
@@ -18,54 +18,57 @@ export default function AccountPage() {
 
   useEffect(() => {
     let cancelled = false;
-    const timeout = setTimeout(() => {
-      if (!cancelled && loading) setLoading(false);
-    }, 5000);
 
-    async function loadAccount() {
+    // Step 1: Check flaneur-auth INSTANTLY (synchronous localStorage read)
+    // This eliminates the grey flash — email shows on very first render after this effect.
+    let userId: string | null = null;
+    let userEmail: string | null = null;
+    try {
+      const authFlag = localStorage.getItem('flaneur-auth');
+      if (authFlag) {
+        const parsed = JSON.parse(authFlag);
+        if (parsed?.id) {
+          userId = parsed.id;
+          userEmail = parsed.email;
+        }
+      }
+    } catch { /* ignore */ }
+
+    if (userEmail) {
+      setEmail(userEmail);
+      // Also read localStorage newsletter flag instantly
+      if (localStorage.getItem('flaneur-newsletter-subscribed') === 'true') {
+        setIsSubscribed(true);
+      }
+    }
+    setAuthReady(true); // Page can render now (no spinner)
+
+    if (!userId) return; // Not logged in — nothing more to load
+
+    // Step 2: Load profile details in background (progressive loading)
+    async function loadProfile() {
       const supabase = createClient();
 
-      // getSession() with 3s timeout - navigator.locks can deadlock on mobile Safari
-      let session = null;
+      // Try getSession to upgrade userId/email from flaneur-auth to full session
       try {
         const { data } = await Promise.race([
           supabase.auth.getSession(),
           new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
         ]);
-        session = data.session;
-      } catch {
-        // Timeout or error - check flaneur-auth flag below
-      }
-
-      // If GoTrue session failed, check simple auth flag
-      let userId: string | null = session?.user?.id ?? null;
-      let userEmail: string | null = session?.user?.email ?? null;
-
-      if (!userId) {
-        try {
-          const authFlag = localStorage.getItem('flaneur-auth');
-          if (authFlag) {
-            const parsed = JSON.parse(authFlag);
-            if (parsed.id) {
-              userId = parsed.id;
-              userEmail = parsed.email;
-            }
+        if (!cancelled && data.session?.user) {
+          userId = data.session.user.id;
+          if (data.session.user.email) {
+            userEmail = data.session.user.email;
+            setEmail(userEmail);
           }
-        } catch { /* ignore */ }
+        }
+      } catch {
+        // Timeout or error — keep flaneur-auth data
       }
 
       if (cancelled) return;
 
-      if (!userId) {
-        // Genuinely not logged in (no GoTrue session AND no flaneur-auth flag)
-        setLoading(false);
-        clearTimeout(timeout);
-        return;
-      }
-
-      setEmail(userEmail);
-
-      // Load profile data. Try Supabase client first (uses cookies).
+      // Load profile. Try Supabase client first (uses cookies).
       // If that fails (mobile Safari navigator.locks deadlock), fall back
       // to direct REST calls using the access token from GoTrue localStorage.
       let profileLoaded = false;
@@ -74,7 +77,7 @@ export default function AccountPage() {
           supabase
             .from('profiles')
             .select('primary_timezone, childcare_mode_enabled, email_unsubscribe_token')
-            .eq('id', userId)
+            .eq('id', userId!)
             .single(),
           new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
         ]);
@@ -120,6 +123,7 @@ export default function AccountPage() {
               const profiles = await profileRes.json();
               const profile = profiles?.[0];
               if (profile) {
+                profileLoaded = true;
                 if (profile.primary_timezone) setTimezone(profile.primary_timezone);
                 if (profile.childcare_mode_enabled) {
                   setChildcareEnabled(true);
@@ -134,34 +138,43 @@ export default function AccountPage() {
             }
           }
         } catch {
-          // Direct REST also failed - graceful degradation
+          // Direct REST also failed — graceful degradation
         }
       }
 
-      // Check children via Supabase client (if not already loaded by REST fallback)
-      if (profileLoaded) {
+      // Check children via Supabase client (if profile loaded via Supabase, not REST)
+      if (profileLoaded && !cancelled) {
         try {
           const { count: childCount } = await supabase
             .from('user_children')
             .select('*', { count: 'exact', head: true })
-            .eq('user_id', userId)
+            .eq('user_id', userId!)
             .eq('user_source', 'profile');
           if (!cancelled && childCount && childCount > 0) setHasChildren(true);
         } catch { /* ignore */ }
       }
 
-      if (!cancelled) {
-        setIsSubscribed(localStorage.getItem('flaneur-newsletter-subscribed') === 'true');
-        setLoading(false);
-        clearTimeout(timeout);
+      // Server-side newsletter check — more reliable than localStorage alone.
+      // Uses our API which has service role access.
+      if (userEmail && !cancelled) {
+        try {
+          const res = await fetch(
+            `/api/account/newsletter-status?email=${encodeURIComponent(userEmail)}`,
+            { credentials: 'same-origin' }
+          );
+          if (!cancelled && res.ok) {
+            const { subscribed } = await res.json();
+            if (subscribed) {
+              setIsSubscribed(true);
+              try { localStorage.setItem('flaneur-newsletter-subscribed', 'true'); } catch { /* ignore */ }
+            }
+          }
+        } catch { /* ignore — localStorage value stands */ }
       }
     }
 
-    loadAccount();
-    return () => {
-      cancelled = true;
-      clearTimeout(timeout);
-    };
+    loadProfile();
+    return () => { cancelled = true; };
   }, []);
 
   const handleSignOut = async () => {
@@ -189,7 +202,7 @@ export default function AccountPage() {
     window.location.href = '/';
   };
 
-  if (loading) {
+  if (!authReady) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-5 h-5 border-2 border-fg-subtle border-t-transparent rounded-full animate-spin" />

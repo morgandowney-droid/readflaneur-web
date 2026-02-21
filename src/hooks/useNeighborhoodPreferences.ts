@@ -98,14 +98,13 @@ export function useNeighborhoodPreferences(): {
           } else if (ids !== null) {
             // Logged in but DB is empty. Don't clear localStorage —
             // user may have neighborhoods from before they signed up.
-            // Instead, push localStorage to DB to bootstrap preferences.
+            // Push localStorage to DB via server API (service role key, reliable).
             const stored = localStorage.getItem(PREFS_KEY);
             if (stored) {
               try {
                 const localIds = JSON.parse(stored) as string[];
                 if (localIds.length > 0) {
-                  // Fire-and-forget: push local prefs to DB
-                  fetch('/api/neighborhoods/sync-to-db', {
+                  fetch('/api/neighborhoods/save-preferences', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ neighborhoodIds: localIds }),

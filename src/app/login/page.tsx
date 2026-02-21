@@ -107,10 +107,17 @@ function LoginForm() {
       // Server-only sign-in: zero navigator.locks calls.
       // POST to /api/auth/signin which validates credentials via GoTrue REST API
       // (service role key) and sets auth cookies on the response.
+      // Also sends client neighborhoods so server can bootstrap DB if empty.
+      let clientNeighborhoods: string[] = [];
+      try {
+        const stored = localStorage.getItem('flaneur-neighborhood-preferences');
+        if (stored) clientNeighborhoods = JSON.parse(stored);
+      } catch { /* ignore */ }
+
       const res = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, captchaToken }),
+        body: JSON.stringify({ email, password, captchaToken, clientNeighborhoods }),
         credentials: 'same-origin',
       });
       const result = await res.json();

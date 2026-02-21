@@ -914,6 +914,18 @@ function GlobalNeighborhoodModal({
       // Sync cookie + localStorage so server reads updated neighborhoods
       localStorage.setItem(PREFS_KEY, JSON.stringify(finalIds));
       document.cookie = `flaneur-neighborhoods=${finalIds.join(',')};path=/;max-age=31536000;SameSite=Strict`;
+
+      // Save to DB via server API (fire-and-forget).
+      // Uses cookie-based auth + service role key for reliable DB writes.
+      // This replaces the per-toggle client-side Supabase writes that silently
+      // fail when the JWT session expires.
+      fetch('/api/neighborhoods/save-preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ neighborhoodIds: finalIds }),
+        credentials: 'same-origin',
+      }).catch(() => {});
+
       router.push('/feed');
     } else {
       router.push('/neighborhoods');
@@ -928,10 +940,13 @@ function GlobalNeighborhoodModal({
     localStorage.removeItem(PREFS_KEY);
     document.cookie = 'flaneur-neighborhoods=;path=/;max-age=0;SameSite=Strict';
     if (userId) {
-      const supabase = createClient();
-      Promise.resolve(
-        supabase.from('user_neighborhood_preferences').delete().eq('user_id', userId)
-      ).then(null, () => {});
+      // Use server API for reliable DB write (bypasses expired JWT issues)
+      fetch('/api/neighborhoods/save-preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ neighborhoodIds: [] }),
+        credentials: 'same-origin',
+      }).catch(() => {});
     }
   };
 

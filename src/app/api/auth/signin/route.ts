@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // Validates Turnstile server-side, then authenticates with GoTrue.
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, captchaToken } = await request.json();
+    const { email, password, captchaToken, clientNeighborhoods } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password required' }, { status: 400 });
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
             { headers: { 'apikey': serviceRoleKey, 'Authorization': `Bearer ${serviceRoleKey}` } }
           ),
           fetch(
-            `${supabaseUrl}/rest/v1/newsletter_subscribers?select=id&email=eq.${encodeURIComponent(email)}&limit=1`,
+            `${supabaseUrl}/rest/v1/newsletter_subscribers?select=id&email=eq.${encodeURIComponent(email.toLowerCase().trim())}&limit=1`,
             { headers: { 'apikey': serviceRoleKey, 'Authorization': `Bearer ${serviceRoleKey}` } }
           ),
         ]);
@@ -94,6 +94,46 @@ export async function POST(request: NextRequest) {
       }
     } catch {
       // Non-critical — client-side sync will fill later
+    }
+
+    // Bootstrap DB from client neighborhoods if DB is empty.
+    // This is the key fix for cross-device sync: every login pushes the client's
+    // neighborhoods to DB via service role key (100% reliable, no RLS/session issues).
+    if (neighborhoodIds.length === 0 && Array.isArray(clientNeighborhoods) && clientNeighborhoods.length > 0) {
+      try {
+        const userId = tokenData.user?.id;
+        if (userId) {
+          const rows = clientNeighborhoods
+            .filter((id: unknown) => typeof id === 'string' && id.length > 0)
+            .map((id: string, i: number) => ({
+              user_id: userId,
+              neighborhood_id: id,
+              sort_order: i,
+            }));
+
+          if (rows.length > 0) {
+            const insertRes = await fetch(
+              `${supabaseUrl}/rest/v1/user_neighborhood_preferences`,
+              {
+                method: 'POST',
+                headers: {
+                  'apikey': serviceRoleKey,
+                  'Authorization': `Bearer ${serviceRoleKey}`,
+                  'Content-Type': 'application/json',
+                  'Prefer': 'return=minimal',
+                },
+                body: JSON.stringify(rows),
+              }
+            );
+            if (insertRes.ok) {
+              neighborhoodIds = rows.map((r: { neighborhood_id: string }) => r.neighborhood_id);
+              console.log(`[signin] Bootstrapped ${rows.length} neighborhoods to DB for user ${userId}`);
+            }
+          }
+        }
+      } catch {
+        // Non-critical — neighborhoods will sync later
+      }
     }
 
     // Build response with full session data + user state
