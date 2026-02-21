@@ -152,6 +152,33 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Auto-subscribe to newsletter if not already subscribed.
+    // Every registered user should be in newsletter_subscribers for email delivery.
+    if (!isSubscribed && tokenData.user?.email) {
+      try {
+        const adminHeaders = { 'apikey': serviceRoleKey, 'Authorization': `Bearer ${serviceRoleKey}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
+        const normalizedEmail = tokenData.user.email.toLowerCase().trim();
+        await fetch(
+          `${supabaseUrl}/rest/v1/newsletter_subscribers`,
+          {
+            method: 'POST',
+            headers: adminHeaders,
+            body: JSON.stringify({
+              email: normalizedEmail,
+              subscribed_at: new Date().toISOString(),
+              neighborhood_ids: neighborhoodIds,
+              email_verified: true,
+              verified_at: new Date().toISOString(),
+            }),
+          }
+        );
+        isSubscribed = true;
+        console.log(`[signin] Auto-subscribed ${normalizedEmail} to newsletter`);
+      } catch {
+        // Non-critical — can subscribe later
+      }
+    }
+
     // Build response with full session data + user state
     const response = NextResponse.json({
       access_token: tokenData.access_token,

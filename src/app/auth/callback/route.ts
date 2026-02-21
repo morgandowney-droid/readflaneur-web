@@ -58,6 +58,38 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // Auto-subscribe to newsletter if not already subscribed.
+      // Every registered user should be in newsletter_subscribers for email delivery.
+      try {
+        const adminForSub = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        const userEmail = data.session.user.email?.toLowerCase().trim();
+        if (userEmail) {
+          const { data: existingSub } = await adminForSub
+            .from('newsletter_subscribers')
+            .select('id')
+            .eq('email', userEmail)
+            .maybeSingle();
+
+          if (!existingSub) {
+            await adminForSub
+              .from('newsletter_subscribers')
+              .insert({
+                email: userEmail,
+                subscribed_at: new Date().toISOString(),
+                neighborhood_ids: [],
+                email_verified: true,
+                verified_at: new Date().toISOString(),
+              });
+            console.log(`[auth/callback] Auto-subscribed ${userEmail} to newsletter`);
+          }
+        }
+      } catch {
+        // Non-critical
+      }
+
       // Sync DB neighborhood preferences to cookie for feed page (server-side).
       // The client-side layout script will sync cookie → localStorage on load.
       try {
