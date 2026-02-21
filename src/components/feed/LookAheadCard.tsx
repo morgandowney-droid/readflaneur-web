@@ -152,14 +152,26 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
 
   if (!url) return null;
 
-  // Parse body text into paragraphs, handling [[Day, Date]] headers
-  const paragraphs = bodyText ? bodyText.split('\n\n').filter(p => p.trim()) : [];
+  // Pre-process body text: ensure [[Day, Date]] headers get their own paragraphs
+  // (same logic as ArticleBody.tsx)
+  const processedBody = bodyText
+    ? bodyText
+        .replace(/\s*(\[\[[^\]]+\]\])\s*/g, '\n\n$1\n\n')
+        .replace(/\]\]\s+([A-Z])/g, ']]\n\n$1')
+    : null;
 
-  // One-sentence teaser for closed card
-  const firstParagraph = paragraphs[0] || '';
-  const sentenceMatch = firstParagraph.match(/^[^.!?]*[.!?]/);
-  const previewSentence = sentenceMatch ? sentenceMatch[0] : firstParagraph;
-  const hasMore = paragraphs.length > 1 || firstParagraph.length > previewSentence.length;
+  // Parse body text into paragraphs, handling [[Day, Date]] headers
+  const paragraphs = processedBody ? processedBody.split('\n\n').filter(p => p.trim()) : [];
+
+  // One-sentence teaser: strip all markdown to get clean plain text
+  const plainText = (paragraphs.find(p => !p.match(/^\[\[/) && !p.match(/^\*\*[^*]+\*\*$/)) || paragraphs[0] || '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')           // strip bold markers
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')      // strip markdown links, keep text
+    .replace(/\[\[([^\]]+)\]\]/g, '$1')            // strip header markers
+    .trim();
+  const sentenceMatch = plainText.match(/^[^.!?]*[.!?]/);
+  const previewSentence = sentenceMatch ? sentenceMatch[0] : plainText;
+  const hasMore = paragraphs.length > 1 || plainText.length > previewSentence.length;
 
   const handleToggle = () => {
     setIsExpanded(prev => !prev);
@@ -247,10 +259,10 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
         </>
       ) : (
         <>
-          {/* Compact preview - one sentence teaser */}
+          {/* Compact preview - one sentence teaser (plain text, muted) */}
           {bodyText && previewSentence ? (
             <p className="text-lg text-fg-muted">
-              {renderParagraph(previewSentence, 'la-preview')}
+              {previewSentence}
               {hasMore && (
                 <>
                   {' '}
