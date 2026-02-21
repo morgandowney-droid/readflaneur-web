@@ -162,6 +162,10 @@ function LoginForm() {
       if (result.is_subscribed) {
         localStorage.setItem('flaneur-newsletter-subscribed', 'true');
       }
+      // Cache profile data for instant account page rendering
+      if (result.profile) {
+        localStorage.setItem('flaneur-profile', JSON.stringify(result.profile));
+      }
 
       setSuccess(true);
 
@@ -239,11 +243,11 @@ function LoginForm() {
           />
         </div>
 
-        {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+        {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() && (
           <div className="flex justify-center">
             <Turnstile
               ref={turnstileRef}
-              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY.trim()}
               onSuccess={setCaptchaToken}
               onExpire={() => setCaptchaToken(null)}
               options={{ theme: 'dark', size: 'flexible' }}

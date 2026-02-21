@@ -70,17 +70,23 @@ export async function POST(request: NextRequest) {
     // before redirect — ensures feed renders with correct neighborhoods immediately.
     let neighborhoodIds: string[] = [];
     let isSubscribed = false;
+    let profileData: { timezone?: string; childcare?: boolean; prefsToken?: string } = {};
     try {
       const userId = tokenData.user?.id;
       if (userId) {
-        const [prefsRes, subRes] = await Promise.all([
+        const adminHeaders = { 'apikey': serviceRoleKey, 'Authorization': `Bearer ${serviceRoleKey}` };
+        const [prefsRes, subRes, profileRes] = await Promise.all([
           fetch(
-            `${supabaseUrl}/rest/v1/user_neighborhood_preferences?select=neighborhood_id,sort_order&order=sort_order.asc&user_id=eq.${userId}`,
-            { headers: { 'apikey': serviceRoleKey, 'Authorization': `Bearer ${serviceRoleKey}` } }
+            `${supabaseUrl}/rest/v1/user_neighborhood_preferences?select=neighborhood_id&user_id=eq.${userId}`,
+            { headers: adminHeaders }
           ),
           fetch(
             `${supabaseUrl}/rest/v1/newsletter_subscribers?select=id&email=eq.${encodeURIComponent(email.toLowerCase().trim())}&limit=1`,
-            { headers: { 'apikey': serviceRoleKey, 'Authorization': `Bearer ${serviceRoleKey}` } }
+            { headers: adminHeaders }
+          ),
+          fetch(
+            `${supabaseUrl}/rest/v1/profiles?select=primary_timezone,childcare_mode_enabled,email_unsubscribe_token&id=eq.${userId}&limit=1`,
+            { headers: adminHeaders }
           ),
         ]);
         if (prefsRes.ok) {
@@ -90,6 +96,17 @@ export async function POST(request: NextRequest) {
         if (subRes.ok) {
           const subs = await subRes.json();
           isSubscribed = Array.isArray(subs) && subs.length > 0;
+        }
+        if (profileRes.ok) {
+          const profiles = await profileRes.json();
+          const p = profiles?.[0];
+          if (p) {
+            profileData = {
+              timezone: p.primary_timezone || undefined,
+              childcare: p.childcare_mode_enabled || false,
+              prefsToken: p.email_unsubscribe_token || undefined,
+            };
+          }
         }
       }
     } catch {
@@ -105,10 +122,9 @@ export async function POST(request: NextRequest) {
         if (userId) {
           const rows = clientNeighborhoods
             .filter((id: unknown) => typeof id === 'string' && id.length > 0)
-            .map((id: string, i: number) => ({
+            .map((id: string) => ({
               user_id: userId,
               neighborhood_id: id,
-              sort_order: i,
             }));
 
           if (rows.length > 0) {
@@ -146,6 +162,7 @@ export async function POST(request: NextRequest) {
       user: tokenData.user,
       neighborhood_ids: neighborhoodIds,
       is_subscribed: isSubscribed,
+      profile: profileData,
     });
 
     // Set auth cookies directly in the response (bypasses setSession's getUser hang)

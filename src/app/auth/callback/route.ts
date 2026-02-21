@@ -67,9 +67,8 @@ export async function GET(request: NextRequest) {
         );
         const { data: dbPrefs } = await adminClient
           .from('user_neighborhood_preferences')
-          .select('neighborhood_id, sort_order')
-          .eq('user_id', data.session.user.id)
-          .order('sort_order', { ascending: true });
+          .select('neighborhood_id')
+          .eq('user_id', data.session.user.id);
 
         if (dbPrefs && dbPrefs.length > 0) {
           const dbIds = dbPrefs.map(p => p.neighborhood_id);

@@ -61,23 +61,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    // Get max sort_order for this user
-    const { data: maxOrder } = await supabase
-      .from('user_neighborhood_preferences')
-      .select('sort_order')
-      .eq('user_id', session.user.id)
-      .order('sort_order', { ascending: false })
-      .limit(1);
-
-    const nextOrder = (maxOrder?.[0]?.sort_order ?? -1) + 1;
-
     // Insert new preference
     await supabase
       .from('user_neighborhood_preferences')
       .insert({
         user_id: session.user.id,
         neighborhood_id: neighborhoodId,
-        sort_order: nextOrder,
       });
 
     return NextResponse.json({ success: true });

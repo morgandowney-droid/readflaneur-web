@@ -31,8 +31,7 @@ export async function GET() {
 
     const { data: prefs } = await supabase
       .from('user_neighborhood_preferences')
-      .select('neighborhood_id, sort_order')
-      .order('sort_order', { ascending: true });
+      .select('neighborhood_id');
 
     const ids = prefs?.map(p => p.neighborhood_id) || [];
     return NextResponse.json({ ids, userId: session.user.id });

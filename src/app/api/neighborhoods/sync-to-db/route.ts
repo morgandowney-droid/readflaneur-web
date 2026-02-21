@@ -49,10 +49,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert all neighborhood preferences from localStorage
-    const rows = neighborhoodIds.map((id: string, i: number) => ({
+    const rows = neighborhoodIds.map((id: string) => ({
       user_id: userId,
       neighborhood_id: id,
-      sort_order: i,
     }));
 
     await supabase

@@ -247,20 +247,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 9. Auto-add to creator's collection
-    const { data: maxOrder } = await admin
-      .from('user_neighborhood_preferences')
-      .select('sort_order')
-      .eq('user_id', userId)
-      .order('sort_order', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
     await admin
       .from('user_neighborhood_preferences')
       .insert({
         user_id: userId,
         neighborhood_id: neighborhoodId,
-        sort_order: (maxOrder?.sort_order || 0) + 1,
       })
       .then(null, (e: unknown) => console.error('Failed to add to collection:', e));
 

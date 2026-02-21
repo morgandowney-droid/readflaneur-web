@@ -40,6 +40,19 @@ export default function AccountPage() {
       if (localStorage.getItem('flaneur-newsletter-subscribed') === 'true') {
         setIsSubscribed(true);
       }
+      // Read cached profile data (written by login page from signin API response)
+      try {
+        const cached = localStorage.getItem('flaneur-profile');
+        if (cached) {
+          const profile = JSON.parse(cached);
+          if (profile.timezone) setTimezone(profile.timezone);
+          if (profile.childcare) {
+            setChildcareEnabled(true);
+            localStorage.setItem('flaneur-family-corner-enabled', 'true');
+          }
+          if (profile.prefsToken) setPrefsToken(profile.prefsToken);
+        }
+      } catch { /* ignore */ }
     }
     setAuthReady(true); // Page can render now (no spinner)
 

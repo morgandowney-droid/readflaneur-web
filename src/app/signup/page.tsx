@@ -191,11 +191,11 @@ export default function SignupPage() {
             />
           </div>
 
-          {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+          {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() && (
             <div className="flex justify-center">
               <Turnstile
                 ref={turnstileRef}
-                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY.trim()}
                 onSuccess={setCaptchaToken}
                 onExpire={() => setCaptchaToken(null)}
                 options={{ theme: 'dark', size: 'flexible' }}
@@ -205,7 +205,7 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            disabled={isLoading || (!!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken)}
+            disabled={isLoading || (!!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() && !captchaToken)}
             className="w-full bg-fg text-canvas py-3 text-sm tracking-widest uppercase hover:opacity-80 transition-colors disabled:opacity-50 rounded-lg"
           >
             {isLoading ? 'Creating account...' : 'Create Account'}

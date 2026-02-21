@@ -56,10 +56,9 @@ export async function POST(request: NextRequest) {
     if (neighborhoodIds.length > 0) {
       const rows = neighborhoodIds
         .filter((id: unknown) => typeof id === 'string' && id.length > 0)
-        .map((id: string, i: number) => ({
+        .map((id: string) => ({
           user_id: userId,
           neighborhood_id: id,
-          sort_order: i,
         }));
 
       if (rows.length > 0) {
