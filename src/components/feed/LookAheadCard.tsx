@@ -204,7 +204,7 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
           {eventListingBlock && (
             <div className="mb-4 pb-3 border-b border-border">
               <p className="text-[9px] uppercase tracking-[0.2em] text-fg-subtle mb-2">At a glance</p>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 {eventListingBlock.split(/\n\n+/).filter(Boolean).map((line, i) => {
                   const hdr = line.trim().match(/^\[\[(.+)\]\]$/);
                   if (hdr) {
@@ -213,19 +213,20 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
                   if (isEventLine(line)) {
                     const segments = line.replace(/\.$/, '').split(';').map(s => s.trim());
                     return (
-                      <p key={i} className="text-xs leading-snug text-fg-muted pl-2 border-l border-border">
-                        {segments.map((seg, si) => (
-                          <span key={si}>
-                            {si === 0 && seg.match(/\d{1,2}:\d{2}/) ? (
-                              <span className="font-mono text-accent text-[10px]">{seg}</span>
-                            ) : si === 0 ? (
-                              <span className="text-fg">{seg}</span>
-                            ) : (
-                              <span>{seg}</span>
-                            )}
-                            {si < segments.length - 1 && <span className="text-fg-subtle mx-1">&middot;</span>}
-                          </span>
-                        ))}
+                      <p key={i} className="text-xs leading-snug text-fg-muted flex">
+                        <span className="text-fg-subtle/40 mr-1.5 select-none">&bull;</span>
+                        <span>
+                          {segments.map((seg, si) => (
+                            <span key={si}>
+                              {si === 0 ? (
+                                <span className="text-fg">{seg}</span>
+                              ) : (
+                                <span>{seg}</span>
+                              )}
+                              {si < segments.length - 1 && <span className="text-fg-subtle mx-1">&middot;</span>}
+                            </span>
+                          ))}
+                        </span>
                       </p>
                     );
                   }

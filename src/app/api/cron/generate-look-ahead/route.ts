@@ -390,7 +390,8 @@ export async function GET(request: Request) {
           // Prepend structured event listing to enriched prose body
           const eventListing = formatEventListing(
             lookAheadBrief.structuredEvents || [],
-            localDate
+            localDate,
+            city
           );
           const articleBody = eventListing
             ? eventListing + '\n\n' + enrichedBody

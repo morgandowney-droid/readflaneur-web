@@ -150,7 +150,7 @@ function EventListingBlock({ content }: { content: string }) {
   return (
     <div className="mb-10 pb-8 border-b border-border">
       <p className="text-[10px] uppercase tracking-[0.25em] text-fg-subtle mb-4">At a glance</p>
-      <div className="space-y-3">
+      <div className="space-y-2">
         {lines.map((line, i) => {
           // Date header [[Today, Sat Feb 21]]
           const headerMatch = line.match(/^\[\[(.+)\]\]$/);
@@ -166,21 +166,22 @@ function EventListingBlock({ content }: { content: string }) {
           if (isEventLine(line)) {
             const segments = line.replace(/\.$/, '').split(';').map(s => s.trim());
             return (
-              <p key={i} className="text-sm leading-snug text-fg-muted pl-2 border-l border-border">
-                {segments.map((seg, si) => (
-                  <span key={si}>
-                    {si === 0 && seg.match(/\d{1,2}:\d{2}/) ? (
-                      <span className="font-mono text-accent text-xs">{seg}</span>
-                    ) : si === 0 ? (
-                      <span className="text-fg">{seg}</span>
-                    ) : (
-                      <span>{seg}</span>
-                    )}
-                    {si < segments.length - 1 && (
-                      <span className="text-fg-subtle mx-1">&middot;</span>
-                    )}
-                  </span>
-                ))}
+              <p key={i} className="text-sm leading-snug text-fg-muted flex">
+                <span className="text-fg-subtle/40 mr-2 select-none">&bull;</span>
+                <span>
+                  {segments.map((seg, si) => (
+                    <span key={si}>
+                      {si === 0 ? (
+                        <span className="text-fg">{seg}</span>
+                      ) : (
+                        <span>{seg}</span>
+                      )}
+                      {si < segments.length - 1 && (
+                        <span className="text-fg-subtle mx-1">&middot;</span>
+                      )}
+                    </span>
+                  ))}
+                </span>
               </p>
             );
           }
