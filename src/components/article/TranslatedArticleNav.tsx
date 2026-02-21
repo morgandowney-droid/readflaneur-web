@@ -3,19 +3,11 @@
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 
-interface NavLinkProps {
-  citySlug?: string;
-  neighborhoodSlug?: string;
-}
-
-export function BackToFeedLink({ citySlug, neighborhoodSlug }: NavLinkProps) {
+export function BackToFeedLink() {
   const { t } = useTranslation();
-  const href = citySlug && neighborhoodSlug
-    ? `/${citySlug}/${neighborhoodSlug}`
-    : '/feed';
   return (
     <Link
-      href={href}
+      href="/feed"
       className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-fg-muted hover:text-fg mb-8"
     >
       <span>&larr;</span>
@@ -29,14 +21,11 @@ export function TranslatedDailyBriefLabel({ dayAbbr }: { dayAbbr: string }) {
   return <>{dayAbbr} {t('feed.dailyBrief')}</>;
 }
 
-export function MoreStoriesButton({ citySlug, neighborhoodSlug }: NavLinkProps) {
+export function MoreStoriesButton() {
   const { t } = useTranslation();
-  const href = citySlug && neighborhoodSlug
-    ? `/${citySlug}/${neighborhoodSlug}`
-    : '/feed';
   return (
     <Link
-      href={href}
+      href="/feed"
       className="inline-block bg-white text-neutral-900 px-8 py-3 text-sm tracking-widest uppercase hover:bg-neutral-200 transition-colors"
     >
       {t('article.moreStories')}
