@@ -38,7 +38,8 @@ export function formatEventListing(
   city?: string,     // City name to strip from addresses
 ): string {
   // Filter out invalid events (must have date and name at minimum)
-  const valid = events.filter(e => e.date && e.name?.trim());
+  // Also filter out generic tourist activities that shouldn't appear in local content
+  const valid = events.filter(e => e.date && e.name?.trim() && !isTouristActivity(e));
   if (valid.length === 0) return '';
 
   // Deduplicate recurring events: same name across multiple dates
@@ -232,6 +233,27 @@ function formatEventLine(event: StructuredEvent, city?: string, alsoOn?: string)
   }
 
   return line + '.';
+}
+
+/**
+ * Filter out generic tourist activities that wouldn't interest local residents.
+ * Safety net in case Grok includes them despite prompt instructions.
+ */
+function isTouristActivity(event: StructuredEvent): boolean {
+  const name = event.name.toLowerCase();
+  const category = (event.category || '').toLowerCase();
+  const combined = `${name} ${category}`;
+
+  // Guided tours, food tours, walking tours
+  if (/\b(guided\s+tour|walking\s+tour|food\s+tour|food\s+hall\s+tour|bike\s+tour|boat\s+tour|segway\s+tour|bus\s+tour)\b/.test(combined)) return true;
+
+  // Hop-on-hop-off, pub crawls, escape rooms
+  if (/\b(hop[- ]on[- ]hop[- ]off|pub\s+crawl|escape\s+room)\b/.test(combined)) return true;
+
+  // Long-running permanent shows
+  if (/\b(mamma\s+mia|lion\s+king|phantom\s+of\s+the\s+opera|wicked|chicago\s+the\s+musical)\b/.test(name)) return true;
+
+  return false;
 }
 
 /**
