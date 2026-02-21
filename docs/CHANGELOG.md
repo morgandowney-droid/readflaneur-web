@@ -5,6 +5,12 @@
 
 ## 2026-02-26
 
+**Fix Look Ahead Cron: Generate for Combos, Not Components:**
+- Combo neighborhoods (Tribeca, Ostermalm, Hamptons) were getting fragmented Look Ahead articles - one per component (FiDi, Tribeca Core, LES) instead of one consolidated article per combo.
+- Root cause: cron used `getActiveNeighborhoodIds()` which returns both combo and component IDs, then filtered `.eq('is_combo', false)` so only components were processed.
+- Fix: switched to `.eq('is_active', true)` query (same pattern as Daily Brief cron) which naturally includes combos and excludes components. Added `getComboInfo()` component name expansion before Grok search so all component areas are covered in one article.
+- Articles now stored under combo ID. API already handles combo expansion for backward compatibility.
+
 **Fix Look Ahead API for Combo Neighborhoods:**
 - Ostermalm and Tribeca Look Ahead cards returned null because articles are stored under component IDs (e.g., `stockholm-ostermalm-core`, `nyc-tribeca-core`), not the combo ID.
 - API now queries `combo_neighborhoods` table to expand combo IDs to component IDs, matching the pattern used by `fetchLookAheadAsStory()` and `fetchLookAheadUrl()` in assembler.ts.
