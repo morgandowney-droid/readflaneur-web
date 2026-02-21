@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { isEventLine } from '@/lib/look-ahead-events';
 
 interface ArticleBodyProps {
   content: string;
@@ -67,6 +68,11 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
   return (
     <article className="max-w-none" style={{ fontFamily: 'var(--font-body-serif)' }}>
       {paragraphs.map((paragraph, index) => {
+        // Horizontal rule separator (--- between event listing and prose)
+        if (paragraph.trim() === '---') {
+          return <hr key={index} className="border-border my-8" />;
+        }
+
         // Check if this is a section header (wrapped in [[ ]])
         const headerMatch = paragraph.match(/^\[\[([^\]]+)\]\]$/);
         if (headerMatch) {
@@ -74,6 +80,27 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
             <h3 key={index} className="text-xl font-semibold text-fg mt-10 mb-6" style={{ fontFamily: 'var(--font-body-serif)' }}>
               {headerMatch[1]}
             </h3>
+          );
+        }
+
+        // Structured event line (2+ semicolons)
+        if (isEventLine(paragraph)) {
+          const segments = paragraph.replace(/\.$/, '').split(';').map(s => s.trim());
+          return (
+            <p key={index} className="text-[1rem] md:text-[1.1rem] leading-relaxed mb-2 text-fg-muted" style={{ fontFamily: 'var(--font-body-serif)' }}>
+              {segments.map((seg, si) => (
+                <span key={si}>
+                  {si === 0 && seg.match(/\d{1,2}:\d{2}/) ? (
+                    <span className="font-mono text-accent text-[0.9rem]">{seg}</span>
+                  ) : (
+                    <span>{seg}</span>
+                  )}
+                  {si < segments.length - 1 && (
+                    <span className="text-fg-subtle mx-1">&middot;</span>
+                  )}
+                </span>
+              ))}
+            </p>
           );
         }
 

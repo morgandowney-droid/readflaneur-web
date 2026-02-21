@@ -6,6 +6,7 @@ import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
 import { getComboInfo } from '@/lib/combo-utils';
 import { getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
+import { formatEventListing } from '@/lib/look-ahead-events';
 
 /**
  * Generate Look Ahead Articles
@@ -118,7 +119,11 @@ function getLocalPublishDate(timezone: string): { localDate: string; publishAtUt
 }
 
 function generatePreviewText(content: string): string {
-  const cleaned = content
+  // Skip event listing section (everything before ---) if present
+  const separatorIdx = content.indexOf('\n---\n');
+  const prose = separatorIdx > -1 ? content.substring(separatorIdx + 5) : content;
+
+  const cleaned = prose
     .replace(/\[\[[^\]]+\]\]/g, '')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
@@ -376,11 +381,20 @@ export async function GET(request: Request) {
             }
           );
 
-          const articleBody = enriched.rawResponse;
-          if (!articleBody) {
+          const enrichedBody = enriched.rawResponse;
+          if (!enrichedBody) {
             console.log(`[generate-look-ahead] No enriched content for ${name}`);
             return null;
           }
+
+          // Prepend structured event listing to enriched prose body
+          const eventListing = formatEventListing(
+            lookAheadBrief.structuredEvents || [],
+            localDate
+          );
+          const articleBody = eventListing
+            ? eventListing + '\n\n' + enrichedBody
+            : enrichedBody;
 
           // Step 3: Create article
           const headline = lookAheadBrief.headline;

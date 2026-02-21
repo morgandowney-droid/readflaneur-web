@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
+import { isEventLine } from '@/lib/look-ahead-events';
 
 interface LookAheadCardProps {
   neighborhoodId: string;
@@ -163,8 +164,11 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
   // Parse body text into paragraphs, handling [[Day, Date]] headers
   const paragraphs = processedBody ? processedBody.split('\n\n').filter(p => p.trim()) : [];
 
-  // One-sentence teaser: strip all markdown to get clean plain text
-  const plainText = (paragraphs.find(p => !p.match(/^\[\[/) && !p.match(/^\*\*[^*]+\*\*$/)) || paragraphs[0] || '')
+  // One-sentence teaser: skip event listing lines and --- separator, find first prose paragraph
+  const proseParagraphs = paragraphs.filter(
+    p => !isEventLine(p) && p.trim() !== '---' && !p.match(/^\*\*[^*]+\*\*$/)
+  );
+  const plainText = (proseParagraphs.find(p => !p.match(/^\[\[/)) || proseParagraphs[0] || '')
     .replace(/\*\*([^*]+)\*\*/g, '$1')           // strip bold markers
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')      // strip markdown links, keep text
     .replace(/\[\[([^\]]+)\]\]/g, '$1')            // strip header markers
@@ -191,6 +195,10 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
           {/* Full content */}
           <div className="text-lg text-fg-muted leading-relaxed space-y-4 mt-2">
             {paragraphs.map((p, i) => {
+              // Horizontal rule separator
+              if (p.trim() === '---') {
+                return <hr key={i} className="border-border my-4" />;
+              }
               // Detect [[Day, Date]] headers - extra top margin for section breaks
               const headerMatch = p.match(/^\[\[(.+)\]\]$/);
               if (headerMatch) {
@@ -198,6 +206,26 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
                   <h3 key={i} className="text-xs font-semibold text-fg uppercase tracking-widest mt-6 mb-1">
                     {headerMatch[1]}
                   </h3>
+                );
+              }
+              // Structured event line (compact styling)
+              if (isEventLine(p)) {
+                const segments = p.replace(/\.$/, '').split(';').map(s => s.trim());
+                return (
+                  <p key={i} className="text-sm leading-relaxed mb-1 text-fg-muted">
+                    {segments.map((seg, si) => (
+                      <span key={si}>
+                        {si === 0 && seg.match(/\d{1,2}:\d{2}/) ? (
+                          <span className="font-mono text-accent text-xs">{seg}</span>
+                        ) : (
+                          <span>{seg}</span>
+                        )}
+                        {si < segments.length - 1 && (
+                          <span className="text-fg-subtle mx-1">&middot;</span>
+                        )}
+                      </span>
+                    ))}
+                  </p>
                 );
               }
               return <p key={i}>{renderParagraph(p, `la-${i}`)}</p>;

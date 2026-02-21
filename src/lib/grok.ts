@@ -359,13 +359,17 @@ Format each story clearly separated by "---"`
  * Generate a forward-looking neighborhood brief using Grok Responses API
  * Covers tomorrow and the next 7 days: events, openings, exhibitions, community meetings, etc.
  */
+export interface LookAheadResult extends NeighborhoodBrief {
+  structuredEvents: import('@/lib/look-ahead-events').StructuredEvent[];
+}
+
 export async function generateLookAhead(
   neighborhoodName: string,
   city: string,
   country?: string,
   timezone?: string,
   targetLocalDate?: string, // YYYY-MM-DD in neighborhood's local timezone
-): Promise<NeighborhoodBrief | null> {
+): Promise<LookAheadResult | null> {
   const apiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
 
   if (!apiKey) {
@@ -427,6 +431,17 @@ After searching, create a "Look Ahead" summary.
 
 Format your response EXACTLY as:
 HEADLINE: [Catchy headline, max 50 characters. Be specific - name the event or venue. Never generic.]
+EVENTS_JSON:
+[A JSON array of structured event objects. Each object has these fields:
+  - "date": YYYY-MM-DD (required)
+  - "day_label": weekday name, e.g. "Saturday" (required)
+  - "time": time string like "10:00", "12:00-15:00", "10:00, 14:00, 16:00", or null if unknown
+  - "name": event name (required)
+  - "category": type like "Art Exhibition", "Concert", "Food Festival", or null
+  - "location": venue name or null
+  - "address": street address or null
+  - "price": price with currency like "SEK 250", "Free", "$45", or null if unknown
+Include ALL events you mention in the CONTENT section. Each event MUST have at minimum "date", "day_label", and "name".]
 CONTENT: [Organize by "Today" (meaning ${todayStr}) then "This Week". Each item: what it is, where, when, and why it matters. Separate sections with blank lines.]
 
 Rules:
@@ -484,8 +499,27 @@ Rules:
     }
 
     // Parse the response
-    const headlineMatch = responseText.match(/HEADLINE:\s*(.+?)(?:\n|CONTENT:)/i);
+    const headlineMatch = responseText.match(/HEADLINE:\s*(.+?)(?:\n|EVENTS_JSON:|CONTENT:)/i);
     const contentMatch = responseText.match(/CONTENT:\s*([\s\S]+)/i);
+
+    // Parse structured events from EVENTS_JSON section
+    let structuredEvents: import('@/lib/look-ahead-events').StructuredEvent[] = [];
+    const eventsJsonMatch = responseText.match(/EVENTS_JSON:\s*([\s\S]*?)(?=\nCONTENT:)/i);
+    if (eventsJsonMatch) {
+      try {
+        const jsonMatch = eventsJsonMatch[1].trim().match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          if (Array.isArray(parsed)) {
+            structuredEvents = parsed.filter(
+              (e: Record<string, unknown>) => e && typeof e.date === 'string' && typeof e.name === 'string'
+            );
+          }
+        }
+      } catch (e) {
+        console.warn(`[generateLookAhead] Failed to parse EVENTS_JSON for ${neighborhoodName}:`, e);
+      }
+    }
 
     const rawHeadline = headlineMatch?.[1]?.trim() || `What's Coming Up in ${neighborhoodName}`;
     // Strip citation markers and URLs from headline (e.g., "[[1]](https://...)" or "(1)")
@@ -517,6 +551,8 @@ Rules:
       url: c.url,
     }));
 
+    console.log(`[generateLookAhead] Parsed ${structuredEvents.length} structured events for ${neighborhoodName}`);
+
     return {
       headline,
       content,
@@ -524,6 +560,7 @@ Rules:
       sourceCount: sources.length,
       model: GROK_MODEL,
       searchQuery,
+      structuredEvents,
     };
   } catch (error) {
     console.error('Grok Look Ahead error:', error);
