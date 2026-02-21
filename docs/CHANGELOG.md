@@ -5,6 +5,16 @@
 
 ## 2026-02-26
 
+**Fix Look Ahead Card Teaser and Expanded Formatting:**
+- Preview teaser stripped all markdown (bold `**...**`, links `[text](url)`, header `[[...]]` markers) before sentence extraction - was showing raw `[Lincoln Center](https://www.` in the closed card.
+- Teaser renders as plain muted grey text (no bold/link parsing), matching the Daily Brief card's style.
+- Body text preprocessed with `\n\n` paragraph breaks around `[[Day, Date]]` headers (same as `ArticleBody.tsx`) so "Today, Saturday February 21" starts on its own line as an `<h3>` when expanded.
+
+**Fix Daily Brief Card Date Using Browser Timezone Instead of Neighborhood:**
+- Waiheke Island (Auckland, UTC+13) brief showed "FRI FEB 20" when viewed from Stockholm (UTC+1) - should show "SAT FEB 21".
+- Added `timezone?: string` prop to `NeighborhoodBrief`, date formatting uses `{ timeZone: timezone }` option.
+- Passed from all 4 render sites: `feed/page.tsx` (single + multi), `[city]/[neighborhood]/page.tsx`, `MultiFeed.tsx` (pill-switch brief).
+
 **Fix Look Ahead Same-Day Local Time Generation:**
 - Look Ahead articles were appearing a day early because cron used UTC date math (`new Date().setUTCDate(+1)`) - at 5 PM UTC (12 PM NYC), UTC tomorrow = Saturday but NYC today = Friday. Article said "today Feb 21" while being visible on Feb 20.
 - Added `getLocalPublishDate(timezone)` helper using `toLocaleDateString('en-CA', { timeZone })` for per-neighborhood local date computation. Each article gets `published_at` set to 7 AM in neighborhood's local timezone (converted to UTC).
