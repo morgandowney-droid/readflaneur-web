@@ -5,6 +5,11 @@
 
 ## 2026-02-27
 
+**Fix Look Ahead Repeating Same Venue Across Multiple Days:**
+- West Village article listed DEJAVU restaurant identically on 6 different days with slightly reworded paragraphs. Useless padding.
+- Added NO REPETITION rule to both Grok prompt and Gemini `lookAheadStyle`: never repeat the same venue/restaurant/event across multiple day sections. If a venue is open daily, mention it once on the most relevant day. Skip days with no unique events rather than padding.
+- Files: `src/lib/grok.ts`, `src/lib/brief-enricher-gemini.ts`.
+
 **Add Structured Event Listing to Look Ahead Articles:**
 - Grok prompt now requests `EVENTS_JSON:` section with structured event data (date, time, name, category, location, address, price) alongside prose `CONTENT:`.
 - New `src/lib/look-ahead-events.ts`: `formatEventListing()` groups events by date, deduplicates recurring events with "(also on Sun, Mon)" suffix, strips postcodes and city names from addresses via `cleanAddress()`, sorts chronologically. Output prepended to enriched prose body with `[[Event Listing]]...---` separator.
