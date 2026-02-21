@@ -5,6 +5,11 @@
 
 ## 2026-02-27
 
+**Fix Article Back Link Going to /city/neighborhood Instead of /feed:**
+- "← All My Neighborhood Stories" and "More Stories" buttons on article pages were linking to `/{city}/{neighborhood}` (the dedicated single-neighborhood page) instead of `/feed` (the multi-neighborhood feed with pills).
+- Changed both `BackToFeedLink` and `MoreStoriesButton` in `TranslatedArticleNav.tsx` to always link to `/feed`. Removed unused `citySlug`/`neighborhoodSlug` props.
+- Files: `src/components/article/TranslatedArticleNav.tsx`, `src/app/[city]/[neighborhood]/[slug]/page.tsx`.
+
 **Fix Look Ahead Repeating Same Venue Across Multiple Days:**
 - West Village article listed DEJAVU restaurant identically on 6 different days with slightly reworded paragraphs. Useless padding.
 - Added NO REPETITION rule to both Grok prompt and Gemini `lookAheadStyle`: never repeat the same venue/restaurant/event across multiple day sections. If a venue is open daily, mention it once on the most relevant day. Skip days with no unique events rather than padding.
