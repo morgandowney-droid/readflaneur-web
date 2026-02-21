@@ -3,6 +3,18 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-27
+
+**Add Structured Event Listing to Look Ahead Articles:**
+- Grok prompt now requests `EVENTS_JSON:` section with structured event data (date, time, name, category, location, address, price) alongside prose `CONTENT:`.
+- New `src/lib/look-ahead-events.ts`: `formatEventListing()` groups events by date, deduplicates recurring events with "(also on Sun, Mon)" suffix, strips postcodes and city names from addresses via `cleanAddress()`, sorts chronologically. Output prepended to enriched prose body with `[[Event Listing]]...---` separator.
+- `ArticleBody.tsx`: New `EventListingBlock` component renders compact "At a glance" block with grey bullet points, middot-separated segments (name in `text-fg`, details in `text-fg-muted`), date headers as small uppercase tracking-widest text. Separated from prose body by border.
+- `LookAheadCard.tsx`: Matching compact event rendering in expanded view. Teaser extraction skips event listing, only uses prose body for preview sentence.
+- `isEventLine()` exported from `look-ahead-events.ts` (detects 2+ semicolons) for shared render detection.
+- Grok `LookAheadResult` interface extends `NeighborhoodBrief` with `structuredEvents` field. Graceful fallback: if EVENTS_JSON missing/malformed, articles work prose-only.
+- Suppressed duplicate CTA buttons on editorial article pages (PostReadEmailCapture and FallbackAd "Add to Collection" hidden when BriefDiscoveryFooter already present for look_ahead/brief_summary articles).
+- Files: `src/lib/look-ahead-events.ts` (new), `src/lib/grok.ts`, `src/app/api/cron/generate-look-ahead/route.ts`, `src/components/article/ArticleBody.tsx`, `src/components/feed/LookAheadCard.tsx`, `src/app/[city]/[neighborhood]/[slug]/page.tsx`.
+
 ## 2026-02-26
 
 **Fix Nuisance Watch Date Precision, Spacing, and Images:**
