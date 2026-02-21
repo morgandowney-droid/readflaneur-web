@@ -157,7 +157,7 @@ function buildMagicLinkEmail(actionLink: string): string {
                   </td>
                   <td width="50%" style="padding:12px 0 12px 8px; vertical-align:top;">
                     <div style="font-size:13px; font-weight:600; color:#C9A96E; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px;">Look Ahead</div>
-                    <div style="font-size:13px; color:#737373; line-height:1.5;">What&rsquo;s happening in the next 7 days, delivered each morning.</div>
+                    <div style="font-size:13px; color:#737373; line-height:1.5;">What&rsquo;s happening today and in the next 7 days, delivered each morning.</div>
                   </td>
                 </tr>
                 <tr>

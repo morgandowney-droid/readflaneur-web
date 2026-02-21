@@ -180,7 +180,7 @@ export function BriefDiscoveryFooter({
             href={lookAheadUrl}
             className="block text-sm text-fg-muted hover:text-accent transition-colors"
           >
-            Read the Look Ahead (next 7 days) for <span className="font-semibold text-fg">{neighborhoodName}</span> &rsaquo;
+            Read the Look Ahead (today and next 7 days) for <span className="font-semibold text-fg">{neighborhoodName}</span> &rsaquo;
           </Link>
         )}
 

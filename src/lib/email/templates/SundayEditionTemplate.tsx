@@ -200,7 +200,7 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
                 {content.lookAheadUrl && (
                   <Text style={readMoreText}>
                     <Link href={content.lookAheadUrl} style={readMoreLink}>
-                      Read the full Look Ahead (next 7 days) for {content.neighborhoodName} &rsaquo;
+                      Read the full Look Ahead (today and next 7 days) for {content.neighborhoodName} &rsaquo;
                     </Link>
                   </Text>
                 )}

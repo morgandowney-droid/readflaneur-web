@@ -564,7 +564,7 @@ function cleanCategoryLabel(label: string | null, neighborhoodName: string, publ
     const isToday = publishedAt ? isSameDay(new Date(publishedAt), new Date()) : true;
     return isToday ? 'Daily Brief (Today)' : 'Daily Brief';
   }
-  if (/^Look Ahead$/i.test(cleaned)) return 'Look Ahead (next 7 days)';
+  if (/^Look Ahead$/i.test(cleaned)) return 'Look Ahead (today and next 7 days)';
   return cleaned;
 }
 
