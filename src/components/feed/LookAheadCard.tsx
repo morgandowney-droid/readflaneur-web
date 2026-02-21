@@ -153,22 +153,30 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
 
   if (!url) return null;
 
-  // Pre-process body text: ensure [[Day, Date]] headers get their own paragraphs
-  // (same logic as ArticleBody.tsx)
-  const processedBody = bodyText
-    ? bodyText
+  // Split event listing from prose at --- separator
+  let eventListingBlock: string | null = null;
+  let proseBody = bodyText || '';
+
+  if (bodyText) {
+    const sepMatch = bodyText.match(/^\[\[Event Listing\]\]\s*([\s\S]*?)\n---\s*\n/);
+    if (sepMatch) {
+      eventListingBlock = sepMatch[1].trim();
+      proseBody = bodyText.substring(sepMatch[0].length).trim();
+    }
+  }
+
+  // Pre-process prose: ensure [[Day, Date]] headers get their own paragraphs
+  const processedBody = proseBody
+    ? proseBody
         .replace(/\s*(\[\[[^\]]+\]\])\s*/g, '\n\n$1\n\n')
         .replace(/\]\]\s+([A-Z])/g, ']]\n\n$1')
     : null;
 
-  // Parse body text into paragraphs, handling [[Day, Date]] headers
+  // Parse prose into paragraphs
   const paragraphs = processedBody ? processedBody.split('\n\n').filter(p => p.trim()) : [];
 
-  // One-sentence teaser: skip event listing lines and --- separator, find first prose paragraph
-  const proseParagraphs = paragraphs.filter(
-    p => !isEventLine(p) && p.trim() !== '---' && !p.match(/^\*\*[^*]+\*\*$/)
-  );
-  const plainText = (proseParagraphs.find(p => !p.match(/^\[\[/)) || proseParagraphs[0] || '')
+  // One-sentence teaser from prose (not event listing)
+  const plainText = (paragraphs.find(p => !p.match(/^\[\[/)) || paragraphs[0] || '')
     .replace(/\*\*([^*]+)\*\*/g, '$1')           // strip bold markers
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')      // strip markdown links, keep text
     .replace(/\[\[([^\]]+)\]\]/g, '$1')            // strip header markers
@@ -192,13 +200,44 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
 
       {isExpanded && bodyText ? (
         <>
-          {/* Full content */}
+          {/* Compact event listing block */}
+          {eventListingBlock && (
+            <div className="mb-4 pb-3 border-b border-border">
+              <p className="text-[9px] uppercase tracking-[0.2em] text-fg-subtle mb-2">At a glance</p>
+              <div className="space-y-1.5">
+                {eventListingBlock.split(/\n\n+/).filter(Boolean).map((line, i) => {
+                  const hdr = line.trim().match(/^\[\[(.+)\]\]$/);
+                  if (hdr) {
+                    return <p key={i} className={`text-[10px] font-semibold text-fg uppercase tracking-widest ${i > 0 ? 'mt-2' : ''}`}>{hdr[1]}</p>;
+                  }
+                  if (isEventLine(line)) {
+                    const segments = line.replace(/\.$/, '').split(';').map(s => s.trim());
+                    return (
+                      <p key={i} className="text-xs leading-snug text-fg-muted pl-2 border-l border-border">
+                        {segments.map((seg, si) => (
+                          <span key={si}>
+                            {si === 0 && seg.match(/\d{1,2}:\d{2}/) ? (
+                              <span className="font-mono text-accent text-[10px]">{seg}</span>
+                            ) : si === 0 ? (
+                              <span className="text-fg">{seg}</span>
+                            ) : (
+                              <span>{seg}</span>
+                            )}
+                            {si < segments.length - 1 && <span className="text-fg-subtle mx-1">&middot;</span>}
+                          </span>
+                        ))}
+                      </p>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Prose content */}
           <div className="text-lg text-fg-muted leading-relaxed space-y-4 mt-2">
             {paragraphs.map((p, i) => {
-              // Horizontal rule separator
-              if (p.trim() === '---') {
-                return <hr key={i} className="border-border my-4" />;
-              }
               // Detect [[Day, Date]] headers - extra top margin for section breaks
               const headerMatch = p.match(/^\[\[(.+)\]\]$/);
               if (headerMatch) {
@@ -206,26 +245,6 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
                   <h3 key={i} className="text-xs font-semibold text-fg uppercase tracking-widest mt-6 mb-1">
                     {headerMatch[1]}
                   </h3>
-                );
-              }
-              // Structured event line (compact styling)
-              if (isEventLine(p)) {
-                const segments = p.replace(/\.$/, '').split(';').map(s => s.trim());
-                return (
-                  <p key={i} className="text-sm leading-relaxed mb-1 text-fg-muted">
-                    {segments.map((seg, si) => (
-                      <span key={si}>
-                        {si === 0 && seg.match(/\d{1,2}:\d{2}/) ? (
-                          <span className="font-mono text-accent text-xs">{seg}</span>
-                        ) : (
-                          <span>{seg}</span>
-                        )}
-                        {si < segments.length - 1 && (
-                          <span className="text-fg-subtle mx-1">&middot;</span>
-                        )}
-                      </span>
-                    ))}
-                  </p>
                 );
               }
               return <p key={i}>{renderParagraph(p, `la-${i}`)}</p>;

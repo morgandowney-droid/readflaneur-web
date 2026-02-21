@@ -28,15 +28,25 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
     .replace(/\.\.\s*/g, '. ')
     .trim();
 
+  // Split event listing from prose body at --- separator
+  let eventListingBlock: string | null = null;
+  let proseContent = cleanedContent;
+
+  const separatorMatch = cleanedContent.match(/^\[\[Event Listing\]\]\s*([\s\S]*?)\n---\s*\n/);
+  if (separatorMatch) {
+    eventListingBlock = separatorMatch[1].trim();
+    proseContent = cleanedContent.substring(separatorMatch[0].length).trim();
+  }
+
   // Insert paragraph breaks before section headers [[...]]
   // This ensures headers get their own line/block
-  cleanedContent = cleanedContent.replace(/\s*(\[\[[^\]]+\]\])\s*/g, '\n\n$1\n\n');
+  proseContent = proseContent.replace(/\s*(\[\[[^\]]+\]\])\s*/g, '\n\n$1\n\n');
 
   // Also insert paragraph breaks after sentences that end with ]] (header followed by content)
-  cleanedContent = cleanedContent.replace(/\]\]\s+([A-Z])/g, ']]\n\n$1');
+  proseContent = proseContent.replace(/\]\]\s+([A-Z])/g, ']]\n\n$1');
 
   // Split into paragraphs - handle both \n\n and single \n
-  let paragraphs = cleanedContent
+  let paragraphs = proseContent
     .split(/\n\n+/)
     .map(p => p.trim())
     .filter(p => p.length > 0);
@@ -65,14 +75,40 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
 
   const pClass = 'text-fg text-[1.2rem] md:text-[1.35rem] leading-loose mb-8';
 
+  // Render function that handles strong tags and markdown links
+  const renderParts = (text: string): ReactNode[] => {
+    const result: ReactNode[] = [];
+    // Split on both <strong> tags and markdown links [text](url)
+    const parts = text.split(/(<strong>[^<]+<\/strong>|\[[^\]]+\]\(https?:\/\/[^)]+\))/);
+
+    parts.forEach((part, partIdx) => {
+      const strongMatch = part.match(/<strong>([^<]+)<\/strong>/);
+      const linkMatch = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/);
+      if (strongMatch) {
+        result.push(<strong key={`strong-${partIdx}`} className="font-bold text-fg">{strongMatch[1]}</strong>);
+      } else if (linkMatch) {
+        result.push(
+          <a key={`link-${partIdx}`} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60">
+            {linkMatch[1]}
+          </a>
+        );
+      } else if (part) {
+        result.push(part);
+      }
+    });
+
+    return result;
+  };
+
   return (
     <article className="max-w-none" style={{ fontFamily: 'var(--font-body-serif)' }}>
-      {paragraphs.map((paragraph, index) => {
-        // Horizontal rule separator (--- between event listing and prose)
-        if (paragraph.trim() === '---') {
-          return <hr key={index} className="border-border my-8" />;
-        }
+      {/* Compact event listing block */}
+      {eventListingBlock && (
+        <EventListingBlock content={eventListingBlock} />
+      )}
 
+      {/* Prose body */}
+      {paragraphs.map((paragraph, index) => {
         // Check if this is a section header (wrapped in [[ ]])
         const headerMatch = paragraph.match(/^\[\[([^\]]+)\]\]$/);
         if (headerMatch) {
@@ -83,54 +119,8 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
           );
         }
 
-        // Structured event line (2+ semicolons)
-        if (isEventLine(paragraph)) {
-          const segments = paragraph.replace(/\.$/, '').split(';').map(s => s.trim());
-          return (
-            <p key={index} className="text-[1rem] md:text-[1.1rem] leading-relaxed mb-2 text-fg-muted" style={{ fontFamily: 'var(--font-body-serif)' }}>
-              {segments.map((seg, si) => (
-                <span key={si}>
-                  {si === 0 && seg.match(/\d{1,2}:\d{2}/) ? (
-                    <span className="font-mono text-accent text-[0.9rem]">{seg}</span>
-                  ) : (
-                    <span>{seg}</span>
-                  )}
-                  {si < segments.length - 1 && (
-                    <span className="text-fg-subtle mx-1">&middot;</span>
-                  )}
-                </span>
-              ))}
-            </p>
-          );
-        }
-
         // Process bold markers
         const processedParagraph = paragraph.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-        // Render function that handles strong tags and markdown links
-        const renderParts = (text: string): ReactNode[] => {
-          const result: ReactNode[] = [];
-          // Split on both <strong> tags and markdown links [text](url)
-          const parts = text.split(/(<strong>[^<]+<\/strong>|\[[^\]]+\]\(https?:\/\/[^)]+\))/);
-
-          parts.forEach((part, partIdx) => {
-            const strongMatch = part.match(/<strong>([^<]+)<\/strong>/);
-            const linkMatch = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/);
-            if (strongMatch) {
-              result.push(<strong key={`strong-${partIdx}`} className="font-bold text-fg">{strongMatch[1]}</strong>);
-            } else if (linkMatch) {
-              result.push(
-                <a key={`link-${partIdx}`} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60">
-                  {linkMatch[1]}
-                </a>
-              );
-            } else if (part) {
-              result.push(part);
-            }
-          });
-
-          return result;
-        };
 
         // Render content with line breaks preserved
         const lines = processedParagraph.split(/  \n|\n/);
@@ -147,5 +137,57 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
         );
       })}
     </article>
+  );
+}
+
+/**
+ * Compact event listing rendered as a tight block above prose.
+ * Parses [[Day, Date]] headers and semicolon-separated event lines.
+ */
+function EventListingBlock({ content }: { content: string }) {
+  const lines = content.split(/\n\n+/).map(l => l.trim()).filter(Boolean);
+
+  return (
+    <div className="mb-10 pb-8 border-b border-border">
+      <p className="text-[10px] uppercase tracking-[0.25em] text-fg-subtle mb-4">At a glance</p>
+      <div className="space-y-3">
+        {lines.map((line, i) => {
+          // Date header [[Today, Sat Feb 21]]
+          const headerMatch = line.match(/^\[\[(.+)\]\]$/);
+          if (headerMatch) {
+            return (
+              <p key={i} className={`text-xs font-semibold text-fg uppercase tracking-widest ${i > 0 ? 'mt-4' : ''}`}>
+                {headerMatch[1]}
+              </p>
+            );
+          }
+
+          // Event line with semicolons
+          if (isEventLine(line)) {
+            const segments = line.replace(/\.$/, '').split(';').map(s => s.trim());
+            return (
+              <p key={i} className="text-sm leading-snug text-fg-muted pl-2 border-l border-border">
+                {segments.map((seg, si) => (
+                  <span key={si}>
+                    {si === 0 && seg.match(/\d{1,2}:\d{2}/) ? (
+                      <span className="font-mono text-accent text-xs">{seg}</span>
+                    ) : si === 0 ? (
+                      <span className="text-fg">{seg}</span>
+                    ) : (
+                      <span>{seg}</span>
+                    )}
+                    {si < segments.length - 1 && (
+                      <span className="text-fg-subtle mx-1">&middot;</span>
+                    )}
+                  </span>
+                ))}
+              </p>
+            );
+          }
+
+          return null;
+        })}
+      </div>
+    </div>
   );
 }
