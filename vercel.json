@@ -81,26 +81,6 @@
       "schedule": "0 8 * * 6"
     },
     {
-      "path": "/api/cron/generate-nyc-weekly-digest",
-      "schedule": "0 10 * * 6"
-    },
-    {
-      "path": "/api/cron/sync-global-permits",
-      "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/cron/sync-global-liquor",
-      "schedule": "0 7 * * 2"
-    },
-    {
-      "path": "/api/cron/sync-global-crime",
-      "schedule": "0 9 * * 6"
-    },
-    {
-      "path": "/api/cron/generate-global-weekly-digest",
-      "schedule": "0 11 * * 6"
-    },
-    {
       "path": "/api/cron/sync-auction-calendar",
       "schedule": "0 23 * * 0"
     },
