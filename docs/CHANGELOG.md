@@ -5,6 +5,10 @@
 
 ## 2026-02-26
 
+**Fix Look Ahead API for Combo Neighborhoods:**
+- Ostermalm and Tribeca Look Ahead cards returned null because articles are stored under component IDs (e.g., `stockholm-ostermalm-core`, `nyc-tribeca-core`), not the combo ID.
+- API now queries `combo_neighborhoods` table to expand combo IDs to component IDs, matching the pattern used by `fetchLookAheadAsStory()` and `fetchLookAheadUrl()` in assembler.ts.
+
 **Fix Look Ahead Card Teaser and Expanded Formatting:**
 - Preview teaser stripped all markdown (bold `**...**`, links `[text](url)`, header `[[...]]` markers) before sentence extraction - was showing raw `[Lincoln Center](https://www.` in the closed card.
 - Teaser renders as plain muted grey text (no bold/link parsing), matching the Daily Brief card's style.
