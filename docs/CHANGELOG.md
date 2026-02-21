@@ -5,6 +5,13 @@
 
 ## 2026-02-27
 
+**Disable Civic Data Story Generation:**
+- Removed 5 crons from vercel.json: `generate-nyc-weekly-digest`, `generate-global-weekly-digest`, `sync-global-permits`, `sync-global-liquor`, `sync-global-crime`.
+- Archived all 23 published "Civic Data" articles via DB update. Content was low-quality weekly civic recaps.
+
+**Change Advertise House Ad CTA:**
+- Changed from "Let's Place It" to "Place It" in English translations.
+
 **Fix Article Back Link Going to /city/neighborhood Instead of /feed:**
 - "← All My Neighborhood Stories" and "More Stories" buttons on article pages were linking to `/{city}/{neighborhood}` (the dedicated single-neighborhood page) instead of `/feed` (the multi-neighborhood feed with pills).
 - Changed both `BackToFeedLink` and `MoreStoriesButton` in `TranslatedArticleNav.tsx` to always link to `/feed`. Removed unused `citySlug`/`neighborhoodSlug` props.
