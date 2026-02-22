@@ -137,7 +137,8 @@ Rules:
 - Each paragraph should cover one distinct topic or story.
 - Prioritize verified facts over rumors.
 - If you don't find much, say so.
-- DATE REFERENCES: When using relative time words (yesterday, today, tomorrow, Thursday, last week, etc.), ALWAYS include the explicit calendar date - e.g., "yesterday (February 19)", "this Thursday, February 20". Readers may see this days later.`
+- DATE REFERENCES: When using relative time words (yesterday, today, tomorrow, Thursday, last week, etc.), ALWAYS include the explicit calendar date - e.g., "yesterday (February 19)", "this Thursday, February 20". Readers may see this days later.
+- EXCLUDE generic tourist activities: guided walking tours, food tours, food hall tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms, and any other activity primarily marketed to tourists rather than locals. The reader is a well-travelled 35-year-old who has lived here for years - they would never go on a walking tour of their own neighborhood. Focus on what's NEW or NEWSWORTHY.`
           },
           {
             role: 'user',
