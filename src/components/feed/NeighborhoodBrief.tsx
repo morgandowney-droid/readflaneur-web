@@ -100,6 +100,10 @@ function renderWithBold(text: string): ReactNode[] {
  * Result: header = "N. Moore is Having a Moment", rest = "If you haven't walked..."
  */
 function extractSectionHeader(text: string): { header: string; rest: string } | null {
+  // If text contains markdown links, skip header detection entirely -
+  // the heuristic word splitter breaks [text](url) across header/rest boundary
+  if (/\[[^\]]+\]\(https?:\/\/[^)]+\)/.test(text)) return null;
+
   // Remove any existing ** or *** markers first
   const cleanText = text.replace(/\*+/g, '');
 
