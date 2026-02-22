@@ -7,6 +7,12 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: "https://b3e23f7ef7fb85d43b222efbf99bfcac@o4510840196431872.ingest.us.sentry.io/4510840235884544",
 
+  // Silence known harmless errors
+  ignoreErrors: [
+    // GoTrue navigator.locks AbortError when user navigates away during getSession()
+    'signal is aborted without reason',
+  ],
+
   // Add optional integrations for additional features
   integrations: [Sentry.replayIntegration()],
 
