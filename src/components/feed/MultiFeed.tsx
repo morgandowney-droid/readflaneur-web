@@ -53,7 +53,19 @@ export function MultiFeed({
   const { t } = useTranslation();
   const [view, setView] = useState<FeedView>(defaultView);
   const [isHydrated, setIsHydrated] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [activeFilter, setActiveFilterRaw] = useState<string | null>(null);
+
+  // Persist active pill to sessionStorage so browser back restores it
+  const setActiveFilter = useCallback((id: string | null) => {
+    setActiveFilterRaw(id);
+    try {
+      if (id) {
+        sessionStorage.setItem('flaneur-active-pill', id);
+      } else {
+        sessionStorage.removeItem('flaneur-active-pill');
+      }
+    } catch { /* SSR or private browsing */ }
+  }, []);
   const [fetchedBrief, setFetchedBrief] = useState<{
     briefId: string;
     headline: string;
@@ -74,6 +86,16 @@ export function MultiFeed({
   const [moreLoading, setMoreLoading] = useState(false);
   const [hasMoreFiltered, setHasMoreFiltered] = useState(true);
   const { openModal } = useNeighborhoodModal();
+
+  // Restore active pill from sessionStorage on mount (browser back preserves selection)
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('flaneur-active-pill');
+      if (saved && neighborhoods.some(n => n.id === saved)) {
+        setActiveFilterRaw(saved);
+      }
+    } catch { /* SSR or private browsing */ }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Mobile dropdown state
   const [dropdownOpen, setDropdownOpen] = useState(false);
