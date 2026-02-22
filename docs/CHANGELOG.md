@@ -5,6 +5,13 @@
 
 ## 2026-02-27
 
+**Morning Brew-Style Information Gap Email Subject Lines:**
+- Daily Brief emails now use Gemini-generated 1-4 word cryptic teasers instead of headline excerpts. Format: `Daily Brief: {Neighborhood}. {teaser}` (e.g., "Daily Brief: West Village. Rent freeze showdown").
+- Teaser generated during Gemini enrichment (zero extra API calls) via new `subject_teaser` field in the JSON response. Validated: 1-5 words, max 40 chars, must be incomplete/intriguing.
+- Stored in `neighborhood_briefs.subject_teaser` column (new DB migration). Email assembler fetches from most recent enriched brief for primary neighborhood.
+- `buildSubject()` in sender.ts prefers Gemini teaser, falls back to headline-based teaser (`{lead headline} & more`) when no teaser available or too long for 70-char limit.
+- Files: `supabase/migrations/20260226_add_brief_subject_teaser.sql` (new), `src/lib/brief-enricher-gemini.ts`, `src/app/api/cron/enrich-briefs/route.ts`, `src/lib/email/types.ts`, `src/lib/email/assembler.ts`, `src/lib/email/sender.ts`.
+
 **Disable Civic Data Story Generation:**
 - Removed 5 crons from vercel.json: `generate-nyc-weekly-digest`, `generate-global-weekly-digest`, `sync-global-permits`, `sync-global-liquor`, `sync-global-crime`.
 - Archived all 23 published "Civic Data" articles via DB update. Content was low-quality weekly civic recaps.
