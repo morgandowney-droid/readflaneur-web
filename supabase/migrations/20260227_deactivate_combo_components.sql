@@ -7,7 +7,7 @@
 UPDATE neighborhoods
 SET is_active = false
 WHERE id IN (
-  SELECT component_neighborhood_id
+  SELECT component_id
   FROM combo_neighborhoods
 );
 
@@ -16,7 +16,7 @@ WHERE id IN (
 UPDATE articles
 SET status = 'archived'
 WHERE neighborhood_id IN (
-  SELECT component_neighborhood_id
+  SELECT component_id
   FROM combo_neighborhoods
 )
 AND article_type IN ('brief_summary', 'look_ahead')

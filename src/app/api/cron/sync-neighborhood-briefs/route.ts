@@ -165,8 +165,8 @@ export async function GET(request: Request) {
   // (components should have is_active=false, but guard against DB drift)
   const { data: comboComponents } = await supabase
     .from('combo_neighborhoods')
-    .select('component_neighborhood_id');
-  const componentIds = new Set((comboComponents || []).map(c => c.component_neighborhood_id));
+    .select('component_id');
+  const componentIds = new Set((comboComponents || []).map(c => c.component_id));
 
   // Filter neighborhoods:
   // 1. Not a component of a combo (combos generate content for their components)

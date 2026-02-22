@@ -260,8 +260,8 @@ export async function GET(request: Request) {
       // (components should have is_active=false, but guard against DB drift)
       const { data: comboComponents } = await supabase
         .from('combo_neighborhoods')
-        .select('component_neighborhood_id');
-      const componentIds = new Set((comboComponents || []).map(c => c.component_neighborhood_id));
+        .select('component_id');
+      const componentIds = new Set((comboComponents || []).map(c => c.component_id));
 
       // Filter to only neighborhoods with active subscribers, excluding components
       neighborhoods = data.filter(n => activeSubscriberIds.has(n.id) && !componentIds.has(n.id));
