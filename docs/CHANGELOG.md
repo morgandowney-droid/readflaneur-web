@@ -3,6 +3,17 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-22
+
+**Sunday Edition Admin Test Page:**
+- New `/admin/sunday-edition` page for one-click generate, preview, and test-send of Sunday Edition emails on any day of the week.
+- Neighborhood dropdown (all active neighborhoods), date picker, admin email input, cron secret (persisted to localStorage).
+- Status check: queries `weekly_briefs` and `articles` to show whether brief and article exist for selected neighborhood+date.
+- Three actions: "Generate Brief + Article" (calls sync-weekly-brief cron), "Preview Email" (renders full email HTML in iframe with subject line), "Send Test to Me" (calls send-sunday-edition with test/force params).
+- New preview endpoint: `GET /api/admin/preview-sunday-edition?neighborhood={id}&date={date}` - auth via Bearer CRON_SECRET, fetches brief (falls back to most recent with warning), builds full SundayEditionContent with weather/ad/Look Ahead, returns `{ subject, html, briefWeekDate, articleExists, articleUrl, warning }`.
+- Article URL safety fix: both `send-sunday-edition` and `sunday-edition-request` now verify the article exists and is published before constructing the "Read the full edition" URL. Prevents broken 404 links when article hasn't been created yet.
+- Files: `src/app/admin/sunday-edition/page.tsx` (new), `src/app/api/admin/preview-sunday-edition/route.ts` (new), `src/app/api/cron/send-sunday-edition/route.ts`, `src/app/api/email/sunday-edition-request/route.ts`.
+
 ## 2026-02-27
 
 **Fix Sunday Edition Data Point Voice and Past Holiday Detection:**
