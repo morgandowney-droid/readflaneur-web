@@ -5,6 +5,13 @@
 
 ## 2026-02-22
 
+**Fix Markdown Links Rendering as Raw Text in Daily Brief Cards:**
+- Users saw raw `[Bar Maeda](https://www.google.com/search?...)` text in SoHo Daily Brief instead of a clickable link. The DB content was correct (proper markdown link in `enriched_content`), and `renderWithLinks()` handles markdown-to-anchor conversion.
+- Root cause: `extractSectionHeader()` in `NeighborhoodBrief.tsx` is a heuristic that auto-detects section headers by scanning for sequences of capitalized words. It splits text into words on whitespace boundaries, so `[Bar Maeda](url)` becomes two words: `[Bar` (starts uppercase after stripping `[`) and `Maeda](url...)` (starts uppercase). The detector treated "Over in Hudson Square, [Bar" as the "header" and "Maeda](url) opened its doors..." as the "rest", breaking the markdown link in half. `renderWithLinks()` couldn't match the broken fragments.
+- Fix: Skip header detection entirely when the paragraph contains markdown links (`/\[[^\]]+\]\(https?:\/\/[^)]+\)/` guard at top of function). Paragraphs with links are content, not section headers.
+- This is a **rendering** bug (data is correct, display logic breaks it), so DB-level health checks cannot catch it. The existing health monitor checks hyperlinks exist in DB content (they do) and checks for HTML artifacts (there are none). The fix addresses the root cause in the rendering pipeline.
+- File: `src/components/feed/NeighborhoodBrief.tsx`.
+
 **Add Anchor Links from Look Ahead Event Listing to Day Headers:**
 - In the expanded Look Ahead card, the "At a glance" event listing day headers (e.g., "Today, Wednesday February 18") are now clickable anchor links that smooth-scroll to the corresponding day section in the prose body below.
 - Uses `scrollIntoView({ behavior: 'smooth', block: 'start' })` to avoid URL hash pollution. `stopPropagation` prevents card collapse, `preventDefault` keeps URL clean.
