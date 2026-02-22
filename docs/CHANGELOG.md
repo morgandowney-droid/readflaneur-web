@@ -5,6 +5,12 @@
 
 ## 2026-02-22
 
+**Add Anchor Links from Look Ahead Event Listing to Day Headers:**
+- In the expanded Look Ahead card, the "At a glance" event listing day headers (e.g., "Today, Wednesday February 18") are now clickable anchor links that smooth-scroll to the corresponding day section in the prose body below.
+- Uses `scrollIntoView({ behavior: 'smooth', block: 'start' })` to avoid URL hash pollution. `stopPropagation` prevents card collapse, `preventDefault` keeps URL clean.
+- `daySlug()` helper converts header text to deterministic IDs (e.g., `la-today-wednesday-february-18`). Prose `<h3>` headers get matching `id` attributes.
+- File: `src/components/feed/LookAheadCard.tsx`.
+
 **Persist Active Pill Selection Across Browser Back Navigation:**
 - When a user clicked a neighborhood pill, read an article, then hit browser back, the feed defaulted to "All Neighborhoods" instead of the pill they had selected. Now `MultiFeed` persists `activeFilter` in `sessionStorage` (`flaneur-active-pill` key). On mount, restores the saved pill if it exists in the current neighborhoods list. Session-scoped (not localStorage) since pill selection is ephemeral navigation state.
 - File: `src/components/feed/MultiFeed.tsx`.
