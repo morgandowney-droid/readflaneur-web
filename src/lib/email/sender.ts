@@ -12,8 +12,10 @@ import { checkDailyEmailLimit } from './daily-email-limit';
 
 /**
  * Build the email subject line
- * Format: "Daily Brief: {neighborhood}. {teaser from story headlines}"
- * Under 70 characters total, referencing several stories to entice opens.
+ * Format: "Daily Brief: {neighborhood}. {teaser}"
+ * Under 70 characters total.
+ * Prefers Gemini-generated "information gap" teaser (Morning Brew style),
+ * falls back to headline-based teaser.
  */
 function buildSubject(content: DailyBriefContent): string {
   const primary = content.primarySection?.neighborhoodName;
@@ -23,13 +25,20 @@ function buildSubject(content: DailyBriefContent): string {
   }
 
   const prefix = `Daily Brief: ${primary}. `;
+
+  // Prefer Gemini-generated information gap teaser
+  const geminiTeaser = content.primarySection?.subjectTeaser;
+  if (geminiTeaser && geminiTeaser.length + prefix.length <= 70) {
+    return `${prefix}${geminiTeaser}`;
+  }
+
+  // Fallback: headline-based teaser
   const stories = content.primarySection?.stories || [];
 
   if (stories.length === 0) {
     return `Daily Brief: ${primary}`;
   }
 
-  // Build teaser from story headlines - take short phrases from each
   const budget = 70 - prefix.length;
   const teaser = buildTeaser(stories.map(s => s.headline), budget);
 

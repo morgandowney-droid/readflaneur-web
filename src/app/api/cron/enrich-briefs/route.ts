@@ -312,6 +312,7 @@ export async function GET(request: Request) {
                 enriched_categories: result.categories,
                 enriched_at: new Date().toISOString(),
                 enrichment_model: result.model,
+                subject_teaser: result.subjectTeaser || null,
               })
               .eq('id', brief.id);
 

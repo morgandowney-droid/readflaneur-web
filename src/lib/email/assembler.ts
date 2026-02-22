@@ -464,6 +464,20 @@ export async function assembleDailyBrief(
       console.warn(`[assembler] Missing ${briefStory ? 'look ahead' : 'daily brief'} for primary ${primaryNeighborhood.id}`);
     }
 
+    // Fetch subject teaser from the most recent enriched brief
+    let subjectTeaser: string | null = null;
+    const { data: briefTeaser } = await supabase
+      .from('neighborhood_briefs')
+      .select('subject_teaser')
+      .eq('neighborhood_id', primaryNeighborhood.id)
+      .not('subject_teaser', 'is', null)
+      .order('generated_at', { ascending: false })
+      .limit(1)
+      .single();
+    if (briefTeaser?.subject_teaser) {
+      subjectTeaser = briefTeaser.subject_teaser;
+    }
+
     primarySection = {
       neighborhoodId: primaryNeighborhood.id,
       neighborhoodName: primaryNeighborhood.name,
@@ -471,6 +485,7 @@ export async function assembleDailyBrief(
       weather,
       weatherStory,
       stories: emailStories,
+      subjectTeaser,
     };
   }
 

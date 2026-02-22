@@ -32,6 +32,7 @@ export interface PrimaryNeighborhoodSection {
   weather: WeatherData | null;
   weatherStory: WeatherStory | null;
   stories: EmailStory[];
+  subjectTeaser?: string | null;
 }
 
 export interface SatelliteNeighborhoodSection {

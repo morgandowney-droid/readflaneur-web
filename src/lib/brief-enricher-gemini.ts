@@ -42,6 +42,7 @@ export interface EnrichedBriefOutput {
   blockedDomains: string[];
   rawResponse?: string;
   linkCandidates?: LinkCandidate[];
+  subjectTeaser?: string | null;
 }
 
 export interface ContinuityItem {
@@ -336,6 +337,16 @@ ${articleType === 'look_ahead' || articleType === 'weekly_recap' ? '- CRITICAL: 
 
 Write it like you're the neighborhood insider sharing what's actually happening - conversational but factual. This will be published directly to readers.
 
+SUBJECT TEASER (MANDATORY):
+Generate a 1-4 word "information gap" teaser for the email subject line. This teaser appears after "Daily Brief: {Neighborhood}." and must compel the reader to open the email simply to understand what it means. Think Morning Brew style - cryptic, intriguing, incomplete. Examples: "Rent freeze showdown", "The bakery switch", "40 floors down", "Rats won". Rules:
+- 1-4 words MAXIMUM (shorter is better)
+- Must relate to the most interesting story in the brief
+- Must NOT be a complete sentence or make full sense on its own
+- Must NOT be clickbait or misleading - it should relate to real content
+- Must NOT include the neighborhood name
+- Lowercase unless proper noun
+- No punctuation except when part of a proper name
+
 After your prose, include this JSON with ONLY the verified stories:
 \`\`\`json
 {
@@ -353,7 +364,8 @@ After your prose, include this JSON with ONLY the verified stories:
   ],
   "link_candidates": [
     {"text": "Exact phrase from your prose"}
-  ]
+  ],
+  "subject_teaser": "1-4 word information gap teaser"
 }
 \`\`\`
 
@@ -433,6 +445,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     // Extract JSON from original response (before markdown stripping)
     let enrichedData: { categories: EnrichedCategory[]; link_candidates?: unknown[] } = { categories: [] };
     let linkCandidates: LinkCandidate[] = [];
+    let subjectTeaser: string | null = null;
 
     const jsonMatch = rawText.match(/```json\s*([\s\S]*?)```/);
     if (jsonMatch) {
@@ -446,6 +459,17 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
         if (parsed.link_candidates) {
           linkCandidates = validateLinkCandidates(parsed.link_candidates);
           console.log(`Found ${linkCandidates.length} valid link candidates`);
+        }
+        // Extract subject teaser (1-4 words, max 40 chars)
+        if (parsed.subject_teaser && typeof parsed.subject_teaser === 'string') {
+          const t = parsed.subject_teaser.trim();
+          const wordCount = t.split(/\s+/).length;
+          if (wordCount >= 1 && wordCount <= 5 && t.length <= 40) {
+            subjectTeaser = t;
+            console.log(`Subject teaser: "${subjectTeaser}"`);
+          } else {
+            console.warn(`Subject teaser rejected (${wordCount} words, ${t.length} chars): "${t}"`);
+          }
         }
       } catch (e) {
         console.error('Failed to parse Gemini JSON:', e);
@@ -469,6 +493,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
         blockedDomains,
         rawResponse: text,
         linkCandidates,
+        subjectTeaser,
       };
     }
 
@@ -503,6 +528,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
       blockedDomains,
       rawResponse: text,
       linkCandidates,
+      subjectTeaser,
     };
 
   } catch (error) {
