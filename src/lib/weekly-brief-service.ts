@@ -103,7 +103,8 @@ export async function generateWeeklyBrief(
   neighborhoodName: string,
   city: string,
   country: string,
-  model: string = AI_MODELS.GEMINI_PRO
+  model: string = AI_MODELS.GEMINI_PRO,
+  weekDate?: string
 ): Promise<WeeklyBriefContent> {
   const geminiKey = process.env.GEMINI_API_KEY;
   const grokKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
@@ -167,7 +168,10 @@ export async function generateWeeklyBrief(
   const uses12h = ['USA', 'US', 'Canada', 'Australia', 'Philippines'].includes(country);
   const timeFormat = uses12h ? '12-hour (e.g., "Saturday Feb 14 2pm")' : '24-hour (e.g., "Saturday Feb 14 14:00")';
 
-  const upcomingHoliday = detectUpcomingHoliday(country);
+  // Anchor holiday detection to the publication date (weekDate), not generation time.
+  // This prevents past holidays from appearing if the brief is generated days before publication.
+  const publicationDate = weekDate ? new Date(weekDate + 'T00:00:00Z') : undefined;
+  const upcomingHoliday = detectUpcomingHoliday(country, publicationDate);
   const isoWeek = getISOWeekNumber(new Date());
   const dataPointType = DATA_POINT_ROTATION[isoWeek % 4];
 
@@ -557,18 +561,18 @@ Respond with ONLY this JSON:
 
 const DATA_POINT_PROMPTS: Record<DataPointType, (n: string, c: string, co: string) => string> = {
   real_estate: (n, c) =>
-    `What is the current average residential listing price in ${n}, ${c}? Compare to last month. Provide one number and one sentence of context. If exact data unavailable, give the best available indicator. VOICE: Write as a local insider using "we/our" - e.g., "Our median listing is holding at $4.2M" or "${n} is seeing steady demand." NEVER say "Residents are" - that sounds like a third party. NEVER use em dashes.`,
+    `What is the current average residential listing price in ${n}, ${c}? Compare to last month. Provide one number and one sentence of context. If exact data unavailable, give the best available indicator. VOICE: Reference the neighborhood by name - e.g., "The ${n} median listing is holding at $4.2M" or "${n} buyer interest remains steady." NEVER use "we/our/us" - it sounds too possessive for real estate. NEVER say "Residents are." NEVER use em dashes.`,
   safety: (n, c) =>
-    `What are the recent crime or safety statistics for ${n}, ${c}? Compare to last year same period. Provide one key metric and one sentence of context. VOICE: Write as a local insider using "we/our" - e.g., "We're seeing a 12% drop in incidents" or "${n} is holding steady." NEVER say "Residents are." NEVER use em dashes.`,
+    `What are the recent crime or safety statistics for ${n}, ${c}? Compare to last year same period. Provide one key metric and one sentence of context. VOICE: Reference the neighborhood by name - e.g., "${n} is seeing a 12% drop in incidents" or "Crime in ${n} is holding steady." NEVER use "we/our/us." NEVER say "Residents are." NEVER use em dashes.`,
   environment: (n, c, co) => {
     const useF = co === 'USA' || co === 'US' || co === 'United States';
     const unit = useF ? '°F' : '°C';
     const example = useF ? '45°F' : '12°C';
-    return `What is the current temperature in ${n}, ${c}? Provide the temperature in ${unit} ONLY as the value (e.g., "${example}") and one sentence of context about current weather conditions. Do NOT use AQI or air quality index. Do NOT include both °F and °C - use ${unit} only. VOICE: Write as a local insider using "we/our" - e.g., "We're staying indoors today" or "${n} is dealing with a cold snap." NEVER say "Residents are." NEVER use em dashes.`;
+    return `What is the current temperature in ${n}, ${c}? Provide the temperature in ${unit} ONLY as the value (e.g., "${example}") and one sentence of context about current weather conditions. Do NOT use AQI or air quality index. Do NOT include both °F and °C - use ${unit} only. VOICE: Reference the neighborhood by name - e.g., "${n} is staying indoors today" or "${n} is dealing with a cold snap." NEVER use "we/our/us." NEVER say "Residents are." NEVER use em dashes.`;
   },
   flaneur_index: (n, c, co) => {
     const currency = co === 'USA' ? 'USD' : co === 'UK' ? 'GBP' : co === 'Sweden' ? 'SEK' : co === 'Australia' ? 'AUD' : 'local currency';
-    return `What is the average price of a latte at premium cafes in ${n}, ${c}? Give the price in ${currency} and compare to the city average. This is our "Flaneur Index" - a lighthearted cost-of-living indicator. VOICE: Write as a local insider - e.g., "Our morning latte runs about $6.50" or "We're paying a premium." NEVER say "Residents are." NEVER use em dashes.`;
+    return `What is the average price of a latte at premium cafes in ${n}, ${c}? Give the price in ${currency} and compare to the city average. This is the "Flaneur Index" - a lighthearted cost-of-living indicator. VOICE: Reference the neighborhood by name - e.g., "A ${n} morning latte runs about $6.50" or "${n} prices sit above the city average." NEVER use "we/our/us." NEVER say "Residents are." NEVER use em dashes.`;
   },
 };
 
@@ -815,9 +819,13 @@ const HOLIDAYS: HolidayDef[] = [
 
 /**
  * Detect if a major holiday falls within the next 7 days for this country.
+ * @param country - Country string to filter holidays
+ * @param referenceDate - The publication date to anchor the 7-day window (defaults to today).
+ *   Pass the edition's weekDate so holidays are always forward-looking from publication,
+ *   not from the generation time (which may be days earlier).
  */
-function detectUpcomingHoliday(country: string): { name: string; date: Date } | null {
-  const now = new Date();
+function detectUpcomingHoliday(country: string, referenceDate?: Date): { name: string; date: Date } | null {
+  const now = referenceDate ? new Date(referenceDate) : new Date();
   now.setHours(0, 0, 0, 0);
   const endDate = new Date(now);
   endDate.setDate(endDate.getDate() + 7);

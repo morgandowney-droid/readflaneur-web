@@ -167,7 +167,8 @@ export async function GET(request: Request) {
             neighborhood.name,
             neighborhood.city,
             neighborhood.country || 'USA',
-            model
+            model,
+            weekDate
           );
 
           // Create feed article
