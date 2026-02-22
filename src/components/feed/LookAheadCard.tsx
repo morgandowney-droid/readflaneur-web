@@ -185,6 +185,10 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
   const previewSentence = sentenceMatch ? sentenceMatch[0] : plainText;
   const hasMore = paragraphs.length > 1 || plainText.length > previewSentence.length;
 
+  function daySlug(text: string): string {
+    return 'la-' + text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  }
+
   const handleToggle = () => {
     setIsExpanded(prev => !prev);
   };
@@ -215,7 +219,20 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
                 {eventListingBlock.split(/\n\n+/).filter(Boolean).map((line, i) => {
                   const hdr = line.trim().match(/^\[\[(.+)\]\]$/);
                   if (hdr) {
-                    return <p key={i} className={`text-[10px] font-semibold text-fg uppercase tracking-widest ${i > 0 ? 'mt-2' : ''}`}>{hdr[1]}</p>;
+                    return (
+                      <a
+                        key={i}
+                        href={`#${daySlug(hdr[1])}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          document.getElementById(daySlug(hdr[1]))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }}
+                        className={`block text-[10px] font-semibold text-fg uppercase tracking-widest hover:text-accent transition-colors ${i > 0 ? 'mt-2' : ''}`}
+                      >
+                        {hdr[1]}
+                      </a>
+                    );
                   }
                   if (isEventLine(line)) {
                     const segments = line.replace(/\.$/, '').split(';').map(s => s.trim());
@@ -250,7 +267,7 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
               const headerMatch = p.match(/^\[\[(.+)\]\]$/);
               if (headerMatch) {
                 return (
-                  <h3 key={i} className="text-xs font-semibold text-fg uppercase tracking-widest mt-6 mb-1">
+                  <h3 key={i} id={daySlug(headerMatch[1])} className="text-xs font-semibold text-fg uppercase tracking-widest mt-6 mb-1">
                     {headerMatch[1]}
                   </h3>
                 );
