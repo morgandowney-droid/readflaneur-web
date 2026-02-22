@@ -138,7 +138,7 @@ Rules:
 - Prioritize verified facts over rumors.
 - If you don't find much, say so.
 - DATE REFERENCES: When using relative time words (yesterday, today, tomorrow, Thursday, last week, etc.), ALWAYS include the explicit calendar date - e.g., "yesterday (February 19)", "this Thursday, February 20". Readers may see this days later.
-- EXCLUDE generic tourist activities: guided walking tours, food tours, food hall tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms, and any other activity primarily marketed to tourists rather than locals. The reader is a well-travelled 35-year-old who has lived here for years - they would never go on a walking tour of their own neighborhood. Focus on what's NEW or NEWSWORTHY.`
+- EXCLUDE only these specific tourist traps: guided walking tours, food tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms. DO include everything else - gallery openings, pop-up markets, concerts, comedy shows, restaurant openings, art exhibitions, food festivals, sports events, community events, and any other time-limited happening. Cast a WIDE net. The reader wants to know what's going on this week.`
           },
           {
             role: 'user',
@@ -455,7 +455,7 @@ Rules:
 - Do NOT include citation references like [[1]] or (1) in the HEADLINE.
 - NEVER use passive, defeatist, or "nothing happening" headlines. There is ALWAYS something worth highlighting. Banned headline patterns: "Quiet Week", "Slow Week", "Not Much Going On", "A Calm Week", "Nothing Major". Always lead with the most interesting specific event or venue name.
 - NEVER repeat the same venue, restaurant, or event across multiple days. If a venue is open every day (like a restaurant or bar), mention it ONCE on the most relevant day. Each day should feature DIFFERENT events. If there aren't enough distinct events, include fewer days rather than padding with repeats.
-- EXCLUDE long-running tourist attractions, permanent shows, and generic tourist activities. This includes: Broadway/West End-style permanent shows ("Mamma Mia!", "The Lion King", "Phantom of the Opera", "Wicked"), museum permanent exhibitions, guided walking tours, food tours, food hall tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms, and any other activity primarily marketed to tourists rather than locals. Only include these if something genuinely unusual is happening (closing, reopening, major cast change, anniversary milestone, special one-time event). Focus on events that are NEW or time-limited and would interest a well-travelled 35-year-old local resident.`
+- EXCLUDE only these specific items: permanent Broadway/West End shows ("Mamma Mia!", "The Lion King", "Phantom of the Opera", "Wicked"), guided walking tours, food tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms. DO include everything else - gallery openings, temporary exhibitions, pop-up markets, concerts, comedy shows, restaurant/bar openings, art shows, food festivals, sports events, community events, museum special exhibitions, theater premieres, and any other time-limited happening. Cast a WIDE net and find as many events as possible. A busy neighborhood should have many events across the week.`
           },
           {
             role: 'user',
