@@ -148,15 +148,15 @@ function EventListingBlock({ content }: { content: string }) {
   const lines = content.split(/\n\n+/).map(l => l.trim()).filter(Boolean);
 
   return (
-    <div className="mb-10 pb-8 border-b border-border">
-      <p className="text-[10px] uppercase tracking-[0.25em] text-fg-subtle mb-4">At a glance</p>
+    <div className="mb-10 pb-8 border-b border-border" style={{ fontFamily: 'var(--font-body-serif)' }}>
+      <p className="text-[10px] uppercase tracking-[0.25em] text-fg-subtle mb-4" style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)' }}>At a glance</p>
       <div className="space-y-2">
         {lines.map((line, i) => {
           // Date header [[Today, Sat Feb 21]]
           const headerMatch = line.match(/^\[\[(.+)\]\]$/);
           if (headerMatch) {
             return (
-              <p key={i} className={`text-xs font-semibold text-fg uppercase tracking-widest ${i > 0 ? 'mt-4' : ''}`}>
+              <p key={i} className={`text-sm font-semibold text-fg uppercase tracking-widest ${i > 0 ? 'mt-4' : ''}`}>
                 {headerMatch[1]}
               </p>
             );
@@ -166,7 +166,7 @@ function EventListingBlock({ content }: { content: string }) {
           if (isEventLine(line)) {
             const segments = line.replace(/\.$/, '').split(';').map(s => s.trim());
             return (
-              <p key={i} className="text-sm leading-snug text-fg-muted flex">
+              <p key={i} className="text-[0.95rem] leading-relaxed text-fg-muted flex">
                 <span className="text-fg-subtle/40 mr-2 select-none">&bull;</span>
                 <span>
                   {segments.map((seg, si) => (
