@@ -638,6 +638,7 @@ const dataPointLabel = {
 
 const dataPointValue = {
   fontSize: '36px',
+  lineHeight: '1.2',
   fontWeight: '700' as const,
   color: '#1a1a1a',
   margin: '8px 0',

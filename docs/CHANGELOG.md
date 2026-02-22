@@ -5,6 +5,11 @@
 
 ## 2026-02-22
 
+**Fix Sunday Edition Data Point Headline Overlap:**
+- The "THE MARKET" data point section in Sunday Edition emails had overlapping text on mobile when the headline wrapped to multiple lines (e.g., "$1.995M, up 14.8% from last month"). The `dataPointValue` style had `fontSize: '36px'` with Playfair Display but no explicit `lineHeight`, defaulting to ~1.0.
+- Added `lineHeight: '1.2'` to `dataPointValue` style in `SundayEditionTemplate.tsx`.
+- File: `src/lib/email/templates/SundayEditionTemplate.tsx`.
+
 **Fix Daily Brief and Look Ahead Card Appearance:**
 - Daily Brief closed state preview now skips the AI greeting paragraph (e.g., "Good morning, neighbors." or "God morgon, grannar.") and shows actual news content from the second paragraph instead. `isGreetingParagraph()` function covers all 9 supported languages (en, sv, fr, de, es, pt, it, zh, ja) with regex patterns, max 120 chars.
 - Look Ahead closed state: "Read more" moved to its own line below the teaser sentence instead of running inline, preventing messy wrapping.
