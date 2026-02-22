@@ -235,12 +235,20 @@ export async function GET(request: Request) {
     timeZone: timezone,
   });
 
-  // Build article URL
+  // Build article URL (verify article exists before including link)
   let articleUrl: string | null = null;
   if (articleSlug) {
-    const neighborhoodSlug = neighborhoodId.split('-').slice(1).join('-');
-    const citySlug = hood.city.toLowerCase().replace(/\s+/g, '-');
-    articleUrl = `${appUrl}/${citySlug}/${neighborhoodSlug}/${articleSlug}?ref=sunday-edition-request`;
+    const { data: articleCheck } = await supabase
+      .from('articles')
+      .select('id')
+      .eq('slug', articleSlug)
+      .eq('status', 'published')
+      .single();
+    if (articleCheck) {
+      const neighborhoodSlug = neighborhoodId.split('-').slice(1).join('-');
+      const citySlug = hood.city.toLowerCase().replace(/\s+/g, '-');
+      articleUrl = `${appUrl}/${citySlug}/${neighborhoodSlug}/${articleSlug}?ref=sunday-edition-request`;
+    }
   }
 
   const emailContent: SundayEditionContent = {

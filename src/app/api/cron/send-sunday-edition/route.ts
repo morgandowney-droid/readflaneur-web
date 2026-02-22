@@ -246,12 +246,20 @@ export async function GET(request: Request) {
         timeZone: recipient.timezone || 'America/New_York',
       });
 
-      // Build article URL for "Read the full edition" link
+      // Build article URL for "Read the full edition" link (verify article exists)
       let articleUrl: string | null = null;
       if (articleSlug) {
-        const neighborhoodSlug = primaryId.split('-').slice(1).join('-');
-        const citySlug = hood.city.toLowerCase().replace(/\s+/g, '-');
-        articleUrl = `${appUrl}/${citySlug}/${neighborhoodSlug}/${articleSlug}?ref=sunday-edition`;
+        const { data: articleCheck } = await supabase
+          .from('articles')
+          .select('id')
+          .eq('slug', articleSlug)
+          .eq('status', 'published')
+          .single();
+        if (articleCheck) {
+          const neighborhoodSlug = primaryId.split('-').slice(1).join('-');
+          const citySlug = hood.city.toLowerCase().replace(/\s+/g, '-');
+          articleUrl = `${appUrl}/${citySlug}/${neighborhoodSlug}/${articleSlug}?ref=sunday-edition`;
+        }
       }
 
       // Fetch Look Ahead article URL for this neighborhood
