@@ -200,6 +200,13 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
 
       {isExpanded && bodyText ? (
         <>
+          {/* Summary block at top of expanded view */}
+          {previewSentence && (
+            <div className="bg-canvas/50 rounded-lg px-4 py-3 mb-4">
+              <p className="text-lg text-fg-muted leading-relaxed">{previewSentence}</p>
+            </div>
+          )}
+
           {/* Compact event listing block */}
           {eventListingBlock && (
             <div className="mb-4 pb-3 border-b border-border">
@@ -309,17 +316,18 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
         <>
           {/* Compact preview - one sentence teaser (plain text, muted) */}
           {bodyText && previewSentence ? (
-            <p className="text-lg text-fg-muted">
-              {previewSentence}
+            <div>
+              <p className="text-lg text-fg-muted">
+                {previewSentence}
+              </p>
               {hasMore && (
-                <>
-                  {' '}
+                <p className="mt-1">
                   <span className="text-xs font-medium text-fg-muted hover:text-fg transition-colors">
                     {t('feed.readMore')} &rsaquo;
                   </span>
-                </>
+                </p>
               )}
-            </p>
+            </div>
           ) : (
             <Link
               href={url}

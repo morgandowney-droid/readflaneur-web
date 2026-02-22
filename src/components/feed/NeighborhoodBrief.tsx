@@ -286,6 +286,37 @@ function cleanContent(text: string): string {
     .trim();
 }
 
+/**
+ * Detect if a paragraph is a greeting line (e.g., "Good morning, neighbors.")
+ * Covers all 9 supported languages: en, sv, fr, de, es, pt, it, zh, ja
+ */
+function isGreetingParagraph(text: string): boolean {
+  const trimmed = text.trim();
+  // Short paragraphs that start with common greeting patterns
+  if (trimmed.length > 120) return false;
+  const greetingPatterns = [
+    // English
+    /^(good\s+morning|morning|hello|hey|greetings)/i,
+    // Swedish
+    /^(god\s+morgon|hej|morrn)/i,
+    // French
+    /^(bonjour|bon\s+matin|salut)/i,
+    // German
+    /^(guten\s+morgen|morgen|hallo)/i,
+    // Spanish
+    /^(buenos\s+d[ií]as|hola|buen\s+d[ií]a)/i,
+    // Portuguese
+    /^(bom\s+dia|ol[aá])/i,
+    // Italian
+    /^(buongiorno|buon\s+giorno|ciao)/i,
+    // Chinese
+    /^(早上好|早安|你好)/,
+    // Japanese
+    /^(おはようございます|おはよう|こんにちは)/,
+  ];
+  return greetingPatterns.some(p => p.test(trimmed));
+}
+
 function formatTime(dateString: string, locale: string = 'en') {
   const date = new Date(dateString);
   const now = new Date();
@@ -419,7 +450,10 @@ export function NeighborhoodBrief({
   // Clean content and split into paragraphs
   const cleanedContent = cleanContent(displayContent);
   const paragraphs = cleanedContent.split('\n\n').filter(p => p.trim());
-  const previewText = paragraphs[0] || cleanedContent;
+  // Skip greeting paragraph for preview - show actual news content
+  const previewText = (paragraphs.length > 1 && isGreetingParagraph(paragraphs[0]))
+    ? paragraphs[1]
+    : (paragraphs[0] || cleanedContent);
   const hasMore = paragraphs.length > 1 || cleanedContent.length > 300;
 
   // Check if a paragraph is a commentary line (short question or closing remark)
