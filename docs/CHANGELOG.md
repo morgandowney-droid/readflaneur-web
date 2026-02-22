@@ -5,6 +5,12 @@
 
 ## 2026-02-22
 
+**Fix Daily Brief and Look Ahead Card Appearance:**
+- Daily Brief closed state preview now skips the AI greeting paragraph (e.g., "Good morning, neighbors." or "God morgon, grannar.") and shows actual news content from the second paragraph instead. `isGreetingParagraph()` function covers all 9 supported languages (en, sv, fr, de, es, pt, it, zh, ja) with regex patterns, max 120 chars.
+- Look Ahead closed state: "Read more" moved to its own line below the teaser sentence instead of running inline, preventing messy wrapping.
+- Look Ahead expanded state: summary block now appears at the top before the event listing with `bg-canvas/50 rounded-lg px-4 py-3` for subtle visual distinction, using the same `text-lg text-fg-muted leading-relaxed` font size as body text.
+- Files: `src/components/feed/NeighborhoodBrief.tsx`, `src/components/feed/LookAheadCard.tsx`.
+
 **Sunday Edition Admin Test Page:**
 - New `/admin/sunday-edition` page for one-click generate, preview, and test-send of Sunday Edition emails on any day of the week.
 - Neighborhood dropdown (all active neighborhoods), date picker, admin email input, cron secret (persisted to localStorage).
