@@ -5,6 +5,10 @@
 
 ## 2026-02-22
 
+**Persist Active Pill Selection Across Browser Back Navigation:**
+- When a user clicked a neighborhood pill, read an article, then hit browser back, the feed defaulted to "All Neighborhoods" instead of the pill they had selected. Now `MultiFeed` persists `activeFilter` in `sessionStorage` (`flaneur-active-pill` key). On mount, restores the saved pill if it exists in the current neighborhoods list. Session-scoped (not localStorage) since pill selection is ephemeral navigation state.
+- File: `src/components/feed/MultiFeed.tsx`.
+
 **Stop Generating Briefs and Look-Aheads for Combo Component Neighborhoods:**
 - Component neighborhoods like Djurgarden (part of Ostermalm combo) were getting their own independent daily briefs and look-ahead articles because they had `is_active=true` in the DB. Only combo neighborhoods should generate content - components are covered by the combo's expanded Grok search.
 - SQL migration sets `is_active=false` for all neighborhoods in `combo_neighborhoods.component_id` and archives their incorrectly generated `brief_summary`/`look_ahead` articles.
