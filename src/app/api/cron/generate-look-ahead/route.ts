@@ -256,8 +256,15 @@ export async function GET(request: Request) {
         throw new Error(`Failed to fetch neighborhoods: ${fetchError?.message}`);
       }
 
-      // Filter to only neighborhoods with active subscribers
-      neighborhoods = data.filter(n => activeSubscriberIds.has(n.id));
+      // Exclude component neighborhoods that are part of combos
+      // (components should have is_active=false, but guard against DB drift)
+      const { data: comboComponents } = await supabase
+        .from('combo_neighborhoods')
+        .select('component_neighborhood_id');
+      const componentIds = new Set((comboComponents || []).map(c => c.component_neighborhood_id));
+
+      // Filter to only neighborhoods with active subscribers, excluding components
+      neighborhoods = data.filter(n => activeSubscriberIds.has(n.id) && !componentIds.has(n.id));
     }
 
     if (neighborhoods.length === 0) {

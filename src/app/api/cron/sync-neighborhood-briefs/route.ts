@@ -161,10 +161,20 @@ export async function GET(request: Request) {
 
   const { data: allNeighborhoods, error: fetchError } = await query;
 
+  // Exclude component neighborhoods that are part of combos
+  // (components should have is_active=false, but guard against DB drift)
+  const { data: comboComponents } = await supabase
+    .from('combo_neighborhoods')
+    .select('component_neighborhood_id');
+  const componentIds = new Set((comboComponents || []).map(c => c.component_neighborhood_id));
+
   // Filter neighborhoods:
-  // 1. Don't already have a brief for their local "today"
-  // 2. It's currently midnight-7am local time (unless force=true or testing)
+  // 1. Not a component of a combo (combos generate content for their components)
+  // 2. Don't already have a brief for their local "today"
+  // 3. It's currently midnight-7am local time (unless force=true or testing)
   const neighborhoods = (allNeighborhoods || []).filter(n => {
+    // Skip component neighborhoods (combo generates their content)
+    if (!testNeighborhoodId && componentIds.has(n.id)) return false;
     // Always process if testing specific neighborhood
     if (testNeighborhoodId) return true;
 
