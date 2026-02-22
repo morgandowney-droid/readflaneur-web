@@ -5,6 +5,17 @@
 
 ## 2026-02-22
 
+**Stop Generating Briefs and Look-Aheads for Combo Component Neighborhoods:**
+- Component neighborhoods like Djurgarden (part of Ostermalm combo) were getting their own independent daily briefs and look-ahead articles because they had `is_active=true` in the DB. Only combo neighborhoods should generate content - components are covered by the combo's expanded Grok search.
+- SQL migration sets `is_active=false` for all neighborhoods in `combo_neighborhoods.component_id` and archives their incorrectly generated `brief_summary`/`look_ahead` articles.
+- Added `combo_neighborhoods` exclusion guard in both `sync-neighborhood-briefs` and `generate-look-ahead` crons - fetches component IDs into a Set and skips them during filtering, preventing future DB drift from re-enabling generation.
+- Files: `src/app/api/cron/sync-neighborhood-briefs/route.ts`, `src/app/api/cron/generate-look-ahead/route.ts`, `supabase/migrations/20260227_deactivate_combo_components.sql`.
+
+**Add Tourist Activity Filter to Daily Brief Prompts:**
+- Walking tours, food tours, and other tourist activities were appearing in Daily Briefs (e.g., Ostermalm brief mentioning a walking tour). The Look Ahead prompts already had this filter but Daily Brief Grok and Gemini enrichment prompts did not.
+- Added tourist trap exclusion rules to both `generateNeighborhoodBrief()` in `grok.ts` and `dailyBriefStyle` in `brief-enricher-gemini.ts`.
+- Files: `src/lib/grok.ts`, `src/lib/brief-enricher-gemini.ts`.
+
 **Fix Sunday Edition Data Point Headline Overlap:**
 - The "THE MARKET" data point section in Sunday Edition emails had overlapping text on mobile when the headline wrapped to multiple lines (e.g., "$1.995M, up 14.8% from last month"). The `dataPointValue` style had `fontSize: '36px'` with Playfair Display but no explicit `lineHeight`, defaulting to ~1.0.
 - Added `lineHeight: '1.2'` to `dataPointValue` style in `SundayEditionTemplate.tsx`.
