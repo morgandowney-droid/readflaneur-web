@@ -140,8 +140,10 @@ export async function GET(request: Request) {
 
     console.log(`[SundayEdition] Processing ${toProcess.length} neighborhoods (${existingSet.size} already done)`);
 
-    // Process neighborhoods in concurrent batches of 3 for throughput
-    const CONCURRENCY = 3;
+    // Process neighborhoods in concurrent batches of 5 for throughput
+    // At ~45s per neighborhood, concurrency 5 yields ~10 per 280s run
+    // Combined with Saturday+Sunday schedule (48h), covers all 270 neighborhoods
+    const CONCURRENCY = 5;
     const queue = [...toProcess];
 
     while (queue.length > 0) {
