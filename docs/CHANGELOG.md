@@ -5,6 +5,18 @@
 
 ## 2026-02-22
 
+**Fix Look Ahead Event Listing Font Jarring:**
+- The "At a glance" event listing used `text-xs`/`text-sm` sans-serif while the prose body immediately below used `text-[1.35rem]` Merriweather serif with `leading-loose` - a jarring visual jump from 12-14px compact sans to 22px serif.
+- Switched event listing container to serif (`var(--font-body-serif)`), bumped day headers from `text-xs` to `text-sm`, bumped event lines from `text-sm` to `text-[0.95rem]` (~15px) with `leading-relaxed`, keeping "At a glance" label in sans-serif.
+- File: `src/components/article/ArticleBody.tsx`.
+
+**Relax Tourist Filter to Stop Suppressing Legitimate Events:**
+- SoHo Look Ahead had only 1 event for an entire week. The tourist filter's broad "any other activity primarily marketed to tourists rather than locals" language was causing Grok to self-censor aggressively in tourist-heavy neighborhoods - SoHo, where nearly everything could be considered "touristy".
+- Narrowed all 3 filter layers (Grok Daily Brief prompt, Grok Look Ahead prompt, Gemini enrichment styles) to a specific exclusion list only: walking tours, food tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms, permanent Broadway shows. Removed the vague catch-all.
+- Explicitly encouraged including galleries, exhibitions, concerts, comedy, restaurant openings, pop-up markets, community events, museum special exhibitions, etc. Added "cast a WIDE net" instruction.
+- The JavaScript `isTouristActivity()` filter in `look-ahead-events.ts` was already narrow (only regex for specific terms) - no change needed there.
+- Files: `src/lib/grok.ts`, `src/lib/brief-enricher-gemini.ts`.
+
 **Fix Markdown Links Rendering as Raw Text in Daily Brief Cards:**
 - Users saw raw `[Bar Maeda](https://www.google.com/search?...)` text in SoHo Daily Brief instead of a clickable link. The DB content was correct (proper markdown link in `enriched_content`), and `renderWithLinks()` handles markdown-to-anchor conversion.
 - Root cause: `extractSectionHeader()` in `NeighborhoodBrief.tsx` is a heuristic that auto-detects section headers by scanning for sequences of capitalized words. It splits text into words on whitespace boundaries, so `[Bar Maeda](url)` becomes two words: `[Bar` (starts uppercase after stripping `[`) and `Maeda](url...)` (starts uppercase). The detector treated "Over in Hudson Square, [Bar" as the "header" and "Maeda](url) opened its doors..." as the "rest", breaking the markdown link in half. `renderWithLinks()` couldn't match the broken fragments.
