@@ -5,9 +5,12 @@
  * per Unsplash terms (no downloading/re-hosting). Triggers download
  * endpoint for attribution tracking.
  *
- * Strategy: ONE search per neighborhood ("Nolita New York"), take the
- * top 10 results, assign different photos to each category by index.
- * This ensures every photo is actually of the neighborhood.
+ * Strategy: Two parallel searches per neighborhood — "{name} {city}"
+ * for relevance and "{name}" alone for iconic shots — then interleave
+ * the results so we get both city-accurate and visually striking photos.
+ * 30 results per query, 8 assigned to categories. For ambiguous names
+ * like "SoHo" the city-qualified search provides disambiguation while
+ * the name-only search surfaces the most popular/curated shots.
  *
  * Rate limits: 50/hr (demo), 5000/hr (production)
  */
@@ -102,15 +105,45 @@ export async function triggerDownload(downloadLocation: string): Promise<void> {
 }
 
 /**
+ * Interleave two arrays, alternating elements and deduplicating by ID.
+ * Produces a merged list that mixes city-qualified (relevant) results
+ * with neighborhood-only (iconic/popular) results.
+ */
+function interleave(
+  a: UnsplashSearchResult[],
+  b: UnsplashSearchResult[],
+): UnsplashSearchResult[] {
+  const merged: UnsplashSearchResult[] = [];
+  const seen = new Set<string>();
+  const maxLen = Math.max(a.length, b.length);
+
+  for (let i = 0; i < maxLen; i++) {
+    if (i < a.length && !seen.has(a[i].id)) {
+      merged.push(a[i]);
+      seen.add(a[i].id);
+    }
+    if (i < b.length && !seen.has(b[i].id)) {
+      merged.push(b[i]);
+      seen.add(b[i].id);
+    }
+  }
+
+  return merged;
+}
+
+/**
  * Search and collect photos for all 8 image categories for a neighborhood.
  *
- * Uses just 1-2 API calls per neighborhood instead of 8:
- * 1. Search "{neighborhood} {city}" — get 10 results
- * 2. If <8 results, also search "{city} neighborhood street" — get 10 more
- * 3. Assign unique photos to each category by index
+ * Two parallel searches, then interleave for best of both worlds:
+ * 1. "{neighborhood} {city}" (30 results) — disambiguates "SoHo New York"
+ *    vs "SoHo London", ensures city-relevance
+ * 2. "{neighborhood}" alone (30 results) — surfaces the most iconic/popular
+ *    shots that photographers tag with just the neighborhood name
  *
- * This ensures every photo is actually of the neighborhood, not random
- * artistic shots from abstract keyword queries.
+ * Results are interleaved (alternating) so the final pool mixes accurate
+ * and visually striking photos. Falls back to city-only if still short.
+ *
+ * Cost: 2 API calls per neighborhood (was 1-4). Well within 5000/hr budget.
  */
 export async function searchAllCategories(
   neighborhoodName: string,
@@ -121,29 +154,33 @@ export async function searchAllCategories(
   const accessKey = getAccessKey();
   const needed = IMAGE_CATEGORIES.length;
 
-  // Build fallback query chain — stop as soon as we have enough photos
-  const queries = [
-    `${neighborhoodName} ${city}`,           // Tier 1: "Sotogrande Andalusia"
-    `${city} ${neighborhoodName}`,            // Tier 2: "Andalusia Sotogrande" (word order matters)
-    city,                                      // Tier 3: "Andalusia" (just the city/region)
-    ...(country ? [`${city} ${country}`] : []), // Tier 4: "Andalusia Spain" (if country available)
-  ];
+  // Primary searches: run in parallel for speed
+  const [cityQualified, nameOnly] = await Promise.all([
+    searchUnsplash(accessKey, `${neighborhoodName} ${city}`, 30),
+    searchUnsplash(accessKey, neighborhoodName, 30),
+  ]);
 
-  let results: UnsplashSearchResult[] = [];
-  const existingIds = new Set<string>();
+  // Interleave: alternates city-qualified (relevant) with name-only (iconic)
+  let results = interleave(cityQualified, nameOnly);
 
-  for (const query of queries) {
-    if (results.length >= needed) break;
+  // Fallback: if still short, try broader queries
+  if (results.length < needed) {
+    const seenIds = new Set(results.map(r => r.id));
 
-    if (results.length > 0) {
+    const fallbackQueries = [
+      city,
+      ...(country ? [`${city} ${country}`] : []),
+    ];
+
+    for (const query of fallbackQueries) {
+      if (results.length >= needed) break;
       await new Promise(resolve => setTimeout(resolve, 200));
-    }
-
-    const batch = await searchUnsplash(accessKey, query, 10);
-    for (const r of batch) {
-      if (!existingIds.has(r.id)) {
-        results.push(r);
-        existingIds.add(r.id);
+      const batch = await searchUnsplash(accessKey, query, 30);
+      for (const r of batch) {
+        if (!seenIds.has(r.id)) {
+          results.push(r);
+          seenIds.add(r.id);
+        }
       }
     }
   }
@@ -153,7 +190,7 @@ export async function searchAllCategories(
   // Assign unique photos to each category
   const photos: UnsplashPhotosMap = {};
   for (let i = 0; i < IMAGE_CATEGORIES.length; i++) {
-    if (i >= results.length) break; // Not enough unique photos
+    if (i >= results.length) break;
 
     const category = IMAGE_CATEGORIES[i];
     const photo = toPhoto(results[i]);
