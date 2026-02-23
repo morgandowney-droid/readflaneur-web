@@ -198,8 +198,8 @@ export async function GET(request: Request) {
     const activeIds = await getActiveNeighborhoodIds(supabase);
     const activeArray = Array.from(activeIds);
 
-    if (activeArray.length < BRIEF_SAMPLE_COUNT + ARTICLE_SAMPLE_COUNT) {
-      throw new Error(`Not enough active neighborhoods (${activeArray.length})`);
+    if (activeArray.length === 0) {
+      throw new Error('No active neighborhoods found');
     }
 
     // Fetch neighborhood names for display
@@ -215,10 +215,39 @@ export async function GET(request: Request) {
       }
     }
 
-    // Pick random neighborhoods - separate sets for briefs and articles
-    const briefIds = pickRandom(activeArray, BRIEF_SAMPLE_COUNT);
-    const remainingForArticles = activeArray.filter((id) => !briefIds.includes(id));
-    const articleIds = pickRandom(remainingForArticles, ARTICLE_SAMPLE_COUNT);
+    // Find neighborhoods that actually have enriched briefs
+    const { data: briefNeighborhoodRows } = await supabase
+      .from('neighborhood_briefs')
+      .select('neighborhood_id')
+      .not('enriched_content', 'is', null)
+      .in('neighborhood_id', activeArray)
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    const briefNeighborhoodIds = [...new Set(
+      (briefNeighborhoodRows || []).map((r) => r.neighborhood_id)
+    )];
+
+    // Find neighborhoods that actually have look-ahead articles
+    const { data: articleNeighborhoodRows } = await supabase
+      .from('articles')
+      .select('neighborhood_id')
+      .eq('article_type', 'look_ahead')
+      .eq('status', 'published')
+      .in('neighborhood_id', activeArray)
+      .order('published_at', { ascending: false })
+      .limit(500);
+
+    const articleNeighborhoodIds = [...new Set(
+      (articleNeighborhoodRows || []).map((r) => r.neighborhood_id)
+    )];
+
+    // Pick random neighborhoods from those that have content
+    const briefIds = pickRandom(briefNeighborhoodIds, BRIEF_SAMPLE_COUNT);
+    const articleIds = pickRandom(
+      articleNeighborhoodIds.filter((id) => !briefIds.includes(id)),
+      ARTICLE_SAMPLE_COUNT
+    );
 
     // Fetch enriched daily briefs (7 most recent per neighborhood)
     const briefSamples: { neighborhood: string; content: string }[] = [];
