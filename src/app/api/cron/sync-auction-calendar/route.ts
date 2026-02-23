@@ -98,9 +98,6 @@ export async function GET(request: Request) {
       });
     }
 
-    // Get cached image for auctions (reused across all stories)
-    const cachedImageUrl = await getCronImage('auction', supabase);
-
     // Generate stories for top events (Mega first, then Standard)
     const megaEvents = events.filter((e) => e.tier === 'Mega').slice(0, 5);
     const standardEvents = events.filter((e) => e.tier === 'Standard').slice(0, 5);
@@ -188,13 +185,13 @@ export async function GET(request: Request) {
               day: 'numeric',
             });
 
-            // Create article with cached image
+            // Create article with Unsplash image
             const { error: insertError } = await supabase.from('articles').insert({
               neighborhood_id: finalNeighborhoodId,
               headline: story.headline,
               body_text: story.body,
               preview_text: story.previewText,
-              image_url: cachedImageUrl, // Reuse cached category image
+              image_url: await getCronImage('auction', supabase, { neighborhoodId: finalNeighborhoodId }),
               slug,
               status: 'published',
               published_at: new Date().toISOString(),

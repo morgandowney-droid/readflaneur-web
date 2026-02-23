@@ -136,17 +136,12 @@ export async function GET(request: Request) {
       });
     }
 
-    // Get cached images per condition type (snow, surf, sun)
-    const imageByType: Record<string, string> = {};
+    // Category mapping for condition types
     const typeToCategory: Record<string, 'escape-index' | 'escape-surf' | 'escape-sun'> = {
       snow: 'escape-index',
       surf: 'escape-surf',
       sun: 'escape-sun',
     };
-    const conditionTypes = [...new Set(stories.map(s => s.conditionType))];
-    for (const ct of conditionTypes) {
-      imageByType[ct] = await getCronImage(typeToCategory[ct] || 'escape-index', supabase);
-    }
 
     // Create articles for each story
     for (const story of stories) {
@@ -204,13 +199,13 @@ export async function GET(request: Request) {
             }
           }
 
-          // Create article with cached image
+          // Create article with per-neighborhood Unsplash image
           const { error: insertError } = await supabase.from('articles').insert({
             neighborhood_id: finalNeighborhoodId,
             headline: story.headline,
             body_text: story.body,
             preview_text: story.previewText,
-            image_url: imageByType[story.conditionType] || '', // Condition-specific cached image
+            image_url: await getCronImage(typeToCategory[story.conditionType] || 'escape-index', supabase, { neighborhoodId: finalNeighborhoodId }),
             slug,
             status: 'published',
             published_at: new Date().toISOString(),

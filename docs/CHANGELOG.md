@@ -26,6 +26,13 @@
 
 ## 2026-02-24
 
+**Eliminate AI-Generated Images from Specialized Cron Articles:**
+- 28 specialized crons (overture-alerts, museum-watch, gala-watch, archive-hunter, etc.) were using `getCronImage()` which returned cached AI-generated images from Supabase Storage `cron-cache/`. All 269 neighborhoods now have Unsplash library photos, so AI images are no longer needed.
+- Modified `getCronImage()` in `cron-images.ts` to accept optional `neighborhoodId` in options. When provided, does a DB lookup for `image_library_status.unsplash_photos` and returns the `rss-story` category Unsplash photo URL (catch-all for non-brief articles). Falls back to any available Unsplash photo, then to existing AI cached image.
+- Updated all 28 cron callsites to pass `neighborhoodId` per-article. Old pattern: `getCronImage('category', supabase)` called once at top, shared across all articles. New pattern: `getCronImage('category', supabase, { neighborhoodId: finalNeighborhoodId })` called per-article inside the insert loop. Each article now gets a neighborhood-specific Unsplash photo.
+- Expanded `retry-missing-images` cron to also find articles with `cron-cache/` in their `image_url` and replace with Unsplash library photos. This backfills all existing articles that already have AI-generated images. Phase 1: empty/null images (existing). Phase 2: cron-cache AI images (new). Separate counters: `library_filled` and `ai_replaced`.
+- Files: `src/lib/cron-images.ts` (core change + new `getUnsplashForNeighborhood()` helper), 28 cron route files, `retry-missing-images/route.ts` (backfill).
+
 **Shorten Look Ahead Link Text to "next 7 days":**
 - Changed from "Read the Look Ahead (today and next 7 days) for {name}" to "Read the Look Ahead (next 7 days) for {name}" across all surfaces.
 - Email templates: DailyBriefTemplate.tsx, SundayEditionTemplate.tsx.

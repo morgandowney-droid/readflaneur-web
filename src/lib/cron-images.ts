@@ -18,6 +18,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
 import { AI_MODELS } from '@/config/ai-models';
+import type { UnsplashPhotosMap } from './unsplash';
 
 // ============================================================================
 // CATEGORY DEFINITIONS
@@ -383,8 +384,15 @@ export async function getCronImage(
   options?: {
     forceRegenerate?: boolean;
     usePlaceholderOnly?: boolean;
+    neighborhoodId?: string;
   }
 ): Promise<string> {
+  // Prefer Unsplash library photo when neighborhoodId is provided
+  if (options?.neighborhoodId) {
+    const unsplashUrl = await getUnsplashForNeighborhood(supabase, options.neighborhoodId);
+    if (unsplashUrl) return unsplashUrl;
+  }
+
   // Option to skip AI generation entirely and use placeholder
   if (options?.usePlaceholderOnly) {
     return uploadPlaceholder(category, supabase);
@@ -406,6 +414,32 @@ export async function getCronImage(
 
   // Fallback to SVG placeholder
   return uploadPlaceholder(category, supabase);
+}
+
+/**
+ * Look up Unsplash photos for a neighborhood from DB.
+ * Returns the 'rss-story' category URL (catch-all for non-brief articles)
+ * or any available photo as fallback.
+ */
+async function getUnsplashForNeighborhood(
+  supabase: SupabaseClient,
+  neighborhoodId: string,
+): Promise<string | null> {
+  const { data } = await supabase
+    .from('image_library_status')
+    .select('unsplash_photos')
+    .eq('neighborhood_id', neighborhoodId)
+    .single();
+
+  if (!data?.unsplash_photos) return null;
+
+  const photos = data.unsplash_photos as UnsplashPhotosMap;
+  // Prefer rss-story category (catch-all for non-brief articles)
+  const rssPhoto = photos['rss-story'];
+  if (rssPhoto?.url) return rssPhoto.url;
+  // Any available photo as fallback
+  const any = Object.values(photos).find(p => p?.url);
+  return any?.url || null;
 }
 
 /**

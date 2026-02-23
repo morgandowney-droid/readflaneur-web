@@ -135,9 +135,6 @@ export async function GET(request: Request) {
       });
     }
 
-    // Get cached image for political wallet (reused across all stories)
-    const cachedImageUrl = await getCronImage('political-wallet', supabase);
-
     // Create articles for each story
     for (const story of stories) {
       for (const neighborhoodId of story.targetNeighborhoods) {
@@ -192,13 +189,13 @@ export async function GET(request: Request) {
             }
           }
 
-          // Create article with cached image
+          // Create article with Unsplash image
           const { error: insertError } = await supabase.from('articles').insert({
             neighborhood_id: finalNeighborhoodId,
             headline: story.headline,
             body_text: story.body,
             preview_text: story.previewText,
-            image_url: cachedImageUrl, // Reuse cached category image
+            image_url: await getCronImage('political-wallet', supabase, { neighborhoodId: finalNeighborhoodId }),
             slug,
             status: 'published',
             published_at: new Date().toISOString(),

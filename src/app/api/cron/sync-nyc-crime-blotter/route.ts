@@ -83,11 +83,6 @@ export async function GET(request: Request) {
       `Crime blotter: processing ${configEntries.length} neighborhoods`
     );
 
-    // Get cached image for crime blotter
-    const cachedImageUrl = await getCronImage('crime-blotter', supabase, {
-      usePlaceholderOnly: true,
-    });
-
     const dateStr = new Date().toISOString().split('T')[0];
 
     for (const [configKey, configValue] of configEntries) {
@@ -163,7 +158,7 @@ export async function GET(request: Request) {
           headline: story.headline,
           body_text: story.body,
           preview_text: story.previewText,
-          image_url: cachedImageUrl,
+          image_url: await getCronImage('crime-blotter', supabase, { neighborhoodId: dbNeighborhoodId }),
           slug,
           status: 'published',
           published_at: new Date().toISOString(),

@@ -144,9 +144,6 @@ export async function GET(request: Request) {
       });
     }
 
-    // Get cached image for route alerts (reused across all stories)
-    const cachedImageUrl = await getCronImage('route-alert', supabase);
-
     // Create articles for each story
     for (const story of stories) {
       for (const neighborhoodId of story.targetNeighborhoods) {
@@ -206,7 +203,7 @@ export async function GET(request: Request) {
             headline: story.headline,
             body_text: story.body,
             preview_text: story.previewText,
-            image_url: cachedImageUrl, // Reuse cached category image
+            image_url: await getCronImage('route-alert', supabase, { neighborhoodId: finalNeighborhoodId }),
             slug,
             status: 'published',
             published_at: new Date().toISOString(),

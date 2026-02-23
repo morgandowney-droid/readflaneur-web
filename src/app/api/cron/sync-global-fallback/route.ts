@@ -153,9 +153,6 @@ export async function GET(request: NextRequest) {
     // Limit to prevent runaway costs
     const toProcess = neighborhoodsNeedingContent.slice(0, MAX_FALLBACK_PER_RUN);
 
-    // Get cached images for fallback categories
-    const developmentImage = await getCronImage('real-estate', supabase);
-    const lifestyleImage = await getCronImage('civic-data', supabase);
     const defaultImage = '/images/placeholder-neighborhood.jpg';
 
     // Process each neighborhood
@@ -168,12 +165,12 @@ export async function GET(request: NextRequest) {
         if (result.story) {
           results.storiesGenerated++;
 
-          // Select appropriate image
+          // Select appropriate image per neighborhood
           let imageUrl = defaultImage;
           if (result.story.storyType === 'development') {
-            imageUrl = developmentImage || defaultImage;
+            imageUrl = await getCronImage('real-estate', supabase, { neighborhoodId }) || defaultImage;
           } else if (result.story.storyType === 'lifestyle') {
-            imageUrl = lifestyleImage || defaultImage;
+            imageUrl = await getCronImage('civic-data', supabase, { neighborhoodId }) || defaultImage;
           }
 
           // Insert article (slug is deterministic, so check for existing first)

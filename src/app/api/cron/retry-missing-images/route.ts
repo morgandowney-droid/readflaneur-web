@@ -5,9 +5,10 @@ import { selectLibraryImage, preloadUnsplashCache } from '@/lib/image-library';
 /**
  * Retry Missing Images
  *
- * Finds published articles with empty image_url and fills them from the
- * pre-generated image library (Unsplash photos). No AI generation fallback —
- * if no library image exists, the article waits for the next refresh cycle.
+ * Finds published articles with empty image_url OR AI-generated cron-cache
+ * images and fills/replaces them with Unsplash library photos.
+ * No AI generation fallback - if no library image exists, the article waits
+ * for the next refresh cycle.
  *
  * Schedule: Every 2 hours
  */
@@ -37,15 +38,16 @@ export async function GET(request: Request) {
   let success = false;
   const errors: string[] = [];
   let libraryFilled = 0;
+  let aiReplaced = 0;
 
   try {
     // Preload Unsplash cache for fast lookups
     await preloadUnsplashCache(supabase);
 
-    // Find articles with missing images (empty string or null)
-    const { data: articles, error: fetchError } = await supabase
+    // Phase 1: Find articles with missing images (empty string or null)
+    const { data: missingArticles, error: fetchError } = await supabase
       .from('articles')
-      .select('id, neighborhood_id, article_type, category_label')
+      .select('id, neighborhood_id, article_type, category_label, image_url')
       .eq('status', 'published')
       .or('image_url.is.null,image_url.eq.')
       .order('published_at', { ascending: false })
@@ -56,13 +58,33 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, error: fetchError.message }, { status: 500 });
     }
 
-    if (!articles || articles.length === 0) {
-      success = true;
-      return NextResponse.json({ success: true, message: 'No articles need images', filled: 0 });
+    // Phase 2: Find articles with AI-generated cron-cache images to replace
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const cronCachePattern = `${supabaseUrl}/storage/v1/object/public/images/cron-cache/%`;
+    const { data: aiArticles, error: aiError } = await supabase
+      .from('articles')
+      .select('id, neighborhood_id, article_type, category_label, image_url')
+      .eq('status', 'published')
+      .like('image_url', cronCachePattern)
+      .order('published_at', { ascending: false })
+      .limit(100);
+
+    if (aiError) {
+      errors.push(`AI fetch error: ${aiError.message}`);
     }
 
-    // Try library image for each article
-    for (const article of articles) {
+    const allArticles = [
+      ...(missingArticles || []),
+      ...(aiArticles || []),
+    ];
+
+    if (allArticles.length === 0) {
+      success = true;
+      return NextResponse.json({ success: true, message: 'No articles need images', filled: 0, ai_replaced: 0 });
+    }
+
+    // Process all articles
+    for (const article of allArticles) {
       if (!article.neighborhood_id) continue;
 
       const libraryUrl = selectLibraryImage(
@@ -73,7 +95,10 @@ export async function GET(request: Request) {
 
       if (!libraryUrl) continue;
 
-      // For Unsplash URLs, no HEAD check needed — CDN is reliable
+      // Skip if the article already has this exact Unsplash URL
+      if (article.image_url === libraryUrl) continue;
+
+      // For Unsplash URLs, no HEAD check needed - CDN is reliable
       // For legacy Supabase URLs, verify existence
       const isUnsplash = libraryUrl.includes('images.unsplash.com');
       if (!isUnsplash) {
@@ -91,7 +116,12 @@ export async function GET(request: Request) {
         .eq('id', article.id);
 
       if (!updateError) {
-        libraryFilled++;
+        const isCronCache = article.image_url && article.image_url.includes('cron-cache/');
+        if (isCronCache) {
+          aiReplaced++;
+        } else {
+          libraryFilled++;
+        }
       } else {
         errors.push(`Update ${article.id}: ${updateError.message}`);
       }
@@ -101,9 +131,11 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      articles_found: articles.length,
+      missing_found: (missingArticles || []).length,
+      ai_found: (aiArticles || []).length,
       library_filled: libraryFilled,
-      total_filled: libraryFilled,
+      ai_replaced: aiReplaced,
+      total_updated: libraryFilled + aiReplaced,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -118,6 +150,7 @@ export async function GET(request: Request) {
       errors: errors.length > 0 ? errors : null,
       response_data: {
         library_filled: libraryFilled,
+        ai_replaced: aiReplaced,
       },
     }).then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
   }

@@ -16,7 +16,7 @@ import { processViewConePermits, ViewConeStory } from '@/lib/vancouver-views';
 import { getCapeTownConditions, ConditionAlert } from '@/lib/capetown-conditions';
 import { getSingaporeMarketAlerts, SingaporeMarketAlert } from '@/lib/singapore-market';
 import { processARCOMAgenda, ARCOMAlert } from '@/lib/palm-beach-arcom';
-import { getCronImage } from '@/lib/cron-images';
+import { getCronImage, CronImageCategory } from '@/lib/cron-images';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -176,10 +176,8 @@ export async function GET(request: NextRequest) {
       results.vancouver.stories = vancouverResult.stories.length;
       results.vancouver.errors = vancouverResult.errors;
 
-      // Get cached image for real estate category
-      const viewImage = await getCronImage('real-estate', supabase);
-
       for (const story of vancouverResult.stories) {
+        const viewImage = await getCronImage('real-estate', supabase, { neighborhoodId: story.neighborhoodId });
         const article = await viewConeStoryToArticle(
           story,
           viewImage || '/images/placeholder-neighborhood.jpg'
@@ -206,15 +204,9 @@ export async function GET(request: NextRequest) {
       const capeTownResult = await getCapeTownConditions();
       results.capeTown.alerts = capeTownResult.alerts.length;
 
-      // Get cached images
-      const beachImage = await getCronImage('escape-index', supabase);
-      const gridImage = await getCronImage('civic-data', supabase);
-
       for (const alert of capeTownResult.alerts) {
-        const imageUrl =
-          alert.type === 'calm'
-            ? beachImage || '/images/placeholder-neighborhood.jpg'
-            : gridImage || '/images/placeholder-neighborhood.jpg';
+        const alertCategory: CronImageCategory = alert.type === 'calm' ? 'escape-index' : 'civic-data';
+        const imageUrl = await getCronImage(alertCategory, supabase, { neighborhoodId: alert.neighborhoodId }) || '/images/placeholder-neighborhood.jpg';
 
         const article = await conditionAlertToArticle(alert, imageUrl);
 
@@ -239,12 +231,11 @@ export async function GET(request: NextRequest) {
       const singaporeAlerts = await getSingaporeMarketAlerts();
       results.singapore.alerts = singaporeAlerts.length;
 
-      const marketImage = await getCronImage('real-estate', supabase);
-
       for (const alert of singaporeAlerts) {
+        const marketImage = await getCronImage('real-estate', supabase, { neighborhoodId: alert.neighborhoodId }) || '/images/placeholder-neighborhood.jpg';
         const article = await singaporeAlertToArticle(
           alert,
-          marketImage || '/images/placeholder-neighborhood.jpg'
+          marketImage
         );
 
         const { error } = await supabase.from('articles').insert(article);
@@ -269,12 +260,11 @@ export async function GET(request: NextRequest) {
       results.palmBeach.alerts = arcomResult.alerts.length;
       results.palmBeach.errors = arcomResult.errors;
 
-      const designImage = await getCronImage('real-estate', supabase);
-
       for (const alert of arcomResult.alerts) {
+        const designImage = await getCronImage('real-estate', supabase, { neighborhoodId: alert.neighborhoodId }) || '/images/placeholder-neighborhood.jpg';
         const article = await arcomAlertToArticle(
           alert,
-          designImage || '/images/placeholder-neighborhood.jpg'
+          designImage
         );
 
         const { error } = await supabase.from('articles').insert(article);

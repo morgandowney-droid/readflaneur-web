@@ -70,9 +70,6 @@ export async function GET(request: Request) {
       `Generating weekly digests for ${neighborhoodIds.length} neighborhoods (${weekStartStr} to now)`
     );
 
-    // Get cached image for civic data (reused across all digests)
-    const cachedImageUrl = await getCronImage('civic-data', supabase);
-
     for (const configKey of neighborhoodIds) {
       // NEIGHBORHOOD_ID_TO_CONFIG keys lack `nyc-` prefix (e.g. "chelsea")
       // but DB neighborhood IDs are "nyc-chelsea"
@@ -172,13 +169,13 @@ export async function GET(request: Request) {
           continue;
         }
 
-        // Create the article with cached image
+        // Create the article with per-neighborhood Unsplash image
         const { error: insertError } = await supabase.from('articles').insert({
           neighborhood_id: dbNeighborhoodId,
           headline: digest.headline,
           body_text: digest.body,
           preview_text: digest.previewText,
-          image_url: cachedImageUrl, // Reuse cached category image
+          image_url: await getCronImage('civic-data', supabase, { neighborhoodId: dbNeighborhoodId }),
           slug,
           status: 'published',
           published_at: new Date().toISOString(),

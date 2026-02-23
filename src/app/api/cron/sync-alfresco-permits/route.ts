@@ -79,9 +79,6 @@ export async function GET(request: Request) {
       });
     }
 
-    // Get cached image for alfresco watch (reused across all stories)
-    const cachedImageUrl = await getCronImage('alfresco-watch', supabase);
-
     // Group events by neighborhood
     const eventsByNeighborhood: Record<string, OutdoorDiningEvent[]> = {};
     for (const event of events) {
@@ -138,13 +135,14 @@ export async function GET(request: Request) {
             ? `nyc-${neighborhoodId}`
             : neighborhoodId;
 
-          // Create article with cached image
+          // Create article with Unsplash image
+          const imageUrl = await getCronImage('alfresco-watch', supabase, { neighborhoodId: finalNeighborhoodId });
           const { error: insertError } = await supabase.from('articles').insert({
             neighborhood_id: finalNeighborhoodId,
             headline: story.headline,
             body_text: story.body,
             preview_text: story.previewText,
-            image_url: cachedImageUrl, // Reuse cached category image
+            image_url: imageUrl,
             slug,
             status: 'published',
             published_at: new Date().toISOString(),
@@ -165,7 +163,7 @@ export async function GET(request: Request) {
                 headline: story.headline,
                 body_text: story.body,
                 preview_text: story.previewText,
-                image_url: cachedImageUrl, // Reuse cached category image
+                image_url: imageUrl,
                 slug,
                 status: 'published',
                 published_at: new Date().toISOString(),

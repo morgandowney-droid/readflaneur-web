@@ -103,9 +103,6 @@ export async function GET(request: Request) {
       });
     }
 
-    // Get cached image for real estate (reused across all articles)
-    const cachedImageUrl = await getCronImage('real-estate', supabase);
-
     // Process each neighborhood
     for (const neighborhood of neighborhoods as NeighborhoodData[]) {
       try {
@@ -145,14 +142,14 @@ export async function GET(request: Request) {
         // Create preview text
         const previewText = `This week's top listings and sales in ${neighborhood.name}. See the most expensive properties on the market and recent closings.`;
 
-        // Insert article with cached image
+        // Insert article with per-neighborhood Unsplash image
         const { error: insertError } = await supabase.from('articles').insert({
           neighborhood_id: neighborhood.id,
           headline: report.headline,
           slug,
           body_text: articleBody,
           preview_text: previewText,
-          image_url: cachedImageUrl, // Reuse cached category image
+          image_url: await getCronImage('real-estate', supabase, { neighborhoodId: neighborhood.id }),
           category_label: 'Real Estate Weekly',
           enriched_at: new Date().toISOString(),
           enrichment_model: 'gemini-2.5-flash',

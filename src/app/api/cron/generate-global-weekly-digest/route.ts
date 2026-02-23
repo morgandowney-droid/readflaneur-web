@@ -90,9 +90,6 @@ export async function GET(request: Request) {
       `Generating global weekly digests for ${citiesToProcess.length} cities (${weekStartStr} to now)`
     );
 
-    // Get cached image for civic data (reused across all digests)
-    const cachedImageUrl = await getCronImage('civic-data', supabase);
-
     for (const city of citiesToProcess) {
       const config = GLOBAL_CITY_CONFIG[city];
       if (!config) {
@@ -257,13 +254,13 @@ export async function GET(request: Request) {
             continue;
           }
 
-          // Create the article with cached image
+          // Create the article with per-neighborhood Unsplash image
           const { error: insertError } = await supabase.from('articles').insert({
             neighborhood_id: neighborhoodId,
             headline: digest.headline,
             body_text: digest.body,
             preview_text: digest.previewText,
-            image_url: cachedImageUrl, // Reuse cached category image
+            image_url: await getCronImage('civic-data', supabase, { neighborhoodId }),
             slug,
             status: 'published',
             published_at: new Date().toISOString(),

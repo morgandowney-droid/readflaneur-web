@@ -74,11 +74,6 @@ export async function GET(request: Request) {
       });
     }
 
-    // Get cached image for liquor watch (use placeholder to avoid AI gen timeout)
-    const cachedImageUrl = await getCronImage('liquor-watch', supabase, {
-      usePlaceholderOnly: true,
-    });
-
     // Create articles for each story
     for (const story of stories) {
       try {
@@ -139,7 +134,7 @@ export async function GET(request: Request) {
           headline: story.headline,
           body_text: story.body,
           preview_text: story.previewText,
-          image_url: cachedImageUrl,
+          image_url: await getCronImage('liquor-watch', supabase, { neighborhoodId: finalNeighborhoodId }),
           slug,
           status: 'published',
           published_at: new Date().toISOString(),
