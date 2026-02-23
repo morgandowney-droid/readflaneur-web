@@ -5,6 +5,15 @@
 
 ## 2026-02-23
 
+**Improve Unsplash Image Quality with Interleaved Dual-Query Search:**
+- Old approach: sequential 4-tier fallback (`"{name} {city}"` -> `"{city} {name}"` -> `"{city}"` -> `"{city} {country}"`), 10 results per query, stopped at 8 photos. Often returned generic city photos instead of iconic neighborhood shots.
+- New approach: two parallel searches via `Promise.all` - `"{name} {city}"` (30 results) for city-disambiguation + `"{name}"` alone (30 results) for the most popular/curated shots photographers tag with just the neighborhood name.
+- Results interleaved: alternating city-qualified (positions 1,3,5...) with name-only (positions 2,4,6...), deduped by photo ID. The 8 categories get a mix of accurate and visually striking photos.
+- Handles ambiguous names (SoHo exists in NYC, London, Hong Kong): city-qualified results take priority in the interleave, so SoHo London photos can't displace SoHo New York photos.
+- Fallback to city-only and city+country queries preserved for neighborhoods with very few Unsplash results.
+- Cost: 2 API calls per neighborhood (was 1-4 sequential), well within 5000/hr production budget. Actually faster due to `Promise.all` parallelism.
+- File: `src/lib/unsplash.ts`. Photos refresh on next `refresh-image-library` cron run (every 4 hours).
+
 **Fix Monitor-and-Fix Auto-Fixer Starvation Bug:**
 - 1,544 stale open issues accumulated since Feb 16, and today's 25 new issues (url_encoded_text, missing_hyperlinks, missing_image) were all stuck unresolved.
 - Root cause 1: `getRetryableIssues()` fetched only 10 issues (oldest first via `MAX_IMAGES_PER_RUN * 2`). The oldest 10 were all `unenriched_brief` from Feb 16.
