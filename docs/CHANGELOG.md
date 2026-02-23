@@ -5,6 +5,14 @@
 
 ## 2026-02-23
 
+**Change Daily Brief Subject Line to Lowercase Teaser-First Format:**
+- Old format: `Daily Brief: West Village. Toughest table` - the "Daily Brief: {Neighborhood}." prefix consumed ~25 chars of the 70-char budget, truncating teasers.
+- New format: `toughest table, west village` - teaser first, comma, neighborhood, all lowercase. No "Daily Brief:" prefix.
+- Gemini teaser path: `{teaser}, {neighborhood}` all lowercase, falls back to teaser alone if combo exceeds 70 chars.
+- Headline fallback: `{lead headline}, {neighborhood}` all lowercase, word-boundary truncated. Removed "& more" suffix.
+- No teaser/no stories fallback: `your morning brief, {neighborhood}`.
+- File: `src/lib/email/sender.ts` (`buildSubject()` and `buildTeaser()`).
+
 **Replace Real Ad Images with AI-Generated Placeholder Creatives:**
 - Uploaded 8 AI-generated ad creative images (Google nano banana AI, no copyright issues) to Supabase `ad-assets` bucket as placeholder paid ads.
 - Brands: Emerald Dunes Links (golf), The Matterhorn Grand (ski hotel), Aethelred Yachts (yacht), Aether Jets (private jet), AURA Z-Fold (electronics), Important Property (real estate), 'St Morgan (restaurant), AURUM (sunglasses).

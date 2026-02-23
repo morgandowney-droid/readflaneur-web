@@ -12,7 +12,7 @@ import { checkDailyEmailLimit } from './daily-email-limit';
 
 /**
  * Build the email subject line
- * Format: "Daily Brief: {neighborhood}. {teaser}"
+ * Format: "{teaser}, {neighborhood}" - all lowercase, teaser first.
  * Under 70 characters total.
  * Prefers Gemini-generated "information gap" teaser (Morning Brew style),
  * falls back to headline-based teaser.
@@ -21,37 +21,42 @@ function buildSubject(content: DailyBriefContent): string {
   const primary = content.primarySection?.neighborhoodName;
 
   if (!primary) {
-    return 'Daily Brief';
+    return 'your morning brief';
   }
 
-  const prefix = `Daily Brief: ${primary}. `;
+  const neighborhoodLower = primary.toLowerCase();
 
   // Prefer Gemini-generated information gap teaser
   const geminiTeaser = content.primarySection?.subjectTeaser;
-  if (geminiTeaser && geminiTeaser.length + prefix.length <= 70) {
-    return `${prefix}${geminiTeaser}`;
+  if (geminiTeaser) {
+    const teaserLower = geminiTeaser.toLowerCase();
+    const subject = `${teaserLower}, ${neighborhoodLower}`;
+    if (subject.length <= 70) return subject;
+    // If combo too long, just use teaser
+    return teaserLower;
   }
 
   // Fallback: headline-based teaser
   const stories = content.primarySection?.stories || [];
 
   if (stories.length === 0) {
-    return `Daily Brief: ${primary}`;
+    return `your morning brief, ${neighborhoodLower}`;
   }
 
-  const budget = 70 - prefix.length;
+  const suffix = `, ${neighborhoodLower}`;
+  const budget = 70 - suffix.length;
   const teaser = buildTeaser(stories.map(s => s.headline), budget);
 
   if (!teaser) {
-    return `Daily Brief: ${primary}`;
+    return `your morning brief, ${neighborhoodLower}`;
   }
 
-  return `${prefix}${teaser}`;
+  return `${teaser.toLowerCase()}${suffix}`;
 }
 
 /**
- * Build enticing teaser from story headlines.
- * Uses the lead headline (as complete as possible) plus "& more" if room.
+ * Build teaser from story headlines.
+ * Uses the lead headline truncated at word boundary.
  */
 function buildTeaser(headlines: string[], budget: number): string {
   if (headlines.length === 0 || budget < 15) return '';
@@ -60,17 +65,11 @@ function buildTeaser(headlines: string[], budget: number): string {
   const clean = headlines.map(h => h.replace(/["""'']/g, '').trim()).filter(h => h.length > 0);
   if (clean.length === 0) return '';
 
-  // Use the lead headline as fully as possible - truncate at word boundary
+  // Use the lead headline - truncate at word boundary if needed
   const lead = clean[0];
   let teaser = lead;
   if (teaser.length > budget) {
-    // Truncate at last full word within budget
     teaser = lead.slice(0, budget).replace(/\s+\S*$/, '');
-  }
-
-  // If there are more stories, try to append "& more"
-  if (clean.length > 1 && teaser.length + 7 <= budget) {
-    teaser += ' & more';
   }
 
   return teaser.length <= budget ? teaser : '';
