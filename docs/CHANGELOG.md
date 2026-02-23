@@ -3,7 +3,31 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-23
+
+**Fix Monitor-and-Fix Auto-Fixer Starvation Bug:**
+- 1,544 stale open issues accumulated since Feb 16, and today's 25 new issues (url_encoded_text, missing_hyperlinks, missing_image) were all stuck unresolved.
+- Root cause 1: `getRetryableIssues()` fetched only 10 issues (oldest first via `MAX_IMAGES_PER_RUN * 2`). The oldest 10 were all `unenriched_brief` from Feb 16.
+- Root cause 2: The `monitor-and-fix` route's if/else chain was missing handlers for `unenriched_brief` and `missing_hyperlinks` - these types fell through to `else { skip }`, even though `attemptFix()` in auto-fixer.ts already had handlers for both.
+- Fix 1: `getRetryableIssues()` - increased limit from 10 to 50, added 7-day max age filter (`.gte('created_at', maxAge)`), changed to newest-first ordering so today's issues get priority.
+- Fix 2: Simplified the route's nonBriefIssues loop - all fixable types now route through `attemptFix()` with per-type rate limits instead of duplicating type dispatch. Added `unenriched_brief`/`missing_hyperlinks` with `enrichFixCount` counter (max 5/run, 2s delay).
+- Fix 3: Added `FIX_CONFIG` constants: `MAX_ENRICHMENTS_PER_RUN` (5), `ENRICHMENT_DELAY_MS` (2000), `MAX_ISSUE_AGE_DAYS` (7).
+- Fix 4: SQL migration bulk-closed all open issues older than 5 days as `needs_manual`.
+- Files: `monitor-and-fix/route.ts` (simplified dispatch), `issue-detector.ts` (query fix), `types.ts` (new constants), migration `20260229_close_stale_cron_issues.sql`.
+
 ## 2026-02-24
+
+**Shorten Look Ahead Link Text to "next 7 days":**
+- Changed from "Read the Look Ahead (today and next 7 days) for {name}" to "Read the Look Ahead (next 7 days) for {name}" across all surfaces.
+- Email templates: DailyBriefTemplate.tsx, SundayEditionTemplate.tsx.
+- Web: BriefDiscoveryFooter.tsx link text.
+- Email assembler: `cleanCategoryLabel` in assembler.ts now uses "Look Ahead (next 7 days)".
+- Translations: `feed.lookAhead` and `feed.lookAheadCta` updated in all 9 languages.
+
+**Change Sunday Edition House Ad CTA to "Place it":**
+- Shortened from "Place it Now" / localized equivalents to "Place it" across all 9 languages.
+- Updated `houseAd.sunday_edition.cta` key in translations.ts (en, sv, fr, de, es, pt, it, zh, ja).
+- CTA text lives only in translations.ts (house_ads table has no cta_text column).
 
 **Add Information Gap Teaser to Sunday Edition Email Subject:**
 - Sunday Edition now uses the same Morning Brew-style subject as Daily Brief: `{teaser}, {neighborhood}` all lowercase.
