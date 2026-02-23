@@ -3,6 +3,22 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-24
+
+**Add Information Gap Teaser to Sunday Edition Email Subject:**
+- Sunday Edition now uses the same Morning Brew-style subject as Daily Brief: `{teaser}, {neighborhood}` all lowercase.
+- Old format `Sunday Edition: West Village. rent freeze & gala night` wasted ~36 chars on prefix and mechanically concatenated headline fragments.
+- New format: `rent freeze showdown, west village` - Gemini generates a 1-4 word cryptic teaser during `editorialSynthesis()` (zero extra API calls, appended as `TEASER:` line to existing prompt).
+- Stored in new `weekly_briefs.subject_teaser` TEXT column (DB migration `20260228_add_weekly_brief_subject_teaser.sql`).
+- `WeeklyBriefContent` interface extended with `subjectTeaser?: string | null`.
+- `editorialSynthesis()` return type changed from `string` to `{ narrative, subjectTeaser }`. Teaser validated: 1-5 words, max 40 chars.
+- `buildSundaySubject()` rewritten in both `send-sunday-edition/route.ts` and `sunday-edition-request/route.ts`:
+  - Gemini teaser: `{teaser}, {neighborhood}` lowercase
+  - Headline fallback: lead headline truncated at word boundary, `{headline}, {neighborhood}` lowercase
+  - No content: `your sunday edition, {neighborhood}`
+- Existing briefs (no teaser) gracefully fall back to headline-based lowercase format.
+- Files: `weekly-brief-service.ts`, `sync-weekly-brief/route.ts`, `send-sunday-edition/route.ts`, `sunday-edition-request/route.ts`, migration.
+
 ## 2026-02-23
 
 **Change Daily Brief Subject Line to Lowercase Teaser-First Format:**
