@@ -319,15 +319,20 @@ export async function getRetryableIssues(
 ): Promise<CronIssue[]> {
   const now = new Date().toISOString();
 
+  // Only fetch issues from the last N days - older issues are stale
+  const maxAge = new Date();
+  maxAge.setDate(maxAge.getDate() - FIX_CONFIG.MAX_ISSUE_AGE_DAYS);
+
   const { data: retryableIssues, error } = await supabase
     .from('cron_issues')
     .select('*')
     .eq('status', 'open')
     .eq('auto_fixable', true)
     .lt('retry_count', FIX_CONFIG.MAX_RETRIES)
+    .gte('created_at', maxAge.toISOString())
     .or(`next_retry_at.is.null,next_retry_at.lte.${now}`)
-    .order('created_at', { ascending: true })
-    .limit(FIX_CONFIG.MAX_IMAGES_PER_RUN * 2);
+    .order('created_at', { ascending: false })
+    .limit(50);
 
   if (error) {
     console.error('Error fetching retryable issues:', error);

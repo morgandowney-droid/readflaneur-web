@@ -113,6 +113,7 @@ export async function GET(request: Request) {
     let imageFixCount = 0;
     let thinContentFixCount = 0;
     let emailFixCount = 0;
+    let enrichFixCount = 0;
 
     // Collect missing brief issues for batch processing
     const briefIssuesToFix: CronIssue[] = [];
@@ -207,132 +208,71 @@ export async function GET(request: Request) {
     }
 
     // Step 4b: Handle non-brief issues one at a time
+    // All fixable types route through attemptFix() which has the actual fix logic.
+    // This loop only handles rate limiting and delays per type.
     for (const issue of nonBriefIssues) {
-      // Handle image issues
-      if (issue.issue_type === 'missing_image' || issue.issue_type === 'placeholder_image') {
+      const type = issue.issue_type;
+
+      // Rate-limit checks per type
+      if (type === 'missing_image' || type === 'placeholder_image') {
         if (imageFixCount >= FIX_CONFIG.MAX_IMAGES_PER_RUN) {
           result.issues_skipped++;
-          console.log(`[Monitor] Image rate limit reached`);
           continue;
         }
-
-        console.log(`[Monitor] Attempting image fix for issue ${issue.id}`);
-        const fixResult = await attemptFix(supabase, issue, baseUrl, cronSecret!);
-
-        result.details.fix_attempts.push({
-          issue_id: issue.id,
-          issue_type: issue.issue_type,
-          result: fixResult,
-        });
-
-        if (fixResult.success) {
-          result.issues_fixed++;
-          console.log(`[Monitor] Fixed: ${fixResult.message}`);
-        } else {
-          result.issues_failed++;
-          console.log(`[Monitor] Failed: ${fixResult.message}`);
-        }
-
-        imageFixCount++;
-        await delay(FIX_CONFIG.IMAGE_GEN_DELAY_MS);
-      }
-      // Handle thin content issues
-      else if (issue.issue_type === 'thin_content') {
+      } else if (type === 'thin_content') {
         if (thinContentFixCount >= FIX_CONFIG.MAX_THIN_CONTENT_PER_RUN) {
           result.issues_skipped++;
-          console.log(`[Monitor] Thin content rate limit reached`);
           continue;
         }
-
-        console.log(`[Monitor] Attempting thin content fix for issue ${issue.id}`);
-        const fixResult = await attemptFix(supabase, issue, baseUrl, cronSecret!);
-
-        result.details.fix_attempts.push({
-          issue_id: issue.id,
-          issue_type: issue.issue_type,
-          result: fixResult,
-        });
-
-        if (fixResult.success) {
-          result.issues_fixed++;
-          console.log(`[Monitor] Fixed: ${fixResult.message}`);
-        } else {
-          result.issues_failed++;
-          console.log(`[Monitor] Failed: ${fixResult.message}`);
-        }
-
-        thinContentFixCount++;
-        await delay(FIX_CONFIG.THIN_CONTENT_DELAY_MS);
-      }
-      // Handle missed email issues
-      else if (issue.issue_type === 'missed_email') {
+      } else if (type === 'missed_email') {
         if (emailFixCount >= FIX_CONFIG.MAX_EMAILS_PER_RUN) {
           result.issues_skipped++;
-          console.log(`[Monitor] Email rate limit reached`);
           continue;
         }
-
-        console.log(`[Monitor] Attempting email fix for issue ${issue.id}`);
-        const fixResult = await attemptFix(supabase, issue, baseUrl, cronSecret!);
-
-        result.details.fix_attempts.push({
-          issue_id: issue.id,
-          issue_type: issue.issue_type,
-          result: fixResult,
-        });
-
-        if (fixResult.success) {
-          result.issues_fixed++;
-          console.log(`[Monitor] Fixed: ${fixResult.message}`);
-        } else {
-          result.issues_failed++;
-          console.log(`[Monitor] Failed: ${fixResult.message}`);
+      } else if (type === 'unenriched_brief' || type === 'missing_hyperlinks') {
+        if (enrichFixCount >= FIX_CONFIG.MAX_ENRICHMENTS_PER_RUN) {
+          result.issues_skipped++;
+          continue;
         }
+      } else if (type === 'missing_sources' || type === 'url_encoded_text' || type === 'editorial_sources' as string) {
+        // No rate limit needed - these are fast DB-only fixes
+      } else {
+        // Non-auto-fixable types (job_failure, html_artifact, thin_brief, etc.)
+        result.issues_skipped++;
+        continue;
+      }
 
+      // Attempt the fix via unified handler
+      console.log(`[Monitor] Attempting ${type} fix for issue ${issue.id}`);
+      const fixResult = await attemptFix(supabase, issue, baseUrl, cronSecret!);
+
+      result.details.fix_attempts.push({
+        issue_id: issue.id,
+        issue_type: type,
+        result: fixResult,
+      });
+
+      if (fixResult.success) {
+        result.issues_fixed++;
+        console.log(`[Monitor] Fixed: ${fixResult.message}`);
+      } else {
+        result.issues_failed++;
+        console.log(`[Monitor] Failed: ${fixResult.message}`);
+      }
+
+      // Post-fix: increment counters and apply delays
+      if (type === 'missing_image' || type === 'placeholder_image') {
+        imageFixCount++;
+        await delay(FIX_CONFIG.IMAGE_GEN_DELAY_MS);
+      } else if (type === 'thin_content') {
+        thinContentFixCount++;
+        await delay(FIX_CONFIG.THIN_CONTENT_DELAY_MS);
+      } else if (type === 'missed_email') {
         emailFixCount++;
         await delay(FIX_CONFIG.EMAIL_RESEND_DELAY_MS);
-      }
-      // Handle missing sources issues
-      else if (issue.issue_type === 'missing_sources') {
-        console.log(`[Monitor] Attempting source fix for issue ${issue.id}`);
-        const fixResult = await attemptFix(supabase, issue, baseUrl, cronSecret!);
-
-        result.details.fix_attempts.push({
-          issue_id: issue.id,
-          issue_type: issue.issue_type,
-          result: fixResult,
-        });
-
-        if (fixResult.success) {
-          result.issues_fixed++;
-          console.log(`[Monitor] Fixed: ${fixResult.message}`);
-        } else {
-          result.issues_failed++;
-          console.log(`[Monitor] Failed: ${fixResult.message}`);
-        }
-      }
-      // Handle URL-encoded text issues
-      else if (issue.issue_type === 'url_encoded_text') {
-        console.log(`[Monitor] Attempting URL-decode fix for issue ${issue.id}`);
-        const fixResult = await attemptFix(supabase, issue, baseUrl, cronSecret!);
-
-        result.details.fix_attempts.push({
-          issue_id: issue.id,
-          issue_type: issue.issue_type,
-          result: fixResult,
-        });
-
-        if (fixResult.success) {
-          result.issues_fixed++;
-          console.log(`[Monitor] Fixed: ${fixResult.message}`);
-        } else {
-          result.issues_failed++;
-          console.log(`[Monitor] Failed: ${fixResult.message}`);
-        }
-      }
-      // Skip non-auto-fixable issues
-      else {
-        result.issues_skipped++;
+      } else if (type === 'unenriched_brief' || type === 'missing_hyperlinks') {
+        enrichFixCount++;
+        await delay(FIX_CONFIG.ENRICHMENT_DELAY_MS);
       }
     }
 

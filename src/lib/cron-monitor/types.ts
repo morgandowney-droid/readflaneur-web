@@ -145,6 +145,15 @@ export const FIX_CONFIG = {
   // Retry backoff intervals (minutes)
   RETRY_BACKOFF: [0, 15, 60], // immediate, 15min, 1hr
 
+  // Rate limit: max re-enrichment calls per monitor run
+  MAX_ENRICHMENTS_PER_RUN: 5,
+
+  // Delay between re-enrichment calls (ms)
+  ENRICHMENT_DELAY_MS: 2000,
+
+  // Max age for retryable issues (days) - older issues are stale
+  MAX_ISSUE_AGE_DAYS: 7,
+
   // Placeholder SVG patterns to detect
   PLACEHOLDER_PATTERNS: [
     /LOCAL\s*NEWS/i,
