@@ -3,6 +3,16 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-23
+
+**Replace Real Ad Images with AI-Generated Placeholder Creatives:**
+- Uploaded 8 AI-generated ad creative images (Google nano banana AI, no copyright issues) to Supabase `ad-assets` bucket as placeholder paid ads.
+- Brands: Emerald Dunes Links (golf), The Matterhorn Grand (ski hotel), Aethelred Yachts (yacht), Aether Jets (private jet), AURA Z-Fold (electronics), Important Property (real estate), 'St Morgan (restaurant), AURUM (sunglasses).
+- 7 daily_brief placement + 1 sunday_edition (AURUM). All global (`is_global: true`), active for 1 year.
+- Expired 2 old placeholder ads (Corcoran real estate + BMW i7 using Unsplash stock images).
+- All placeholder ads tagged `customer_email: 'placeholder@readflaneur.com'` for easy bulk deactivation.
+- Upload script: `scripts/upload-placeholder-ads.mjs`.
+
 ## 2026-02-22
 
 **Fix Look Ahead Event Listing Font Jarring:**
