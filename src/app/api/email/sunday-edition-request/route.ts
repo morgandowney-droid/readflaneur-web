@@ -22,49 +22,52 @@ const MAX_ON_DEMAND_PER_WEEK = 5;
 
 /**
  * Build Sunday Edition subject line.
- * Format: "Sunday Edition: {name}. {teaser}" under 70 chars.
+ * Format: "{teaser}, {neighborhood}" all lowercase, under 70 chars.
+ * Matches Daily Brief subject format.
  */
-function buildSundaySubject(name: string, content: SundayEditionContent): string {
-  const prefix = `Sunday Edition: ${name}. `;
-  const budget = 70 - prefix.length;
+function buildSundaySubject(name: string, content: SundayEditionContent, subjectTeaser?: string | null): string {
+  const neighborhoodLower = name.toLowerCase();
 
-  const phrases: string[] = [];
-  for (const s of (content.rearviewStories || []).slice(0, 3)) {
-    if (s.headline) {
-      const words = s.headline.replace(/["""'']/g, '').split(/\s+/);
-      let phrase = '';
-      for (let i = 0; i < Math.min(words.length, 4); i++) {
-        const next = phrase ? `${phrase} ${words[i]}` : words[i];
-        if (next.length > 25) break;
-        phrase = next;
-      }
-      if (phrase.length >= 4) phrases.push(phrase);
-    }
-  }
-  for (const e of (content.horizonEvents || []).slice(0, 2)) {
-    if (e.name) {
-      const words = e.name.replace(/["""'']/g, '').split(/\s+/);
-      let phrase = '';
-      for (let i = 0; i < Math.min(words.length, 4); i++) {
-        const next = phrase ? `${phrase} ${words[i]}` : words[i];
-        if (next.length > 25) break;
-        phrase = next;
-      }
-      if (phrase.length >= 4) phrases.push(phrase);
-    }
+  // Prefer Gemini-generated information gap teaser
+  if (subjectTeaser) {
+    const teaserLower = subjectTeaser.toLowerCase();
+    const subject = `${teaserLower}, ${neighborhoodLower}`;
+    if (subject.length <= 70) return subject;
+    return teaserLower;
   }
 
-  if (phrases.length === 0 || budget < 15) return `Sunday Edition: ${name}`;
+  // Fallback: headline-based teaser from rearview stories
+  const headlines = (content.rearviewStories || [])
+    .slice(0, 3)
+    .map(s => s.headline?.replace(/["""'']/g, '').trim())
+    .filter((h): h is string => !!h && h.length > 0);
 
-  let result = phrases[0];
-  for (let i = 1; i < phrases.length; i++) {
-    const sep = i === phrases.length - 1 ? ' & ' : ', ';
-    const candidate = result + sep + phrases[i];
-    if (candidate.length > budget) break;
-    result = candidate;
+  if (headlines.length === 0) {
+    return `your sunday edition, ${neighborhoodLower}`;
   }
 
-  return result.length <= budget ? `${prefix}${result}` : `Sunday Edition: ${name}`;
+  const suffix = `, ${neighborhoodLower}`;
+  const budget = 70 - suffix.length;
+
+  if (budget < 15) {
+    return `your sunday edition, ${neighborhoodLower}`;
+  }
+
+  // Use the lead headline truncated at word boundary
+  const lead = headlines[0];
+  const words = lead.split(/\s+/);
+  let teaser = '';
+  for (const word of words) {
+    const next = teaser ? `${teaser} ${word}` : word;
+    if (next.length > budget) break;
+    teaser = next;
+  }
+
+  if (!teaser || teaser.length < 4) {
+    return `your sunday edition, ${neighborhoodLower}`;
+  }
+
+  return `${teaser.toLowerCase()}${suffix}`;
 }
 
 export async function GET(request: Request) {
@@ -316,7 +319,7 @@ export async function GET(request: Request) {
 
   try {
     const html = await render(SundayEditionTemplate(emailContent));
-    const subject = buildSundaySubject(hood.name, emailContent);
+    const subject = buildSundaySubject(hood.name, emailContent, brief.subject_teaser);
     const emailAddr = (process.env.EMAIL_FROM || 'hello@readflaneur.com').replace(/.*<([^>]+)>.*/, '$1').trim();
     const from = `Flaneur News <${emailAddr}>`;
 

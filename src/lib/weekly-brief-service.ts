@@ -78,6 +78,7 @@ export interface WeeklyBriefContent {
   horizonEvents: HorizonEvent[];
   dataPoint: WeeklyDataPoint;
   holidaySection?: HolidaySection | null;
+  subjectTeaser?: string | null;
 }
 
 // ─── Constants ───
@@ -141,13 +142,14 @@ export async function generateWeeklyBrief(
   // Step B: Significance Filter via Gemini
   let topStories: RearviewStory[] = [];
   let narrative = '';
+  let subjectTeaser: string | null = null;
 
   if (articles.length > 0) {
     const filterResult = await significanceFilter(genAI, headlineList, neighborhoodName, city, model);
     topStories = filterResult.stories;
 
     // Step C: Editorial Synthesis via Gemini
-    narrative = await editorialSynthesis(
+    const synthesis = await editorialSynthesis(
       genAI,
       topStories,
       neighborhoodName,
@@ -155,6 +157,8 @@ export async function generateWeeklyBrief(
       articles,
       model
     );
+    narrative = synthesis.narrative;
+    subjectTeaser = synthesis.subjectTeaser;
   } else {
     narrative = `A quiet week in ${neighborhoodName}. No drama, no surprises - just the neighborhood humming along in its familiar rhythm.\n\nSometimes the absence of news is itself a signal. The streets are calm, the cafes are full, and nothing has disrupted the daily routine worth reporting.`;
   }
@@ -233,6 +237,7 @@ export async function generateWeeklyBrief(
       context: dataPoint.context ? stripDashes(dataPoint.context) : dataPoint.context,
     },
     holidaySection,
+    subjectTeaser: subjectTeaser ? stripDashes(subjectTeaser) : null,
   };
 }
 
@@ -305,7 +310,7 @@ async function editorialSynthesis(
   city: string,
   allArticles: Array<{ headline: string; body_text: string | null }>,
   model: string
-): Promise<string> {
+): Promise<{ narrative: string; subjectTeaser: string | null }> {
   // Find the full article bodies for the top stories
   const storyContext = topStories.map(s => {
     const match = allArticles.find(a =>
@@ -338,7 +343,13 @@ TONE AND VOCABULARY:
 STRUCTURE:
 - Write in exactly 4 short paragraphs separated by blank lines (each paragraph 2-3 sentences max)
 - NO greeting or sign-off. NO markdown, bold, or formatting.
-- Approximately 200 words total.`;
+- Approximately 200 words total.
+
+SUBJECT TEASER:
+After the 4 paragraphs, on a new line, write:
+TEASER: [1-4 word cryptic teaser]
+
+The teaser is for the email subject line. It should create an "information gap" - make the reader curious enough to open the email. Think Morning Brew style: intriguing, punchy, lowercase-friendly. Examples: "rent freeze showdown", "the Search verdict", "three closings", "a Search merger". Pick the single most compelling detail from the week's stories.`;
 
   try {
     const response = await genAI.models.generateContent({
@@ -347,10 +358,31 @@ STRUCTURE:
       config: { temperature: 0.7 },
     });
 
-    return (response.text || '').trim();
+    const text = (response.text || '').trim();
+
+    // Parse TEASER: line from the end of the response
+    let narrative = text;
+    let subjectTeaser: string | null = null;
+
+    const teaserMatch = text.match(/\nTEASER:\s*(.+)$/im);
+    if (teaserMatch) {
+      subjectTeaser = teaserMatch[1].trim();
+      narrative = text.slice(0, teaserMatch.index).trim();
+
+      // Validate: 1-5 words, max 40 chars
+      const wordCount = subjectTeaser.split(/\s+/).length;
+      if (wordCount > 5 || subjectTeaser.length > 40) {
+        subjectTeaser = null;
+      }
+    }
+
+    return { narrative, subjectTeaser };
   } catch (err) {
     console.error('[SundayEdition] Editorial synthesis error:', err);
-    return `This week in ${neighborhoodName} carried the kind of quiet significance that only reveals itself in retrospect.`;
+    return {
+      narrative: `This week in ${neighborhoodName} carried the kind of quiet significance that only reveals itself in retrospect.`,
+      subjectTeaser: null,
+    };
   }
 }
 

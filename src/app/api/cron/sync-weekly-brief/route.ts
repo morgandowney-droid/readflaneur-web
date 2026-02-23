@@ -210,6 +210,7 @@ export async function GET(request: Request) {
               horizon_events: content.horizonEvents,
               data_point: content.dataPoint,
               holiday_section: content.holidaySection || null,
+              subject_teaser: content.subjectTeaser || null,
               article_id: article?.id || null,
               generated_at: new Date().toISOString(),
             }, {
