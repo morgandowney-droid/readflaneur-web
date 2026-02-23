@@ -24,6 +24,19 @@
 - Fix 4: SQL migration bulk-closed all open issues older than 5 days as `needs_manual`.
 - Files: `monitor-and-fix/route.ts` (simplified dispatch), `issue-detector.ts` (query fix), `types.ts` (new constants), migration `20260229_close_stale_cron_issues.sql`.
 
+## 2026-02-23
+
+**Daily Writing Quality Review Cron:**
+- New `review-writing-quality` cron running daily at 11 AM UTC (after all briefs and look-aheads are generated/enriched).
+- Samples 3 random neighborhoods with active subscribers for daily briefs (7 most recent enriched briefs per neighborhood from `neighborhood_briefs.enriched_content`).
+- Samples 3 different random neighborhoods for look-ahead articles (7 most recent published articles per neighborhood from `articles.body_text` where `article_type = 'look_ahead'`).
+- Sends identical editorial analysis prompt to both Gemini Pro 2.5 and Claude Sonnet 4.5 in parallel via `Promise.allSettled()` - one model failing doesn't block the other.
+- Analysis benchmarks against FT How To Spend It, Morning Brew, Monocle, Puck, Airmail, Vanity Fair. Four sections: Grok search query recommendations, writing persona/style recommendations, engagement/shareability, biggest single improvement.
+- HTML email report sent to `ADMIN_EMAIL` with both analyses side by side, sampled neighborhoods listed in header.
+- Full Gemini + Claude analyses stored in `cron_executions.response_data` for historical tracking.
+- Cost: ~$0.27/day (~$8.10/month). Recommendations-only - no automatic updates to prompts, personas, or queries.
+- File: `src/app/api/cron/review-writing-quality/route.ts`. Added to `vercel.json` crons.
+
 ## 2026-02-24
 
 **Eliminate AI-Generated Images from Specialized Cron Articles:**
