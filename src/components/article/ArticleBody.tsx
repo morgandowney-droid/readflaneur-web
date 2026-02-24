@@ -49,31 +49,34 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
   proseContent = proseContent.replace(/\]\]\s+([A-Z])/g, ']]\n\n$1');
 
   // Split into paragraphs - handle both \n\n and single \n
-  let paragraphs = proseContent
+  const rawParagraphs = proseContent
     .split(/\n\n+/)
     .map(p => p.trim())
     .filter(p => p.length > 0);
 
-  // If still only one paragraph and it's long, try to split on sentence boundaries
-  if (paragraphs.length === 1 && paragraphs[0].length > 500) {
-    const longParagraph = paragraphs[0];
-    // Split on sentence endings followed by space and capital letter, creating ~3-4 sentence paragraphs
-    const sentences = longParagraph.split(/(?<=[.!?])\s+(?=[A-Z])/);
-    const newParagraphs: string[] = [];
+  // Split long paragraphs on sentence boundaries (~2-3 sentences each).
+  // Look Ahead articles often have one giant paragraph per day section with
+  // multiple events crammed together. This breaks them into readable chunks.
+  const paragraphs: string[] = [];
+  for (const para of rawParagraphs) {
+    // Skip headers and short paragraphs
+    if (para.match(/^\[\[/) || para.length <= 400) {
+      paragraphs.push(para);
+      continue;
+    }
+    const sentences = para.split(/(?<=[.!?])\s+(?=[A-Z])/);
     let currentPara = '';
-
     for (const sentence of sentences) {
-      if (currentPara.length + sentence.length > 400 && currentPara.length > 0) {
-        newParagraphs.push(currentPara.trim());
+      if (currentPara.length + sentence.length > 300 && currentPara.length > 0) {
+        paragraphs.push(currentPara.trim());
         currentPara = sentence;
       } else {
         currentPara += (currentPara ? ' ' : '') + sentence;
       }
     }
     if (currentPara.trim()) {
-      newParagraphs.push(currentPara.trim());
+      paragraphs.push(currentPara.trim());
     }
-    paragraphs = newParagraphs;
   }
 
   const pClass = 'text-fg text-[1.2rem] md:text-[1.35rem] leading-loose mb-8';
