@@ -473,25 +473,29 @@ export function NeighborhoodBrief({
   const cleanedContent = cleanContent(displayContent);
   const paragraphs = cleanedContent.split('\n\n').filter(p => p.trim());
   // Skip greeting/filler/header/sign-off paragraphs for preview - show actual news content
-  let previewText = paragraphs[0] || cleanedContent;
+  let previewText = '';
   for (const para of paragraphs) {
-    const trimmedPara = para.trim();
-    if (trimmedPara.match(/^\[\[/)) continue; // skip section headers
-    if (trimmedPara.length < 30) continue; // skip sign-offs, teasers, and fragments
-    if (isSignOff(trimmedPara)) continue; // skip closing remarks
-    if (!isGreetingOrFillerParagraph(para)) {
-      previewText = para;
+    // Strip [[header]] markers but keep any content after them
+    const stripped = para.trim().replace(/^\[\[[^\]]*\]\]\s*/, '');
+    if (!stripped || stripped.length < 30) continue; // skip empty headers, sign-offs, fragments
+    if (isSignOff(stripped)) continue; // skip closing remarks
+    if (!isGreetingOrFillerParagraph(stripped)) {
+      previewText = stripped;
       break;
     }
     // Paragraph starts with filler but may have useful sentences after
-    if (para.length > 80) {
-      const sentences = para.split(/(?<=[.!?])\s+(?=[A-Z])/);
+    if (stripped.length > 80) {
+      const sentences = stripped.split(/(?<=[.!?])\s+(?=[A-Z])/);
       const firstUseful = sentences.findIndex(s => !isGreetingOrFillerParagraph(s));
       if (firstUseful > 0) {
         previewText = sentences.slice(firstUseful).join(' ');
         break;
       }
     }
+  }
+  // Fallback: use first paragraph with any real content
+  if (!previewText) {
+    previewText = paragraphs.find(p => p.trim().replace(/^\[\[[^\]]*\]\]\s*/, '').length > 15) || paragraphs[0] || cleanedContent;
   }
   const hasMore = paragraphs.length > 1 || cleanedContent.length > 300;
 
