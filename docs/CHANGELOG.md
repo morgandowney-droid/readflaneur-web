@@ -17,6 +17,13 @@
 - Cost: ~+$0.70/day (~$21/month) for ~350 additional Gemini Flash calls/day, well within 10K RPD budget.
 - Files: `src/lib/gemini-search.ts` (new), `sync-neighborhood-briefs/route.ts`, `generate-look-ahead/route.ts`, `src/lib/weekly-brief-service.ts`.
 
+**Fix Broken Legacy Image URLs in Assembler Fallback:**
+- 8 daily brief articles had broken images (HTTP 400) because the email assembler fallback path (`fetchBriefAsStory()`) created articles before `generate-brief-articles` cron ran, and `selectLibraryImage()` sync function returned legacy Supabase Storage URLs on cache miss (those files no longer exist).
+- New `selectLibraryImageAsync()` in `image-library.ts` - async function that queries DB directly for Unsplash photos without requiring cache preload. Assembler fallback now uses this instead of `image_url: ''`.
+- Removed legacy Supabase Storage URL fallback from `selectLibraryImage()` sync path - now returns `''` on cache miss since all 273 neighborhoods have Unsplash photos. `retry-missing-images` cron fills gaps.
+- Backfilled 15 articles (8 today + 7 older) with correct Unsplash URLs via one-off script.
+- Files: `src/lib/image-library.ts` (new `selectLibraryImageAsync`, removed legacy fallback), `src/lib/email/assembler.ts` (async image lookup in fallback path).
+
 **Enrichment Prompt: One Story Per Section + Recency-First Ordering:**
 - Daily Brief (`dailyBriefStyle`): each distinct story gets its own [[header]] and paragraph, never combine unrelated stories. Lead with most recent and surprising news - yesterday's incident outranks last week's opening.
 - Look Ahead (`lookAheadStyle`): each event gets its own paragraph within day sections. Lead each day with most noteworthy event - one-time specials outrank recurring happenings.
