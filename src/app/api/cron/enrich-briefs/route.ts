@@ -313,6 +313,7 @@ export async function GET(request: Request) {
                 enriched_at: new Date().toISOString(),
                 enrichment_model: result.model,
                 subject_teaser: result.subjectTeaser || null,
+                email_teaser: result.emailTeaser || null,
               })
               .eq('id', brief.id);
 

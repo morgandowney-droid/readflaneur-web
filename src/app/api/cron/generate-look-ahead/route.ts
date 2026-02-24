@@ -122,7 +122,10 @@ function getLocalPublishDate(timezone: string): { localDate: string; publishAtUt
 function generatePreviewText(content: string): string {
   // Skip event listing section (everything before ---) if present
   const separatorIdx = content.indexOf('\n---\n');
-  const prose = separatorIdx > -1 ? content.substring(separatorIdx + 5) : content;
+  let prose = separatorIdx > -1 ? content.substring(separatorIdx + 5) : content;
+
+  // Strip any label text that Gemini might inject at the start
+  prose = prose.replace(/^(Daily Brief|Look Ahead|DAILY BRIEF|LOOK AHEAD)[:\s]*[^.!?\n]*[.!?\n]\s*/i, '');
 
   const cleaned = prose
     .replace(/\[\[[^\]]+\]\]/g, '')
@@ -431,7 +434,8 @@ export async function GET(request: Request) {
           const headline = lookAheadBrief.headline;
           const articleHeadline = `LOOK AHEAD: ${headline}`;
           const slug = generateSlug(headline, id, localDate);
-          const previewText = generatePreviewText(articleBody);
+          // Use email_teaser from Gemini enrichment if available, otherwise auto-generate
+          const previewText = enriched.emailTeaser || generatePreviewText(articleBody);
 
           const { data: inserted, error: insertError } = await supabase
             .from('articles')

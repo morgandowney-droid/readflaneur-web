@@ -43,6 +43,7 @@ export interface EnrichedBriefOutput {
   rawResponse?: string;
   linkCandidates?: LinkCandidate[];
   subjectTeaser?: string | null;
+  emailTeaser?: string | null;
 }
 
 export interface ContinuityItem {
@@ -356,6 +357,19 @@ Generate a 1-4 word "information gap" teaser for the email subject line. This te
 - Lowercase unless proper noun
 - No punctuation except when part of a proper name
 
+EMAIL TEASER (MANDATORY):
+Generate a 2-3 sentence information-dense teaser (max 160 chars) for the email blurb. Pack it with specific names, places, and facts that create information gaps compelling readers to click. Examples:
+- "Village snowball fight against NYPD. Hello Kees bar and Dahla Thai. Goodbye Da Toscano."
+- "Shin Takumi opens on Spring St. DEJAVU pop-up extended. Golden Steer reservations live."
+- "It's fondue night at Raclette. Louis Vuitton pop-up continues. Free jazz at the Vanguard."
+Rules:
+- 2-3 short, punchy sentences packed with specific facts
+- Max 160 characters total
+- Must include at least one specific name (person, place, business, event)
+- NO greetings ("Good morning"), NO filler ("Here's what's happening"), NO vague openers
+- NO "In {neighborhood}" or "This week in" framing
+- Think of it as the movie trailer for your brief - only the most intriguing details
+
 After your prose, include this JSON with ONLY the verified stories:
 \`\`\`json
 {
@@ -374,7 +388,8 @@ After your prose, include this JSON with ONLY the verified stories:
   "link_candidates": [
     {"text": "Exact phrase from your prose"}
   ],
-  "subject_teaser": "1-4 word information gap teaser"
+  "subject_teaser": "1-4 word information gap teaser",
+  "email_teaser": "2-3 sentence information-dense teaser with specific names and facts (max 160 chars)"
 }
 \`\`\`
 
@@ -455,6 +470,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     let enrichedData: { categories: EnrichedCategory[]; link_candidates?: unknown[] } = { categories: [] };
     let linkCandidates: LinkCandidate[] = [];
     let subjectTeaser: string | null = null;
+    let emailTeaser: string | null = null;
 
     const jsonMatch = rawText.match(/```json\s*([\s\S]*?)```/);
     if (jsonMatch) {
@@ -480,6 +496,18 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
             console.warn(`Subject teaser rejected (${wordCount} words, ${t.length} chars): "${t}"`);
           }
         }
+        // Extract email teaser (2-3 sentences, 10-200 chars, must contain a period/exclamation)
+        if (parsed.email_teaser && typeof parsed.email_teaser === 'string') {
+          const et = parsed.email_teaser.trim();
+          const hasEnding = /[.!]/.test(et);
+          const isGreeting = /^(good morning|god morgon|bonjour|buongiorno|guten morgen|buenos d[ií]as|bom dia|goedemorgen|morning)/i.test(et);
+          if (et.length >= 10 && et.length <= 200 && hasEnding && !isGreeting) {
+            emailTeaser = et;
+            console.log(`Email teaser: "${emailTeaser}"`);
+          } else {
+            console.warn(`Email teaser rejected (${et.length} chars, hasEnding=${hasEnding}, isGreeting=${isGreeting}): "${et}"`);
+          }
+        }
       } catch (e) {
         console.error('Failed to parse Gemini JSON:', e);
       }
@@ -503,6 +531,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
         rawResponse: text,
         linkCandidates,
         subjectTeaser,
+        emailTeaser,
       };
     }
 
@@ -538,6 +567,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
       rawResponse: text,
       linkCandidates,
       subjectTeaser,
+      emailTeaser,
     };
 
   } catch (error) {

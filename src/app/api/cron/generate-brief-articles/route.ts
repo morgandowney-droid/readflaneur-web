@@ -245,6 +245,7 @@ export async function GET(request: Request) {
         enrichment_model,
         model,
         generated_at,
+        email_teaser,
         neighborhoods!inner(id, name, city)
       `)
       .in('id', chunk)
@@ -313,8 +314,8 @@ export async function GET(request: Request) {
       // Generate slug using neighborhood id and brief's generation date
       const slug = generateSlug(articleHeadline, neighborhood.id, brief.generated_at);
 
-      // Generate preview text
-      const previewText = generatePreviewText(articleBody);
+      // Use email_teaser from Gemini enrichment if available, otherwise auto-generate
+      const previewText = brief.email_teaser || generatePreviewText(articleBody);
 
       // Extract sources from enriched categories
       const extractedSources = extractSourcesFromCategories(brief.enriched_categories as EnrichedCategory[] | null);

@@ -122,7 +122,7 @@ async function fetchBriefAsStory(
   // Fallback: use neighborhood_briefs table and create an article on-the-fly
   const { data: brief } = await supabase
     .from('neighborhood_briefs')
-    .select('id, headline, content, enriched_content, enriched_categories, enrichment_model, model, generated_at')
+    .select('id, headline, content, enriched_content, enriched_categories, enrichment_model, model, generated_at, email_teaser')
     .eq('neighborhood_id', neighborhoodId)
     .gte('expires_at', new Date().toISOString())
     .order('created_at', { ascending: false })
@@ -145,25 +145,30 @@ async function fetchBriefAsStory(
     .substring(0, 50);
   const slug = `${neighborhoodId}-brief-${date}-${headlineSlug}`;
 
-  // Generate preview text from content, truncated at sentence boundary (no ellipsis)
-  let previewText = articleBody
-    .replace(/\[\[[^\]]+\]\]/g, '')
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/\n+/g, ' ')
-    .trim()
-    .substring(0, 200);
+  // Use email_teaser from Gemini enrichment if available, otherwise auto-generate
+  let previewText = '';
+  if (brief.email_teaser) {
+    previewText = brief.email_teaser;
+  } else {
+    previewText = articleBody
+      .replace(/\[\[[^\]]+\]\]/g, '')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/\n+/g, ' ')
+      .trim()
+      .substring(0, 200);
 
-  if (previewText.length >= 200) {
-    const lastPeriod = previewText.lastIndexOf('.');
-    const lastExcl = previewText.lastIndexOf('!');
-    const lastQuestion = previewText.lastIndexOf('?');
-    const lastEnd = Math.max(lastPeriod, lastExcl, lastQuestion);
-    if (lastEnd > 0) {
-      previewText = previewText.slice(0, lastEnd + 1);
-    } else {
-      const lastSpace = previewText.lastIndexOf(' ');
-      if (lastSpace > 0) previewText = previewText.slice(0, lastSpace);
+    if (previewText.length >= 200) {
+      const lastPeriod = previewText.lastIndexOf('.');
+      const lastExcl = previewText.lastIndexOf('!');
+      const lastQuestion = previewText.lastIndexOf('?');
+      const lastEnd = Math.max(lastPeriod, lastExcl, lastQuestion);
+      if (lastEnd > 0) {
+        previewText = previewText.slice(0, lastEnd + 1);
+      } else {
+        const lastSpace = previewText.lastIndexOf(' ');
+        if (lastSpace > 0) previewText = previewText.slice(0, lastSpace);
+      }
     }
   }
 
@@ -640,13 +645,24 @@ function formatDateline(dateString?: string): string {
   return `${day} ${month} ${dayNum}`;
 }
 
-/** Check if a preview text is just a greeting with no substance */
-function isGreetingOnly(text: string): boolean {
-  // Match patterns like "Good morning, Nolita." or "Bonjour, voisins." with nothing after
+/** Check if a preview text STARTS with a greeting (checks first sentence only, no length limit) */
+function isGreetingStart(text: string): boolean {
   const stripped = text.trim().replace(/\s+/g, ' ');
-  // If it's a single short sentence (under 40 chars) that looks like a greeting
-  if (stripped.length > 60) return false;
-  return /^(good morning|god morgon|bonjour|buongiorno|guten morgen|buenos d[ií]as|bom dia|goedemorgen|morning|gr[üu]ezi)[,.]?\s*[^.!?]*[.!?]?\s*$/i.test(stripped);
+  // Check if the first sentence is a greeting pattern
+  return /^(good morning|god morgon|bonjour|buongiorno|guten morgen|buenos d[ií]as|bom dia|goedemorgen|morning|gr[üu]ezi|hey|hello)[,.]?\s/i.test(stripped);
+}
+
+/** Check if text starts with a label pattern that shouldn't be blurb text */
+function isLabelText(text: string): boolean {
+  const stripped = text.trim();
+  return /^(Daily Brief|Look Ahead|Sunday Edition|DAILY BRIEF|LOOK AHEAD)\s*[:.]/i.test(stripped);
+}
+
+/** Check if text is generic filler with no specific facts */
+function isFillerText(text: string): boolean {
+  const stripped = text.trim().replace(/\s+/g, ' ');
+  // Detect vague openers like "It's been a busy couple of weeks" or "Here's what's happening"
+  return /^(it['']s been a|here['']s what|here is what|there['']s (a lot|plenty|much)|we['']ve got|let['']s (dive|take a look|get into)|this (morning|week|weekend))/i.test(stripped);
 }
 
 /**
@@ -687,6 +703,56 @@ function findSentenceEnd(text: string): number {
 }
 
 /**
+ * Extract information-dense sentences from body text for email blurbs.
+ * Skips greetings, date filler, event listing markers, and label text.
+ */
+function extractInformativeSentences(bodyText: string, maxChars: number): string {
+  // Clean body text: strip markdown, event listings, headers
+  const cleaned = bodyText
+    .replace(/\[\[Event Listing\]\][\s\S]*?---/g, '') // event listing blocks
+    .replace(/\[\[[^\]]+\]\]/g, '')                     // [[section headers]]
+    .replace(/\*\*([^*]+)\*\*/g, '$1')                  // **bold**
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')            // [text](url) -> text
+    .replace(/\n+/g, ' ')
+    .trim();
+
+  const sentences = extractSentences(cleaned);
+
+  // Filter out non-informative sentences
+  const informative = sentences.filter(s => {
+    const t = s.trim();
+    if (isGreetingStart(t)) return false;
+    if (isLabelText(t)) return false;
+    if (isFillerText(t)) return false;
+    // Skip date-only sentences like "Here's your update for Tuesday, February 24, 2026."
+    if (/^(here['']s|this is) (your|the) (update|brief|news|roundup|look ahead)/i.test(t)) return false;
+    // Skip very short sentences (< 15 chars) that are likely fragments
+    if (t.length < 15) return false;
+    return true;
+  });
+
+  if (informative.length === 0) return '';
+
+  // Build blurb from informative sentences up to maxChars
+  let result = '';
+  for (const sentence of informative) {
+    const candidate = result ? result + ' ' + sentence : sentence;
+    if (candidate.length > maxChars) {
+      // If we have nothing yet, take this sentence truncated at sentence boundary
+      if (!result) {
+        const truncated = sentence.substring(0, maxChars);
+        const end = findSentenceEnd(truncated);
+        result = end > 30 ? truncated.slice(0, end + 1) : truncated;
+      }
+      break;
+    }
+    result = candidate;
+  }
+
+  return result;
+}
+
+/**
  * Convert a DB article row to an EmailStory
  */
 function toEmailStory(
@@ -708,29 +774,18 @@ function toEmailStory(
   const dateline = formatDateline(article.published_at || article.created_at);
   const labelWithDate = cleanedLabel ? `${cleanedLabel} - ${dateline}` : null;
 
-  // If preview text is just a greeting, extract 2-3 real sentences from body_text
+  // Extract informative blurb: detect and replace greeting filler, label text, or missing preview
   let previewText = article.preview_text || '';
-  if (isGreetingOnly(previewText) && article.body_text) {
-    const bodyPlain = article.body_text
-      .replace(/\[\[[^\]]+\]\]/g, '')
-      .replace(/\*\*([^*]+)\*\*/g, '$1')
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-      .replace(/\n+/g, ' ')
-      .trim();
-    // Extract real sentences (skip greetings, skip single initials like "R.")
-    const sentences = extractSentences(bodyPlain);
-    const nonGreeting = sentences.filter(s => !isGreetingOnly(s));
-    if (nonGreeting.length >= 2) {
-      previewText = nonGreeting.slice(0, 2).join(' ');
-    } else if (nonGreeting.length === 1) {
-      previewText = nonGreeting[0];
-    }
-    // Truncate if too long
-    if (previewText.length > 250) {
-      const truncated = previewText.substring(0, 250);
-      const lastEnd = findSentenceEnd(truncated);
-      if (lastEnd > 50) previewText = truncated.slice(0, lastEnd + 1);
-    }
+
+  const needsBetterPreview = !previewText
+    || previewText.length < 30
+    || isGreetingStart(previewText)
+    || isLabelText(previewText)
+    || isFillerText(previewText);
+
+  if (needsBetterPreview && article.body_text) {
+    const extracted = extractInformativeSentences(article.body_text, 160);
+    if (extracted) previewText = extracted;
   }
 
   return {
