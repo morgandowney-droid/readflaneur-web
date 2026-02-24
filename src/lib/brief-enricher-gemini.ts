@@ -348,30 +348,30 @@ ${articleType === 'look_ahead' || articleType === 'weekly_recap' ? '- CRITICAL: 
 Write it like you're the neighborhood insider sharing what's actually happening - conversational but factual. This will be published directly to readers.
 
 SUBJECT TEASER (MANDATORY):
-Generate a 1-4 word "information gap" teaser for the email subject line. This teaser appears after "Daily Brief: {Neighborhood}." and must compel the reader to open the email simply to understand what it means. Think Morning Brew style - cryptic, intriguing, incomplete. Examples: "rent freeze showdown", "the bakery switch", "40 floors down", "rats won". Rules:
+Generate a 1-4 word "information gap" teaser for the email subject line. This teaser appears after "Daily Brief: {Neighborhood}." and must compel the reader to open the email simply to understand what it means. Think Morning Brew style - cryptic, intriguing, incomplete. Examples: "rent freeze showdown", "bakery switch", "40 floors down", "rats won", "building of the year". Rules:
 - 1-4 words MAXIMUM (shorter is better)
 - Must relate to the most interesting story in the brief
 - Must NOT be a complete sentence or make full sense on its own
 - Must NOT be clickbait or misleading - it should relate to real content
 - Must NOT include the neighborhood name
 - ALL LOWERCASE. No capital letters at all, not even for the first word. Only exception: proper nouns that are always capitalized (brand names like "IKEA", people's names like "de Blasio")
+- Do NOT start with "the" - just drop it. "building of the year" not "the building of the year". "bakery switch" not "the bakery switch"
 - No punctuation except when part of a proper name
 
 EMAIL TEASER (MANDATORY):
-Generate a 2-3 sentence information-dense teaser (max 160 chars) for the email blurb. Write with energy and attitude - you're the insider who knows what matters. Create urgency and intrigue, not a dry summary. Examples:
+Generate 2-3 standalone information nuggets (max 160 chars total) for the email blurb. Each sentence is a punchy, self-contained fact. No connective tissue between them - no "Plus,", "Also,", "And", "Meanwhile". Just nugget after nugget. Examples:
 - "Village snowball fight against NYPD. Hello Kees bar and Dahla Thai. Goodbye Da Toscano."
 - "Shin Takumi finally opens on Spring St. DEJAVU pop-up extended again. Golden Steer reservations live."
-- "Fondue night at Raclette. Cool new art at the Vanguard gallery. Louis Vuitton pop-up rolls on."
-- "Wasahof's husmanskost grub finally launches. Cool new art at Galleri Duerr. Forskaren wins building of the year."
+- "Fondue night at Raclette. Wild new show at Vanguard gallery. Louis Vuitton pop-up rolls on."
+- "Wasahof's husmanskost menu now live. Cool new art at Galleri Duerr. Forskaren wins building of the year."
 Rules:
-- 2-3 short, punchy sentences packed with specific facts
+- Each sentence is a STANDALONE NUGGET. No "Plus,", "Also,", "And,", "Meanwhile,", "In addition" - these are filler words that waste precious characters
 - Max 160 characters total
 - Must include at least one specific name (person, place, business, event)
-- Write with VOICE and ENERGY. Use words like "finally", "just dropped", "rolls on", "cool new", "gone for good". Avoid pedantic descriptions like "starts tomorrow" or "is now open" - instead say "finally launches" or "just opened"
-- NO boilerplate like "Catch art openings at X and Y" - instead "Cool new art at X" or "X debuts wild new show"
-- NO greetings ("Good morning"), NO filler ("Here's what's happening"), NO vague openers
+- Use ACTIVE, PRESENT-TENSE language. Say "now live", "just opened", "finally launches", "gone for good", "rolls on". NEVER say "starts tomorrow", "will open", "is expected to", "begins next week" - these defer the action and kill urgency. Make it sound like it's happening NOW
+- NO boilerplate like "Catch art openings at X and Y" or "New art at X and Y" - instead "Cool new art at X" or "X debuts wild new show". One venue per sentence, not lists
+- NO greetings, NO filler ("Here's what's happening"), NO vague openers
 - NO "In {neighborhood}" or "This week in" framing
-- Think of it as the movie trailer for your brief - only the most intriguing details
 
 After your prose, include this JSON with ONLY the verified stories:
 \`\`\`json
