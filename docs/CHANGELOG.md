@@ -5,6 +5,11 @@
 
 ## 2026-03-01
 
+**Handle Curly Apostrophes in Filler Detection:**
+- Gemini enrichment outputs U+2019 (right single quotation mark / curly apostrophe) instead of ASCII apostrophe (U+0027). Filler regex patterns like `/^here'?s/` used `'?` which only matches the ASCII variant, so "Here\u2019s the download..." bypassed filler detection entirely.
+- Updated all apostrophe-containing patterns in both `isGreetingOrFillerParagraph()` (NeighborhoodBrief.tsx) and `isFillerSentence()` (CompactArticleCard.tsx) to use `['\u2019]?` character class matching both straight and curly apostrophes.
+- Root cause of persistent "Here's the download for our corner of the world today..." preview despite the multi-paragraph loop fix being deployed correctly.
+
 **Fix Filler Detection for Long Paragraphs and Multi-Paragraph Filler:**
 - `isGreetingOrFillerParagraph()` had a 200-char length limit that caused it to miss filler-starting paragraphs exceeding 200 chars. Fix: checks only the first sentence against filler patterns, no length limit.
 - Enriched briefs have separate short paragraphs for each filler line (P0: "Morning, neighbors." P1: "Here's the download..." P2: "[[Digging Out]]" header P3: "If you're just waking up..."). Old code only skipped P0 and used P1 unconditionally.
