@@ -5,6 +5,11 @@
 
 ## 2026-03-01
 
+**Fix Filler Detection for Long Paragraphs:**
+- `isGreetingOrFillerParagraph()` had a 200-char length limit that caused it to miss filler-starting paragraphs exceeding 200 chars (e.g., "Morning, neighbors. Here's the download for our corner of the world today, Tuesday, February 24, 2026." followed by actual news).
+- Fix: checks only the first sentence against filler patterns instead of applying a whole-paragraph length limit. Also handles single-paragraph content by skipping filler sentences within the paragraph to find the first useful sentence.
+- Added "If you're just waking up" filler pattern to both NeighborhoodBrief and CompactArticleCard.
+
 **Skip Filler Blurbs in Feed Cards + Suppress Subscribe Prompt for Logged-In Users:**
 - Daily Brief card showed "Here's the download for our corner of the world today, Tuesday, February 24, 2026." as preview text. `isGreetingParagraph()` only caught greetings like "Good morning" but missed filler openers.
 - Expanded to `isGreetingOrFillerParagraph()` with filler patterns: "Here's the download/latest/lowdown/update", "It's been a busy/quiet week", "Welcome to", "Let's dive in", date-only sentences, plus equivalents in all 9 languages.
