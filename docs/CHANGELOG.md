@@ -5,6 +5,12 @@
 
 ## 2026-03-01
 
+**Replace Look Ahead Expandable Card with Simple Link:**
+- The expandable card with "At a glance" event listing was visually jarring and didn't integrate well with the brief styling.
+- Replaced `LookAheadCard` (362 lines) with a minimal component (~50 lines) that fetches the Look Ahead URL and renders a clean link: "What's Coming Up in {name}" (translated via `feed.lookAheadCta` in all 9 languages).
+- Same props interface (`neighborhoodId`, `neighborhoodName`, `city`) so all 3 callsites (`[city]/[neighborhood]/page.tsx`, `MultiFeed.tsx` x2) remain unchanged.
+- Removed: expandable card UI, event listing parsing/rendering, prose paragraph rendering, discovery CTAs (yesterday/nearby/random), markdown link rendering helpers, sentence teaser extraction.
+
 **Strip SUBJECT TEASER/EMAIL TEASER Labels and Daily Brief Label from Display:**
 - Gemini outputs "SUBJECT TEASER: snowball showdown" and "EMAIL TEASER: Snowball fight targets NYPD..." as visible prose text alongside the JSON block. These leaked into `enriched_content` and displayed in brief cards and article pages.
 - Stripped in `brief-enricher-gemini.ts` during text processing (prevents future storage).
