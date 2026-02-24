@@ -294,34 +294,40 @@ function cleanContent(text: string): string {
 }
 
 /**
- * Detect if a paragraph is a greeting line (e.g., "Good morning, neighbors.")
- * Covers all 9 supported languages: en, sv, fr, de, es, pt, it, zh, ja
+ * Detect if a paragraph is a greeting or filler line that shouldn't be the preview.
+ * Catches: greetings ("Good morning"), filler ("Here's the download"),
+ * date-only sentences, and generic openers across all 9 languages.
  */
-function isGreetingParagraph(text: string): boolean {
+function isGreetingOrFillerParagraph(text: string): boolean {
   const trimmed = text.trim();
-  // Short paragraphs that start with common greeting patterns
-  if (trimmed.length > 120) return false;
-  const greetingPatterns = [
-    // English
+  if (trimmed.length > 200) return false;
+  const patterns = [
+    // English greetings
     /^(good\s+morning|morning|hello|hey|greetings)/i,
+    // English filler openers
+    /^here'?s\s+(the\s+)?(download|latest|lowdown|rundown|roundup|update|what'?s\s+happening|your\s+morning)/i,
+    /^(welcome\s+to|let'?s\s+dive|let'?s\s+get\s+into|ready\s+for)/i,
+    /^(it'?s\s+been\s+a\s+(busy|quiet|slow|big|wild)|what\s+a\s+(week|day|morning))/i,
     // Swedish
-    /^(god\s+morgon|hej|morrn)/i,
+    /^(god\s+morgon|hej|morrn|h[äa]r\s+[äa]r)/i,
     // French
-    /^(bonjour|bon\s+matin|salut)/i,
+    /^(bonjour|bon\s+matin|salut|voici)/i,
     // German
-    /^(guten\s+morgen|morgen|hallo)/i,
+    /^(guten\s+morgen|morgen|hallo|hier\s+ist)/i,
     // Spanish
-    /^(buenos\s+d[ií]as|hola|buen\s+d[ií]a)/i,
+    /^(buenos\s+d[ií]as|hola|buen\s+d[ií]a|aqu[ií]\s+est[áa])/i,
     // Portuguese
-    /^(bom\s+dia|ol[aá])/i,
+    /^(bom\s+dia|ol[aá]|aqui\s+est[áa])/i,
     // Italian
-    /^(buongiorno|buon\s+giorno|ciao)/i,
+    /^(buongiorno|buon\s+giorno|ciao|ecco)/i,
     // Chinese
     /^(早上好|早安|你好)/,
     // Japanese
     /^(おはようございます|おはよう|こんにちは)/,
+    // Date-only sentences (e.g., "Tuesday, February 24, 2026.")
+    /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d/i,
   ];
-  return greetingPatterns.some(p => p.test(trimmed));
+  return patterns.some(p => p.test(trimmed));
 }
 
 function formatTime(dateString: string, locale: string = 'en') {
@@ -457,8 +463,8 @@ export function NeighborhoodBrief({
   // Clean content and split into paragraphs
   const cleanedContent = cleanContent(displayContent);
   const paragraphs = cleanedContent.split('\n\n').filter(p => p.trim());
-  // Skip greeting paragraph for preview - show actual news content
-  const previewText = (paragraphs.length > 1 && isGreetingParagraph(paragraphs[0]))
+  // Skip greeting/filler paragraph for preview - show actual news content
+  const previewText = (paragraphs.length > 1 && isGreetingOrFillerParagraph(paragraphs[0]))
     ? paragraphs[1]
     : (paragraphs[0] || cleanedContent);
   const hasMore = paragraphs.length > 1 || cleanedContent.length > 300;

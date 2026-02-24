@@ -19,6 +19,28 @@ function formatDate(dateString: string, locale: string = 'en', timezone?: string
   return date.toLocaleDateString(locale, opts);
 }
 
+/** Detect filler/greeting sentences that shouldn't lead a blurb */
+function isFillerSentence(s: string): boolean {
+  const t = s.trim();
+  return /^(good\s+morning|morning|hello|hey|greetings)/i.test(t)
+    || /^here'?s\s+(the\s+)?(download|latest|lowdown|rundown|roundup|update|what'?s\s+happening|your\s+morning)/i.test(t)
+    || /^(welcome\s+to|let'?s\s+dive|let'?s\s+get\s+into|ready\s+for)/i.test(t)
+    || /^(it'?s\s+been\s+a\s+(busy|quiet|slow|big|wild)|what\s+a\s+(week|day|morning))/i.test(t)
+    || /^(god\s+morgon|hej|bonjour|guten\s+morgen|buenos\s+d[ií]as|bom\s+dia|buongiorno|ciao)/i.test(t)
+    || /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d/i.test(t);
+}
+
+/** Extract a clean blurb: skip greeting/filler sentences, truncate at sentence boundary */
+function cleanBlurb(text: string): string {
+  const sentences = text.split(/(?<=[.!?])\s+(?=[A-Z])/);
+  // Find first non-filler sentence
+  const startIdx = sentences.findIndex(s => !isFillerSentence(s));
+  if (startIdx < 0) return truncateAtSentence(text, 200);
+  // Build blurb from non-filler sentences
+  const useful = sentences.slice(startIdx).join(' ');
+  return truncateAtSentence(useful, 200);
+}
+
 /** Truncate text at the last full sentence boundary within maxLen chars */
 function truncateAtSentence(text: string, maxLen: number): string {
   if (text.length <= maxLen) return text;
@@ -44,7 +66,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
   const articleUrl = `/${citySlug}/${neighborhoodSlug}/${article.slug || article.id}`;
 
   const rawBlurb = article.preview_text || article.body_text || '';
-  const blurb = rawBlurb ? truncateAtSentence(rawBlurb, 200) : '';
+  const blurb = rawBlurb ? cleanBlurb(rawBlurb) : '';
 
   // Translation support
   const { language, isTranslated } = useLanguageContext();

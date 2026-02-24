@@ -25,6 +25,8 @@ export function ReturnVisitPrompt() {
       // Already subscribed or dismissed
       if (localStorage.getItem(SUBSCRIBED_KEY) === 'true') return;
       if (localStorage.getItem(DISMISSED_KEY) === 'true') return;
+      // Logged-in users are auto-subscribed - suppress prompt
+      if (localStorage.getItem('flaneur-auth')) return;
 
       // Check read threshold
       const reads = parseInt(localStorage.getItem(READS_KEY) || '0', 10);

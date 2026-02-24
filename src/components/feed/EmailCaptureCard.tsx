@@ -24,8 +24,9 @@ export function EmailCaptureCard({ neighborhoodName }: EmailCaptureCardProps) {
     try {
       const subscribed = localStorage.getItem(SUBSCRIBED_KEY) === 'true';
       const dismissed = localStorage.getItem(DISMISSED_KEY) === 'true';
+      const loggedIn = !!localStorage.getItem('flaneur-auth');
       const reads = parseInt(localStorage.getItem(READS_KEY) || '0', 10);
-      if (!subscribed && !dismissed && reads >= READ_THRESHOLD) {
+      if (!subscribed && !dismissed && !loggedIn && reads >= READ_THRESHOLD) {
         setVisible(true);
       }
     } catch {
