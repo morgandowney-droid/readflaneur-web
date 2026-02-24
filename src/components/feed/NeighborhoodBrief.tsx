@@ -300,7 +300,9 @@ function cleanContent(text: string): string {
  */
 function isGreetingOrFillerParagraph(text: string): boolean {
   const trimmed = text.trim();
-  if (trimmed.length > 200) return false;
+  // Check the first sentence only - long paragraphs that START with a greeting
+  // should still be detected (e.g., "Morning, neighbors. Here's the download...")
+  const firstSentence = trimmed.split(/(?<=[.!?])\s+/)[0] || trimmed;
   const patterns = [
     // English greetings
     /^(good\s+morning|morning|hello|hey|greetings)/i,
@@ -308,6 +310,7 @@ function isGreetingOrFillerParagraph(text: string): boolean {
     /^here'?s\s+(the\s+)?(download|latest|lowdown|rundown|roundup|update|what'?s\s+happening|your\s+morning)/i,
     /^(welcome\s+to|let'?s\s+dive|let'?s\s+get\s+into|ready\s+for)/i,
     /^(it'?s\s+been\s+a\s+(busy|quiet|slow|big|wild)|what\s+a\s+(week|day|morning))/i,
+    /^(if\s+you'?re\s+just\s+waking\s+up)/i,
     // Swedish
     /^(god\s+morgon|hej|morrn|h[äa]r\s+[äa]r)/i,
     // French
@@ -327,7 +330,7 @@ function isGreetingOrFillerParagraph(text: string): boolean {
     // Date-only sentences (e.g., "Tuesday, February 24, 2026.")
     /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d/i,
   ];
-  return patterns.some(p => p.test(trimmed));
+  return patterns.some(p => p.test(firstSentence));
 }
 
 function formatTime(dateString: string, locale: string = 'en') {
@@ -464,9 +467,20 @@ export function NeighborhoodBrief({
   const cleanedContent = cleanContent(displayContent);
   const paragraphs = cleanedContent.split('\n\n').filter(p => p.trim());
   // Skip greeting/filler paragraph for preview - show actual news content
-  const previewText = (paragraphs.length > 1 && isGreetingOrFillerParagraph(paragraphs[0]))
-    ? paragraphs[1]
-    : (paragraphs[0] || cleanedContent);
+  let previewText = paragraphs[0] || cleanedContent;
+  if (isGreetingOrFillerParagraph(previewText)) {
+    if (paragraphs.length > 1) {
+      // Use next paragraph
+      previewText = paragraphs[1];
+    } else {
+      // Single paragraph starting with filler - skip filler sentences
+      const sentences = previewText.split(/(?<=[.!?])\s+(?=[A-Z])/);
+      const firstUseful = sentences.findIndex(s => !isGreetingOrFillerParagraph(s));
+      if (firstUseful > 0) {
+        previewText = sentences.slice(firstUseful).join(' ');
+      }
+    }
+  }
   const hasMore = paragraphs.length > 1 || cleanedContent.length > 300;
 
   // Check if a paragraph is a commentary line (short question or closing remark)

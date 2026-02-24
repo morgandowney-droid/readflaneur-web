@@ -26,6 +26,7 @@ function isFillerSentence(s: string): boolean {
     || /^here'?s\s+(the\s+)?(download|latest|lowdown|rundown|roundup|update|what'?s\s+happening|your\s+morning)/i.test(t)
     || /^(welcome\s+to|let'?s\s+dive|let'?s\s+get\s+into|ready\s+for)/i.test(t)
     || /^(it'?s\s+been\s+a\s+(busy|quiet|slow|big|wild)|what\s+a\s+(week|day|morning))/i.test(t)
+    || /^(if\s+you'?re\s+just\s+waking\s+up)/i.test(t)
     || /^(god\s+morgon|hej|bonjour|guten\s+morgen|buenos\s+d[ií]as|bom\s+dia|buongiorno|ciao)/i.test(t)
     || /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d/i.test(t);
 }
