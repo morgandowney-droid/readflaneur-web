@@ -179,18 +179,25 @@ export async function generateWeeklyBrief(
   const isoWeek = getISOWeekNumber(new Date());
   const dataPointType = DATA_POINT_ROTATION[isoWeek % 4];
 
-  // Section 2: The Horizon
+  // Section 2: The Horizon - always-dual: Grok + Gemini in parallel
   let horizonEvents: HorizonEvent[] = [];
   try {
-    if (grokKey) {
-      const rawEvents = await huntUpcomingEvents(grokKey, neighborhoodName, city, country);
-      if (rawEvents) {
-        horizonEvents = await curateEvents(genAI, rawEvents, neighborhoodName, city, timeFormat, model);
-      }
+    const [grokEventsResult, geminiEventsResult] = await Promise.allSettled([
+      grokKey ? huntUpcomingEvents(grokKey, neighborhoodName, city, country) : Promise.resolve(null),
+      huntEventsWithGemini(genAI, neighborhoodName, city, timeFormat, model),
+    ]);
+
+    const rawGrokEvents = grokEventsResult.status === 'fulfilled' ? grokEventsResult.value : null;
+    const geminiDirectEvents = geminiEventsResult.status === 'fulfilled' ? geminiEventsResult.value : [];
+
+    // Curate Grok events if present, then merge with Gemini's
+    let curatedGrokEvents: HorizonEvent[] = [];
+    if (rawGrokEvents) {
+      curatedGrokEvents = await curateEvents(genAI, rawGrokEvents, neighborhoodName, city, timeFormat, model);
     }
-    if (horizonEvents.length === 0) {
-      horizonEvents = await huntEventsWithGemini(genAI, neighborhoodName, city, timeFormat, model);
-    }
+
+    // Combine and deduplicate by event name similarity, keep up to 5
+    horizonEvents = deduplicateHorizonEvents([...curatedGrokEvents, ...geminiDirectEvents]).slice(0, 5);
     horizonEvents.sort((a, b) => parseEventDayForSort(a.day) - parseEventDayForSort(b.day));
   } catch (err) {
     console.error(`[SundayEdition] ${neighborhoodName}: horizon failed:`, err);
@@ -344,6 +351,8 @@ STRUCTURE:
 - Write in exactly 4 short paragraphs separated by blank lines (each paragraph 2-3 sentences max)
 - NO greeting or sign-off. NO markdown, bold, or formatting.
 - Approximately 200 words total.
+- ONE STORY PER PARAGRAPH: Each paragraph covers one distinct story. NEVER combine two unrelated stories in the same paragraph.
+- STORY ORDER: Lead with the most consequential and recent story. A safety incident or policy change outranks a restaurant opening. Within the same significance level, more recent events lead.
 
 SUBJECT TEASER:
 After the 4 paragraphs, on a new line, write:
@@ -521,6 +530,37 @@ Respond with ONLY this JSON:
   }
 
   return [];
+}
+
+/**
+ * Deduplicate horizon events by name similarity.
+ * If two events have names where one contains the other (or >70% word overlap),
+ * keep the one with more detail (longer whyItMatters).
+ */
+function deduplicateHorizonEvents(events: HorizonEvent[]): HorizonEvent[] {
+  const result: HorizonEvent[] = [];
+  const seenNames: string[] = [];
+
+  for (const event of events) {
+    const name = event.name.trim().toLowerCase();
+    const isDuplicate = seenNames.some(existing => {
+      if (existing.includes(name) || name.includes(existing)) return true;
+      // Word overlap check
+      const wordsA = new Set(existing.split(/\s+/).filter(w => w.length > 2));
+      const wordsB = new Set(name.split(/\s+/).filter(w => w.length > 2));
+      if (wordsA.size === 0 || wordsB.size === 0) return false;
+      let overlap = 0;
+      for (const w of wordsA) { if (wordsB.has(w)) overlap++; }
+      return overlap / Math.min(wordsA.size, wordsB.size) > 0.7;
+    });
+
+    if (!isDuplicate) {
+      result.push(event);
+      seenNames.push(name);
+    }
+  }
+
+  return result;
 }
 
 async function huntEventsWithGemini(

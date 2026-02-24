@@ -5,6 +5,7 @@ import { getComboInfo } from '@/lib/combo-utils';
 import { generateBriefContextSnippet } from '@/lib/nyc-content-generator';
 import { NYCPermit } from '@/lib/nyc-permits';
 import { LiquorLicense } from '@/lib/nyc-liquor';
+import { searchNeighborhoodFacts, mergeContent } from '@/lib/gemini-search';
 
 /**
  * Neighborhood Briefs Sync Cron Job
@@ -103,6 +104,7 @@ export async function GET(request: Request) {
     neighborhoods_processed: 0,
     briefs_generated: 0,
     briefs_failed: 0,
+    gemini_supplemented: 0,
     errors: [] as string[],
   };
 
@@ -112,7 +114,7 @@ export async function GET(request: Request) {
 
   const { data: recentBriefs } = await supabase
     .from('neighborhood_briefs')
-    .select('neighborhood_id, created_at')
+    .select('neighborhood_id, created_at, headline')
     .gte('created_at', recentCutoff.toISOString());
 
   // Build map of neighborhood_id -> brief timestamps for local-date checking
@@ -280,18 +282,36 @@ export async function GET(request: Request) {
         }
       }
 
-      // Generate brief using Grok (pass timezone for correct local date context)
-      const brief = await generateNeighborhoodBrief(
-        searchName,
-        hood.city,
-        hood.country,
-        nycDataContext,
-        hood.timezone
-      );
+      // Extract recent headlines for anti-repetition in Gemini search
+      const recentTopics = (recentBriefs || [])
+        .filter(b => b.neighborhood_id === hood.id && b.headline)
+        .slice(0, 5)
+        .map(b => b.headline as string);
 
-      if (!brief) {
+      // Run Grok + Gemini in parallel (Gemini ~5-10s finishes before Grok ~25-30s)
+      const [grokResult, geminiResult] = await Promise.allSettled([
+        generateNeighborhoodBrief(searchName, hood.city, hood.country, nycDataContext, hood.timezone),
+        searchNeighborhoodFacts(searchName, hood.city, hood.country, hood.timezone, recentTopics),
+      ]);
+
+      const grokBrief = grokResult.status === 'fulfilled' ? grokResult.value : null;
+      const geminiFacts = geminiResult.status === 'fulfilled' ? geminiResult.value : null;
+
+      if (!grokBrief && !geminiFacts) {
         results.briefs_failed++;
-        results.errors.push(`${hood.name}: Brief returned null`);
+        results.errors.push(`${hood.name}: Both Grok and Gemini returned null`);
+        return;
+      }
+
+      // Merge content from both sources
+      const mergedContent = mergeContent(grokBrief?.content || null, geminiFacts?.facts || null);
+      const brief = grokBrief
+        ? { ...grokBrief, content: mergedContent }
+        : { headline: `What's Happening in ${hood.name}`, content: mergedContent, sources: [], sourceCount: geminiFacts?.sourceCount || 0, model: 'gemini-2.5-flash', searchQuery: '' };
+
+      if (!brief.content) {
+        results.briefs_failed++;
+        results.errors.push(`${hood.name}: Merged content is empty`);
         return;
       }
 
@@ -321,6 +341,7 @@ export async function GET(request: Request) {
       }
 
       results.briefs_generated++;
+      if (geminiFacts) results.gemini_supplemented++;
 
     } catch (err) {
       results.briefs_failed++;
@@ -353,6 +374,7 @@ export async function GET(request: Request) {
       neighborhoods_processed: results.neighborhoods_processed,
       briefs_generated: results.briefs_generated,
       briefs_failed: results.briefs_failed,
+      gemini_supplemented: results.gemini_supplemented,
       neighborhoods_eligible: neighborhoods.length,
     },
     triggered_by: testNeighborhoodId ? 'manual' : 'vercel_cron',

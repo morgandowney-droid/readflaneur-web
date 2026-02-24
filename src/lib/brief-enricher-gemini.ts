@@ -275,7 +275,10 @@ TONE AND VOCABULARY:
 - NEVER use em dashes (\u2014). Use commas, periods, or hyphens (-) instead.
 - The reader is well-educated and prefers polished language without slang
 
-This is The Sunday Edition - a weekly community recap published on Sunday. Even if you are processing this on a different day, write as if it is Sunday (use the CURRENT TIME date provided above as your reference). Do not reference Monday or any day after Sunday. Straight news, no fluff.`;
+This is The Sunday Edition - a weekly community recap published on Sunday. Even if you are processing this on a different day, write as if it is Sunday (use the CURRENT TIME date provided above as your reference). Do not reference Monday or any day after Sunday. Straight news, no fluff.
+
+ONE STORY PER SECTION: Each distinct story gets its own [[header]] and paragraph. NEVER combine two unrelated stories in the same section. A zoning decision and a restaurant closure are two separate stories - give each its own section.
+STORY ORDER: Lead with the most consequential and recent story first. A safety incident or policy change that affects residents outranks a restaurant opening. Within the same significance level, more recent events lead over older ones.`;
 
   const lookAheadStyle = `
 Your writing style:
@@ -301,7 +304,10 @@ ENERGY RULES: NEVER describe a period as "quiet", "slow", "calm", or "not much h
 
 NO REPETITION: NEVER repeat the same venue, restaurant, or event across multiple day sections. If a venue is open every day (like a restaurant or bar), mention it ONCE on the most relevant day and move on. A Look Ahead that lists the same place on Monday, Tuesday, Wednesday, Thursday is useless padding. Each day section should feature DIFFERENT events. If there genuinely aren't enough distinct events to fill every day, SKIP those days entirely rather than repeating content. Quality over quantity - 3 days with unique events is far better than 7 days repeating the same venue.
 
-TOURIST TRAP FILTER: EXCLUDE only these specific items: permanent Broadway/West End shows ("Mamma Mia!", "The Lion King", "Phantom of the Opera", "Wicked"), guided walking tours, food tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms. Keep everything else - gallery openings, temporary exhibitions, pop-up markets, concerts, comedy shows, restaurant/bar openings, art shows, food festivals, sports events, community events, museum special exhibitions, theater premieres are all valuable content.`;
+TOURIST TRAP FILTER: EXCLUDE only these specific items: permanent Broadway/West End shows ("Mamma Mia!", "The Lion King", "Phantom of the Opera", "Wicked"), guided walking tours, food tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms. Keep everything else - gallery openings, temporary exhibitions, pop-up markets, concerts, comedy shows, restaurant/bar openings, art shows, food festivals, sports events, community events, museum special exhibitions, theater premieres are all valuable content.
+
+ONE EVENT PER SECTION: Within each day, each distinct event gets its own paragraph. NEVER lump two unrelated events together in the same paragraph. A museum exhibition and a restaurant opening are separate items.
+EVENT ORDER: Within each day section, lead with the most noteworthy event first - a one-time special event (gallery opening, premiere, limited pop-up) outranks a recurring weekly happening. Time-sensitive events (last day of an exhibition, opening night) outrank ongoing ones.`;
 
   const systemInstruction = basePersona + (
     articleType === 'weekly_recap' ? weeklyRecapStyle :
@@ -335,6 +341,8 @@ ${articleType === 'look_ahead' || articleType === 'weekly_recap' ? '- CRITICAL: 
 - IMPORTANT: Wrap each section header in double brackets like this: [[Section Header Here]]
 - Section headers should be catchy and conversational (e.g., "[[The Bagel Wars Begin]]", "[[Lunch Spot of the Week]]")
 - Do NOT use markdown headers (#) or bold (**) - only use [[double brackets]] for headers
+- ONE STORY PER SECTION: Each distinct story gets its own [[header]] and paragraph. NEVER combine two unrelated stories in the same section. A coffee shop ranking and a park incident are two separate stories - give each its own section.
+- STORY ORDER: Lead with the most RECENT and surprising news first. A police incident or community controversy from yesterday outranks a restaurant opening from 10 days ago. Recency matters - something that happened yesterday or today always leads over something from last week. Within the same time frame, prioritize the most unusual, consequential, or conversation-worthy story.
 
 Write it like you're the neighborhood insider sharing what's actually happening - conversational but factual. This will be published directly to readers.
 

@@ -7,6 +7,7 @@ import { getComboInfo } from '@/lib/combo-utils';
 import { getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 import { formatEventListing } from '@/lib/look-ahead-events';
+import { searchUpcomingEvents, mergeContent, mergeStructuredEvents } from '@/lib/gemini-search';
 
 /**
  * Generate Look Ahead Articles
@@ -351,12 +352,34 @@ export async function GET(request: Request) {
             }
           }
 
-          // Step 1: Grok search for upcoming events
-          console.log(`[generate-look-ahead] Grok search for ${searchName}, ${city} (local date: ${localDate})...`);
-          const lookAheadBrief = await generateLookAhead(searchName, city, country || undefined, tz, localDate);
+          // Step 1: Grok + Gemini search in parallel for upcoming events
+          console.log(`[generate-look-ahead] Searching for ${searchName}, ${city} (local date: ${localDate})...`);
+          const [grokResult, geminiResult] = await Promise.allSettled([
+            generateLookAhead(searchName, city, country || undefined, tz, localDate),
+            searchUpcomingEvents(searchName, city, country || undefined, tz, localDate),
+          ]);
 
-          if (!lookAheadBrief || !lookAheadBrief.content) {
-            console.log(`[generate-look-ahead] No content from Grok for ${name}`);
+          const grokLookAhead = grokResult.status === 'fulfilled' ? grokResult.value : null;
+          const geminiEvents = geminiResult.status === 'fulfilled' ? geminiResult.value : null;
+
+          if (!grokLookAhead && !geminiEvents) {
+            console.log(`[generate-look-ahead] No content from either source for ${name}`);
+            return null;
+          }
+
+          // Merge content and structured events from both sources
+          const mergedContent = mergeContent(grokLookAhead?.content || null, geminiEvents?.events || null);
+          const mergedStructuredEvents = mergeStructuredEvents(
+            grokLookAhead?.structuredEvents || [],
+            geminiEvents?.structuredEvents || []
+          );
+
+          const lookAheadBrief = grokLookAhead
+            ? { ...grokLookAhead, content: mergedContent, structuredEvents: mergedStructuredEvents }
+            : { headline: `Look Ahead: ${name}`, content: mergedContent, sources: [], sourceCount: geminiEvents?.sourceCount || 0, model: 'gemini-2.5-flash', searchQuery: '', structuredEvents: mergedStructuredEvents };
+
+          if (!lookAheadBrief.content) {
+            console.log(`[generate-look-ahead] Merged content empty for ${name}`);
             return null;
           }
 
