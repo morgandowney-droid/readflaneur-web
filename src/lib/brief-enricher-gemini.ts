@@ -496,8 +496,8 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
       .replace(/\{\s*"?categories"?[\s\S]*$/i, '')  // Remove trailing JSON
       .replace(/\{\s*categories[\s\S]*$/i, '')     // Remove unquoted JSON variant
       // Strip teaser labels that Gemini outputs as prose (these are for JSON only, not display)
-      .replace(/^SUBJECT TEASER:.*$/gm, '')
-      .replace(/^EMAIL TEASER:.*$/gm, '')
+      .replace(/^(?:SUBJECT|subject)[_ ](?:TEASER|teaser):.*$/gm, '')
+      .replace(/^(?:EMAIL|email)[_ ](?:TEASER|teaser):.*$/gm, '')
       .replace(/^(Daily Brief|Look Ahead|DAILY BRIEF|LOOK AHEAD)[:\s]*[^.!?\n]*[.!?\n]\s*/im, '')
       // Clean Gemini Google Search grounding citation artifacts
       .replace(/\.\(/g, '.')               // .( -> . (citation artifact, never valid English)

@@ -27,6 +27,11 @@ function isFillerSentence(s: string): boolean {
     || /^(welcome\s+to|let['\u2019]?s\s+dive|let['\u2019]?s\s+get\s+into|ready\s+for)/i.test(t)
     || /^(it['\u2019]?s\s+been\s+a\s+(busy|quiet|slow|big|wild)|what\s+a\s+(week|day|morning))/i.test(t)
     || /^(if\s+you['\u2019]?re\s+just\s+waking\s+up)/i.test(t)
+    || /^(another\s+(brisk|chilly|cold|warm|busy|quiet|foggy|rainy|snowy|sunny|crisp)\s+(morning|day|evening|week))/i.test(t)
+    || /^(right\s+then|well\s+then),?\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i.test(t)
+    || /^a\s+(crisp|brisk|chilly|cold|warm|foggy|rainy|snowy|sunny|beautiful|lovely|quiet)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|morning|day|evening|week)/i.test(t)
+    || /^(here\s+is\s+the\s+latest|there['\u2019]?s\s+always\s+something|for\s+those\s+looking\s+to)/i.test(t)
+    || /^let['\u2019]?s\s+see\s+what/i.test(t)
     || /^(god\s+morgon|hej|bonjour|guten\s+morgen|buenos\s+d[ií]as|bom\s+dia|buongiorno|ciao)/i.test(t)
     || /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d/i.test(t);
 }

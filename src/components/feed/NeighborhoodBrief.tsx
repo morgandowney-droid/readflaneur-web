@@ -256,8 +256,9 @@ function renderWithSearchableEntities(
 function cleanContent(text: string): string {
   return text
     // Strip teaser labels that Gemini outputs as prose (for email/subject only, not display)
-    .replace(/^SUBJECT TEASER:.*$/gm, '')
-    .replace(/^EMAIL TEASER:.*$/gm, '')
+    // Gemini outputs these in varying case: "SUBJECT TEASER:", "subject_teaser:", "Subject Teaser:", etc.
+    .replace(/^(?:SUBJECT|subject)[_ ](?:TEASER|teaser):.*$/gm, '')
+    .replace(/^(?:EMAIL|email)[_ ](?:TEASER|teaser):.*$/gm, '')
     // Strip raw search result objects leaked from AI tool output
     // Matches patterns like: {'title': '...', 'url': '...', 'snippet': ...}
     .replace(/\{['"](?:title|url|snippet|author|published_at)['"]:[^}]*(?:\}|$)/gm, '')
@@ -311,6 +312,12 @@ function isGreetingOrFillerParagraph(text: string): boolean {
     /^(welcome\s+to|let['\u2019]?s\s+dive|let['\u2019]?s\s+get\s+into|ready\s+for)/i,
     /^(it['\u2019]?s\s+been\s+a\s+(busy|quiet|slow|big|wild)|what\s+a\s+(week|day|morning))/i,
     /^(if\s+you['\u2019]?re\s+just\s+waking\s+up)/i,
+    // Generic scene-setting openers (e.g., "Another brisk morning", "Right then, Tuesday has arrived")
+    /^(another\s+(brisk|chilly|cold|warm|busy|quiet|foggy|rainy|snowy|sunny|crisp)\s+(morning|day|evening|week))/i,
+    /^(right\s+then|well\s+then|so\s+then),?\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i,
+    /^a\s+(crisp|brisk|chilly|cold|warm|foggy|rainy|snowy|sunny|beautiful|lovely|quiet)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|morning|day|evening|week)/i,
+    /^(here\s+is\s+the\s+latest|there['\u2019]?s\s+always\s+something|for\s+those\s+looking\s+to)/i,
+    /^let['\u2019]?s\s+see\s+what/i,
     // Swedish
     /^(god\s+morgon|hej|morrn|h[äa]r\s+[äa]r)/i,
     // French
