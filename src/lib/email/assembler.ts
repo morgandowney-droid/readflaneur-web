@@ -17,6 +17,7 @@ import { fetchWeather } from './weather';
 import { generateWeatherStory } from './weather-story';
 import { getEmailAds } from './ads';
 import { getUniqueBands } from '@/lib/childcare/age-bands';
+import { selectLibraryImageAsync } from '@/lib/image-library';
 
 // Each section gets exactly 1 Daily Brief + 1 Look Ahead
 
@@ -177,6 +178,9 @@ async function fetchBriefAsStory(
     return toEmailStory(existingArticle, neighborhoodName, cityName);
   }
 
+  // Get Unsplash image (async DB lookup - no cache preload needed)
+  const imageUrl = await selectLibraryImageAsync(supabase, neighborhoodId, 'brief_summary');
+
   // Create the article so the email link goes to a full article page
   const { data: newArticle } = await supabase
     .from('articles')
@@ -193,7 +197,7 @@ async function fetchBriefAsStory(
       article_type: 'brief_summary',
       category_label: `${neighborhoodName} Daily Brief`,
       brief_id: brief.id,
-      image_url: '',
+      image_url: imageUrl,
       enriched_at: new Date().toISOString(),
       enrichment_model: brief.enrichment_model || 'gemini-2.5-flash',
     })

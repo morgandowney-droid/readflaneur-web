@@ -193,8 +193,47 @@ export function selectLibraryImage(
     }
   }
 
-  // Fallback to old Supabase Storage URL
-  return getLibraryUrl(neighborhoodId, category);
+  // All 273 neighborhoods have Unsplash photos now.
+  // If cache miss, return '' and let retry-missing-images fill it later.
+  // Never return legacy Supabase Storage URLs (those files don't exist).
+  return '';
+}
+
+/**
+ * Async version of selectLibraryImage that queries DB directly.
+ * Use this when the Unsplash cache hasn't been preloaded (e.g., assembler fallback).
+ * Returns Unsplash URL from DB, or '' if no photo exists.
+ */
+export async function selectLibraryImageAsync(
+  supabase: SupabaseClient,
+  neighborhoodId: string,
+  articleType: string,
+  categoryLabel?: string,
+): Promise<string> {
+  // Try cache first
+  const cached = selectLibraryImage(neighborhoodId, articleType, categoryLabel);
+  if (cached && cached.includes('unsplash.com')) {
+    return cached;
+  }
+
+  // Query DB directly
+  const category = resolveCategory(articleType, categoryLabel);
+  const { data } = await supabase
+    .from('image_library_status')
+    .select('unsplash_photos')
+    .eq('neighborhood_id', neighborhoodId)
+    .single();
+
+  if (data?.unsplash_photos) {
+    const photos = data.unsplash_photos as UnsplashPhotosMap;
+    const photo = photos[category];
+    if (photo?.url) return photo.url;
+    // Fallback to any available photo
+    const available = Object.values(photos).find(p => p?.url);
+    if (available?.url) return available.url;
+  }
+
+  return '';
 }
 
 // ============================================================================
