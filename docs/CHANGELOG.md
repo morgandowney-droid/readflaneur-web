@@ -5,9 +5,10 @@
 
 ## 2026-03-01
 
-**Fix Filler Detection for Long Paragraphs:**
-- `isGreetingOrFillerParagraph()` had a 200-char length limit that caused it to miss filler-starting paragraphs exceeding 200 chars (e.g., "Morning, neighbors. Here's the download for our corner of the world today, Tuesday, February 24, 2026." followed by actual news).
-- Fix: checks only the first sentence against filler patterns instead of applying a whole-paragraph length limit. Also handles single-paragraph content by skipping filler sentences within the paragraph to find the first useful sentence.
+**Fix Filler Detection for Long Paragraphs and Multi-Paragraph Filler:**
+- `isGreetingOrFillerParagraph()` had a 200-char length limit that caused it to miss filler-starting paragraphs exceeding 200 chars. Fix: checks only the first sentence against filler patterns, no length limit.
+- Enriched briefs have separate short paragraphs for each filler line (P0: "Morning, neighbors." P1: "Here's the download..." P2: "[[Digging Out]]" header P3: "If you're just waking up..."). Old code only skipped P0 and used P1 unconditionally.
+- Fix: loops through all paragraphs, skipping filler paragraphs and `[[header]]` section markers, extracts useful sentences from long filler-starting paragraphs. UWS preview now shows "Yesterday's blizzard left its mark, dropping a hefty 19.7 inches in Central Park." instead of three consecutive filler sentences.
 - Added "If you're just waking up" filler pattern to both NeighborhoodBrief and CompactArticleCard.
 
 **Skip Filler Blurbs in Feed Cards + Suppress Subscribe Prompt for Logged-In Users:**
