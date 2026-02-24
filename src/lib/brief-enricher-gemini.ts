@@ -87,6 +87,46 @@ function buildContinuityBlock(items: ContinuityItem[]): string {
   return block;
 }
 
+/**
+ * Post-process email teaser to fix patterns Gemini stubbornly produces
+ * despite explicit prompt instructions. Gemini follows JSON examples better
+ * than prose rules, but some patterns still slip through.
+ */
+function cleanEmailTeaser(teaser: string): string {
+  let cleaned = teaser;
+
+  // Strip connective filler at the start of sentences
+  // "Plus, X." -> "X." / "Also, X." -> "X." / "And X." -> "X." / "Meanwhile, X." -> "X."
+  cleaned = cleaned.replace(/(?:^|(?<=\.\s))(?:Plus,?\s|Also,?\s|And\s|Meanwhile,?\s|In addition,?\s)/gi, '');
+
+  // Convert passive future to active present: "starts tomorrow" -> "now live"
+  cleaned = cleaned.replace(/\bstarts?\s+tomorrow\b/gi, 'now live');
+  cleaned = cleaned.replace(/\bopens?\s+tomorrow\b/gi, 'just opened');
+  cleaned = cleaned.replace(/\bbegins?\s+tomorrow\b/gi, 'now live');
+  cleaned = cleaned.replace(/\blaunches?\s+tomorrow\b/gi, 'finally launches');
+  cleaned = cleaned.replace(/\bwill\s+open\b/gi, 'opens');
+  cleaned = cleaned.replace(/\bwill\s+launch\b/gi, 'launches');
+  cleaned = cleaned.replace(/\bis\s+expected\s+to\b/gi, '');
+  cleaned = cleaned.replace(/\bbegins?\s+next\s+week\b/gi, 'now live');
+
+  // Strip boilerplate openers: "See what's on at X" -> "X"
+  // "Check out X" -> "X" / "Catch X at Y" -> "X at Y"
+  cleaned = cleaned.replace(/(?:^|(?<=\.\s))See what's on at\s+/gi, '');
+  cleaned = cleaned.replace(/(?:^|(?<=\.\s))Check out\s+/gi, '');
+  cleaned = cleaned.replace(/(?:^|(?<=\.\s))Catch\s+(?:the\s+)?/gi, '');
+  cleaned = cleaned.replace(/(?:^|(?<=\.\s))Don't miss\s+/gi, '');
+
+  // Clean up any double spaces or leading/trailing whitespace
+  cleaned = cleaned.replace(/\s{2,}/g, ' ').trim();
+
+  // Ensure it still starts with a capital letter after stripping
+  if (cleaned.length > 0) {
+    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  }
+
+  return cleaned;
+}
+
 // Blocked domains per neighborhood
 const BLOCKED_DOMAINS: Record<string, string[]> = {
   'tribeca': ['tribecacitizen.com'],
@@ -391,8 +431,8 @@ After your prose, include this JSON with ONLY the verified stories:
   "link_candidates": [
     {"text": "Exact phrase from your prose"}
   ],
-  "subject_teaser": "1-4 word information gap teaser",
-  "email_teaser": "2-3 sentence information-dense teaser with specific names and facts (max 160 chars)"
+  "subject_teaser": "rent freeze showdown",
+  "email_teaser": "Shin Takumi finally opens on Spring St. DEJAVU pop-up extended again. Golden Steer reservations live."
 }
 \`\`\`
 
@@ -501,7 +541,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
         }
         // Extract email teaser (2-3 sentences, 10-200 chars, must contain a period/exclamation)
         if (parsed.email_teaser && typeof parsed.email_teaser === 'string') {
-          const et = parsed.email_teaser.trim();
+          const et = cleanEmailTeaser(parsed.email_teaser.trim());
           const hasEnding = /[.!]/.test(et);
           const isGreeting = /^(good morning|god morgon|bonjour|buongiorno|guten morgen|buenos d[ií]as|bom dia|goedemorgen|morning)/i.test(et);
           if (et.length >= 10 && et.length <= 200 && hasEnding && !isGreeting) {
