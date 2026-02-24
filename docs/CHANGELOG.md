@@ -5,6 +5,15 @@
 
 ## 2026-03-01
 
+**Post-Process Email Teasers for Gemini Stubborn Patterns:**
+- Gemini Pro ignores negative prompt instructions ("NEVER say starts tomorrow", "NO boilerplate like See what's on at") despite explicit rules. Two fixes:
+- **Fix 1 - JSON schema example:** Changed JSON schema `email_teaser` value from description placeholder to concrete example text ("Shin Takumi finally opens on Spring St. DEJAVU pop-up extended again. Golden Steer reservations live."). Gemini follows examples over prose instructions (known gotcha).
+- **Fix 2 - `cleanEmailTeaser()` post-processor:** Strips connective filler ("Plus,", "Also,", "And", "Meanwhile,", "In addition"), converts passive future to active present ("starts tomorrow" -> "now live", "opens tomorrow" -> "just opened", "launches tomorrow" -> "finally launches", "will open" -> "opens"), removes boilerplate openers ("See what's on at", "Check out", "Catch", "Don't miss"). Applied during enrichment response parsing before DB save.
+- **Subject teaser prompt tightened:** ALL lowercase (only proper nouns capitalized), no leading "the" ("building of the year" not "the building of the year").
+- **Email teaser prompt tightened:** Standalone nuggets only (no "Plus,"/"Also,"), active present tense ("now live" not "starts tomorrow"), one venue per sentence (no lists like "X and Y"), no boilerplate.
+- Test results: Vasastan "Hagastaden's Forskaren is building of the year. Wasahof's husmanskost menu now live. A vernissage at Galleri Kaktus this Friday." / West Village "Snowball fight targets NYPD in Washington Square Park. A Cornelia Street cafe is named one of the world's best. Subterranean cocktail bar Kees is now open."
+- File: `src/lib/brief-enricher-gemini.ts` (prompt + JSON schema + `cleanEmailTeaser()` + parsing).
+
 **Information-Dense Email Teasers + Look Ahead Blurb Fix:**
 - **Problem A:** Daily Brief email blurbs showed content-free filler like "Morning, neighbors. It's been a busy couple of weeks for openings." instead of engaging teasers. Root cause: `isGreetingOnly()` in assembler.ts returned `false` for text >60 chars, letting greetings bypass detection entirely.
 - **Problem B:** Several Look Ahead stories (West Village, Stockholm, Summit) showed "Daily Brief: {neighborhood}." as their blurb because `generatePreviewText()` in the Look Ahead cron captured label text from Gemini output.
