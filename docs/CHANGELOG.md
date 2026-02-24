@@ -5,6 +5,12 @@
 
 ## 2026-03-01
 
+**Skip Filler Blurbs in Feed Cards + Suppress Subscribe Prompt for Logged-In Users:**
+- Daily Brief card showed "Here's the download for our corner of the world today, Tuesday, February 24, 2026." as preview text. `isGreetingParagraph()` only caught greetings like "Good morning" but missed filler openers.
+- Expanded to `isGreetingOrFillerParagraph()` with filler patterns: "Here's the download/latest/lowdown/update", "It's been a busy/quiet week", "Welcome to", "Let's dive in", date-only sentences, plus equivalents in all 9 languages.
+- CompactArticleCard: added `cleanBlurb()` that splits text into sentences, skips filler/greeting sentences, then truncates at sentence boundary. Feed article blurbs now show real news content instead of filler.
+- ReturnVisitPrompt + EmailCaptureCard: suppressed for logged-in users by checking `flaneur-auth` localStorage. Users who signed up before auto-subscribe feature was added didn't have `flaneur-newsletter-subscribed` key set, causing subscribe prompts despite being active email recipients.
+
 **Fix Look Ahead Article Paragraph Splitting:**
 - Look Ahead day sections rendered as wall-of-text paragraphs with multiple events crammed together (e.g., tree tapping + teen hangout + Come From Away musical all in one paragraph).
 - Root cause: sentence-boundary splitting in `ArticleBody.tsx` only triggered when `paragraphs.length === 1 && length > 500`. Look Ahead articles have multiple paragraphs (one per `[[Day, Date]]` header), so the condition never fired.
