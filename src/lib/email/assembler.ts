@@ -648,8 +648,11 @@ function formatDateline(dateString?: string): string {
 /** Check if a preview text STARTS with a greeting (checks first sentence only, no length limit) */
 function isGreetingStart(text: string): boolean {
   const stripped = text.trim().replace(/\s+/g, ' ');
-  // Check if the first sentence is a greeting pattern
-  return /^(good morning|god morgon|bonjour|buongiorno|guten morgen|buenos d[ií]as|bom dia|goedemorgen|morning|gr[üu]ezi|hey|hello)[,.]?\s/i.test(stripped);
+  // Check the first sentence for greeting/filler patterns
+  const firstSentence = stripped.split(/(?<=[.!?])\s+/)[0] || stripped;
+  return /^(good morning|god morgon|bonjour|buongiorno|guten morgen|buenos d[ií]as|bom dia|goedemorgen|morning|gr[üu]ezi|hey|hello)[,.]?\s/i.test(firstSentence)
+    || /^here['\u2019']?s\s+(the\s+)?(download|latest|lowdown|rundown|roundup|update|what['\u2019']?s\s+happening|your\s+morning)/i.test(firstSentence)
+    || /^(if\s+you['\u2019']?re\s+just\s+waking\s+up)/i.test(firstSentence);
 }
 
 /** Check if text starts with a label pattern that shouldn't be blurb text */
@@ -662,7 +665,18 @@ function isLabelText(text: string): boolean {
 function isFillerText(text: string): boolean {
   const stripped = text.trim().replace(/\s+/g, ' ');
   // Detect vague openers like "It's been a busy couple of weeks" or "Here's what's happening"
-  return /^(it['']s been a|here['']s what|here is what|there['']s (a lot|plenty|much)|we['']ve got|let['']s (dive|take a look|get into)|this (morning|week|weekend))/i.test(stripped);
+  return /^(it['\u2019']?s been a|here['\u2019']?s what|here is what|there['\u2019']?s (a lot|plenty|much)|we['\u2019']?ve got|let['\u2019']?s (dive|take a look|get into|see what)|this (morning|week|weekend))/i.test(stripped)
+    || /^(another\s+(brisk|chilly|cold|warm|busy|quiet|foggy|rainy|snowy|sunny|crisp)\s+(morning|day|evening|week))/i.test(stripped)
+    || /^(right\s+then|well\s+then),?\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i.test(stripped)
+    || /^a\s+(crisp|brisk|chilly|cold|warm|foggy|rainy|snowy|sunny|beautiful|lovely|quiet)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|morning|day|evening|week)/i.test(stripped)
+    || /^(here\s+is\s+the\s+latest|there['\u2019']?s\s+always\s+something|for\s+those\s+looking\s+to)/i.test(stripped)
+    || /^(welcome\s+to|ready\s+for)/i.test(stripped);
+}
+
+/** Check if text is a brief sign-off/closing line */
+function isSignOff(text: string): boolean {
+  const t = text.trim();
+  return /^(enjoy the day|enjoy your|stay warm|stay safe|stay dry|take care|until tomorrow|see you tomorrow|have a (great|good|wonderful)|that['\u2019']?s (all|it) for|till next time|bundle up)/i.test(t);
 }
 
 /**
@@ -707,12 +721,14 @@ function findSentenceEnd(text: string): number {
  * Skips greetings, date filler, event listing markers, and label text.
  */
 function extractInformativeSentences(bodyText: string, maxChars: number): string {
-  // Clean body text: strip markdown, event listings, headers
+  // Clean body text: strip markdown, event listings, headers, teaser labels
   const cleaned = bodyText
     .replace(/\[\[Event Listing\]\][\s\S]*?---/g, '') // event listing blocks
     .replace(/\[\[[^\]]+\]\]/g, '')                     // [[section headers]]
     .replace(/\*\*([^*]+)\*\*/g, '$1')                  // **bold**
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')            // [text](url) -> text
+    .replace(/^(?:SUBJECT|subject)[_ ](?:TEASER|teaser):.*$/gm, '') // teaser labels
+    .replace(/^(?:EMAIL|email)[_ ](?:TEASER|teaser):.*$/gm, '')
     .replace(/\n+/g, ' ')
     .trim();
 
@@ -724,8 +740,9 @@ function extractInformativeSentences(bodyText: string, maxChars: number): string
     if (isGreetingStart(t)) return false;
     if (isLabelText(t)) return false;
     if (isFillerText(t)) return false;
+    if (isSignOff(t)) return false;
     // Skip date-only sentences like "Here's your update for Tuesday, February 24, 2026."
-    if (/^(here['']s|this is) (your|the) (update|brief|news|roundup|look ahead)/i.test(t)) return false;
+    if (/^(here['\u2019']?s|this is) (your|the) (update|brief|news|roundup|look ahead)/i.test(t)) return false;
     // Skip very short sentences (< 15 chars) that are likely fragments
     if (t.length < 15) return false;
     return true;
@@ -781,7 +798,8 @@ function toEmailStory(
     || previewText.length < 30
     || isGreetingStart(previewText)
     || isLabelText(previewText)
-    || isFillerText(previewText);
+    || isFillerText(previewText)
+    || isSignOff(previewText);
 
   if (needsBetterPreview && article.body_text) {
     const extracted = extractInformativeSentences(article.body_text, 160);
