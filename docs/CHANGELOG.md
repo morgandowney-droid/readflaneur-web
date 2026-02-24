@@ -5,6 +5,12 @@
 
 ## 2026-03-01
 
+**Strip SUBJECT TEASER/EMAIL TEASER Labels and Daily Brief Label from Display:**
+- Gemini outputs "SUBJECT TEASER: snowball showdown" and "EMAIL TEASER: Snowball fight targets NYPD..." as visible prose text alongside the JSON block. These leaked into `enriched_content` and displayed in brief cards and article pages.
+- Stripped in `brief-enricher-gemini.ts` during text processing (prevents future storage).
+- Render-time stripping in 3 components for existing articles: `NeighborhoodBrief.tsx` `cleanContent()`, `ArticleBody.tsx`, `LookAheadCard.tsx`.
+- Also strips "Daily Brief: {name}." label text from Look Ahead card teaser and expanded body (Gemini injects label at start of Look Ahead prose).
+
 **Post-Process Email Teasers for Gemini Stubborn Patterns:**
 - Gemini Pro ignores negative prompt instructions ("NEVER say starts tomorrow", "NO boilerplate like See what's on at") despite explicit rules. Two fixes:
 - **Fix 1 - JSON schema example:** Changed JSON schema `email_teaser` value from description placeholder to concrete example text ("Shin Takumi finally opens on Spring St. DEJAVU pop-up extended again. Golden Steer reservations live."). Gemini follows examples over prose instructions (known gotcha).
