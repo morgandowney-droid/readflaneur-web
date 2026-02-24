@@ -333,6 +333,12 @@ function isGreetingOrFillerParagraph(text: string): boolean {
   return patterns.some(p => p.test(firstSentence));
 }
 
+/** Detect brief sign-off/closing lines that shouldn't be preview text */
+function isSignOff(text: string): boolean {
+  const t = text.trim();
+  return /^(enjoy the day|enjoy your|stay warm|stay safe|stay dry|take care|until tomorrow|see you tomorrow|have a (great|good|wonderful)|that['\u2019]?s (all|it) for|till next time|bundle up)/i.test(t);
+}
+
 function formatTime(dateString: string, locale: string = 'en') {
   const date = new Date(dateString);
   const now = new Date();
@@ -466,10 +472,13 @@ export function NeighborhoodBrief({
   // Clean content and split into paragraphs
   const cleanedContent = cleanContent(displayContent);
   const paragraphs = cleanedContent.split('\n\n').filter(p => p.trim());
-  // Skip greeting/filler/header paragraphs for preview - show actual news content
+  // Skip greeting/filler/header/sign-off paragraphs for preview - show actual news content
   let previewText = paragraphs[0] || cleanedContent;
   for (const para of paragraphs) {
-    if (para.match(/^\[\[/)) continue; // skip section headers
+    const trimmedPara = para.trim();
+    if (trimmedPara.match(/^\[\[/)) continue; // skip section headers
+    if (trimmedPara.length < 30) continue; // skip sign-offs, teasers, and fragments
+    if (isSignOff(trimmedPara)) continue; // skip closing remarks
     if (!isGreetingOrFillerParagraph(para)) {
       previewText = para;
       break;
