@@ -466,18 +466,21 @@ export function NeighborhoodBrief({
   // Clean content and split into paragraphs
   const cleanedContent = cleanContent(displayContent);
   const paragraphs = cleanedContent.split('\n\n').filter(p => p.trim());
-  // Skip greeting/filler paragraph for preview - show actual news content
+  // Skip greeting/filler/header paragraphs for preview - show actual news content
   let previewText = paragraphs[0] || cleanedContent;
-  if (isGreetingOrFillerParagraph(previewText)) {
-    if (paragraphs.length > 1) {
-      // Use next paragraph
-      previewText = paragraphs[1];
-    } else {
-      // Single paragraph starting with filler - skip filler sentences
-      const sentences = previewText.split(/(?<=[.!?])\s+(?=[A-Z])/);
+  for (const para of paragraphs) {
+    if (para.match(/^\[\[/)) continue; // skip section headers
+    if (!isGreetingOrFillerParagraph(para)) {
+      previewText = para;
+      break;
+    }
+    // Paragraph starts with filler but may have useful sentences after
+    if (para.length > 80) {
+      const sentences = para.split(/(?<=[.!?])\s+(?=[A-Z])/);
       const firstUseful = sentences.findIndex(s => !isGreetingOrFillerParagraph(s));
       if (firstUseful > 0) {
         previewText = sentences.slice(firstUseful).join(' ');
+        break;
       }
     }
   }
