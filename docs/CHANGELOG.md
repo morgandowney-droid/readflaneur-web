@@ -3,6 +3,26 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-24
+
+**Dual-Source Fact-Gathering: Grok + Gemini Search:**
+- Previously Grok was the sole fact-gatherer (X search + web search), causing repetition (same trending topics daily) and thin coverage (Grok misses institutional sources like gallery calendars, official event listings, local news sites).
+- New: Gemini Flash with Google Search grounding runs as a parallel second fact-gatherer alongside Grok via `Promise.allSettled`. Zero latency increase since Gemini (~5-10s) finishes before Grok (~25-30s).
+- New file `src/lib/gemini-search.ts`: `searchNeighborhoodFacts()` for daily briefs (targets local newspapers, official calendars, city government, business press, real estate), `searchUpcomingEvents()` for Look Ahead (targets gallery exhibitions, museum schedules, concert listings, community meetings), `mergeContent()` appends Gemini facts with "ALSO NOTED:" label, `mergeStructuredEvents()` deduplicates by name similarity and sorts chronologically.
+- Anti-repetition: `searchNeighborhoodFacts()` accepts `recentTopics` param (last 5 brief headlines) injected as "AVOID repeating these recently covered topics" in the Gemini prompt.
+- `sync-neighborhood-briefs`: parallel Grok + Gemini call per neighborhood, merged before save. Falls back gracefully if either source fails. Tracks `gemini_supplemented` count in cron_executions.
+- `generate-look-ahead`: parallel Grok + Gemini call, merges both prose content and structured events via `mergeStructuredEvents()`.
+- `weekly-brief-service`: Horizon section changed from Grok-then-Gemini-fallback to always-dual parallel. Added `deduplicateHorizonEvents()` helper. Max events increased from 3 to 5.
+- Retry: 2s/5s/15s exponential backoff on 429/RESOURCE_EXHAUSTED (same pattern as brief-enricher-gemini.ts).
+- Cost: ~+$0.70/day (~$21/month) for ~350 additional Gemini Flash calls/day, well within 10K RPD budget.
+- Files: `src/lib/gemini-search.ts` (new), `sync-neighborhood-briefs/route.ts`, `generate-look-ahead/route.ts`, `src/lib/weekly-brief-service.ts`.
+
+**Enrichment Prompt: One Story Per Section + Recency-First Ordering:**
+- Daily Brief (`dailyBriefStyle`): each distinct story gets its own [[header]] and paragraph, never combine unrelated stories. Lead with most recent and surprising news - yesterday's incident outranks last week's opening.
+- Look Ahead (`lookAheadStyle`): each event gets its own paragraph within day sections. Lead each day with most noteworthy event - one-time specials outrank recurring happenings.
+- Sunday Edition (`weeklyRecapStyle` + `editorialSynthesis`): one story per section, lead with most consequential and recent. Safety incidents or policy changes outrank restaurant openings.
+- File: `src/lib/brief-enricher-gemini.ts`, `src/lib/weekly-brief-service.ts`.
+
 ## 2026-02-23
 
 **Improve Unsplash Image Quality with Interleaved Dual-Query Search:**
