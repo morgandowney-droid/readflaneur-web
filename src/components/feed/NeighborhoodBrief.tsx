@@ -306,11 +306,11 @@ function isGreetingOrFillerParagraph(text: string): boolean {
   const patterns = [
     // English greetings
     /^(good\s+morning|morning|hello|hey|greetings)/i,
-    // English filler openers
-    /^here'?s\s+(the\s+)?(download|latest|lowdown|rundown|roundup|update|what'?s\s+happening|your\s+morning)/i,
-    /^(welcome\s+to|let'?s\s+dive|let'?s\s+get\s+into|ready\s+for)/i,
-    /^(it'?s\s+been\s+a\s+(busy|quiet|slow|big|wild)|what\s+a\s+(week|day|morning))/i,
-    /^(if\s+you'?re\s+just\s+waking\s+up)/i,
+    // English filler openers (handle both straight ' and curly \u2019 apostrophes from Gemini)
+    /^here['\u2019]?s\s+(the\s+)?(download|latest|lowdown|rundown|roundup|update|what['\u2019]?s\s+happening|your\s+morning)/i,
+    /^(welcome\s+to|let['\u2019]?s\s+dive|let['\u2019]?s\s+get\s+into|ready\s+for)/i,
+    /^(it['\u2019]?s\s+been\s+a\s+(busy|quiet|slow|big|wild)|what\s+a\s+(week|day|morning))/i,
+    /^(if\s+you['\u2019]?re\s+just\s+waking\s+up)/i,
     // Swedish
     /^(god\s+morgon|hej|morrn|h[äa]r\s+[äa]r)/i,
     // French

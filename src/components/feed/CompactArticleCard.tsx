@@ -23,10 +23,10 @@ function formatDate(dateString: string, locale: string = 'en', timezone?: string
 function isFillerSentence(s: string): boolean {
   const t = s.trim();
   return /^(good\s+morning|morning|hello|hey|greetings)/i.test(t)
-    || /^here'?s\s+(the\s+)?(download|latest|lowdown|rundown|roundup|update|what'?s\s+happening|your\s+morning)/i.test(t)
-    || /^(welcome\s+to|let'?s\s+dive|let'?s\s+get\s+into|ready\s+for)/i.test(t)
-    || /^(it'?s\s+been\s+a\s+(busy|quiet|slow|big|wild)|what\s+a\s+(week|day|morning))/i.test(t)
-    || /^(if\s+you'?re\s+just\s+waking\s+up)/i.test(t)
+    || /^here['\u2019]?s\s+(the\s+)?(download|latest|lowdown|rundown|roundup|update|what['\u2019]?s\s+happening|your\s+morning)/i.test(t)
+    || /^(welcome\s+to|let['\u2019]?s\s+dive|let['\u2019]?s\s+get\s+into|ready\s+for)/i.test(t)
+    || /^(it['\u2019]?s\s+been\s+a\s+(busy|quiet|slow|big|wild)|what\s+a\s+(week|day|morning))/i.test(t)
+    || /^(if\s+you['\u2019]?re\s+just\s+waking\s+up)/i.test(t)
     || /^(god\s+morgon|hej|bonjour|guten\s+morgen|buenos\s+d[ií]as|bom\s+dia|buongiorno|ciao)/i.test(t)
     || /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d/i.test(t);
 }
