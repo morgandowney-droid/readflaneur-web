@@ -3,6 +3,17 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-01
+
+**Information-Dense Email Teasers + Look Ahead Blurb Fix:**
+- **Problem A:** Daily Brief email blurbs showed content-free filler like "Morning, neighbors. It's been a busy couple of weeks for openings." instead of engaging teasers. Root cause: `isGreetingOnly()` in assembler.ts returned `false` for text >60 chars, letting greetings bypass detection entirely.
+- **Problem B:** Several Look Ahead stories (West Village, Stockholm, Summit) showed "Daily Brief: {neighborhood}." as their blurb because `generatePreviewText()` in the Look Ahead cron captured label text from Gemini output.
+- **Fix 1 - email_teaser field:** Added `email_teaser` to Gemini enrichment JSON response (zero extra API cost - same call). Prompt instructs Gemini to generate 2-3 sentence teasers packed with specific names, places, and facts (max 160 chars). Examples: "Village snowball fight against NYPD. Hello Kees bar and Dahla Thai. Goodbye Da Toscano." Validated: 10-200 chars, must contain period/exclamation, no greeting patterns. Stored in `neighborhood_briefs.email_teaser` (new column). Used as `preview_text` when creating articles in `generate-brief-articles`, `generate-look-ahead`, and assembler fallback.
+- **Fix 2 - Label text stripping:** `generatePreviewText()` in Look Ahead cron now strips "Daily Brief:", "Look Ahead:" prefix labels that Gemini sometimes injects at start of prose.
+- **Fix 3 - Robust blurb extraction:** Replaced `isGreetingOnly()` (broken 60-char limit) with three helpers: `isGreetingStart()` (checks first sentence only, no length limit), `isLabelText()` (detects label prefixes), `isFillerText()` (detects vague openers like "It's been a busy couple of weeks"). New `extractInformativeSentences()` filters out greetings/labels/filler/date-only sentences from body text and builds 160-char information-dense blurbs.
+- **Pipeline:** `enrich-briefs` cron saves `email_teaser` to DB. `generate-brief-articles` and `generate-look-ahead` prefer `email_teaser` as `preview_text`. Assembler fallback path also uses `email_teaser`. `toEmailStory()` detects bad preview text at render time as final safety net.
+- Files: `src/lib/brief-enricher-gemini.ts` (prompt + parsing), `src/lib/email/assembler.ts` (helpers + fallback), `src/app/api/cron/enrich-briefs/route.ts` (DB save), `src/app/api/cron/generate-brief-articles/route.ts` (use email_teaser), `src/app/api/cron/generate-look-ahead/route.ts` (label strip + use email_teaser), migration `20260301_add_brief_email_teaser.sql`.
+
 ## 2026-02-24
 
 **Dual-Source Fact-Gathering: Grok + Gemini Search:**
