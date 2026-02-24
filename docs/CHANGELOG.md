@@ -3,6 +3,31 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-24
+
+**Align Email Assembler Blurb Filters with Feed-Side Fixes:**
+- Email blurbs from `toEmailStory()` in assembler.ts had the same filler detection gaps as the feed side: missing curly apostrophes, no sign-off detection, no generic scene-setter patterns.
+- `isGreetingStart()`: expanded to check first sentence only (not whole text) with curly apostrophe `['\u2019]?` support. Added filler openers: "Here's the download"/"Another brisk morning"/"A crisp Tuesday"/"Right then, Tuesday"/"A crisp Monday".
+- `isFillerText()`: added generic scene-setters matching NeighborhoodBrief patterns, curly apostrophe support throughout.
+- New `isSignOff()`: detects closing remarks ("Enjoy the day", "Stay warm", "Until tomorrow", "Bundle up", "Have a great day") that shouldn't be email preview text.
+- `extractInformativeSentences()`: now strips teaser labels case-insensitively from body text before sentence extraction, filters sign-off sentences, curly apostrophe in date-filler pattern.
+- `needsBetterPreview` in `toEmailStory()`: now also checks `isSignOff(previewText)`.
+- Files: `src/lib/email/assembler.ts`
+
+**Fix Case-Insensitive Teaser Label Stripping + Generic Filler Openers:**
+- Gemini outputs teaser labels in varying case: "SUBJECT TEASER:", "subject_teaser:", "EMAIL TEASER:", "email_teaser:". Old regex was case-sensitive, only matching uppercase.
+- Updated to case-insensitive `(?:SUBJECT|subject)[_ ](?:TEASER|teaser)` pattern in 3 files: `NeighborhoodBrief.tsx` cleanContent(), `ArticleBody.tsx` content cleaning, `brief-enricher-gemini.ts` enrichment post-processing.
+- Added generic scene-setting filler patterns to both `NeighborhoodBrief.tsx` and `CompactArticleCard.tsx`: "Another brisk/chilly/cold/warm morning", "A crisp Tuesday morning", "Right then, Tuesday", "Here is the latest", "There's always something", "For those looking to", "Welcome to", "Ready for".
+- Verified across 8 neighborhoods: UWS, Tribeca, West Village (NYC), Stockholm/Ostermalm, London/Soho, Paris/Le Marais, Tokyo/Shibuya.
+
+**Fix [[Header]] Marker Stripping and Sign-Off Detection in Brief Preview:**
+- Paragraph loop was skipping entire paragraphs starting with `[[` (section headers). But some paragraphs have the marker inline with content: `[[Tin Building Goes Dark]] The corporation's Tin Building...`. Skipping the whole paragraph lost the useful content after the marker.
+- Fix: strip `[[header]]` markers with `.replace(/^\[\[[^\]]*\]\]\s*/, '')` and use remaining content instead of skipping.
+- Added `isSignOff()` function detecting closing remarks: "Enjoy the day", "Stay warm", "Stay safe", "Until tomorrow", "See you tomorrow", "Have a great/good/wonderful", "That's all for", "Bundle up".
+- Paragraphs under 30 chars now skipped (catches fragments like "Enjoy the day." that aren't caught by sign-off patterns).
+- Fallback when all paragraphs are filler changed from `paragraphs[0]` (which was "Morning, neighbors.") to empty string with a secondary search for any paragraph with 15+ chars.
+- Files: `src/components/feed/NeighborhoodBrief.tsx`
+
 ## 2026-03-01
 
 **Handle Curly Apostrophes in Filler Detection:**
