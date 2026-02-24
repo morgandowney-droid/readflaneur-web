@@ -5,6 +5,12 @@
 
 ## 2026-03-01
 
+**Fix Look Ahead Article Paragraph Splitting:**
+- Look Ahead day sections rendered as wall-of-text paragraphs with multiple events crammed together (e.g., tree tapping + teen hangout + Come From Away musical all in one paragraph).
+- Root cause: sentence-boundary splitting in `ArticleBody.tsx` only triggered when `paragraphs.length === 1 && length > 500`. Look Ahead articles have multiple paragraphs (one per `[[Day, Date]]` header), so the condition never fired.
+- Fix: apply sentence splitting to any individual paragraph over 400 chars, targeting ~300 char sub-paragraphs at sentence boundaries. Skips `[[header]]` paragraphs and short content.
+- Result: each event/topic within a day section gets its own paragraph for better readability.
+
 **Replace Look Ahead Expandable Card with Simple Link:**
 - The expandable card with "At a glance" event listing was visually jarring and didn't integrate well with the brief styling.
 - Replaced `LookAheadCard` (362 lines) with a minimal component (~50 lines) that fetches the Look Ahead URL and renders a clean link: "What's Coming Up in {name}" (translated via `feed.lookAheadCta` in all 9 languages).
