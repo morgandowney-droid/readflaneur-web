@@ -12,6 +12,9 @@ interface ArticleBodyProps {
 export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProps) {
   // Strip all links (HTML and markdown) from content, keeping just the text
   let cleanedContent = content
+    // Strip teaser labels that Gemini outputs as prose (for email/subject only, not display)
+    .replace(/^SUBJECT TEASER:.*$/gm, '')
+    .replace(/^EMAIL TEASER:.*$/gm, '')
     // Strip raw Grok search result objects that leak into content
     .replace(/\{['"](?:title|url|snippet|author|published_at)['"]:[^}]*(?:\}|$)/gm, '')
     // Convert HTML <a> tags to markdown links (preserves hyperlinks for rendering)

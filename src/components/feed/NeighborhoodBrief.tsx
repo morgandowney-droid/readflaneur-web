@@ -255,6 +255,9 @@ function renderWithSearchableEntities(
  */
 function cleanContent(text: string): string {
   return text
+    // Strip teaser labels that Gemini outputs as prose (for email/subject only, not display)
+    .replace(/^SUBJECT TEASER:.*$/gm, '')
+    .replace(/^EMAIL TEASER:.*$/gm, '')
     // Strip raw search result objects leaked from AI tool output
     // Matches patterns like: {'title': '...', 'url': '...', 'snippet': ...}
     .replace(/\{['"](?:title|url|snippet|author|published_at)['"]:[^}]*(?:\}|$)/gm, '')

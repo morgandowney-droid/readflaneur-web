@@ -165,9 +165,10 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
     }
   }
 
-  // Pre-process prose: ensure [[Day, Date]] headers get their own paragraphs
+  // Pre-process prose: strip label text and ensure [[Day, Date]] headers get their own paragraphs
   const processedBody = proseBody
     ? proseBody
+        .replace(/^(Daily Brief|Look Ahead|DAILY BRIEF|LOOK AHEAD)[:\s]*[^.!?\n]*[.!?\n]\s*/im, '') // strip label text
         .replace(/\s*(\[\[[^\]]+\]\])\s*/g, '\n\n$1\n\n')
         .replace(/\]\]\s+([A-Z])/g, ']]\n\n$1')
     : null;
@@ -176,10 +177,11 @@ export function LookAheadCard({ neighborhoodId, neighborhoodName, city }: LookAh
   const paragraphs = processedBody ? processedBody.split('\n\n').filter(p => p.trim()) : [];
 
   // One-sentence teaser from prose (not event listing)
-  const plainText = (paragraphs.find(p => !p.match(/^\[\[/)) || paragraphs[0] || '')
+  const plainText = (paragraphs.find(p => !p.match(/^\[\[/) && !p.match(/^(Daily Brief|Look Ahead|DAILY BRIEF|LOOK AHEAD)[:\s]/i)) || paragraphs[0] || '')
     .replace(/\*\*([^*]+)\*\*/g, '$1')           // strip bold markers
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')      // strip markdown links, keep text
     .replace(/\[\[([^\]]+)\]\]/g, '$1')            // strip header markers
+    .replace(/^(Daily Brief|Look Ahead|DAILY BRIEF|LOOK AHEAD)[:\s]*[^.!?\n]*[.!?\n]\s*/i, '') // strip label text
     .trim();
   const sentenceMatch = plainText.match(/^[^.!?]*[.!?]/);
   const previewSentence = sentenceMatch ? sentenceMatch[0] : plainText;
