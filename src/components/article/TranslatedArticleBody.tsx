@@ -48,6 +48,7 @@ interface TranslatedArticleBodyProps {
   content: string;
   neighborhoodName: string;
   city: string;
+  articleType?: string;
 }
 
 /** Wraps ArticleBody with translation support.
@@ -58,6 +59,7 @@ export function TranslatedArticleBody({
   content,
   neighborhoodName,
   city,
+  articleType,
 }: TranslatedArticleBodyProps) {
   const { language, isTranslated } = useLanguageContext();
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
@@ -113,6 +115,7 @@ export function TranslatedArticleBody({
       content={translatedContent || content}
       neighborhoodName={neighborhoodName}
       city={city}
+      articleType={articleType}
     />
   );
 }

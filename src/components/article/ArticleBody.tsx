@@ -7,9 +7,27 @@ interface ArticleBodyProps {
   content: string;
   neighborhoodName: string;
   city: string;
+  articleType?: string;
 }
 
-export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProps) {
+/** Detect greeting lines across 9 languages - matches the patterns in NeighborhoodBrief.tsx */
+function isGreetingLine(text: string): boolean {
+  const trimmed = text.trim();
+  const patterns = [
+    /^(good\s+morning|morning|hello|hey|greetings)/i,
+    /^(god\s+morgon|hej|morrn)/i,
+    /^(bonjour|bon\s+matin|salut)/i,
+    /^(guten\s+morgen|morgen|hallo)/i,
+    /^(buenos\s+d[ií]as|hola|buen\s+d[ií]a)/i,
+    /^(bom\s+dia|ol[aá])/i,
+    /^(buongiorno|buon\s+giorno|ciao)/i,
+    /^(早上好|早安|你好)/,
+    /^(おはようございます|おはよう|こんにちは)/,
+  ];
+  return patterns.some(p => p.test(trimmed));
+}
+
+export function ArticleBody({ content, neighborhoodName, city, articleType }: ArticleBodyProps) {
   // Strip all links (HTML and markdown) from content, keeping just the text
   let cleanedContent = content
     // Strip teaser labels that Gemini outputs as prose (for email/subject only, not display)
@@ -30,6 +48,18 @@ export function ArticleBody({ content, neighborhoodName, city }: ArticleBodyProp
     // Fix double periods
     .replace(/\.\.\s*/g, '. ')
     .trim();
+
+  // For Daily Brief articles, ensure the greeting is the first visible paragraph.
+  // Gemini sometimes outputs subject_teaser and email_teaser as prose text before the
+  // greeting, causing inconsistent opening content across different briefs.
+  if (articleType === 'brief_summary') {
+    const lines = cleanedContent.split(/\n\n+/);
+    const greetingIdx = lines.findIndex(l => isGreetingLine(l.trim()));
+    if (greetingIdx > 0) {
+      // Drop everything before the greeting (teaser labels, summary lines)
+      cleanedContent = lines.slice(greetingIdx).join('\n\n');
+    }
+  }
 
   // Split event listing from prose body at --- separator
   let eventListingBlock: string | null = null;

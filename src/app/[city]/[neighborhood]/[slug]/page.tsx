@@ -313,6 +313,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           content={article.body_text}
           neighborhoodName={article.neighborhood?.name || ''}
           city={article.neighborhood?.city || ''}
+          articleType={article.article_type}
         />
 
         {/* Source Attribution + Reactions (inline) */}
