@@ -153,7 +153,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
   );
 
   const imageEl = article.image_url ? (
-    <div className="relative w-24 h-24 flex-shrink-0">
+    <div className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden">
       <Image
         src={article.image_url}
         alt={article.headline}

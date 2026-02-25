@@ -271,7 +271,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           );
           return (
             <>
-              <div className="relative aspect-video w-full mb-2">
+              <div className="relative aspect-video w-full mb-2 rounded-xl overflow-hidden">
                 <Image
                   src={article.image_url}
                   alt={article.headline}

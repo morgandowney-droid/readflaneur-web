@@ -153,7 +153,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
           </div>
         )}
 
-        <div className="relative aspect-video w-full bg-elevated">
+        <div className="relative aspect-video w-full bg-elevated rounded-xl overflow-hidden">
           {article.image_url ? (
             <Image
               src={article.image_url}

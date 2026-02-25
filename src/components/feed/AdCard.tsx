@@ -52,7 +52,7 @@ export function AdCard({ ad, variant = 'gallery' }: AdCardProps) {
           {ad.sponsor_label}
         </span>
       </div>
-      <div className="relative aspect-video w-full">
+      <div className="relative aspect-video w-full overflow-hidden">
         <Image
           src={ad.image_url}
           alt={ad.headline}
