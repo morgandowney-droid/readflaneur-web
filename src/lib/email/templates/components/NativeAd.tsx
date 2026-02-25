@@ -42,7 +42,7 @@ export function NativeAd({ ad }: NativeAdProps) {
 
 const container = {
   border: '1px solid #eeeeee',
-  borderRadius: '4px',
+  borderRadius: '12px',
   padding: '20px 16px',
   marginTop: '8px',
   marginBottom: '8px',
@@ -61,7 +61,7 @@ const sponsoredLabel = {
 
 const image = {
   width: '100%',
-  borderRadius: '4px',
+  borderRadius: '8px',
   marginBottom: '12px',
 };
 
@@ -103,7 +103,7 @@ const ctaButton = {
   letterSpacing: '0.1em',
   textTransform: 'uppercase' as const,
   textDecoration: 'none',
-  borderRadius: '4px',
+  borderRadius: '8px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
 };
 

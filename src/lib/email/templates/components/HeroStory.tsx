@@ -45,7 +45,7 @@ const container = {
 
 const image = {
   width: '100%',
-  borderRadius: '4px',
+  borderRadius: '12px',
   marginBottom: '12px',
 };
 

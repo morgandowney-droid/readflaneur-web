@@ -90,5 +90,5 @@ const adLink = {
 
 const adImage = {
   maxWidth: '100%',
-  borderRadius: '4px',
+  borderRadius: '12px',
 };

@@ -244,7 +244,7 @@ const tempDesc = {
 
 const tomorrowBox = {
   border: '1px solid #e5e5e5',
-  borderRadius: '6px',
+  borderRadius: '12px',
   padding: '8px 16px',
   margin: '10px auto 0',
   maxWidth: '280px',

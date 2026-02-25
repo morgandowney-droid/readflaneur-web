@@ -395,6 +395,7 @@ const heroImage = {
   width: '100%',
   maxHeight: '300px',
   objectFit: 'cover' as const,
+  borderRadius: '12px',
 };
 
 const sectionContainer = {
@@ -503,7 +504,7 @@ const readMoreLink = {
 
 const sponsorSection = {
   border: '1px solid #e8e0d4',
-  borderRadius: '4px',
+  borderRadius: '12px',
   padding: '20px 16px',
   marginTop: '8px',
   marginBottom: '8px',
@@ -524,7 +525,7 @@ const sponsorEyebrow = {
 const sponsorImage = {
   display: 'block' as const,
   width: '100%',
-  borderRadius: '4px',
+  borderRadius: '8px',
   marginBottom: '12px',
 };
 
