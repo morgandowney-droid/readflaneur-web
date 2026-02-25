@@ -5,6 +5,16 @@
 
 ## 2026-02-25
 
+**Softer Rounded Corners on Email Images and Buttons:**
+- Inspired by Hedvig's email design. Bumped `borderRadius` across all email templates for a softer, more modern look.
+- Hero/outer images: `4px` to `12px` (HeroStory.tsx story image, Header.tsx ad banner, SundayEditionTemplate.tsx hero image).
+- Ad/sponsor container borders: `4px` to `12px` (NativeAd.tsx container, SundayEditionTemplate.tsx sponsor section).
+- Nested images inside containers: `4px` to `8px` (NativeAd.tsx ad image, SundayEditionTemplate.tsx sponsor image).
+- CTA buttons: `4px` to `8px` (NativeAd.tsx ctaButton).
+- Weather tomorrowBox: `6px` to `12px` (DailyBriefTemplate.tsx).
+- Added missing `borderRadius: '12px'` to Sunday Edition hero image (was the only image without any rounding).
+- Files: `HeroStory.tsx`, `Header.tsx`, `NativeAd.tsx`, `SundayEditionTemplate.tsx`, `DailyBriefTemplate.tsx`
+
 **Fix Look Ahead published_at 24h Off for APAC Timezones:**
 - Waiheke (Auckland, NZ, UTC+13) Look Ahead articles showed "Feb 26" content and "-461m ago" timestamp on Feb 25. Root cause: `getLocalPublishDate()` used noon UTC as reference to compute timezone offset, but noon UTC on Feb 25 is already 1 AM Feb 26 in NZ. The offset came out as -11 instead of +13, setting `published_at` to 7 AM Feb 26 NZDT (wrong) instead of 7 AM Feb 25 NZDT (correct).
 - Fix: use midnight UTC as reference and compare local day/month to detect which side of the date boundary we're on. Same date = positive offset (APAC), previous day = negative offset (Americas). `Date.UTC` handles hour rollover for negative utcHour values.
