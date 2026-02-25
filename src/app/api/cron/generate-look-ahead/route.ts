@@ -90,28 +90,46 @@ function getLocalPublishDate(timezone: string): { localDate: string; publishAtUt
   // Get today's date in the neighborhood's local timezone
   const localDate = new Date().toLocaleDateString('en-CA', { timeZone: tz }); // YYYY-MM-DD
 
-  // Compute 7 AM local time in UTC:
-  // Create a date at midnight UTC on the local date, then adjust for timezone offset
+  // Compute 7 AM local time in UTC by binary-searching the offset.
+  // We need to find the UTC instant where formatting it in `tz` gives 7:00 on `localDate`.
+  // Approach: start from midnight UTC on the local date, format that instant in tz,
+  // and measure how far off we are from 7 AM local on that date.
   const [year, month, day] = localDate.split('-').map(Number);
 
-  // Use Intl to find the UTC offset for this timezone at 7 AM local
-  // Create a reference date at the target local time
-  const refDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0)); // noon UTC as starting point
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone: tz,
     year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour: '2-digit', minute: '2-digit',
     hour12: false,
   });
-  const parts = formatter.formatToParts(refDate);
-  const getPart = (type: string) => parts.find(p => p.type === type)?.value || '0';
-  const localHourAtRef = parseInt(getPart('hour'), 10);
 
-  // The offset between UTC noon and the local hour tells us the timezone offset
-  const offsetHours = localHourAtRef - 12;
-  // 7 AM local = 7 - offset hours in UTC
+  // Start guess: midnight UTC on the target date
+  const guessUtc = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+  const parts = formatter.formatToParts(guessUtc);
+  const getPart = (type: string) => parts.find(p => p.type === type)?.value || '0';
+  const localHour = parseInt(getPart('hour'), 10);
+  const localDay = parseInt(getPart('day'), 10);
+  const localMonth = parseInt(getPart('month'), 10);
+
+  // How many hours is midnight UTC from midnight local on the target date?
+  // If midnight UTC = 13:00 local on the same day, offset is +13 hours
+  // If midnight UTC = 19:00 local on the previous day, offset is -5 hours
+  let offsetHours: number;
+  if (localMonth === month && localDay === day) {
+    // Same date: offset = localHour (e.g., midnight UTC = 13:00 local means UTC+13)
+    offsetHours = localHour;
+  } else if (localDay > day || localMonth > month) {
+    // Already next day locally (e.g., midnight UTC Feb 25 = 1 AM local Feb 26 for UTC+13 via DST edge)
+    offsetHours = localHour + 24;
+  } else {
+    // Previous day locally (e.g., midnight UTC Feb 25 = 7 PM local Feb 24 for UTC-5)
+    offsetHours = localHour - 24;
+  }
+
+  // 7 AM local = (7 - offset) hours UTC on the same calendar date
   const utcHour = 7 - offsetHours;
 
+  // utcHour may be negative (APAC) or > 23 (western Pacific edge), Date.UTC handles rollover
   const publishAt = new Date(Date.UTC(year, month - 1, day, utcHour, 0, 0));
   return {
     localDate,

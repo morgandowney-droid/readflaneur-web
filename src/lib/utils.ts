@@ -29,14 +29,20 @@ export function formatRelativeTime(date: string | Date, locale: string = 'en', t
   const now = new Date();
   const then = new Date(date);
   const diffMs = now.getTime() - then.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
 
   // Short local date in the neighborhood's timezone (e.g., "Feb 21")
   const localDateOpts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
   if (timezone) localDateOpts.timeZone = timezone;
   const localDate = new Intl.DateTimeFormat(locale, localDateOpts).format(then);
+
+  // Handle future dates gracefully (published_at set to 7 AM local but viewer is in an earlier timezone)
+  if (diffMs < 0) {
+    return localDate;
+  }
+
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
 
   if (diffMins < 60) {
     return timezone ? `${diffMins}m ago · ${localDate}` : `${diffMins}m ago`;
