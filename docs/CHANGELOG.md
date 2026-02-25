@@ -5,6 +5,12 @@
 
 ## 2026-02-25
 
+**Rounded Corners on Website Images, Ads, and CTA Buttons:**
+- Added `rounded-xl` (12px) with `overflow-hidden` to all article images: compact feed card thumbnails (CompactArticleCard), gallery hero images (ArticleCard), article detail page hero image, and ad card images (AdCard).
+- Added `rounded-xl` to all ad/house ad containers: StoryOpenAd, FallbackAd (all variants - bonus ads, house ads, newsletter signup, static house ad, add-to-collection, suggest neighborhood, community neighborhood, family corner, escape mode).
+- Added `rounded-lg` to all inline CTA buttons and spans that were missing rounding (Add, Learn More, Subscribe, etc.) and form inputs in newsletter signup.
+- Files: `CompactArticleCard.tsx`, `ArticleCard.tsx`, `[slug]/page.tsx`, `AdCard.tsx`, `StoryOpenAd.tsx`, `FallbackAd.tsx`
+
 **Softer Rounded Corners on Email Images and Buttons:**
 - Inspired by Hedvig's email design. Bumped `borderRadius` across all email templates for a softer, more modern look.
 - Hero/outer images: `4px` to `12px` (HeroStory.tsx story image, Header.tsx ad banner, SundayEditionTemplate.tsx hero image).
