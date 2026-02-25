@@ -3,6 +3,17 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-25
+
+**Filter Routine Gallery Hours from Look Ahead + Headline Must Reference Today:**
+- Grok was listing 13+ galleries simply open during normal hours as "events" in Look Ahead articles (e.g., Tribeca Feb 25 listed ongoing exhibitions at One Art Space, Ippodo Gallery, Canada Gallery, etc. as if they were special events). Headline referenced "Feb 27" gallery openings despite today being Feb 25.
+- Three-layer fix across all event-sourcing prompts:
+  - `grok.ts` (generateLookAhead): New GALLERY AND MUSEUM FILTER section requires specific time-limited occasions (opening receptions, closing days, artist talks, exhibition premieres). Added to exclusion list. Headline rule now requires referencing today or the very next day with events.
+  - `brief-enricher-gemini.ts` (lookAheadStyle): New GALLERY/MUSEUM FILTER mirrors Grok prompt rules.
+  - `gemini-search.ts` (searchUpcomingEvents): Search targets updated from generic "Gallery exhibitions" to "Gallery opening RECEPTIONS, artist talks, exhibition premieres, closing days (NOT galleries simply open during normal hours)". New filter section added.
+- The test applied everywhere: "would a local specifically plan to visit on THIS day vs any other day?" If no, exclude it.
+- Files: `src/lib/grok.ts`, `src/lib/brief-enricher-gemini.ts`, `src/lib/gemini-search.ts`
+
 ## 2026-02-24
 
 **Align Email Assembler Blurb Filters with Feed-Side Fixes:**
