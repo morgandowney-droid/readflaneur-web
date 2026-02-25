@@ -5,6 +5,14 @@
 
 ## 2026-02-25
 
+**Family Corner Email Improvements:**
+- Added light divider line (`#e5e5e5`) between age group sections for visual separation (detects when age band prefix changes, e.g., "Infant" to "Toddler").
+- "For your primary neighborhood" now shows the neighborhood name: "For your primary neighborhood: Tribeca".
+- Headline prompt tightened: max 50 chars (was 80), must name a specific activity/venue, no neighborhood prefix, no "for your kids" suffix, no colons. Bad: "Tribeca Fun: BPC Play, Art & Music for Your Kids". Good: "Baggywrinkle crafts at the Seaport".
+- Empty day sub-sections now skipped entirely instead of "No specific events today" filler. If an age group has nothing for today AND next 2 days, a single ongoing drop-in option is mentioned without the Today/Next 2 Days split.
+- Both Grok and Gemini prompts updated.
+- Files: `FamilyCornerSection.tsx`, `generate-childcare-content.ts`
+
 **Consistent Greeting on Daily Brief Article Pages:**
 - Daily Brief articles opened from the feed sometimes showed the greeting ("Morning, neighbors.") and sometimes didn't. Root cause: Gemini occasionally outputs subject_teaser and email_teaser as prose text before the greeting in the body content, pushing the greeting to the 3rd paragraph instead of the 1st.
 - Fix: `ArticleBody.tsx` now detects the greeting paragraph for `brief_summary` articles and strips all preceding paragraphs (teaser labels, summary lines). Greeting patterns cover all 9 languages.
