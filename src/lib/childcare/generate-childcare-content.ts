@@ -68,16 +68,24 @@ Body: ${rawBody}
 
 AGE GROUPS TO COVER: ${bandDescriptions}
 
+HEADLINE RULES:
+- Write a short, intriguing headline (max 50 chars) that makes a parent curious
+- Name a specific activity, venue, or event - never generic "Fun for Kids" or "{Neighborhood} Fun:"
+- No neighborhood name prefix. No "for your kids" suffix. No colons.
+- Good examples: "Baggywrinkle crafts at the Seaport", "Kindie Rock at Battery Park", "Pier 25 drop-ins all week"
+- Bad examples: "Tribeca Fun: BPC Play, Art & Music for Your Kids", "Family Activities This Week"
+
 STRUCTURE RULES:
-1. Write a single concise headline (max 80 chars) capturing the best family activity
-2. For EACH age group, organize into TWO sub-sections:
-   - **[Age Group] - Today:** 1 specific activity happening today (with time, location). If nothing today, write "No specific events today - [suggest an ongoing/drop-in option]."
+1. For EACH age group, organize into TWO sub-sections:
+   - **[Age Group] - Today:** 1 specific activity happening today (with time, location)
    - **[Age Group] - Next 2 Days:** 1-2 activities happening tomorrow or the day after (with dates, times, locations)
-3. Keep each sub-section to 1-2 sentences max
-4. Keep total body under 300 words
-5. ONLY mention events happening today, tomorrow, or the day after (3-day window) plus ongoing drop-in programs
-6. Remove any enrollment deadlines months away or seasonal camps not yet open
-7. Do NOT include any URLs, citations, or source references
+2. If there is genuinely nothing for an age group on a given day, SKIP that sub-section entirely. NEVER write "No specific events today" or "Nothing scheduled" or any variation - these waste the reader's time. Just omit the sub-section.
+3. If an age group has nothing for today AND nothing for the next 2 days, mention ONE ongoing drop-in option in a single sub-section (no "Today" / "Next 2 Days" split needed)
+4. Keep each sub-section to 1-2 sentences max
+5. Keep total body under 300 words
+6. ONLY mention events happening today, tomorrow, or the day after (3-day window) plus ongoing drop-in programs
+7. Remove any enrollment deadlines months away or seasonal camps not yet open
+8. Do NOT include any URLs, citations, or source references
 
 Return EXACTLY in this format:
 HEADLINE: [your headline]
@@ -151,8 +159,8 @@ Look for:
 - Age-appropriate classes or workshops happening this week
 
 Return your response in this exact format:
-HEADLINE: [A single compelling headline summarizing the top family news, max 80 chars]
-BODY: [One paragraph per age group, clearly labeled. Include specific dates, times, locations, and ages where available. Keep it practical and actionable for parents. Max 400 words total.]`;
+HEADLINE: [Short intriguing headline naming a specific activity or venue, max 50 chars. No neighborhood name. No "for kids" suffix.]
+BODY: [One paragraph per age group, clearly labeled. Include specific dates, times, locations, and ages where available. Keep it practical and actionable for parents. If nothing found for a day, skip it - never say "no events". Max 400 words total.]`;
 
   const response = await grokEventSearch(systemPrompt, userPrompt);
   if (!response) return null;

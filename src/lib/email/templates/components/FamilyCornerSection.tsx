@@ -67,21 +67,34 @@ export function FamilyCornerSection({ familyCorner }: FamilyCornerSectionProps) 
           FAMILY CORNER <span style={neighborhoodSpan}>&middot; {displayName}</span>
         </Text>
         <Text style={bandLine}>{bandSubtitle}</Text>
-        <Text style={primaryNote}>For your primary neighborhood</Text>
+        <Text style={primaryNote}>For your primary neighborhood: {familyCorner.neighborhoodName}</Text>
         <Hr style={rule} />
       </Section>
 
       {/* Content */}
       <Section style={contentBlock}>
         <Text style={headline}>{familyCorner.headline}</Text>
-        {sections.map((section, i) => (
-          <Text key={i} style={bodyText}>
-            {section.bandHeader && (
-              <span style={bandHeaderStyle}>{section.bandHeader} </span>
-            )}
-            {section.text}
-          </Text>
-        ))}
+        {sections.map((section, i) => {
+          // Detect if this is the start of a new age band (e.g., "Toddler" after "Infant" sections)
+          // by checking if the band label prefix changed from the previous section
+          const currentBand = section.bandHeader?.match(/^(\w[\w\s]*?)\s*\(/)?.[1]?.trim();
+          const prevBand = i > 0 && sections[i - 1].bandHeader
+            ? sections[i - 1].bandHeader?.match(/^(\w[\w\s]*?)\s*\(/)?.[1]?.trim()
+            : null;
+          const showDivider = i > 0 && currentBand && prevBand && currentBand !== prevBand;
+
+          return (
+            <span key={i}>
+              {showDivider && <Hr style={ageBandDivider} />}
+              <Text style={bodyText}>
+                {section.bandHeader && (
+                  <span style={bandHeaderStyle}>{section.bandHeader} </span>
+                )}
+                {section.text}
+              </Text>
+            </span>
+          );
+        })}
       </Section>
     </Section>
   );
@@ -150,6 +163,11 @@ const headline = {
 const bandHeaderStyle = {
   fontWeight: '600' as const,
   color: '#333333',
+};
+
+const ageBandDivider = {
+  borderTop: '1px solid #e5e5e5',
+  margin: '8px 0 12px',
 };
 
 const bodyText = {
