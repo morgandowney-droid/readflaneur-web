@@ -129,14 +129,16 @@ export async function searchUpcomingEvents(
   const prompt = `Search for upcoming events in ${location} from ${fromStr} through ${toStr}.
 
 Search specifically for:
-1. Gallery exhibitions and opening receptions with dates
-2. Museum special exhibitions and schedule changes
+1. Gallery opening RECEPTIONS, artist talks, exhibition premieres, closing days (NOT galleries simply open during normal hours)
+2. Museum special exhibitions launching or closing, new installations, members-only previews (NOT museums just being open)
 3. Restaurant opening announcements and soft opening dates
 4. Concert, theater, and live music listings at local venues
 5. Farmers markets, pop-up events, and street fairs
 6. Community board meetings and public hearings
 7. Sports events at local venues
 8. Food festivals, wine tastings, book signings
+
+GALLERY/MUSEUM FILTER: Only include a gallery or museum if there is a specific TIME-LIMITED event (opening reception, closing day, artist talk, premiere). Do NOT include a gallery/museum just because it is open with an ongoing exhibition. "Gallery X shows Artist Y" is not an event.
 
 For each event found, provide: the specific date (YYYY-MM-DD), day of week, time if available, event name, category, venue name, address, and price if listed.
 

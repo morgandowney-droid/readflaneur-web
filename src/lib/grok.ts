@@ -415,8 +415,9 @@ IMPORTANT TIMING CONTEXT: This content will be published at 7 AM local time on $
 
 Search X and the web for upcoming events, openings, and happenings in ${location} starting from ${todayStr} and over the following 7 days. Focus on:
 - Confirmed events with specific dates and times
-- Restaurant, bar, or cafe openings
-- Art exhibitions, gallery openings, museum events
+- Restaurant, bar, or cafe openings (NEW openings only, not existing restaurants)
+- Gallery opening receptions, artist talks, exhibition premieres, closing days
+- Museum special exhibitions, new installations, members-only previews
 - Community meetings, town halls, local government events
 - Sports events, races, outdoor activities
 - Seasonal happenings (markets, festivals, pop-ups)
@@ -428,10 +429,16 @@ CRITICAL RULES:
 - Every item MUST have a specific date or date range
 - If you cannot find upcoming events, say so honestly
 
+GALLERY AND MUSEUM FILTER (CRITICAL):
+- ONLY include galleries/museums when there is a SPECIFIC EVENT happening: an opening reception, closing day, artist talk, new exhibition premiere, members-only preview, special ticketed event, or other time-limited occasion
+- Do NOT include galleries or museums simply because they are open during normal hours with an ongoing exhibition. "Gallery X is showing Artist Y" is NOT an event - it's just a venue being open
+- The test: would a local resident specifically plan to visit on THIS day vs any other day? If the answer is "no, it's the same exhibition that's been there for weeks", do NOT include it
+- Opening RECEPTIONS (with a specific evening time like 6-8 PM) are events. An exhibition that opened last month and is still running is NOT an event
+
 After searching, create a "Look Ahead" summary.
 
 Format your response EXACTLY as:
-HEADLINE: [Catchy headline, max 50 characters. Be specific - name the event or venue. Never generic.]
+HEADLINE: [Catchy headline, max 50 characters. Be specific - name the event or venue. Never generic. The headline MUST reference something happening TODAY (${todayStr}) or, if today is light, the very next day with events. Never headline an event 2+ days away when there are things happening sooner.]
 EVENTS_JSON:
 [A JSON array of structured event objects. Each object has these fields:
   - "date": YYYY-MM-DD (required)
@@ -455,7 +462,7 @@ Rules:
 - Do NOT include citation references like [[1]] or (1) in the HEADLINE.
 - NEVER use passive, defeatist, or "nothing happening" headlines. There is ALWAYS something worth highlighting. Banned headline patterns: "Quiet Week", "Slow Week", "Not Much Going On", "A Calm Week", "Nothing Major". Always lead with the most interesting specific event or venue name.
 - NEVER repeat the same venue, restaurant, or event across multiple days. If a venue is open every day (like a restaurant or bar), mention it ONCE on the most relevant day. Each day should feature DIFFERENT events. If there aren't enough distinct events, include fewer days rather than padding with repeats.
-- EXCLUDE only these specific items: permanent Broadway/West End shows ("Mamma Mia!", "The Lion King", "Phantom of the Opera", "Wicked"), guided walking tours, food tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms. DO include everything else - gallery openings, temporary exhibitions, pop-up markets, concerts, comedy shows, restaurant/bar openings, art shows, food festivals, sports events, community events, museum special exhibitions, theater premieres, and any other time-limited happening. Cast a WIDE net and find as many events as possible. A busy neighborhood should have many events across the week.`
+- EXCLUDE only these specific items: permanent Broadway/West End shows ("Mamma Mia!", "The Lion King", "Phantom of the Opera", "Wicked"), guided walking tours, food tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms, and galleries/museums that are simply open during normal hours with ongoing exhibitions (no special event happening). DO include everything else - gallery opening RECEPTIONS, temporary exhibition premieres, closing days, artist talks, pop-up markets, concerts, comedy shows, restaurant/bar openings, art shows, food festivals, sports events, community events, museum special exhibitions, theater premieres, and any other time-limited happening. Cast a WIDE net and find as many events as possible. A busy neighborhood should have many events across the week.`
           },
           {
             role: 'user',
