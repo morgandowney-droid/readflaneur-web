@@ -5,6 +5,13 @@
 
 ## 2026-02-25
 
+**Fix Look Ahead published_at 24h Off for APAC Timezones:**
+- Waiheke (Auckland, NZ, UTC+13) Look Ahead articles showed "Feb 26" content and "-461m ago" timestamp on Feb 25. Root cause: `getLocalPublishDate()` used noon UTC as reference to compute timezone offset, but noon UTC on Feb 25 is already 1 AM Feb 26 in NZ. The offset came out as -11 instead of +13, setting `published_at` to 7 AM Feb 26 NZDT (wrong) instead of 7 AM Feb 25 NZDT (correct).
+- Fix: use midnight UTC as reference and compare local day/month to detect which side of the date boundary we're on. Same date = positive offset (APAC), previous day = negative offset (Americas). `Date.UTC` handles hour rollover for negative utcHour values.
+- Verified for Auckland (UTC+13: 7 AM local = prev day 18:00 UTC) and NYC (UTC-5: 7 AM local = same day 12:00 UTC).
+- Also fixed `formatRelativeTime()` in utils.ts: when `published_at` is in the future (viewer in earlier timezone), returns just the date string instead of "-461m ago".
+- Files: `src/app/api/cron/generate-look-ahead/route.ts`, `src/lib/utils.ts`
+
 **Use Subject Teaser as Daily Brief Article Headline:**
 - The short 1-4 word Gemini-generated `subject_teaser` (e.g., "heated school meeting", "$12m lodge sale") now used as the Daily Brief article headline in Title Case, replacing the longer Grok-generated headline.
 - New `toHeadlineCase()` utility in `utils.ts` - smart title case that keeps small words (a, the, of, in) lowercase unless first word, preserves tokens starting with symbols ($12m) or already mixed-case (IKEA, de Blasio).
