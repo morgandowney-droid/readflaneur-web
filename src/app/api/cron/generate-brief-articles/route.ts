@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
+import { toHeadlineCase } from '@/lib/utils';
 
 interface ArticleSourceInput {
   source_name: string;
@@ -239,6 +240,7 @@ export async function GET(request: Request) {
         id,
         neighborhood_id,
         headline,
+        subject_teaser,
         content,
         enriched_content,
         enriched_categories,
@@ -298,8 +300,10 @@ export async function GET(request: Request) {
 
       const neighborhood = brief.neighborhoods as unknown as { id: string; name: string; city: string };
 
-      // Generate article headline with DAILY BRIEF prefix
-      const baseHeadline = brief.headline || `What's Happening in ${neighborhood.name}`;
+      // Use subject_teaser (Title Case) as headline when available, fall back to Grok headline
+      const baseHeadline = brief.subject_teaser
+        ? toHeadlineCase(brief.subject_teaser)
+        : (brief.headline || `What's Happening in ${neighborhood.name}`);
       const articleHeadline = `${neighborhood.name} DAILY BRIEF: ${baseHeadline}`;
 
       // Only use enriched content — never publish raw/unenriched briefs

@@ -5,6 +5,7 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { CITY_PREFIX_MAP } from '@/lib/neighborhood-utils';
+import { toHeadlineCase } from '@/lib/utils';
 import {
   EmailRecipient,
   DailyBriefContent,
@@ -122,7 +123,7 @@ async function fetchBriefAsStory(
   // Fallback: use neighborhood_briefs table and create an article on-the-fly
   const { data: brief } = await supabase
     .from('neighborhood_briefs')
-    .select('id, headline, content, enriched_content, enriched_categories, enrichment_model, model, generated_at, email_teaser')
+    .select('id, headline, subject_teaser, content, enriched_content, enriched_categories, enrichment_model, model, generated_at, email_teaser')
     .eq('neighborhood_id', neighborhoodId)
     .gte('expires_at', new Date().toISOString())
     .order('created_at', { ascending: false })
@@ -136,9 +137,12 @@ async function fetchBriefAsStory(
 
   // Create an article from the enriched brief so the email link goes to a full article page
   const articleBody = brief.enriched_content;
-  const articleHeadline = `${neighborhoodName} DAILY BRIEF: ${brief.headline}`;
+  const baseHeadline = brief.subject_teaser
+    ? toHeadlineCase(brief.subject_teaser)
+    : brief.headline;
+  const articleHeadline = `${neighborhoodName} DAILY BRIEF: ${baseHeadline}`;
   const date = new Date().toISOString().split('T')[0];
-  const headlineSlug = brief.headline
+  const headlineSlug = baseHeadline
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')

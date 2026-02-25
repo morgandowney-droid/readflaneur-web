@@ -72,6 +72,27 @@ export function categoryLabelToSlug(label: string): string {
 }
 
 /**
+ * Title-case a short teaser string for use as a headline.
+ * Capitalizes each word, but keeps small words (a, the, of, in, on, for, and, etc.)
+ * lowercase unless they're the first word. Preserves intentionally-capitalized
+ * tokens like "$12m" or "IKEA".
+ */
+export function toHeadlineCase(text: string): string {
+  const small = new Set(['a', 'an', 'the', 'and', 'but', 'or', 'for', 'nor', 'in', 'on', 'at', 'to', 'of', 'by', 'is', 'vs']);
+  return text
+    .split(/\s+/)
+    .map((word, i) => {
+      // Preserve tokens that are already mixed-case or start with symbols ($12m, IKEA, de Blasio)
+      if (/[A-Z]/.test(word) && /[a-z]/.test(word)) return word;
+      if (/^[^a-zA-Z]/.test(word)) return word; // starts with $ or digit
+      const lower = word.toLowerCase();
+      if (i > 0 && small.has(lower)) return lower;
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(' ');
+}
+
+/**
  * Strip redundant "Neighborhood DAILY BRIEF:" or "Neighborhood LOOK AHEAD:" prefix from article headlines
  * e.g., "Östermalm DAILY BRIEF: Hockey Puck Drop" → "Hockey Puck Drop"
  * e.g., "Sweden LOOK AHEAD: Gothenburg Horse Show" → "Gothenburg Horse Show"
