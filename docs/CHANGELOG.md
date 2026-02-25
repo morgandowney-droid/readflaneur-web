@@ -5,6 +5,13 @@
 
 ## 2026-02-25
 
+**Consistent Greeting on Daily Brief Article Pages:**
+- Daily Brief articles opened from the feed sometimes showed the greeting ("Morning, neighbors.") and sometimes didn't. Root cause: Gemini occasionally outputs subject_teaser and email_teaser as prose text before the greeting in the body content, pushing the greeting to the 3rd paragraph instead of the 1st.
+- Fix: `ArticleBody.tsx` now detects the greeting paragraph for `brief_summary` articles and strips all preceding paragraphs (teaser labels, summary lines). Greeting patterns cover all 9 languages.
+- New `articleType` prop threaded through `TranslatedArticleBody` -> `ArticleBody` from the article detail page.
+- Does NOT affect feed card previews, compact card blurbs, or email blurbs - those continue to strip greetings as before.
+- Files: `ArticleBody.tsx`, `TranslatedArticleBody.tsx`, `[slug]/page.tsx`
+
 **Rounded Corners on Website Images, Ads, and CTA Buttons:**
 - Added `rounded-xl` (12px) with `overflow-hidden` to all article images: compact feed card thumbnails (CompactArticleCard), gallery hero images (ArticleCard), article detail page hero image, and ad card images (AdCard).
 - Added `rounded-xl` to all ad/house ad containers: StoryOpenAd, FallbackAd (all variants - bonus ads, house ads, newsletter signup, static house ad, add-to-collection, suggest neighborhood, community neighborhood, family corner, escape mode).
