@@ -5,6 +5,15 @@
 
 ## 2026-02-25
 
+**Use Subject Teaser as Daily Brief Article Headline:**
+- The short 1-4 word Gemini-generated `subject_teaser` (e.g., "heated school meeting", "$12m lodge sale") now used as the Daily Brief article headline in Title Case, replacing the longer Grok-generated headline.
+- New `toHeadlineCase()` utility in `utils.ts` - smart title case that keeps small words (a, the, of, in) lowercase unless first word, preserves tokens starting with symbols ($12m) or already mixed-case (IKEA, de Blasio).
+- `generate-brief-articles` cron: added `subject_teaser` to SELECT, uses it as headline when available.
+- `assembler.ts` fallback path: same change for on-the-fly article creation.
+- Falls back to Grok headline when `subject_teaser` is null.
+- Email subject line path completely untouched - reads `subject_teaser` from `neighborhood_briefs` table independently. No circular dependency.
+- Files: `src/lib/utils.ts`, `src/app/api/cron/generate-brief-articles/route.ts`, `src/lib/email/assembler.ts`
+
 **Filter Routine Gallery Hours from Look Ahead + Headline Must Reference Today:**
 - Grok was listing 13+ galleries simply open during normal hours as "events" in Look Ahead articles (e.g., Tribeca Feb 25 listed ongoing exhibitions at One Art Space, Ippodo Gallery, Canada Gallery, etc. as if they were special events). Headline referenced "Feb 27" gallery openings despite today being Feb 25.
 - Three-layer fix across all event-sourcing prompts:
