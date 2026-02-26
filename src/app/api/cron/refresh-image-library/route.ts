@@ -65,7 +65,7 @@ export async function GET(request: Request) {
     // Get current library status
     const { data: statuses } = await supabase
       .from('image_library_status')
-      .select('neighborhood_id, generation_season, unsplash_photos');
+      .select('neighborhood_id, generation_season, unsplash_photos, unsplash_alternates');
 
     const statusMap = new Map(
       (statuses || []).map(s => [s.neighborhood_id, s])
@@ -73,10 +73,13 @@ export async function GET(request: Request) {
 
     // Filter to neighborhoods needing refresh:
     // - No Unsplash photos at all
+    // - Missing alternates (feature added mid-quarter, needs backfill)
     // - Different season (quarterly variety refresh)
     const needsRefresh = neighborhoods.filter(n => {
       const status = statusMap.get(n.id);
       if (!status?.unsplash_photos) return true;
+      const alts = status.unsplash_alternates;
+      if (!alts || (Array.isArray(alts) && alts.length === 0)) return true;
       return status.generation_season !== currentSeason;
     });
 

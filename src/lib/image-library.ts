@@ -50,6 +50,7 @@ export interface LibraryStatus {
 
 interface CacheEntry {
   photos: UnsplashPhotosMap;
+  alternates: UnsplashPhoto[];
   timestamp: number;
 }
 
@@ -70,13 +71,14 @@ async function getUnsplashPhotos(
 
   const { data } = await supabase
     .from('image_library_status')
-    .select('unsplash_photos')
+    .select('unsplash_photos, unsplash_alternates')
     .eq('neighborhood_id', neighborhoodId)
     .single();
 
   if (data?.unsplash_photos) {
     unsplashCache.set(neighborhoodId, {
       photos: data.unsplash_photos as UnsplashPhotosMap,
+      alternates: (data.unsplash_alternates || []) as UnsplashPhoto[],
       timestamp: Date.now(),
     });
     return data.unsplash_photos as UnsplashPhotosMap;
@@ -94,7 +96,7 @@ export async function preloadUnsplashCache(
 ): Promise<void> {
   const { data } = await supabase
     .from('image_library_status')
-    .select('neighborhood_id, unsplash_photos')
+    .select('neighborhood_id, unsplash_photos, unsplash_alternates')
     .not('unsplash_photos', 'is', null);
 
   if (data) {
@@ -102,6 +104,7 @@ export async function preloadUnsplashCache(
     for (const row of data) {
       unsplashCache.set(row.neighborhood_id, {
         photos: row.unsplash_photos as UnsplashPhotosMap,
+        alternates: (row.unsplash_alternates || []) as UnsplashPhoto[],
         timestamp: now,
       });
     }
@@ -188,6 +191,19 @@ export function selectLibraryImage(
   // Check Unsplash cache first
   const cached = unsplashCache.get(neighborhoodId);
   if (cached) {
+    // For RSS/news articles with an index, draw from the full pool
+    // (8 category photos + up to 40 alternates) for maximum variety
+    const isRotatable = articleIndex != null && articleType !== 'brief_summary'
+      && articleType !== 'look_ahead' && articleType !== 'weekly_recap';
+
+    if (isRotatable && cached.alternates.length > 0) {
+      const allPhotos = Object.values(cached.photos).filter((p): p is UnsplashPhoto => !!p?.url);
+      const fullPool = [...allPhotos, ...cached.alternates.filter(a => a?.url)];
+      if (fullPool.length > 0) {
+        return fullPool[articleIndex % fullPool.length].url;
+      }
+    }
+
     const photo: UnsplashPhoto | undefined = cached.photos[category];
     if (photo?.url) {
       return photo.url;
@@ -227,12 +243,23 @@ export async function selectLibraryImageAsync(
   const category = resolveCategory(articleType, categoryLabel, articleIndex);
   const { data } = await supabase
     .from('image_library_status')
-    .select('unsplash_photos')
+    .select('unsplash_photos, unsplash_alternates')
     .eq('neighborhood_id', neighborhoodId)
     .single();
 
   if (data?.unsplash_photos) {
     const photos = data.unsplash_photos as UnsplashPhotosMap;
+    const alternates = (data.unsplash_alternates || []) as UnsplashPhoto[];
+
+    // For RSS/news articles, draw from full pool (photos + alternates)
+    const isRotatable = articleIndex != null && articleType !== 'brief_summary'
+      && articleType !== 'look_ahead' && articleType !== 'weekly_recap';
+    if (isRotatable && alternates.length > 0) {
+      const allPhotos = Object.values(photos).filter((p): p is UnsplashPhoto => !!p?.url);
+      const fullPool = [...allPhotos, ...alternates.filter(a => a?.url)];
+      if (fullPool.length > 0) return fullPool[articleIndex % fullPool.length].url;
+    }
+
     const photo = photos[category];
     if (photo?.url) return photo.url;
     // Fallback to any available photo
@@ -271,6 +298,7 @@ export async function getLibraryReadyIds(
       if (row.unsplash_photos) {
         unsplashCache.set(row.neighborhood_id, {
           photos: row.unsplash_photos as UnsplashPhotosMap,
+          alternates: [],
           timestamp: now,
         });
       }
@@ -377,6 +405,7 @@ export async function swapNegativeImage(
   // Invalidate module-level cache
   unsplashCache.set(neighborhoodId, {
     photos: updatedPhotos,
+    alternates: remainingAlternates,
     timestamp: Date.now(),
   });
 
