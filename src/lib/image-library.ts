@@ -15,6 +15,7 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import type { UnsplashPhoto, UnsplashPhotosMap } from './unsplash';
+import { triggerDownload } from './unsplash';
 
 // ============================================================================
 // TYPES
@@ -271,6 +272,117 @@ export async function getLibraryReadyIds(
   }
 
   return readyIds;
+}
+
+// ============================================================================
+// NEGATIVE IMAGE SWAP
+// ============================================================================
+
+export interface SwapResult {
+  oldUrl: string;
+  newUrl: string;
+  articlesUpdated: number;
+  newPhotographer: string;
+}
+
+/**
+ * Swap a negatively-scored image out of a neighborhood's library.
+ *
+ * 1. Finds which category holds the bad URL
+ * 2. Picks the first available alternate
+ * 3. Updates library JSONB (swap in replacement, remove from alternates, blacklist old ID)
+ * 4. Bulk-updates all articles using the bad URL
+ * 5. Invalidates cache and triggers Unsplash download attribution
+ *
+ * Returns null if no swap is possible (no alternates, image not in library).
+ */
+export async function swapNegativeImage(
+  supabase: SupabaseClient,
+  neighborhoodId: string,
+  badImageUrl: string,
+): Promise<SwapResult | null> {
+  // Load library row
+  const { data: row } = await supabase
+    .from('image_library_status')
+    .select('unsplash_photos, unsplash_alternates, rejected_image_ids')
+    .eq('neighborhood_id', neighborhoodId)
+    .single();
+
+  if (!row?.unsplash_photos) return null;
+
+  const photos = row.unsplash_photos as UnsplashPhotosMap;
+  const alternates = (row.unsplash_alternates || []) as UnsplashPhoto[];
+  const rejectedIds = (row.rejected_image_ids || []) as string[];
+
+  // Find which category holds the bad image
+  let badCategory: ImageCategory | null = null;
+  let badPhotoId: string | null = null;
+  for (const cat of IMAGE_CATEGORIES) {
+    const photo = photos[cat];
+    if (photo?.url === badImageUrl) {
+      badCategory = cat;
+      badPhotoId = photo.id;
+      break;
+    }
+  }
+
+  if (!badCategory || !badPhotoId) return null; // Image not in this library
+  if (alternates.length === 0) return null; // No replacements available
+
+  // Pick first alternate
+  const replacement = alternates[0];
+  const remainingAlternates = alternates.slice(1);
+
+  // Update library JSONB
+  const updatedPhotos = { ...photos, [badCategory]: replacement };
+  const updatedRejected = [...rejectedIds, badPhotoId];
+
+  const { error: updateError } = await supabase
+    .from('image_library_status')
+    .update({
+      unsplash_photos: updatedPhotos,
+      unsplash_alternates: remainingAlternates,
+      rejected_image_ids: updatedRejected,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('neighborhood_id', neighborhoodId);
+
+  if (updateError) {
+    console.error(`[swap] Failed to update library for ${neighborhoodId}:`, updateError.message);
+    return null;
+  }
+
+  // Count articles that will be updated
+  const { data: affectedArticles } = await supabase
+    .from('articles')
+    .select('id')
+    .eq('image_url', badImageUrl);
+
+  const articlesCount = affectedArticles?.length ?? 0;
+
+  // Bulk-update all articles using the bad URL
+  if (articlesCount > 0) {
+    await supabase
+      .from('articles')
+      .update({ image_url: replacement.url })
+      .eq('image_url', badImageUrl);
+  }
+
+  // Invalidate module-level cache
+  unsplashCache.set(neighborhoodId, {
+    photos: updatedPhotos,
+    timestamp: Date.now(),
+  });
+
+  // Trigger Unsplash download attribution for the new photo
+  triggerDownload(replacement.download_location);
+
+  return {
+    oldUrl: badImageUrl,
+    newUrl: replacement.url,
+    articlesUpdated: articlesCount,
+    newPhotographer: replacement.photographer,
+  };
 }
 
 // ============================================================================

@@ -202,3 +202,84 @@ export async function searchAllCategories(
 
   return photos;
 }
+
+/**
+ * Extended search that returns both category-assigned photos AND alternates.
+ *
+ * Same dual-search + interleave strategy as searchAllCategories, but:
+ * 1. Filters out rejected photo IDs before assignment
+ * 2. Returns overflow photos (positions 8+) as alternates for future swaps
+ * 3. Caps alternates at 40 photos
+ *
+ * Existing searchAllCategories() is untouched - zero risk to current consumers.
+ */
+export async function searchAllCategoriesWithAlternates(
+  neighborhoodName: string,
+  city: string,
+  country?: string,
+  rejectedIds?: string[],
+): Promise<{ photos: UnsplashPhotosMap; alternates: UnsplashPhoto[] }> {
+  const { IMAGE_CATEGORIES } = await import('./image-library');
+  const accessKey = getAccessKey();
+  const needed = IMAGE_CATEGORIES.length;
+  const rejected = new Set(rejectedIds || []);
+
+  // Primary searches: run in parallel for speed
+  const [cityQualified, nameOnly] = await Promise.all([
+    searchUnsplash(accessKey, `${neighborhoodName} ${city}`, 30),
+    searchUnsplash(accessKey, neighborhoodName, 30),
+  ]);
+
+  // Interleave: alternates city-qualified (relevant) with name-only (iconic)
+  let results = interleave(cityQualified, nameOnly);
+
+  // Filter out rejected photos
+  if (rejected.size > 0) {
+    results = results.filter(r => !rejected.has(r.id));
+  }
+
+  // Fallback: if still short, try broader queries
+  if (results.length < needed) {
+    const seenIds = new Set(results.map(r => r.id));
+
+    const fallbackQueries = [
+      city,
+      ...(country ? [`${city} ${country}`] : []),
+    ];
+
+    for (const query of fallbackQueries) {
+      if (results.length >= needed) break;
+      await new Promise(resolve => setTimeout(resolve, 200));
+      const batch = await searchUnsplash(accessKey, query, 30);
+      for (const r of batch) {
+        if (!seenIds.has(r.id) && !rejected.has(r.id)) {
+          results.push(r);
+          seenIds.add(r.id);
+        }
+      }
+    }
+  }
+
+  if (results.length === 0) return { photos: {}, alternates: [] };
+
+  // Assign first 8 to categories
+  const photos: UnsplashPhotosMap = {};
+  for (let i = 0; i < IMAGE_CATEGORIES.length; i++) {
+    if (i >= results.length) break;
+
+    const category = IMAGE_CATEGORIES[i];
+    const photo = toPhoto(results[i]);
+    photos[category] = photo;
+
+    // Trigger download tracking (fire-and-forget)
+    triggerDownload(photo.download_location);
+  }
+
+  // Collect overflow as alternates (positions 8+, cap at 40)
+  const alternates: UnsplashPhoto[] = [];
+  for (let i = IMAGE_CATEGORIES.length; i < results.length && alternates.length < 40; i++) {
+    alternates.push(toPhoto(results[i]));
+  }
+
+  return { photos, alternates };
+}

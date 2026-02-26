@@ -14,7 +14,7 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { IMAGE_CATEGORIES } from './image-library';
-import { searchAllCategories, type UnsplashPhotosMap } from './unsplash';
+import { searchAllCategoriesWithAlternates, type UnsplashPhoto, type UnsplashPhotosMap } from './unsplash';
 
 // ============================================================================
 // TYPES
@@ -54,9 +54,29 @@ export async function generateNeighborhoodLibrary(
     errors: [],
   };
 
+  // Fetch existing rejected_image_ids so we never re-use bad photos
+  let rejectedIds: string[] = [];
+  const { data: existingRow } = await supabase
+    .from('image_library_status')
+    .select('rejected_image_ids')
+    .eq('neighborhood_id', neighborhood.id)
+    .single();
+
+  if (existingRow?.rejected_image_ids) {
+    rejectedIds = existingRow.rejected_image_ids as string[];
+  }
+
   let photos: UnsplashPhotosMap;
+  let alternates: UnsplashPhoto[];
   try {
-    photos = await searchAllCategories(neighborhood.name, neighborhood.city, neighborhood.country ?? undefined);
+    const searchResult = await searchAllCategoriesWithAlternates(
+      neighborhood.name,
+      neighborhood.city,
+      neighborhood.country ?? undefined,
+      rejectedIds.length > 0 ? rejectedIds : undefined,
+    );
+    photos = searchResult.photos;
+    alternates = searchResult.alternates;
     result.photos_found = Object.keys(photos).length;
   } catch (err) {
     result.errors.push(`Search failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -68,7 +88,7 @@ export async function generateNeighborhoodLibrary(
     return result;
   }
 
-  // Update status tracking table
+  // Update status tracking table (preserve rejected_image_ids)
   const now = new Date();
   const season = `${now.getFullYear()}-Q${Math.ceil((now.getMonth() + 1) / 3)}`;
 
@@ -77,6 +97,7 @@ export async function generateNeighborhoodLibrary(
     .upsert({
       neighborhood_id: neighborhood.id,
       unsplash_photos: photos,
+      unsplash_alternates: alternates,
       images_generated: IMAGE_CATEGORIES.length, // Mark as complete for backward compat
       last_generated_at: now.toISOString(),
       generation_season: season,

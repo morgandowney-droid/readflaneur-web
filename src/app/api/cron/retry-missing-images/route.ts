@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { selectLibraryImage, preloadUnsplashCache } from '@/lib/image-library';
+import { selectLibraryImage, preloadUnsplashCache, swapNegativeImage } from '@/lib/image-library';
 
 /**
  * Retry Missing Images
@@ -39,6 +39,7 @@ export async function GET(request: Request) {
   const errors: string[] = [];
   let libraryFilled = 0;
   let aiReplaced = 0;
+  let negativeSwapped = 0;
 
   try {
     // Preload Unsplash cache for fast lookups
@@ -127,6 +128,36 @@ export async function GET(request: Request) {
       }
     }
 
+    // Phase 3: Swap negatively-scored Unsplash images
+    try {
+      const { data: negativeImages, error: rpcError } = await supabase
+        .rpc('get_negative_images', { threshold: -2 });
+
+      if (rpcError) {
+        errors.push(`Negative images RPC: ${rpcError.message}`);
+      } else if (negativeImages && negativeImages.length > 0) {
+        for (const { image_url } of negativeImages) {
+          // Find which neighborhood owns this image via articles table
+          const { data: article } = await supabase
+            .from('articles')
+            .select('neighborhood_id')
+            .eq('image_url', image_url)
+            .limit(1)
+            .single();
+
+          if (!article?.neighborhood_id) continue;
+
+          const result = await swapNegativeImage(supabase, article.neighborhood_id, image_url);
+          if (result) {
+            negativeSwapped++;
+            console.log(`[retry-missing-images] Swapped ${result.oldUrl} -> ${result.newUrl} (${result.articlesUpdated} articles, photographer: ${result.newPhotographer})`);
+          }
+        }
+      }
+    } catch (err) {
+      errors.push(`Phase 3: ${err instanceof Error ? err.message : String(err)}`);
+    }
+
     success = true;
 
     return NextResponse.json({
@@ -135,7 +166,8 @@ export async function GET(request: Request) {
       ai_found: (aiArticles || []).length,
       library_filled: libraryFilled,
       ai_replaced: aiReplaced,
-      total_updated: libraryFilled + aiReplaced,
+      negative_swapped: negativeSwapped,
+      total_updated: libraryFilled + aiReplaced + negativeSwapped,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -151,6 +183,7 @@ export async function GET(request: Request) {
       response_data: {
         library_filled: libraryFilled,
         ai_replaced: aiReplaced,
+        negative_swapped: negativeSwapped,
       },
     }).then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
   }
