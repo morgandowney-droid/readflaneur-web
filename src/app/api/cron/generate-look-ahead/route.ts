@@ -8,6 +8,7 @@ import { getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 import { formatEventListing } from '@/lib/look-ahead-events';
 import { searchUpcomingEvents, mergeContent, mergeStructuredEvents } from '@/lib/gemini-search';
+import { toHeadlineCase } from '@/lib/utils';
 
 /**
  * Generate Look Ahead Articles
@@ -449,7 +450,10 @@ export async function GET(request: Request) {
             : enrichedBody;
 
           // Step 3: Create article
-          const headline = lookAheadBrief.headline;
+          // Prefer Gemini's punchy subject_teaser over Grok's generic headline
+          const headline = enriched.subjectTeaser
+            ? toHeadlineCase(enriched.subjectTeaser)
+            : lookAheadBrief.headline;
           const articleHeadline = `LOOK AHEAD: ${headline}`;
           const slug = generateSlug(headline, id, localDate);
           // Use email_teaser from Gemini enrichment if available, otherwise auto-generate
