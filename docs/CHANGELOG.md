@@ -3,6 +3,18 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-26
+
+**Auto-Swap Negatively-Scored Unsplash Photos:**
+- Users can thumbs-down article images via `ImageFeedback.tsx`, but votes were just stored with no action. Now photos with 2+ net downvotes (score <= -2) are automatically replaced.
+- New `searchAllCategoriesWithAlternates()` in `unsplash.ts` - same dual-search logic but returns overflow photos (positions 8+, capped at 40) as alternates, and filters out rejected photo IDs before category assignment. Existing `searchAllCategories()` untouched for zero risk.
+- `image-library-generator.ts` now fetches `rejected_image_ids` before search, calls the alternate-aware search, and upserts `unsplash_alternates` alongside `unsplash_photos`.
+- New `swapNegativeImage()` in `image-library.ts` - finds which category holds the bad URL, swaps in first alternate, bulk-updates all articles using the bad URL, blacklists old photo ID in `rejected_image_ids` (persists across library refreshes), invalidates module-level cache, triggers Unsplash download attribution.
+- Phase 3 added to `retry-missing-images` cron after existing Phases 1 (missing) and 2 (AI replacement): calls `get_negative_images(-2)` RPC, resolves neighborhood via articles table, calls `swapNegativeImage()`, logs `negative_swapped` count.
+- DB migration: `unsplash_alternates JSONB DEFAULT '[]'` and `rejected_image_ids TEXT[] DEFAULT '{}'` columns on `image_library_status`, index on `image_feedback(image_url)`, `get_negative_images(threshold)` RPC.
+- Zero extra Unsplash API calls - alternates are photos already fetched and previously discarded.
+- Files: `unsplash.ts`, `image-library.ts`, `image-library-generator.ts`, `retry-missing-images/route.ts`, migration `20260302_image_swap_alternates.sql`
+
 ## 2026-02-25
 
 **Family Corner Email Improvements:**
