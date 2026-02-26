@@ -5,6 +5,14 @@
 
 ## 2026-02-26
 
+**Fix Repeating Topics in Daily Briefs:**
+- Persistent topics (e.g., Artion Cafe closure in Tribeca) appeared in nearly every brief for 2 weeks. Root cause: Grok searched blind with zero topic history, Gemini Search got 5 headlines but Grok ran in parallel ignoring them, and Gemini enrichment only passively suggested back-references.
+- Layer 1 - Grok: Added optional `recentTopics` param to `generateNeighborhoodBrief()`. Injects "RECENTLY COVERED TOPICS" block into system prompt instructing Grok to find different stories unless genuinely new information exists (new tenant, legal update, community reaction).
+- Layer 2 - Cron: Extended `sync-neighborhood-briefs` lookback from 36h to 7 days, increased headline count from 5 to 10, now passes `recentTopics` to both Grok and Gemini Search (previously only Gemini Search).
+- Layer 3 - Gemini enrichment: Changed anti-repetition instruction from passive ("you may briefly reference") to prescriptive ("DROP that story entirely, dedicate space to other stories"). Exception only for concrete new facts with back-reference.
+- Layer 4 - Continuity context: Extended `fetchContinuityContext` in enrich-briefs from 5-day/3-day lookback to 10-day/7-day, item limits from 5/10 to 10/20.
+- Files: `grok.ts`, `sync-neighborhood-briefs/route.ts`, `brief-enricher-gemini.ts`, `enrich-briefs/route.ts`
+
 **Auto-Swap Negatively-Scored Unsplash Photos:**
 - Users can thumbs-down article images via `ImageFeedback.tsx`, but votes were just stored with no action. Now photos with 2+ net downvotes (score <= -2) are automatically replaced.
 - New `searchAllCategoriesWithAlternates()` in `unsplash.ts` - same dual-search logic but returns overflow photos (positions 8+, capped at 40) as alternates, and filters out rejected photo IDs before category assignment. Existing `searchAllCategories()` untouched for zero risk.
