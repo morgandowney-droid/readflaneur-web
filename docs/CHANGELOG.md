@@ -5,6 +5,13 @@
 
 ## 2026-02-26
 
+**Expand Image Rotation to Full Unsplash Photo Pool:**
+- RSS/news articles previously rotated across only 8 category photos per neighborhood. Now draws from the full pool: 8 category photos + up to 40 alternates stored in `unsplash_alternates` JSONB, giving ~48 unique images to rotate through per neighborhood.
+- `CacheEntry` in `image-library.ts` now includes `alternates` field. `preloadUnsplashCache()`, `getUnsplashPhotos()`, and `selectLibraryImageAsync()` all fetch `unsplash_alternates` from DB. `selectLibraryImage()` builds combined pool for RSS/news articles (`articleIndex % fullPool.length`). Brief/Look Ahead/Sunday Edition articles still use their dedicated category photos.
+- `swapNegativeImage()` cache invalidation now preserves remaining alternates. `getLibraryReadyIds()` cache set includes `alternates: []` placeholder.
+- Refresh cron (`refresh-image-library`) now triggers regeneration for neighborhoods with empty `unsplash_alternates` (feature added mid-quarter, needs backfill). Added `unsplash_alternates` to status query and empty-alternates condition to `needsRefresh` filter.
+- Files: `image-library.ts`, `refresh-image-library/route.ts`
+
 **Rotate RSS/News Article Images Across Full Photo Library:**
 - RSS and news articles all used the single `rss-story` category photo, causing identical images on every "News Brief" article for a neighborhood (visible when multiple articles appear in the same feed view).
 - Fix: `resolveCategory()` in `image-library.ts` now rotates RSS/news/standard articles across all 8 Unsplash library categories using `articleIndex % 8`. Added optional `articleIndex` param to `selectLibraryImage()` and `selectLibraryImageAsync()`.
