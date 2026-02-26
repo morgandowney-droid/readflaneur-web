@@ -5,6 +5,11 @@
 
 ## 2026-02-26
 
+**Use Gemini Subject Teaser for Look Ahead Headlines:**
+- Look Ahead articles used Grok's raw `HEADLINE:` output directly, producing generic date-heavy headlines like "Art Openings Thu", "Wine Class Tonight!", "Lincoln Center Vogue Tonight" while Daily Brief headlines got punchy Gemini-generated teasers like "Tragedy on Waverly".
+- Fix: `generate-look-ahead/route.ts` now prefers `enriched.subjectTeaser` via `toHeadlineCase()`, matching the Daily Brief pattern from `generate-brief-articles`. Falls back to Grok headline when no teaser available.
+- Files: `generate-look-ahead/route.ts`
+
 **Fix Repeating Topics in Daily Briefs:**
 - Persistent topics (e.g., Artion Cafe closure in Tribeca) appeared in nearly every brief for 2 weeks. Root cause: Grok searched blind with zero topic history, Gemini Search got 5 headlines but Grok ran in parallel ignoring them, and Gemini enrichment only passively suggested back-references.
 - Layer 1 - Grok: Added optional `recentTopics` param to `generateNeighborhoodBrief()`. Injects "RECENTLY COVERED TOPICS" block into system prompt instructing Grok to find different stories unless genuinely new information exists (new tenant, legal update, community reaction).
