@@ -108,9 +108,10 @@ export async function GET(request: Request) {
     errors: [] as string[],
   };
 
-  // Get recent briefs (last 36h) to check per-neighborhood local date coverage.
-  // We fetch a wide window because "today" in UTC+12 starts 12h before UTC midnight.
-  const recentCutoff = new Date(Date.now() - 36 * 60 * 60 * 1000);
+  // Get recent briefs (last 7 days) for per-neighborhood local date coverage check
+  // AND for anti-repetition topic history. 7-day window catches persistent topics
+  // that keep appearing across multiple briefs (e.g., a restaurant closure for 2 weeks).
+  const recentCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   const { data: recentBriefs } = await supabase
     .from('neighborhood_briefs')
@@ -282,15 +283,15 @@ export async function GET(request: Request) {
         }
       }
 
-      // Extract recent headlines for anti-repetition in Gemini search
+      // Extract recent headlines for anti-repetition in both Grok and Gemini search
       const recentTopics = (recentBriefs || [])
         .filter(b => b.neighborhood_id === hood.id && b.headline)
-        .slice(0, 5)
+        .slice(0, 10)
         .map(b => b.headline as string);
 
       // Run Grok + Gemini in parallel (Gemini ~5-10s finishes before Grok ~25-30s)
       const [grokResult, geminiResult] = await Promise.allSettled([
-        generateNeighborhoodBrief(searchName, hood.city, hood.country, nycDataContext, hood.timezone),
+        generateNeighborhoodBrief(searchName, hood.city, hood.country, nycDataContext, hood.timezone, recentTopics),
         searchNeighborhoodFacts(searchName, hood.city, hood.country, hood.timezone, recentTopics),
       ]);
 

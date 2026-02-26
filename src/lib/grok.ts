@@ -71,7 +71,8 @@ export async function generateNeighborhoodBrief(
   city: string,
   country?: string,
   nycDataContext?: string,
-  timezone?: string
+  timezone?: string,
+  recentTopics?: string[]
 ): Promise<NeighborhoodBrief | null> {
   const apiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
 
@@ -138,7 +139,12 @@ Rules:
 - Prioritize verified facts over rumors.
 - If you don't find much, say so.
 - DATE REFERENCES: When using relative time words (yesterday, today, tomorrow, Thursday, last week, etc.), ALWAYS include the explicit calendar date - e.g., "yesterday (February 19)", "this Thursday, February 20". Readers may see this days later.
-- EXCLUDE only these specific tourist traps: guided walking tours, food tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms. DO include everything else - gallery openings, pop-up markets, concerts, comedy shows, restaurant openings, art exhibitions, food festivals, sports events, community events, and any other time-limited happening. Cast a WIDE net. The reader wants to know what's going on this week.`
+- EXCLUDE only these specific tourist traps: guided walking tours, food tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms. DO include everything else - gallery openings, pop-up markets, concerts, comedy shows, restaurant openings, art exhibitions, food festivals, sports events, community events, and any other time-limited happening. Cast a WIDE net. The reader wants to know what's going on this week.${recentTopics && recentTopics.length > 0 ? `
+
+RECENTLY COVERED TOPICS (last ${recentTopics.length} briefs):
+${recentTopics.map(t => `- ${t}`).join('\n')}
+
+DO NOT lead with or dedicate a paragraph to these topics UNLESS you find genuinely new information (e.g., a new tenant announced, legal dispute, community reaction not previously covered). A story being recent does not make it newsworthy again. Find DIFFERENT stories instead.` : ''}`
           },
           {
             role: 'user',

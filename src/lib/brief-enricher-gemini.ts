@@ -296,8 +296,9 @@ TONE AND VOCABULARY:
 You're the neighbor everyone wishes they had - always in the know, never boring.
 - TOURIST TRAP FILTER: DROP only these specific items: guided walking tours, food tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms. Keep everything else - gallery openings, pop-up markets, concerts, restaurant openings, exhibitions, community events, etc. are all valuable content.
 - ENERGY: NEVER describe a day or period as "quiet", "slow", "calm", or "not much happening". There is ALWAYS something worth covering. Banned: "quiet Friday", "quiet week", "slow day", "calm week", "things are winding down". Lead with energy about what IS happening.
-- If a story in today's tips relates to RECENT COVERAGE CONTEXT below, you may briefly reference it (e.g., "as we noted Tuesday...", "following up on last week's opening..."). Do this sparingly - only when it adds genuine value.
-- RECENT COVERAGE CONTEXT is background knowledge only. If nothing connects to today's stories, ignore it entirely. Never list or summarize previous coverage.`;
+- ANTI-REPETITION RULE: If a story in today's tips was already covered in RECENT COVERAGE CONTEXT with NO genuinely new information (new tenant, legal update, community reaction, reopening date), DROP that story entirely. Do not mention it. Dedicate the space to other stories instead.
+- Exception: If there IS a genuine update on a previously covered story, cover it briefly with a back-reference (e.g., "following Artion Cafe's closure last week, a new tenant has signed a lease"). The update must contain concrete new facts, not just a restatement.
+- RECENT COVERAGE CONTEXT is background knowledge. Never list or summarize previous coverage.`;
 
   const weeklyRecapStyle = `
 Your writing style:

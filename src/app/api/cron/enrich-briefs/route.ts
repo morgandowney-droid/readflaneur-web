@@ -49,8 +49,9 @@ function truncateToSentence(text: string, maxLen = 200): string {
 
 /**
  * Fetch recent coverage history for a neighborhood to give Gemini continuity context.
- * Returns last 5 days of enriched briefs (headline + excerpt) and last 3 days of
- * non-brief articles (headline + article_type).
+ * Returns last 10 days of enriched briefs (headline + excerpt) and last 7 days of
+ * non-brief articles (headline + article_type). Extended windows catch persistent
+ * topics that repeat across 1-2 weeks.
  */
 async function fetchContinuityContext(
   supabase: SupabaseClient,
@@ -61,33 +62,35 @@ async function fetchContinuityContext(
   const items: ContinuityItem[] = [];
 
   try {
-    const fiveDaysAgo = new Date();
-    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+    const tenDaysAgo = new Date();
+    tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
 
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    // Query 1: Last 5 enriched briefs (exclude current)
+    // Query 1: Last 10 days of enriched briefs (exclude current) - extended
+    // from 5 days to catch persistent topics that repeat across 1-2 weeks
     const { data: recentBriefs } = await supabase
       .from('neighborhood_briefs')
       .select('id, headline, enriched_content, generated_at')
       .eq('neighborhood_id', neighborhoodId)
       .neq('id', excludeBriefId)
       .not('enriched_content', 'is', null)
-      .gte('generated_at', fiveDaysAgo.toISOString())
+      .gte('generated_at', tenDaysAgo.toISOString())
       .order('generated_at', { ascending: false })
-      .limit(5);
+      .limit(10);
 
-    // Query 2: Last 3 days of published articles (exclude brief_summary)
+    // Query 2: Last 7 days of published articles (exclude brief_summary) -
+    // extended from 3 days to give Gemini broader awareness of recent coverage
     const { data: recentArticles } = await supabase
       .from('articles')
       .select('headline, article_type, published_at')
       .eq('neighborhood_id', neighborhoodId)
       .eq('status', 'published')
       .neq('article_type', 'brief_summary')
-      .gte('published_at', threeDaysAgo.toISOString())
+      .gte('published_at', sevenDaysAgo.toISOString())
       .order('published_at', { ascending: false })
-      .limit(10);
+      .limit(20);
 
     const tz = timezone || 'America/New_York';
 
