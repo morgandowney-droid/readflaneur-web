@@ -274,7 +274,7 @@ export async function GET(request: Request) {
           headline: finalStory.headline,
           body_text: finalStory.body,
           preview_text: finalStory.previewText,
-          image_url: selectLibraryImage(finalNeighborhoodId, 'rss-story', categoryLabel, libraryReadyIds),
+          image_url: selectLibraryImage(finalNeighborhoodId, 'rss-story', categoryLabel, libraryReadyIds, results.articles_created),
           slug,
           status: 'published',
           published_at: new Date().toISOString(),

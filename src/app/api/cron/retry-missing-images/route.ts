@@ -85,13 +85,16 @@ export async function GET(request: Request) {
     }
 
     // Process all articles
-    for (const article of allArticles) {
+    for (let i = 0; i < allArticles.length; i++) {
+      const article = allArticles[i];
       if (!article.neighborhood_id) continue;
 
       const libraryUrl = selectLibraryImage(
         article.neighborhood_id,
         article.article_type || 'standard',
         article.category_label || undefined,
+        undefined,
+        i,
       );
 
       if (!libraryUrl) continue;

@@ -140,8 +140,10 @@ function getDayOfYear(date?: Date): number {
 
 /**
  * Determine which image category to use for an article type.
+ * For RSS/news articles, rotates across all 8 categories using articleIndex
+ * so consecutive articles for the same neighborhood get different photos.
  */
-function resolveCategory(articleType: string, categoryLabel?: string): ImageCategory {
+function resolveCategory(articleType: string, categoryLabel?: string, articleIndex?: number): ImageCategory {
   const variant = (getDayOfYear() % 3) + 1;
 
   if (articleType === 'brief_summary') {
@@ -154,7 +156,9 @@ function resolveCategory(articleType: string, categoryLabel?: string): ImageCate
   ) {
     return 'sunday-edition';
   } else {
-    return 'rss-story';
+    // Rotate RSS/news articles across all 8 categories for visual variety
+    const idx = articleIndex ?? 0;
+    return IMAGE_CATEGORIES[idx % IMAGE_CATEGORIES.length];
   }
 }
 
@@ -173,12 +177,13 @@ export function selectLibraryImage(
   articleType: string,
   categoryLabel?: string,
   libraryReadyIds?: Set<string>,
+  articleIndex?: number,
 ): string {
   if (libraryReadyIds && !libraryReadyIds.has(neighborhoodId)) {
     return '';
   }
 
-  const category = resolveCategory(articleType, categoryLabel);
+  const category = resolveCategory(articleType, categoryLabel, articleIndex);
 
   // Check Unsplash cache first
   const cached = unsplashCache.get(neighborhoodId);
@@ -210,15 +215,16 @@ export async function selectLibraryImageAsync(
   neighborhoodId: string,
   articleType: string,
   categoryLabel?: string,
+  articleIndex?: number,
 ): Promise<string> {
   // Try cache first
-  const cached = selectLibraryImage(neighborhoodId, articleType, categoryLabel);
+  const cached = selectLibraryImage(neighborhoodId, articleType, categoryLabel, undefined, articleIndex);
   if (cached && cached.includes('unsplash.com')) {
     return cached;
   }
 
   // Query DB directly
-  const category = resolveCategory(articleType, categoryLabel);
+  const category = resolveCategory(articleType, categoryLabel, articleIndex);
   const { data } = await supabase
     .from('image_library_status')
     .select('unsplash_photos')
