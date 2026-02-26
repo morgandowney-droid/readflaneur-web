@@ -5,6 +5,13 @@
 
 ## 2026-02-26
 
+**Fix Daily Brief Card Showing Teaser Text Before Greeting:**
+- Some neighborhoods (Upper West Side, West Village) showed the `subject_teaser` value (e.g., "affordability shift") and `email_teaser` blurb as visible paragraphs above the "Morning, neighbors." greeting in the Daily Brief card on the feed. Other neighborhoods (Tribeca, Malibu, Ostermalm) were unaffected.
+- Root cause: Gemini inconsistently outputs teaser values as standalone prose paragraphs WITHOUT `SUBJECT TEASER:` / `EMAIL TEASER:` label prefixes. The existing regex stripping (`^SUBJECT TEASER:.*$`) only catches lines WITH labels, so unlabeled teasers slipped through.
+- Fix: `NeighborhoodBrief.tsx` now finds the first greeting/filler paragraph (via existing `isGreetingOrFillerParagraph()`) and drops all paragraphs before it, matching the same pre-greeting stripping logic already in `ArticleBody.tsx` for article detail pages.
+- This is a render-side fix - the stored `enriched_content` still contains the teaser text but it's now invisible. The collapsed card preview was already unaffected (preview extraction already skipped non-greeting paragraphs).
+- Files: `NeighborhoodBrief.tsx`
+
 **Expand Image Rotation to Full Unsplash Photo Pool:**
 - RSS/news articles previously rotated across only 8 category photos per neighborhood. Now draws from the full pool: 8 category photos + up to 40 alternates stored in `unsplash_alternates` JSONB, giving ~48 unique images to rotate through per neighborhood.
 - `CacheEntry` in `image-library.ts` now includes `alternates` field. `preloadUnsplashCache()`, `getUnsplashPhotos()`, and `selectLibraryImageAsync()` all fetch `unsplash_alternates` from DB. `selectLibraryImage()` builds combined pool for RSS/news articles (`articleIndex % fullPool.length`). Brief/Look Ahead/Sunday Edition articles still use their dedicated category photos.
