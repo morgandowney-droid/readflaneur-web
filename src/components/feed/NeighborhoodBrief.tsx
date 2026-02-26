@@ -478,7 +478,16 @@ export function NeighborhoodBrief({
 
   // Clean content and split into paragraphs
   const cleanedContent = cleanContent(displayContent);
-  const paragraphs = cleanedContent.split('\n\n').filter(p => p.trim());
+  let paragraphs = cleanedContent.split('\n\n').filter(p => p.trim());
+
+  // Strip pre-greeting paragraphs (subject_teaser and email_teaser prose that Gemini
+  // outputs before the greeting without label prefixes, so regex stripping misses them).
+  // Matches the same logic in ArticleBody.tsx for brief_summary articles.
+  const greetingIdx = paragraphs.findIndex(p => isGreetingOrFillerParagraph(p.trim()));
+  if (greetingIdx > 0) {
+    paragraphs = paragraphs.slice(greetingIdx);
+  }
+
   // Skip greeting/filler/header/sign-off paragraphs for preview - show actual news content
   let previewText = '';
   for (const para of paragraphs) {
