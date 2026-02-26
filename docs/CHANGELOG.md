@@ -5,6 +5,13 @@
 
 ## 2026-02-26
 
+**Rotate RSS/News Article Images Across Full Photo Library:**
+- RSS and news articles all used the single `rss-story` category photo, causing identical images on every "News Brief" article for a neighborhood (visible when multiple articles appear in the same feed view).
+- Fix: `resolveCategory()` in `image-library.ts` now rotates RSS/news/standard articles across all 8 Unsplash library categories using `articleIndex % 8`. Added optional `articleIndex` param to `selectLibraryImage()` and `selectLibraryImageAsync()`.
+- Updated callsites: `sync-news` (RSS articles use `results.articles_created`, Grok articles use `results.grok_articles_created`), `sync-nuisance-watch` (uses `results.articles_created`), `retry-missing-images` (uses loop index `i`).
+- Existing articles keep their current image; new articles going forward get visual variety.
+- Files: `image-library.ts`, `sync-news/route.ts`, `sync-nuisance-watch/route.ts`, `retry-missing-images/route.ts`
+
 **Use Gemini Subject Teaser for Look Ahead Headlines:**
 - Look Ahead articles used Grok's raw `HEADLINE:` output directly, producing generic date-heavy headlines like "Art Openings Thu", "Wine Class Tonight!", "Lincoln Center Vogue Tonight" while Daily Brief headlines got punchy Gemini-generated teasers like "Tragedy on Waverly".
 - Fix: `generate-look-ahead/route.ts` now prefers `enriched.subjectTeaser` via `toHeadlineCase()`, matching the Daily Brief pattern from `generate-brief-articles`. Falls back to Grok headline when no teaser available.
