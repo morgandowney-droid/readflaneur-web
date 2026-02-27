@@ -5,6 +5,11 @@
 
 ## 2026-02-28
 
+**Polish Email Template:**
+- Moved postcard section up from after Family Corner to right after primary stories/referral CTA. Provides an early color break (Unsplash photo) in the otherwise B&W text-heavy email, instead of being buried at the bottom.
+- Removed "Share on X / Facebook" links from lead story in `StoryList.tsx`. Nobody clicks social share links from inside an email - they share the article URL directly. Removed `ShareLinks` component and unused `shareRow`/`shareLink`/`shareDot` styles.
+- Files: `DailyBriefTemplate.tsx`, `StoryList.tsx`
+
 **Polish Exploration Discovery UX:**
 - Discovery card "+" button now toggles between add/remove - tapping again removes the neighborhood from the user's feed (previously one-way add only). Cards check localStorage on mount so already-subscribed neighborhoods show "✓" immediately.
 - Mobile discovery cards show brief feedback label ("Added to feed" / "Removed") that auto-clears after 2 seconds. Added `animate-fade-in` CSS animation.

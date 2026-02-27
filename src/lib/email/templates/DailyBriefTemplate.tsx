@@ -146,6 +146,11 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
             </Section>
           )}
 
+          {/* Discovery Postcard - early color break between primary and satellites */}
+          {content.postcard && (
+            <PostcardSection postcard={content.postcard} />
+          )}
+
           {/* Satellite neighborhoods */}
           {content.satelliteSections.length > 0 && (
             <Hr style={sectionDividerDark} />
@@ -157,11 +162,6 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
           {/* Family Corner */}
           {content.familyCorner && (
             <FamilyCornerSection familyCorner={content.familyCorner} />
-          )}
-
-          {/* Discovery Postcard */}
-          {content.postcard && (
-            <PostcardSection postcard={content.postcard} />
           )}
 
           <Footer
