@@ -740,23 +740,35 @@ export function MultiFeed({
         </div>
       )}
 
-      {/* ── MASTHEAD (below pills so pills stay vertically stable) ── */}
-      <NeighborhoodHeader
-        mode="all"
-        city={activeHood?.city || ''}
-        citySlug=""
-        neighborhoodName={activeHood?.name || t('feed.myNeighborhoods')}
-        neighborhoodSlug=""
-        neighborhoodId={activeHood?.id || ''}
-        hideControlDeck
-        neighborhoodCount={activeHood ? undefined : (neighborhoods.length || undefined)}
-        timezone={activeHood?.timezone}
-        country={activeHood?.country}
-        latitude={activeHood?.latitude}
-        longitude={activeHood?.longitude}
-        comboComponentNames={activeHood?.combo_component_names}
-        initialWeather={!activeFilter ? initialWeather : undefined}
-      />
+      {/* ── DESKTOP BENTO GRID (discovery layout, right after pills) ── */}
+      {!activeFilter && isMultiple && (
+        <div className="hidden md:block">
+          <BentoGrid
+            sections={bentoSections || []}
+            isLoading={bentoLoading}
+          />
+        </div>
+      )}
+
+      {/* ── MASTHEAD (hidden on desktop when bento is the opening view) ── */}
+      <div className={!activeFilter && isMultiple && bentoSections && bentoSections.length > 0 ? 'md:hidden' : ''}>
+        <NeighborhoodHeader
+          mode="all"
+          city={activeHood?.city || ''}
+          citySlug=""
+          neighborhoodName={activeHood?.name || t('feed.myNeighborhoods')}
+          neighborhoodSlug=""
+          neighborhoodId={activeHood?.id || ''}
+          hideControlDeck
+          neighborhoodCount={activeHood ? undefined : (neighborhoods.length || undefined)}
+          timezone={activeHood?.timezone}
+          country={activeHood?.country}
+          latitude={activeHood?.latitude}
+          longitude={activeHood?.longitude}
+          comboComponentNames={activeHood?.combo_component_names}
+          initialWeather={!activeFilter ? initialWeather : undefined}
+        />
+      </div>
 
       {/* ── DAILY BRIEF ── */}
       {activeFilter === null ? (
@@ -823,16 +835,6 @@ export function MultiFeed({
       )}
 
       {reminder}
-
-      {/* ── DESKTOP BENTO GRID (discovery layout, no pill filter) ── */}
-      {!activeFilter && isMultiple && (
-        <div className="hidden md:block">
-          <BentoGrid
-            sections={bentoSections || []}
-            isLoading={bentoLoading}
-          />
-        </div>
-      )}
 
       {/* "ALL STORIES" section header before regular feed (desktop only, when bento shown) */}
       {!activeFilter && isMultiple && bentoSections && bentoSections.length > 0 && (
