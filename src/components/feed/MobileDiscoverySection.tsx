@@ -66,6 +66,7 @@ export function MobileDiscoverySection({
                     citySlug={card.citySlug}
                     neighborhoodSlug={card.neighborhoodSlug}
                     onAdd={card.onAdd}
+                    onRemove={card.onRemove}
                   />
                 ))}
               </div>

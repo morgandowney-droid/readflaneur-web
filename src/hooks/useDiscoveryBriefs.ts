@@ -57,6 +57,16 @@ export function useDiscoveryBriefs(
     }).catch(() => {});
   }, []);
 
+  const handleRemove = useCallback((neighborhoodId: string) => {
+    try {
+      const stored = localStorage.getItem('flaneur-neighborhood-preferences');
+      const ids: string[] = stored ? JSON.parse(stored) : [];
+      const filtered = ids.filter(id => id !== neighborhoodId);
+      localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(filtered));
+      syncNeighborhoodCookie();
+    } catch { /* SSR or private browsing */ }
+  }, []);
+
   const buildSections = useCallback((data: DiscoveryBriefsResponse): BentoSection[] => {
     const result: BentoSection[] = [];
 
@@ -82,6 +92,7 @@ export function useDiscoveryBriefs(
         neighborhoodSlug: b.neighborhoodSlug,
         size: 'standard' as const,
         onAdd: handleAdd,
+        onRemove: handleRemove,
       }));
       result.push({
         label: REGION_LABELS[key]?.label || key,
@@ -91,17 +102,18 @@ export function useDiscoveryBriefs(
     }
 
     return result;
-  }, [handleAdd, options?.buildUserSection]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [handleAdd, handleRemove, options?.buildUserSection]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reattachCallbacks = useCallback((cached: BentoSection[]) => {
     for (const section of cached) {
       if (section.translationKey !== 'bento.yourNeighborhoods') {
         for (const card of section.cards) {
           card.onAdd = handleAdd;
+          card.onRemove = handleRemove;
         }
       }
     }
-  }, [handleAdd]);
+  }, [handleAdd, handleRemove]);
 
   const refresh = useCallback(() => {
     try { sessionStorage.removeItem(BENTO_CACHE_KEY); } catch {}
@@ -117,7 +129,7 @@ export function useDiscoveryBriefs(
         try {
           const cacheData = built.map(s => ({
             ...s,
-            cards: s.cards.map(({ onAdd: _, ...card }) => card),
+            cards: s.cards.map(({ onAdd: _, onRemove: _r, ...card }) => card),
           }));
           sessionStorage.setItem(BENTO_CACHE_KEY, JSON.stringify(cacheData));
         } catch {}
@@ -158,7 +170,7 @@ export function useDiscoveryBriefs(
         try {
           const cacheData = built.map(s => ({
             ...s,
-            cards: s.cards.map(({ onAdd: _, ...card }) => card),
+            cards: s.cards.map(({ onAdd: _, onRemove: _r, ...card }) => card),
           }));
           sessionStorage.setItem(BENTO_CACHE_KEY, JSON.stringify(cacheData));
         } catch {}

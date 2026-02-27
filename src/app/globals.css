@@ -65,6 +65,7 @@
   --font-serif: var(--font-cormorant);
   --font-body-serif: var(--font-merriweather), Georgia, 'Times New Roman', serif;
   --font-mono: var(--font-geist-mono);
+  --animate-fade-in: fadeIn 0.2s ease-out;
 }
 
 body {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cleanArticleHeadline } from '@/lib/utils';
@@ -18,6 +18,7 @@ export interface BentoCardProps {
   size: 'hero' | 'wide' | 'standard';
   isUserNeighborhood?: boolean;
   onAdd?: (neighborhoodId: string) => void;
+  onRemove?: (neighborhoodId: string) => void;
 }
 
 const sizeClasses: Record<BentoCardProps['size'], string> = {
@@ -51,9 +52,19 @@ export function BentoCard({
   size,
   isUserNeighborhood,
   onAdd,
+  onRemove,
 }: BentoCardProps) {
   const href = `/${citySlug}/${neighborhoodSlug}/${slug}?explore=true`;
   const [added, setAdded] = useState(false);
+
+  // Check if already in user's neighborhoods on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('flaneur-neighborhood-preferences');
+      const ids: string[] = stored ? JSON.parse(stored) : [];
+      if (ids.includes(neighborhoodId)) setAdded(true);
+    } catch {}
+  }, [neighborhoodId]);
 
   // Truncate blurb based on card size
   const maxBlurb = size === 'hero' ? 160 : size === 'wide' ? 120 : 80;
@@ -61,12 +72,16 @@ export function BentoCard({
     ? blurb.slice(0, blurb.lastIndexOf(' ', maxBlurb)) + '...'
     : blurb;
 
-  const handleAdd = (e: React.MouseEvent) => {
+  const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (added || !onAdd) return;
-    onAdd(neighborhoodId);
-    setAdded(true);
+    if (added) {
+      onRemove?.(neighborhoodId);
+      setAdded(false);
+    } else {
+      onAdd?.(neighborhoodId);
+      setAdded(true);
+    }
   };
 
   return (
@@ -97,10 +112,10 @@ export function BentoCard({
         <div className="absolute top-0 left-0 w-1 h-full bg-amber-500/60 z-10" />
       )}
 
-      {/* "+" subscribe button on discovery cards */}
-      {onAdd && (
+      {/* Subscribe toggle button on discovery cards */}
+      {(onAdd || onRemove) && (
         <button
-          onClick={handleAdd}
+          onClick={handleToggle}
           className={`
             absolute top-3 right-3 z-10
             w-8 h-8 rounded-full flex items-center justify-center

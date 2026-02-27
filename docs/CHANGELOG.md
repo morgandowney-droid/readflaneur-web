@@ -5,6 +5,14 @@
 
 ## 2026-02-28
 
+**Polish Exploration Discovery UX:**
+- Discovery card "+" button now toggles between add/remove - tapping again removes the neighborhood from the user's feed (previously one-way add only). Cards check localStorage on mount so already-subscribed neighborhoods show "✓" immediately.
+- Mobile discovery cards show brief feedback label ("Added to feed" / "Removed") that auto-clears after 2 seconds. Added `animate-fade-in` CSS animation.
+- Added `handleRemove` callback to `useDiscoveryBriefs` hook (removes from localStorage + syncs cookie). `onRemove` passed through `BentoCardProps` alongside `onAdd`, stripped from sessionStorage cache alongside `onAdd`.
+- Article page: moved `ExplorationNextSuggestions` above the bottom ad (was sandwiched between ad and "More Stories" - now directly after BriefDiscoveryFooter, close to article content).
+- Removed "Explore nearby" neighborhood pills section from article pages (redundant with exploration suggestions). Removed associated `nearbyNeighborhoods` Supabase query (saves a DB call per article page load).
+- Files: `MobileDiscoveryCard.tsx`, `BentoCard.tsx`, `useDiscoveryBriefs.ts`, `MobileDiscoverySection.tsx`, `globals.css`, `[slug]/page.tsx`
+
 **Exploration Discovery Redesign:**
 - **Email Postcards:** New `email_postcards` cache table stores daily postcard selection (same for all recipients). `selectDailyPostcard()` scores candidates on proper nouns (+5), date references (+3), city recency (+3/-10 for 7-day repeat), teaser density (+2 if >60 chars), filler (-5). Sunday variant picks top 3 with city diversity. `PostcardSection` React Email component with gold `#C9A96E` POSTCARD label, warm `#FDFBF7` background, Unsplash photo, and "Explore" link. Daily single inserted after Family Corner in DailyBriefTemplate. Sunday triple replaces "Your Other Editions" in SundayEditionTemplate (falls back to existing links if < 2 candidates).
 - **Mobile Feed Discovery:** `useDiscoveryBriefs` hook extracted from MultiFeed (~180 lines of inline bento state/fetch/cache logic). `MobileDiscoveryCard` renders photo cards in 2-col grid (`aspect-[4/3]`, rounded-xl, gradient overlay, "+" subscribe button). `MobileDiscoverySection` container with "Beyond {Name}" title, per-region labels, loading skeleton, and "Show me more" refresh button. `NeighborhoodDiscovery` client wrapper wraps hook for single-neighborhood pages. MultiFeed refactored to use hook with `md:hidden` mobile section after load-more. Discovery prop wired into NeighborhoodFeed, `[neighborhood]/page.tsx`, and `feed/page.tsx`.

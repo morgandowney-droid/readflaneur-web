@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cleanArticleHeadline } from '@/lib/utils';
@@ -15,6 +15,7 @@ interface MobileDiscoveryCardProps {
   citySlug: string;
   neighborhoodSlug: string;
   onAdd?: (neighborhoodId: string) => void;
+  onRemove?: (neighborhoodId: string) => void;
 }
 
 export function MobileDiscoveryCard({
@@ -27,16 +28,34 @@ export function MobileDiscoveryCard({
   citySlug,
   neighborhoodSlug,
   onAdd,
+  onRemove,
 }: MobileDiscoveryCardProps) {
   const [added, setAdded] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const href = `/${citySlug}/${neighborhoodSlug}/${slug}?explore=true`;
 
-  const handleAdd = (e: React.MouseEvent) => {
+  // Check if already in user's neighborhoods on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('flaneur-neighborhood-preferences');
+      const ids: string[] = stored ? JSON.parse(stored) : [];
+      if (ids.includes(neighborhoodId)) setAdded(true);
+    } catch {}
+  }, [neighborhoodId]);
+
+  const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (added || !onAdd) return;
-    onAdd(neighborhoodId);
-    setAdded(true);
+    if (added) {
+      onRemove?.(neighborhoodId);
+      setAdded(false);
+      setFeedback('Removed');
+    } else {
+      onAdd?.(neighborhoodId);
+      setAdded(true);
+      setFeedback('Added to feed');
+    }
+    setTimeout(() => setFeedback(null), 2000);
   };
 
   return (
@@ -61,17 +80,24 @@ export function MobileDiscoveryCard({
         </p>
       </div>
 
-      {/* Subscribe button */}
-      {onAdd && (
-        <button
-          onClick={handleAdd}
-          className={`absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white text-sm transition-colors ${
-            added ? 'bg-green-600/60' : 'bg-black/50 active:bg-black/70'
-          }`}
-          aria-label={added ? 'Added' : `Add ${neighborhoodName}`}
-        >
-          {added ? '✓' : '+'}
-        </button>
+      {/* Subscribe toggle button */}
+      {(onAdd || onRemove) && (
+        <div className="absolute top-2 right-2 flex items-center gap-1.5">
+          {feedback && (
+            <span className="text-[10px] text-white bg-black/60 backdrop-blur-sm rounded px-1.5 py-0.5 animate-fade-in">
+              {feedback}
+            </span>
+          )}
+          <button
+            onClick={handleToggle}
+            className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-sm transition-colors ${
+              added ? 'bg-green-600/60 backdrop-blur-sm' : 'bg-black/50 backdrop-blur-sm active:bg-black/70'
+            }`}
+            aria-label={added ? `Remove ${neighborhoodName} from feed` : `Add ${neighborhoodName} to feed`}
+          >
+            {added ? '✓' : '+'}
+          </button>
+        </div>
       )}
     </Link>
   );

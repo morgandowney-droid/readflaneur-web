@@ -151,15 +151,6 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
     }
   }
 
-  // Fetch nearby neighborhoods in the same city for exploration
-  const { data: nearbyNeighborhoods } = await supabase
-    .from('neighborhoods')
-    .select('id, name')
-    .eq('city', article.neighborhood?.city || '')
-    .eq('is_active', true)
-    .neq('id', neighborhoodId)
-    .limit(5);
-
   const neighborhoodUrl = `/${city}/${neighborhood}`;
 
   return (
@@ -404,31 +395,7 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
           </div>
         )}
 
-        {/* Bottom Story Open Ad */}
-        {/* For articles with BriefDiscoveryFooter (brief_summary, look_ahead, sunday edition),
-            skip "Add to Collection" CTA since the footer already has "Add to neighborhoods" */}
-        {(() => {
-          const hasBriefDiscoveryFooter =
-            article.article_type === 'look_ahead' ||
-            article.article_type === 'brief_summary' ||
-            (article.category_label && article.category_label.toLowerCase().includes('daily brief')) ||
-            article.category_label === 'The Sunday Edition';
-          return (
-            <div className="mt-12 pt-8 border-t border-border">
-              {bottomAd ? (
-                <StoryOpenAd ad={bottomAd} position="bottom" />
-              ) : (
-                <FallbackAd
-                  variant="story_open"
-                  position="bottom"
-                  fallback={fallbackData}
-                />
-              )}
-            </div>
-          );
-        })()}
-
-        {/* Exploration suggestions */}
+        {/* Exploration suggestions - right after editorial content */}
         <ExplorationNextSuggestions
           neighborhoodId={article.neighborhood_id || neighborhoodId}
           city={article.neighborhood?.city || ''}
@@ -438,7 +405,20 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
           categoryLabel={article.category_label || ''}
         />
 
-        {/* Email capture for engaged readers - skip when BriefDiscoveryFooter already has inline email capture */}
+        {/* Bottom Story Open Ad */}
+        <div className="mt-12 pt-8 border-t border-border">
+          {bottomAd ? (
+            <StoryOpenAd ad={bottomAd} position="bottom" />
+          ) : (
+            <FallbackAd
+              variant="story_open"
+              position="bottom"
+              fallback={fallbackData}
+            />
+          )}
+        </div>
+
+        {/* Email capture for engaged readers - skip for editorial article types */}
         {article.article_type !== 'look_ahead' &&
          article.article_type !== 'brief_summary' &&
          article.category_label !== 'The Sunday Edition' &&
@@ -450,24 +430,6 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
         <div className="mt-12 pt-8 border-t border-border text-center">
           <MoreStoriesButton />
         </div>
-
-        {/* Explore nearby neighborhoods */}
-        {nearbyNeighborhoods && nearbyNeighborhoods.length > 0 && (
-          <div className="mt-8 text-center">
-            <p className="text-[10px] uppercase tracking-widest text-fg-muted mb-3">Explore nearby</p>
-            <div className="flex flex-wrap justify-center gap-2">
-              {nearbyNeighborhoods.map((n) => (
-                <Link
-                  key={n.id}
-                  href={`/${city}/${neighborhoodToSlug(n.id)}`}
-                  className="px-3 py-1.5 text-xs border border-border rounded-full text-fg-muted hover:border-border-strong hover:text-fg transition-colors"
-                >
-                  {n.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
