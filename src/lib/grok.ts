@@ -427,7 +427,8 @@ Search X and the web for upcoming events, openings, and happenings in ${location
 - Community meetings, town halls, local government events
 - Sports events, races, outdoor activities
 - Seasonal happenings (markets, festivals, pop-ups)
-- Theater, music, and performance events
+- Theater, opera, ballet, classical music, and live performance events
+- Performances at major cultural venues in ${city} (theaters, opera houses, concert halls, philharmonics) - these serve the whole city and are relevant even if not physically in ${neighborhoodName}
 
 CRITICAL RULES:
 - ONLY include events that are CONFIRMED and upcoming (${todayStr} through the following 7 days)
@@ -468,7 +469,8 @@ Rules:
 - Do NOT include citation references like [[1]] or (1) in the HEADLINE.
 - NEVER use passive, defeatist, or "nothing happening" headlines. There is ALWAYS something worth highlighting. Banned headline patterns: "Quiet Week", "Slow Week", "Not Much Going On", "A Calm Week", "Nothing Major". Always lead with the most interesting specific event or venue name.
 - NEVER repeat the same venue, restaurant, or event across multiple days. If a venue is open every day (like a restaurant or bar), mention it ONCE on the most relevant day. Each day should feature DIFFERENT events. If there aren't enough distinct events, include fewer days rather than padding with repeats.
-- EXCLUDE only these specific items: permanent Broadway/West End shows ("Mamma Mia!", "The Lion King", "Phantom of the Opera", "Wicked"), guided walking tours, food tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms, and galleries/museums that are simply open during normal hours with ongoing exhibitions (no special event happening). DO include everything else - gallery opening RECEPTIONS, temporary exhibition premieres, closing days, artist talks, pop-up markets, concerts, comedy shows, restaurant/bar openings, art shows, food festivals, sports events, community events, museum special exhibitions, theater premieres, and any other time-limited happening. Cast a WIDE net and find as many events as possible. A busy neighborhood should have many events across the week.`
+- EXCLUDE only these specific items: permanent Broadway/West End shows ("Mamma Mia!", "The Lion King", "Phantom of the Opera", "Wicked"), guided walking tours, food tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms, and galleries/museums that are simply open during normal hours with ongoing exhibitions (no special event happening). DO include everything else - gallery opening RECEPTIONS, temporary exhibition premieres, closing days, artist talks, pop-up markets, concerts, comedy shows, restaurant/bar openings, art shows, food festivals, sports events, community events, museum special exhibitions, theater premieres, opera/ballet performances, classical concerts, and any other time-limited happening. Cast a WIDE net and find as many events as possible.
+- MAJOR CULTURAL VENUES: Always search for what's playing at the city's major theaters, opera houses, concert halls, and philharmonics. These are NOT tourist traps - they are the cultural heartbeat of the city. Include tonight's performance at the national theater, this week's opera, the upcoming symphony concert. These venues serve all neighborhoods in ${city}.`
           },
           {
             role: 'user',

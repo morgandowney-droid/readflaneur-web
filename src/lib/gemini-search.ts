@@ -137,6 +137,10 @@ Search specifically for:
 6. Community board meetings and public hearings
 7. Sports events at local venues
 8. Food festivals, wine tastings, book signings
+9. Theater, opera, ballet, and classical music performances at major cultural venues in ${city}
+10. Performances at the city's national theater, opera house, concert halls, and philharmonic
+
+MAJOR CULTURAL VENUES: Always search for what's playing at ${city}'s major theaters, opera houses, concert halls, and philharmonics. These are NOT tourist traps - they are the cultural heartbeat of the city. Include tonight's performance, this week's opera, upcoming symphony concerts. These venues serve ALL neighborhoods in the city, not just the one they're located in.
 
 GALLERY/MUSEUM FILTER: Only include a gallery or museum if there is a specific TIME-LIMITED event (opening reception, closing day, artist talk, premiere). Do NOT include a gallery/museum just because it is open with an ongoing exhibition. "Gallery X shows Artist Y" is not an event.
 
