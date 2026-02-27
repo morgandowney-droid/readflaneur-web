@@ -199,11 +199,11 @@ function formatEventLine(event: StructuredEvent, city?: string, alsoOn?: string)
 
   // Category + time combined (e.g., "Art Exhibition, 17:00-20:00")
   const catTimeParts: string[] = [];
-  if (event.category?.trim() && event.category.trim().toLowerCase() !== event.name.trim().toLowerCase()) {
-    catTimeParts.push(event.category.trim());
+  if (!isPlaceholder(event.category) && event.category!.trim().toLowerCase() !== event.name.trim().toLowerCase()) {
+    catTimeParts.push(event.category!.trim());
   }
-  if (event.time?.trim()) {
-    catTimeParts.push(event.time.trim());
+  if (!isPlaceholder(event.time)) {
+    catTimeParts.push(event.time!.trim());
   }
   if (catTimeParts.length > 0) {
     parts.push(catTimeParts.join(', '));
@@ -211,9 +211,9 @@ function formatEventLine(event: StructuredEvent, city?: string, alsoOn?: string)
 
   // Location + cleaned address combined
   const locationParts: string[] = [];
-  if (event.location?.trim()) locationParts.push(event.location.trim());
-  if (event.address?.trim()) {
-    const cleaned = cleanAddress(event.address, city);
+  if (!isPlaceholder(event.location)) locationParts.push(event.location!.trim());
+  if (!isPlaceholder(event.address)) {
+    const cleaned = cleanAddress(event.address!, city);
     if (cleaned) locationParts.push(cleaned);
   }
   if (locationParts.length > 0) {
@@ -221,8 +221,8 @@ function formatEventLine(event: StructuredEvent, city?: string, alsoOn?: string)
   }
 
   // Price (if available)
-  if (event.price?.trim()) {
-    parts.push(event.price.trim());
+  if (!isPlaceholder(event.price)) {
+    parts.push(event.price!.trim());
   }
 
   let line = parts.join('; ');
@@ -233,6 +233,16 @@ function formatEventLine(event: StructuredEvent, city?: string, alsoOn?: string)
   }
 
   return line + '.';
+}
+
+/**
+ * Check if a value is a placeholder that shouldn't be displayed.
+ * Catches "Not Listed", "TBD", "TBA", "N/A", "Unknown", "Not Available", "None".
+ */
+export function isPlaceholder(val: string | null | undefined): boolean {
+  if (!val?.trim()) return true;
+  const lower = val.trim().toLowerCase();
+  return ['not listed', 'tbd', 'tba', 'n/a', 'unknown', 'not available', 'none'].includes(lower);
 }
 
 /**

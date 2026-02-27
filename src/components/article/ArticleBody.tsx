@@ -1,13 +1,14 @@
 'use client';
 
-import { ReactNode } from 'react';
-import { isEventLine } from '@/lib/look-ahead-events';
+import { ReactNode, useState, useMemo } from 'react';
+import { isEventLine, isPlaceholder } from '@/lib/look-ahead-events';
 
 interface ArticleBodyProps {
   content: string;
   neighborhoodName: string;
   city: string;
   articleType?: string;
+  country?: string;
 }
 
 /** Detect greeting lines across 9 languages - matches the patterns in NeighborhoodBrief.tsx */
@@ -27,7 +28,7 @@ function isGreetingLine(text: string): boolean {
   return patterns.some(p => p.test(trimmed));
 }
 
-export function ArticleBody({ content, neighborhoodName, city, articleType }: ArticleBodyProps) {
+export function ArticleBody({ content, neighborhoodName, city, articleType, country }: ArticleBodyProps) {
   // Strip all links (HTML and markdown) from content, keeping just the text
   let cleanedContent = content
     // Strip teaser labels that Gemini outputs as prose (for email/subject only, not display)
@@ -109,6 +110,10 @@ export function ArticleBody({ content, neighborhoodName, city, articleType }: Ar
     }
   }
 
+  // When Look Ahead has a structured event listing, the prose restates the same
+  // events in paragraph form - skip it entirely.
+  const skipProse = articleType === 'look_ahead' && eventListingBlock;
+
   const pClass = 'text-fg text-[1.2rem] md:text-[1.35rem] leading-loose mb-8';
 
   // Render function that handles strong tags and markdown links
@@ -138,13 +143,13 @@ export function ArticleBody({ content, neighborhoodName, city, articleType }: Ar
 
   return (
     <article className="max-w-none" style={{ fontFamily: 'var(--font-body-serif)' }}>
-      {/* Compact event listing block */}
+      {/* Structured event listing block */}
       {eventListingBlock && (
-        <EventListingBlock content={eventListingBlock} />
+        <EventListingBlock content={eventListingBlock} city={city} country={country} />
       )}
 
-      {/* Prose body */}
-      {paragraphs.map((paragraph, index) => {
+      {/* Prose body (skipped for Look Ahead when event listing exists) */}
+      {!skipProse && paragraphs.map((paragraph, index) => {
         // Check if this is a section header (wrapped in [[ ]])
         const headerMatch = paragraph.match(/^\[\[([^\]]+)\]\]$/);
         if (headerMatch) {
@@ -176,55 +181,343 @@ export function ArticleBody({ content, neighborhoodName, city, articleType }: Ar
   );
 }
 
+/** Parsed event with structured fields for filtering and display */
+interface ParsedEvent {
+  name: string;
+  category: string | null;
+  time: string | null;
+  venue: string | null;
+  address: string | null;
+  price: string | null;
+  dayLabel: string;
+  alsoOn: string | null; // "(also on Sun, Mon)" suffix
+}
+
+/** Time-of-day bucket for filtering */
+type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'all-day';
+
 /**
- * Compact event listing rendered as a tight block above prose.
- * Parses [[Day, Date]] headers and semicolon-separated event lines.
+ * Convert 24h time to AM/PM for US locales.
+ * "19:00" -> "7:00 PM", "10:00-15:00" -> "10:00 AM - 3:00 PM"
+ * Already AM/PM -> pass through. Null/missing -> null.
  */
-function EventListingBlock({ content }: { content: string }) {
+function formatTime(timeStr: string | null, country?: string): string | null {
+  if (!timeStr || isPlaceholder(timeStr)) return null;
+  const isUS = country?.toUpperCase() === 'US' || country?.toUpperCase() === 'USA' || country?.toUpperCase() === 'UNITED STATES';
+  if (!isUS) return timeStr;
+  // Already has AM/PM - pass through
+  if (/[AaPp][Mm]/.test(timeStr)) return timeStr;
+  // Convert each HH:MM occurrence
+  return timeStr.replace(/(\d{1,2}):(\d{2})/g, (_, h, m) => {
+    const hour = parseInt(h, 10);
+    if (isNaN(hour)) return `${h}:${m}`;
+    const suffix = hour >= 12 ? 'PM' : 'AM';
+    const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return `${h12}:${m} ${suffix}`;
+  });
+}
+
+/**
+ * Classify an event's time into a time-of-day bucket.
+ */
+function classifyTimeOfDay(time: string | null): TimeOfDay {
+  if (!time) return 'all-day';
+  const match = time.match(/(\d{1,2}):(\d{2})/);
+  if (!match) {
+    // Check for AM/PM style
+    const ampmMatch = time.match(/(\d{1,2}):?\d{0,2}\s*(AM|PM)/i);
+    if (!ampmMatch) return 'all-day';
+    let hour = parseInt(ampmMatch[1], 10);
+    if (ampmMatch[2].toUpperCase() === 'PM' && hour !== 12) hour += 12;
+    if (ampmMatch[2].toUpperCase() === 'AM' && hour === 12) hour = 0;
+    if (hour < 12) return 'morning';
+    if (hour < 17) return 'afternoon';
+    return 'evening';
+  }
+  const hour = parseInt(match[1], 10);
+  if (hour < 12) return 'morning';
+  if (hour < 17) return 'afternoon';
+  return 'evening';
+}
+
+/**
+ * Parse the raw event listing content into structured data.
+ */
+function parseEventListing(content: string, country?: string): { days: string[]; events: ParsedEvent[] } {
   const lines = content.split(/\n\n+/).map(l => l.trim()).filter(Boolean);
+  const events: ParsedEvent[] = [];
+  const days: string[] = [];
+  let currentDay = '';
+
+  for (const line of lines) {
+    const headerMatch = line.match(/^\[\[(.+)\]\]$/);
+    if (headerMatch) {
+      currentDay = headerMatch[1];
+      if (!days.includes(currentDay)) days.push(currentDay);
+      continue;
+    }
+
+    if (!isEventLine(line)) continue;
+
+    // Strip trailing period and "(also on ...)" suffix
+    let cleanLine = line.replace(/\.$/, '');
+    let alsoOn: string | null = null;
+    const alsoMatch = cleanLine.match(/\s*\(also on ([^)]+)\)\s*$/);
+    if (alsoMatch) {
+      alsoOn = alsoMatch[1];
+      cleanLine = cleanLine.substring(0, alsoMatch.index);
+    }
+
+    const segments = cleanLine.split(';').map(s => s.trim());
+    const name = segments[0] || '';
+    if (isPlaceholder(name)) continue;
+
+    // Segment 1: category + time (e.g., "Art Exhibition, 17:00-20:00")
+    let category: string | null = null;
+    let time: string | null = null;
+    if (segments[1]) {
+      const catTimeParts = segments[1].split(',').map(s => s.trim());
+      for (const part of catTimeParts) {
+        if (/\d{1,2}[:.]\d{2}/.test(part) || /\d{1,2}\s*(AM|PM)/i.test(part)) {
+          time = part;
+        } else if (!isPlaceholder(part)) {
+          category = part;
+        }
+      }
+    }
+
+    // Segment 2: venue, address
+    let venue: string | null = null;
+    let address: string | null = null;
+    if (segments[2]) {
+      const locParts = segments[2].split(',').map(s => s.trim());
+      venue = isPlaceholder(locParts[0]) ? null : locParts[0];
+      if (locParts.length > 1) {
+        address = isPlaceholder(locParts.slice(1).join(', ')) ? null : locParts.slice(1).join(', ');
+      }
+    }
+
+    // Segment 3: price
+    let price: string | null = null;
+    if (segments[3] && !isPlaceholder(segments[3])) {
+      price = segments[3];
+    }
+
+    // Filter placeholder time
+    if (isPlaceholder(time)) time = null;
+
+    events.push({
+      name,
+      category,
+      time: formatTime(time, country),
+      venue,
+      address,
+      price,
+      dayLabel: currentDay,
+      alsoOn,
+    });
+  }
+
+  return { days, events };
+}
+
+/**
+ * Interactive event listing with day/time/category filters and hyperlinked names.
+ */
+function EventListingBlock({ content, city, country }: { content: string; city: string; country?: string }) {
+  const { days, events } = useMemo(() => parseEventListing(content, country), [content, country]);
+
+  // Filter state
+  const [activeDay, setActiveDay] = useState<string | null>(null);
+  const [activeTimeOfDay, setActiveTimeOfDay] = useState<Set<TimeOfDay>>(new Set());
+  const [activeCategories, setActiveCategories] = useState<Set<string>>(new Set());
+  const [showAllCategories, setShowAllCategories] = useState(false);
+
+  // Extract unique categories
+  const allCategories = useMemo(() => {
+    const cats = new Set<string>();
+    events.forEach(e => { if (e.category) cats.add(e.category); });
+    return Array.from(cats).sort();
+  }, [events]);
+
+  const visibleCategoryCount = 5;
+  const displayedCategories = showAllCategories ? allCategories : allCategories.slice(0, visibleCategoryCount);
+  const hiddenCategoryCount = allCategories.length - visibleCategoryCount;
+
+  // Apply filters
+  const filteredEvents = useMemo(() => {
+    return events.filter(e => {
+      if (activeDay && e.dayLabel !== activeDay) return false;
+      if (activeTimeOfDay.size > 0) {
+        const tod = classifyTimeOfDay(e.time);
+        if (!activeTimeOfDay.has(tod)) return false;
+      }
+      if (activeCategories.size > 0 && (!e.category || !activeCategories.has(e.category))) return false;
+      return true;
+    });
+  }, [events, activeDay, activeTimeOfDay, activeCategories]);
+
+  // Group filtered events by day (preserving original day order)
+  const groupedFiltered = useMemo(() => {
+    const map = new Map<string, ParsedEvent[]>();
+    for (const e of filteredEvents) {
+      const existing = map.get(e.dayLabel) || [];
+      existing.push(e);
+      map.set(e.dayLabel, existing);
+    }
+    return map;
+  }, [filteredEvents]);
+
+  const hasFilters = activeDay !== null || activeTimeOfDay.size > 0 || activeCategories.size > 0;
+
+  const clearFilters = () => {
+    setActiveDay(null);
+    setActiveTimeOfDay(new Set());
+    setActiveCategories(new Set());
+  };
+
+  const toggleTimeOfDay = (tod: TimeOfDay) => {
+    setActiveTimeOfDay(prev => {
+      const next = new Set(prev);
+      if (next.has(tod)) next.delete(tod); else next.add(tod);
+      return next;
+    });
+  };
+
+  const toggleCategory = (cat: string) => {
+    setActiveCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat); else next.add(cat);
+      return next;
+    });
+  };
+
+  const pillBase = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer select-none';
+  const pillActive = 'bg-accent/20 text-accent border border-accent/30';
+  const pillInactive = 'bg-surface text-fg-muted border border-border hover:border-border-strong hover:text-fg';
 
   return (
-    <div className="mb-10 pb-8 border-b border-border" style={{ fontFamily: 'var(--font-body-serif)' }}>
-      <p className="text-[10px] uppercase tracking-[0.25em] text-fg-subtle mb-4" style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)' }}>At a glance</p>
-      <div className="space-y-2">
-        {lines.map((line, i) => {
-          // Date header [[Today, Sat Feb 21]]
-          const headerMatch = line.match(/^\[\[(.+)\]\]$/);
-          if (headerMatch) {
-            return (
-              <p key={i} className={`text-sm font-semibold text-fg uppercase tracking-widest ${i > 0 ? 'mt-4' : ''}`}>
-                {headerMatch[1]}
-              </p>
-            );
-          }
+    <div className="mb-10" style={{ fontFamily: 'var(--font-body-serif)' }}>
+      {/* Filter bar */}
+      <div className="mb-6 space-y-3" style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)' }}>
+        {/* Day pills */}
+        {days.length > 1 && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              className={`${pillBase} ${activeDay === null ? pillActive : pillInactive}`}
+              onClick={() => setActiveDay(null)}
+            >All days</button>
+            {days.map(day => (
+              <button
+                key={day}
+                className={`${pillBase} ${activeDay === day ? pillActive : pillInactive}`}
+                onClick={() => setActiveDay(activeDay === day ? null : day)}
+              >{day.replace(/,.*$/, '')}</button>
+            ))}
+          </div>
+        )}
 
-          // Event line with semicolons
-          if (isEventLine(line)) {
-            const segments = line.replace(/\.$/, '').split(';').map(s => s.trim());
-            return (
-              <p key={i} className="text-[0.95rem] leading-relaxed text-fg-muted flex">
-                <span className="text-fg-subtle/40 mr-2 select-none">&bull;</span>
-                <span>
-                  {segments.map((seg, si) => (
-                    <span key={si}>
-                      {si === 0 ? (
-                        <span className="text-fg">{seg}</span>
-                      ) : (
-                        <span>{seg}</span>
-                      )}
-                      {si < segments.length - 1 && (
-                        <span className="text-fg-subtle mx-1">&middot;</span>
-                      )}
-                    </span>
-                  ))}
-                </span>
-              </p>
-            );
-          }
+        {/* Time-of-day chips */}
+        <div className="flex flex-wrap gap-2">
+          {(['morning', 'afternoon', 'evening', 'all-day'] as TimeOfDay[]).map(tod => (
+            <button
+              key={tod}
+              className={`${pillBase} ${activeTimeOfDay.has(tod) ? pillActive : pillInactive}`}
+              onClick={() => toggleTimeOfDay(tod)}
+            >{tod === 'all-day' ? 'All Day' : tod.charAt(0).toUpperCase() + tod.slice(1)}</button>
+          ))}
+        </div>
 
-          return null;
-        })}
+        {/* Category chips */}
+        {allCategories.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {displayedCategories.map(cat => (
+              <button
+                key={cat}
+                className={`${pillBase} ${activeCategories.has(cat) ? pillActive : pillInactive}`}
+                onClick={() => toggleCategory(cat)}
+              >{cat}</button>
+            ))}
+            {!showAllCategories && hiddenCategoryCount > 0 && (
+              <button
+                className={`${pillBase} ${pillInactive}`}
+                onClick={() => setShowAllCategories(true)}
+              >+{hiddenCategoryCount} more</button>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Events */}
+      {filteredEvents.length === 0 ? (
+        <div className="text-center py-8 text-fg-muted">
+          <p className="text-sm">No events match your filters.</p>
+          <button onClick={clearFilters} className="text-accent text-sm mt-2 hover:underline">Clear filters</button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {days.filter(d => groupedFiltered.has(d)).map(day => (
+            <div key={day}>
+              <p className={`text-sm font-semibold text-fg uppercase tracking-widest mb-2 mt-5`} style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)' }}>
+                {day}
+              </p>
+              {groupedFiltered.get(day)!.map((event, i) => {
+                const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(event.name + ' ' + city)}`;
+                const metaParts: string[] = [];
+                if (event.time) metaParts.push(event.time);
+                if (event.venue) metaParts.push(event.venue);
+                if (event.address) metaParts.push(event.address);
+                if (event.price) metaParts.push(event.price);
+                if (event.alsoOn) metaParts.push(`also on ${event.alsoOn}`);
+
+                return (
+                  <div key={`${day}-${i}`} className="py-2 flex">
+                    <span className="text-fg-subtle/40 mr-3 mt-[0.35rem] select-none text-sm shrink-0">&bull;</span>
+                    <div className="min-w-0">
+                      {/* Line 1: hyperlinked name + category badge */}
+                      <div className="flex flex-wrap items-baseline gap-x-2">
+                        <a
+                          href={searchUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-fg font-semibold text-[0.95rem] underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-solid hover:decoration-neutral-300/60"
+                        >
+                          {event.name}
+                        </a>
+                        {event.category && (
+                          <span className="text-[10px] uppercase tracking-wider text-fg-subtle bg-surface border border-border rounded-full px-2 py-0.5 whitespace-nowrap">
+                            {event.category}
+                          </span>
+                        )}
+                      </div>
+                      {/* Line 2: time, venue, address, price */}
+                      {metaParts.length > 0 && (
+                        <p className="text-[0.85rem] text-fg-muted leading-relaxed mt-0.5">
+                          {metaParts.map((part, pi) => (
+                            <span key={pi}>
+                              {pi > 0 && <span className="text-fg-subtle mx-1">&middot;</span>}
+                              {part}
+                            </span>
+                          ))}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Active filter summary */}
+      {hasFilters && filteredEvents.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-border">
+          <button onClick={clearFilters} className="text-fg-muted text-xs hover:text-fg transition-colors" style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)' }}>
+            Showing {filteredEvents.length} of {events.length} events - Clear filters
+          </button>
+        </div>
+      )}
     </div>
   );
 }

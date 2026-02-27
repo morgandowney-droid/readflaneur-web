@@ -314,6 +314,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           neighborhoodName={article.neighborhood?.name || ''}
           city={article.neighborhood?.city || ''}
           articleType={article.article_type}
+          country={article.neighborhood?.country || ''}
         />
 
         {/* Source Attribution + Reactions (inline) */}
