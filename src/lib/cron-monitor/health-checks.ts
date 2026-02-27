@@ -56,7 +56,8 @@ export async function checkBriefCoverage(
   const { data: recentBriefs } = await supabase
     .from('neighborhood_briefs')
     .select('neighborhood_id, created_at')
-    .gte('created_at', recentCutoff.toISOString());
+    .gte('created_at', recentCutoff.toISOString())
+    .limit(3000);
 
   // Build map of neighborhood_id -> brief timestamps
   const briefsByNeighborhood = new Map<string, string[]>();

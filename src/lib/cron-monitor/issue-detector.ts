@@ -98,7 +98,8 @@ export async function detectMissingBriefs(
   const { data: todaysBriefs, error: briefError } = await supabase
     .from('neighborhood_briefs')
     .select('neighborhood_id')
-    .gte('created_at', todayStart.toISOString());
+    .gte('created_at', todayStart.toISOString())
+    .limit(3000);
 
   if (briefError) {
     console.error('Error fetching today\'s briefs:', briefError);

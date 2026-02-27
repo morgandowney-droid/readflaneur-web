@@ -111,12 +111,16 @@ export async function GET(request: Request) {
   // Get recent briefs (last 7 days) for per-neighborhood local date coverage check
   // AND for anti-repetition topic history. 7-day window catches persistent topics
   // that keep appearing across multiple briefs (e.g., a restaurant closure for 2 weeks).
+  // MUST use explicit limit - Supabase default is 1000 rows, but 270 neighborhoods * 7 days
+  // = ~1890+ briefs. Without this, today's briefs get silently dropped and hasBriefForLocalToday
+  // returns false, causing alphabetically-first neighborhoods to regenerate every run.
   const recentCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   const { data: recentBriefs } = await supabase
     .from('neighborhood_briefs')
     .select('neighborhood_id, created_at, headline')
-    .gte('created_at', recentCutoff.toISOString());
+    .gte('created_at', recentCutoff.toISOString())
+    .limit(5000);
 
   // Build map of neighborhood_id -> brief timestamps for local-date checking
   const briefsByNeighborhood = new Map<string, string[]>();
