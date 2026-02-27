@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { cleanArticleHeadline } from '@/lib/utils';
 
 export interface BentoCardProps {
   headline: string;
@@ -101,7 +102,7 @@ export function BentoCard({
           font-serif font-bold text-white leading-tight mb-1.5
           ${headlineClasses[size]}
         `}>
-          {headline}
+          {cleanArticleHeadline(headline)}
         </h3>
 
         {/* Blurb - hidden on standard size for cleaner look */}
