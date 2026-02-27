@@ -121,19 +121,19 @@ async function fetchBriefAsStory(
   }
 
   // Fallback: use neighborhood_briefs table and create an article on-the-fly
+  // Filter enriched_content IS NOT NULL in the query itself (not post-fetch) so that
+  // a newer unenriched brief doesn't shadow an older enriched one, causing null return
   const { data: brief } = await supabase
     .from('neighborhood_briefs')
     .select('id, headline, subject_teaser, content, enriched_content, enriched_categories, enrichment_model, model, generated_at, email_teaser')
     .eq('neighborhood_id', neighborhoodId)
+    .not('enriched_content', 'is', null)
     .gte('expires_at', new Date().toISOString())
     .order('created_at', { ascending: false })
     .limit(1)
     .single();
 
   if (!brief) return null;
-
-  // Never create an article from an unenriched brief — wait for Gemini enrichment
-  if (!brief.enriched_content) return null;
 
   // Create an article from the enriched brief so the email link goes to a full article page
   const articleBody = brief.enriched_content;
@@ -478,13 +478,17 @@ export async function assembleDailyBrief(
     }
 
     // Fetch subject teaser from the most recent enriched brief
+    // Must use same sort order (created_at) and enriched_content gate as fetchBriefAsStory
+    // to ensure subject line teaser comes from the same brief used in the body
     let subjectTeaser: string | null = null;
     const { data: briefTeaser } = await supabase
       .from('neighborhood_briefs')
       .select('subject_teaser')
       .eq('neighborhood_id', primaryNeighborhood.id)
       .not('subject_teaser', 'is', null)
-      .order('generated_at', { ascending: false })
+      .not('enriched_content', 'is', null)
+      .gte('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
       .limit(1)
       .single();
     if (briefTeaser?.subject_teaser) {
