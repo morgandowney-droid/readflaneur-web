@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cleanArticleHeadline } from '@/lib/utils';
@@ -16,6 +17,7 @@ export interface BentoCardProps {
   neighborhoodSlug: string;
   size: 'hero' | 'wide' | 'standard';
   isUserNeighborhood?: boolean;
+  onAdd?: (neighborhoodId: string) => void;
 }
 
 const sizeClasses: Record<BentoCardProps['size'], string> = {
@@ -41,20 +43,31 @@ export function BentoCard({
   blurb,
   imageUrl,
   neighborhoodName,
+  neighborhoodId,
   city,
   slug,
   citySlug,
   neighborhoodSlug,
   size,
   isUserNeighborhood,
+  onAdd,
 }: BentoCardProps) {
   const href = `/${citySlug}/${neighborhoodSlug}/${slug}`;
+  const [added, setAdded] = useState(false);
 
   // Truncate blurb based on card size
   const maxBlurb = size === 'hero' ? 160 : size === 'wide' ? 120 : 80;
   const truncatedBlurb = blurb.length > maxBlurb
     ? blurb.slice(0, blurb.lastIndexOf(' ', maxBlurb)) + '...'
     : blurb;
+
+  const handleAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (added || !onAdd) return;
+    onAdd(neighborhoodId);
+    setAdded(true);
+  };
 
   return (
     <Link
@@ -76,12 +89,39 @@ export function BentoCard({
         className="object-cover transition-all duration-500 group-hover:scale-105 group-hover:brightness-110"
       />
 
-      {/* Gradient overlay - heavier at bottom for text legibility */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
 
       {/* User neighborhood amber accent */}
       {isUserNeighborhood && (
         <div className="absolute top-0 left-0 w-1 h-full bg-amber-500/60 z-10" />
+      )}
+
+      {/* "+" subscribe button on discovery cards */}
+      {onAdd && (
+        <button
+          onClick={handleAdd}
+          className={`
+            absolute top-3 right-3 z-10
+            w-8 h-8 rounded-full flex items-center justify-center
+            transition-all duration-200
+            ${added
+              ? 'bg-green-600/60 backdrop-blur-sm'
+              : 'bg-black/50 backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100 hover:bg-black/70'
+            }
+          `}
+          aria-label={added ? 'Added' : `Add ${neighborhoodName}`}
+        >
+          {added ? (
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2.5 7l3 3 6-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 2v10M2 7h10" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          )}
+        </button>
       )}
 
       {/* Content overlay */}
@@ -100,6 +140,7 @@ export function BentoCard({
         {/* Headline */}
         <h3 className={`
           font-serif font-bold text-white leading-tight mb-1.5
+          [text-shadow:0_1px_4px_rgba(0,0,0,0.5)]
           ${headlineClasses[size]}
         `}>
           {cleanArticleHeadline(headline)}

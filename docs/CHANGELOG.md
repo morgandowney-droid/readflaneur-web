@@ -3,6 +3,17 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-02-27
+
+**Polish Bento Grid (5 Fixes):**
+- **Lighter gradient:** Changed overlay from `from-black/85 via-black/30` to `from-black/70 via-black/25` so neighborhood photos are more visible. Added `text-shadow: 0 1px 4px rgba(0,0,0,0.5)` on headlines as safety net for bright photos.
+- **Lopsided discovery sections:** When a region has exactly 2 cards, both are now `wide` (col-span-2 each, filling all 4 columns). Discovery sections with <2 cards are filtered out entirely. User section keeps hero card behavior.
+- **"+" subscribe button:** Discovery cards show a `+` circle button (top-right, appears on hover with `bg-black/50 backdrop-blur-sm`). Click adds neighborhood to `flaneur-neighborhood-preferences` localStorage, syncs cookie, and fires `/api/neighborhoods/add`. Swaps to green checkmark on success. `onAdd` prop on `BentoCardProps`, handler in MultiFeed follows same pattern as `AddToCollectionCTA`.
+- **Session cache + refresh:** Bento sections cached in `sessionStorage` (`flaneur-bento-cache`) after first API fetch. Within a session, content stays consistent. "Discover more" button at grid bottom clears cache and refetches with `&_t=` cache-buster. `onAdd` callbacks re-attached after loading from cache (functions aren't serializable).
+- **Compact masthead:** Desktop shows single-line bar between pills and bento grid: "My Neighborhoods" (clickable, opens selector modal) + location count on left, `NeighborhoodLiveStatus` (weather + time for primary neighborhood) on right. Full `NeighborhoodHeader` stays hidden on desktop when bento is active, visible on mobile as before.
+- Files: `BentoCard.tsx`, `BentoGrid.tsx`, `MultiFeed.tsx`, `translations.ts`
+- Translation keys added: `bento.discoverMore`, `bento.added` in all 9 languages
+
 ## 2026-02-26
 
 **Fix Daily Brief Card Showing Teaser Text Before Greeting:**
