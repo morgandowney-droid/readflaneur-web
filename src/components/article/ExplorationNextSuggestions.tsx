@@ -173,7 +173,7 @@ export function ExplorationNextSuggestions({
             <Link
               key={suggestion.url}
               href={suggestion.url}
-              className="block group"
+              className="block group truncate"
             >
               <span className="text-xs text-fg-subtle">{label}: </span>
               <span className="text-sm font-semibold text-fg group-hover:text-accent transition-colors">
