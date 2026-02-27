@@ -120,7 +120,7 @@ export function ExplorationNextSuggestions({
   const secondary = suggestions.filter((_, i) => i !== heroIdx);
 
   return (
-    <div className="mt-10 mb-4">
+    <div className="mt-10 mb-4 pt-8 border-t border-border">
       <p className="text-[10px] tracking-[0.2em] uppercase text-fg-subtle mb-4">Keep exploring</p>
 
       {/* Hero card with image */}
@@ -142,7 +142,7 @@ export function ExplorationNextSuggestions({
               <p className="text-base md:text-lg font-light text-white leading-snug line-clamp-2" style={{ fontFamily: 'var(--font-body-serif, Georgia, serif)' }}>
                 {cleanArticleHeadline(hero.suggestion.headline)}
               </p>
-              <p className="text-xs text-white/70 mt-2 group-hover:text-white transition-colors tracking-wider uppercase">
+              <p className="text-sm text-white mt-3 group-hover:text-accent transition-colors tracking-wider uppercase font-medium">
                 Continue exploring &rsaquo;
               </p>
             </div>
@@ -166,22 +166,39 @@ export function ExplorationNextSuggestions({
         </Link>
       )}
 
-      {/* Secondary text links */}
+      {/* Secondary suggestions with thumbnails */}
       {secondary.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {secondary.map(({ label, suggestion }) => (
             <Link
               key={suggestion.url}
               href={suggestion.url}
-              className="block group truncate"
+              className="flex items-center gap-3 group"
             >
-              <span className="text-xs text-fg-subtle">{label}: </span>
-              <span className="text-sm font-semibold text-fg group-hover:text-accent transition-colors">
-                {suggestion.neighborhoodName}
-              </span>
-              {suggestion.headline && (
-                <span className="text-sm text-fg-muted"> - {cleanArticleHeadline(suggestion.headline)}</span>
+              {suggestion.imageUrl ? (
+                <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0">
+                  <Image
+                    src={suggestion.imageUrl}
+                    alt={suggestion.neighborhoodName}
+                    fill
+                    className="object-cover"
+                    sizes="32px"
+                  />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-elevated shrink-0 flex items-center justify-center">
+                  <span className="text-fg-subtle text-[10px]">&rarr;</span>
+                </div>
               )}
+              <div className="min-w-0 truncate">
+                <span className="text-xs text-fg-subtle">{label}: </span>
+                <span className="text-sm font-semibold text-fg group-hover:text-accent transition-colors">
+                  {suggestion.neighborhoodName}
+                </span>
+                {suggestion.headline && (
+                  <span className="text-sm text-fg-muted"> - {cleanArticleHeadline(suggestion.headline)}</span>
+                )}
+              </div>
             </Link>
           ))}
         </div>

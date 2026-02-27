@@ -345,6 +345,19 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
           isExploring={isExploring}
         />
 
+        {/* In explore mode: show exploration suggestions BEFORE brief links
+            so "next neighborhood" is the primary CTA, not "more from this neighborhood" */}
+        {isExploring && (
+          <ExplorationNextSuggestions
+            neighborhoodId={article.neighborhood_id || neighborhoodId}
+            city={article.neighborhood?.city || ''}
+            country={article.neighborhood?.country || ''}
+            latitude={article.neighborhood?.latitude}
+            longitude={article.neighborhood?.longitude}
+            categoryLabel={article.category_label || ''}
+          />
+        )}
+
         {/* Brief discovery CTAs - right after sources on daily brief and Sunday Edition articles */}
         {(article.article_type === 'brief_summary' ||
           (article.category_label && article.category_label.toLowerCase().includes('daily brief'))) && (
@@ -409,15 +422,17 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
           </div>
         )}
 
-        {/* Exploration suggestions - right after editorial content */}
-        <ExplorationNextSuggestions
-          neighborhoodId={article.neighborhood_id || neighborhoodId}
-          city={article.neighborhood?.city || ''}
-          country={article.neighborhood?.country || ''}
-          latitude={article.neighborhood?.latitude}
-          longitude={article.neighborhood?.longitude}
-          categoryLabel={article.category_label || ''}
-        />
+        {/* Non-explore mode: exploration suggestions after editorial content */}
+        {!isExploring && (
+          <ExplorationNextSuggestions
+            neighborhoodId={article.neighborhood_id || neighborhoodId}
+            city={article.neighborhood?.city || ''}
+            country={article.neighborhood?.country || ''}
+            latitude={article.neighborhood?.latitude}
+            longitude={article.neighborhood?.longitude}
+            categoryLabel={article.category_label || ''}
+          />
+        )}
 
         {/* Bottom Story Open Ad - hidden during explore sessions */}
         {!isExploring && (
