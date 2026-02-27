@@ -105,9 +105,9 @@ export async function triggerDownload(downloadLocation: string): Promise<void> {
 }
 
 /**
- * Interleave two arrays, alternating elements and deduplicating by ID.
- * Produces a merged list that mixes city-qualified (relevant) results
- * with neighborhood-only (iconic/popular) results.
+ * Merge two arrays with city-qualified priority (3:1 ratio), deduplicating by ID.
+ * Takes 3 city-qualified results for every 1 name-only result so that ambiguous
+ * names like SoHo, Chelsea, Downtown get the correct city's photos in 6+ of 8 slots.
  */
 function interleave(
   a: UnsplashSearchResult[],
@@ -115,16 +115,27 @@ function interleave(
 ): UnsplashSearchResult[] {
   const merged: UnsplashSearchResult[] = [];
   const seen = new Set<string>();
-  const maxLen = Math.max(a.length, b.length);
+  let ai = 0;
+  let bi = 0;
 
-  for (let i = 0; i < maxLen; i++) {
-    if (i < a.length && !seen.has(a[i].id)) {
-      merged.push(a[i]);
-      seen.add(a[i].id);
+  while (ai < a.length || bi < b.length) {
+    // Take 3 from city-qualified (a)
+    for (let k = 0; k < 3 && ai < a.length; ai++) {
+      if (!seen.has(a[ai].id)) {
+        merged.push(a[ai]);
+        seen.add(a[ai].id);
+        k++;
+      }
     }
-    if (i < b.length && !seen.has(b[i].id)) {
-      merged.push(b[i]);
-      seen.add(b[i].id);
+    // Take 1 from name-only (b) for iconic variety
+    while (bi < b.length) {
+      if (!seen.has(b[bi].id)) {
+        merged.push(b[bi]);
+        seen.add(b[bi].id);
+        bi++;
+        break;
+      }
+      bi++;
     }
   }
 
@@ -140,8 +151,9 @@ function interleave(
  * 2. "{neighborhood}" alone (30 results) — surfaces the most iconic/popular
  *    shots that photographers tag with just the neighborhood name
  *
- * Results are interleaved (alternating) so the final pool mixes accurate
- * and visually striking photos. Falls back to city-only if still short.
+ * Results are merged with 3:1 city-qualified priority so ambiguous names
+ * (SoHo, Chelsea, Downtown) get the correct city's photos in 6+ of 8 slots.
+ * Falls back to city-only if still short.
  *
  * Cost: 2 API calls per neighborhood (was 1-4). Well within 5000/hr budget.
  */
