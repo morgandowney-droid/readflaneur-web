@@ -750,6 +750,16 @@ export function MultiFeed({
         </div>
       )}
 
+      {/* "ALL STORIES" divider between bento and daily brief (desktop only) */}
+      {!activeFilter && isMultiple && bentoSections && bentoSections.length > 0 && (
+        <div className="hidden md:flex items-center gap-4 mt-2 mb-6">
+          <span className="text-[11px] tracking-[0.2em] uppercase font-medium text-fg-subtle whitespace-nowrap">
+            {t('bento.allStories') || 'All Stories'}
+          </span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+      )}
+
       {/* ── MASTHEAD (hidden on desktop when bento is the opening view) ── */}
       <div className={!activeFilter && isMultiple && bentoSections && bentoSections.length > 0 ? 'md:hidden' : ''}>
         <NeighborhoodHeader
@@ -835,16 +845,6 @@ export function MultiFeed({
       )}
 
       {reminder}
-
-      {/* "ALL STORIES" section header before regular feed (desktop only, when bento shown) */}
-      {!activeFilter && isMultiple && bentoSections && bentoSections.length > 0 && (
-        <div className="hidden md:flex items-center gap-4 mb-4">
-          <span className="text-[11px] tracking-[0.2em] uppercase font-medium text-fg-subtle whitespace-nowrap">
-            {t('bento.allStories') || 'All Stories'}
-          </span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
-      )}
 
       {/* MOBILE: View toggle directly above news feed */}
       {isMultiple && (
