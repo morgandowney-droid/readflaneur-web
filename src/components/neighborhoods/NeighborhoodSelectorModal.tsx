@@ -8,6 +8,7 @@ import { Neighborhood, GlobalRegion } from '@/types';
 import { getDistance } from '@/lib/geo-utils';
 import { findCountryForQuery, findRegionForQuery, findStateForQuery } from '@/lib/search-aliases';
 import { getAllCityNames, getTimezoneForCity, getStoredLocation, saveStoredLocation } from '@/lib/location';
+import { GEO_REGION_ORDER, GEO_REGION_INDEX, getGeoRegion } from '@/lib/region-utils';
 
 // Extend Neighborhood type to include combo info for display
 interface NeighborhoodWithCombo extends Neighborhood {
@@ -41,34 +42,7 @@ function isEnclaveRegion(region?: string): boolean {
   return region ? region.includes('enclaves') : false;
 }
 
-// Geographic region order and labels for region sort
-const GEO_REGION_ORDER: { key: string; label: string }[] = [
-  { key: 'north-america', label: 'North America' },
-  { key: 'south-america', label: 'South America' },
-  { key: 'europe', label: 'Europe' },
-  { key: 'middle-east', label: 'Middle East' },
-  { key: 'asia-pacific', label: 'Asia & Pacific' },
-  { key: 'africa', label: 'Africa' },
-  { key: 'other', label: 'Other' },
-];
-
-const GEO_REGION_INDEX: Record<string, number> = Object.fromEntries(
-  GEO_REGION_ORDER.map((r, i) => [r.key, i])
-);
-
-/** Map any region (including vacation/enclave) to its geographic parent */
-function getGeoRegion(region?: string): string {
-  if (!region) return 'other';
-  if (region === 'us-vacation' || region === 'caribbean-vacation') return 'north-america';
-  if (region === 'europe-vacation') return 'europe';
-  if (region === 'test') return 'other';
-  if (region.includes('enclaves')) {
-    if (region.startsWith('nyc')) return 'north-america';
-    if (region.startsWith('stockholm')) return 'europe';
-    return 'other';
-  }
-  return region;
-}
+// GEO_REGION_ORDER, GEO_REGION_INDEX, getGeoRegion imported from @/lib/region-utils
 
 // Modal Context
 type ModalTab = 'all' | 'community';

@@ -13,6 +13,10 @@ import { NeighborhoodBrief, NeighborhoodBriefSkeleton } from './NeighborhoodBrie
 import { LookAheadCard } from './LookAheadCard';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
+import { BentoGrid, BentoSection } from './BentoGrid';
+import { BentoCardProps } from './BentoCard';
+import { BENTO_REGIONS } from '@/lib/region-utils';
+import type { DiscoveryBrief, DiscoveryBriefsResponse } from '@/app/api/feed/discovery-briefs/route';
 
 const VIEW_PREF_KEY = 'flaneur-feed-view';
 
@@ -87,6 +91,11 @@ export function MultiFeed({
   const [hasMoreFiltered, setHasMoreFiltered] = useState(true);
   const { openModal } = useNeighborhoodModal();
 
+  // Bento grid state (desktop discovery layout)
+  const [bentoSections, setBentoSections] = useState<BentoSection[] | null>(null);
+  const [bentoLoading, setBentoLoading] = useState(false);
+  const bentoFetchedRef = useRef(false);
+
   // Restore active pill from sessionStorage on mount (browser back preserves selection)
   useEffect(() => {
     try {
@@ -96,6 +105,93 @@ export function MultiFeed({
       }
     } catch { /* SSR or private browsing */ }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch discovery briefs for bento grid (once on mount, desktop only)
+  useEffect(() => {
+    if (bentoFetchedRef.current) return;
+    if (neighborhoods.length < 2) return; // Only show bento in multi-neighborhood view
+    // Check if desktop (avoid fetch on mobile where bento is hidden)
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return;
+
+    bentoFetchedRef.current = true;
+    setBentoLoading(true);
+
+    const subscribedIds = neighborhoods.map(n => n.id).join(',');
+    fetch(`/api/feed/discovery-briefs?subscribedIds=${encodeURIComponent(subscribedIds)}&count=3`)
+      .then(res => res.json())
+      .then((data: DiscoveryBriefsResponse) => {
+        const sections: BentoSection[] = [];
+
+        // 1. User's neighborhoods section (from server-rendered items)
+        const userCards: BentoCardProps[] = [];
+        for (const hood of neighborhoods.slice(0, 3)) {
+          // Find a brief_summary article for this neighborhood in server items
+          const article = items.find(item =>
+            item.type === 'article'
+            && (item.data as Article).neighborhood_id === hood.id
+            && (item.data as Article).article_type === 'brief_summary'
+          );
+          if (article && article.type === 'article') {
+            const a = article.data as Article;
+            if (!a.image_url || !a.slug) continue;
+            userCards.push({
+              headline: a.headline || '',
+              blurb: a.preview_text || '',
+              imageUrl: a.image_url,
+              neighborhoodName: hood.name,
+              neighborhoodId: hood.id,
+              city: hood.city,
+              slug: a.slug,
+              citySlug: getCitySlugFromId(hood.id),
+              neighborhoodSlug: getNeighborhoodSlugFromId(hood.id),
+              size: 'hero',
+              isUserNeighborhood: true,
+            });
+          }
+        }
+        if (userCards.length > 0) {
+          sections.push({
+            label: 'Your Neighborhoods',
+            translationKey: 'bento.yourNeighborhoods',
+            cards: userCards,
+          });
+        }
+
+        // 2. Discovery regions: Asia & Pacific -> Europe -> The Americas
+        const regionLabels: Record<string, { label: string; key: string }> = {
+          'asia-pacific': { label: 'Asia & Pacific', key: 'bento.asiaPacific' },
+          'europe': { label: 'Europe', key: 'bento.europe' },
+          'americas': { label: 'The Americas', key: 'bento.americas' },
+        };
+        for (const { key } of BENTO_REGIONS) {
+          const briefs: DiscoveryBrief[] = data.regions?.[key] || [];
+          if (briefs.length === 0) continue;
+          const cards: BentoCardProps[] = briefs.map(b => ({
+            headline: b.headline,
+            blurb: b.previewText,
+            imageUrl: b.imageUrl,
+            neighborhoodName: b.neighborhoodName,
+            neighborhoodId: b.neighborhoodId,
+            city: b.city,
+            slug: b.slug,
+            citySlug: b.citySlug,
+            neighborhoodSlug: b.neighborhoodSlug,
+            size: 'standard' as const,
+          }));
+          sections.push({
+            label: regionLabels[key].label,
+            translationKey: regionLabels[key].key,
+            cards,
+          });
+        }
+
+        setBentoSections(sections);
+        setBentoLoading(false);
+      })
+      .catch(() => {
+        setBentoLoading(false);
+      });
+  }, [neighborhoods, items]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Mobile dropdown state
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -727,6 +823,26 @@ export function MultiFeed({
       )}
 
       {reminder}
+
+      {/* ── DESKTOP BENTO GRID (discovery layout, no pill filter) ── */}
+      {!activeFilter && isMultiple && (
+        <div className="hidden md:block">
+          <BentoGrid
+            sections={bentoSections || []}
+            isLoading={bentoLoading}
+          />
+        </div>
+      )}
+
+      {/* "ALL STORIES" section header before regular feed (desktop only, when bento shown) */}
+      {!activeFilter && isMultiple && bentoSections && bentoSections.length > 0 && (
+        <div className="hidden md:flex items-center gap-4 mb-4">
+          <span className="text-[11px] tracking-[0.2em] uppercase font-medium text-fg-subtle whitespace-nowrap">
+            {t('bento.allStories') || 'All Stories'}
+          </span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+      )}
 
       {/* MOBILE: View toggle directly above news feed */}
       {isMultiple && (
