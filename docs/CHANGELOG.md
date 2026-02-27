@@ -5,6 +5,17 @@
 
 ## 2026-02-28
 
+**Deepen Exploration Engagement Beyond 1 Level:**
+- Users clicking postcards or discovery cards were reading one article and bouncing. The old `ExplorationNextSuggestions` rendered 3 plain text links buried below the article - easy to miss and no visual pull.
+- **Visual "Read Next" card:** Rewrote `ExplorationNextSuggestions.tsx`. Hero card with Unsplash photo (`aspect-[3/1]`, `rounded-xl`, gradient overlay `from-black/80 via-black/30`), tracked-caps neighborhood/city, serif headline, "Continue exploring" CTA. Secondary suggestions remain as text links below. Fallback to styled `bg-surface` card when no image. sessionStorage cache (`flaneur-explore-{neighborhoodId}`) shared with ExplorationBar prevents redundant API calls.
+- **Sticky ExplorationBar:** New `ExplorationBar.tsx` - fixed bottom bar during `?explore=true` sessions. Appears at 40% article scroll via IntersectionObserver. `bg-surface/90 backdrop-blur-md`. Shows circular 40px Unsplash thumbnail + neighborhood + headline + "Next" link. Hides on scroll-up, reappears on scroll-down. Dismiss X persists to `flaneur-explore-bar-dismissed` sessionStorage.
+- **Exploration session trail:** New `useExplorationSession` hook tracks visited neighborhoods in `flaneur-exploration-session` sessionStorage. Auto-adds current page on mount. `BackToFeedLink` now accepts `trailCount` prop - shows "EXPLORING (N NEIGHBORHOODS)" when trail > 1.
+- **Subscribe nudge:** New `ExploreSubscribeNudge.tsx` - after SourceAttribution on explore articles. "Enjoying {name}? Add to my neighborhoods" one-tap action. Checks localStorage, adds with cookie sync + fire-and-forget API, shows checkmark. Hidden if already subscribed.
+- **API change:** `/api/explore/next` now returns `imageUrl: string | null` in Suggestion interface. All 3 strategy queries include `image_url` in SELECT. Returns Unsplash URLs only (null for non-Unsplash images).
+- **Client wrappers:** New `ExplorationWrapper.tsx` with `ExplorationBackLink` and `ExplorationBarWithSession` connecting session trail state to server-rendered `[slug]/page.tsx`.
+- New files: `src/components/article/ExplorationBar.tsx`, `src/components/article/ExplorationWrapper.tsx`, `src/components/article/ExploreSubscribeNudge.tsx`, `src/hooks/useExplorationSession.ts`
+- Modified files: `src/app/api/explore/next/route.ts`, `src/components/article/ExplorationNextSuggestions.tsx`, `src/components/article/TranslatedArticleNav.tsx`, `src/app/[city]/[neighborhood]/[slug]/page.tsx`
+
 **Polish Email Template:**
 - Moved postcard section up from after Family Corner to right after primary stories/referral CTA. Provides an early color break (Unsplash photo) in the otherwise B&W text-heavy email, instead of being buried at the bottom.
 - Removed "Share on X / Facebook" links from lead story in `StoryList.tsx`. Nobody clicks social share links from inside an email - they share the article URL directly. Removed `ShareLinks` component and unused `shareRow`/`shareLink`/`shareDot` styles.
