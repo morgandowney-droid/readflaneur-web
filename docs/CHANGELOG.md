@@ -5,6 +5,18 @@
 
 ## 2026-02-27
 
+**Expand Look Ahead Search to Include Major Cultural Venues:**
+- Neighborhood-scoped search queries in both Grok (`generateLookAhead`) and Gemini Search (`searchUpcomingEvents`) missed city-wide cultural venues like national theaters, opera houses, concert halls, and philharmonics (e.g., Dramaten, Stockholm Opera, Konserthuset wouldn't appear in a "Vasastan, Stockholm" search).
+- Added explicit "MAJOR CULTURAL VENUES" search instruction to both `grok.ts` (Look Ahead system prompt) and `gemini-search.ts` (upcoming events prompt) - instructs the search to always check what's playing at the city's major cultural venues, noting they serve all neighborhoods not just the one they're located in.
+- Added "Theater, opera, ballet, classical music" and "Performances at major cultural venues in {city}" to search focus lists in both files.
+- Files: `grok.ts`, `gemini-search.ts`
+
+**Polish Look Ahead Event Listing:**
+- Strip "(not Vasastan)" and similar neighborhood annotations from event addresses via `stripNeighborhoodAnnotations()` regex: removes `(not X)`, `(bordering X)`, `(near X)`, `(outside X)`, `(close to X)` patterns.
+- Normalize category badge text: `normalizeCategory()` strips "/SubType" suffixes (e.g., "Music/Show" -> "MUSIC", "Food & Drink/Fair" -> "FOOD & DRINK") for cleaner uppercase pills.
+- Make filter bar collapsible: three filter rows (day/time/category) now hidden behind a "Filter" toggle button with chevron icon and count badge showing active filter count. Saves significant vertical space on mobile, especially for articles with many day/category options.
+- Files: `ArticleBody.tsx`
+
 **Redesign Look Ahead Event Listing with Interactive Filters and Hyperlinks:**
 - Replaced static "At a glance" event listing with interactive `EventListingBlock` component featuring three filter dimensions: day pills, time-of-day chips (Morning/Afternoon/Evening/All Day), and category chips (top 5 shown, "+N more" toggle for rest). All filters are client-side `useState` with `useMemo` for efficient re-rendering.
 - Event names are hyperlinked to Google Search (`name + city`) using the existing dotted-underline academic link styling (`decoration-dotted decoration-neutral-500/40`).
