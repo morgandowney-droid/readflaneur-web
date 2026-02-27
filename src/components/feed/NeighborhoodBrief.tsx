@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, ReactNode } from 'react';
-import Link from 'next/link';
+import { useState, useEffect, ReactNode } from 'react';
 import { useLanguageContext } from '@/components/providers/LanguageProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import { ShareButton } from '@/components/ui/ShareButton';
@@ -380,11 +379,6 @@ export function NeighborhoodBrief({
   const { t } = useTranslation();
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
 
-  // Discovery CTA state - lazy loaded on first expand
-  const [nearbyDiscovery, setNearbyDiscovery] = useState<{ url: string; neighborhoodName: string } | null>(null);
-  const [randomDiscovery, setRandomDiscovery] = useState<{ url: string; neighborhoodName: string } | null>(null);
-  const [yesterdayUrl, setYesterdayUrl] = useState<string | null>(null);
-  const discoveryFetched = useRef(false);
 
   // Fetch translated brief content when language changes
   useEffect(() => {
@@ -413,54 +407,6 @@ export function NeighborhoodBrief({
 
     return () => { cancelled = true; };
   }, [briefId, language, isTranslated]);
-
-  // Lazy fetch discovery CTAs on first expand
-  useEffect(() => {
-    if (!isExpanded || discoveryFetched.current || !neighborhoodId) return;
-    discoveryFetched.current = true;
-
-    try {
-      const stored = localStorage.getItem('flaneur-neighborhood-preferences');
-      const subscribedIds = stored ? JSON.parse(stored) as string[] : [];
-      const params = new URLSearchParams();
-      if (subscribedIds.length > 0) params.set('subscribedIds', subscribedIds.join(','));
-      if (neighborhoodId) params.set('referenceId', neighborhoodId);
-
-      // Fetch nearby and random in parallel
-      const nearbyParams = new URLSearchParams(params);
-      nearbyParams.set('mode', 'nearby');
-
-      const randomParams = new URLSearchParams(params);
-      randomParams.set('mode', 'random');
-      if (city) randomParams.set('excludeCity', city);
-
-      fetch(`/api/discover-neighborhood?${nearbyParams}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.neighborhoodName) setNearbyDiscovery(data);
-        })
-        .catch(() => {});
-
-      fetch(`/api/discover-neighborhood?${randomParams}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.neighborhoodName) setRandomDiscovery(data);
-        })
-        .catch(() => {});
-
-      // Fetch yesterday's brief for this neighborhood (before the current brief's date)
-      if (neighborhoodId && generatedAt) {
-        const params = new URLSearchParams({ neighborhoodId, beforeDate: generatedAt });
-        fetch(`/api/briefs/yesterday?${params}`)
-          .then(res => res.json())
-          .then(data => { if (data.url) setYesterdayUrl(data.url); })
-          .catch(() => {});
-      }
-
-    } catch {
-      // localStorage or fetch failure - silently skip CTAs
-    }
-  }, [isExpanded, neighborhoodId, city]);
 
   // Never display unenriched (raw Grok) content - wait for Gemini enrichment
   if (!enrichedContent) return null;
@@ -732,42 +678,6 @@ export function NeighborhoodBrief({
             <p className="text-[10px] text-fg-muted italic">
               {t('brief.synthesizedGeneric')}
             </p>
-          )}
-        </div>
-      )}
-
-      {/* Discovery CTAs - only show when expanded and at least one result loaded */}
-      {isExpanded && (yesterdayUrl || nearbyDiscovery || randomDiscovery) && (
-        <div className="mt-3 pt-3 border-t border-border flex flex-col gap-1.5">
-          {yesterdayUrl && (
-            <Link
-              href={yesterdayUrl}
-              scroll={true}
-              onClick={(e) => e.stopPropagation()}
-              className="text-xs text-fg-muted hover:text-accent transition-colors"
-            >
-              Read yesterday&apos;s <span className="font-semibold text-fg">{neighborhoodName}</span> Daily Brief &rsaquo;
-            </Link>
-          )}
-          {nearbyDiscovery && (
-            <Link
-              href={nearbyDiscovery.url}
-              scroll={true}
-              onClick={(e) => e.stopPropagation()}
-              className="text-xs text-fg-muted hover:text-accent transition-colors"
-            >
-              Read today&apos;s nearby <span className="font-semibold text-fg">{nearbyDiscovery.neighborhoodName}</span> Daily Brief &rsaquo;
-            </Link>
-          )}
-          {randomDiscovery && (
-            <Link
-              href={randomDiscovery.url}
-              scroll={true}
-              onClick={(e) => e.stopPropagation()}
-              className="mt-1.5 text-xs text-fg-muted hover:text-accent transition-colors"
-            >
-              Take me somewhere new &rsaquo;
-            </Link>
           )}
         </div>
       )}

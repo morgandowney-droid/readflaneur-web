@@ -52,7 +52,7 @@ export function BentoCard({
   isUserNeighborhood,
   onAdd,
 }: BentoCardProps) {
-  const href = `/${citySlug}/${neighborhoodSlug}/${slug}`;
+  const href = `/${citySlug}/${neighborhoodSlug}/${slug}?explore=true`;
   const [added, setAdded] = useState(false);
 
   // Truncate blurb based on card size

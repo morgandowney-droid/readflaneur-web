@@ -10,6 +10,7 @@ import {
   Hr,
 } from '@react-email/components';
 import type { HorizonEvent, WeeklyDataPoint, RearviewStory, HolidaySection } from '../../weekly-brief-service';
+import { PostcardsSundaySection } from './components/PostcardSection';
 
 export interface SundayEditionAd {
   sponsorLabel: string;
@@ -38,6 +39,7 @@ export interface SundayEditionContent {
   requestBaseUrl?: string;
   requestToken?: string;
   lookAheadUrl?: string | null;
+  postcards?: import('../types').PostcardSection[] | null;
 }
 
 export function SundayEditionTemplate(content: SundayEditionContent) {
@@ -236,8 +238,13 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
             </>
           )}
 
-          {/* Your Other Editions */}
-          {content.secondaryNeighborhoods && content.secondaryNeighborhoods.length > 0 && content.requestBaseUrl && content.requestToken && (
+          {/* Discovery Postcards (replace Your Other Editions when available) */}
+          {content.postcards && content.postcards.length >= 2 ? (
+            <>
+              <PostcardsSundaySection postcards={content.postcards} />
+              <Hr style={divider} />
+            </>
+          ) : content.secondaryNeighborhoods && content.secondaryNeighborhoods.length > 0 && content.requestBaseUrl && content.requestToken ? (
             <>
               <Section style={otherEditionsSection}>
                 <Text style={sectionLabel}>YOUR OTHER EDITIONS</Text>
@@ -256,7 +263,7 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
 
               <Hr style={divider} />
             </>
-          )}
+          ) : null}
 
           {/* Inline referral CTA */}
           {content.referralUrl && (

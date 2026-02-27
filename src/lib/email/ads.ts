@@ -92,14 +92,13 @@ async function getHouseAd(
 
   let clickUrl = ad.click_url || appUrl;
 
-  // For "app_download" and "escape_mode" types, resolve a dynamic discovery brief URL
-  if ((ad.type === 'app_download' || ad.type === 'escape_mode') && options?.subscribedIds) {
+  // For "app_download" types, resolve a dynamic discovery brief URL
+  if (ad.type === 'app_download' && options?.subscribedIds) {
     try {
       const result = await findDiscoveryBrief(
         supabase,
         options.subscribedIds,
-        ad.type === 'escape_mode' ? null : (options.primaryNeighborhoodId ?? null),
-        ad.type === 'escape_mode' ? { mode: 'random' } : undefined
+        options.primaryNeighborhoodId ?? null
       );
       if (result) {
         clickUrl = `${appUrl}${result.url}`;
@@ -129,6 +128,6 @@ async function getHouseAd(
     clickUrl,
     sponsorLabel: 'Flaneur',
     impressionUrl: '',
-    ctaText: ad.type === 'escape_mode' ? 'Take me somewhere new' : undefined,
+    ctaText: undefined,
   };
 }

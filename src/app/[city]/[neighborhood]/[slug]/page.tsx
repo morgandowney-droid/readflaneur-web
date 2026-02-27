@@ -19,6 +19,7 @@ import { getFallback } from '@/lib/FallbackService';
 import type { FallbackData } from '@/components/feed/FallbackAd';
 import { BackToFeedLink, MoreStoriesButton, TranslatedDailyBriefLabel } from '@/components/article/TranslatedArticleNav';
 import { BriefDiscoveryFooter } from '@/components/article/BriefDiscoveryFooter';
+import { ExplorationNextSuggestions } from '@/components/article/ExplorationNextSuggestions';
 
 interface ArticlePageProps {
   params: Promise<{
@@ -26,6 +27,7 @@ interface ArticlePageProps {
     neighborhood: string;
     slug: string;
   }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export async function generateMetadata({ params }: ArticlePageProps) {
@@ -57,8 +59,10 @@ export async function generateMetadata({ params }: ArticlePageProps) {
   };
 }
 
-export default async function ArticlePage({ params }: ArticlePageProps) {
+export default async function ArticlePage({ params, searchParams }: ArticlePageProps) {
   const { city, neighborhood, slug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const isExploring = resolvedSearchParams?.explore === 'true';
   const supabase = await createClient();
 
   // Map city slug to neighborhood prefix
@@ -165,7 +169,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
       <div className="mx-auto max-w-2xl">
         {/* Back link - goes to /feed */}
-        <BackToFeedLink />
+        <BackToFeedLink isExploring={isExploring} />
 
         {/* Top Story Open Ad */}
         <div className="mb-8">
@@ -418,13 +422,21 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   variant="story_open"
                   position="bottom"
                   fallback={fallbackData}
-                  articleNeighborhoodId={hasBriefDiscoveryFooter ? undefined : neighborhoodId}
-                  articleNeighborhoodName={hasBriefDiscoveryFooter ? undefined : article.neighborhood?.name}
                 />
               )}
             </div>
           );
         })()}
+
+        {/* Exploration suggestions */}
+        <ExplorationNextSuggestions
+          neighborhoodId={article.neighborhood_id || neighborhoodId}
+          city={article.neighborhood?.city || ''}
+          country={article.neighborhood?.country || ''}
+          latitude={article.neighborhood?.latitude}
+          longitude={article.neighborhood?.longitude}
+          categoryLabel={article.category_label || ''}
+        />
 
         {/* Email capture for engaged readers - skip when BriefDiscoveryFooter already has inline email capture */}
         {article.article_type !== 'look_ahead' &&

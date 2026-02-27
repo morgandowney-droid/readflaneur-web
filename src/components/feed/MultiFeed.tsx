@@ -13,14 +13,11 @@ import { NeighborhoodBrief, NeighborhoodBriefSkeleton } from './NeighborhoodBrie
 import { LookAheadCard } from './LookAheadCard';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
-import { BentoGrid, BentoSection } from './BentoGrid';
+import { BentoGrid } from './BentoGrid';
 import { BentoCardProps } from './BentoCard';
-import { BENTO_REGIONS } from '@/lib/region-utils';
 import { NeighborhoodLiveStatus } from './NeighborhoodLiveStatus';
-import { syncNeighborhoodCookie } from '@/lib/neighborhood-cookie';
-import type { DiscoveryBrief, DiscoveryBriefsResponse } from '@/app/api/feed/discovery-briefs/route';
-
-const BENTO_CACHE_KEY = 'flaneur-bento-cache';
+import { MobileDiscoverySection } from './MobileDiscoverySection';
+import { useDiscoveryBriefs } from '@/hooks/useDiscoveryBriefs';
 
 const VIEW_PREF_KEY = 'flaneur-feed-view';
 
@@ -95,10 +92,48 @@ export function MultiFeed({
   const [hasMoreFiltered, setHasMoreFiltered] = useState(true);
   const { openModal } = useNeighborhoodModal();
 
-  // Bento grid state (desktop discovery layout)
-  const [bentoSections, setBentoSections] = useState<BentoSection[] | null>(null);
-  const [bentoLoading, setBentoLoading] = useState(false);
-  const bentoFetchedRef = useRef(false);
+  // Discovery briefs for bento grid (desktop) and mobile discovery
+  const { sections: bentoSections, isLoading: bentoLoading, refresh: handleBentoRefresh } = useDiscoveryBriefs(
+    neighborhoods.map(n => n.id),
+    {
+      skip: neighborhoods.length < 2,
+      buildUserSection: () => {
+        const userCards: BentoCardProps[] = [];
+        for (const hood of neighborhoods.slice(0, 3)) {
+          const article = items.find(item =>
+            item.type === 'article'
+            && (item.data as Article).neighborhood_id === hood.id
+            && (item.data as Article).article_type === 'brief_summary'
+          );
+          if (article && article.type === 'article') {
+            const a = article.data as Article;
+            if (!a.image_url || !a.slug) continue;
+            userCards.push({
+              headline: a.headline || '',
+              blurb: a.preview_text || '',
+              imageUrl: a.image_url,
+              neighborhoodName: hood.name,
+              neighborhoodId: hood.id,
+              city: hood.city,
+              slug: a.slug,
+              citySlug: getCitySlugFromId(hood.id),
+              neighborhoodSlug: getNeighborhoodSlugFromId(hood.id),
+              size: 'hero',
+              isUserNeighborhood: true,
+            });
+          }
+        }
+        if (userCards.length > 0) {
+          return {
+            label: 'Your Neighborhoods',
+            translationKey: 'bento.yourNeighborhoods',
+            cards: userCards,
+          };
+        }
+        return null;
+      },
+    }
+  );
 
   // Restore active pill from sessionStorage on mount (browser back preserves selection)
   useEffect(() => {
@@ -109,172 +144,6 @@ export function MultiFeed({
       }
     } catch { /* SSR or private browsing */ }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /** Build bento sections from API data, attaching onAdd to discovery cards */
-  const buildBentoSections = useCallback((data: DiscoveryBriefsResponse): BentoSection[] => {
-    const sections: BentoSection[] = [];
-
-    // 1. User's neighborhoods section (from server-rendered items)
-    const userCards: BentoCardProps[] = [];
-    for (const hood of neighborhoods.slice(0, 3)) {
-      const article = items.find(item =>
-        item.type === 'article'
-        && (item.data as Article).neighborhood_id === hood.id
-        && (item.data as Article).article_type === 'brief_summary'
-      );
-      if (article && article.type === 'article') {
-        const a = article.data as Article;
-        if (!a.image_url || !a.slug) continue;
-        userCards.push({
-          headline: a.headline || '',
-          blurb: a.preview_text || '',
-          imageUrl: a.image_url,
-          neighborhoodName: hood.name,
-          neighborhoodId: hood.id,
-          city: hood.city,
-          slug: a.slug,
-          citySlug: getCitySlugFromId(hood.id),
-          neighborhoodSlug: getNeighborhoodSlugFromId(hood.id),
-          size: 'hero',
-          isUserNeighborhood: true,
-        });
-      }
-    }
-    if (userCards.length > 0) {
-      sections.push({
-        label: 'Your Neighborhoods',
-        translationKey: 'bento.yourNeighborhoods',
-        cards: userCards,
-      });
-    }
-
-    // 2. Discovery regions
-    const regionLabels: Record<string, { label: string; key: string }> = {
-      'asia-pacific': { label: 'Asia & Pacific', key: 'bento.asiaPacific' },
-      'europe': { label: 'Europe', key: 'bento.europe' },
-      'americas': { label: 'The Americas', key: 'bento.americas' },
-    };
-    for (const { key } of BENTO_REGIONS) {
-      const briefs: DiscoveryBrief[] = data.regions?.[key] || [];
-      if (briefs.length === 0) continue;
-      const cards: BentoCardProps[] = briefs.map(b => ({
-        headline: b.headline,
-        blurb: b.previewText,
-        imageUrl: b.imageUrl,
-        neighborhoodName: b.neighborhoodName,
-        neighborhoodId: b.neighborhoodId,
-        city: b.city,
-        slug: b.slug,
-        citySlug: b.citySlug,
-        neighborhoodSlug: b.neighborhoodSlug,
-        size: 'standard' as const,
-        onAdd: handleBentoAdd,
-      }));
-      sections.push({
-        label: regionLabels[key].label,
-        translationKey: regionLabels[key].key,
-        cards,
-      });
-    }
-
-    return sections;
-  }, [neighborhoods, items]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /** Add a neighborhood from bento discovery card */
-  const handleBentoAdd = useCallback((neighborhoodId: string) => {
-    try {
-      const stored = localStorage.getItem('flaneur-neighborhood-preferences');
-      const ids: string[] = stored ? JSON.parse(stored) : [];
-      if (!ids.includes(neighborhoodId)) {
-        ids.push(neighborhoodId);
-        localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(ids));
-        syncNeighborhoodCookie();
-      }
-    } catch { /* SSR or private browsing */ }
-    // Fire-and-forget DB sync
-    fetch('/api/neighborhoods/add', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ neighborhoodId }),
-    }).catch(() => {});
-  }, []);
-
-  /** Refresh bento grid with fresh data */
-  const handleBentoRefresh = useCallback(() => {
-    try { sessionStorage.removeItem(BENTO_CACHE_KEY); } catch {}
-    bentoFetchedRef.current = false;
-    setBentoLoading(true);
-
-    const subscribedIds = neighborhoods.map(n => n.id).join(',');
-    fetch(`/api/feed/discovery-briefs?subscribedIds=${encodeURIComponent(subscribedIds)}&count=3&_t=${Date.now()}`)
-      .then(res => res.json())
-      .then((data: DiscoveryBriefsResponse) => {
-        const sections = buildBentoSections(data);
-        setBentoSections(sections);
-        // Cache for session (strip onAdd - not serializable)
-        try {
-          const cacheData = sections.map(s => ({
-            ...s,
-            cards: s.cards.map(({ onAdd: _, ...card }) => card),
-          }));
-          sessionStorage.setItem(BENTO_CACHE_KEY, JSON.stringify(cacheData));
-        } catch {}
-        setBentoLoading(false);
-        bentoFetchedRef.current = true;
-      })
-      .catch(() => {
-        setBentoLoading(false);
-        bentoFetchedRef.current = true;
-      });
-  }, [neighborhoods, buildBentoSections]);
-
-  // Fetch discovery briefs for bento grid (once on mount, desktop only)
-  useEffect(() => {
-    if (bentoFetchedRef.current) return;
-    if (neighborhoods.length < 2) return;
-    if (typeof window !== 'undefined' && window.innerWidth < 768) return;
-
-    bentoFetchedRef.current = true;
-
-    // Check session cache first
-    try {
-      const cached = sessionStorage.getItem(BENTO_CACHE_KEY);
-      if (cached) {
-        const cachedSections: BentoSection[] = JSON.parse(cached);
-        // Re-attach onAdd callbacks to discovery cards
-        for (const section of cachedSections) {
-          if (section.translationKey !== 'bento.yourNeighborhoods') {
-            for (const card of section.cards) {
-              card.onAdd = handleBentoAdd;
-            }
-          }
-        }
-        setBentoSections(cachedSections);
-        return;
-      }
-    } catch {}
-
-    setBentoLoading(true);
-    const subscribedIds = neighborhoods.map(n => n.id).join(',');
-    fetch(`/api/feed/discovery-briefs?subscribedIds=${encodeURIComponent(subscribedIds)}&count=3`)
-      .then(res => res.json())
-      .then((data: DiscoveryBriefsResponse) => {
-        const sections = buildBentoSections(data);
-        setBentoSections(sections);
-        // Cache for session (strip onAdd - not serializable)
-        try {
-          const cacheData = sections.map(s => ({
-            ...s,
-            cards: s.cards.map(({ onAdd: _, ...card }) => card),
-          }));
-          sessionStorage.setItem(BENTO_CACHE_KEY, JSON.stringify(cacheData));
-        } catch {}
-        setBentoLoading(false);
-      })
-      .catch(() => {
-        setBentoLoading(false);
-      });
-  }, [neighborhoods, items, buildBentoSections, handleBentoAdd]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Mobile dropdown state
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -724,13 +593,13 @@ export function MultiFeed({
                   </button>
                 ))}
 
-                {/* Explore link */}
+                {/* Manage neighborhoods link */}
                 <div className="border-t border-border">
                   <button
                     onClick={() => { setDropdownOpen(false); openModal(); }}
                     className="w-full px-4 py-3 text-left text-xs tracking-wide text-fg-subtle hover:text-accent transition-colors"
                   >
-                    {t('feed.explore')}
+                    {t('nav.editNeighborhoods')}
                   </button>
                 </div>
               </div>
@@ -999,6 +868,18 @@ export function MultiFeed({
 
       {/* Load More for "All Neighborhoods" (no pill filter active) */}
       {!activeFilter && loadMoreAll}
+
+      {/* Mobile discovery section */}
+      {isMultiple && (
+        <div className="md:hidden">
+          <MobileDiscoverySection
+            sections={bentoSections || []}
+            isLoading={bentoLoading}
+            onRefresh={handleBentoRefresh}
+            neighborhoodName={activeHood?.name}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -17,6 +17,7 @@ import {
 import { fetchWeather } from './weather';
 import { generateWeatherStory } from './weather-story';
 import { getEmailAds } from './ads';
+import { selectDailyPostcard } from './postcard-selector';
 import { getUniqueBands } from '@/lib/childcare/age-bands';
 import { selectLibraryImageAsync } from '@/lib/image-library';
 
@@ -568,6 +569,14 @@ export async function assembleDailyBrief(
     primaryNeighborhood?.name || 'your neighborhood'
   );
 
+  // Fetch discovery postcard (cached per day, 1 query for subsequent recipients)
+  let postcard = null;
+  try {
+    postcard = await selectDailyPostcard(supabase);
+  } catch (e) {
+    console.warn('[assembler] Failed to select postcard:', e);
+  }
+
   return {
     recipient,
     date: formatDateForTimezone(recipient.timezone),
@@ -577,6 +586,7 @@ export async function assembleDailyBrief(
     nativeAd,
     lookAheadUrl,
     familyCorner,
+    postcard,
   };
 }
 

@@ -7,6 +7,7 @@ import { checkDailyEmailLimit } from '@/lib/email/daily-email-limit';
 import { resolveRecipients } from '@/lib/email/scheduler';
 import { resolveSundayAd } from '@/lib/email/sunday-ad-resolver';
 import { fetchWeather } from '@/lib/email/weather';
+import { selectSundayPostcards } from '@/lib/email/postcard-selector';
 
 /**
  * Build Sunday Edition subject line.
@@ -169,6 +170,14 @@ export async function GET(request: Request) {
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://readflaneur.com';
+
+    // Fetch discovery postcards once for all recipients (cached per day)
+    let sundayPostcards: import('@/lib/email/types').PostcardSection[] | null = null;
+    try {
+      sundayPostcards = await selectSundayPostcards(supabase);
+    } catch (e) {
+      console.warn('[sunday-edition] Failed to select postcards:', e);
+    }
 
     let emailsSent = 0;
 
@@ -334,6 +343,7 @@ export async function GET(request: Request) {
         requestBaseUrl: `${appUrl}/api/email/sunday-edition-request`,
         requestToken: recipient.unsubscribeToken,
         lookAheadUrl,
+        postcards: sundayPostcards,
       };
 
       // Resolve sponsor ad for this neighborhood

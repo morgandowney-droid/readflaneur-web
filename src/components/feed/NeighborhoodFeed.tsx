@@ -22,6 +22,7 @@ interface NeighborhoodFeedProps {
   comboInfo?: ComboInfo | null;
   briefArchive?: ReactNode;
   dailyBrief?: ReactNode;
+  discovery?: ReactNode;
   timezone?: string;
   country?: string;
   latitude?: number;
@@ -41,6 +42,7 @@ export function NeighborhoodFeed({
   comboInfo,
   briefArchive,
   dailyBrief,
+  discovery,
   timezone,
   country,
   latitude,
@@ -99,6 +101,7 @@ export function NeighborhoodFeed({
         </div>
       )}
       <FeedList items={items} view={currentView} />
+      {discovery}
     </div>
   );
 }

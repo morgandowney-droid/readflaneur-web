@@ -14,6 +14,7 @@ import { StoryList } from './components/StoryList';
 import { NativeAd } from './components/NativeAd';
 import { SatelliteSection } from './components/SatelliteSection';
 import { FamilyCornerSection } from './components/FamilyCornerSection';
+import { PostcardSection } from './components/PostcardSection';
 import { Footer } from './components/Footer';
 
 export function DailyBriefTemplate(content: DailyBriefContent) {
@@ -156,6 +157,11 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
           {/* Family Corner */}
           {content.familyCorner && (
             <FamilyCornerSection familyCorner={content.familyCorner} />
+          )}
+
+          {/* Discovery Postcard */}
+          {content.postcard && (
+            <PostcardSection postcard={content.postcard} />
           )}
 
           <Footer

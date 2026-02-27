@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 
-export function BackToFeedLink() {
+export function BackToFeedLink({ isExploring }: { isExploring?: boolean } = {}) {
   const { t } = useTranslation();
   return (
     <Link
@@ -11,7 +11,7 @@ export function BackToFeedLink() {
       className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-fg-muted hover:text-fg mb-8"
     >
       <span>&larr;</span>
-      <span>{t('article.allStories')}</span>
+      <span>{isExploring ? (t('explore.keepExploring') || 'Keep Exploring') : t('article.allStories')}</span>
     </Link>
   );
 }

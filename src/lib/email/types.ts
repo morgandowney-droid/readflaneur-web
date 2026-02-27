@@ -23,6 +23,7 @@ export interface DailyBriefContent {
   nativeAd: EmailAd | null;
   lookAheadUrl?: string | null;
   familyCorner?: FamilyCornerSection | null;
+  postcard?: PostcardSection | null;
 }
 
 export interface PrimaryNeighborhoodSection {
@@ -76,6 +77,15 @@ export interface FamilyCornerSection {
   bodyText: string;
   ageBands: string[];
   neighborhoodName: string;
+}
+
+export interface PostcardSection {
+  neighborhoodName: string;
+  cityName: string;
+  country: string;
+  imageUrl: string;
+  teaser: string;
+  articleUrl: string;
 }
 
 export interface EmailAd {

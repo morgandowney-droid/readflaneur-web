@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { MagicLinkReminder } from '@/components/feed/MagicLinkReminder';
 import { NeighborhoodFeed } from '@/components/feed/NeighborhoodFeed';
 import { NeighborhoodBrief } from '@/components/feed/NeighborhoodBrief';
+import { NeighborhoodDiscovery } from '@/components/feed/NeighborhoodDiscovery';
 import { MultiFeed } from '@/components/feed/MultiFeed';
 import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { MultiLoadMoreButton } from '@/components/feed/MultiLoadMoreButton';
@@ -338,6 +339,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               neighborhoodId={singleNeighborhood.id}
               defaultView="compact"
               initialWeather={initialWeather || undefined}
+              discovery={<NeighborhoodDiscovery neighborhoodId={singleNeighborhood.id} neighborhoodName={singleNeighborhood.name} />}
               dailyBrief={brief ? (
                 <NeighborhoodBrief
                   briefId={brief.id}

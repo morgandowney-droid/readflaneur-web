@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { NeighborhoodFeed } from '@/components/feed/NeighborhoodFeed';
 import { NeighborhoodBrief } from '@/components/feed/NeighborhoodBrief';
 import { LookAheadCard } from '@/components/feed/LookAheadCard';
+import { NeighborhoodDiscovery } from '@/components/feed/NeighborhoodDiscovery';
 import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { injectAds } from '@/lib/ad-engine';
 import { Article, Ad } from '@/types';
@@ -198,6 +199,7 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
           latitude={neighborhoodData.latitude}
           longitude={neighborhoodData.longitude}
           initialWeather={initialWeather || undefined}
+          discovery={<NeighborhoodDiscovery neighborhoodId={neighborhoodId} neighborhoodName={neighborhoodData.name} />}
           dailyBrief={!category && brief ? (
             <>
               {comboBriefAttribution && (
