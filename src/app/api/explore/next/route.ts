@@ -73,6 +73,9 @@ export async function GET(req: NextRequest) {
   const lat = parseFloat(params.get('lat') || '0');
   const lng = parseFloat(params.get('lng') || '0');
   const category = params.get('category') || '';
+  // Comma-separated neighborhood IDs to exclude (from exploration trail)
+  const excludeIds = new Set((params.get('exclude') || '').split(',').filter(Boolean));
+  excludeIds.add(neighborhoodId || '');
 
   if (!neighborhoodId || !city) {
     return NextResponse.json({ sameCity: null, sameTheme: null, geoHop: null });
@@ -99,6 +102,7 @@ export async function GET(req: NextRequest) {
 
     if (sameCityHoods && sameCityHoods.length > 0) {
       for (const hood of sameCityHoods) {
+        if (excludeIds.has(hood.id)) continue;
         const { data: articles } = await supabase
           .from('articles')
           .select('slug, headline, preview_text, image_url')
@@ -149,10 +153,11 @@ export async function GET(req: NextRequest) {
         .limit(5);
 
       if (themeArticles && themeArticles.length > 0) {
-        // Pick one that's not same city as sameCity suggestion
+        // Pick one that's not same city as sameCity suggestion or in exclude list
         for (const a of themeArticles) {
           const hood = a.neighborhood as unknown as { id: string; name: string; city: string; country: string } | null;
           if (!hood) continue;
+          if (excludeIds.has(hood.id)) continue;
           if (result.sameCity && hood.name === result.sameCity.neighborhoodName) continue;
 
           result.sameTheme = {
@@ -193,7 +198,8 @@ export async function GET(req: NextRequest) {
 
         // Try first 10 nearest from different countries
         for (const hood of differentCountry.slice(0, 10)) {
-          // Skip if already used
+          // Skip if already used or in exclude list
+          if (excludeIds.has(hood.id)) continue;
           if (result.sameCity?.neighborhoodName === hood.name) continue;
           if (result.sameTheme?.neighborhoodName === hood.name) continue;
 

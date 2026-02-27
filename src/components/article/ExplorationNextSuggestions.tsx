@@ -29,6 +29,20 @@ interface ExplorationNextSuggestionsProps {
   categoryLabel?: string;
 }
 
+/** Get visited neighborhood IDs from sessionStorage cache keys */
+function getVisitedIds(): string[] {
+  try {
+    const ids: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith('flaneur-explore-')) {
+        ids.push(key.replace('flaneur-explore-', ''));
+      }
+    }
+    return ids;
+  } catch { return []; }
+}
+
 export function ExplorationNextSuggestions({
   neighborhoodId,
   city,
@@ -51,6 +65,8 @@ export function ExplorationNextSuggestions({
       }
     } catch {}
 
+    // Pass previously visited neighborhood IDs so API doesn't suggest them
+    const visitedIds = getVisitedIds();
     const params = new URLSearchParams({
       neighborhoodId,
       city,
@@ -59,6 +75,9 @@ export function ExplorationNextSuggestions({
       lng: String(longitude || 0),
       category: categoryLabel || '',
     });
+    if (visitedIds.length > 0) {
+      params.set('exclude', visitedIds.join(','));
+    }
 
     fetch(`/api/explore/next?${params}`)
       .then(res => res.json())
@@ -107,7 +126,7 @@ export function ExplorationNextSuggestions({
       {/* Hero card with image */}
       {hero ? (
         <Link href={hero.suggestion.url} className="block group mb-4">
-          <div className="relative aspect-[3/1] w-full rounded-xl overflow-hidden">
+          <div className="relative aspect-[2/1] md:aspect-[5/2] w-full rounded-xl overflow-hidden">
             <Image
               src={hero.suggestion.imageUrl!}
               alt={hero.suggestion.neighborhoodName}
@@ -115,18 +134,15 @@ export function ExplorationNextSuggestions({
               className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
               sizes="(max-width: 768px) 100vw, 672px"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
-              <p className="text-[10px] tracking-[0.2em] uppercase text-white/60 mb-1">
-                {hero.label}
-              </p>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
               <p className="text-xs tracking-[0.15em] uppercase text-white/80 mb-1">
                 {hero.suggestion.neighborhoodName} &middot; {hero.suggestion.city}
               </p>
               <p className="text-base md:text-lg font-light text-white leading-snug line-clamp-2" style={{ fontFamily: 'var(--font-body-serif, Georgia, serif)' }}>
                 {cleanArticleHeadline(hero.suggestion.headline)}
               </p>
-              <p className="text-xs text-white/50 mt-2 group-hover:text-white/70 transition-colors">
+              <p className="text-xs text-white/70 mt-2 group-hover:text-white transition-colors tracking-wider uppercase">
                 Continue exploring &rsaquo;
               </p>
             </div>
