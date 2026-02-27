@@ -3,15 +3,22 @@
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 
-export function BackToFeedLink({ isExploring }: { isExploring?: boolean } = {}) {
+export function BackToFeedLink({ isExploring, trailCount }: { isExploring?: boolean; trailCount?: number } = {}) {
   const { t } = useTranslation();
+
+  const label = isExploring && trailCount && trailCount > 1
+    ? `Exploring (${trailCount} neighborhoods)`
+    : isExploring
+      ? (t('explore.keepExploring') || 'Keep Exploring')
+      : t('article.allStories');
+
   return (
     <Link
       href="/feed"
       className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-fg-muted hover:text-fg mb-8"
     >
       <span>&larr;</span>
-      <span>{isExploring ? (t('explore.keepExploring') || 'Keep Exploring') : t('article.allStories')}</span>
+      <span>{label}</span>
     </Link>
   );
 }

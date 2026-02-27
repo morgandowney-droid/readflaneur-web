@@ -17,9 +17,10 @@ import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
 import { getComboForComponent } from '@/lib/combo-utils';
 import { getFallback } from '@/lib/FallbackService';
 import type { FallbackData } from '@/components/feed/FallbackAd';
-import { BackToFeedLink, MoreStoriesButton, TranslatedDailyBriefLabel } from '@/components/article/TranslatedArticleNav';
+import { MoreStoriesButton, TranslatedDailyBriefLabel } from '@/components/article/TranslatedArticleNav';
 import { BriefDiscoveryFooter } from '@/components/article/BriefDiscoveryFooter';
 import { ExplorationNextSuggestions } from '@/components/article/ExplorationNextSuggestions';
+import { ExplorationBackLink, ExplorationBarWithSession, ExploreSubscribeNudge } from '@/components/article/ExplorationWrapper';
 
 interface ArticlePageProps {
   params: Promise<{
@@ -154,13 +155,17 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
   const neighborhoodUrl = `/${city}/${neighborhood}`;
 
   return (
-    <div className="py-8 px-4">
+    <div className="py-8 px-4 relative">
       {/* Track article view */}
       <ArticleViewTracker articleId={article.id} neighborhoodId={article.neighborhood_id} />
 
       <div className="mx-auto max-w-2xl">
         {/* Back link - goes to /feed */}
-        <BackToFeedLink isExploring={isExploring} />
+        <ExplorationBackLink
+          isExploring={isExploring}
+          neighborhoodName={article.neighborhood?.name || ''}
+          city={article.neighborhood?.city || ''}
+        />
 
         {/* Top Story Open Ad */}
         <div className="mb-8">
@@ -331,6 +336,13 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
           actions={<ArticleReactions articleId={article.id} />}
         />
 
+        {/* Subscribe nudge for exploration visitors */}
+        <ExploreSubscribeNudge
+          neighborhoodId={article.neighborhood_id || neighborhoodId}
+          neighborhoodName={article.neighborhood?.name || ''}
+          isExploring={isExploring}
+        />
+
         {/* Brief discovery CTAs - right after sources on daily brief and Sunday Edition articles */}
         {(article.article_type === 'brief_summary' ||
           (article.category_label && article.category_label.toLowerCase().includes('daily brief'))) && (
@@ -431,6 +443,18 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
           <MoreStoriesButton />
         </div>
       </div>
+
+      {/* Sticky exploration bar - appears on scroll during explore sessions */}
+      <ExplorationBarWithSession
+        isExploring={isExploring}
+        neighborhoodId={article.neighborhood_id || neighborhoodId}
+        neighborhoodName={article.neighborhood?.name || ''}
+        city={article.neighborhood?.city || ''}
+        country={article.neighborhood?.country || ''}
+        latitude={article.neighborhood?.latitude}
+        longitude={article.neighborhood?.longitude}
+        categoryLabel={article.category_label || ''}
+      />
     </div>
   );
 }

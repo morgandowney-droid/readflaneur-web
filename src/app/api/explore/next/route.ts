@@ -13,6 +13,7 @@ interface Suggestion {
   headline: string;
   teaser: string;
   url: string;
+  imageUrl: string | null;
 }
 
 interface ExploreResponse {
@@ -100,7 +101,7 @@ export async function GET(req: NextRequest) {
       for (const hood of sameCityHoods) {
         const { data: articles } = await supabase
           .from('articles')
-          .select('slug, headline, preview_text')
+          .select('slug, headline, preview_text, image_url')
           .eq('neighborhood_id', hood.id)
           .eq('article_type', 'brief_summary')
           .eq('status', 'published')
@@ -115,6 +116,7 @@ export async function GET(req: NextRequest) {
             headline: articles[0].headline || '',
             teaser: truncateTeaser(articles[0].preview_text || ''),
             url: buildArticleUrl(hood, articles[0].slug),
+            imageUrl: articles[0].image_url?.includes('unsplash.com') ? articles[0].image_url : null,
           };
           break;
         }
@@ -138,7 +140,7 @@ export async function GET(req: NextRequest) {
 
       const { data: themeArticles } = await supabase
         .from('articles')
-        .select('slug, headline, preview_text, neighborhood_id, neighborhood:neighborhoods(id, name, city, country)')
+        .select('slug, headline, preview_text, image_url, neighborhood_id, neighborhood:neighborhoods(id, name, city, country)')
         .ilike('category_label', pattern)
         .eq('status', 'published')
         .neq('neighborhood_id', neighborhoodId)
@@ -159,6 +161,7 @@ export async function GET(req: NextRequest) {
             headline: a.headline || '',
             teaser: truncateTeaser(a.preview_text || ''),
             url: buildArticleUrl(hood, a.slug),
+            imageUrl: a.image_url?.includes('unsplash.com') ? a.image_url : null,
           };
           break;
         }
@@ -196,7 +199,7 @@ export async function GET(req: NextRequest) {
 
           const { data: articles } = await supabase
             .from('articles')
-            .select('slug, headline, preview_text')
+            .select('slug, headline, preview_text, image_url')
             .eq('neighborhood_id', hood.id)
             .eq('article_type', 'brief_summary')
             .eq('status', 'published')
@@ -211,6 +214,7 @@ export async function GET(req: NextRequest) {
               headline: articles[0].headline || '',
               teaser: truncateTeaser(articles[0].preview_text || ''),
               url: buildArticleUrl(hood, articles[0].slug),
+              imageUrl: articles[0].image_url?.includes('unsplash.com') ? articles[0].image_url : null,
             };
             break;
           }
