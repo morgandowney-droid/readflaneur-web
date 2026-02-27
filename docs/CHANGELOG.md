@@ -5,6 +5,17 @@
 
 ## 2026-02-27
 
+**Redesign Look Ahead Event Listing with Interactive Filters and Hyperlinks:**
+- Replaced static "At a glance" event listing with interactive `EventListingBlock` component featuring three filter dimensions: day pills, time-of-day chips (Morning/Afternoon/Evening/All Day), and category chips (top 5 shown, "+N more" toggle for rest). All filters are client-side `useState` with `useMemo` for efficient re-rendering.
+- Event names are hyperlinked to Google Search (`name + city`) using the existing dotted-underline academic link styling (`decoration-dotted decoration-neutral-500/40`).
+- Two-line event layout: Line 1 = hyperlinked name + category badge (small pill), Line 2 = time/venue/address/price with middot separators in `text-fg-muted`.
+- Added `isPlaceholder()` helper to `look-ahead-events.ts` - filters "Not Listed", "TBD", "TBA", "N/A", "Unknown", "Not Available", "None" from both source (`formatEventLine()`) and render-time parsing. Exported for use in `ArticleBody.tsx`.
+- Locale-aware AM/PM time formatting: `formatTime()` converts 24h times to AM/PM for US/USA country codes (e.g., "19:00" -> "7:00 PM", "10:00-15:00" -> "10:00 AM - 3:00 PM"). Non-US countries pass through as-is. Already-formatted AM/PM times pass through.
+- When `articleType === 'look_ahead'` and an event listing block exists, the prose body is skipped entirely - it restated the same events in paragraph form, wasting reader time.
+- `country` prop threaded through `ArticleBody` -> `TranslatedArticleBody` -> `[slug]/page.tsx` (reads `article.neighborhood?.country`).
+- "No events match" empty state with accent-colored "Clear filters" link. Filter summary at bottom shows "Showing N of M events - Clear filters".
+- Files: `ArticleBody.tsx`, `TranslatedArticleBody.tsx`, `[slug]/page.tsx`, `look-ahead-events.ts`
+
 **Fix Supabase 1000-Row Default Limit Causing Duplicate Brief Generation:**
 - `sync-neighborhood-briefs` fetches 7 days of briefs (~1890+ rows) to check `hasBriefForLocalToday()`. Without `.limit()`, Supabase silently caps at 1000 rows. Today's briefs for some neighborhoods were dropped, causing `hasBriefForLocalToday()` to return false. The 4 alphabetically-first NYC neighborhoods (Bergen Gold, Brooklyn Heights, Brooklyn West, Chelsea) regenerated every 15-min run (10+ times each today), consuming ~20% of processing capacity while 27 other NYC neighborhoods (Tribeca, West Village, Upper West Side, SoHo, etc.) stayed pending.
 - Added `.limit(5000)` to sync cron query and `.limit(3000)` to health-checks and issue-detector monitoring queries.
