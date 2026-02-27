@@ -241,6 +241,22 @@ function classifyTimeOfDay(time: string | null): TimeOfDay {
 }
 
 /**
+ * Strip Grok's "(not Vasastan)", "(bordering Ostermalm)", etc. from addresses.
+ */
+function stripNeighborhoodAnnotations(text: string): string {
+  return text.replace(/\s*\((not|bordering|near|outside|close to)\s+[^)]+\)\s*/gi, '').trim();
+}
+
+/**
+ * Normalize category labels: "Music/Show" -> "Music", "Food & Drink/Fair" -> "Food & Drink".
+ * Strips slash-suffixes that are sub-types and clutter the badge display.
+ */
+function normalizeCategory(cat: string): string {
+  // Strip "/SubType" suffix (e.g., "Music/Show" -> "Music", "Theater/Musical" -> "Theater")
+  return cat.replace(/\/\w+$/, '').trim();
+}
+
+/**
  * Parse the raw event listing content into structured data.
  */
 function parseEventListing(content: string, country?: string): { days: string[]; events: ParsedEvent[] } {
@@ -281,19 +297,21 @@ function parseEventListing(content: string, country?: string): { days: string[];
         if (/\d{1,2}[:.]\d{2}/.test(part) || /\d{1,2}\s*(AM|PM)/i.test(part)) {
           time = part;
         } else if (!isPlaceholder(part)) {
-          category = part;
+          category = normalizeCategory(part);
         }
       }
     }
 
-    // Segment 2: venue, address
+    // Segment 2: venue, address - strip neighborhood annotations
     let venue: string | null = null;
     let address: string | null = null;
     if (segments[2]) {
-      const locParts = segments[2].split(',').map(s => s.trim());
-      venue = isPlaceholder(locParts[0]) ? null : locParts[0];
+      const cleanedSeg = stripNeighborhoodAnnotations(segments[2]);
+      const locParts = cleanedSeg.split(',').map(s => s.trim()).filter(Boolean);
+      venue = isPlaceholder(locParts[0]) ? null : locParts[0] || null;
       if (locParts.length > 1) {
-        address = isPlaceholder(locParts.slice(1).join(', ')) ? null : locParts.slice(1).join(', ');
+        const addr = locParts.slice(1).join(', ');
+        address = isPlaceholder(addr) ? null : addr;
       }
     }
 
@@ -332,6 +350,7 @@ function EventListingBlock({ content, city, country }: { content: string; city: 
   const [activeTimeOfDay, setActiveTimeOfDay] = useState<Set<TimeOfDay>>(new Set());
   const [activeCategories, setActiveCategories] = useState<Set<string>>(new Set());
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Extract unique categories
   const allCategories = useMemo(() => {
@@ -368,7 +387,8 @@ function EventListingBlock({ content, city, country }: { content: string; city: 
     return map;
   }, [filteredEvents]);
 
-  const hasFilters = activeDay !== null || activeTimeOfDay.size > 0 || activeCategories.size > 0;
+  const activeFilterCount = (activeDay ? 1 : 0) + activeTimeOfDay.size + activeCategories.size;
+  const hasFilters = activeFilterCount > 0;
 
   const clearFilters = () => {
     setActiveDay(null);
@@ -398,51 +418,67 @@ function EventListingBlock({ content, city, country }: { content: string; city: 
 
   return (
     <div className="mb-10" style={{ fontFamily: 'var(--font-body-serif)' }}>
-      {/* Filter bar */}
-      <div className="mb-6 space-y-3" style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)' }}>
-        {/* Day pills */}
-        {days.length > 1 && (
-          <div className="flex flex-wrap gap-2">
-            <button
-              className={`${pillBase} ${activeDay === null ? pillActive : pillInactive}`}
-              onClick={() => setActiveDay(null)}
-            >All days</button>
-            {days.map(day => (
-              <button
-                key={day}
-                className={`${pillBase} ${activeDay === day ? pillActive : pillInactive}`}
-                onClick={() => setActiveDay(activeDay === day ? null : day)}
-              >{day.replace(/,.*$/, '')}</button>
-            ))}
-          </div>
+      {/* Filter toggle + collapsible filter bar */}
+      <div className="mb-6" style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)' }}>
+        <button
+          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer select-none ${hasFilters ? pillActive : pillInactive}`}
+          onClick={() => setFiltersOpen(!filtersOpen)}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+          Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${filtersOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        {hasFilters && !filtersOpen && (
+          <button onClick={clearFilters} className="text-fg-muted text-xs ml-3 hover:text-fg transition-colors">Clear</button>
         )}
 
-        {/* Time-of-day chips */}
-        <div className="flex flex-wrap gap-2">
-          {(['morning', 'afternoon', 'evening', 'all-day'] as TimeOfDay[]).map(tod => (
-            <button
-              key={tod}
-              className={`${pillBase} ${activeTimeOfDay.has(tod) ? pillActive : pillInactive}`}
-              onClick={() => toggleTimeOfDay(tod)}
-            >{tod === 'all-day' ? 'All Day' : tod.charAt(0).toUpperCase() + tod.slice(1)}</button>
-          ))}
-        </div>
+        {filtersOpen && (
+          <div className="mt-3 space-y-3">
+            {/* Day pills */}
+            {days.length > 1 && (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  className={`${pillBase} ${activeDay === null ? pillActive : pillInactive}`}
+                  onClick={() => setActiveDay(null)}
+                >All days</button>
+                {days.map(day => (
+                  <button
+                    key={day}
+                    className={`${pillBase} ${activeDay === day ? pillActive : pillInactive}`}
+                    onClick={() => setActiveDay(activeDay === day ? null : day)}
+                  >{day.replace(/,.*$/, '')}</button>
+                ))}
+              </div>
+            )}
 
-        {/* Category chips */}
-        {allCategories.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {displayedCategories.map(cat => (
-              <button
-                key={cat}
-                className={`${pillBase} ${activeCategories.has(cat) ? pillActive : pillInactive}`}
-                onClick={() => toggleCategory(cat)}
-              >{cat}</button>
-            ))}
-            {!showAllCategories && hiddenCategoryCount > 0 && (
-              <button
-                className={`${pillBase} ${pillInactive}`}
-                onClick={() => setShowAllCategories(true)}
-              >+{hiddenCategoryCount} more</button>
+            {/* Time-of-day chips */}
+            <div className="flex flex-wrap gap-2">
+              {(['morning', 'afternoon', 'evening', 'all-day'] as TimeOfDay[]).map(tod => (
+                <button
+                  key={tod}
+                  className={`${pillBase} ${activeTimeOfDay.has(tod) ? pillActive : pillInactive}`}
+                  onClick={() => toggleTimeOfDay(tod)}
+                >{tod === 'all-day' ? 'All Day' : tod.charAt(0).toUpperCase() + tod.slice(1)}</button>
+              ))}
+            </div>
+
+            {/* Category chips */}
+            {allCategories.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {displayedCategories.map(cat => (
+                  <button
+                    key={cat}
+                    className={`${pillBase} ${activeCategories.has(cat) ? pillActive : pillInactive}`}
+                    onClick={() => toggleCategory(cat)}
+                  >{cat}</button>
+                ))}
+                {!showAllCategories && hiddenCategoryCount > 0 && (
+                  <button
+                    className={`${pillBase} ${pillInactive}`}
+                    onClick={() => setShowAllCategories(true)}
+                  >+{hiddenCategoryCount} more</button>
+                )}
+              </div>
             )}
           </div>
         )}
