@@ -838,15 +838,18 @@ export function MultiFeed({
             </span>
           </div>
           {neighborhoods[0]?.timezone && (
-            <NeighborhoodLiveStatus
-              timezone={neighborhoods[0].timezone}
-              country={neighborhoods[0].country}
-              latitude={neighborhoods[0].latitude}
-              longitude={neighborhoods[0].longitude}
-              neighborhoodName={neighborhoods[0].name}
-              city={neighborhoods[0].city}
-              initialWeather={initialWeather}
-            />
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-fg-subtle">{neighborhoods[0].name}</span>
+              <NeighborhoodLiveStatus
+                timezone={neighborhoods[0].timezone}
+                country={neighborhoods[0].country}
+                latitude={neighborhoods[0].latitude}
+                longitude={neighborhoods[0].longitude}
+                neighborhoodName={neighborhoods[0].name}
+                city={neighborhoods[0].city}
+                initialWeather={initialWeather}
+              />
+            </div>
           )}
         </div>
       )}
