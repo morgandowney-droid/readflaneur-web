@@ -24,6 +24,20 @@ interface ExplorationBarProps {
   trailCount?: number;
 }
 
+/** Get visited neighborhood IDs from sessionStorage cache keys */
+function getVisitedIds(): string[] {
+  try {
+    const ids: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith('flaneur-explore-')) {
+        ids.push(key.replace('flaneur-explore-', ''));
+      }
+    }
+    return ids;
+  } catch { return []; }
+}
+
 export function ExplorationBar({
   neighborhoodId,
   city,
@@ -50,33 +64,43 @@ export function ExplorationBar({
       }
     } catch {}
 
-    // Reuse cached explore data from ExplorationNextSuggestions
-    const cacheKey = `flaneur-explore-${neighborhoodId}`;
-    try {
-      const cached = sessionStorage.getItem(cacheKey);
-      if (cached) {
-        const data = JSON.parse(cached);
-        pickSuggestion(data);
-        return;
+    // Brief delay lets ExplorationNextSuggestions cache its response first
+    const timer = setTimeout(() => {
+      // Reuse cached explore data from ExplorationNextSuggestions
+      const cacheKey = `flaneur-explore-${neighborhoodId}`;
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const data = JSON.parse(cached);
+          pickSuggestion(data);
+          return;
+        }
+      } catch {}
+
+      // Fallback: fetch with exclude param to avoid suggesting visited neighborhoods
+      const visitedIds = getVisitedIds();
+      const params = new URLSearchParams({
+        neighborhoodId,
+        city,
+        country: country || '',
+        lat: String(latitude || 0),
+        lng: String(longitude || 0),
+        category: categoryLabel || '',
+      });
+      if (visitedIds.length > 0) {
+        params.set('exclude', visitedIds.join(','));
       }
-    } catch {}
 
-    const params = new URLSearchParams({
-      neighborhoodId,
-      city,
-      country: country || '',
-      lat: String(latitude || 0),
-      lng: String(longitude || 0),
-      category: categoryLabel || '',
-    });
+      fetch(`/api/explore/next?${params}`)
+        .then(res => res.json())
+        .then(data => {
+          pickSuggestion(data);
+          try { sessionStorage.setItem(cacheKey, JSON.stringify(data)); } catch {}
+        })
+        .catch(() => {});
+    }, 500);
 
-    fetch(`/api/explore/next?${params}`)
-      .then(res => res.json())
-      .then(data => {
-        pickSuggestion(data);
-        try { sessionStorage.setItem(cacheKey, JSON.stringify(data)); } catch {}
-      })
-      .catch(() => {});
+    return () => clearTimeout(timer);
   }, [neighborhoodId, city, country, latitude, longitude, categoryLabel, isExploring]);
 
   const pickSuggestion = useCallback((data: Record<string, Suggestion | null>) => {
@@ -145,12 +169,12 @@ export function ExplorationBar({
       {/* Sticky bottom bar */}
       {suggestion && !dismissed && (
         <div
-          className={`fixed bottom-0 md:bottom-14 left-0 right-0 z-[55] transition-transform duration-300 ease-out ${
+          className={`fixed bottom-0 md:bottom-14 left-0 right-0 z-[55] pointer-events-none transition-transform duration-300 ease-out ${
             visible ? 'translate-y-0' : 'translate-y-full'
           }`}
         >
           <div className="bg-surface/90 backdrop-blur-md border-t border-border">
-            <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+            <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3 pointer-events-auto">
               {/* Thumbnail */}
               {suggestion.imageUrl ? (
                 <Link href={suggestion.url} className="shrink-0">
