@@ -167,14 +167,16 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
           city={article.neighborhood?.city || ''}
         />
 
-        {/* Top Story Open Ad */}
-        <div className="mb-8">
-          {topAd ? (
-            <StoryOpenAd ad={topAd} position="top" />
-          ) : (
-            <FallbackAd variant="story_open" position="top" fallback={fallbackData} />
-          )}
-        </div>
+        {/* Top Story Open Ad - hidden during explore sessions to preserve "next episode" flow */}
+        {!isExploring && (
+          <div className="mb-8">
+            {topAd ? (
+              <StoryOpenAd ad={topAd} position="top" />
+            ) : (
+              <FallbackAd variant="story_open" position="top" fallback={fallbackData} />
+            )}
+          </div>
+        )}
 
         {/* Article Header */}
         <header className="mb-8">
@@ -417,31 +419,36 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
           categoryLabel={article.category_label || ''}
         />
 
-        {/* Bottom Story Open Ad */}
-        <div className="mt-12 pt-8 border-t border-border">
-          {bottomAd ? (
-            <StoryOpenAd ad={bottomAd} position="bottom" />
-          ) : (
-            <FallbackAd
-              variant="story_open"
-              position="bottom"
-              fallback={fallbackData}
-            />
-          )}
-        </div>
+        {/* Bottom Story Open Ad - hidden during explore sessions */}
+        {!isExploring && (
+          <div className="mt-12 pt-8 border-t border-border">
+            {bottomAd ? (
+              <StoryOpenAd ad={bottomAd} position="bottom" />
+            ) : (
+              <FallbackAd
+                variant="story_open"
+                position="bottom"
+                fallback={fallbackData}
+              />
+            )}
+          </div>
+        )}
 
-        {/* Email capture for engaged readers - skip for editorial article types */}
-        {article.article_type !== 'look_ahead' &&
+        {/* Email capture for engaged readers - skip for editorial article types and explore sessions */}
+        {!isExploring &&
+         article.article_type !== 'look_ahead' &&
          article.article_type !== 'brief_summary' &&
          article.category_label !== 'The Sunday Edition' &&
          !(article.category_label && article.category_label.toLowerCase().includes('daily brief')) && (
           <PostReadEmailCapture neighborhoodName={article.neighborhood?.name || 'neighborhood'} />
         )}
 
-        {/* More stories */}
-        <div className="mt-12 pt-8 border-t border-border text-center">
-          <MoreStoriesButton />
-        </div>
+        {/* More stories - hidden during explore sessions (sticky bar + hero card provide navigation) */}
+        {!isExploring && (
+          <div className="mt-12 pt-8 border-t border-border text-center">
+            <MoreStoriesButton />
+          </div>
+        )}
       </div>
 
       {/* Sticky exploration bar - appears on scroll during explore sessions */}
