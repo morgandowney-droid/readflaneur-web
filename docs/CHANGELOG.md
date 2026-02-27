@@ -5,6 +5,12 @@
 
 ## 2026-02-28
 
+**Ad-Free Explore Sessions:**
+- Explore articles (`?explore=true`) now hide all ads and redundant CTAs to preserve "next episode" flow. Top house ad was the first visible element after the back link - explorer clicked a beautiful postcard/hero card excited to read about a neighborhood, and got an ad before the content. Bottom house ad interrupted the hero card → footer flow. `PostReadEmailCapture` was redundant with `ExploreSubscribeNudge`. `MoreStoriesButton` linking to `/feed` was misleading for explorers who may not have a feed.
+- Four `{!isExploring && (...)}` guards in `[slug]/page.tsx`: top ad slot, bottom ad slot, PostReadEmailCapture, MoreStoriesButton. Both paid `StoryOpenAd` and `FallbackAd` are gated.
+- Explore page bottom now flows: subscribe nudge → KEEP READING links → KEEP EXPLORING hero card → secondary text link → footer. Clean.
+- Files: `src/app/[city]/[neighborhood]/[slug]/page.tsx`
+
 **Deepen Exploration Engagement Beyond 1 Level:**
 - Users clicking postcards or discovery cards were reading one article and bouncing. The old `ExplorationNextSuggestions` rendered 3 plain text links buried below the article - easy to miss and no visual pull.
 - **Visual "Read Next" card:** Rewrote `ExplorationNextSuggestions.tsx`. Hero card with Unsplash photo (`aspect-[2/1] md:aspect-[5/2]`, `rounded-xl`, gradient overlay `from-black/80 via-black/20`), tracked-caps neighborhood/city, serif headline, "Continue exploring" CTA in `text-white/70 tracking-wider uppercase`. Secondary suggestions as truncated text links below. Fallback to styled `bg-surface` card when no image. sessionStorage cache (`flaneur-explore-{neighborhoodId}`) shared with ExplorationBar. `getVisitedIds()` reads sessionStorage cache keys to pass `exclude` param to API, breaking suggestion ping-pong loops.
