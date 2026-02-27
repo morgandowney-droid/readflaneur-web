@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { cleanArticleHeadline } from '@/lib/utils';
 
 interface Suggestion {
   neighborhoodName: string;
@@ -109,7 +110,7 @@ export function ExplorationNextSuggestions({
               {suggestion.neighborhoodName}
             </span>
             {suggestion.headline && (
-              <span className="text-sm text-fg-muted"> - {suggestion.headline}</span>
+              <span className="text-sm text-fg-muted"> - {cleanArticleHeadline(suggestion.headline)}</span>
             )}
           </Link>
         ))}
