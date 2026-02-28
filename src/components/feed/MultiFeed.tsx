@@ -919,6 +919,12 @@ export function MultiFeed({
           >
             {t('nav.chooseNeighborhoods')}
           </button>
+          <p className="text-sm text-fg-subtle mt-4">
+            {t('feed.alreadyHaveAccount')}{' '}
+            <a href="/login" className="text-accent hover:underline font-medium">
+              {t('nav.signIn')}
+            </a>
+          </p>
         </div>
       )}
 

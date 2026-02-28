@@ -9,6 +9,7 @@ import { LocationPrompt } from '@/components/location/LocationPrompt';
 import { ReturnVisitPrompt } from '@/components/feed/ReturnVisitPrompt';
 import { PrimaryChangeSuggestion } from '@/components/feed/PrimaryChangeSuggestion';
 import { LanguageProvider } from '@/components/providers/LanguageProvider';
+import { PreferencesSync } from '@/components/providers/PreferencesSync';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -73,6 +74,7 @@ export default function RootLayout({
             <LocationPrompt />
             <ReturnVisitPrompt />
             <PrimaryChangeSuggestion />
+            <PreferencesSync />
           </NeighborhoodModalProvider>
         </LanguageProvider>
       </body>

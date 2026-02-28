@@ -27,6 +27,14 @@ export function useTheme() {
       // localStorage unavailable
     }
     document.documentElement.setAttribute('data-theme', t);
+    // Fire-and-forget sync to DB for cross-device persistence
+    try {
+      fetch('/api/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ theme: t }),
+      }).catch(() => {});
+    } catch { /* ignore */ }
   }, []);
 
   const toggleTheme = useCallback(() => {

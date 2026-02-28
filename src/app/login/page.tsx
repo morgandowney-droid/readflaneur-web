@@ -165,6 +165,15 @@ function LoginForm() {
       // Cache profile data for instant account page rendering
       if (result.profile) {
         localStorage.setItem('flaneur-profile', JSON.stringify(result.profile));
+        // Restore theme and language preferences from DB
+        if (result.profile.theme === 'light' || result.profile.theme === 'dark') {
+          localStorage.setItem('flaneur-theme', result.profile.theme);
+          document.documentElement.setAttribute('data-theme', result.profile.theme);
+        }
+        if (result.profile.language && result.profile.language !== 'en') {
+          localStorage.setItem('flaneur-language', result.profile.language);
+          document.documentElement.lang = result.profile.language;
+        }
       }
 
       setSuccess(true);

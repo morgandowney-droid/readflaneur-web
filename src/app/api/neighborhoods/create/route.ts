@@ -43,20 +43,27 @@ async function validateWithAI(input: string): Promise<ValidationResult> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
 
-  const prompt = `You are a geographic validation assistant. The user wants to create a neighborhood page for a local news product.
+  const prompt = `You are a geographic validation assistant. The user wants to create a local page for a hyper-local news product.
 
-Validate whether the following input refers to a real, specific neighborhood or district within a city. It must be a walkable urban area (not a country, state, continent, body of water, fictional place, or overly broad region like "Downtown" without a city).
+Validate whether the following input refers to a real, specific place where people live. This can be:
+- A neighborhood or district within a city (e.g., "Tribeca", "Notting Hill")
+- A small town or municipality (e.g., "Utrera", "Rye", "Potsdam")
+- A village or commune (e.g., "Gruyeres", "Fiesole")
+- A city or urban area (e.g., "Seville", "Portland")
+
+REJECT only: countries, states/provinces, continents, bodies of water, fictional places, or overly vague inputs like "Downtown" without a city.
 
 Input: "${input}"
 
 Rules:
-- The name should be the commonly used short English name for the neighborhood (e.g., "Tribeca" not "Triangle Below Canal Street")
-- If the input includes a city (e.g., "Notting Hill, London"), use that city
-- If the input is just a neighborhood name, infer the most likely city
-- Return the standard English name, even if the local name differs (but keep well-known local names like "Montmartre")
+- The name should be the commonly used short English name (e.g., "Tribeca" not "Triangle Below Canal Street")
+- For towns/municipalities that ARE the city, set both name and city to the town name (e.g., name: "Utrera", city: "Utrera")
+- For neighborhoods within a city (e.g., "Notting Hill, London"), use the city they belong to
+- If the input is ambiguous, infer the most likely location
+- Keep well-known local names (e.g., "Montmartre", "Utrera")
 - Region must be one of: north-america, europe, asia-pacific, middle-east, south-america, africa
 - Timezone must be a valid IANA timezone (e.g., "Europe/Paris", "America/New_York")
-- Coordinates should be the approximate center of the neighborhood
+- Coordinates should be the approximate center of the location
 
 Return ONLY valid JSON with this exact schema:
 {

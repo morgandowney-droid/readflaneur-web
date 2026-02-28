@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     // before redirect — ensures feed renders with correct neighborhoods immediately.
     let neighborhoodIds: string[] = [];
     let isSubscribed = false;
-    let profileData: { timezone?: string; childcare?: boolean; prefsToken?: string } = {};
+    let profileData: { timezone?: string; childcare?: boolean; prefsToken?: string; theme?: string; language?: string } = {};
     try {
       const userId = tokenData.user?.id;
       if (userId) {
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
             { headers: adminHeaders }
           ),
           fetch(
-            `${supabaseUrl}/rest/v1/profiles?select=primary_timezone,childcare_mode_enabled,email_unsubscribe_token&id=eq.${userId}&limit=1`,
+            `${supabaseUrl}/rest/v1/profiles?select=primary_timezone,childcare_mode_enabled,email_unsubscribe_token,preferred_theme,preferred_language&id=eq.${userId}&limit=1`,
             { headers: adminHeaders }
           ),
         ]);
@@ -105,6 +105,8 @@ export async function POST(request: NextRequest) {
               timezone: p.primary_timezone || undefined,
               childcare: p.childcare_mode_enabled || false,
               prefsToken: p.email_unsubscribe_token || undefined,
+              theme: p.preferred_theme || undefined,
+              language: p.preferred_language || undefined,
             };
           }
         }

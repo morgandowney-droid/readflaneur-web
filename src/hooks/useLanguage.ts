@@ -64,6 +64,14 @@ export function useLanguage() {
       // localStorage unavailable
     }
     document.documentElement.lang = code;
+    // Fire-and-forget sync to DB for cross-device persistence
+    try {
+      fetch('/api/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language: code }),
+      }).catch(() => {});
+    } catch { /* ignore */ }
   }, []);
 
   /** Auto-detect browser language and enable translation */
