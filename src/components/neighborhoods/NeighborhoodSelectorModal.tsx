@@ -121,6 +121,18 @@ async function fetchNeighborhoodsData(timeoutMs: number = 8000): Promise<{
       // Auth check failed — fall through to localStorage
     }
 
+    // If getSession timed out, check flaneur-auth localStorage as instant fallback
+    // (same pattern as Header.tsx — flaneur-auth is set on login)
+    if (!userId) {
+      try {
+        const authData = localStorage.getItem('flaneur-auth');
+        if (authData) {
+          const parsed = JSON.parse(authData);
+          if (parsed?.id) userId = parsed.id;
+        }
+      } catch { /* ignore */ }
+    }
+
     // Fall back to localStorage if no DB preferences
     if (selected.size === 0) {
       const stored = localStorage.getItem(PREFS_KEY);
