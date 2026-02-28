@@ -5,6 +5,10 @@
 
 ## 2026-02-28
 
+**Move Postcard to Bottom of Daily Brief Email:**
+- Postcard section moved from between primary stories and satellite neighborhoods back to the bottom of the email, after Family Corner and just before Footer. The postcard is a reward for readers who scroll to the end, not an interruption mid-email.
+- Files: `src/lib/email/templates/DailyBriefTemplate.tsx`
+
 **Fix Email Date Labels Using Recipient Timezone:**
 - Email date labels like "Daily Brief (Today) - Sat Feb 28" were showing stale dates for cross-timezone recipients. A Stockholm reader (UTC+1) getting email at 7 AM local (6 AM UTC) saw NYC briefs (UTC-5) dated "Fri Feb 27" because `formatDateline()` and `isSameDay()` used server UTC.
 - `isSameDay(a, b, timezone?)` now compares dates in recipient's IANA timezone via `toLocaleDateString('en-CA', { timeZone })`.
