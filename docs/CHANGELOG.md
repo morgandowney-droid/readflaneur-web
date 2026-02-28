@@ -5,6 +5,11 @@
 
 ## 2026-02-28
 
+**Fix Mobile Feed Empty State Flash During Cookie Sync:**
+- Logged-in users on mobile saw "Select neighborhoods to see local stories" + "Choose Neighborhoods" button for 1-2 seconds before their real feed appeared. The server rendered `/feed` with an empty cookie (neighborhoods live in localStorage, cookie synced by client), showed the empty state CTA, then client hydration read localStorage, synced the cookie, and called `router.refresh()` to re-render with the correct feed.
+- Added `syncChecked` state in MultiFeed that starts `false` when `neighborhoods.length === 0`. The empty state CTA only renders when `isEmpty && syncChecked`. The cookie-sync useEffect sets `syncChecked = true` only when localStorage is also empty (genuinely no neighborhoods). When localStorage has IDs, it syncs the cookie and refreshes without ever showing the empty state.
+- Files: `src/components/feed/MultiFeed.tsx`
+
 **Fix Timezone Bugs in Look Ahead Dedup, Sunday Edition, Brief Articles, and Article Page Day Labels:**
 - Look Ahead dedup for UTC+11..+13 neighborhoods (e.g., Waiheke Island NZ) failed because `published_at` at 7 AM local = previous UTC calendar day (18:00Z Feb 27 for Feb 28 local). Old dedup queried `published_at >= '2026-02-28T00:00:00Z'` which never matched. Fixed: queries a broad time window around all neighborhoods' `publishAtUtc` values and compares per-neighborhood within 2h tolerance.
 - Sunday Edition `sync-weekly-brief` used `new Date().toISOString().split('T')[0]` as `weekDate`, so Saturday runs created Saturday-dated editions and Sunday runs created Sunday-dated editions (2 per week). Fixed: always calculates "this coming Sunday" - if already Sunday use today, otherwise add `7 - dayOfWeek` days.
