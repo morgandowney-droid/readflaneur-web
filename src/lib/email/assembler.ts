@@ -101,7 +101,8 @@ async function fetchBriefAsStory(
   supabase: SupabaseClient,
   neighborhoodId: string,
   neighborhoodName: string,
-  cityName: string
+  cityName: string,
+  timezone?: string
 ): Promise<EmailStory | null> {
   // First: check for a brief article in the articles table (14h window = today's brief only)
   // Using 14h instead of 48h prevents stale briefs from blocking fresh ones
@@ -118,7 +119,7 @@ async function fetchBriefAsStory(
     .single();
 
   if (briefArticle) {
-    return toEmailStory(briefArticle, neighborhoodName, cityName);
+    return toEmailStory(briefArticle, neighborhoodName, cityName, timezone);
   }
 
   // Fallback: use neighborhood_briefs table and create an article on-the-fly
@@ -185,7 +186,7 @@ async function fetchBriefAsStory(
     .single();
 
   if (existingArticle) {
-    return toEmailStory(existingArticle, neighborhoodName, cityName);
+    return toEmailStory(existingArticle, neighborhoodName, cityName, timezone);
   }
 
   // Get Unsplash image (async DB lookup - no cache preload needed)
@@ -255,7 +256,7 @@ async function fetchBriefAsStory(
         console.error(`[assembler] Failed to insert sources for ${newArticle.id}:`, e)
       );
     }
-    return toEmailStory(newArticle, neighborhoodName, cityName);
+    return toEmailStory(newArticle, neighborhoodName, cityName, timezone);
   }
 
   // If insert failed for any reason, still build a valid link to the article slug
@@ -266,7 +267,7 @@ async function fetchBriefAsStory(
     category_label: `${neighborhoodName} Daily Brief`,
     slug,
     neighborhood_id: neighborhoodId,
-  }, neighborhoodName, cityName);
+  }, neighborhoodName, cityName, timezone);
 }
 
 /**
@@ -278,7 +279,8 @@ async function fetchLookAheadAsStory(
   neighborhoodId: string,
   neighborhoodName: string,
   cityName: string,
-  isCombo?: boolean
+  isCombo?: boolean,
+  timezone?: string
 ): Promise<EmailStory | null> {
   const since48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
   const ids = await expandNeighborhoodIds(supabase, neighborhoodId, isCombo);
@@ -295,7 +297,7 @@ async function fetchLookAheadAsStory(
 
   if (!lookAheadArticle) return null;
 
-  return toEmailStory(lookAheadArticle, neighborhoodName, cityName);
+  return toEmailStory(lookAheadArticle, neighborhoodName, cityName, timezone);
 }
 
 /**
@@ -465,8 +467,8 @@ export async function assembleDailyBrief(
     }
 
     // Fetch exactly 1 Daily Brief + 1 Look Ahead
-    const briefStory = await fetchBriefAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city);
-    const lookAheadStory = await fetchLookAheadAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city, primaryNeighborhood.is_combo);
+    const briefStory = await fetchBriefAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city, recipient.timezone);
+    const lookAheadStory = await fetchLookAheadAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city, primaryNeighborhood.is_combo, recipient.timezone);
 
     const emailStories: EmailStory[] = [];
     if (briefStory) emailStories.push(briefStory);
@@ -521,8 +523,8 @@ export async function assembleDailyBrief(
     const neighborhood = neighborhoodMap.get(satId);
     if (!neighborhood) continue;
 
-    const briefStory = await fetchBriefAsStory(supabase, satId, neighborhood.name, neighborhood.city);
-    const lookAheadStory = await fetchLookAheadAsStory(supabase, satId, neighborhood.name, neighborhood.city, neighborhood.is_combo);
+    const briefStory = await fetchBriefAsStory(supabase, satId, neighborhood.name, neighborhood.city, recipient.timezone);
+    const lookAheadStory = await fetchLookAheadAsStory(supabase, satId, neighborhood.name, neighborhood.city, neighborhood.is_combo, recipient.timezone);
 
     const emailStories: EmailStory[] = [];
     if (briefStory) emailStories.push(briefStory);
@@ -595,23 +597,28 @@ export async function assembleDailyBrief(
  * e.g., "Beverly Hills Daily Brief" → "Daily Brief"
  * publishedAt is used to determine if "(Today)" is accurate
  */
-function cleanCategoryLabel(label: string | null, neighborhoodName: string, publishedAt?: string): string | null {
+function cleanCategoryLabel(label: string | null, neighborhoodName: string, publishedAt?: string, timezone?: string): string | null {
   if (!label) return null;
   // Strip neighborhood name prefix (case-insensitive)
   let cleaned = label.replace(new RegExp(`^${escapeRegex(neighborhoodName)}\\s+`, 'i'), '');
   cleaned = cleaned || label;
   // Rename labels for email display
   if (/^Daily Brief$/i.test(cleaned)) {
-    // Only say "(Today)" if the article was actually published today
-    const isToday = publishedAt ? isSameDay(new Date(publishedAt), new Date()) : true;
+    // Only say "(Today)" if the article was actually published today in recipient's timezone
+    const isToday = publishedAt ? isSameDay(new Date(publishedAt), new Date(), timezone) : true;
     return isToday ? 'Daily Brief (Today)' : 'Daily Brief';
   }
   if (/^Look Ahead$/i.test(cleaned)) return 'Look Ahead (next 7 days)';
   return cleaned;
 }
 
-/** Check if two dates are the same calendar day */
-function isSameDay(a: Date, b: Date): boolean {
+/** Check if two dates are the same calendar day in a given timezone */
+function isSameDay(a: Date, b: Date, timezone?: string): boolean {
+  if (timezone) {
+    const aLocal = a.toLocaleDateString('en-CA', { timeZone: timezone });
+    const bLocal = b.toLocaleDateString('en-CA', { timeZone: timezone });
+    return aLocal === bLocal;
+  }
   return a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate();
@@ -652,14 +659,17 @@ function escapeRegex(str: string): string {
 }
 
 /**
- * Format a dateline suffix from a date string
+ * Format a dateline suffix from a date string in recipient's timezone
  * e.g., "Mon Feb 12"
  */
-function formatDateline(dateString?: string): string {
+function formatDateline(dateString?: string, timezone?: string): string {
   const date = dateString ? new Date(dateString) : new Date();
-  const day = date.toLocaleDateString('en-US', { weekday: 'short' });
-  const month = date.toLocaleDateString('en-US', { month: 'short' });
-  const dayNum = date.getDate();
+  const opts: Intl.DateTimeFormatOptions = timezone ? { timeZone: timezone } : {};
+  const day = date.toLocaleDateString('en-US', { weekday: 'short', ...opts });
+  const month = date.toLocaleDateString('en-US', { month: 'short', ...opts });
+  const dayNum = timezone
+    ? parseInt(date.toLocaleDateString('en-US', { day: 'numeric', timeZone: timezone }), 10)
+    : date.getDate();
   return `${day} ${month} ${dayNum}`;
 }
 
@@ -803,10 +813,11 @@ function toEmailStory(
     created_at?: string;
   },
   neighborhoodName: string,
-  cityName: string
+  cityName: string,
+  timezone?: string
 ): EmailStory {
-  const cleanedLabel = cleanCategoryLabel(article.category_label, neighborhoodName, article.published_at);
-  const dateline = formatDateline(article.published_at || article.created_at);
+  const cleanedLabel = cleanCategoryLabel(article.category_label, neighborhoodName, article.published_at, timezone);
+  const dateline = formatDateline(article.published_at || article.created_at, timezone);
   const labelWithDate = cleanedLabel ? `${cleanedLabel} - ${dateline}` : null;
 
   // Extract informative blurb: detect and replace greeting filler, label text, or missing preview
