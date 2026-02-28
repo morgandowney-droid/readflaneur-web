@@ -5,12 +5,13 @@
 
 ## 2026-02-28
 
-**Horizontal Scroll Bento Grid with Jump-to-Feed Arrow:**
-- Desktop bento grid converted from fixed 4-column CSS grid to per-section horizontal scroll rows. "My Neighborhoods" now shows ALL user neighborhoods (was capped at 3), and regional discovery sections show up to 8 cards each (was 3). Users scroll horizontally through cards with arrow buttons and gradient fade indicators at edges.
-- New `scroll` size variant on BentoCard: fixed 280x260px with `snap-start` for polished scroll-snap behavior. Blurb hidden on scroll cards for clean look.
-- `ScrollableRow` internal component in BentoGrid: `useRef` scroll container + `ResizeObserver` + scroll event for overflow detection, 292px scroll per click (280px card + 12px gap), circular arrow buttons at vertical center with glassmorphism styling, left/right gradient fade indicators.
+**Paginated Bento Grid with Jump-to-Feed Arrow:**
+- Desktop bento grid keeps original 4-column CSS grid with hero/wide/standard card sizes but adds paginated navigation. Each section displays 3 cards per page with left/right arrows and "1/N" page indicator in the section header.
+- `PaginatedSection` internal component in BentoGrid: manages per-section page state with `PAGE_SIZE=3`, `assignSizes()` determines hero/wide/standard layout per page, `SectionHeader` shows pagination controls when `totalPages > 1`.
+- "My Neighborhoods" now shows ALL user neighborhoods (was capped at 3) via client-side REST API fetch of `brief_summary` articles per neighborhood (bypasses server feed limit of ~42 items). User section merged with discovery sections at render time via `useMemo` to avoid race condition with async fetch.
 - `JumpToFeedArrow` below "My Neighborhoods" section: centered button with tracked-caps "Jump to stories" label + chevron-down SVG with subtle 2s bounce animation, smooth-scrolls to "ALL STORIES" divider via `feedStartRef` in MultiFeed.
 - API discovery-briefs max cap raised from 5 to 12, hook fetches `count=8` per region instead of 3.
+- Translation key `bento.jumpToFeed` added in all 9 languages. CSS `animate-bounce-subtle` keyframes added.
 - Mobile layout completely unchanged (MobileDiscoverySection untouched).
 - Files: `src/components/feed/BentoGrid.tsx` (rewritten), `src/components/feed/BentoCard.tsx`, `src/components/feed/MultiFeed.tsx`, `src/hooks/useDiscoveryBriefs.ts`, `src/app/api/feed/discovery-briefs/route.ts`, `src/lib/translations.ts`, `src/app/globals.css`
 
