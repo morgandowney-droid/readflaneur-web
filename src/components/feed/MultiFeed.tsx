@@ -839,10 +839,31 @@ export function MultiFeed({
         />
       </div>
 
+      {/* ── MOBILE: Primary neighborhood indicator (wake-up screen context) ── */}
+      {!activeFilter && isMultiple && neighborhoods[0] && (
+        <div className="md:hidden flex items-baseline justify-between px-1 pt-1 pb-2">
+          <div className="flex items-baseline gap-2">
+            <span className="font-display text-lg text-fg tracking-wide">{neighborhoods[0].name}</span>
+            <span className="text-xs text-fg-subtle">{neighborhoods[0].city}</span>
+          </div>
+          {neighborhoods[0].timezone && (
+            <NeighborhoodLiveStatus
+              timezone={neighborhoods[0].timezone}
+              country={neighborhoods[0].country}
+              latitude={neighborhoods[0].latitude}
+              longitude={neighborhoods[0].longitude}
+              neighborhoodName={neighborhoods[0].name}
+              city={neighborhoods[0].city}
+              initialWeather={initialWeather}
+            />
+          )}
+        </div>
+      )}
+
       {/* ── DAILY BRIEF ── */}
       {activeFilter === null ? (
         dailyBrief && (
-          <div className="mt-2 mb-2 md:mb-6">
+          <div className="mt-0 mb-2 md:mt-2 md:mb-6">
             {dailyBrief}
             {neighborhoods[0] && (
               <>

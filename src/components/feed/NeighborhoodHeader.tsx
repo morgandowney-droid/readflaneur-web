@@ -88,27 +88,25 @@ export function NeighborhoodHeader({
       <div className="text-center pt-2 md:pt-6">
         {isAll ? (
           <>
-            {/* Heading — clickable to open selector when showing "My Neighborhoods" */}
-            <h1
-              className={`font-display text-4xl md:text-5xl text-fg tracking-wide mb-1${!neighborhoodId ? ' cursor-pointer hover:text-fg transition-colors' : ''}`}
+            {/* Heading + city inline to save vertical space */}
+            <div className={`flex items-baseline justify-center gap-2.5 mb-1${!neighborhoodId ? ' cursor-pointer' : ''}`}
               onClick={!neighborhoodId ? () => openModal() : undefined}
               role={!neighborhoodId ? 'button' : undefined}
             >
-              {neighborhoodName}
-            </h1>
+              <h1 className="font-display text-4xl md:text-5xl text-fg tracking-wide">
+                {neighborhoodName}
+              </h1>
+              {city && (
+                <span className="text-sm text-fg-subtle">{city}</span>
+              )}
+            </div>
 
-            {/* City / subtitle line - reuses same slot for layout stability */}
+            {/* Combo component names or neighborhood count subtitle */}
             <p className="text-sm text-fg-subtle mb-1.5 h-5">
-              {city ? (
-                comboComponentNames && comboComponentNames.length > 0 ? (
-                  <>
-                    {city}
-                    <span className="mx-2 text-neutral-600">·</span>
-                    <span className="font-serif italic">{`${t('feed.covering')} ${joinWithAnd(comboComponentNames)}`}</span>
-                  </>
-                ) : city
+              {city && comboComponentNames && comboComponentNames.length > 0 ? (
+                <span className="font-serif italic">{`${t('feed.covering')} ${joinWithAnd(comboComponentNames)}`}</span>
               ) : (
-                neighborhoodCount !== undefined
+                !city && neighborhoodCount !== undefined
                   ? `${t('feed.curatedFeed')} ${neighborhoodCount} ${t('feed.locations')}`
                   : '\u00A0'
               )}
