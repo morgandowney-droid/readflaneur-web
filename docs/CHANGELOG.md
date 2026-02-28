@@ -5,6 +5,11 @@
 
 ## 2026-02-28
 
+**Instant Translation for Community Neighborhood Creation:**
+- Users with a non-English `preferred_language` (e.g., Spanish) who created a community neighborhood saw the brief and article in English only, with translation delayed up to 60 minutes until the `translate-content` cron processed it.
+- Pipeline now checks creator's `preferred_language` from profiles after article creation and translates both brief and article via Gemini Flash in parallel (~2-3s). Inserts into `brief_translations` and `article_translations` tables so user sees content in their language immediately.
+- File: `src/app/api/neighborhoods/create/route.ts`
+
 **Claude Fallback Enricher for Community Neighborhoods:**
 - When Gemini enrichment fails during community neighborhood creation (quota exhaustion, API errors), new users saw raw bullet-point facts instead of a polished daily brief.
 - Added `enrichWithClaude()` fallback that fires only when Gemini enrichment fails. Uses the same `insiderPersona()` prompt with local-language greetings, `[[section headers]]`, prose paragraphs, and TEASER extraction. Model: `claude-sonnet-4-5`.
