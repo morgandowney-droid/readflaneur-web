@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, ReactNode } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { FeedItem, Article, Ad } from '@/types';
 import { FeedList } from './FeedList';
@@ -13,7 +13,7 @@ import { NeighborhoodBrief, NeighborhoodBriefSkeleton } from './NeighborhoodBrie
 import { LookAheadCard } from './LookAheadCard';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
-import { BentoGrid } from './BentoGrid';
+import { BentoGrid, BentoSection } from './BentoGrid';
 import { BentoCardProps } from './BentoCard';
 import { NeighborhoodLiveStatus } from './NeighborhoodLiveStatus';
 import { MobileDiscoverySection } from './MobileDiscoverySection';
@@ -159,22 +159,27 @@ export function MultiFeed({
   }, [neighborhoods]);
 
   // Discovery briefs for bento grid (desktop) and mobile discovery
-  const { sections: bentoSections, isLoading: bentoLoading, refresh: handleBentoRefresh } = useDiscoveryBriefs(
+  const { sections: discoverySections, isLoading: bentoLoading, refresh: handleBentoRefresh } = useDiscoveryBriefs(
     neighborhoods.map(n => n.id),
-    {
-      skip: neighborhoods.length < 2,
-      buildUserSection: () => {
-        if (userBentoCards.length > 0) {
-          return {
-            label: 'Your Neighborhoods',
-            translationKey: 'bento.yourNeighborhoods',
-            cards: userBentoCards,
-          };
-        }
-        return null;
-      },
-    }
+    { skip: neighborhoods.length < 2 }
   );
+
+  // Merge user section (from async fetch) with discovery sections at render time
+  // This avoids the race condition where buildUserSection runs before the fetch completes
+  const bentoSections = useMemo(() => {
+    const result: BentoSection[] = [];
+    if (userBentoCards.length > 0) {
+      result.push({
+        label: 'Your Neighborhoods',
+        translationKey: 'bento.yourNeighborhoods',
+        cards: userBentoCards,
+      });
+    }
+    if (discoverySections) {
+      result.push(...discoverySections);
+    }
+    return result.length > 0 ? result : null;
+  }, [userBentoCards, discoverySections]);
 
   // Restore active pill from sessionStorage on mount (browser back preserves selection)
   useEffect(() => {
