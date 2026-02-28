@@ -3,7 +3,14 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
-## 2026-03-04
+## 2026-02-28
+
+**Faster Community Neighborhood Creation Pipeline:**
+- Creation pipeline was too slow (~40-60s) and fragile - Grok brief generation (25-30s) often timed out, leaving new neighborhoods with zero content. Utrera (Spain) had no brief or articles 10 minutes after creation.
+- Replaced Grok with Gemini Flash + Google Search grounding (~5-10s) for initial brief. Image library and brief generation now run in parallel via `Promise.allSettled`. Total creation time drops from ~40-60s to ~10-15s.
+- Full Grok+enrichment pipeline runs overnight via `sync-neighborhood-briefs` cron, so quality improves by the next morning.
+- Also fixed: new neighborhoods weren't added to `newsletter_subscribers.neighborhood_ids`, causing email crons to skip them entirely. Now auto-syncs on creation.
+- File: `src/app/api/neighborhoods/create/route.ts`
 
 **Persist Theme/Language Preferences to DB for Cross-Device Sync:**
 - Users switching devices or clearing browser storage lost their dark mode and language settings. Theme and language were localStorage-only with no server persistence.
