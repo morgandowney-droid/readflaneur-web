@@ -58,6 +58,8 @@ export function MultiFeed({
   const { t } = useTranslation();
   const [view, setView] = useState<FeedView>(defaultView);
   const [isHydrated, setIsHydrated] = useState(false);
+  // Suppress empty state until we've checked localStorage for neighborhoods
+  const [syncChecked, setSyncChecked] = useState(neighborhoods.length > 0);
   const [activeFilter, setActiveFilterRaw] = useState<string | null>(null);
 
   // Persist active pill to sessionStorage so browser back restores it
@@ -200,7 +202,7 @@ export function MultiFeed({
   // When server didn't get neighborhoods from cookie (e.g., first visit before cookie set),
   // sync cookie and soft-refresh so server can read it
   useEffect(() => {
-    if (neighborhoods.length > 0) return;
+    if (neighborhoods.length > 0) { setSyncChecked(true); return; }
     try {
       const stored = localStorage.getItem('flaneur-neighborhood-preferences');
       if (stored) {
@@ -210,9 +212,12 @@ export function MultiFeed({
           document.cookie = `flaneur-neighborhoods=${ids.join(',')};path=/;max-age=31536000;SameSite=Strict`;
           window.scrollTo(0, 0);
           router.refresh();
+          return; // Don't set syncChecked - refresh will re-mount with neighborhoods
         }
       }
     } catch {}
+    // localStorage is also empty - genuinely no neighborhoods
+    setSyncChecked(true);
   }, [neighborhoods.length, router]);
 
   // Fetch brief for filtered neighborhood (REST API - bypasses Supabase client issues)
@@ -813,8 +818,8 @@ export function MultiFeed({
         </div>
       ) : null}
 
-      {/* ── EMPTY STATE ── */}
-      {isEmpty && (
+      {/* ── EMPTY STATE (only after confirming localStorage is also empty) ── */}
+      {isEmpty && syncChecked && (
         <div className="py-8 text-center">
           <p className="text-sm text-fg-subtle mb-4">
             {t('feed.selectNeighborhoods')}
