@@ -6,6 +6,7 @@ import { getDistance } from '@/lib/geo-utils';
 import { generateCommunityId, generateBriefArticleSlug, generatePreviewText } from '@/lib/community-pipeline';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { performInstantResend } from '@/lib/email/instant-resend';
+import { sendEmail } from '@/lib/email';
 import { selectLibraryImage } from '@/lib/image-library';
 import { generateNeighborhoodLibrary } from '@/lib/image-library-generator';
 import { searchNeighborhoodFacts } from '@/lib/gemini-search';
@@ -582,7 +583,50 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 11. Trigger instant resend (fire-and-forget)
+    // 11. Send congratulations email (fire-and-forget)
+    if (pipelineStatus.article && session.user.email) {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\n$/, '').replace(/\/$/, '')
+        || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://readflaneur.com');
+      const citySlug = neighborhoodId.split('-')[0];
+      const neighborhoodSlug = neighborhoodId.split('-').slice(1).join('-');
+      const neighborhoodUrl = `${baseUrl}/${citySlug}/${neighborhoodSlug}`;
+
+      sendEmail({
+        to: session.user.email,
+        subject: `${validation.name} is live on Flaneur`,
+        html: `
+          <div style="font-family: Georgia, 'Times New Roman', serif; max-width: 520px; margin: 0 auto; padding: 40px 20px; color: #1c1917;">
+            <div style="text-align: center; margin-bottom: 32px;">
+              <span style="font-size: 14px; letter-spacing: 0.3em; color: #78716c;">FLANEUR</span>
+            </div>
+            <h1 style="font-size: 24px; font-weight: 400; text-align: center; margin-bottom: 8px;">
+              ${validation.name} is live
+            </h1>
+            <p style="font-size: 14px; color: #78716c; text-align: center; margin-bottom: 32px;">
+              ${validation.city}, ${validation.country}
+            </p>
+            <p style="font-size: 16px; line-height: 1.7; margin-bottom: 16px;">
+              Your first daily brief for ${validation.name} has been published. You can read it now:
+            </p>
+            <div style="text-align: center; margin: 28px 0;">
+              <a href="${neighborhoodUrl}" style="display: inline-block; padding: 12px 32px; background: #1c1917; color: #ffffff; text-decoration: none; font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; border-radius: 8px;">
+                Read Your Brief
+              </a>
+            </div>
+            <div style="border-top: 1px solid #e7e5e4; margin: 32px 0; padding-top: 24px;">
+              <p style="font-size: 14px; color: #78716c; line-height: 1.6; margin: 0;">
+                <strong style="color: #1c1917;">What happens next:</strong> A new daily brief for ${validation.name} will be published every morning at 7 am local time. If you're subscribed to the Daily Brief email, it will be included automatically.
+              </p>
+            </div>
+            <p style="font-size: 12px; color: #a8a29e; text-align: center; margin-top: 32px;">
+              <a href="${baseUrl}/feed" style="color: #a8a29e;">readflaneur.com</a>
+            </p>
+          </div>
+        `,
+      }).then(null, (e: unknown) => console.error('Congratulations email error:', e));
+    }
+
+    // 12. Trigger instant resend (fire-and-forget)
     performInstantResend(admin, {
       userId,
       source: 'profile',

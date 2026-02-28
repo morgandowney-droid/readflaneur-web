@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
+const COUNTDOWN_START = 17;
+const IS_LIVE_DISPLAY_MS = 10000;
+
 interface Props {
   neighborhoodName: string;
   neighborhoodId: string;
@@ -11,14 +14,14 @@ interface Props {
 
 /**
  * Shown when a user just created a community neighborhood (?created=true).
- * Polls for the first article, shows a countdown, and celebrates with balloons.
+ * Polls for the first article, shows a countdown from 17s, and celebrates with balloons.
  */
 export function NewNeighborhoodCelebration({ neighborhoodName, neighborhoodId }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isCreated = searchParams.get('created') === 'true';
 
-  const [elapsed, setElapsed] = useState(0);
+  const [remaining, setRemaining] = useState(COUNTDOWN_START);
   const [ready, setReady] = useState(false);
   const [showBalloons, setShowBalloons] = useState(false);
 
@@ -40,34 +43,31 @@ export function NewNeighborhoodCelebration({ neighborhoodName, neighborhoodId }:
   useEffect(() => {
     if (!isCreated) return;
 
+    const showLive = () => {
+      setReady(true);
+      setShowBalloons(true);
+      setTimeout(() => {
+        router.replace(window.location.pathname);
+        router.refresh();
+      }, IS_LIVE_DISPLAY_MS);
+    };
+
     // Check immediately (article may already exist from pipeline)
     checkForArticle().then(found => {
-      if (found) {
-        setReady(true);
-        setShowBalloons(true);
-        setTimeout(() => {
-          router.replace(window.location.pathname);
-          router.refresh();
-        }, 4000);
-      }
+      if (found) showLive();
     });
 
-    // Countdown timer
+    // Countdown timer (decrements from COUNTDOWN_START)
     const timer = setInterval(() => {
-      setElapsed(prev => prev + 1);
+      setRemaining(prev => (prev > 0 ? prev - 1 : 0));
     }, 1000);
 
     // Poll every 3s for article
     const poller = setInterval(async () => {
       const found = await checkForArticle();
       if (found) {
-        setReady(true);
-        setShowBalloons(true);
         clearInterval(poller);
-        setTimeout(() => {
-          router.replace(window.location.pathname);
-          router.refresh();
-        }, 4000);
+        showLive();
       }
     }, 3000);
 
@@ -78,7 +78,7 @@ export function NewNeighborhoodCelebration({ neighborhoodName, neighborhoodId }:
       setTimeout(() => {
         router.replace(window.location.pathname);
         router.refresh();
-      }, 2000);
+      }, 3000);
     }, 90000);
 
     return () => {
@@ -120,7 +120,7 @@ export function NewNeighborhoodCelebration({ neighborhoodName, neighborhoodId }:
 
           {/* Countdown */}
           <div className="text-3xl font-mono text-fg mb-4 tabular-nums">
-            {elapsed}s
+            {remaining}s
           </div>
 
           <h2 className="text-sm tracking-[0.25em] uppercase font-light text-fg mb-3">
@@ -128,7 +128,6 @@ export function NewNeighborhoodCelebration({ neighborhoodName, neighborhoodId }:
           </h2>
           <p className="text-sm text-fg-subtle max-w-sm mx-auto leading-relaxed">
             Scanning local sources, writing your first daily brief, and selecting photos.
-            This usually takes 15-20 seconds.
           </p>
         </>
       ) : (
@@ -136,8 +135,11 @@ export function NewNeighborhoodCelebration({ neighborhoodName, neighborhoodId }:
           <h2 className="text-lg font-medium text-fg mb-2">
             {neighborhoodName} is live
           </h2>
-          <p className="text-sm text-fg-subtle max-w-sm mx-auto leading-relaxed">
-            Your first daily brief is ready. You&apos;ll receive a new edition every morning at 7am local time.
+          <p className="text-sm text-fg-subtle max-w-sm mx-auto leading-relaxed mb-4">
+            Your first daily brief is ready. A new edition will arrive every morning at 7 am local time.
+          </p>
+          <p className="text-xs text-fg-subtle/60">
+            Loading your stories...
           </p>
         </>
       )}
