@@ -764,6 +764,7 @@ export function MultiFeed({
           </div>
           {neighborhoods[0]?.timezone && (
             <div className="flex items-center gap-2">
+              <span className="text-[10px] tracking-[0.15em] uppercase text-fg-subtle">{t('feed.primaryNeighborhood')}</span>
               <span className="text-xs text-fg-subtle">{neighborhoods[0].name}</span>
               <NeighborhoodLiveStatus
                 timezone={neighborhoods[0].timezone}
