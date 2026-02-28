@@ -5,6 +5,12 @@
 
 ## 2026-02-28
 
+**Claude Fallback Enricher for Community Neighborhoods:**
+- When Gemini enrichment fails during community neighborhood creation (quota exhaustion, API errors), new users saw raw bullet-point facts instead of a polished daily brief.
+- Added `enrichWithClaude()` fallback that fires only when Gemini enrichment fails. Uses the same `insiderPersona()` prompt with local-language greetings, `[[section headers]]`, prose paragraphs, and TEASER extraction. Model: `claude-sonnet-4-5`.
+- Pipeline flow: Gemini Search facts -> try Gemini enrichment -> if failed, try Claude enrichment -> create article from whichever enriched content is available (or raw facts as last resort).
+- File: `src/app/api/neighborhoods/create/route.ts`
+
 **Faster Community Neighborhood Creation Pipeline:**
 - Creation pipeline was too slow (~40-60s) and fragile - Grok brief generation (25-30s) often timed out, leaving new neighborhoods with zero content. Utrera (Spain) had no brief or articles 10 minutes after creation.
 - Replaced Grok with Gemini Flash + Google Search grounding (~5-10s) for initial brief. Image library and brief generation now run in parallel via `Promise.allSettled`. Gemini enrichment added (~5-10s) for proper greeting, structured sections, hyperlinks, and subject teaser headline. Total creation time ~15-20s vs old ~40-60s.
