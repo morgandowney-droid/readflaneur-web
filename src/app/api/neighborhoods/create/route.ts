@@ -9,12 +9,93 @@ import { performInstantResend } from '@/lib/email/instant-resend';
 import { selectLibraryImage } from '@/lib/image-library';
 import { generateNeighborhoodLibrary } from '@/lib/image-library-generator';
 import { searchNeighborhoodFacts } from '@/lib/gemini-search';
+import { insiderPersona } from '@/lib/ai-persona';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const MAX_COMMUNITY_NEIGHBORHOODS = 2;
 const DUPLICATE_RADIUS_KM = 0.5; // 500m
+
+/**
+ * Fallback enricher using Claude when Gemini is unavailable (quota exhausted, etc.)
+ * Returns enriched prose or null on failure.
+ */
+async function enrichWithClaude(
+  rawFacts: string,
+  neighborhoodName: string,
+  city: string,
+  country: string,
+  timezone: string,
+): Promise<{ body: string; subjectTeaser: string | null } | null> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return null;
+
+  const localDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: timezone,
+  });
+
+  const persona = insiderPersona(`${neighborhoodName}, ${city}`, 'Daily Brief Editor');
+
+  const prompt = `${persona}
+
+Rewrite the bullet-point facts below into a polished daily neighborhood brief for ${neighborhoodName}, ${city}, ${country}.
+
+TODAY'S LOCAL DATE: ${localDate}
+
+RULES:
+- Start with a greeting in the LOCAL LANGUAGE (e.g., "Buenos dias, vecinos." for Spain, "Bonjour, voisins." for Paris, "God morgon, grannar." for Stockholm, "Morning, neighbors." for English-speaking cities)
+- Use [[Double Bracket Section Headers]] for each topic
+- Write 1-2 conversational prose paragraphs per section
+- Include specific details (addresses, names, prices, times)
+- End with a brief sign-off in the local language
+- NEVER use em dashes. Use commas, periods, or hyphens instead
+- Write in English with 1-2 local language phrases naturally woven in
+- Drop any facts you cannot reasonably verify
+- Generate a SUBJECT TEASER: 1-4 punchy lowercase words that create curiosity (like "heated school meeting" or "carnival countdown"). Output this on its own line at the very end prefixed with "TEASER:"
+
+RAW FACTS:
+${rawFacts}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: AI_MODELS.CLAUDE_SONNET,
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Claude API error:', response.status, await response.text());
+      return null;
+    }
+
+    const data = await response.json();
+    const text: string = data.content?.[0]?.text || '';
+    if (!text || text.length < 100) return null;
+
+    // Extract teaser from last line
+    let body = text;
+    let subjectTeaser: string | null = null;
+    const teaserMatch = text.match(/\nTEASER:\s*(.+)$/im);
+    if (teaserMatch) {
+      subjectTeaser = teaserMatch[1].trim().toLowerCase().replace(/^the\s+/, '');
+      body = text.replace(/\nTEASER:\s*.+$/im, '').trim();
+    }
+
+    return { body, subjectTeaser };
+  } catch (err) {
+    console.error('Claude fallback enrichment error:', err);
+    return null;
+  }
+}
 
 function getSupabaseAdmin() {
   return createServiceClient(
@@ -375,7 +456,47 @@ export async function POST(request: NextRequest) {
               pipelineStatus.enrichment = true;
             }
           } catch (err) {
-            console.error('Enrichment error (using raw facts):', err);
+            console.error('Gemini enrichment error:', err);
+          }
+
+          // Step C2: Claude fallback if Gemini enrichment failed
+          if (!pipelineStatus.enrichment) {
+            try {
+              console.log('Gemini enrichment failed, trying Claude fallback...');
+              const claudeResult = await enrichWithClaude(
+                facts.facts,
+                validation.name,
+                validation.city,
+                validation.country,
+                validation.timezone,
+              );
+
+              if (claudeResult) {
+                articleBody = claudeResult.body;
+                enrichmentModel = AI_MODELS.CLAUDE_SONNET;
+
+                if (claudeResult.subjectTeaser) {
+                  enrichedHeadline = claudeResult.subjectTeaser
+                    .split(' ')
+                    .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+                    .join(' ');
+                }
+
+                await admin
+                  .from('neighborhood_briefs')
+                  .update({
+                    enriched_content: articleBody,
+                    enrichment_model: enrichmentModel,
+                    subject_teaser: claudeResult.subjectTeaser || null,
+                  })
+                  .eq('id', insertedBrief.id);
+
+                pipelineStatus.enrichment = true;
+                console.log('Claude fallback enrichment succeeded');
+              }
+            } catch (err) {
+              console.error('Claude fallback error (using raw facts):', err);
+            }
           }
 
           // Step D: Create article from enriched (or raw) content
