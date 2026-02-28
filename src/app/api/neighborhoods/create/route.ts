@@ -4,11 +4,10 @@ import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { AI_MODELS } from '@/config/ai-models';
 import { getDistance } from '@/lib/geo-utils';
 import { generateCommunityId, generateBriefArticleSlug, generatePreviewText } from '@/lib/community-pipeline';
-import { generateNeighborhoodBrief } from '@/lib/grok';
-import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { performInstantResend } from '@/lib/email/instant-resend';
 import { selectLibraryImage } from '@/lib/image-library';
 import { generateNeighborhoodLibrary } from '@/lib/image-library-generator';
+import { searchNeighborhoodFacts } from '@/lib/gemini-search';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -253,7 +252,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create neighborhood' }, { status: 500 });
     }
 
-    // 9. Auto-add to creator's collection
+    // 9. Auto-add to creator's collection + sync newsletter_subscribers
     await admin
       .from('user_neighborhood_preferences')
       .insert({
@@ -262,7 +261,30 @@ export async function POST(request: NextRequest) {
       })
       .then(null, (e: unknown) => console.error('Failed to add to collection:', e));
 
-    // 10. Run pipeline (with time budget, each step is try/catch)
+    // Sync to newsletter_subscribers.neighborhood_ids so crons pick it up for emails
+    try {
+      const { data: nsub } = await admin
+        .from('newsletter_subscribers')
+        .select('id, neighborhood_ids')
+        .eq('email', session.user.email)
+        .maybeSingle();
+
+      if (nsub) {
+        const currentIds: string[] = nsub.neighborhood_ids || [];
+        if (!currentIds.includes(neighborhoodId)) {
+          await admin
+            .from('newsletter_subscribers')
+            .update({ neighborhood_ids: [...currentIds, neighborhoodId] })
+            .eq('id', nsub.id);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to sync newsletter_subscribers:', e);
+    }
+
+    // 10. Fast pipeline: Gemini Flash with Search (~5-10s) instead of Grok (~25-30s)
+    // Image library runs in parallel with brief for speed.
+    // The full Grok+enrichment pipeline runs overnight via sync-neighborhood-briefs cron.
     const pipelineStatus = {
       brief: false,
       enrichment: false,
@@ -270,154 +292,76 @@ export async function POST(request: NextRequest) {
       image: false,
     };
 
-    const timeBudgetMs = 240_000; // 240s for pipeline
-    const pipelineStart = Date.now();
+    // Step A + D in parallel: Gemini Search brief + Unsplash image library
+    const [factsResult, imageResult] = await Promise.allSettled([
+      searchNeighborhoodFacts(
+        validation.name,
+        validation.city,
+        validation.country,
+        validation.timezone,
+      ),
+      generateNeighborhoodLibrary(admin, {
+        id: neighborhoodId,
+        name: validation.name,
+        city: validation.city,
+        country: validation.country,
+      }),
+    ]);
 
-    const hasTimeBudget = () => Date.now() - pipelineStart < timeBudgetMs;
-
-    // Step A: Generate brief via Grok
-    let briefId: string | null = null;
-    let briefContent: string | null = null;
-    let briefHeadline: string | null = null;
-
-    if (hasTimeBudget()) {
-      try {
-        const brief = await generateNeighborhoodBrief(
-          validation.name,
-          validation.city,
-          validation.country,
-          undefined,
-          validation.timezone,
-        );
-
-        if (brief) {
-          const { data: insertedBrief } = await admin
-            .from('neighborhood_briefs')
-            .insert({
-              neighborhood_id: neighborhoodId,
-              headline: brief.headline,
-              content: brief.content,
-              source_count: brief.sourceCount || 0,
-              ai_model: brief.model || 'grok',
-              generated_at: new Date().toISOString(),
-            })
-            .select('id')
-            .single();
-
-          if (insertedBrief) {
-            briefId = insertedBrief.id;
-            briefContent = brief.content;
-            briefHeadline = brief.headline;
-            pipelineStatus.brief = true;
-          }
-        }
-      } catch (err) {
-        console.error('Brief generation error:', err);
-      }
+    const facts = factsResult.status === 'fulfilled' ? factsResult.value : null;
+    if (imageResult.status === 'fulfilled' && imageResult.value.photos_found > 0) {
+      pipelineStatus.image = true;
     }
 
-    // Step B: Enrich with Gemini
-    let enrichedContent: string | null = null;
-    let enrichedCategories: unknown = null;
-
-    if (hasTimeBudget() && briefContent && briefId) {
+    // Step B: Create brief + article from Gemini Search facts
+    if (facts && facts.facts) {
       try {
-        const enriched = await enrichBriefWithGemini(
-          briefContent,
-          validation.name,
-          neighborhoodId,
-          validation.city,
-          validation.country,
-          { briefGeneratedAt: new Date().toISOString(), timezone: validation.timezone }
-        );
-
-        if (enriched) {
-          // Build enriched content from categories
-          const contentParts: string[] = [];
-          if (enriched.categories) {
-            for (const cat of enriched.categories) {
-              contentParts.push(`**${cat.name}**`);
-              for (const story of cat.stories || []) {
-                contentParts.push(`${story.entity}: ${story.context}`);
-              }
-              contentParts.push('');
-            }
-          }
-          enrichedContent = contentParts.join('\n') || null;
-          enrichedCategories = enriched.categories || null;
-
-          // Update brief with enriched data
-          await admin
-            .from('neighborhood_briefs')
-            .update({
-              enriched_content: enrichedContent || enriched.rawResponse,
-              enriched_categories: enrichedCategories,
-              enrichment_model: enriched.model,
-            })
-            .eq('id', briefId)
-            .then(null, (e: unknown) => console.error('Failed to update brief enrichment:', e));
-
-          pipelineStatus.enrichment = true;
-        }
-      } catch (err) {
-        console.error('Enrichment error:', err);
-      }
-    }
-
-    // Step C: Create article
-    if (hasTimeBudget() && briefId && (enrichedContent || briefContent)) {
-      try {
-        const baseHeadline = briefHeadline || `What's Happening in ${validation.name}`;
-        const articleHeadline = `${validation.name} DAILY BRIEF: ${baseHeadline}`;
-        const articleBody = enrichedContent || briefContent!;
-        const slug = generateBriefArticleSlug(articleHeadline, neighborhoodId);
-        const previewText = generatePreviewText(articleBody);
-
-        const { error: articleError } = await admin
-          .from('articles')
+        const headline = `What's Happening in ${validation.name}`;
+        const { data: insertedBrief } = await admin
+          .from('neighborhood_briefs')
           .insert({
             neighborhood_id: neighborhoodId,
-            headline: articleHeadline,
-            body_text: articleBody,
-            preview_text: previewText,
-            slug,
-            status: 'published',
-            published_at: new Date().toISOString(),
-            author_type: 'ai',
-            ai_model: 'grok + gemini',
-            article_type: 'brief_summary',
-            category_label: `${validation.name} Daily Brief`,
-            brief_id: briefId,
-            image_url: selectLibraryImage(neighborhoodId, 'brief_summary'),
-            enriched_at: new Date().toISOString(),
-            enrichment_model: 'gemini-2.5-flash',
-          });
+            headline,
+            content: facts.facts,
+            source_count: facts.sourceCount || 0,
+            model: 'gemini-2.5-flash',
+            generated_at: new Date().toISOString(),
+          })
+          .select('id')
+          .single();
 
-        if (!articleError) {
-          pipelineStatus.article = true;
+        if (insertedBrief) {
+          pipelineStatus.brief = true;
+
+          // Step C: Create article directly (enrichment cron will improve it later)
+          const articleHeadline = `${validation.name} DAILY BRIEF: ${headline}`;
+          const slug = generateBriefArticleSlug(articleHeadline, neighborhoodId);
+          const previewText = generatePreviewText(facts.facts);
+
+          const { error: articleError } = await admin
+            .from('articles')
+            .insert({
+              neighborhood_id: neighborhoodId,
+              headline: articleHeadline,
+              body_text: facts.facts,
+              preview_text: previewText,
+              slug,
+              status: 'published',
+              published_at: new Date().toISOString(),
+              author_type: 'ai',
+              ai_model: 'gemini-2.5-flash',
+              article_type: 'brief_summary',
+              category_label: `${validation.name} Daily Brief`,
+              brief_id: insertedBrief.id,
+              image_url: selectLibraryImage(neighborhoodId, 'brief_summary'),
+            });
+
+          if (!articleError) {
+            pipelineStatus.article = true;
+          }
         }
       } catch (err) {
-        console.error('Article creation error:', err);
-      }
-    }
-
-    // Step D: Generate image library for new community neighborhood
-    if (hasTimeBudget()) {
-      try {
-        const libResult = await generateNeighborhoodLibrary(
-          admin,
-          {
-            id: neighborhoodId,
-            name: validation.name,
-            city: validation.city,
-            country: validation.country,
-          },
-        );
-        if (libResult.photos_found > 0) {
-          pipelineStatus.image = true;
-        }
-      } catch (err) {
-        console.error('Image library generation error:', err);
+        console.error('Brief/article creation error:', err);
       }
     }
 
