@@ -95,18 +95,28 @@ export async function detectMissingBriefs(
   }
 
   // Get neighborhoods that already have today's brief
-  const { data: todaysBriefs, error: briefError } = await supabase
-    .from('neighborhood_briefs')
-    .select('neighborhood_id')
-    .gte('created_at', todayStart.toISOString())
-    .limit(3000);
-
-  if (briefError) {
-    console.error('Error fetching today\'s briefs:', briefError);
-    return issues;
+  // Paginate - Supabase server-side max-rows=1000 silently caps .limit()
+  const todaysBriefs: { neighborhood_id: string }[] = [];
+  let idOffset = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { data: page, error: briefError } = await supabase
+      .from('neighborhood_briefs')
+      .select('neighborhood_id')
+      .gte('created_at', todayStart.toISOString())
+      .order('created_at', { ascending: true })
+      .range(idOffset, idOffset + 999);
+    if (briefError) {
+      console.error('Error fetching today\'s briefs:', briefError);
+      return issues;
+    }
+    if (!page || page.length === 0) break;
+    todaysBriefs.push(...page);
+    if (page.length < 1000) break;
+    idOffset += 1000;
   }
 
-  const coveredIds = new Set((todaysBriefs || []).map(b => b.neighborhood_id));
+  const coveredIds = new Set(todaysBriefs.map(b => b.neighborhood_id));
   const missingNeighborhoods = (activeNeighborhoods || []).filter(n => !coveredIds.has(n.id));
 
   // Check current hour - only report missing briefs after 12:00 UTC

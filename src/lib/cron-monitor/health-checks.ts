@@ -53,11 +53,22 @@ export async function checkBriefCoverage(
   // Fetch last 36h of briefs and check each against its local "today".
   const recentCutoff = new Date(Date.now() - 36 * 60 * 60 * 1000);
 
-  const { data: recentBriefs } = await supabase
-    .from('neighborhood_briefs')
-    .select('neighborhood_id, created_at')
-    .gte('created_at', recentCutoff.toISOString())
-    .limit(3000);
+  // Paginate - Supabase server-side max-rows=1000 silently caps .limit()
+  const recentBriefs: { neighborhood_id: string; created_at: string }[] = [];
+  let hcOffset = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { data: page } = await supabase
+      .from('neighborhood_briefs')
+      .select('neighborhood_id, created_at')
+      .gte('created_at', recentCutoff.toISOString())
+      .order('created_at', { ascending: true })
+      .range(hcOffset, hcOffset + 999);
+    if (!page || page.length === 0) break;
+    recentBriefs.push(...page);
+    if (page.length < 1000) break;
+    hcOffset += 1000;
+  }
 
   // Build map of neighborhood_id -> brief timestamps
   const briefsByNeighborhood = new Map<string, string[]>();

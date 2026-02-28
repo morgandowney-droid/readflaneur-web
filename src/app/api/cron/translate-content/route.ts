@@ -63,16 +63,24 @@ export async function GET(request: Request) {
     const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
 
     // Step 1: Get ALL article IDs from last 48h (lightweight query)
-    const { data: allArticleIds } = await supabase
-      .from('articles')
-      .select('id')
-      .eq('status', 'published')
-      .gte('published_at', cutoff)
-      .not('body_text', 'is', null)
-      .order('published_at', { ascending: false })
-      .limit(2000);
-
-    const articleIdList = (allArticleIds || []).map(a => a.id);
+    // Paginate - Supabase server-side max-rows=1000 silently caps .limit()
+    const articleIdList: string[] = [];
+    let artOffset = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { data: page } = await supabase
+        .from('articles')
+        .select('id')
+        .eq('status', 'published')
+        .gte('published_at', cutoff)
+        .not('body_text', 'is', null)
+        .order('published_at', { ascending: false })
+        .range(artOffset, artOffset + 999);
+      if (!page || page.length === 0) break;
+      for (const a of page) articleIdList.push(a.id);
+      if (page.length < 1000) break;
+      artOffset += 1000;
+    }
 
     // Phase 1: Translate articles (75% of time budget)
     for (const lang of languages) {
@@ -154,15 +162,23 @@ export async function GET(request: Request) {
     }
 
     // Step 1b: Get ALL enriched brief IDs from last 48h
-    const { data: allBriefIds } = await supabase
-      .from('neighborhood_briefs')
-      .select('id')
-      .not('enriched_content', 'is', null)
-      .gte('generated_at', cutoff)
-      .order('generated_at', { ascending: false })
-      .limit(2000);
-
-    const briefIdList = (allBriefIds || []).map(b => b.id);
+    // Paginate - Supabase server-side max-rows=1000 silently caps .limit()
+    const briefIdList: string[] = [];
+    let brfOffset = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { data: page } = await supabase
+        .from('neighborhood_briefs')
+        .select('id')
+        .not('enriched_content', 'is', null)
+        .gte('generated_at', cutoff)
+        .order('generated_at', { ascending: false })
+        .range(brfOffset, brfOffset + 999);
+      if (!page || page.length === 0) break;
+      for (const b of page) briefIdList.push(b.id);
+      if (page.length < 1000) break;
+      brfOffset += 1000;
+    }
 
     // Phase 2: Translate briefs (remaining 25% of time budget)
     for (const lang of languages) {

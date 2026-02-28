@@ -111,16 +111,33 @@ export async function GET(request: Request) {
   // Get recent briefs (last 7 days) for per-neighborhood local date coverage check
   // AND for anti-repetition topic history. 7-day window catches persistent topics
   // that keep appearing across multiple briefs (e.g., a restaurant closure for 2 weeks).
-  // MUST use explicit limit - Supabase default is 1000 rows, but 270 neighborhoods * 7 days
-  // = ~1890+ briefs. Without this, today's briefs get silently dropped and hasBriefForLocalToday
-  // returns false, causing alphabetically-first neighborhoods to regenerate every run.
+  // MUST paginate - Supabase has a server-side max-rows=1000 that overrides .limit().
+  // With 270 neighborhoods * 7 days = 1890+ rows, a single query silently drops rows
+  // beyond 1000, causing hasBriefForLocalToday to miss today's briefs and generate
+  // duplicates (hit this bug 3 times: Feb 23-28 2026 generated 1218 briefs/day).
   const recentCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  const { data: recentBriefs } = await supabase
-    .from('neighborhood_briefs')
-    .select('neighborhood_id, created_at, headline')
-    .gte('created_at', recentCutoff.toISOString())
-    .limit(5000);
+  const recentBriefs: { neighborhood_id: string; created_at: string; headline: string | null }[] = [];
+  const PAGE_SIZE = 1000;
+  let offset = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { data: page, error: pageError } = await supabase
+      .from('neighborhood_briefs')
+      .select('neighborhood_id, created_at, headline')
+      .gte('created_at', recentCutoff.toISOString())
+      .order('created_at', { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (pageError) {
+      console.error('Failed to fetch recent briefs page:', pageError.message);
+      break;
+    }
+    if (!page || page.length === 0) break;
+    recentBriefs.push(...page);
+    if (page.length < PAGE_SIZE) break; // Last page
+    offset += PAGE_SIZE;
+  }
 
   // Build map of neighborhood_id -> brief timestamps for local-date checking
   const briefsByNeighborhood = new Map<string, string[]>();
