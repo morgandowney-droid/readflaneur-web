@@ -127,7 +127,22 @@ export default function SignupPage() {
       <div className="w-full max-w-sm">
         <h1 className="text-2xl font-light text-center text-fg mb-10">Create Account</h1>
 
-        {/* OAuth buttons hidden pre-launch — Google & Apple login fully implemented and ready to re-enable */}
+        <button
+          onClick={() => handleOAuthSignup('google')}
+          disabled={isOAuthLoading === 'google'}
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-border-strong rounded-lg hover:bg-hover transition-colors disabled:opacity-50"
+        >
+          <GoogleIcon />
+          <span className="text-sm text-fg">
+            {isOAuthLoading === 'google' ? 'Redirecting...' : 'Continue with Google'}
+          </span>
+        </button>
+
+        <div className="flex items-center gap-4 my-6">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-fg-subtle uppercase tracking-widest">or</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
