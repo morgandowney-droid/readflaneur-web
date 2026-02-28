@@ -3,6 +3,27 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-04
+
+**Persist Theme/Language Preferences to DB for Cross-Device Sync:**
+- Users switching devices or clearing browser storage lost their dark mode and language settings. Theme and language were localStorage-only with no server persistence.
+- Added `preferred_theme` and `preferred_language` columns to `profiles` table.
+- `useTheme` and `useLanguage` hooks now fire-and-forget sync changes to DB via `POST /api/preferences`.
+- Signin API returns theme/language in profile data; login page restores them to localStorage and applies to DOM immediately.
+- `PreferencesSync` component in layout.tsx handles OAuth login and new-device scenarios by reading from `flaneur-profile` localStorage cache (written at login). Runs once per session via `flaneur-prefs-synced` sessionStorage guard.
+- Files: `src/hooks/useTheme.ts`, `src/hooks/useLanguage.ts`, `src/app/api/preferences/route.ts`, `src/app/api/auth/signin/route.ts`, `src/app/login/page.tsx`, `src/components/providers/PreferencesSync.tsx`, `src/app/layout.tsx`, `supabase/migrations/20260304_add_profile_preferences.sql`
+
+**Feed Empty State "Sign In" Link:**
+- Users arriving from email story links without cookies saw "Choose Neighborhoods" with no path to their existing account.
+- Added "Already have an account? Sign in" link below the CTA button, translated in all 9 languages.
+- Files: `src/components/feed/MultiFeed.tsx`, `src/lib/translations.ts`
+
+**Accept Towns and Small Cities in Community Neighborhoods:**
+- A user tried to create "Utrera" (a town in Spain with ~52K people) but got rejected by the Gemini validation prompt which only allowed "neighborhoods or districts within a city".
+- Expanded validation to accept standalone towns, villages, municipalities, communes, and cities. Only rejects countries, states/provinces, continents, bodies of water, and fictional places.
+- For towns that are their own city (e.g., Utrera), both `name` and `city` are set to the same value.
+- File: `src/app/api/neighborhoods/create/route.ts`
+
 ## 2026-02-28
 
 **Fix Community Tab Auth Gate for Signed-In Users:**
