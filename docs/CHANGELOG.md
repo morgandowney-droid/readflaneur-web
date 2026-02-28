@@ -5,6 +5,12 @@
 
 ## 2026-02-28
 
+**Fix Community Tab Auth Gate for Signed-In Users:**
+- Signed-in users clicking "Add Neighborhood" saw "Sign in to create your own neighborhood" with a Sign In button, despite being authenticated and seeing their account details on the Account tab.
+- Root cause: `NeighborhoodSelectorModal.fetchNeighborhoodsData()` uses `Promise.race` with a 3-second timeout on `getSession()`. When the Supabase session check was slow (common on mobile), the timeout won and `userId` stayed `null`, gating the Community create form behind a sign-in prompt.
+- Fix: Added `flaneur-auth` localStorage fallback after the `getSession()` race, matching the same pattern `Header.tsx` uses for instant auth detection. `flaneur-auth` is written at login time and contains the user's ID, so it's always available instantly.
+- File: `src/components/neighborhoods/NeighborhoodSelectorModal.tsx`
+
 **Unify Article Body Font and Reduce Text Size:**
 - Removed 3 sans-serif font overrides from EventListingBlock (filter bar, day headers, filter summary) so all article content uses Merriweather serif consistently. Previously switching between serif body text and sans-serif UI elements mid-article was visually jarring.
 - Reduced desktop body text from `text-[1.35rem]` (22px) to `text-[1.2rem]` (19px), mobile from `text-[1.2rem]` to `text-[1.1rem]` (17.6px). Closer to feed card text (~17px) without the jarring size jump when opening an article.
