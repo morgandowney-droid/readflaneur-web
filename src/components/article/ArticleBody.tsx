@@ -114,7 +114,7 @@ export function ArticleBody({ content, neighborhoodName, city, articleType, coun
   // events in paragraph form - skip it entirely.
   const skipProse = articleType === 'look_ahead' && eventListingBlock;
 
-  const pClass = 'text-fg text-[1.2rem] md:text-[1.35rem] leading-loose mb-8';
+  const pClass = 'text-fg text-[1.1rem] md:text-[1.2rem] leading-relaxed mb-6';
 
   // Render function that handles strong tags and markdown links
   const renderParts = (text: string): ReactNode[] => {
@@ -154,7 +154,7 @@ export function ArticleBody({ content, neighborhoodName, city, articleType, coun
         const headerMatch = paragraph.match(/^\[\[([^\]]+)\]\]$/);
         if (headerMatch) {
           return (
-            <h3 key={index} className="text-xl font-semibold text-fg mt-10 mb-6" style={{ fontFamily: 'var(--font-body-serif)' }}>
+            <h3 key={index} className="text-lg font-semibold text-fg mt-8 mb-4" style={{ fontFamily: 'var(--font-body-serif)' }}>
               {headerMatch[1]}
             </h3>
           );
@@ -419,7 +419,7 @@ function EventListingBlock({ content, city, country }: { content: string; city: 
   return (
     <div className="mb-10" style={{ fontFamily: 'var(--font-body-serif)' }}>
       {/* Filter toggle + collapsible filter bar */}
-      <div className="mb-6" style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)' }}>
+      <div className="mb-6">
         <button
           className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer select-none ${hasFilters ? pillActive : pillInactive}`}
           onClick={() => setFiltersOpen(!filtersOpen)}
@@ -494,7 +494,7 @@ function EventListingBlock({ content, city, country }: { content: string; city: 
         <div className="space-y-2">
           {days.filter(d => groupedFiltered.has(d)).map(day => (
             <div key={day}>
-              <p className={`text-sm font-semibold text-fg uppercase tracking-widest mb-2 mt-5`} style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)' }}>
+              <p className={`text-sm font-semibold text-fg uppercase tracking-widest mb-2 mt-5`}>
                 {day}
               </p>
               {groupedFiltered.get(day)!.map((event, i) => {
@@ -549,7 +549,7 @@ function EventListingBlock({ content, city, country }: { content: string; city: 
       {/* Active filter summary */}
       {hasFilters && filteredEvents.length > 0 && (
         <div className="mt-4 pt-3 border-t border-border">
-          <button onClick={clearFilters} className="text-fg-muted text-xs hover:text-fg transition-colors" style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)' }}>
+          <button onClick={clearFilters} className="text-fg-muted text-xs hover:text-fg transition-colors">
             Showing {filteredEvents.length} of {events.length} events - Clear filters
           </button>
         </div>
