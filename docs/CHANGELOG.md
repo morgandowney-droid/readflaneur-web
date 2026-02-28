@@ -5,6 +5,11 @@
 
 ## 2026-02-28
 
+**Enable Google OAuth Login:**
+- Unhide Google OAuth button on both `/login` and `/signup` pages. "Continue with Google" button with colored Google icon above an "or" divider, then the existing email/password form below.
+- All OAuth plumbing was already implemented: `signInWithOAuth` redirects to Google, callback at `/api/auth/callback` exchanges code for session via `exchangeCodeForSession`. Apple login remains hidden for now.
+- Files: `src/app/login/page.tsx`, `src/app/signup/page.tsx`
+
 **Fix My Neighborhoods Masthead Flash:**
 - NeighborhoodHeader in MultiFeed changed from always-rendered with CSS `hidden` class to conditional rendering (`activeFilter && activeHood`). When no pill is active, the header is completely absent from the DOM. Previously, if `neighborhoods` was empty during server render (cookie mismatch) or `router.refresh()` transitions, `isMultiple` was `false` so the CSS `hidden` class wasn't applied and the large "My Neighborhoods" serif heading flashed for ~1 second before the real feed loaded.
 - When a pill IS active, NeighborhoodHeader renders with the actual neighborhood name, city, maps/history links as before.
