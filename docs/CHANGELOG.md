@@ -5,6 +5,13 @@
 
 ## 2026-02-28
 
+**Polish Exploration UX:**
+- In explore mode, `ExplorationNextSuggestions` ("Keep Exploring") now renders ABOVE `BriefDiscoveryFooter` ("Keep Reading") so the next-neighborhood hero card is the primary CTA right after the subscribe nudge. Explorer no longer has to scroll past current-neighborhood links (yesterday's brief, Look Ahead) to find the next neighborhood. Non-explore mode keeps original order.
+- Hero card "Continue exploring" CTA strengthened from `text-xs text-white/70` to `text-sm text-white font-medium` for better readability on dark images.
+- Secondary suggestion links now show 32px circular Unsplash thumbnails with flex layout, matching the sticky bar aesthetic. Previously plain truncated text.
+- `border-t border-border` divider added above "Keep exploring" section label for visual separation from subscribe nudge above.
+- Files: `src/app/[city]/[neighborhood]/[slug]/page.tsx`, `src/components/article/ExplorationNextSuggestions.tsx`
+
 **Ad-Free Explore Sessions:**
 - Explore articles (`?explore=true`) now hide all ads and redundant CTAs to preserve "next episode" flow. Top house ad was the first visible element after the back link - explorer clicked a beautiful postcard/hero card excited to read about a neighborhood, and got an ad before the content. Bottom house ad interrupted the hero card → footer flow. `PostReadEmailCapture` was redundant with `ExploreSubscribeNudge`. `MoreStoriesButton` linking to `/feed` was misleading for explorers who may not have a feed.
 - Four `{!isExploring && (...)}` guards in `[slug]/page.tsx`: top ad slot, bottom ad slot, PostReadEmailCapture, MoreStoriesButton. Both paid `StoryOpenAd` and `FallbackAd` are gated.
