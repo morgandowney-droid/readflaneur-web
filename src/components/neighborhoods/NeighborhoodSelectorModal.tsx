@@ -1746,27 +1746,6 @@ function GlobalNeighborhoodModal({
           )}
 
 
-          {/* Empty State (All tab only) */}
-          {activeTab === 'all' && !loading && filteredCities.length === 0 && (
-            <div className="py-12 text-center">
-              <p className="text-fg-subtle">No pre-existing &ldquo;{searchQuery}&rdquo; neighborhoods found.</p>
-              <div className="mt-4 flex items-center justify-center gap-3">
-                <button
-                  onClick={() => setActiveTab('community')}
-                  className="text-sm text-accent hover:text-accent font-medium transition-colors"
-                >
-                  Create one
-                </button>
-                <span className="text-fg-subtle">or</span>
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="text-sm text-fg-muted hover:text-fg font-medium transition-colors"
-                >
-                  Clear search
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Modal Footer */}
