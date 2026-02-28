@@ -5,6 +5,17 @@
 
 ## 2026-02-28
 
+**Mobile Wake-Up Screen Polish:**
+- Inline city name: NeighborhoodHeader `isAll` mode now places city ("New York") to the right of neighborhood name ("Tribeca") using `flex items-baseline justify-center gap-2.5` instead of on a separate line below. Saves vertical space when a pill is selected. Combo component names stay on their own subtitle line.
+- Mobile primary neighborhood indicator: new `md:hidden` section in MultiFeed between hidden masthead and Daily Brief card. Shows serif neighborhood name + grey city on left, `NeighborhoodLiveStatus` (time/weather) on right. Only renders when `!activeFilter && isMultiple && neighborhoods[0]`. Gives immediate context that the Daily Brief card belongs to the primary neighborhood on the mobile wake-up screen.
+- Daily Brief top margin tightened from `mt-2` to `mt-0` on mobile (desktop keeps `md:mt-2`) so the brief card sits snugly below the new indicator line.
+- Files: `src/components/feed/MultiFeed.tsx`, `src/components/feed/NeighborhoodHeader.tsx`
+
+**Hide Redundant Mobile Feed Elements:**
+- "My Neighborhoods" masthead hidden on ALL screens (changed from `md:hidden` to `hidden`) when `!activeFilter && isMultiple`, not just desktop. The masthead text was occupying the most valuable mobile real estate without adding information.
+- Mobile gallery view toggle section (`md:hidden flex justify-end pb-2`) removed entirely. Gallery view toggle is desktop-only now, reducing mobile choice overload and reclaiming a full row of screen space.
+- Files: `src/components/feed/MultiFeed.tsx`
+
 **Feed UX Improvements and Bug Fixes:**
 - Clickable "PRIMARY NEIGHBORHOOD {name}" in compact desktop masthead: wraps label and neighborhood name in `<Link>` to `/{city}/{neighborhood}`, hover accent color via `group-hover:text-accent`, weather/time stays outside the link.
 - Selected neighborhoods pill strip in selector modal: `selectedNeighborhoods` useMemo maps selected IDs to ordered list (primary first from localStorage), renders horizontal flex-wrap pills between sort buttons and city list body (All tab only), each pill shows name + "x" remove button, primary gets amber dot, max-h-[120px] with overflow scroll.
