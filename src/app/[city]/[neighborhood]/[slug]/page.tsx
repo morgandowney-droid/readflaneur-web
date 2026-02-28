@@ -192,7 +192,7 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
                     {article.neighborhood?.city && <span> &middot; {article.neighborhood.city}</span>}
                   </p>
                   <p className="text-xs font-semibold uppercase tracking-wider text-amber-700 mb-3">
-                    <TranslatedDailyBriefLabel dayAbbr={getDayAbbr(article.published_at || article.created_at)} />
+                    <TranslatedDailyBriefLabel dayAbbr={getDayAbbr(article.published_at || article.created_at, 'en', article.neighborhood?.timezone || undefined)} />
                   </p>
                   <h1 className="text-3xl font-light leading-tight mb-3">
                     <TranslatedHeadline articleId={article.id} headline={cleanArticleHeadline(article.headline)} />

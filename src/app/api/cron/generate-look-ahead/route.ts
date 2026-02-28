@@ -311,23 +311,35 @@ export async function GET(request: Request) {
       allLocalDates.add(dates.localDate);
     }
 
-    // Dedup: check which neighborhoods already have a Look Ahead article for their local today
-    // Query across all relevant dates (usually just 1-2 distinct dates)
-    const dateArray = Array.from(allLocalDates);
+    // Dedup: check which neighborhoods already have a Look Ahead article for their local today.
+    // We query a broad 48h window and then compare per-neighborhood publish dates.
+    // This avoids the UTC calendar date mismatch bug where UTC+13 neighborhoods have
+    // publishAtUtc on the PREVIOUS UTC day (e.g., localDate=Feb 28 but publishAtUtc=Feb 27 18:00Z).
     const alreadyProcessed = new Set<string>();
-    for (const date of dateArray) {
+    const allPublishTimes = Array.from(neighborhoodDates.values()).map(d => d.publishAtUtc);
+    const minPublish = allPublishTimes.reduce((a, b) => a < b ? a : b);
+    const maxPublish = allPublishTimes.reduce((a, b) => a > b ? a : b);
+    // Widen by 1h each side to catch edge cases
+    const windowStart = new Date(new Date(minPublish).getTime() - 3600_000).toISOString();
+    const windowEnd = new Date(new Date(maxPublish).getTime() + 3600_000).toISOString();
+    {
       const { data: existingArticles } = await supabase
         .from('articles')
-        .select('neighborhood_id')
+        .select('neighborhood_id, published_at')
         .eq('article_type', 'look_ahead')
-        .gte('published_at', `${date}T00:00:00Z`)
-        .lt('published_at', `${date}T23:59:59Z`);
+        .gte('published_at', windowStart)
+        .lt('published_at', windowEnd);
       if (existingArticles) {
         for (const a of existingArticles) {
-          // Only mark as processed if the existing article's date matches this neighborhood's local date
+          // Mark as processed if the article's published_at matches this neighborhood's target
           const nDates = neighborhoodDates.get(a.neighborhood_id);
-          if (nDates && nDates.localDate === date) {
-            alreadyProcessed.add(a.neighborhood_id);
+          if (nDates) {
+            // Compare: article's published_at should be within 2h of the target publishAtUtc
+            const articleTime = new Date(a.published_at).getTime();
+            const targetTime = new Date(nDates.publishAtUtc).getTime();
+            if (Math.abs(articleTime - targetTime) < 7200_000) {
+              alreadyProcessed.add(a.neighborhood_id);
+            }
           }
         }
       }

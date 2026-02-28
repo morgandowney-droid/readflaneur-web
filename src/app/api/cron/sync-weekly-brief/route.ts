@@ -59,8 +59,24 @@ export async function GET(request: Request) {
   const libraryReadyIds = await getLibraryReadyIds(supabase);
   await preloadUnsplashCache(supabase);
   const startedAt = new Date().toISOString();
-  // The Sunday date for this edition - allow override for catch-up runs past midnight
-  const weekDate = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
+  // The Sunday date for this edition - always calculate "this Sunday" so all runs
+  // during the Saturday+Sunday window share the same weekDate for dedup.
+  // Allow override via ?date= for catch-up runs.
+  let weekDate = url.searchParams.get('date') || '';
+  if (!weekDate) {
+    const now = new Date();
+    const dayOfWeek = now.getUTCDay(); // 0=Sunday, 6=Saturday
+    if (dayOfWeek === 0) {
+      // Already Sunday - use today
+      weekDate = now.toISOString().split('T')[0];
+    } else {
+      // Saturday (6) or any other day - find this coming Sunday
+      const daysUntilSunday = 7 - dayOfWeek;
+      const sunday = new Date(now);
+      sunday.setUTCDate(sunday.getUTCDate() + daysUntilSunday);
+      weekDate = sunday.toISOString().split('T')[0];
+    }
+  }
 
   // Pro-first, Flash-fallback: check how much Pro RPD remains today
   const todayStart = new Date();

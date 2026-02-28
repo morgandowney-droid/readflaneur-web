@@ -133,10 +133,12 @@ export function truncateHeadline(text: string, maxLen: number = 40): string {
 }
 
 /**
- * Get day-of-week abbreviation from a date string
+ * Get day-of-week abbreviation from a date string in a specific timezone
  * e.g., "2026-02-08T..." → "Sun"
  */
-export function getDayAbbr(dateString: string, locale: string = 'en'): string {
+export function getDayAbbr(dateString: string, locale: string = 'en', timezone?: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString(locale, { weekday: 'short' });
+  const opts: Intl.DateTimeFormatOptions = { weekday: 'short' };
+  if (timezone) opts.timeZone = timezone;
+  return date.toLocaleDateString(locale, opts);
 }

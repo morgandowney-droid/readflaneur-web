@@ -102,9 +102,11 @@ function extractSourcesFromCategories(categories: EnrichedCategory[] | null): Ar
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
-function generateSlug(headline: string, neighborhoodSlug: string, generatedAt: string): string {
-  // Use brief's generation date, not "now" - consistent across retries
-  const date = new Date(generatedAt).toISOString().split('T')[0];
+function generateSlug(headline: string, neighborhoodSlug: string, generatedAt: string, timezone?: string): string {
+  // Use brief's generation date in the neighborhood's local timezone for correct date in slug
+  const date = timezone
+    ? new Date(generatedAt).toLocaleDateString('en-CA', { timeZone: timezone })
+    : new Date(generatedAt).toISOString().split('T')[0];
   const headlineSlug = headline
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '')
@@ -248,7 +250,7 @@ export async function GET(request: Request) {
         model,
         generated_at,
         email_teaser,
-        neighborhoods!inner(id, name, city)
+        neighborhoods!inner(id, name, city, timezone)
       `)
       .in('id', chunk)
       .order('generated_at', { ascending: false });
@@ -269,12 +271,14 @@ export async function GET(request: Request) {
     });
   }
 
-  // Dedup: only keep the latest brief per neighborhood per day
-  // This prevents duplicate articles when multiple briefs exist for the same neighborhood
+  // Dedup: only keep the latest brief per neighborhood per LOCAL day
+  // Uses the neighborhood's IANA timezone to determine the local date, avoiding
+  // UTC date mismatch (e.g., NYC midnight EST = 05:00Z which is "next day" in UTC)
   const dedupMap = new Map<string, typeof briefs[0]>();
   for (const brief of briefs) {
-    const date = new Date(brief.generated_at).toISOString().split('T')[0];
-    const key = `${brief.neighborhood_id}::${date}`;
+    const tz = (brief.neighborhoods as any)?.timezone || 'America/New_York';
+    const localDate = new Date(brief.generated_at).toLocaleDateString('en-CA', { timeZone: tz });
+    const key = `${brief.neighborhood_id}::${localDate}`;
     const existing = dedupMap.get(key);
     if (!existing || new Date(brief.generated_at) > new Date(existing.generated_at)) {
       dedupMap.set(key, brief);
@@ -315,8 +319,8 @@ export async function GET(request: Request) {
         continue;
       }
 
-      // Generate slug using neighborhood id and brief's generation date
-      const slug = generateSlug(articleHeadline, neighborhood.id, brief.generated_at);
+      // Generate slug using neighborhood id and brief's local generation date
+      const slug = generateSlug(articleHeadline, neighborhood.id, brief.generated_at, (brief.neighborhoods as any)?.timezone);
 
       // Use email_teaser from Gemini enrichment if available, otherwise auto-generate
       const previewText = brief.email_teaser || generatePreviewText(articleBody);
