@@ -1210,8 +1210,23 @@ function GlobalNeighborhoodModal({
           </div>
           )}
 
-          {/* Sort buttons (All tab only) */}
-          {activeTab === 'all' && (
+          {/* No results - prominent create CTA (always visible above keyboard) */}
+          {activeTab === 'all' && searchQuery.trim() && filteredCities.length === 0 && !loading && (
+            <div className="mt-4 rounded-lg border border-accent/30 bg-amber-500/5 p-4">
+              <p className="text-sm text-fg-muted mb-3">
+                We don&apos;t cover <span className="text-fg font-medium">{searchQuery.trim()}</span> yet, but you can add it now.
+              </p>
+              <button
+                onClick={() => { setActiveTab('community'); setCommunityInput(searchQuery.trim()); setSearchQuery(''); }}
+                className="w-full py-2.5 rounded-lg bg-accent text-canvas text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                Create {searchQuery.trim()}
+              </button>
+            </div>
+          )}
+
+          {/* Sort buttons (All tab only, hide when search yields no results) */}
+          {activeTab === 'all' && !(searchQuery.trim() && filteredCities.length === 0) && (
           <div className="mt-3 flex items-center gap-2">
             <button
               onClick={handleSortByNearest}
@@ -1244,8 +1259,8 @@ function GlobalNeighborhoodModal({
           </div>
           )}
 
-          {/* Selected neighborhoods pills (All tab only) */}
-          {activeTab === 'all' && selectedNeighborhoods.length > 0 && (
+          {/* Selected neighborhoods pills (All tab only, hide when search yields no results) */}
+          {activeTab === 'all' && selectedNeighborhoods.length > 0 && !(searchQuery.trim() && filteredCities.length === 0) && (
             <div className="mt-3 flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto">
               {selectedNeighborhoods.map(n => (
                 <span
