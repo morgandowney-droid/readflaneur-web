@@ -7,7 +7,8 @@ import { BENTO_REGIONS } from '@/lib/region-utils';
 import { syncNeighborhoodCookie } from '@/lib/neighborhood-cookie';
 import type { DiscoveryBrief, DiscoveryBriefsResponse } from '@/app/api/feed/discovery-briefs/route';
 
-const BENTO_CACHE_KEY = 'flaneur-bento-cache';
+// Versioned cache key - bump when data shape or fetch params change
+const BENTO_CACHE_KEY = 'flaneur-bento-cache-v2';
 
 const REGION_LABELS: Record<string, { label: string; key: string }> = {
   'asia-pacific': { label: 'Asia & Pacific', key: 'bento.asiaPacific' },

@@ -176,7 +176,8 @@ export function MultiFeed({
       });
     }
     if (discoverySections) {
-      result.push(...discoverySections);
+      // Filter out any stale user section from sessionStorage cache to prevent duplicates
+      result.push(...discoverySections.filter(s => s.translationKey !== 'bento.yourNeighborhoods'));
     }
     return result.length > 0 ? result : null;
   }, [userBentoCards, discoverySections]);
