@@ -749,7 +749,7 @@ export function MultiFeed({
       )}
 
       {/* ── COMPACT MASTHEAD (desktop only, between pills and bento) ── */}
-      {!activeFilter && isMultiple && bentoSections && bentoSections.length > 0 && (
+      {!activeFilter && isMultiple && (
         <div className="hidden md:flex items-center justify-between py-3 mb-2">
           <div className="flex items-center gap-3">
             <button
@@ -763,7 +763,7 @@ export function MultiFeed({
             </span>
           </div>
           {neighborhoods[0]?.timezone && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-baseline gap-2">
               <span className="text-[10px] tracking-[0.15em] uppercase text-fg-subtle">{t('feed.primaryNeighborhood')}</span>
               <span className="text-xs text-fg-subtle">{neighborhoods[0].name}</span>
               <NeighborhoodLiveStatus
@@ -802,8 +802,8 @@ export function MultiFeed({
         </div>
       )}
 
-      {/* ── MASTHEAD (hidden on desktop when bento is the opening view) ── */}
-      <div className={!activeFilter && isMultiple && bentoSections && bentoSections.length > 0 ? 'md:hidden' : ''}>
+      {/* ── MASTHEAD (hidden on desktop in multi-feed mode - compact masthead handles desktop) ── */}
+      <div className={!activeFilter && isMultiple ? 'md:hidden' : ''}>
         <NeighborhoodHeader
           mode="all"
           city={activeHood?.city || ''}
