@@ -4,6 +4,7 @@ import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { AI_MODELS } from '@/config/ai-models';
 import { getDistance } from '@/lib/geo-utils';
 import { generateCommunityId, generateBriefArticleSlug, generatePreviewText } from '@/lib/community-pipeline';
+import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { performInstantResend } from '@/lib/email/instant-resend';
 import { selectLibraryImage } from '@/lib/image-library';
 import { generateNeighborhoodLibrary } from '@/lib/image-library-generator';
@@ -313,7 +314,7 @@ export async function POST(request: NextRequest) {
       pipelineStatus.image = true;
     }
 
-    // Step B: Create brief + article from Gemini Search facts
+    // Step B: Create brief from Gemini Search facts
     if (facts && facts.facts) {
       try {
         const headline = `What's Happening in ${validation.name}`;
@@ -333,17 +334,61 @@ export async function POST(request: NextRequest) {
         if (insertedBrief) {
           pipelineStatus.brief = true;
 
-          // Step C: Create article directly (enrichment cron will improve it later)
-          const articleHeadline = `${validation.name} DAILY BRIEF: ${headline}`;
+          // Step C: Enrich with Gemini (~5-10s) for proper greeting, sections, hyperlinks
+          let articleBody = facts.facts;
+          let enrichedHeadline = headline;
+          let enrichmentModel = 'gemini-2.5-flash';
+
+          try {
+            const enriched = await enrichBriefWithGemini(
+              facts.facts,
+              validation.name,
+              neighborhoodId,
+              validation.city,
+              validation.country,
+              { briefGeneratedAt: new Date().toISOString(), timezone: validation.timezone }
+            );
+
+            if (enriched) {
+              articleBody = enriched.rawResponse || facts.facts;
+              enrichmentModel = enriched.model || 'gemini-2.5-flash';
+
+              // Use subject teaser as headline if available
+              if (enriched.subjectTeaser) {
+                enrichedHeadline = enriched.subjectTeaser
+                  .split(' ')
+                  .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+                  .join(' ');
+              }
+
+              // Update brief with enriched data
+              await admin
+                .from('neighborhood_briefs')
+                .update({
+                  enriched_content: articleBody,
+                  enriched_categories: enriched.categories || null,
+                  enrichment_model: enrichmentModel,
+                  subject_teaser: enriched.subjectTeaser || null,
+                })
+                .eq('id', insertedBrief.id);
+
+              pipelineStatus.enrichment = true;
+            }
+          } catch (err) {
+            console.error('Enrichment error (using raw facts):', err);
+          }
+
+          // Step D: Create article from enriched (or raw) content
+          const articleHeadline = enrichedHeadline;
           const slug = generateBriefArticleSlug(articleHeadline, neighborhoodId);
-          const previewText = generatePreviewText(facts.facts);
+          const previewText = generatePreviewText(articleBody);
 
           const { error: articleError } = await admin
             .from('articles')
             .insert({
               neighborhood_id: neighborhoodId,
               headline: articleHeadline,
-              body_text: facts.facts,
+              body_text: articleBody,
               preview_text: previewText,
               slug,
               status: 'published',
@@ -354,6 +399,8 @@ export async function POST(request: NextRequest) {
               category_label: `${validation.name} Daily Brief`,
               brief_id: insertedBrief.id,
               image_url: selectLibraryImage(neighborhoodId, 'brief_summary'),
+              enriched_at: pipelineStatus.enrichment ? new Date().toISOString() : undefined,
+              enrichment_model: pipelineStatus.enrichment ? enrichmentModel : undefined,
             });
 
           if (!articleError) {
