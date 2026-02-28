@@ -94,42 +94,81 @@ export function MultiFeed({
   const [hasMoreFiltered, setHasMoreFiltered] = useState(true);
   const { openModal } = useNeighborhoodModal();
 
+  // Fetch latest brief_summary article per user neighborhood for bento grid
+  // (server items are capped at ~42, so with 14+ neighborhoods many briefs are missing)
+  const [userBentoCards, setUserBentoCards] = useState<BentoCardProps[]>([]);
+  useEffect(() => {
+    if (neighborhoods.length < 2) return;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const ids = neighborhoods.map(n => n.id);
+    // Also include combo component IDs so we find articles stored under components
+    const allIds = new Set(ids);
+    for (const hood of neighborhoods) {
+      if (hood.combo_component_ids) {
+        for (const cid of hood.combo_component_ids) allIds.add(cid);
+      }
+    }
+    const url = `${supabaseUrl}/rest/v1/articles?select=slug,headline,preview_text,image_url,neighborhood_id&status=eq.published&article_type=eq.brief_summary&neighborhood_id=in.(${Array.from(allIds).join(',')})&image_url=not.is.null&order=published_at.desc.nullsfirst&limit=${allIds.size * 2}`;
+    fetch(url, {
+      headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` },
+    })
+      .then(res => res.json())
+      .then((data: any[]) => {
+        if (!Array.isArray(data)) return;
+        // Index by neighborhood_id, keep only first (newest) per neighborhood
+        const byHood = new Map<string, any>();
+        for (const a of data) {
+          if (!byHood.has(a.neighborhood_id)) byHood.set(a.neighborhood_id, a);
+        }
+        // Map combo component articles back to parent combo ID
+        const comboMap = new Map<string, string>();
+        for (const hood of neighborhoods) {
+          if (hood.combo_component_ids) {
+            for (const cid of hood.combo_component_ids) comboMap.set(cid, hood.id);
+          }
+        }
+        const cards: BentoCardProps[] = [];
+        for (const hood of neighborhoods) {
+          // Try direct match first, then check combo components
+          let article = byHood.get(hood.id);
+          if (!article && hood.combo_component_ids) {
+            for (const cid of hood.combo_component_ids) {
+              article = byHood.get(cid);
+              if (article) break;
+            }
+          }
+          if (!article || !article.image_url || !article.slug) continue;
+          cards.push({
+            headline: article.headline || '',
+            blurb: article.preview_text || '',
+            imageUrl: article.image_url,
+            neighborhoodName: hood.name,
+            neighborhoodId: hood.id,
+            city: hood.city,
+            slug: article.slug,
+            citySlug: getCitySlugFromId(hood.id),
+            neighborhoodSlug: getNeighborhoodSlugFromId(hood.id),
+            size: 'hero',
+            isUserNeighborhood: true,
+          });
+        }
+        setUserBentoCards(cards);
+      })
+      .catch(() => {});
+  }, [neighborhoods]);
+
   // Discovery briefs for bento grid (desktop) and mobile discovery
   const { sections: bentoSections, isLoading: bentoLoading, refresh: handleBentoRefresh } = useDiscoveryBriefs(
     neighborhoods.map(n => n.id),
     {
       skip: neighborhoods.length < 2,
       buildUserSection: () => {
-        const userCards: BentoCardProps[] = [];
-        for (const hood of neighborhoods) {
-          const article = items.find(item =>
-            item.type === 'article'
-            && (item.data as Article).neighborhood_id === hood.id
-            && (item.data as Article).article_type === 'brief_summary'
-          );
-          if (article && article.type === 'article') {
-            const a = article.data as Article;
-            if (!a.image_url || !a.slug) continue;
-            userCards.push({
-              headline: a.headline || '',
-              blurb: a.preview_text || '',
-              imageUrl: a.image_url,
-              neighborhoodName: hood.name,
-              neighborhoodId: hood.id,
-              city: hood.city,
-              slug: a.slug,
-              citySlug: getCitySlugFromId(hood.id),
-              neighborhoodSlug: getNeighborhoodSlugFromId(hood.id),
-              size: 'hero',
-              isUserNeighborhood: true,
-            });
-          }
-        }
-        if (userCards.length > 0) {
+        if (userBentoCards.length > 0) {
           return {
             label: 'Your Neighborhoods',
             translationKey: 'bento.yourNeighborhoods',
-            cards: userCards,
+            cards: userBentoCards,
           };
         }
         return null;
