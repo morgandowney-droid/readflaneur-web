@@ -819,25 +819,23 @@ export function MultiFeed({
         </div>
       )}
 
-      {/* ── MASTHEAD (hidden in multi-feed "All Stories" mode - compact masthead handles desktop, dropdown handles mobile) ── */}
-      <div className={!activeFilter && isMultiple ? 'hidden' : ''}>
+      {/* ── MASTHEAD (only when a pill is active — compact masthead handles "all" on desktop, dropdown on mobile) ── */}
+      {activeFilter && activeHood && (
         <NeighborhoodHeader
           mode="all"
-          city={activeHood?.city || ''}
+          city={activeHood.city}
           citySlug=""
-          neighborhoodName={activeHood?.name || t('feed.myNeighborhoods')}
+          neighborhoodName={activeHood.name}
           neighborhoodSlug=""
-          neighborhoodId={activeHood?.id || ''}
+          neighborhoodId={activeHood.id}
           hideControlDeck
-          neighborhoodCount={activeHood ? undefined : (neighborhoods.length || undefined)}
-          timezone={activeHood?.timezone}
-          country={activeHood?.country}
-          latitude={activeHood?.latitude}
-          longitude={activeHood?.longitude}
-          comboComponentNames={activeHood?.combo_component_names}
-          initialWeather={!activeFilter ? initialWeather : undefined}
+          timezone={activeHood.timezone}
+          country={activeHood.country}
+          latitude={activeHood.latitude}
+          longitude={activeHood.longitude}
+          comboComponentNames={activeHood.combo_component_names}
         />
-      </div>
+      )}
 
       {/* ── MOBILE: Primary neighborhood indicator (wake-up screen context) ── */}
       {!activeFilter && isMultiple && neighborhoods[0] && (
