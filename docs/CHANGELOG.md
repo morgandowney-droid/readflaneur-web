@@ -7,8 +7,8 @@
 
 **Faster Community Neighborhood Creation Pipeline:**
 - Creation pipeline was too slow (~40-60s) and fragile - Grok brief generation (25-30s) often timed out, leaving new neighborhoods with zero content. Utrera (Spain) had no brief or articles 10 minutes after creation.
-- Replaced Grok with Gemini Flash + Google Search grounding (~5-10s) for initial brief. Image library and brief generation now run in parallel via `Promise.allSettled`. Total creation time drops from ~40-60s to ~10-15s.
-- Full Grok+enrichment pipeline runs overnight via `sync-neighborhood-briefs` cron, so quality improves by the next morning.
+- Replaced Grok with Gemini Flash + Google Search grounding (~5-10s) for initial brief. Image library and brief generation now run in parallel via `Promise.allSettled`. Gemini enrichment added (~5-10s) for proper greeting, structured sections, hyperlinks, and subject teaser headline. Total creation time ~15-20s vs old ~40-60s.
+- Full Grok pipeline runs overnight via `sync-neighborhood-briefs` cron for further quality upgrade.
 - Also fixed: new neighborhoods weren't added to `newsletter_subscribers.neighborhood_ids`, causing email crons to skip them entirely. Now auto-syncs on creation.
 - File: `src/app/api/neighborhoods/create/route.ts`
 

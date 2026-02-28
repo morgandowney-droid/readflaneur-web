@@ -155,10 +155,11 @@ Recent work: Faster community neighborhood creation (Gemini Flash Search ~10s in
 ### Community Neighborhoods (User-Created)
 - **Limit:** 2 per authenticated user
 - **Create endpoint:** `POST /api/neighborhoods/create` (maxDuration=300) - auth, limit check, Gemini Flash AI validation (verifies real place where people live - neighborhoods, towns, villages, municipalities, cities - rejects countries/states/continents/fictional, normalizes name/city/country/region/timezone/coordinates), duplicate detection (exact ID + 500m Haversine proximity), insert, newsletter_subscribers sync, fast pipeline, instant resend
-- **Pipeline:** Fast initial content via Gemini Flash with Google Search (~5-10s) instead of Grok (~25-30s). Image library runs in parallel via `Promise.allSettled`. Full Grok+enrichment pipeline runs overnight via `sync-neighborhood-briefs` cron. Steps:
-  1. Gemini Flash Search (`searchNeighborhoodFacts()`) + Unsplash image library (`generateNeighborhoodLibrary()`) in parallel
+- **Pipeline:** Fast initial content via Gemini Flash (~15-20s total) instead of Grok (~40-60s). Image library runs in parallel with fact-gathering via `Promise.allSettled`. Full Grok pipeline runs overnight via `sync-neighborhood-briefs` cron for quality upgrade. Steps:
+  1. Gemini Flash Search (`searchNeighborhoodFacts()`) + Unsplash image library (`generateNeighborhoodLibrary()`) in parallel (~5-10s)
   2. Brief creation from Gemini Search facts
-  3. Article creation from brief (enrichment cron improves later)
+  3. Gemini enrichment (`enrichBriefWithGemini()`) for proper greeting, structured sections, hyperlinks, subject teaser headline (~5-10s)
+  4. Article creation from enriched content (with `enriched_at` set so enrich-briefs Phase 2 skips it)
 - **Newsletter sync:** Auto-adds new neighborhood to creator's `newsletter_subscribers.neighborhood_ids` so email crons (sync-neighborhood-briefs, send-daily-brief) discover it
 - **Count endpoint:** `GET /api/neighborhoods/my-community-count` - returns `{ count }` for limit UI
 - **DB columns:** `neighborhoods.is_community` (boolean), `neighborhoods.created_by` (UUID), `neighborhoods.community_status` ('active'|'removed')
