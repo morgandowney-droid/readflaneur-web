@@ -5,6 +5,12 @@
 
 ## 2026-02-28
 
+**Fix My Neighborhoods Masthead Flash:**
+- NeighborhoodHeader in MultiFeed changed from always-rendered with CSS `hidden` class to conditional rendering (`activeFilter && activeHood`). When no pill is active, the header is completely absent from the DOM. Previously, if `neighborhoods` was empty during server render (cookie mismatch) or `router.refresh()` transitions, `isMultiple` was `false` so the CSS `hidden` class wasn't applied and the large "My Neighborhoods" serif heading flashed for ~1 second before the real feed loaded.
+- When a pill IS active, NeighborhoodHeader renders with the actual neighborhood name, city, maps/history links as before.
+- When no pill is active: desktop uses the compact masthead (My Neighborhoods + primary neighborhood + weather), mobile uses the new primary indicator line.
+- Files: `src/components/feed/MultiFeed.tsx`
+
 **Mobile Wake-Up Screen Polish:**
 - Inline city name: NeighborhoodHeader `isAll` mode now places city ("New York") to the right of neighborhood name ("Tribeca") using `flex items-baseline justify-center gap-2.5` instead of on a separate line below. Saves vertical space when a pill is selected. Combo component names stay on their own subtitle line.
 - Mobile primary neighborhood indicator: new `md:hidden` section in MultiFeed between hidden masthead and Daily Brief card. Shows serif neighborhood name + grey city on left, `NeighborhoodLiveStatus` (time/weather) on right. Only renders when `!activeFilter && isMultiple && neighborhoods[0]`. Gives immediate context that the Daily Brief card belongs to the primary neighborhood on the mobile wake-up screen.
