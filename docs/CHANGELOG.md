@@ -5,6 +5,12 @@
 
 ## 2026-02-28
 
+**Unify Article Body Font and Reduce Text Size:**
+- Removed 3 sans-serif font overrides from EventListingBlock (filter bar, day headers, filter summary) so all article content uses Merriweather serif consistently. Previously switching between serif body text and sans-serif UI elements mid-article was visually jarring.
+- Reduced desktop body text from `text-[1.35rem]` (22px) to `text-[1.2rem]` (19px), mobile from `text-[1.2rem]` to `text-[1.1rem]` (17.6px). Closer to feed card text (~17px) without the jarring size jump when opening an article.
+- Line height from `leading-loose` (2x) to `leading-relaxed` (1.625x), paragraph spacing `mb-8` to `mb-6`, section headers `text-xl` to `text-lg` with proportional margins.
+- File: `src/components/article/ArticleBody.tsx`
+
 **Enable Google OAuth Login:**
 - Unhide Google OAuth button on both `/login` and `/signup` pages. "Continue with Google" button with colored Google icon above an "or" divider, then the existing email/password form below.
 - All OAuth plumbing was already implemented: `signInWithOAuth` redirects to Google, callback at `/api/auth/callback` exchanges code for session via `exchangeCodeForSession`. Apple login remains hidden for now.
