@@ -5,6 +5,13 @@
 
 ## 2026-03-01
 
+**Community Neighborhood 1-Week Reminder Email:**
+- New daily cron (`send-community-reminder`, 9 AM UTC) sends a branded email to community neighborhood creators exactly 7 days after creation.
+- Email includes a CTA linking to the most recent daily brief article and a secondary link to the full neighborhood feed page.
+- Uses a 24-hour time window (7-8 days ago) for natural dedup - each neighborhood is matched exactly once with no migration or tracking column needed.
+- Skips neighborhoods with no published articles, removed status, or creators without email.
+- Files: `src/app/api/cron/send-community-reminder/route.ts` (new), `vercel.json`
+
 **Database-Level Brief Dedup Constraint:**
 - Application-level dedup in `sync-neighborhood-briefs` failed when Supabase's `max-rows=1000` cap silently truncated query results, generating 2000+ duplicate briefs Feb 23-28 and exhausting Gemini Pro's 1K RPD quota.
 - Three-layer defense: (1) `UNIQUE(neighborhood_id, brief_date)` DB constraint makes duplicates impossible regardless of application bugs, (2) pre-Grok real-time DB check avoids wasting ~30s API calls on doomed inserts, (3) batch filter using `brief_date` column replaces fragile paginated timestamp queries.

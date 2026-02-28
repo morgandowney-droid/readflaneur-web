@@ -7,7 +7,7 @@ import { generateCommunityId, generateBriefArticleSlug, generatePreviewText } fr
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { performInstantResend } from '@/lib/email/instant-resend';
 import { sendEmail } from '@/lib/email';
-import { selectLibraryImage } from '@/lib/image-library';
+import { selectLibraryImageAsync } from '@/lib/image-library';
 import { generateNeighborhoodLibrary } from '@/lib/image-library-generator';
 import { searchNeighborhoodFacts } from '@/lib/gemini-search';
 import { insiderPersona } from '@/lib/ai-persona';
@@ -536,7 +536,7 @@ export async function POST(request: NextRequest) {
               article_type: 'brief_summary',
               category_label: `${validation.name} Daily Brief`,
               brief_id: effectiveBriefId,
-              image_url: selectLibraryImage(neighborhoodId, 'brief_summary'),
+              image_url: await selectLibraryImageAsync(admin, neighborhoodId, 'brief_summary'),
               enriched_at: pipelineStatus.enrichment ? new Date().toISOString() : undefined,
               enrichment_model: pipelineStatus.enrichment ? enrichmentModel : undefined,
             })
