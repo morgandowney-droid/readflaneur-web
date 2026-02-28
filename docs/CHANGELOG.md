@@ -5,6 +5,13 @@
 
 ## 2026-02-28
 
+**Fix Email Date Labels Using Recipient Timezone:**
+- Email date labels like "Daily Brief (Today) - Sat Feb 28" were showing stale dates for cross-timezone recipients. A Stockholm reader (UTC+1) getting email at 7 AM local (6 AM UTC) saw NYC briefs (UTC-5) dated "Fri Feb 27" because `formatDateline()` and `isSameDay()` used server UTC.
+- `isSameDay(a, b, timezone?)` now compares dates in recipient's IANA timezone via `toLocaleDateString('en-CA', { timeZone })`.
+- `formatDateline(dateString?, timezone?)` formats dates using `Intl.DateTimeFormat` with recipient timezone.
+- `cleanCategoryLabel()` and `toEmailStory()` accept timezone param, threaded from `assembleDailyBrief()` via `recipient.timezone` through `fetchBriefAsStory`/`fetchLookAheadAsStory` for both primary and satellite sections.
+- Files: `src/lib/email/assembler.ts`
+
 **Polish Exploration UX:**
 - In explore mode, `ExplorationNextSuggestions` ("Keep Exploring") now renders ABOVE `BriefDiscoveryFooter` ("Keep Reading") so the next-neighborhood hero card is the primary CTA right after the subscribe nudge. Explorer no longer has to scroll past current-neighborhood links (yesterday's brief, Look Ahead) to find the next neighborhood. Non-explore mode keeps original order.
 - Hero card "Continue exploring" CTA strengthened from `text-xs text-white/70` to `text-sm text-white font-medium` for better readability on dark images.
