@@ -5,6 +5,14 @@
 
 ## 2026-02-28
 
+**Feed UX Improvements and Bug Fixes:**
+- Clickable "PRIMARY NEIGHBORHOOD {name}" in compact desktop masthead: wraps label and neighborhood name in `<Link>` to `/{city}/{neighborhood}`, hover accent color via `group-hover:text-accent`, weather/time stays outside the link.
+- Selected neighborhoods pill strip in selector modal: `selectedNeighborhoods` useMemo maps selected IDs to ordered list (primary first from localStorage), renders horizontal flex-wrap pills between sort buttons and city list body (All tab only), each pill shows name + "x" remove button, primary gets amber dot, max-h-[120px] with overflow scroll.
+- Bento section header updated from "Your Neighborhoods" to "Your Neighborhoods Today" in all 9 languages (`bento.yourNeighborhoods` translation key). Fallback label in MultiFeed also updated.
+- Fix bento grid flash on back-navigation: `userBentoCards` state now initializes from `sessionStorage` cache (`flaneur-user-bento-v1`) via useState initializer function. Cache written after each successful fetch. Eliminates the 200-500ms flash where bento was hidden while the REST API fetch completed.
+- Fix Look Ahead articles showing individual source names: `SourceAttribution.tsx` now treats editorial articles (`isEditorial` = brief_summary, look_ahead, weekly_recap) as having no individual sources even when `article_sources` rows exist in the DB. Shows generic "Synthesized from public news sources and social media" instead of "Synthesized from reporting by X, Y, Z". Source rows remain in DB for tracking purposes.
+- Files: `src/components/feed/MultiFeed.tsx`, `src/components/neighborhoods/NeighborhoodSelectorModal.tsx`, `src/lib/translations.ts`, `src/components/article/SourceAttribution.tsx`
+
 **Paginated Bento Grid with Jump-to-Feed Arrow:**
 - Desktop bento grid keeps original 4-column CSS grid with hero/wide/standard card sizes but adds paginated navigation. Each section displays 3 cards per page with left/right arrows and "1/N" page indicator in the section header.
 - `PaginatedSection` internal component in BentoGrid: manages per-section page state with `PAGE_SIZE=3`, `assignSizes()` determines hero/wide/standard layout per page, `SectionHeader` shows pagination controls when `totalPages > 1`.
