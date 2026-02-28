@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const subscribedIdsParam = searchParams.get('subscribedIds') || '';
-    const count = Math.min(parseInt(searchParams.get('count') || '3', 10), 5);
+    const count = Math.min(parseInt(searchParams.get('count') || '3', 10), 12);
 
     const subscribedIds = new Set(
       subscribedIdsParam.split(',').filter(Boolean)

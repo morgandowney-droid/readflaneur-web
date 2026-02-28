@@ -121,7 +121,7 @@ export function useDiscoveryBriefs(
     setIsLoading(true);
 
     const idsParam = subscribedIds.join(',');
-    fetch(`/api/feed/discovery-briefs?subscribedIds=${encodeURIComponent(idsParam)}&count=3&_t=${Date.now()}`)
+    fetch(`/api/feed/discovery-briefs?subscribedIds=${encodeURIComponent(idsParam)}&count=8&_t=${Date.now()}`)
       .then(res => res.json())
       .then((data: DiscoveryBriefsResponse) => {
         const built = buildSections(data);
@@ -162,7 +162,7 @@ export function useDiscoveryBriefs(
 
     setIsLoading(true);
     const idsParam = subscribedIds.join(',');
-    fetch(`/api/feed/discovery-briefs?subscribedIds=${encodeURIComponent(idsParam)}&count=3`)
+    fetch(`/api/feed/discovery-briefs?subscribedIds=${encodeURIComponent(idsParam)}&count=8`)
       .then(res => res.json())
       .then((data: DiscoveryBriefsResponse) => {
         const built = buildSections(data);

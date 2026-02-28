@@ -121,6 +121,15 @@ main {
   scrollbar-width: none;
 }
 
+/* Subtle bounce for jump-to-feed arrow */
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
 /* Refined link styles */
 a {
   transition: color 0.2s ease;

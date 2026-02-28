@@ -15,7 +15,7 @@ export interface BentoCardProps {
   slug: string;
   citySlug: string;
   neighborhoodSlug: string;
-  size: 'hero' | 'wide' | 'standard';
+  size: 'hero' | 'wide' | 'standard' | 'scroll';
   isUserNeighborhood?: boolean;
   onAdd?: (neighborhoodId: string) => void;
   onRemove?: (neighborhoodId: string) => void;
@@ -25,18 +25,21 @@ const sizeClasses: Record<BentoCardProps['size'], string> = {
   hero: 'col-span-2 row-span-2',
   wide: 'col-span-2 row-span-1',
   standard: 'col-span-1 row-span-1',
+  scroll: 'w-[280px] shrink-0',
 };
 
 const heightClasses: Record<BentoCardProps['size'], string> = {
   hero: 'min-h-[420px]',
   wide: 'min-h-[220px]',
   standard: 'min-h-[260px]',
+  scroll: 'h-[260px]',
 };
 
 const headlineClasses: Record<BentoCardProps['size'], string> = {
   hero: 'text-2xl md:text-3xl',
   wide: 'text-lg md:text-xl',
   standard: 'text-base md:text-lg',
+  scroll: 'text-base md:text-lg',
 };
 
 export function BentoCard({
@@ -92,6 +95,7 @@ export function BentoCard({
         ${sizeClasses[size]} ${heightClasses[size]}
         transition-transform duration-300 ease-out
         hover:scale-[1.015] hover:shadow-lg
+        ${size === 'scroll' ? 'snap-start' : ''}
         ${isUserNeighborhood ? 'ring-1 ring-amber-500/40' : ''}
       `}
     >
@@ -100,7 +104,7 @@ export function BentoCard({
         src={imageUrl}
         alt={`${neighborhoodName}, ${city}`}
         fill
-        sizes={size === 'standard' ? '25vw' : '50vw'}
+        sizes={size === 'scroll' ? '280px' : size === 'standard' ? '25vw' : '50vw'}
         className="object-cover transition-all duration-500 group-hover:scale-105 group-hover:brightness-110"
       />
 
@@ -162,7 +166,7 @@ export function BentoCard({
         </h3>
 
         {/* Blurb - hidden on standard size for cleaner look */}
-        {size !== 'standard' && truncatedBlurb && (
+        {size !== 'standard' && size !== 'scroll' && truncatedBlurb && (
           <p className="text-sm text-white/70 leading-relaxed line-clamp-2">
             {truncatedBlurb}
           </p>
@@ -182,7 +186,7 @@ export function BentoCardSkeleton({ size }: { size: BentoCardProps['size'] }) {
       <div className="absolute bottom-4 left-4 right-4 space-y-2">
         <div className="h-3 bg-surface rounded w-1/3" />
         <div className="h-5 bg-surface rounded w-3/4" />
-        {size !== 'standard' && <div className="h-3 bg-surface rounded w-2/3" />}
+        {size !== 'standard' && size !== 'scroll' && <div className="h-3 bg-surface rounded w-2/3" />}
       </div>
     </div>
   );

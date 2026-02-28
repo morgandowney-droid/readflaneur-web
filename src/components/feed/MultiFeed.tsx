@@ -101,7 +101,7 @@ export function MultiFeed({
       skip: neighborhoods.length < 2,
       buildUserSection: () => {
         const userCards: BentoCardProps[] = [];
-        for (const hood of neighborhoods.slice(0, 3)) {
+        for (const hood of neighborhoods) {
           const article = items.find(item =>
             item.type === 'article'
             && (item.data as Article).neighborhood_id === hood.id
@@ -146,6 +146,12 @@ export function MultiFeed({
       }
     } catch { /* SSR or private browsing */ }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Jump-to-feed ref for bento grid arrow
+  const feedStartRef = useRef<HTMLDivElement>(null);
+  const handleJumpToFeed = useCallback(() => {
+    feedStartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   // Mobile dropdown state
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -735,13 +741,14 @@ export function MultiFeed({
             sections={bentoSections || []}
             isLoading={bentoLoading}
             onRefresh={handleBentoRefresh}
+            onJumpToFeed={handleJumpToFeed}
           />
         </div>
       )}
 
       {/* "ALL STORIES" divider between bento and daily brief (desktop only) */}
       {!activeFilter && isMultiple && bentoSections && bentoSections.length > 0 && (
-        <div className="hidden md:flex items-center gap-4 mt-2 mb-6">
+        <div ref={feedStartRef} className="hidden md:flex items-center gap-4 mt-2 mb-6">
           <span className="text-[11px] tracking-[0.2em] uppercase font-medium text-fg-subtle whitespace-nowrap">
             {t('bento.allStories') || 'All Stories'}
           </span>
