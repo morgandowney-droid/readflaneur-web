@@ -759,6 +759,22 @@ function GlobalNeighborhoodModal({
       .filter(c => c.neighborhoods.length > 0);
   }, [citiesWithNeighborhoods, searchQuery]);
 
+  // Selected neighborhoods as ordered list (primary first) for pill strip
+  const selectedNeighborhoods = useMemo(() => {
+    if (selected.size === 0) return [];
+    let orderedIds: string[] = [];
+    try {
+      const stored = localStorage.getItem(PREFS_KEY);
+      if (stored) orderedIds = JSON.parse(stored);
+    } catch {}
+    const neighborhoodMap = new Map(neighborhoods.map(n => [n.id, n]));
+    const ordered = [
+      ...orderedIds.filter(id => selected.has(id)),
+      ...[...selected].filter(id => !orderedIds.includes(id)),
+    ];
+    return ordered.map(id => neighborhoodMap.get(id)).filter(Boolean) as NeighborhoodWithCombo[];
+  }, [selected, neighborhoods]);
+
   // Helper: save selected set to localStorage preserving primary-first order
   const saveToLocalStorage = (ids: Set<string>, currentPrimary: string | null) => {
     const arr = Array.from(ids);
@@ -1214,6 +1230,32 @@ function GlobalNeighborhoodModal({
               {sortBy === 'region' ? 'Sort alphabetically' : 'Sort by region'}
             </button>
           </div>
+          )}
+
+          {/* Selected neighborhoods pills (All tab only) */}
+          {activeTab === 'all' && selectedNeighborhoods.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto">
+              {selectedNeighborhoods.map(n => (
+                <span
+                  key={n.id}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded-full border border-border-strong bg-surface text-fg-muted"
+                >
+                  {n.id === primaryId && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70 shrink-0" />
+                  )}
+                  {n.name}
+                  <button
+                    onClick={() => toggleNeighborhood(n.id)}
+                    className="ml-0.5 text-fg-subtle hover:text-fg transition-colors"
+                    aria-label={`Remove ${n.name}`}
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </span>
+              ))}
+            </div>
           )}
         </div>
 

@@ -81,8 +81,9 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated, headlin
     </span>
   ) : null;
 
-  // If no specific sources, try to extract from editor_notes (RSS or government source)
-  if (!sources || sources.length === 0) {
+  // Editorial content (briefs, look-ahead, sunday edition) should show generic attribution,
+  // not individual source names, even if source rows exist in the DB for tracking purposes
+  if (!sources || sources.length === 0 || isEditorial) {
     const parsedSource = parseEditorNotesSource(editorNotes);
     if (parsedSource) {
       // Government/authoritative source - link directly, no verify needed

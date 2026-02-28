@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { FeedItem, Article, Ad } from '@/types';
 import { FeedList } from './FeedList';
 import { ViewToggle, FeedView } from './ViewToggle';
@@ -96,7 +97,16 @@ export function MultiFeed({
 
   // Fetch latest brief_summary article per user neighborhood for bento grid
   // (server items are capped at ~42, so with 14+ neighborhoods many briefs are missing)
-  const [userBentoCards, setUserBentoCards] = useState<BentoCardProps[]>([]);
+  // Restore from sessionStorage cache immediately to prevent bento flash on back-navigation
+  const USER_BENTO_CACHE_KEY = 'flaneur-user-bento-v1';
+  const [userBentoCards, setUserBentoCards] = useState<BentoCardProps[]>(() => {
+    if (typeof window === 'undefined' || neighborhoods.length < 2) return [];
+    try {
+      const cached = sessionStorage.getItem(USER_BENTO_CACHE_KEY);
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return [];
+  });
   useEffect(() => {
     if (neighborhoods.length < 2) return;
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -154,6 +164,8 @@ export function MultiFeed({
           });
         }
         setUserBentoCards(cards);
+        // Cache for instant restore on back-navigation
+        try { sessionStorage.setItem(USER_BENTO_CACHE_KEY, JSON.stringify(cards)); } catch {}
       })
       .catch(() => {});
   }, [neighborhoods]);
@@ -170,7 +182,7 @@ export function MultiFeed({
     const result: BentoSection[] = [];
     if (userBentoCards.length > 0) {
       result.push({
-        label: 'Your Neighborhoods',
+        label: 'Your Neighborhoods Today',
         translationKey: 'bento.yourNeighborhoods',
         cards: userBentoCards,
       });
@@ -764,8 +776,13 @@ export function MultiFeed({
           </div>
           {neighborhoods[0]?.timezone && (
             <div className="flex items-baseline gap-2">
-              <span className="text-[10px] tracking-[0.15em] uppercase text-fg-subtle">{t('feed.primaryNeighborhood')}</span>
-              <span className="text-xs text-fg-subtle">{neighborhoods[0].name}</span>
+              <Link
+                href={`/${getCitySlugFromId(neighborhoods[0].id)}/${getNeighborhoodSlugFromId(neighborhoods[0].id)}`}
+                className="flex items-baseline gap-2 hover:text-accent transition-colors group"
+              >
+                <span className="text-[10px] tracking-[0.15em] uppercase text-fg-subtle group-hover:text-accent transition-colors">{t('feed.primaryNeighborhood')}</span>
+                <span className="text-xs text-fg-subtle group-hover:text-accent transition-colors">{neighborhoods[0].name}</span>
+              </Link>
               <NeighborhoodLiveStatus
                 timezone={neighborhoods[0].timezone}
                 country={neighborhoods[0].country}
