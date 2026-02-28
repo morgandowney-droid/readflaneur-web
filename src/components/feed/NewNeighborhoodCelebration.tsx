@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
-const COUNTDOWN_START = 17;
 const IS_LIVE_DISPLAY_MS = 10000;
 
 interface Props {
@@ -14,14 +13,14 @@ interface Props {
 
 /**
  * Shown when a user just created a community neighborhood (?created=true).
- * Polls for the first article, shows a countdown from 17s, and celebrates with balloons.
+ * The countdown happens in the modal - this page shows the celebration
+ * (balloons + "is live" message) then loads the feed.
  */
 export function NewNeighborhoodCelebration({ neighborhoodName, neighborhoodId }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isCreated = searchParams.get('created') === 'true';
 
-  const [remaining, setRemaining] = useState(COUNTDOWN_START);
   const [ready, setReady] = useState(false);
   const [showBalloons, setShowBalloons] = useState(false);
 
@@ -52,17 +51,12 @@ export function NewNeighborhoodCelebration({ neighborhoodName, neighborhoodId }:
       }, IS_LIVE_DISPLAY_MS);
     };
 
-    // Check immediately (article may already exist from pipeline)
+    // Check immediately (article should already exist from pipeline)
     checkForArticle().then(found => {
       if (found) showLive();
     });
 
-    // Countdown timer (decrements from COUNTDOWN_START)
-    const timer = setInterval(() => {
-      setRemaining(prev => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-
-    // Poll every 3s for article
+    // Poll every 3s as fallback
     const poller = setInterval(async () => {
       const found = await checkForArticle();
       if (found) {
@@ -82,7 +76,6 @@ export function NewNeighborhoodCelebration({ neighborhoodName, neighborhoodId }:
     }, 90000);
 
     return () => {
-      clearInterval(timer);
       clearInterval(poller);
       clearTimeout(safety);
     };
@@ -113,21 +106,12 @@ export function NewNeighborhoodCelebration({ neighborhoodName, neighborhoodId }:
 
       {!ready ? (
         <>
-          {/* Pulsing dot */}
+          {/* Brief loading state (article should already exist, this is just a fallback) */}
           <div className="flex justify-center mb-6">
             <div className="w-3 h-3 rounded-full bg-accent animate-pulse" />
           </div>
-
-          {/* Countdown */}
-          <div className="text-3xl font-mono text-fg mb-4 tabular-nums">
-            {remaining}s
-          </div>
-
-          <h2 className="text-sm tracking-[0.25em] uppercase font-light text-fg mb-3">
-            Building your {neighborhoodName} edition
-          </h2>
-          <p className="text-sm text-fg-subtle max-w-sm mx-auto leading-relaxed">
-            Scanning local sources, writing your first daily brief, and selecting photos.
+          <p className="text-sm text-fg-subtle">
+            Loading your {neighborhoodName} stories...
           </p>
         </>
       ) : (

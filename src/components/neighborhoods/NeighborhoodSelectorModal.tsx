@@ -271,6 +271,29 @@ function GlobalNeighborhoodModal({
   const [communityError, setCommunityError] = useState('');
   const [communityCreatedName, setCommunityCreatedName] = useState('');
   const communityInputRef = useRef<HTMLInputElement>(null);
+  const [countdown, setCountdown] = useState(17);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Start/stop countdown timer when create status changes
+  useEffect(() => {
+    if (communityCreateStatus === 'validating' || communityCreateStatus === 'generating') {
+      setCountdown(17);
+      countdownRef.current = setInterval(() => {
+        setCountdown(prev => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    } else {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+    }
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+    };
+  }, [communityCreateStatus]);
 
   // Executive status application state
   const [showExecutiveForm, setShowExecutiveForm] = useState(false);
@@ -1378,6 +1401,21 @@ function GlobalNeighborhoodModal({
                         You will receive a daily brief for {communityCreatedName} at 7am local time starting tomorrow.
                       </p>
                     </div>
+                  ) : (communityCreateStatus === 'validating' || communityCreateStatus === 'generating') ? (
+                    <div className="text-center py-8">
+                      <div className="flex justify-center mb-4">
+                        <div className="w-3 h-3 rounded-full bg-accent animate-pulse" />
+                      </div>
+                      <div className="text-3xl font-mono text-fg mb-3 tabular-nums">
+                        {countdown}s
+                      </div>
+                      <h3 className="text-sm tracking-[0.25em] uppercase font-light text-fg mb-2">
+                        Building your {communityInput.trim()} edition
+                      </h3>
+                      <p className="text-xs text-fg-subtle max-w-xs mx-auto leading-relaxed">
+                        Scanning local sources, writing your first daily brief, and selecting photos.
+                      </p>
+                    </div>
                   ) : (
                     <div>
                       <div className="flex items-center gap-3">
@@ -1388,24 +1426,17 @@ function GlobalNeighborhoodModal({
                           onChange={(e) => { setCommunityInput(e.target.value); setCommunityError(''); }}
                           onKeyDown={(e) => e.key === 'Enter' && handleCommunityCreate()}
                           placeholder="e.g., Notting Hill, London"
-                          disabled={communityCreateStatus === 'validating' || communityCreateStatus === 'generating'}
                           className="flex-1 bg-transparent border-b border-border-strong text-sm text-fg placeholder-fg-subtle py-2 focus:outline-none focus:border-amber-500/50 transition-colors max-w-[300px]"
                         />
                         <button
                           onClick={handleCommunityCreate}
-                          disabled={!communityInput.trim() || communityInput.trim().length < 3 || communityCreateStatus === 'validating' || communityCreateStatus === 'generating'}
+                          disabled={!communityInput.trim() || communityInput.trim().length < 3}
                           className="px-4 py-2 text-[11px] tracking-[0.1em] uppercase font-medium bg-fg text-canvas hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-all rounded-lg whitespace-nowrap"
                         >
-                          {communityCreateStatus === 'validating' ? 'Validating...'
-                            : communityCreateStatus === 'generating' ? 'Generating brief...'
-                            : 'Create'}
+                          Create
                         </button>
                       </div>
-                      {communityCreateStatus === 'generating' && (
-                        <p className="text-xs text-fg-subtle mt-2">
-                          This may take a minute - we are generating a brief and article for your neighborhood.
-                        </p>
-                      )}
+                      {/* No generating hint needed - countdown takes over */}
                       {communityError && (
                         <p className="text-xs text-red-400 mt-2">{communityError}</p>
                       )}
