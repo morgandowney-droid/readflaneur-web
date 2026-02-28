@@ -108,68 +108,50 @@ export async function GET(request: Request) {
     errors: [] as string[],
   };
 
-  // Get recent briefs (last 7 days) for per-neighborhood local date coverage check
-  // AND for anti-repetition topic history. 7-day window catches persistent topics
-  // that keep appearing across multiple briefs (e.g., a restaurant closure for 2 weeks).
-  // MUST paginate - Supabase has a server-side max-rows=1000 that overrides .limit().
-  // With 270 neighborhoods * 7 days = 1890+ rows, a single query silently drops rows
-  // beyond 1000, causing hasBriefForLocalToday to miss today's briefs and generate
-  // duplicates (hit this bug 3 times: Feb 23-28 2026 generated 1218 briefs/day).
-  const recentCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  // Layer 1 (batch filter): Query brief_date column for yesterday/today/tomorrow
+  // to identify neighborhoods that already have today's brief. This covers timezone
+  // edge cases (yesterday/tomorrow in UTC may be "today" in some local timezones).
+  // With ~270 neighborhoods * 3 days = ~810 rows max, well under the 1000-row cap.
+  const now = new Date();
+  function getLocalDate(timezone: string | null): string {
+    return now.toLocaleDateString('en-CA', { timeZone: timezone || 'UTC' });
+  }
+  const utcToday = now.toISOString().split('T')[0];
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-  const recentBriefs: { neighborhood_id: string; created_at: string; headline: string | null }[] = [];
-  const PAGE_SIZE = 1000;
-  let offset = 0;
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const { data: page, error: pageError } = await supabase
-      .from('neighborhood_briefs')
-      .select('neighborhood_id, created_at, headline')
-      .gte('created_at', recentCutoff.toISOString())
-      .order('created_at', { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1);
+  const { data: recentBriefDates, error: briefDateError } = await supabase
+    .from('neighborhood_briefs')
+    .select('neighborhood_id, brief_date')
+    .gte('brief_date', yesterday)
+    .lte('brief_date', tomorrow);
 
-    if (pageError) {
-      console.error('Failed to fetch recent briefs page:', pageError.message);
-      break;
-    }
-    if (!page || page.length === 0) break;
-    recentBriefs.push(...page);
-    if (page.length < PAGE_SIZE) break; // Last page
-    offset += PAGE_SIZE;
+  if (briefDateError) {
+    console.error('Failed to fetch recent brief dates:', briefDateError.message);
   }
 
-  // Build map of neighborhood_id -> brief timestamps for local-date checking
-  const briefsByNeighborhood = new Map<string, string[]>();
-  for (const b of recentBriefs || []) {
-    const existing = briefsByNeighborhood.get(b.neighborhood_id) || [];
-    existing.push(b.created_at);
-    briefsByNeighborhood.set(b.neighborhood_id, existing);
+  // Build set of "neighborhoodId::briefDate" for fast lookup.
+  // brief_date is the pre-computed local date stored in DB at insert time.
+  const coveredToday = new Set<string>();
+  for (const b of recentBriefDates || []) {
+    coveredToday.add(`${b.neighborhood_id}::${b.brief_date}`);
   }
 
-  /**
-   * Check if a neighborhood already has a brief for its local "today".
-   * Uses the neighborhood's timezone to determine what "today" means,
-   * fixing the UTC date boundary bug that caused APAC neighborhoods
-   * (UTC+8 to +12) to be missed when their morning window straddles midnight UTC.
-   */
   function hasBriefForLocalToday(neighborhoodId: string, timezone: string | null): boolean {
-    const timestamps = briefsByNeighborhood.get(neighborhoodId);
-    if (!timestamps || timestamps.length === 0) return false;
-
-    const tz = timezone || 'UTC';
-    const now = new Date();
-    // 'en-CA' locale gives YYYY-MM-DD format
-    const localToday = now.toLocaleDateString('en-CA', { timeZone: tz });
-
-    return timestamps.some(ts => {
-      const briefLocalDate = new Date(ts).toLocaleDateString('en-CA', { timeZone: tz });
-      return briefLocalDate === localToday;
-    });
+    const localToday = getLocalDate(timezone);
+    return coveredToday.has(`${neighborhoodId}::${localToday}`);
   }
 
-  // For backward compat in the "no neighborhoods" response, count covered
-  const coveredCount = (recentBriefs || []).length;
+  // Fetch recent headlines separately for anti-repetition (different concern from dedup).
+  // 7-day window catches persistent topics that keep appearing across multiple briefs.
+  const recentCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const { data: recentHeadlines } = await supabase
+    .from('neighborhood_briefs')
+    .select('neighborhood_id, headline')
+    .gte('created_at', recentCutoff.toISOString())
+    .not('headline', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1000);
 
   // Fetch active neighborhoods WITH timezone (includes combo neighborhoods)
   let query = supabase
@@ -304,8 +286,23 @@ export async function GET(request: Request) {
         }
       }
 
+      // Layer 2 (pre-Grok real-time check): Before the expensive ~30s Grok+Gemini call,
+      // verify no brief was inserted since the batch filter ran (race condition guard).
+      const briefDate = getLocalDate(hood.timezone);
+      const { data: existsNow } = await supabase
+        .from('neighborhood_briefs')
+        .select('id')
+        .eq('neighborhood_id', hood.id)
+        .eq('brief_date', briefDate)
+        .maybeSingle();
+
+      if (existsNow) {
+        console.log(`[sync-briefs] Skipping ${hood.name}: brief already exists for ${briefDate} (race condition caught)`);
+        return;
+      }
+
       // Extract recent headlines for anti-repetition in both Grok and Gemini search
-      const recentTopics = (recentBriefs || [])
+      const recentTopics = (recentHeadlines || [])
         .filter(b => b.neighborhood_id === hood.id && b.headline)
         .slice(0, 10)
         .map(b => b.headline as string);
@@ -341,7 +338,7 @@ export async function GET(request: Request) {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24);
 
-      // Insert the brief
+      // Insert the brief with brief_date for unique constraint
       const { error: insertError } = await supabase
         .from('neighborhood_briefs')
         .insert({
@@ -354,9 +351,16 @@ export async function GET(request: Request) {
           search_query: brief.searchQuery,
           generated_at: new Date().toISOString(),
           expires_at: expiresAt.toISOString(),
+          brief_date: briefDate,
         });
 
       if (insertError) {
+        // Layer 3 (DB constraint): 23505 = unique_violation from (neighborhood_id, brief_date)
+        // Another concurrent run already inserted this brief - not an error
+        if (insertError.code === '23505') {
+          console.log(`[sync-briefs] ${hood.name}: constraint prevented duplicate for ${briefDate}`);
+          return;
+        }
         results.briefs_failed++;
         results.errors.push(`${hood.name}: ${insertError.message}`);
         return;

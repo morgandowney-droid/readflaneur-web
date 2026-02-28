@@ -250,6 +250,7 @@ export async function GET(request: Request) {
         model,
         generated_at,
         email_teaser,
+        brief_date,
         neighborhoods!inner(id, name, city, timezone)
       `)
       .in('id', chunk)
@@ -271,14 +272,12 @@ export async function GET(request: Request) {
     });
   }
 
-  // Dedup: only keep the latest brief per neighborhood per LOCAL day
-  // Uses the neighborhood's IANA timezone to determine the local date, avoiding
-  // UTC date mismatch (e.g., NYC midnight EST = 05:00Z which is "next day" in UTC)
+  // Dedup: only keep the latest brief per neighborhood per LOCAL day.
+  // Uses brief_date column (pre-computed local date stored in DB) instead of
+  // runtime toLocaleDateString computation, which was fragile across timezones.
   const dedupMap = new Map<string, typeof briefs[0]>();
   for (const brief of briefs) {
-    const tz = (brief.neighborhoods as any)?.timezone || 'America/New_York';
-    const localDate = new Date(brief.generated_at).toLocaleDateString('en-CA', { timeZone: tz });
-    const key = `${brief.neighborhood_id}::${localDate}`;
+    const key = `${brief.neighborhood_id}::${brief.brief_date}`;
     const existing = dedupMap.get(key);
     if (!existing || new Date(brief.generated_at) > new Date(existing.generated_at)) {
       dedupMap.set(key, brief);

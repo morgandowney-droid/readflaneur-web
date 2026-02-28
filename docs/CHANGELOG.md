@@ -3,7 +3,23 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-01
+
+**Database-Level Brief Dedup Constraint:**
+- Application-level dedup in `sync-neighborhood-briefs` failed when Supabase's `max-rows=1000` cap silently truncated query results, generating 2000+ duplicate briefs Feb 23-28 and exhausting Gemini Pro's 1K RPD quota.
+- Three-layer defense: (1) `UNIQUE(neighborhood_id, brief_date)` DB constraint makes duplicates impossible regardless of application bugs, (2) pre-Grok real-time DB check avoids wasting ~30s API calls on doomed inserts, (3) batch filter using `brief_date` column replaces fragile paginated timestamp queries.
+- New `brief_date DATE NOT NULL` column on `neighborhood_briefs`, backfilled from `generated_at AT TIME ZONE timezone`. Migration cleans existing duplicates (keeps enriched/newest, respects article FK refs).
+- Simplified dedup in `generate-brief-articles` (uses stored `brief_date` instead of runtime `toLocaleDateString`), `health-checks` (simple 3-day range query instead of paginated loop), and `auto-fixer` (handles `23505` as success).
+- All 3 INSERT sites (`sync-neighborhood-briefs`, `neighborhoods/create`, `auto-fixer`) now include `brief_date` and handle unique violation (`23505`) gracefully.
+- Files: `supabase/migrations/20260305_add_brief_date_constraint.sql` (new), `src/app/api/cron/sync-neighborhood-briefs/route.ts`, `src/app/api/neighborhoods/create/route.ts`, `src/lib/cron-monitor/auto-fixer.ts`, `src/app/api/cron/generate-brief-articles/route.ts`, `src/lib/cron-monitor/health-checks.ts`
+
 ## 2026-02-28
+
+**Celebration Countdown for New Community Neighborhoods:**
+- After creating a community neighborhood, users stayed on the modal with no feedback. Now they're navigated to the new neighborhood's page where a live countdown timer shows elapsed seconds while "Building your {name} edition" displays. Polls for the first article every 3s. When found, balloons (emojis) animate from bottom to top across the full screen, then the page refreshes to show the brief. Safety timeout at 90s.
+- Neighborhood selector empty search state now shows a prominent amber-bordered card with "Create {name}" button instead of a text link hidden below the fold. Sort buttons and selected pills hide when search yields no results to maximize mobile screen space. Button pre-fills the Community tab input.
+- Community neighborhoods created by the current user show "Created by you" in accent color instead of generic "Community Created" badge in the selector modal.
+- Files: `src/components/feed/NewNeighborhoodCelebration.tsx` (new), `src/app/[city]/[neighborhood]/page.tsx`, `src/components/neighborhoods/NeighborhoodSelectorModal.tsx`, `src/app/globals.css`
 
 **Instant Translation for Community Neighborhood Creation:**
 - Users with a non-English `preferred_language` (e.g., Spanish) who created a community neighborhood saw the brief and article in English only, with translation delayed up to 60 minutes until the `translate-content` cron processed it.

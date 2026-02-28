@@ -211,6 +211,7 @@ export async function batchFixMissingBriefs(
 
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24);
+      const briefDate = new Date().toLocaleDateString('en-CA', { timeZone: hood.timezone || 'UTC' });
 
       const { error: insertError } = await supabase
         .from('neighborhood_briefs')
@@ -224,9 +225,16 @@ export async function batchFixMissingBriefs(
           search_query: brief.searchQuery,
           generated_at: new Date().toISOString(),
           expires_at: expiresAt.toISOString(),
+          brief_date: briefDate,
         });
 
       if (insertError) {
+        // 23505 = unique_violation - brief already exists for this date (another process fixed it)
+        if (insertError.code === '23505') {
+          result.generated++;
+          console.log(`[BatchBrief] ${hood.name}: already has brief for ${briefDate} (resolved by another process)`);
+          continue;
+        }
         result.failed++;
         result.errors.push(`${hood.name}: ${insertError.message}`);
         continue;

@@ -401,7 +401,8 @@ export async function POST(request: NextRequest) {
     if (facts && facts.facts) {
       try {
         const headline = `What's Happening in ${validation.name}`;
-        const { data: insertedBrief } = await admin
+        const briefDate = new Date().toLocaleDateString('en-CA', { timeZone: validation.timezone });
+        const { data: insertedBrief, error: briefInsertError } = await admin
           .from('neighborhood_briefs')
           .insert({
             neighborhood_id: neighborhoodId,
@@ -410,11 +411,25 @@ export async function POST(request: NextRequest) {
             source_count: facts.sourceCount || 0,
             model: 'gemini-2.5-flash',
             generated_at: new Date().toISOString(),
+            brief_date: briefDate,
           })
           .select('id')
           .single();
 
-        if (insertedBrief) {
+        // Handle unique constraint violation - fetch existing brief to continue pipeline
+        let effectiveBriefId: string | null = insertedBrief?.id || null;
+        if (briefInsertError?.code === '23505') {
+          const { data: existing } = await admin
+            .from('neighborhood_briefs')
+            .select('id')
+            .eq('neighborhood_id', neighborhoodId)
+            .eq('brief_date', briefDate)
+            .maybeSingle();
+          effectiveBriefId = existing?.id || null;
+          console.log(`[create] Brief already exists for ${neighborhoodId} on ${briefDate}, using existing`);
+        }
+
+        if (effectiveBriefId) {
           pipelineStatus.brief = true;
 
           // Step C: Enrich with Gemini (~5-10s) for proper greeting, sections, hyperlinks
@@ -453,7 +468,7 @@ export async function POST(request: NextRequest) {
                   enrichment_model: enrichmentModel,
                   subject_teaser: enriched.subjectTeaser || null,
                 })
-                .eq('id', insertedBrief.id);
+                .eq('id', effectiveBriefId);
 
               pipelineStatus.enrichment = true;
             }
@@ -491,7 +506,7 @@ export async function POST(request: NextRequest) {
                     enrichment_model: enrichmentModel,
                     subject_teaser: claudeResult.subjectTeaser || null,
                   })
-                  .eq('id', insertedBrief.id);
+                  .eq('id', effectiveBriefId);
 
                 pipelineStatus.enrichment = true;
                 console.log('Claude fallback enrichment succeeded');
@@ -520,7 +535,7 @@ export async function POST(request: NextRequest) {
               ai_model: 'gemini-2.5-flash',
               article_type: 'brief_summary',
               category_label: `${validation.name} Daily Brief`,
-              brief_id: insertedBrief.id,
+              brief_id: effectiveBriefId,
               image_url: selectLibraryImage(neighborhoodId, 'brief_summary'),
               enriched_at: pipelineStatus.enrichment ? new Date().toISOString() : undefined,
               enrichment_model: pipelineStatus.enrichment ? enrichmentModel : undefined,
@@ -554,7 +569,7 @@ export async function POST(request: NextRequest) {
 
                 if (briefTx.status === 'fulfilled' && briefTx.value) {
                   await admin.from('brief_translations').upsert({
-                    brief_id: insertedBrief.id,
+                    brief_id: effectiveBriefId,
                     language_code: lang,
                     content: briefTx.value.content,
                     enriched_content: briefTx.value.enriched_content,

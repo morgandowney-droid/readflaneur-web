@@ -48,46 +48,28 @@ export async function checkBriefCoverage(
 
   result.total = neighborhoods.length;
 
-  // Use per-timezone local date check (matches sync-neighborhood-briefs cron logic).
-  // UTC midnight misses APAC neighborhoods whose "today" started before UTC midnight.
-  // Fetch last 36h of briefs and check each against its local "today".
-  const recentCutoff = new Date(Date.now() - 36 * 60 * 60 * 1000);
+  // Use brief_date column for coverage check. Query yesterday/today/tomorrow
+  // to cover all timezone edge cases (~810 rows max, well under 1000-row cap).
+  const now = new Date();
+  const utcToday = now.toISOString().split('T')[0];
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-  // Paginate - Supabase server-side max-rows=1000 silently caps .limit()
-  const recentBriefs: { neighborhood_id: string; created_at: string }[] = [];
-  let hcOffset = 0;
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const { data: page } = await supabase
-      .from('neighborhood_briefs')
-      .select('neighborhood_id, created_at')
-      .gte('created_at', recentCutoff.toISOString())
-      .order('created_at', { ascending: true })
-      .range(hcOffset, hcOffset + 999);
-    if (!page || page.length === 0) break;
-    recentBriefs.push(...page);
-    if (page.length < 1000) break;
-    hcOffset += 1000;
-  }
+  const { data: recentBriefDates } = await supabase
+    .from('neighborhood_briefs')
+    .select('neighborhood_id, brief_date')
+    .gte('brief_date', yesterday)
+    .lte('brief_date', tomorrow);
 
-  // Build map of neighborhood_id -> brief timestamps
-  const briefsByNeighborhood = new Map<string, string[]>();
-  for (const b of recentBriefs || []) {
-    const existing = briefsByNeighborhood.get(b.neighborhood_id) || [];
-    existing.push(b.created_at);
-    briefsByNeighborhood.set(b.neighborhood_id, existing);
+  // Build set of "neighborhoodId::localDate" for fast lookup
+  const coveredSet = new Set<string>();
+  for (const b of recentBriefDates || []) {
+    coveredSet.add(`${b.neighborhood_id}::${b.brief_date}`);
   }
 
   function hasBriefForLocalToday(neighborhoodId: string, timezone: string | null): boolean {
-    const timestamps = briefsByNeighborhood.get(neighborhoodId);
-    if (!timestamps || timestamps.length === 0) return false;
-    const tz = timezone || 'UTC';
-    const now = new Date();
-    const localToday = now.toLocaleDateString('en-CA', { timeZone: tz });
-    return timestamps.some(ts => {
-      const briefLocalDate = new Date(ts).toLocaleDateString('en-CA', { timeZone: tz });
-      return briefLocalDate === localToday;
-    });
+    const localToday = now.toLocaleDateString('en-CA', { timeZone: timezone || 'UTC' });
+    return coveredSet.has(`${neighborhoodId}::${localToday}`);
   }
 
   // Only count neighborhoods whose morning window (midnight-7 AM local) has passed
