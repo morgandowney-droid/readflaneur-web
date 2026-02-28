@@ -819,8 +819,8 @@ export function MultiFeed({
         </div>
       )}
 
-      {/* ── MASTHEAD (hidden on desktop in multi-feed mode - compact masthead handles desktop) ── */}
-      <div className={!activeFilter && isMultiple ? 'md:hidden' : ''}>
+      {/* ── MASTHEAD (hidden in multi-feed "All Stories" mode - compact masthead handles desktop, dropdown handles mobile) ── */}
+      <div className={!activeFilter && isMultiple ? 'hidden' : ''}>
         <NeighborhoodHeader
           mode="all"
           city={activeHood?.city || ''}
@@ -905,12 +905,7 @@ export function MultiFeed({
 
       {reminder}
 
-      {/* MOBILE: View toggle directly above news feed */}
-      {isMultiple && (
-        <div className="md:hidden flex justify-end pb-2">
-          {viewToggle}
-        </div>
-      )}
+      {/* View toggle hidden on mobile — compact view only, reduces choice overload */}
       {activeFilter && articlesLoading ? (
         <div className="space-y-4 py-4">
           {[...Array(4)].map((_, i) => (
