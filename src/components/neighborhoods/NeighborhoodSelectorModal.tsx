@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Neighborhood, GlobalRegion } from '@/types';
 import { getDistance } from '@/lib/geo-utils';
 import { findCountryForQuery, findRegionForQuery, findStateForQuery } from '@/lib/search-aliases';
+import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { getAllCityNames, getTimezoneForCity, getStoredLocation, saveStoredLocation } from '@/lib/location';
 import { GEO_REGION_ORDER, GEO_REGION_INDEX, getGeoRegion } from '@/lib/region-utils';
 
@@ -382,11 +383,29 @@ function GlobalNeighborhoodModal({
           } catch { /* will refresh on next open */ }
         }
 
-        // Reset after 3s
-        setTimeout(() => {
-          setCommunityCreateStatus('idle');
-          setCommunityCreatedName('');
-        }, 3000);
+        // Navigate to the new neighborhood page
+        if (data.neighborhood?.id) {
+          const citySlug = getCitySlugFromId(data.neighborhood.id);
+          const neighborhoodSlug = getNeighborhoodSlugFromId(data.neighborhood.id);
+          // Sync cookie before navigating
+          try {
+            const prefs = localStorage.getItem('flaneur-neighborhood-preferences');
+            if (prefs) {
+              const ids = JSON.parse(prefs);
+              if (Array.isArray(ids)) {
+                document.cookie = `flaneur-neighborhoods=${ids.join(',')};path=/;max-age=31536000;SameSite=Strict`;
+              }
+            }
+          } catch { /* ignore */ }
+          onClose();
+          router.push(`/${citySlug}/${neighborhoodSlug}?created=true`);
+        } else {
+          // Fallback: reset after 3s if no ID
+          setTimeout(() => {
+            setCommunityCreateStatus('idle');
+            setCommunityCreatedName('');
+          }, 3000);
+        }
       }
     } catch {
       setCommunityError('Network error. Please try again.');
@@ -1603,7 +1622,9 @@ function GlobalNeighborhoodModal({
                                     )}
                                     {hood.name}
                                     {hood.is_community && (
-                                      <span className="text-[10px] text-fg-subtle">Community Created</span>
+                                      <span className={`text-[10px] ${hood.created_by === userId ? 'text-accent' : 'text-fg-subtle'}`}>
+                                        {hood.created_by === userId ? 'Created by you' : 'Community'}
+                                      </span>
                                     )}
                                     {hasComboComponents && (
                                       <span className="text-[11px] text-fg-subtle">({hood.combo_component_names!.length} areas)</span>
@@ -1694,7 +1715,9 @@ function GlobalNeighborhoodModal({
                             )}
                             {hood.name}
                             {hood.is_community && (
-                              <span className="text-[10px] text-fg-subtle">Community Created</span>
+                              <span className={`text-[10px] ${hood.created_by === userId ? 'text-accent' : 'text-fg-subtle'}`}>
+                                {hood.created_by === userId ? 'Created by you' : 'Community'}
+                              </span>
                             )}
                             {hasComboComponents && (
                               <span className="text-[11px] text-fg-subtle">({hood.combo_component_names!.length} areas)</span>

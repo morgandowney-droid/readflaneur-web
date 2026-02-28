@@ -10,6 +10,7 @@ import { Article, Ad } from '@/types';
 import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
 import { getNeighborhoodIdsForQuery, getComboInfo, getComboForComponent } from '@/lib/combo-utils';
 import { fetchCurrentWeather } from '@/lib/weather';
+import { NewNeighborhoodCelebration } from '@/components/feed/NewNeighborhoodCelebration';
 
 const INITIAL_PAGE_SIZE = 10;
 
@@ -20,6 +21,7 @@ interface NeighborhoodPageProps {
   }>;
   searchParams: Promise<{
     category?: string;
+    created?: string;
   }>;
 }
 
@@ -52,7 +54,7 @@ export async function generateMetadata({ params }: NeighborhoodPageProps) {
 
 export default async function NeighborhoodPage({ params, searchParams }: NeighborhoodPageProps) {
   const { city, neighborhood } = await params;
-  const { category } = await searchParams;
+  const { category, created } = await searchParams;
   const supabase = await createClient();
 
   // Map city slug to neighborhood prefix
@@ -165,6 +167,20 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
   const categoryDisplayName = category
     ? category.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
     : null;
+
+  // Show celebration countdown for newly created community neighborhoods
+  if (created === 'true' && (!articles || articles.length === 0)) {
+    return (
+      <div className="py-6 px-4">
+        <div className="mx-auto max-w-2xl">
+          <NewNeighborhoodCelebration
+            neighborhoodName={neighborhoodData.name}
+            neighborhoodId={neighborhoodId}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="py-6 px-4">
