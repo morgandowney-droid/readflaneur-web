@@ -5,6 +5,15 @@
 
 ## 2026-02-28
 
+**Horizontal Scroll Bento Grid with Jump-to-Feed Arrow:**
+- Desktop bento grid converted from fixed 4-column CSS grid to per-section horizontal scroll rows. "My Neighborhoods" now shows ALL user neighborhoods (was capped at 3), and regional discovery sections show up to 8 cards each (was 3). Users scroll horizontally through cards with arrow buttons and gradient fade indicators at edges.
+- New `scroll` size variant on BentoCard: fixed 280x260px with `snap-start` for polished scroll-snap behavior. Blurb hidden on scroll cards for clean look.
+- `ScrollableRow` internal component in BentoGrid: `useRef` scroll container + `ResizeObserver` + scroll event for overflow detection, 292px scroll per click (280px card + 12px gap), circular arrow buttons at vertical center with glassmorphism styling, left/right gradient fade indicators.
+- `JumpToFeedArrow` below "My Neighborhoods" section: centered button with tracked-caps "Jump to stories" label + chevron-down SVG with subtle 2s bounce animation, smooth-scrolls to "ALL STORIES" divider via `feedStartRef` in MultiFeed.
+- API discovery-briefs max cap raised from 5 to 12, hook fetches `count=8` per region instead of 3.
+- Mobile layout completely unchanged (MobileDiscoverySection untouched).
+- Files: `src/components/feed/BentoGrid.tsx` (rewritten), `src/components/feed/BentoCard.tsx`, `src/components/feed/MultiFeed.tsx`, `src/hooks/useDiscoveryBriefs.ts`, `src/app/api/feed/discovery-briefs/route.ts`, `src/lib/translations.ts`, `src/app/globals.css`
+
 **Fix Mobile Feed Empty State Flash During Cookie Sync:**
 - Logged-in users on mobile saw "Select neighborhoods to see local stories" + "Choose Neighborhoods" button for 1-2 seconds before their real feed appeared. The server rendered `/feed` with an empty cookie (neighborhoods live in localStorage, cookie synced by client), showed the empty state CTA, then client hydration read localStorage, synced the cookie, and called `router.refresh()` to re-render with the correct feed.
 - Added `syncChecked` state in MultiFeed that starts `false` when `neighborhoods.length === 0`. The empty state CTA only renders when `isEmpty && syncChecked`. The cookie-sync useEffect sets `syncChecked = true` only when localStorage is also empty (genuinely no neighborhoods). When localStorage has IDs, it syncs the cookie and refreshes without ever showing the empty state.
