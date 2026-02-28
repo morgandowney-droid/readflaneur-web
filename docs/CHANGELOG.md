@@ -5,6 +5,13 @@
 
 ## 2026-02-28
 
+**Fix Timezone Bugs in Look Ahead Dedup, Sunday Edition, Brief Articles, and Article Page Day Labels:**
+- Look Ahead dedup for UTC+11..+13 neighborhoods (e.g., Waiheke Island NZ) failed because `published_at` at 7 AM local = previous UTC calendar day (18:00Z Feb 27 for Feb 28 local). Old dedup queried `published_at >= '2026-02-28T00:00:00Z'` which never matched. Fixed: queries a broad time window around all neighborhoods' `publishAtUtc` values and compares per-neighborhood within 2h tolerance.
+- Sunday Edition `sync-weekly-brief` used `new Date().toISOString().split('T')[0]` as `weekDate`, so Saturday runs created Saturday-dated editions and Sunday runs created Sunday-dated editions (2 per week). Fixed: always calculates "this coming Sunday" - if already Sunday use today, otherwise add `7 - dayOfWeek` days.
+- Brief article dedup in `generate-brief-articles` used UTC date from `generated_at` (`toISOString().split('T')[0]`), causing timezone-mismatched dedup keys and duplicate articles. Fixed: uses IANA timezone-aware local date via `toLocaleDateString('en-CA', { timeZone })`. Slug date also uses local timezone. Added `timezone` to neighborhoods SELECT.
+- `getDayAbbr()` in `utils.ts` now accepts optional `timezone` param. Article detail page passes `article.neighborhood?.timezone` so "Fri Daily Brief" displays the correct day for the neighborhood's local timezone.
+- Files: `src/app/api/cron/generate-look-ahead/route.ts`, `src/app/api/cron/sync-weekly-brief/route.ts`, `src/app/api/cron/generate-brief-articles/route.ts`, `src/lib/utils.ts`, `src/app/[city]/[neighborhood]/[slug]/page.tsx`
+
 **Move Postcard to Bottom of Daily Brief Email:**
 - Postcard section moved from between primary stories and satellite neighborhoods back to the bottom of the email, after Family Corner and just before Footer. The postcard is a reward for readers who scroll to the end, not an interruption mid-email.
 - Files: `src/lib/email/templates/DailyBriefTemplate.tsx`
