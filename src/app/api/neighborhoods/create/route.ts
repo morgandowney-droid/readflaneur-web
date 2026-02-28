@@ -10,6 +10,7 @@ import { selectLibraryImage } from '@/lib/image-library';
 import { generateNeighborhoodLibrary } from '@/lib/image-library-generator';
 import { searchNeighborhoodFacts } from '@/lib/gemini-search';
 import { insiderPersona } from '@/lib/ai-persona';
+import { translateArticle, translateBrief, type LanguageCode } from '@/lib/translation-service';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -504,7 +505,7 @@ export async function POST(request: NextRequest) {
           const slug = generateBriefArticleSlug(articleHeadline, neighborhoodId);
           const previewText = generatePreviewText(articleBody);
 
-          const { error: articleError } = await admin
+          const { data: insertedArticle, error: articleError } = await admin
             .from('articles')
             .insert({
               neighborhood_id: neighborhoodId,
@@ -522,10 +523,58 @@ export async function POST(request: NextRequest) {
               image_url: selectLibraryImage(neighborhoodId, 'brief_summary'),
               enriched_at: pipelineStatus.enrichment ? new Date().toISOString() : undefined,
               enrichment_model: pipelineStatus.enrichment ? enrichmentModel : undefined,
-            });
+            })
+            .select('id')
+            .single();
 
-          if (!articleError) {
+          if (!articleError && insertedArticle) {
             pipelineStatus.article = true;
+          }
+
+          // Step E: Translate brief + article if user has non-English language
+          if (pipelineStatus.enrichment) {
+            try {
+              const { data: profile } = await admin
+                .from('profiles')
+                .select('preferred_language')
+                .eq('id', userId)
+                .maybeSingle();
+
+              const lang = profile?.preferred_language as LanguageCode | null;
+              const validLangs: LanguageCode[] = ['sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja'];
+
+              if (lang && validLangs.includes(lang)) {
+                console.log(`Translating brief+article to ${lang} for creator...`);
+
+                const [briefTx, articleTx] = await Promise.allSettled([
+                  translateBrief(facts.facts, articleBody, lang),
+                  insertedArticle ? translateArticle(articleHeadline, articleBody, previewText, lang) : Promise.resolve(null),
+                ]);
+
+                if (briefTx.status === 'fulfilled' && briefTx.value) {
+                  await admin.from('brief_translations').upsert({
+                    brief_id: insertedBrief.id,
+                    language_code: lang,
+                    content: briefTx.value.content,
+                    enriched_content: briefTx.value.enriched_content,
+                  }, { onConflict: 'brief_id,language_code' });
+                }
+
+                if (articleTx.status === 'fulfilled' && articleTx.value && insertedArticle) {
+                  await admin.from('article_translations').upsert({
+                    article_id: insertedArticle.id,
+                    language_code: lang,
+                    headline: articleTx.value.headline,
+                    body: articleTx.value.body,
+                    preview_text: articleTx.value.preview_text,
+                  }, { onConflict: 'article_id,language_code' });
+                }
+
+                console.log(`Translation to ${lang} complete`);
+              }
+            } catch (err) {
+              console.error('Translation error (non-fatal):', err);
+            }
           }
         }
       } catch (err) {
