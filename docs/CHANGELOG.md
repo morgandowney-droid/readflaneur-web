@@ -13,6 +13,9 @@
 - API discovery-briefs max cap raised from 5 to 12, hook fetches `count=8` per region instead of 3.
 - Translation key `bento.jumpToFeed` added in all 9 languages. CSS `animate-bounce-subtle` keyframes added.
 - Mobile layout completely unchanged (MobileDiscoverySection untouched).
+- SessionStorage cache versioned to `flaneur-bento-cache-v2` to invalidate stale data from pre-pagination deployments. Cached user sections filtered by `translationKey` to prevent duplicate "YOUR NEIGHBORHOODS" rows when merging.
+- Compact desktop masthead shows "PRIMARY NEIGHBORHOOD" label (translated, 9 languages) with baseline-aligned neighborhood name + weather/time. Always visible on desktop in multi-feed mode (no flash - uses `isMultiple` condition instead of waiting for bento data to load). Full `NeighborhoodHeader` hidden on desktop via `md:hidden` when bento is active.
+- Translation key `feed.primaryNeighborhood` added in all 9 languages.
 - Files: `src/components/feed/BentoGrid.tsx` (rewritten), `src/components/feed/BentoCard.tsx`, `src/components/feed/MultiFeed.tsx`, `src/hooks/useDiscoveryBriefs.ts`, `src/app/api/feed/discovery-briefs/route.ts`, `src/lib/translations.ts`, `src/app/globals.css`
 
 **Fix Mobile Feed Empty State Flash During Cookie Sync:**
