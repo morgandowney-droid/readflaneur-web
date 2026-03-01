@@ -5,6 +5,17 @@
 
 ## 2026-03-01
 
+**Sunday Edition Email Fixes:**
+- Ad resolver used exact date match (`.eq('start_date', today)`) instead of date range, so multi-day ads like AURUM sunglasses (2026-02-22 to 2027-02-22) never resolved. Fixed to `.lte('start_date', today).gte('end_date', today)` matching Daily Brief pattern.
+- Template only rendered the teaser paragraph of The Letter narrative. `remainingParagraphs` was computed but never rendered in JSX. Now all paragraphs display.
+- Removed duplicate "Continue reading" link. Single "Read the full edition on Flaneur" CTA remains after the stories box.
+- Postcards and "Your Other Editions" used either/or logic. Now both sections render independently when data exists.
+- Sender skipped recipients entirely when primary neighborhood had no weekly brief. Now iterates through all subscribed neighborhoods and uses the first one that has a brief. Logs the fallback.
+- Added Unsplash hero image via `selectLibraryImageAsync()` for the `sunday-edition` category.
+- Banned "quiet significance" generic opener in Sunday Edition prompts (both `weeklyRecapStyle` and `editorialSynthesis` fallback).
+- Protected markdown links from sentence splitting in ArticleBody (e.g., `[71 N. Moore Street](url)` was split at "N. M" boundary).
+- Files: `src/lib/email/sunday-ad-resolver.ts`, `src/lib/email/templates/SundayEditionTemplate.tsx`, `src/app/api/cron/send-sunday-edition/route.ts`, `src/components/article/ArticleBody.tsx`, `src/lib/brief-enricher-gemini.ts`, `src/lib/weekly-brief-service.ts`
+
 **Community Neighborhood 1-Week Reminder Email:**
 - New daily cron (`send-community-reminder`, 9 AM UTC) sends a branded email to community neighborhood creators exactly 7 days after creation.
 - Email includes a CTA linking to the most recent daily brief article and a secondary link to the full neighborhood feed page.
