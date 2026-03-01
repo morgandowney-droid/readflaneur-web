@@ -5,6 +5,12 @@
 
 ## 2026-03-01
 
+**Fix Image Rotation to Use Full Photo Pool:**
+- Daily briefs only rotated between 3 dedicated category photos (`daily-brief-1/2/3` via `dayOfYear % 3`), so the same image repeated every 3 days (~33% of briefs). The 31 alternates in the library were never used.
+- Four bugs fixed: (1) All article types now rotate across the full pool (8 categories + ~31 alternates = ~39 photos) using day-of-year, not just 3 dedicated slots; (2) `getLibraryReadyIds` was preloading cache with `alternates: []` - now fetches `unsplash_alternates` alongside `unsplash_photos`; (3) Brief/look-ahead/weekly articles were explicitly excluded from full-pool rotation - removed exclusion; (4) Auto-swap threshold lowered from -2 to -1 so a single downvote triggers replacement.
+- Manually swapped out the negatively-scored Zachary Shakked scaffolding photo from Tribeca's `daily-brief-1` category, blacklisted it in `rejected_image_ids`, and updated all 6 articles that used it.
+- Files: `src/lib/image-library.ts`, `src/app/api/cron/retry-missing-images/route.ts`
+
 **Fix Community Neighborhood Article Source Attribution:**
 - The community neighborhood creation endpoint (`/api/neighborhoods/create`) was the only code path creating `brief_summary` articles without inserting rows into `article_sources`. This meant community-created neighborhoods showed generic "Synthesized from public news sources" instead of named sources.
 - Added source extraction from `enriched_categories` after article creation, matching the existing pattern in `generate-brief-articles` cron and `assembler.ts` fallback path.
