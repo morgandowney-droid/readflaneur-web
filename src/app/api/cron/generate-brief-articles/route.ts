@@ -351,9 +351,8 @@ export async function GET(request: Request) {
         .single();
 
       if (insertError) {
-        // Slug collision means an article already exists for this date/neighborhood/headline
-        // (likely from a re-generated brief with different ID) - safe to skip
-        if (insertError.message?.includes('articles_slug_key')) {
+        // Slug or brief_id collision means an article already exists for this brief - safe to skip
+        if (insertError.message?.includes('articles_slug_key') || insertError.message?.includes('articles_brief_id_unique')) {
           results.articles_skipped++;
           continue;
         }

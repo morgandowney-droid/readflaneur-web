@@ -178,11 +178,11 @@ async function fetchBriefAsStory(
     }
   }
 
-  // Check if an article with this slug already exists (from a previous email run)
+  // Check if an article already exists for this brief (from cron or a previous email run)
   const { data: existingArticle } = await supabase
     .from('articles')
     .select('headline, preview_text, body_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
-    .eq('slug', slug)
+    .eq('brief_id', brief.id)
     .single();
 
   if (existingArticle) {
@@ -193,7 +193,7 @@ async function fetchBriefAsStory(
   const imageUrl = await selectLibraryImageAsync(supabase, neighborhoodId, 'brief_summary');
 
   // Create the article so the email link goes to a full article page
-  const { data: newArticle } = await supabase
+  const { data: newArticle, error: insertError } = await supabase
     .from('articles')
     .insert({
       neighborhood_id: neighborhoodId,
@@ -214,6 +214,18 @@ async function fetchBriefAsStory(
     })
     .select('id, headline, preview_text, body_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
     .single();
+
+  // Handle unique violation (cron created the article between our check and insert)
+  if (insertError && (insertError.message?.includes('articles_brief_id_unique') || insertError.message?.includes('articles_slug_key'))) {
+    const { data: raceArticle } = await supabase
+      .from('articles')
+      .select('headline, preview_text, body_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
+      .eq('brief_id', brief.id)
+      .single();
+    if (raceArticle) {
+      return toEmailStory(raceArticle, neighborhoodName, cityName, timezone);
+    }
+  }
 
   if (newArticle) {
     // Insert sources from enriched categories (best-effort)
