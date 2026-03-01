@@ -142,7 +142,7 @@ export async function GET(request: Request) {
       });
     }
 
-    // Dedup: skip anyone who already got a Sunday edition for their primary neighborhood this week
+    // Dedup: skip anyone who already got a Sunday edition this week (any neighborhood)
     const { data: alreadySent } = await supabase
       .from('weekly_brief_sends')
       .select('recipient_id, neighborhood_id')
@@ -150,6 +150,10 @@ export async function GET(request: Request) {
 
     const sentSet = new Set(
       (alreadySent || []).map(s => `${s.recipient_id}:${s.neighborhood_id}`)
+    );
+    // Also track recipients who got ANY Sunday Edition this week (prevents fallback from sending multiple)
+    const recipientsSentThisWeek = new Set(
+      (alreadySent || []).map(s => s.recipient_id)
     );
 
     // Batch fetch all neighborhood names for secondary neighborhood links
@@ -188,9 +192,10 @@ export async function GET(request: Request) {
       // Get primary neighborhood ID early for dedup check
       const primaryId = recipient.primaryNeighborhoodId || recipient.subscribedNeighborhoodIds[0];
 
-      if (!testEmail && primaryId && sentSet.has(`${recipient.id}:${primaryId}`)) {
+      // Skip if this recipient already received ANY Sunday Edition this week
+      if (!testEmail && recipientsSentThisWeek.has(recipient.id)) {
         results.emails_skipped++;
-        results.errors.push(`skip:dedup:${recipient.id}:${primaryId}`);
+        results.errors.push(`skip:dedup:${recipient.id}`);
         continue;
       }
 
@@ -254,13 +259,6 @@ export async function GET(request: Request) {
       if (!brief) {
         results.emails_skipped++;
         results.errors.push(`skip:no_brief:${primaryId}:${weekDate}`);
-        continue;
-      }
-
-      // Dedup check for the actual neighborhood being sent (may differ from primary after fallback)
-      if (!testEmail && usedNeighborhoodId !== primaryId && sentSet.has(`${recipient.id}:${usedNeighborhoodId}`)) {
-        results.emails_skipped++;
-        results.errors.push(`skip:dedup:${recipient.id}:${usedNeighborhoodId}`);
         continue;
       }
 
