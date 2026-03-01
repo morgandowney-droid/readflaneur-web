@@ -5,6 +5,12 @@
 
 ## 2026-03-01
 
+**Show Actual Sources on Editorial Articles:**
+- Daily briefs, Look Ahead, and Sunday Edition articles had real sources in the DB (e.g., Eater NY, West Side Rag, Patch, X posts) but `isEditorial` guard in `SourceAttribution` hid them behind generic "Synthesized from public news sources" text.
+- Changed: `isEditorial` now only suppresses the "verify here" Google link, not the source listing. Articles with real sources show "Synthesized from reporting by Eater NY, West Side Rag..." with clickable links.
+- Generic fallback only shown when no sources exist in DB.
+- File: `src/components/article/SourceAttribution.tsx`
+
 **Silence Mobile Safari AbortError in Sentry:**
 - Mobile Safari fires `AbortError: The operation was aborted` (DOMException code 20) when any in-flight fetch is cancelled during page navigation. Harmless noise, not a code bug.
 - Added `'The operation was aborted'` to `ignoreErrors` in `src/instrumentation-client.ts` alongside existing GoTrue `'signal is aborted without reason'` filter.
