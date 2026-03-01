@@ -1372,26 +1372,47 @@ function GlobalNeighborhoodModal({
 
           {/* Selected neighborhoods pills (All tab only, hide when search yields no results or when actively searching on mobile) */}
           {activeTab === 'all' && selectedNeighborhoods.length > 0 && !(searchQuery.trim() && filteredCities.length === 0) && !(isSearchActive && searchQuery.trim()) && (
-            <div className="mt-3 flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto">
+            <div className="mt-3 flex flex-wrap gap-1.5 max-h-[160px] overflow-y-auto">
               {selectedNeighborhoods.map(n => (
-                <span
-                  key={n.id}
-                  className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded-full border border-border-strong bg-surface text-fg-muted"
-                >
-                  {n.id === primaryId && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70 shrink-0" />
-                  )}
-                  {n.name}
-                  <button
-                    onClick={() => toggleNeighborhood(n.id)}
-                    className="ml-0.5 text-fg-subtle hover:text-fg transition-colors"
-                    aria-label={`Remove ${n.name}`}
+                <div key={n.id} className="flex flex-col">
+                  <span
+                    className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded-full border border-border-strong bg-surface text-fg-muted cursor-pointer hover:border-neutral-500 transition-colors"
+                    onClick={() => setExpandedId(expandedId === n.id ? null : n.id)}
                   >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </span>
+                    {n.id === primaryId && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70 shrink-0" />
+                    )}
+                    {n.name}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleNeighborhood(n.id); }}
+                      className="ml-0.5 text-fg-subtle hover:text-fg transition-colors"
+                      aria-label={`Remove ${n.name}`}
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                  {expandedId === n.id && (
+                    <div className="flex items-center gap-2.5 px-1 mt-1 mb-0.5">
+                      {n.id !== primaryId && selected.size > 1 && (
+                        <button
+                          onClick={() => makePrimary(n.id)}
+                          className="text-[10px] tracking-wider uppercase font-medium text-emerald-500/80 hover:text-emerald-400 transition-colors"
+                        >
+                          Set as Primary
+                        </button>
+                      )}
+                      <Link
+                        href={`/${getCitySlugFromId(n.id)}/${getNeighborhoodSlugFromId(n.id)}`}
+                        onClick={() => { setExpandedId(null); onClose(); }}
+                        className="text-[10px] tracking-wider uppercase font-medium text-accent hover:text-accent/80 transition-colors"
+                      >
+                        Go to stories
+                      </Link>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
