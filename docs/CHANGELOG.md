@@ -5,9 +5,10 @@
 
 ## 2026-03-01
 
-**Three Mobile UX Improvements:**
+**Three Mobile UX Improvements + Clickable Pill Actions:**
 - Mobile feed: "Make {name} my primary" link appears below the dropdown when a non-primary neighborhood pill is selected. Reorders localStorage, syncs cookie, fires-and-forgets `POST /api/location/sync-primary-neighborhood`, then `router.refresh()`. Link disappears naturally when the neighborhood becomes primary.
-- Neighborhood selector modal: Tapping an already-selected neighborhood now expands an inline action row (Set as Primary / Go to stories / Remove) instead of instantly deselecting. `expandedId` state tracks which neighborhood is expanded, resets on search query or tab change. Removed standalone "Set as Primary" buttons. Fixed existing `makePrimary` to also call sync-primary API (was missing DB sync).
+- Neighborhood selector modal: Tapping an already-selected neighborhood in the list now expands an inline action row (Set as Primary / Go to stories / Remove) instead of instantly deselecting. `expandedId` state tracks which neighborhood is expanded, resets on search query or tab change. Removed standalone "Set as Primary" buttons. Fixed existing `makePrimary` to also call sync-primary API (was missing DB sync).
+- Selected pills at top of modal are now clickable: tapping a pill name expands Set as Primary (if non-primary) + Go to stories below it, X button still removes. Shared `expandedId` state so only one action row is open at a time across both pills and list items.
 - Mobile keyboard search: Added `isSearchActive` state with `onFocus`/`onBlur` on search input. When focused and typing, selected pills (~80px) and sort buttons (~80px) hide to maximize result space above the keyboard. 200ms blur delay ensures result clicks register before hiding. Clear button also resets state.
 - Added `feed.makePrimary`, `feed.goToStories`, `general.remove` translation keys in all 9 languages.
 - Files: `src/components/feed/MultiFeed.tsx`, `src/components/neighborhoods/NeighborhoodSelectorModal.tsx`, `src/lib/translations.ts`
