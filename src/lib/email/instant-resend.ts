@@ -164,6 +164,12 @@ export async function performInstantResend(
   const { userId, source, trigger } = params;
 
   try {
+    // 0. Skip on Sundays — Daily Brief doesn't send on Sundays (Sunday Edition does instead)
+    if (new Date().getUTCDay() === 0) {
+      console.log(`Instant resend skipped: Sunday (trigger: ${trigger})`);
+      return { success: false, reason: 'email_disabled' };
+    }
+
     // 1. Build recipient (also checks email_enabled and neighborhoods)
     const recipient = await buildRecipientForResend(supabase, userId, source);
     if (!recipient) {
