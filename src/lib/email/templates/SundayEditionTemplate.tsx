@@ -117,14 +117,9 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
             <Text style={sectionSubtitle}>The past seven days, distilled.</Text>
 
             <Text style={narrativeText}>{teaserParagraph}</Text>
-
-            {(remainingParagraphs.length > 0 || content.articleUrl) && content.articleUrl && (
-              <Text style={continueReadingText}>
-                <Link href={content.articleUrl} style={continueReadingLink}>
-                  Continue reading &rarr;
-                </Link>
-              </Text>
-            )}
+            {remainingParagraphs.map((p, i) => (
+              <Text key={i} style={narrativeText}>{p}</Text>
+            ))}
 
             {content.rearviewStories.length > 0 && (
               <Section style={storiesBox}>
@@ -238,13 +233,16 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
             </>
           )}
 
-          {/* Discovery Postcards (replace Your Other Editions when available) */}
-          {content.postcards && content.postcards.length >= 2 ? (
+          {/* Discovery Postcards */}
+          {content.postcards && content.postcards.length >= 2 && (
             <>
               <PostcardsSundaySection postcards={content.postcards} />
               <Hr style={divider} />
             </>
-          ) : content.secondaryNeighborhoods && content.secondaryNeighborhoods.length > 0 && content.requestBaseUrl && content.requestToken ? (
+          )}
+
+          {/* Your Other Editions */}
+          {content.secondaryNeighborhoods && content.secondaryNeighborhoods.length > 0 && content.requestBaseUrl && content.requestToken && (
             <>
               <Section style={otherEditionsSection}>
                 <Text style={sectionLabel}>YOUR OTHER EDITIONS</Text>
@@ -263,7 +261,7 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
 
               <Hr style={divider} />
             </>
-          ) : null}
+          )}
 
           {/* Inline referral CTA */}
           {content.referralUrl && (
@@ -435,18 +433,6 @@ const narrativeText = {
   color: '#333333',
   margin: '0 0 16px',
   fontFamily: 'system-ui, -apple-system, sans-serif',
-};
-
-const continueReadingText = {
-  fontSize: '15px',
-  margin: '0 0 24px',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
-};
-
-const continueReadingLink = {
-  color: '#C9A96E',
-  textDecoration: 'none' as const,
-  fontWeight: '600' as const,
 };
 
 // ─── Three Stories ───

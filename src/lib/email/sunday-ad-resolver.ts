@@ -22,11 +22,11 @@ const DEFAULT_AD: ResolvedSundayAd = {
 
 /**
  * Resolve the best Sunday Edition ad for a given neighborhood.
- * Date-aware: only matches ads booked for today.
+ * Date-aware: matches ads whose booking window includes today.
  *
  * Cascade:
- * 1. Neighborhood-targeted paid ad (placement_type = 'sunday_edition', status = 'active', start_date = today)
- * 2. Global paid ad (is_global = true, start_date = today)
+ * 1. Neighborhood-targeted paid ad (placement_type = 'sunday_edition', status = 'active', start_date <= today <= end_date)
+ * 2. Global paid ad (is_global = true, start_date <= today <= end_date)
  * 3. Sunday house ad (from house_ads table)
  * 4. Hardcoded default
  */
@@ -43,7 +43,8 @@ export async function resolveSundayAd(
     .eq('placement_type', 'sunday_edition')
     .eq('status', 'active')
     .eq('neighborhood_id', neighborhoodId)
-    .eq('start_date', today)
+    .lte('start_date', today)
+    .gte('end_date', today)
     .order('created_at', { ascending: false })
     .limit(1)
     .single();
@@ -67,7 +68,8 @@ export async function resolveSundayAd(
     .eq('placement_type', 'sunday_edition')
     .eq('status', 'active')
     .eq('is_global', true)
-    .eq('start_date', today)
+    .lte('start_date', today)
+    .gte('end_date', today)
     .order('created_at', { ascending: false })
     .limit(1)
     .single();

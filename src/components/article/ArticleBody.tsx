@@ -95,7 +95,15 @@ export function ArticleBody({ content, neighborhoodName, city, articleType, coun
       paragraphs.push(para);
       continue;
     }
-    const sentences = para.split(/(?<=[.!?])\s+(?=[A-Z])/);
+    // Protect markdown links from sentence splitting (e.g., [71 N. Moore Street](url)
+    // would split at "N. M" without protection)
+    const linkPlaceholders: string[] = [];
+    const protectedPara = para.replace(/\[[^\]]+\]\(https?:\/\/[^)]+\)/g, (match) => {
+      linkPlaceholders.push(match);
+      return `__MDLINK_${linkPlaceholders.length - 1}__`;
+    });
+    const sentences = protectedPara.split(/(?<=[.!?])\s+(?=[A-Z])/)
+      .map(s => s.replace(/__MDLINK_(\d+)__/g, (_, idx) => linkPlaceholders[parseInt(idx)]));
     let currentPara = '';
     for (const sentence of sentences) {
       if (currentPara.length + sentence.length > 300 && currentPara.length > 0) {

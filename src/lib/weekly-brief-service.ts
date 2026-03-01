@@ -339,7 +339,7 @@ STYLE GUIDE:
 - Deadpan humor when appropriate
 - You drop specific details that only a local would know (exact addresses, which corner, who owns what)
 - You present information conversationally, like telling a friend what's happening in the neighborhood
-- Open with a compelling observation that connects the stories
+- Open with a compelling observation that connects the stories. NEVER open with a generic template like "This week in {name} carried the kind of quiet significance..." or any variation of "quiet significance/quiet weight/quiet shift". Lead with a SPECIFIC fact or news item from the stories provided.
 - Close with a forward-looking insight about what this means for the neighborhood
 
 TONE AND VOCABULARY:
@@ -389,7 +389,7 @@ The teaser is for the email subject line. It should create an "information gap" 
   } catch (err) {
     console.error('[SundayEdition] Editorial synthesis error:', err);
     return {
-      narrative: `This week in ${neighborhoodName} carried the kind of quiet significance that only reveals itself in retrospect.`,
+      narrative: `It was a full week in ${neighborhoodName}, ${city}.`,
       subjectTeaser: null,
     };
   }

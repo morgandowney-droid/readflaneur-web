@@ -8,6 +8,7 @@ import { resolveRecipients } from '@/lib/email/scheduler';
 import { resolveSundayAd } from '@/lib/email/sunday-ad-resolver';
 import { fetchWeather } from '@/lib/email/weather';
 import { selectSundayPostcards } from '@/lib/email/postcard-selector';
+import { selectLibraryImageAsync } from '@/lib/image-library';
 
 /**
  * Build Sunday Edition subject line.
@@ -208,26 +209,38 @@ export async function GET(request: Request) {
         }
       }
 
-      // Get the primary neighborhood's weekly brief
+      // Get the primary neighborhood's weekly brief, falling back to other subscribed neighborhoods
       if (!primaryId) {
         results.emails_skipped++;
         results.errors.push(`skip:no_primary_id:${recipient.id}`);
         continue;
       }
 
-      // In test mode, also check yesterday's date and most recent brief as fallback
+      // Try primary first, then fall back to other subscribed neighborhoods
       let brief;
-      const { data: todayBrief } = await supabase
-        .from('weekly_briefs')
-        .select('*, neighborhoods(name, city, latitude, longitude, country), articles(slug)')
-        .eq('neighborhood_id', primaryId)
-        .eq('week_date', weekDate)
-        .single();
+      let usedNeighborhoodId = primaryId;
+      const neighborhoodIdsToTry = [primaryId, ...recipient.subscribedNeighborhoodIds.filter((nid: string) => nid !== primaryId)];
 
-      brief = todayBrief;
+      for (const nid of neighborhoodIdsToTry) {
+        const { data: candidateBrief } = await supabase
+          .from('weekly_briefs')
+          .select('*, neighborhoods(name, city, latitude, longitude, country), articles(slug)')
+          .eq('neighborhood_id', nid)
+          .eq('week_date', weekDate)
+          .single();
+
+        if (candidateBrief) {
+          brief = candidateBrief;
+          usedNeighborhoodId = nid;
+          if (nid !== primaryId) {
+            console.log(`[sunday-edition] Fallback: ${recipient.email} primary ${primaryId} has no brief, using ${nid}`);
+          }
+          break;
+        }
+      }
 
       if (!brief && testEmail) {
-        // Try the most recent brief for this neighborhood (regardless of date)
+        // Try the most recent brief for primary neighborhood (regardless of date)
         const { data: recentBriefs } = await supabase
           .from('weekly_briefs')
           .select('*, neighborhoods(name, city, latitude, longitude, country), articles(slug)')
@@ -235,11 +248,19 @@ export async function GET(request: Request) {
           .order('week_date', { ascending: false })
           .limit(1);
         brief = recentBriefs?.[0] || null;
+        usedNeighborhoodId = primaryId;
       }
 
       if (!brief) {
         results.emails_skipped++;
         results.errors.push(`skip:no_brief:${primaryId}:${weekDate}`);
+        continue;
+      }
+
+      // Dedup check for the actual neighborhood being sent (may differ from primary after fallback)
+      if (!testEmail && usedNeighborhoodId !== primaryId && sentSet.has(`${recipient.id}:${usedNeighborhoodId}`)) {
+        results.emails_skipped++;
+        results.errors.push(`skip:dedup:${recipient.id}:${usedNeighborhoodId}`);
         continue;
       }
 
@@ -265,11 +286,17 @@ export async function GET(request: Request) {
           .eq('status', 'published')
           .single();
         if (articleCheck) {
-          const neighborhoodSlug = primaryId.split('-').slice(1).join('-');
+          const neighborhoodSlug = usedNeighborhoodId.split('-').slice(1).join('-');
           const citySlug = hood.city.toLowerCase().replace(/\s+/g, '-');
           articleUrl = `${appUrl}/${citySlug}/${neighborhoodSlug}/${articleSlug}?ref=sunday-edition`;
         }
       }
+
+      // Fetch hero image from Unsplash library for the neighborhood
+      let heroImageUrl: string | null = null;
+      try {
+        heroImageUrl = await selectLibraryImageAsync(supabase, usedNeighborhoodId, 'sunday-edition') || null;
+      } catch {}
 
       // Fetch Look Ahead article URL for this neighborhood
       let lookAheadUrl: string | null = null;
@@ -279,14 +306,14 @@ export async function GET(request: Request) {
         const { data: lookAheadArticles } = await supabase
           .from('articles')
           .select('slug')
-          .eq('neighborhood_id', primaryId)
+          .eq('neighborhood_id', usedNeighborhoodId)
           .eq('status', 'published')
           .eq('article_type', 'look_ahead')
           .gte('published_at', cutoff.toISOString())
           .order('published_at', { ascending: false })
           .limit(1);
         if (lookAheadArticles && lookAheadArticles.length > 0) {
-          const neighborhoodSlugForUrl = primaryId.split('-').slice(1).join('-');
+          const neighborhoodSlugForUrl = usedNeighborhoodId.split('-').slice(1).join('-');
           const citySlugForUrl = hood.city.toLowerCase().replace(/\s+/g, '-');
           lookAheadUrl = `${appUrl}/${citySlugForUrl}/${neighborhoodSlugForUrl}/${lookAheadArticles[0].slug}`;
         }
@@ -326,7 +353,7 @@ export async function GET(request: Request) {
           return dp;
         })(),
         holidaySection: brief.holiday_section || null,
-        imageUrl: null,
+        imageUrl: heroImageUrl,
         articleUrl,
         unsubscribeUrl: `${appUrl}/api/email/unsubscribe?token=${recipient.unsubscribeToken}`,
         preferencesUrl: `${appUrl}/email/preferences?token=${recipient.unsubscribeToken}`,
@@ -334,7 +361,7 @@ export async function GET(request: Request) {
           ? `${appUrl}/invite?ref=${recipient.referralCode}`
           : undefined,
         secondaryNeighborhoods: (recipient.subscribedNeighborhoodIds as string[])
-          .filter((nid: string) => nid !== primaryId)
+          .filter((nid: string) => nid !== usedNeighborhoodId)
           .map((nid: string) => {
             const info = neighborhoodNameMap.get(nid);
             return info ? { id: nid, name: info.name, cityName: info.city } : null;
@@ -347,7 +374,7 @@ export async function GET(request: Request) {
       };
 
       // Resolve sponsor ad for this neighborhood
-      const sundayAd = await resolveSundayAd(supabase, primaryId);
+      const sundayAd = await resolveSundayAd(supabase, usedNeighborhoodId);
       emailContent.sponsorAd = {
         sponsorLabel: sundayAd.sponsorLabel,
         imageUrl: sundayAd.imageUrl,
@@ -387,7 +414,7 @@ export async function GET(request: Request) {
           await supabase.from('weekly_brief_sends').insert({
             recipient_id: recipient.id,
             recipient_email: recipient.email,
-            neighborhood_id: primaryId,
+            neighborhood_id: usedNeighborhoodId,
             week_date: weekDate,
           }).then(null, () => {});
 

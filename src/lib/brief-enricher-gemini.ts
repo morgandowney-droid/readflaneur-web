@@ -319,6 +319,8 @@ TONE AND VOCABULARY:
 
 This is The Sunday Edition - a weekly community recap published on Sunday. Even if you are processing this on a different day, write as if it is Sunday (use the CURRENT TIME date provided above as your reference). Do not reference Monday or any day after Sunday. Straight news, no fluff.
 
+BANNED OPENERS: NEVER open with generic template phrases like "This week in {name} carried the kind of quiet significance..." or any variation involving "quiet significance", "quiet weight", "quiet shift". Jump straight into the first news story.
+
 ONE STORY PER SECTION: Each distinct story gets its own [[header]] and paragraph. NEVER combine two unrelated stories in the same section. A zoning decision and a restaurant closure are two separate stories - give each its own section.
 STORY ORDER: Lead with the most consequential and recent story first. A safety incident or policy change that affects residents outranks a restaurant opening. Within the same significance level, more recent events lead over older ones.`;
 
