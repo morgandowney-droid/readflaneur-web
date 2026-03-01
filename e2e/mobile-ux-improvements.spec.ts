@@ -147,4 +147,36 @@ test.describe('Mobile UX Improvements', () => {
     // Take "after clear" screenshot
     await page.screenshot({ path: 'e2e/screenshots/mobile-search-cleared.png', fullPage: false });
   });
+
+  test('4. Selected pill at top of modal shows inline actions on click', async ({ page }) => {
+    await page.goto(`${PROD_URL}/feed`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(2000);
+
+    // Open the neighborhood selector modal
+    const manageBtn = page.locator('button[title="Manage neighborhoods"]').first();
+    await expect(manageBtn).toBeVisible({ timeout: 15000 });
+    await manageBtn.click();
+
+    // Wait for modal
+    const modal = page.locator('text=City Search');
+    await expect(modal).toBeVisible({ timeout: 10000 });
+    await page.waitForTimeout(1000);
+
+    // Click the Mayfair pill (non-primary, should show Set as Primary + Go to stories)
+    const mayfairPill = page.locator('.flex-wrap span:has-text("Mayfair")').first();
+    await expect(mayfairPill).toBeVisible({ timeout: 5000 });
+    await mayfairPill.click();
+    await page.waitForTimeout(500);
+
+    // Should see "Set as Primary" since Mayfair is not primary
+    const setPrimary = page.locator('button:has-text("Set as Primary")').first();
+    const goToStories = page.locator('a:has-text("Go to stories")').first();
+
+    const hasSetPrimary = await setPrimary.isVisible();
+    const hasGoToStories = await goToStories.isVisible();
+    expect(hasSetPrimary || hasGoToStories).toBeTruthy();
+
+    // Take screenshot
+    await page.screenshot({ path: 'e2e/screenshots/mobile-pill-actions.png', fullPage: false });
+  });
 });
