@@ -5,6 +5,16 @@
 
 ## 2026-03-01
 
+**Fix Sunday Edition Duplicate Sends:**
+- The neighborhood fallback loop (added same day) combined with per-neighborhood dedup (`recipient_id:neighborhood_id`) meant hourly cron runs could select a different neighborhood each time and bypass dedup, sending multiple Sunday Editions to the same person. One user received 4+ emails.
+- Changed to per-recipient dedup: `recipientsSentThisWeek` Set checks just `recipient_id` so each person gets at most one Sunday Edition per week regardless of which neighborhood is used. Removed the redundant per-neighborhood dedup check after fallback.
+- File: `src/app/api/cron/send-sunday-edition/route.ts`
+
+**Fix Instant Resend Sunday Skip:**
+- `performInstantResend()` in `instant-resend.ts` had no Sunday check, while the daily brief cron skips Sundays. A user who changed their primary neighborhood on Sunday triggered an instant resend that sent a Daily Brief on Sunday (when only Sunday Edition should send).
+- Added `getUTCDay() === 0` early return at the top of `performInstantResend()`.
+- File: `src/lib/email/instant-resend.ts`
+
 **Sunday Edition Email Fixes:**
 - Ad resolver used exact date match (`.eq('start_date', today)`) instead of date range, so multi-day ads like AURUM sunglasses (2026-02-22 to 2027-02-22) never resolved. Fixed to `.lte('start_date', today).gte('end_date', today)` matching Daily Brief pattern.
 - Template only rendered the teaser paragraph of The Letter narrative. `remainingParagraphs` was computed but never rendered in JSX. Now all paragraphs display.
