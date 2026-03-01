@@ -5,6 +5,13 @@
 
 ## 2026-03-01
 
+**Three Mobile UX Improvements:**
+- Mobile feed: "Make {name} my primary" link appears below the dropdown when a non-primary neighborhood pill is selected. Reorders localStorage, syncs cookie, fires-and-forgets `POST /api/location/sync-primary-neighborhood`, then `router.refresh()`. Link disappears naturally when the neighborhood becomes primary.
+- Neighborhood selector modal: Tapping an already-selected neighborhood now expands an inline action row (Set as Primary / Go to stories / Remove) instead of instantly deselecting. `expandedId` state tracks which neighborhood is expanded, resets on search query or tab change. Removed standalone "Set as Primary" buttons. Fixed existing `makePrimary` to also call sync-primary API (was missing DB sync).
+- Mobile keyboard search: Added `isSearchActive` state with `onFocus`/`onBlur` on search input. When focused and typing, selected pills (~80px) and sort buttons (~80px) hide to maximize result space above the keyboard. 200ms blur delay ensures result clicks register before hiding. Clear button also resets state.
+- Added `feed.makePrimary`, `feed.goToStories`, `general.remove` translation keys in all 9 languages.
+- Files: `src/components/feed/MultiFeed.tsx`, `src/components/neighborhoods/NeighborhoodSelectorModal.tsx`, `src/lib/translations.ts`
+
 **Fix Sunday Edition Duplicate Sends:**
 - The neighborhood fallback loop (added same day) combined with per-neighborhood dedup (`recipient_id:neighborhood_id`) meant hourly cron runs could select a different neighborhood each time and bypass dedup, sending multiple Sunday Editions to the same person. One user received 4+ emails.
 - Changed to per-recipient dedup: `recipientsSentThisWeek` Set checks just `recipient_id` so each person gets at most one Sunday Edition per week regardless of which neighborhood is used. Removed the redundant per-neighborhood dedup check after fallback.
