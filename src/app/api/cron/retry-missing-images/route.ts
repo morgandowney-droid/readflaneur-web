@@ -134,7 +134,7 @@ export async function GET(request: Request) {
     // Phase 3: Swap negatively-scored Unsplash images
     try {
       const { data: negativeImages, error: rpcError } = await supabase
-        .rpc('get_negative_images', { threshold: -2 });
+        .rpc('get_negative_images', { threshold: -1 });
 
       if (rpcError) {
         errors.push(`Negative images RPC: ${rpcError.message}`);

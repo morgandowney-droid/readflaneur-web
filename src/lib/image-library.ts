@@ -167,7 +167,9 @@ function resolveCategory(articleType: string, categoryLabel?: string, articleInd
 
 /**
  * Select the appropriate library image URL for an article.
- * Checks Unsplash cache first, falls back to old Supabase Storage URL.
+ * ALL article types rotate across the full pool (8 category photos + alternates)
+ * using day-of-year so each day gets a different image. Falls back to category-based
+ * selection only when alternates aren't available.
  *
  * @param neighborhoodId - The neighborhood's slug ID
  * @param articleType - The article_type value from the articles table
@@ -191,19 +193,21 @@ export function selectLibraryImage(
   // Check Unsplash cache first
   const cached = unsplashCache.get(neighborhoodId);
   if (cached) {
-    // For RSS/news articles with an index, draw from the full pool
-    // (8 category photos + up to 40 alternates) for maximum variety
-    const isRotatable = articleIndex != null && articleType !== 'brief_summary'
-      && articleType !== 'look_ahead' && articleType !== 'weekly_recap';
+    // Build the full pool of all available photos (8 categories + alternates)
+    const allPhotos = Object.values(cached.photos).filter((p): p is UnsplashPhoto => !!p?.url);
+    const fullPool = [...allPhotos, ...cached.alternates.filter(a => a?.url)];
 
-    if (isRotatable && cached.alternates.length > 0) {
-      const allPhotos = Object.values(cached.photos).filter((p): p is UnsplashPhoto => !!p?.url);
-      const fullPool = [...allPhotos, ...cached.alternates.filter(a => a?.url)];
-      if (fullPool.length > 0) {
-        return fullPool[articleIndex % fullPool.length].url;
-      }
+    if (fullPool.length > 1) {
+      // Determine rotation index based on article type:
+      // - RSS/standard with articleIndex: use articleIndex for per-article variety
+      // - Brief/Look Ahead/Sunday: use day-of-year so each day gets a different photo
+      const rotationIndex = articleIndex != null
+        ? articleIndex
+        : getDayOfYear();
+      return fullPool[rotationIndex % fullPool.length].url;
     }
 
+    // Fallback: use category-based selection when pool is too small
     const photo: UnsplashPhoto | undefined = cached.photos[category];
     if (photo?.url) {
       return photo.url;
@@ -251,13 +255,12 @@ export async function selectLibraryImageAsync(
     const photos = data.unsplash_photos as UnsplashPhotosMap;
     const alternates = (data.unsplash_alternates || []) as UnsplashPhoto[];
 
-    // For RSS/news articles, draw from full pool (photos + alternates)
-    const isRotatable = articleIndex != null && articleType !== 'brief_summary'
-      && articleType !== 'look_ahead' && articleType !== 'weekly_recap';
-    if (isRotatable && alternates.length > 0) {
-      const allPhotos = Object.values(photos).filter((p): p is UnsplashPhoto => !!p?.url);
-      const fullPool = [...allPhotos, ...alternates.filter(a => a?.url)];
-      if (fullPool.length > 0) return fullPool[articleIndex % fullPool.length].url;
+    // All article types rotate across full pool (8 categories + alternates)
+    const allPhotos = Object.values(photos).filter((p): p is UnsplashPhoto => !!p?.url);
+    const fullPool = [...allPhotos, ...alternates.filter(a => a?.url)];
+    if (fullPool.length > 1) {
+      const rotationIndex = articleIndex != null ? articleIndex : getDayOfYear();
+      return fullPool[rotationIndex % fullPool.length].url;
     }
 
     const photo = photos[category];
@@ -284,7 +287,7 @@ export async function getLibraryReadyIds(
 ): Promise<Set<string>> {
   const { data } = await supabase
     .from('image_library_status')
-    .select('neighborhood_id, unsplash_photos, images_generated');
+    .select('neighborhood_id, unsplash_photos, unsplash_alternates, images_generated');
 
   const readyIds = new Set<string>();
   if (data) {
@@ -294,11 +297,11 @@ export async function getLibraryReadyIds(
       if (row.unsplash_photos || row.images_generated >= IMAGE_CATEGORIES.length) {
         readyIds.add(row.neighborhood_id);
       }
-      // Preload Unsplash cache while we're at it
+      // Preload Unsplash cache with BOTH photos and alternates
       if (row.unsplash_photos) {
         unsplashCache.set(row.neighborhood_id, {
           photos: row.unsplash_photos as UnsplashPhotosMap,
-          alternates: [],
+          alternates: (row.unsplash_alternates || []) as UnsplashPhoto[],
           timestamp: now,
         });
       }
