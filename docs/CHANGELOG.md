@@ -5,6 +5,10 @@
 
 ## 2026-03-01
 
+**Silence Mobile Safari AbortError in Sentry:**
+- Mobile Safari fires `AbortError: The operation was aborted` (DOMException code 20) when any in-flight fetch is cancelled during page navigation. Harmless noise, not a code bug.
+- Added `'The operation was aborted'` to `ignoreErrors` in `src/instrumentation-client.ts` alongside existing GoTrue `'signal is aborted without reason'` filter.
+
 **Three Mobile UX Improvements + Clickable Pill Actions:**
 - Mobile feed: "Make {name} my primary" link appears below the dropdown when a non-primary neighborhood pill is selected. Reorders localStorage, syncs cookie, fires-and-forgets `POST /api/location/sync-primary-neighborhood`, then `router.refresh()`. Link disappears naturally when the neighborhood becomes primary.
 - Neighborhood selector modal: Tapping an already-selected neighborhood in the list now expands an inline action row (Set as Primary / Go to stories / Remove) instead of instantly deselecting. `expandedId` state tracks which neighborhood is expanded, resets on search query or tab change. Removed standalone "Set as Primary" buttons. Fixed existing `makePrimary` to also call sync-primary API (was missing DB sync).
