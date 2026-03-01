@@ -312,6 +312,13 @@ function GlobalNeighborhoodModal({
   const [reportStatus, setReportStatus] = useState<Record<string, 'idle' | 'submitting' | 'success' | 'error'>>({});
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
 
+  // Inline actions for selected neighborhoods
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Mobile keyboard search fix
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const searchBlurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Handle suggestion submission via API
   const handleSuggestionSubmit = async () => {
     if (!suggestionText.trim() || suggestionText.trim().length < 3) return;
@@ -681,6 +688,9 @@ function GlobalNeighborhoodModal({
     };
   }, [isOpen, onClose]);
 
+  // Reset expanded action row when search or tab changes
+  useEffect(() => { setExpandedId(null); }, [searchQuery, activeTab]);
+
   // Compute dynamic city coordinates by averaging neighborhood lat/lng per group
   const cityCoordinates = useMemo(() => {
     const coords: Record<string, [number, number]> = {};
@@ -1004,6 +1014,13 @@ function GlobalNeighborhoodModal({
       localStorage.setItem(PREFS_KEY, JSON.stringify(reordered));
       document.cookie = `flaneur-neighborhoods=${reordered.join(',')};path=/;max-age=31536000;SameSite=Strict`;
       setPrimaryId(id);
+      setExpandedId(null);
+      // Fire-and-forget sync to DB
+      fetch('/api/location/sync-primary-neighborhood', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ neighborhoodId: id }),
+      }).catch(() => {});
       router.push('/feed');
     } catch { /* ignore */ }
   };
@@ -1015,6 +1032,48 @@ function GlobalNeighborhoodModal({
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     el.classList.add('ring-1', 'ring-amber-500/60', 'rounded');
     setTimeout(() => el.classList.remove('ring-1', 'ring-amber-500/60', 'rounded'), 2000);
+  };
+
+  // Click handler: selected hoods expand inline actions, unselected hoods get added
+  const handleNeighborhoodClick = (id: string) => {
+    if (selected.has(id)) {
+      setExpandedId(expandedId === id ? null : id);
+    } else {
+      toggleNeighborhood(id);
+    }
+  };
+
+  // Render inline action row for expanded selected neighborhood
+  const renderInlineActions = (hood: NeighborhoodWithCombo) => {
+    if (expandedId !== hood.id) return null;
+    const isPrimary = hood.id === primaryId;
+    const citySlug = getCitySlugFromId(hood.id);
+    const neighborhoodSlug = getNeighborhoodSlugFromId(hood.id);
+    return (
+      <div className="flex items-center gap-3 ml-4 mt-1 mb-1">
+        {!isPrimary && selected.size > 1 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); makePrimary(hood.id); }}
+            className="text-[10px] tracking-wider uppercase font-medium text-emerald-500/80 hover:text-emerald-400 transition-colors"
+          >
+            Set as Primary
+          </button>
+        )}
+        <Link
+          href={`/${citySlug}/${neighborhoodSlug}`}
+          onClick={() => { setExpandedId(null); onClose(); }}
+          className="text-[10px] tracking-wider uppercase font-medium text-accent hover:text-accent/80 transition-colors"
+        >
+          Go to stories
+        </Link>
+        <button
+          onClick={(e) => { e.stopPropagation(); setExpandedId(null); toggleNeighborhood(hood.id); }}
+          className="text-[10px] tracking-wider uppercase font-medium text-fg-subtle hover:text-fg transition-colors"
+        >
+          Remove
+        </button>
+      </div>
+    );
   };
 
   if (!isOpen) return null;
@@ -1236,11 +1295,21 @@ function GlobalNeighborhoodModal({
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => {
+                  setIsSearchActive(true);
+                  // Scroll input into view on mobile after keyboard opens
+                  setTimeout(() => searchInputRef.current?.scrollIntoView({ block: 'nearest' }), 100);
+                }}
+                onBlur={() => {
+                  // Delay so result clicks register before hiding
+                  if (searchBlurTimer.current) clearTimeout(searchBlurTimer.current);
+                  searchBlurTimer.current = setTimeout(() => setIsSearchActive(false), 200);
+                }}
                 className="w-full bg-transparent border-b border-border-strong text-sm text-fg placeholder-fg-subtle py-2 focus:outline-none focus:border-amber-500/50 transition-colors"
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => { setSearchQuery(''); setIsSearchActive(false); }}
                   className="absolute right-0 top-1/2 -translate-y-1/2 text-fg-subtle hover:text-fg"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1267,8 +1336,8 @@ function GlobalNeighborhoodModal({
             </div>
           )}
 
-          {/* Sort buttons (All tab only, hide when search yields no results) */}
-          {activeTab === 'all' && !(searchQuery.trim() && filteredCities.length === 0) && (
+          {/* Sort buttons (All tab only, hide when search yields no results or when actively searching on mobile) */}
+          {activeTab === 'all' && !(searchQuery.trim() && filteredCities.length === 0) && !(isSearchActive && searchQuery.trim()) && (
           <div className="mt-3 flex items-center gap-2">
             <button
               onClick={handleSortByNearest}
@@ -1301,8 +1370,8 @@ function GlobalNeighborhoodModal({
           </div>
           )}
 
-          {/* Selected neighborhoods pills (All tab only, hide when search yields no results) */}
-          {activeTab === 'all' && selectedNeighborhoods.length > 0 && !(searchQuery.trim() && filteredCities.length === 0) && (
+          {/* Selected neighborhoods pills (All tab only, hide when search yields no results or when actively searching on mobile) */}
+          {activeTab === 'all' && selectedNeighborhoods.length > 0 && !(searchQuery.trim() && filteredCities.length === 0) && !(isSearchActive && searchQuery.trim()) && (
             <div className="mt-3 flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto">
               {selectedNeighborhoods.map(n => (
                 <span
@@ -1495,7 +1564,7 @@ function GlobalNeighborhoodModal({
                                 <div key={hood.id} data-neighborhood-id={hood.id} className="group/item">
                                   <div className="flex items-center gap-1">
                                     <button
-                                      onClick={() => toggleNeighborhood(hood.id)}
+                                      onClick={() => handleNeighborhoodClick(hood.id)}
                                       className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${
                                         isSelected ? 'text-accent font-medium' : 'text-fg-muted hover:text-fg'
                                       }`}
@@ -1532,6 +1601,7 @@ function GlobalNeighborhoodModal({
                                       <span className="text-[10px] text-fg-subtle shrink-0">Reported</span>
                                     )}
                                   </div>
+                                  {renderInlineActions(hood)}
                                   {/* Confirm delete dialog */}
                                   {confirmDeleteId === hood.id && (
                                     <div className="flex items-center gap-2 mt-1 ml-4">
@@ -1638,41 +1708,34 @@ function GlobalNeighborhoodModal({
                                 );
                               }
                               const isPrimary = hood.id === primaryId && selected.size > 1;
-                              const showSetPrimary = isSelected && !isPrimary && selected.size > 1;
                               return (
-                                <div key={hood.id} data-neighborhood-id={hood.id} className="flex items-center gap-1 group/item">
-                                  <button
-                                    onClick={() => toggleNeighborhood(hood.id)}
-                                    className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${isSelected ? 'text-accent font-medium' : 'text-fg-muted hover:text-fg'}`}
-                                    title={hasComboComponents ? `Includes: ${hood.combo_component_names!.join(', ')}` : undefined}
-                                  >
-                                    {isSelected && (
-                                      <svg className="w-3 h-3 shrink-0 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                      </svg>
-                                    )}
-                                    {hood.name}
-                                    {hood.is_community && (
-                                      <span className={`text-[10px] ${hood.created_by === userId ? 'text-accent' : 'text-fg-subtle'}`}>
-                                        {hood.created_by === userId ? 'Created by you' : 'Community'}
-                                      </span>
-                                    )}
-                                    {hasComboComponents && (
-                                      <span className="text-[11px] text-fg-subtle">({hood.combo_component_names!.length} areas)</span>
-                                    )}
-                                    {isPrimary && (
-                                      <span className="text-[9px] tracking-wider uppercase text-amber-500/70 font-medium ml-1">Primary</span>
-                                    )}
-                                  </button>
-                                  {showSetPrimary && (
+                                <div key={hood.id} data-neighborhood-id={hood.id}>
+                                  <div className="flex items-center gap-1 group/item">
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); makePrimary(hood.id); }}
-                                      className="text-[10px] tracking-wider uppercase font-medium text-emerald-500/80 hover:text-emerald-400 opacity-100 md:opacity-0 md:group-hover/item:opacity-100 transition-opacity shrink-0 py-0.5"
-                                      title="Set as primary"
+                                      onClick={() => handleNeighborhoodClick(hood.id)}
+                                      className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${isSelected ? 'text-accent font-medium' : 'text-fg-muted hover:text-fg'}`}
+                                      title={hasComboComponents ? `Includes: ${hood.combo_component_names!.join(', ')}` : undefined}
                                     >
-                                      Set as Primary
+                                      {isSelected && (
+                                        <svg className="w-3 h-3 shrink-0 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      )}
+                                      {hood.name}
+                                      {hood.is_community && (
+                                        <span className={`text-[10px] ${hood.created_by === userId ? 'text-accent' : 'text-fg-subtle'}`}>
+                                          {hood.created_by === userId ? 'Created by you' : 'Community'}
+                                        </span>
+                                      )}
+                                      {hasComboComponents && (
+                                        <span className="text-[11px] text-fg-subtle">({hood.combo_component_names!.length} areas)</span>
+                                      )}
+                                      {isPrimary && (
+                                        <span className="text-[9px] tracking-wider uppercase text-amber-500/70 font-medium ml-1">Primary</span>
+                                      )}
                                     </button>
-                                  )}
+                                  </div>
+                                  {renderInlineActions(hood)}
                                 </div>
                               );
                             })}
@@ -1726,46 +1789,39 @@ function GlobalNeighborhoodModal({
                       }
 
                       const isPrimary = hood.id === primaryId && selected.size > 1;
-                      const showSetPrimary = isSelected && !isPrimary && selected.size > 1;
 
                       return (
-                        <div key={hood.id} data-neighborhood-id={hood.id} className="flex items-center gap-1 group/item">
-                          <button
-                            onClick={() => toggleNeighborhood(hood.id)}
-                            className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${
-                              isSelected
-                                ? 'text-accent font-medium'
-                                : 'text-fg-muted hover:text-fg'
-                            }`}
-                            title={hasComboComponents ? `Includes: ${hood.combo_component_names!.join(', ')}` : undefined}
-                          >
-                            {isSelected && (
-                              <svg className="w-3 h-3 shrink-0 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                            {hood.name}
-                            {hood.is_community && (
-                              <span className={`text-[10px] ${hood.created_by === userId ? 'text-accent' : 'text-fg-subtle'}`}>
-                                {hood.created_by === userId ? 'Created by you' : 'Community'}
-                              </span>
-                            )}
-                            {hasComboComponents && (
-                              <span className="text-[11px] text-fg-subtle">({hood.combo_component_names!.length} areas)</span>
-                            )}
-                            {isPrimary && (
-                              <span className="text-[9px] tracking-wider uppercase text-amber-500/70 font-medium ml-1">Primary</span>
-                            )}
-                          </button>
-                          {showSetPrimary && (
+                        <div key={hood.id} data-neighborhood-id={hood.id}>
+                          <div className="flex items-center gap-1 group/item">
                             <button
-                              onClick={(e) => { e.stopPropagation(); makePrimary(hood.id); }}
-                              className="text-[10px] tracking-wider uppercase font-medium text-emerald-500/80 hover:text-emerald-400 opacity-100 md:opacity-0 md:group-hover/item:opacity-100 transition-opacity shrink-0 py-0.5"
-                              title="Set as primary"
+                              onClick={() => handleNeighborhoodClick(hood.id)}
+                              className={`flex-1 text-left text-sm py-0.5 transition-colors flex items-center gap-1 ${
+                                isSelected
+                                  ? 'text-accent font-medium'
+                                  : 'text-fg-muted hover:text-fg'
+                              }`}
+                              title={hasComboComponents ? `Includes: ${hood.combo_component_names!.join(', ')}` : undefined}
                             >
-                              Set as Primary
+                              {isSelected && (
+                                <svg className="w-3 h-3 shrink-0 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                              {hood.name}
+                              {hood.is_community && (
+                                <span className={`text-[10px] ${hood.created_by === userId ? 'text-accent' : 'text-fg-subtle'}`}>
+                                  {hood.created_by === userId ? 'Created by you' : 'Community'}
+                                </span>
+                              )}
+                              {hasComboComponents && (
+                                <span className="text-[11px] text-fg-subtle">({hood.combo_component_names!.length} areas)</span>
+                              )}
+                              {isPrimary && (
+                                <span className="text-[9px] tracking-wider uppercase text-amber-500/70 font-medium ml-1">Primary</span>
+                              )}
                             </button>
-                          )}
+                          </div>
+                          {renderInlineActions(hood)}
                         </div>
                       );
                     })}

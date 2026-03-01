@@ -538,6 +538,26 @@ export function MultiFeed({
     </div>
   );
 
+  // Make a neighborhood the primary (first in order)
+  const makePrimary = useCallback((id: string) => {
+    const stored = localStorage.getItem('flaneur-neighborhood-preferences');
+    if (!stored) return;
+    try {
+      const ids = JSON.parse(stored) as string[];
+      if (!ids.includes(id)) return;
+      const reordered = [id, ...ids.filter(i => i !== id)];
+      localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(reordered));
+      document.cookie = `flaneur-neighborhoods=${reordered.join(',')};path=/;max-age=31536000;SameSite=Strict`;
+      // Fire-and-forget sync to DB
+      fetch('/api/location/sync-primary-neighborhood', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ neighborhoodId: id }),
+      }).catch(() => {});
+      router.refresh();
+    } catch { /* ignore */ }
+  }, [router]);
+
   const loadMoreFiltered = async () => {
     if (!activeFilter || !fetchedArticles) return;
     setMoreLoading(true);
@@ -677,6 +697,16 @@ export function MultiFeed({
               {manageButton}
             </div>
           </div>
+
+          {/* MOBILE: "Make primary" link when a non-primary pill is selected */}
+          {activeFilter && activeFilter !== neighborhoods[0]?.id && activeHood && (
+            <button
+              onClick={() => makePrimary(activeFilter)}
+              className="md:hidden w-full text-left text-xs text-fg-subtle hover:text-accent transition-colors pb-2 -mt-1"
+            >
+              {t('feed.makePrimary').replace('{name}', activeHood.name)}
+            </button>
+          )}
 
           {/* DESKTOP: Pill bar (unchanged) */}
           <div className="hidden md:flex items-center gap-1 py-3">
