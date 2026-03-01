@@ -5,6 +5,12 @@
 
 ## 2026-03-01
 
+**Fix Community Neighborhood Article Source Attribution:**
+- The community neighborhood creation endpoint (`/api/neighborhoods/create`) was the only code path creating `brief_summary` articles without inserting rows into `article_sources`. This meant community-created neighborhoods showed generic "Synthesized from public news sources" instead of named sources.
+- Added source extraction from `enriched_categories` after article creation, matching the existing pattern in `generate-brief-articles` cron and `assembler.ts` fallback path.
+- Three-layer safety net now complete: (1) all 3 creation paths insert sources, (2) `checkEditorialSources` health check detects missing sources daily at 10 AM UTC, (3) `fixMissingSources` auto-fixer resolves issues every 30 minutes.
+- File: `src/app/api/neighborhoods/create/route.ts`
+
 **Show Actual Sources on Editorial Articles:**
 - Daily briefs, Look Ahead, and Sunday Edition articles had real sources in the DB (e.g., Eater NY, West Side Rag, Patch, X posts) but `isEditorial` guard in `SourceAttribution` hid them behind generic "Synthesized from public news sources" text.
 - Changed: `isEditorial` now only suppresses the "verify here" Google link, not the source listing. Articles with real sources show "Synthesized from reporting by Eater NY, West Side Rag..." with clickable links.
