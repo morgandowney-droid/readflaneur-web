@@ -81,9 +81,9 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated, headlin
     </span>
   ) : null;
 
-  // Editorial content (briefs, look-ahead, sunday edition) should show generic attribution,
-  // not individual source names, even if source rows exist in the DB for tracking purposes
-  if (!sources || sources.length === 0 || isEditorial) {
+  // Show generic attribution only when no sources exist in the DB
+  // Editorial articles with real sources (e.g., briefs citing Eater NY, West Side Rag) should list them
+  if (!sources || sources.length === 0) {
     const parsedSource = parseEditorNotesSource(editorNotes);
     if (parsedSource) {
       // Government/authoritative source - link directly, no verify needed
