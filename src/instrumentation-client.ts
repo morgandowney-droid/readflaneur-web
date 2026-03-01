@@ -11,6 +11,8 @@ Sentry.init({
   ignoreErrors: [
     // GoTrue navigator.locks AbortError when user navigates away during getSession()
     'signal is aborted without reason',
+    // Mobile Safari AbortError when fetch is cancelled due to navigation or page unload
+    'The operation was aborted',
   ],
 
   // Add optional integrations for additional features
