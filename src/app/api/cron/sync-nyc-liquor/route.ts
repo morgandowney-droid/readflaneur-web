@@ -129,6 +129,10 @@ export async function GET(request: Request) {
 
         const categoryLabel = story.status === 'pending' ? 'Last Call: Application' : 'Last Call: Approved';
 
+        // Build source URL - link to individual application when available, otherwise generic dataset
+        const sourceUrl = story.applicationUrl || 'https://data.ny.gov/Economic-Development/Current-Liquor-Authority-Active-Licenses/9s3h-dpkz';
+        const sourceName = story.applicationUrl ? 'NY State Liquor Authority (Application Record)' : 'NY State Liquor Authority';
+
         const { error: insertError } = await supabase.from('articles').insert({
           neighborhood_id: finalNeighborhoodId,
           headline: story.headline,
@@ -142,7 +146,7 @@ export async function GET(request: Request) {
           ai_model: 'gemini-2.5-flash',
           ai_prompt: `Liquor Watch: ${story.businessName} at ${story.address}`,
           category_label: categoryLabel,
-          editor_notes: `Source: NY State Liquor Authority - https://data.ny.gov/Economic-Development/Current-Liquor-Authority-Active-Licenses/9s3h-dpkz`,
+          editor_notes: `Source: ${sourceName} - ${sourceUrl}`,
           enriched_at: new Date().toISOString(),
           enrichment_model: 'gemini-2.5-flash',
         });

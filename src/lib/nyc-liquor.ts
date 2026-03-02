@@ -78,6 +78,8 @@ export interface LiquorLicenseEvent {
   receivedDate?: string;
   effectiveDate?: string;
   isPending: boolean;
+  licenseType?: string;
+  licenseClass?: string;
 }
 
 /**
@@ -85,6 +87,7 @@ export interface LiquorLicenseEvent {
  */
 export interface LiquorStory {
   applicationId: string;
+  applicationUrl: string;
   neighborhoodId: string;
   headline: string;
   body: string;
@@ -174,8 +177,9 @@ export async function fetchPendingLicenses(
 
       const businessName = record.dba || record.legalname || 'Unknown';
 
+      const appId = record.application_id || '';
       events.push({
-        applicationId: record.application_id || `pending-${Date.now()}`,
+        applicationId: appId || `pending-${Date.now()}`,
         businessName,
         legalName: record.legalname || '',
         description,
@@ -186,6 +190,8 @@ export async function fetchPendingLicenses(
         status: 'pending',
         receivedDate: record.received_date,
         isPending: true,
+        licenseType: record.type || '',
+        licenseClass: record.class || '',
       });
     }
   } catch (error) {
@@ -256,6 +262,8 @@ export async function fetchNewActiveLicenses(
         effectiveDate: record.effectivedate,
         receivedDate: record.originalissuedate,
         isPending: false,
+        licenseType: record.type || '',
+        licenseClass: record.class || '',
       });
     }
   } catch (error) {
@@ -263,6 +271,18 @@ export async function fetchNewActiveLicenses(
   }
 
   return events;
+}
+
+/**
+ * Build a direct link to the individual license application on NY State Open Data
+ */
+function buildApplicationUrl(event: LiquorLicenseEvent): string {
+  if (event.isPending) {
+    // Pending licenses dataset
+    return `https://data.ny.gov/resource/f8i8-k2gm.json?application_id=${encodeURIComponent(event.applicationId)}`;
+  }
+  // Active licenses dataset
+  return `https://data.ny.gov/resource/9s3h-dpkz.json?licensepermitid=${encodeURIComponent(event.applicationId)}`;
 }
 
 /**
@@ -284,47 +304,66 @@ export async function generateLiquorStory(
     : 'has been granted a liquor license';
 
   const toneGuidance = event.isPending
-    ? 'This is a pending application — create anticipation but note it is not yet confirmed.'
-    : 'This license has been approved — the opening is confirmed.';
-
-  const systemPrompt = `${insiderPersona(event.neighborhood, 'Editor')}
-
-Writing Style:
-- Insider tone, useful for locals
-- Reference specific streets
-- Brief and scannable
-- No emojis
-- Focus on what this means for the neighborhood`;
+    ? 'This is a PENDING application - not yet confirmed. Note that the outcome is uncertain but worth watching.'
+    : 'This license has been APPROVED - the opening is confirmed.';
 
   const dateLabel = event.isPending ? 'Filed' : 'Issued';
   const dateStr = event.receivedDate
     ? new Date(event.receivedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : null;
 
-  const prompt = `Data:
-- Business: ${event.businessName}
-- Legal Name: ${event.legalName}
-- Type: ${event.description}
+  // Build rich context about the license
+  const legalNameNote = event.legalName && event.legalName.toLowerCase() !== event.businessName.toLowerCase()
+    ? `- Legal Entity: ${event.legalName} (operating as ${event.businessName})`
+    : '';
+  const licenseTypeNote = event.licenseType ? `- License Type: ${event.licenseType}` : '';
+  const licenseClassNote = event.licenseClass ? `- License Class: ${event.licenseClass}` : '';
+
+  const systemPrompt = `${insiderPersona(event.neighborhood, 'Editor')}
+
+You write Last Call articles for Flaneur - a neighborhood newsletter read by locals who care about what's opening on their block.
+
+WRITING RULES:
+- Write 150-200 words across 2-3 paragraphs. This is a proper article, not a blurb.
+- First paragraph: what's happening - who filed/received the license, where exactly (street name, cross streets if known), and when.
+- Second paragraph: context about the business - what kind of establishment it appears to be based on the license type, the legal entity behind it, and what this block/stretch of street is known for. If the DBA name suggests a restaurant concept or chain, note that.
+- Optional third paragraph: what this means for the neighborhood - is this a busy dining corridor, a residential block getting its first bar, a known restaurant group expanding?
+- Reference specific streets and the neighborhood by name.
+- Include the explicit filing/approval date.
+- No emojis, no em dashes.
+- Use active, present-tense prose.
+- If pending, note the application could still be denied.`;
+
+  const prompt = `License Application Data:
+- Business Name (DBA): ${event.businessName}
+${legalNameNote}
+- License Description: ${event.description}
+${licenseTypeNote}
+${licenseClassNote}
 - Address: ${event.address}
+- Zip Code: ${event.zipCode}
 - Neighborhood: ${event.neighborhood}
-- Status: ${event.isPending ? 'Pending application' : 'Newly granted'}
+- Status: ${event.isPending ? 'Pending application' : 'Newly granted/approved'}
 ${dateStr ? `- ${dateLabel} Date: ${dateStr}` : ''}
+- Application ID: ${event.applicationId}
 
 ${toneGuidance}
-
-Task: Write a 35-50 word blurb about this ${event.description.toLowerCase()} ${statusText} at ${event.address}.${dateStr ? ` Mention the ${dateLabel.toLowerCase()} date (${dateStr}) in the text.` : ''}
 
 Return JSON:
 {
   "headline": "Headline under 60 chars mentioning business and street",
-  "body": "35-50 word alert about the license filing",
-  "previewText": "One sentence teaser for feed",
+  "body": "150-200 word article in 2-3 paragraphs about this license ${event.isPending ? 'application' : 'approval'}. Include specific details about the business, the address, the license type, and neighborhood context.",
+  "previewText": "One compelling sentence teaser for the feed card",
   "link_candidates": [
-    {"text": "exact text from body"}
+    {"text": "exact text from body to hyperlink"}
   ]
 }
 
-Include 1-2 link candidates for key entities mentioned in the body (business name, street).`;
+HEADLINE RULES:
+- Short and punchy, under 60 chars.
+- Examples: "Last Call: Carnegie Diner Eyes Chambers Street", "Last Call: New Bar Approved on Maiden Lane"
+
+Include 2-4 link candidates for key entities mentioned in the body (business name, street, neighborhood).`;
 
   try {
     const response = await genAI.models.generateContent({
@@ -352,6 +391,7 @@ Include 1-2 link candidates for key entities mentioned in the body (business nam
 
     return {
       applicationId: event.applicationId,
+      applicationUrl: buildApplicationUrl(event),
       neighborhoodId: event.neighborhoodId,
       headline: parsed.headline || `${event.businessName} files for liquor license at ${event.address}`,
       body,
