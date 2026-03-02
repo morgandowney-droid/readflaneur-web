@@ -161,6 +161,7 @@ export async function searchAllCategories(
   neighborhoodName: string,
   city: string,
   country?: string,
+  broaderArea?: string,
 ): Promise<UnsplashPhotosMap> {
   const { IMAGE_CATEGORIES } = await import('./image-library');
   const accessKey = getAccessKey();
@@ -181,6 +182,7 @@ export async function searchAllCategories(
 
     const fallbackQueries = [
       city,
+      ...(broaderArea ? [broaderArea] : []),
       ...(country ? [`${city} ${country}`] : []),
     ];
 
@@ -230,6 +232,7 @@ export async function searchAllCategoriesWithAlternates(
   city: string,
   country?: string,
   rejectedIds?: string[],
+  broaderArea?: string,
 ): Promise<{ photos: UnsplashPhotosMap; alternates: UnsplashPhoto[] }> {
   const { IMAGE_CATEGORIES } = await import('./image-library');
   const accessKey = getAccessKey();
@@ -256,6 +259,7 @@ export async function searchAllCategoriesWithAlternates(
 
     const fallbackQueries = [
       city,
+      ...(broaderArea ? [broaderArea] : []),
       ...(country ? [`${city} ${country}`] : []),
     ];
 

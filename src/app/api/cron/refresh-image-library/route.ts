@@ -54,7 +54,7 @@ export async function GET(request: Request) {
     // Find neighborhoods that need refresh
     const { data: neighborhoods, error: fetchError } = await supabase
       .from('neighborhoods')
-      .select('id, name, city, country')
+      .select('id, name, city, country, broader_area')
       .eq('is_active', true)
       .order('id');
 

@@ -25,6 +25,7 @@ interface NeighborhoodInfo {
   name: string;
   city: string;
   country: string | null;
+  broader_area?: string | null;
 }
 
 interface GenerationResult {
@@ -74,6 +75,7 @@ export async function generateNeighborhoodLibrary(
       neighborhood.city,
       neighborhood.country ?? undefined,
       rejectedIds.length > 0 ? rejectedIds : undefined,
+      neighborhood.broader_area ?? undefined,
     );
     photos = searchResult.photos;
     alternates = searchResult.alternates;

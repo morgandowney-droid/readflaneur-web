@@ -90,7 +90,7 @@ export async function POST(request: Request) {
     if (neighborhoodId) {
       const { data: neighborhood } = await supabase
         .from('neighborhoods')
-        .select('id, name, city, country')
+        .select('id, name, city, country, broader_area')
         .eq('id', neighborhoodId)
         .single();
 
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
     // Batch mode
     let query = supabase
       .from('neighborhoods')
-      .select('id, name, city, country')
+      .select('id, name, city, country, broader_area')
       .eq('is_active', true)
       .order('id');
 

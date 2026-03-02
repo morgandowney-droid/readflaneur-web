@@ -115,6 +115,7 @@ interface ValidationResult {
   timezone: string;
   latitude: number;
   longitude: number;
+  broader_area?: string;
   rejection_reason?: string;
 }
 
@@ -147,6 +148,7 @@ Rules:
 - Region must be one of: north-america, europe, asia-pacific, middle-east, south-america, africa
 - Timezone must be a valid IANA timezone (e.g., "Europe/Paris", "America/New_York")
 - Coordinates should be the approximate center of the location
+- broader_area: the province, county, or well-known region the place is located within. Use the most recognizable geographic name for photo searches (e.g., "Seville" for Utrera, "Provence" for Aix-en-Provence, "Tuscany" for Fiesole, "Long Island" for Montauk). Set to null if the place IS a major well-known city (e.g., Paris, Tokyo, New York) where the city name alone produces good image results.
 
 Return ONLY valid JSON with this exact schema:
 {
@@ -158,6 +160,7 @@ Return ONLY valid JSON with this exact schema:
   "timezone": "IANA/Timezone",
   "latitude": 48.8866,
   "longitude": 2.3431,
+  "broader_area": "Province or Region Name or null",
   "rejection_reason": "Only if valid is false - explain why"
 }`;
 
@@ -319,6 +322,7 @@ export async function POST(request: NextRequest) {
         timezone: validation.timezone,
         latitude: validation.latitude,
         longitude: validation.longitude,
+        broader_area: validation.broader_area || null,
         is_active: true,
         is_community: true,
         created_by: userId,
@@ -389,6 +393,7 @@ export async function POST(request: NextRequest) {
         name: validation.name,
         city: validation.city,
         country: validation.country,
+        broader_area: validation.broader_area || null,
       }),
     ]);
 
