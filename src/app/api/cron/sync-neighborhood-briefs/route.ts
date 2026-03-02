@@ -208,6 +208,22 @@ export async function GET(request: Request) {
     }, { status: 500 });
   }
 
+  // Sort by timezone urgency: neighborhoods closest to 7 AM (hours 5-7) processed first,
+  // then those at earlier hours. This ensures briefs are ready before the email deadline.
+  neighborhoods.sort((a, b) => {
+    const getHoursSinceMidnight = (tz: string | null) => {
+      if (!tz) return 3.5; // middle of window as fallback
+      try {
+        const localTime = new Date(now.toLocaleString('en-US', { timeZone: tz }));
+        return localTime.getHours() + localTime.getMinutes() / 60;
+      } catch {
+        return 3.5;
+      }
+    };
+    // Descending: higher hours (closer to 7 AM deadline) come first
+    return getHoursSinceMidnight(b.timezone) - getHoursSinceMidnight(a.timezone);
+  });
+
   if (!neighborhoods || neighborhoods.length === 0) {
     // Count how many were skipped due to time window vs already having today's brief
     const skippedTimeWindow = (allNeighborhoods || []).filter(n =>

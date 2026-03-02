@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { enrichBriefWithGemini, ContinuityItem } from '@/lib/brief-enricher-gemini';
+import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
+import { toHeadlineCase } from '@/lib/utils';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -140,6 +142,114 @@ async function fetchContinuityContext(
   return items;
 }
 
+// ─── Inline article creation helpers (mirrors generate-brief-articles logic) ───
+
+interface ArticleSourceInput {
+  source_name: string;
+  source_type: 'publication' | 'x_user' | 'platform' | 'other';
+  source_url?: string;
+}
+
+interface EnrichedCategory {
+  name: string;
+  stories: Array<{
+    entity: string;
+    source?: { name: string; url: string } | null;
+    secondarySource?: { name: string; url: string };
+    context: string;
+  }>;
+}
+
+function generateBriefSlug(headline: string, neighborhoodSlug: string, generatedAt: string, timezone?: string): string {
+  const date = timezone
+    ? new Date(generatedAt).toLocaleDateString('en-CA', { timeZone: timezone })
+    : new Date(generatedAt).toISOString().split('T')[0];
+  const headlineSlug = headline
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .substring(0, 50);
+  return `${neighborhoodSlug}-brief-${date}-${headlineSlug}`;
+}
+
+function generatePreviewText(content: string): string {
+  const cleaned = content
+    .replace(/\[\[[^\]]+\]\]/g, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/\n+/g, ' ')
+    .trim();
+  if (cleaned.length <= 200) return cleaned;
+  const slice = cleaned.substring(0, 200);
+  const lastPeriod = slice.lastIndexOf('.');
+  const lastExcl = slice.lastIndexOf('!');
+  const lastQuestion = slice.lastIndexOf('?');
+  const lastEnd = Math.max(lastPeriod, lastExcl, lastQuestion);
+  if (lastEnd > 0) return cleaned.slice(0, lastEnd + 1);
+  const lastSpace = slice.lastIndexOf(' ');
+  return lastSpace > 0 ? cleaned.slice(0, lastSpace) : slice;
+}
+
+function extractSourcesFromCategories(categories: EnrichedCategory[] | null): ArticleSourceInput[] {
+  if (!categories || !Array.isArray(categories)) {
+    return [
+      { source_name: 'X (Twitter)', source_type: 'platform' },
+      { source_name: 'Google News', source_type: 'platform' },
+    ];
+  }
+
+  const sources: ArticleSourceInput[] = [];
+  const seenSources = new Set<string>();
+
+  for (const category of categories) {
+    for (const story of category.stories || []) {
+      if (story.source?.name) {
+        const key = story.source.name.toLowerCase();
+        if (!seenSources.has(key)) {
+          seenSources.add(key);
+          let sourceType: ArticleSourceInput['source_type'] = 'publication';
+          if (story.source.name.startsWith('@') || story.source.url?.includes('x.com') || story.source.url?.includes('twitter.com')) {
+            sourceType = 'x_user';
+          }
+          const url = story.source.url;
+          const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
+          sources.push({
+            source_name: story.source.name,
+            source_type: sourceType,
+            source_url: isValidUrl ? url : undefined,
+          });
+        }
+      }
+      if (story.secondarySource?.name) {
+        const key = story.secondarySource.name.toLowerCase();
+        if (!seenSources.has(key)) {
+          seenSources.add(key);
+          let sourceType: ArticleSourceInput['source_type'] = 'publication';
+          if (story.secondarySource.name.startsWith('@') || story.secondarySource.url?.includes('x.com')) {
+            sourceType = 'x_user';
+          }
+          const url = story.secondarySource.url;
+          const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
+          sources.push({
+            source_name: story.secondarySource.name,
+            source_type: sourceType,
+            source_url: isValidUrl ? url : undefined,
+          });
+        }
+      }
+    }
+  }
+
+  if (sources.length === 0) {
+    return [
+      { source_name: 'X (Twitter)', source_type: 'platform' },
+      { source_name: 'Google News', source_type: 'platform' },
+    ];
+  }
+
+  return sources;
+}
+
 export async function GET(request: Request) {
   const functionStart = Date.now();
 
@@ -180,10 +290,16 @@ export async function GET(request: Request) {
   // Daily Briefs always get Pro; RSS articles get Flash
   console.log(`[enrich-briefs] Model policy: Pro for briefs (Phase 1), Flash for articles (Phase 2)`);
 
+  // Preload Unsplash image cache for inline article creation
+  const libraryReadyIds = await getLibraryReadyIds(supabase);
+  await preloadUnsplashCache(supabase);
+
   const results = {
     briefs_processed: 0,
     briefs_enriched: 0,
     briefs_failed: 0,
+    articles_created_inline: 0,
+    articles_inline_failed: 0,
     articles_processed: 0,
     articles_enriched: 0,
     articles_failed: 0,
@@ -215,6 +331,7 @@ export async function GET(request: Request) {
           headline,
           neighborhood_id,
           generated_at,
+          model,
           neighborhoods (
             name,
             id,
@@ -237,6 +354,7 @@ export async function GET(request: Request) {
             headline,
             neighborhood_id,
             generated_at,
+            model,
             neighborhoods (
               name,
               id,
@@ -325,6 +443,85 @@ export async function GET(request: Request) {
             }
 
             console.log(`Successfully enriched brief for ${hood.name} [${MODEL_PRO}]`);
+
+            // ─── Inline article creation: create brief_summary article immediately ───
+            try {
+              // Check if article already exists for this brief
+              const { data: existingArticle } = await supabase
+                .from('articles')
+                .select('id')
+                .eq('brief_id', brief.id)
+                .maybeSingle();
+
+              if (!existingArticle) {
+                const enrichedContent = result.rawResponse;
+                if (enrichedContent) {
+                  const baseHeadline = result.subjectTeaser
+                    ? toHeadlineCase(result.subjectTeaser)
+                    : (brief.headline || `What's Happening in ${hood.name}`);
+                  const articleHeadline = `${hood.name} DAILY BRIEF: ${baseHeadline}`;
+                  const slug = generateBriefSlug(articleHeadline, hood.id, brief.generated_at, hood.timezone);
+                  const previewText = result.emailTeaser || generatePreviewText(enrichedContent);
+                  const extractedSources = extractSourcesFromCategories(result.categories as EnrichedCategory[] | null);
+
+                  const { data: insertedArticle, error: insertError } = await supabase
+                    .from('articles')
+                    .insert({
+                      neighborhood_id: brief.neighborhood_id,
+                      headline: articleHeadline,
+                      body_text: enrichedContent,
+                      preview_text: previewText,
+                      slug,
+                      status: 'published',
+                      published_at: brief.generated_at,
+                      author_type: 'ai',
+                      ai_model: brief.model ? `${brief.model} + ${result.model}` : `grok + ${result.model}`,
+                      article_type: 'brief_summary',
+                      category_label: `${hood.name} Daily Brief`,
+                      brief_id: brief.id,
+                      image_url: selectLibraryImage(brief.neighborhood_id, 'brief_summary', undefined, libraryReadyIds),
+                      enriched_at: new Date().toISOString(),
+                      enrichment_model: result.model,
+                    })
+                    .select('id')
+                    .single();
+
+                  if (insertError) {
+                    // Slug or brief_id collision = article already exists, not an error
+                    if (insertError.message?.includes('articles_slug_key') || insertError.message?.includes('articles_brief_id_unique')) {
+                      console.log(`[enrich-briefs] Article already exists for ${hood.name} brief ${brief.id}`);
+                    } else {
+                      console.error(`[enrich-briefs] Inline article creation failed for ${hood.name}: ${insertError.message}`);
+                      results.articles_inline_failed++;
+                    }
+                  } else {
+                    results.articles_created_inline++;
+                    console.log(`[enrich-briefs] Created article inline for ${hood.name}`);
+
+                    // Insert sources
+                    if (extractedSources.length > 0 && insertedArticle?.id) {
+                      const sourcesToInsert = extractedSources.map(s => ({
+                        article_id: insertedArticle.id,
+                        source_name: s.source_name,
+                        source_type: s.source_type,
+                        source_url: s.source_url,
+                      }));
+                      await supabase
+                        .from('article_sources')
+                        .insert(sourcesToInsert)
+                        .then(null, (e: unknown) => console.error(`[enrich-briefs] Sources insert failed for ${hood.name}:`, e));
+                    }
+                  }
+                }
+              } else {
+                console.log(`[enrich-briefs] Article already exists for ${hood.name} brief ${brief.id}, skipping inline creation`);
+              }
+            } catch (articleErr) {
+              // Non-fatal: enrichment succeeded, article creation is bonus
+              console.error(`[enrich-briefs] Inline article creation error for ${hood.name}:`, articleErr);
+              results.articles_inline_failed++;
+            }
+
             return hood.name;
           })
         );
@@ -583,6 +780,8 @@ export async function GET(request: Request) {
         response_data: {
           briefs_processed: results.briefs_processed,
           briefs_enriched: results.briefs_enriched,
+          articles_created_inline: results.articles_created_inline,
+          articles_inline_failed: results.articles_inline_failed,
           articles_processed: results.articles_processed,
           articles_enriched: results.articles_enriched,
           model_pro_used: results.model_pro_used,
