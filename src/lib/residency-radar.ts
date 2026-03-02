@@ -557,10 +557,17 @@ Context:
 - This is relevant to residents of: ${announcement.location.feederCities.join(', ')}
 - Tone: 'Scene Watch'
 
-Task: Write a 35-word blurb.
+Task: Write a 150-200 word article in 2-3 paragraphs.
 Format headline as: 'Scene Watch: ${announcement.brand.name} lands in ${announcement.location.name} for the ${season}'
 
-Return JSON: { "headline": "...", "body": "...", "link_candidates": [{"text": "exact text from body"}] }
+WRITING RULES:
+- Paragraph 1: Which brand is opening or popping up, where exactly, and for how long. Name the specific location, the street or area, and the dates.
+- Paragraph 2: What the brand is known for and what they will be selling or showing at this outpost. Reference specific product lines, collaborations, or exclusive items if known.
+- Paragraph 3: Why this matters for the neighborhood and the feeder cities - cultural cachet, retail corridor momentum, what it signals about the destination's trajectory.
+- Active present-tense prose throughout. No emojis, no em dashes. Reference specific streets and landmarks where possible.
+- Separate paragraphs with double newlines.
+
+Return JSON: { "headline": "...", "body": "A 150-200 word article in 2-3 paragraphs separated by double newlines covering the brand arrival, what they offer, and why it matters locally.", "link_candidates": [{"text": "exact text from body"}] }
 
 Include 1-2 link candidates for key entities mentioned in the body (brand, destination).`;
 
@@ -568,7 +575,7 @@ Include 1-2 link candidates for key entities mentioned in the body (brand, desti
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 250,
+        maxOutputTokens: 800,
       },
     });
 

@@ -650,12 +650,23 @@ Context:
 - Tone: 'Validation'. Think: "We knew it was good, now the world knows."
 - Audience: Locals who pride themselves on knowing about places before they blow up.
 
-Task: Write a blurb for Flâneur's Dining Watch.
+Task: Write a 150-200 word article in 2-3 paragraphs for Flâneur's Dining Watch.
+
+PARAGRAPH STRUCTURE:
+- P1: Which restaurant received the review or recognition, from which outlet or critic, and what the verdict is. Name the publication and the specific award or rating.
+- P2: The cuisine, the chef behind it, and what the reviewer highlighted - signature dishes, atmosphere, service. Pull from the excerpt if available.
+- P3: What this means practically - reservation difficulty, price range, best times to go, and what regulars in the neighborhood already know about the place.
+
+WRITING RULES:
+- Active present tense throughout
+- No emojis, no em dashes, no exclamation points
+- Tone is insider validation, not gushing PR speak
+- Each paragraph should contain 2-3 sentences
 
 Format your response as JSON:
 {
   "headline": "${headlineTemplate}",
-  "body": "[35-40 word blurb. Mention the restaurant, the source, and the recognition. End with something about reservations being harder to get. Tone: knowing, not gushing.]",
+  "body": "150-200 word article in 2-3 paragraphs. First paragraph covers the restaurant, the source, and the recognition. Second paragraph details the cuisine, chef, and what the reviewer highlighted. Third paragraph covers reservation difficulty, price range, and local insider knowledge. Separate paragraphs with double newlines.",
   "previewText": "[12-15 word teaser for feed cards]",
   "link_candidates": [
     {"text": "exact text from body"}

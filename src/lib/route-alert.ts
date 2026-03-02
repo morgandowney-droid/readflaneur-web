@@ -596,11 +596,17 @@ Context:
 - Audience: Values time above all else.
 - Tone: 'Utility'. 'Your summer plans just got easier.'
 
-Task: Write a 35-word blurb.
+Task: Write a 150-200 word article in 2-3 paragraphs.
 Format headline as: 'Flight Check: Direct service to ${announcement.destination.city} launches [Date/Soon].'
-Body: Focus on convenience and destination appeal.
 
-Return JSON: { "headline": "...", "body": "...", "link_candidates": [{"text": "exact text from body"}] }
+WRITING RULES:
+- Paragraph 1: Which airline, what new route, and when it launches. Name the origin and destination airports, the start date, and any inaugural flight details.
+- Paragraph 2: Service frequency, aircraft type, approximate flight time, and what the destination offers. Reference specific neighborhoods, beaches, ski areas, or cultural draws at the destination.
+- Paragraph 3: Why this matters for locals - easier weekend trips, reduced travel time versus connecting flights, business travel convenience, or seasonal escape potential.
+- Active present-tense prose throughout. No emojis, no em dashes. Reference specific airports and routes where possible.
+- Separate paragraphs with double newlines.
+
+Return JSON: { "headline": "...", "body": "A 150-200 word article in 2-3 paragraphs separated by double newlines covering the route, flight details, and why it matters for local travelers.", "link_candidates": [{"text": "exact text from body"}] }
 
 Include 1-2 link candidates for key entities mentioned in the body (airline, destination).`;
 
@@ -608,7 +614,7 @@ Include 1-2 link candidates for key entities mentioned in the body (airline, des
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.6,
-        maxOutputTokens: 250,
+        maxOutputTokens: 800,
       },
     });
 

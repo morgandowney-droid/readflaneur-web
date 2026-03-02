@@ -5,6 +5,14 @@
 
 ## 2026-03-02
 
+**Expand Liquor License Articles from Blurbs to Proper Articles:**
+- `generateLiquorStory()` in `nyc-liquor.ts` was generating 35-50 word generic blurbs like "A new liquor license application... this development suggests a potential new addition to the neighborhood's dining landscape." with no useful detail.
+- Rewrote Gemini prompt to generate 150-200 word articles across 2-3 paragraphs: P1 what's happening (who/where/when), P2 business context (license type, legal entity, what the block is known for), P3 neighborhood implications.
+- Added `licenseType` and `licenseClass` fields to `LiquorLicenseEvent` (extracted from NY State API `type`/`class` fields), passed to Gemini for richer context.
+- Added `applicationUrl` to `LiquorStory` interface with `buildApplicationUrl()` constructing direct links to individual records on NY State Open Data (pending: `f8i8-k2gm.json?application_id=X`, active: `9s3h-dpkz.json?licensepermitid=X`).
+- Cron route `editor_notes` now uses application-specific URL so `SourceAttribution` links to the individual record instead of the generic dataset page.
+- Files: `src/lib/nyc-liquor.ts`, `src/app/api/cron/sync-nyc-liquor/route.ts`
+
 **Fix Primary Neighborhood Reversion on Navigation:**
 - After drag-to-reorder or setPrimary, navigating to an article and back would revert the order because `syncFromDb()` in `useNeighborhoodPreferences` overwrote localStorage with DB results (which have no ordering - `user_neighborhood_preferences` has no `sort_order` column).
 - Fixed by merging: DB is authoritative for WHICH neighborhoods the user has, localStorage is authoritative for ORDER. New IDs from DB are appended after existing local order. Removals from DB are respected.

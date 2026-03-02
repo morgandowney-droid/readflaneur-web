@@ -501,10 +501,17 @@ Context:
 - Audience: Collectors who want to grab it before it sells online
 - Tone: 'Urgent' but sophisticated
 
-Task: Write a 30-word blurb for ${neighborhoodName} residents.
+Task: Write a 150-200 word article in 2-3 paragraphs for ${neighborhoodName} residents.
 Headline format: 'Archive Alert: ${item.brand} [ItemName] lands at ${item.storeLocation.name}'
 
-Return JSON: { "headline": "...", "body": "...", "link_candidates": [{"text": "exact text from body"}] }
+WRITING RULES:
+- Paragraph 1: What item was found, at which store, and what makes it significant. Name the specific piece, the brand, and the store location on its actual street.
+- Paragraph 2: The item's provenance or rarity - why a collector or fashion enthusiast would care. Reference the era, the collection, or the production run if known.
+- Paragraph 3: Practical info - the store name and neighborhood, what section to look in, and how long pieces like this typically last on the floor.
+- Active present-tense prose throughout. No emojis, no em dashes. Reference specific streets and cross-streets where possible.
+- Separate paragraphs with double newlines.
+
+Return JSON: { "headline": "...", "body": "A 150-200 word article in 2-3 paragraphs separated by double newlines covering the find, its significance, and practical details for collectors.", "link_candidates": [{"text": "exact text from body"}] }
 
 Include 1-2 link candidates for key entities mentioned in the body (brand, store, item name).`;
 
@@ -512,7 +519,7 @@ Include 1-2 link candidates for key entities mentioned in the body (brand, store
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 250,
+        maxOutputTokens: 800,
       },
     });
 

@@ -171,12 +171,19 @@ Coverage State: ${state}
 
 Headline Hint: ${headlineHint}
 
-Task: Write a "Special Edition" 40-word blurb for Flâneur residents.
+Task: Write a "Special Edition" 150-200 word article in 2-3 paragraphs for Flâneur residents.
+
+WRITING RULES:
+- Paragraph 1: Which art fair, where exactly, and when it opens. Name the venue and the city. Set the scene with what kind of fair this is.
+- Paragraph 2: Key galleries or artists to look for, what makes this edition special compared to previous years. Name specific names.
+- Paragraph 3: Practical info - ticket prices, VIP preview dates, which days are best to visit and why. Any insider tips on avoiding crowds.
+- Active present-tense prose throughout. No emojis, no em dashes. Reference specific streets and venues where possible.
+- Separate paragraphs with double newlines.
 
 Return JSON:
 {
   "headline": "Attention-grabbing headline under 70 chars",
-  "body": "40-word blurb capturing the moment and creating urgency",
+  "body": "A 150-200 word article in 2-3 paragraphs separated by double newlines covering the fair, its highlights, and practical visitor info.",
   "previewText": "One sentence teaser for the feed",
   "link_candidates": [
     {"text": "exact text from body"}

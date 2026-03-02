@@ -415,12 +415,19 @@ ${event.estimateRange ? `- Estimate Range: ${event.estimateRange}` : ''}
 
 House Note: ${houseStyle[event.house]}
 
-Task: Write a 45-word blurb about this upcoming auction.
+Task: Write a 150-200 word article in 2-3 paragraphs about this upcoming auction.
+
+WRITING RULES:
+- Paragraph 1: What is being auctioned, by which house, when and where. Reference the specific Manhattan location or landmark.
+- Paragraph 2: Why this lot or collection matters - provenance, rarity, estimated value, notable artists or categories. Be specific with names and figures.
+- Paragraph 3: What this means for collectors in the area - how it fits into the New York auction season, whether similar sales have performed recently, what the bidding atmosphere is likely to be.
+- Active present tense. No emojis, no em dashes. Reference specific streets and landmarks.
+- Separate each paragraph with a blank line.
 
 Return JSON:
 {
   "headline": "Headline mentioning house and key category (under 70 chars)",
-  "body": "45-word description emphasizing prestige and collector appeal",
+  "body": "[House] brings [Title] to [Location] on [Date], a sale anchored by [standout lot or category] that has the attention of collectors across the city.\n\n[Specific details about the marquee lots, notable artists, estimated values, provenance, and what makes this collection significant in the current market.]\n\nFor New York collectors, this sale [context about the local auction calendar, how the house has performed here recently, what the competitive landscape looks like for these categories].",
   "previewText": "One sentence teaser for feed",
   "link_candidates": [
     {"text": "exact text from body"}

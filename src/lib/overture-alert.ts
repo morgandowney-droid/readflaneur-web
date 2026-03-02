@@ -449,12 +449,19 @@ Date: ${performanceDateStr} at ${performance.time}
 Type: ${performance.performanceType}
 Premiere Type: ${performance.premiereType || 'Opening Night'}
 
-Task: Write a 30-word "Curtain Up" blurb for Flâneur society readers.
+Task: Write a 150-200 word "Curtain Up" article in 2-3 paragraphs for Flâneur society readers.
+
+WRITING RULES:
+- Paragraph 1: What is premiering, at which venue, and when. Name the specific production, the house, and the opening date.
+- Paragraph 2: The cast, director, or creative team and why this production matters. Reference the composer, the choreographer, or the conductor by name. What makes this staging different from previous runs.
+- Paragraph 3: Ticket availability, price range if known, and what to know before booking. Any sold-out warnings, rush ticket options, or dress code expectations.
+- Active present-tense prose throughout. No emojis, no em dashes. Reference the venue's actual location where possible.
+- Separate paragraphs with double newlines.
 
 Return JSON:
 {
   "headline": "Curtain Up: [Show Name] premieres at [Venue] tonight - under 70 chars",
-  "body": "30-word blurb capturing the glittering occasion and why this premiere matters",
+  "body": "A 150-200 word article in 2-3 paragraphs separated by double newlines covering the premiere, its creative team, and practical booking info.",
   "previewText": "One sentence teaser for the feed",
   "link_candidates": [
     {"text": "exact text from body"}

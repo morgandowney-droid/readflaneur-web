@@ -606,10 +606,24 @@ Context:
 - Tone: 'Insider'. 'The smart money in ${trend.neighborhoodName} is moving toward [Candidate].'
 - NEVER mention individual donor names
 
-Task: Write a 35-word blurb about the donation trends.
+Task: Write a 150-200 word article in 2-3 paragraphs about the donation trends.
 Headline: 'Donor Watch: [Recipient] raises $[Amount] in ${trend.neighborhoodName}'
 
-Return JSON: { "headline": "...", "body": "...", "link_candidates": [{"text": "exact text from body"}] }
+WRITING RULES:
+- Paragraph 1: The headline numbers - how much was raised, from how many donors in this neighborhood, and who the top recipient is. Reference the neighborhood by name. Do NOT name individual donors.
+- Paragraph 2: Context about the recipient - what office they hold or are running for, what platform or issues they are associated with, and why donations from this neighborhood are noteworthy.
+- Paragraph 3: The broader pattern - whether this is part of a trend (party lean, issue-driven giving), how this compares to typical donation levels for this area, and what the party breakdown suggests about where the neighborhood's political money is flowing.
+- Active present tense. No emojis, no em dashes. NEVER mention individual donor names.
+- Separate each paragraph with a blank line.
+
+Return JSON:
+{
+  "headline": "Donor Watch: [Recipient] raises $[Amount] in ${trend.neighborhoodName}",
+  "body": "[Recipient] has pulled in [Amount] from [donor count] donors in ${trend.neighborhoodName}, making [him/her/them] the top fundraiser from the neighborhood this period. The average contribution sits at [average amount].\n\n[Context about the recipient - the office, the race, the platform, and why this neighborhood's donors are writing checks. Reference the party affiliation and what issues tend to drive giving here.]\n\n[Broader trend - party breakdown of giving, whether this represents a shift or continuation of the neighborhood's political leanings, and how these numbers compare to previous filing periods or other neighborhoods in the area].",
+  "link_candidates": [
+    {"text": "exact text from body"}
+  ]
+}
 
 Include 1-2 link candidates for key entities mentioned in the body (candidates, PACs, committees).`;
 
@@ -617,7 +631,7 @@ Include 1-2 link candidates for key entities mentioned in the body (candidates, 
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 300,
+        maxOutputTokens: 800,
       },
     });
 

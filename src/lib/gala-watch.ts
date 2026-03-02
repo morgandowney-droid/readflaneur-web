@@ -746,12 +746,19 @@ Context:
 - This is a ${eventType} (Ticket price: ${priceDisplay}).
 - ${dressCode}
 
-Task: Write a blurb for the Flaneur Social Calendar.
+Task: Write a 150-200 word article in 2-3 paragraphs for the Flaneur Social Calendar.
+
+WRITING RULES:
+- Paragraph 1: Which gala or event, at which venue, and when. Name the specific venue, the date, and the occasion.
+- Paragraph 2: Who is hosting, what cause or organization it benefits, and any notable honorees or attendees. Give context on why this event matters in the social calendar.
+- Paragraph 3: Ticket details and price tiers, dress code expectations, and what makes this one worth attending over other events this season.
+- Active present-tense prose throughout. No emojis, no em dashes. Reference specific streets and venues where possible.
+- Separate paragraphs with double newlines.
 
 Format your response as JSON:
 {
   "headline": "Social Calendar: [Event Name] at [Venue]",
-  "body": "[35-40 word blurb mentioning the venue, date, and ticket price]",
+  "body": "A 150-200 word article in 2-3 paragraphs separated by double newlines covering the event, its significance, and practical attendance details including ticket price.",
   "previewText": "[15-word teaser for feed cards]",
   "link_candidates": [
     {"text": "exact text from body"}

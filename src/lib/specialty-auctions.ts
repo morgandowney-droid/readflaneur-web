@@ -1027,12 +1027,23 @@ Currency: ${event.currency} (${event.currencySymbol})
 
 Headline Format: "Local Gavel: ${event.house} hosts [Sale Title]"
 
-Task: Write a 35-word blurb for local collectors about this auction.
+Task: Write a 150-200 word article in 2-3 paragraphs for local collectors about this auction.
+
+PARAGRAPH STRUCTURE:
+- P1: What is being auctioned, by which house, and when. Name the sale title, the auction house, the date, and the category of lots.
+- P2: Why this lot or sale matters - provenance, rarity, cultural significance, or notable consignors. What makes this auction stand out from routine sales.
+- P3: What this means for collectors and enthusiasts in the area - estimated prices, preview dates, how to register to bid, and whether this signals market trends.
+
+WRITING RULES:
+- Active present tense throughout
+- No emojis, no em dashes
+- Use the correct local currency symbol
+- Each paragraph should contain 2-3 sentences
 
 Return JSON:
 {
   "headline": "Headline under 70 chars",
-  "body": "35-word description emphasizing local heritage and collector appeal",
+  "body": "150-200 word article in 2-3 paragraphs. First paragraph covers what is being auctioned, the house, and dates. Second paragraph explains provenance, rarity, and cultural significance. Third paragraph covers collector implications, estimates, and preview details. Separate paragraphs with double newlines.",
   "previewText": "One sentence teaser",
   "link_candidates": [
     {"text": "exact text from body"}
@@ -1141,12 +1152,24 @@ Tone: ${vacationMapping.tone}
 
 Headline Format: "Market Watch: [Sale Title] in ${sourceEvent.location}"
 
-Task: Write a 35-word blurb explaining why this sale matters to ${vacationMapping.name} residents.
+Task: Write a 150-200 word article in 2-3 paragraphs explaining why this sale matters to ${vacationMapping.name} residents.
+
+PARAGRAPH STRUCTURE:
+- P1: What is being auctioned, by which house in which city, and when. Name the sale title and the categories of lots on offer.
+- P2: Why this lot or sale matters - provenance, rarity, cultural significance, or how the pieces connect to the vacation lifestyle in ${vacationMapping.name}. What makes specific lots worth watching.
+- P3: What this means for collectors and homeowners in the area - estimated prices, how to bid remotely, preview dates, and whether this signals trends in the local art and design market.
+
+WRITING RULES:
+- Active present tense throughout
+- No emojis, no em dashes
+- Use the source city's currency symbol
+- Connect the sale to the vacation living aesthetic
+- Each paragraph should contain 2-3 sentences
 
 Return JSON:
 {
   "headline": "Headline under 70 chars",
-  "body": "35-word description connecting the sale to vacation living",
+  "body": "150-200 word article in 2-3 paragraphs. First paragraph covers what is being auctioned, the house, and dates. Second paragraph explains provenance and connection to vacation living. Third paragraph covers collector implications, remote bidding, and market trends. Separate paragraphs with double newlines.",
   "previewText": "One sentence teaser",
   "link_candidates": [
     {"text": "exact text from body"}

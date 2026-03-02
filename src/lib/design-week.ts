@@ -552,12 +552,23 @@ ${todaysFocus ? `Focus: ${todaysFocus.name} (${todaysFocus.neighborhood}) - ${to
 
 Headline Hint: ${headlineHint}
 
-Task: Write a 35-word "Design Week" blurb for Flâneur design enthusiasts.
+Task: Write a 150-200 word article in 2-3 paragraphs for Flâneur design enthusiasts.
+
+PARAGRAPH STRUCTURE:
+- P1: Which design week event or exhibition is happening, where it is, and when. Name the venue and dates.
+- P2: Featured designers or brands and what installations or shows are worth seeing. Be specific about what visitors will encounter.
+- P3: Why this matters for the neighborhood - foot traffic, temporary installations in public spaces, pop-ups - and practical info like hours or ticketing.
+
+WRITING RULES:
+- Active present tense throughout
+- No emojis, no em dashes
+- Name real designers, brands, venues, and addresses
+- Each paragraph should contain 2-3 sentences
 
 Return JSON:
 {
   "headline": "Attention-grabbing headline under 70 chars",
-  "body": "35-word blurb capturing the design week moment",
+  "body": "150-200 word article in 2-3 paragraphs. First paragraph covers the event, venue, and dates. Second paragraph names featured designers and what to see. Third paragraph explains neighborhood impact and practical details. Separate paragraphs with double newlines.",
   "previewText": "One sentence teaser for the feed",
   "link_candidates": [
     {"text": "exact text from body"}

@@ -581,12 +581,23 @@ Context:
 - Audience: Fashion-conscious, loves a deal, hates lines.
 - Tone: 'Secret Intel'. Think insider tip, not advertisement.
 
-Task: Write a blurb for Flâneur's Style Alert.
+Task: Write a 150-200 word article in 2-3 paragraphs for Flâneur's Style Alert.
+
+PARAGRAPH STRUCTURE:
+- P1: Which brand's sample sale, the venue and address, and when it starts and ends. Set the scene with what kind of sale this is.
+- P2: Expected discounts and what categories are available - menswear, womenswear, accessories, footwear. What specific items or lines to look for.
+- P3: Pro tips - best days to go (early mornings on day one for top picks, final days for deepest cuts), expected lines, payment methods accepted, and sizing notes.
+
+WRITING RULES:
+- Active present tense throughout
+- No emojis, no em dashes, no exclamation points
+- Tone is knowing insider intel, not advertisement
+- Each paragraph should contain 2-3 sentences
 
 Format your response as JSON:
 {
   "headline": "Style Alert: ${sale.brand} sample sale starts ${startDay}",
-  "body": "[30-35 word blurb. Mention the discount, venue, and a pro tip about timing. Don't use exclamation points. Tone is knowing, not excited.]",
+  "body": "150-200 word article in 2-3 paragraphs. First paragraph covers the brand, venue, and dates. Second paragraph details discounts and what categories to shop. Third paragraph shares pro tips on timing, lines, payment, and sizing. Separate paragraphs with double newlines.",
   "previewText": "[12-15 word teaser for feed cards]",
   "link_candidates": [
     {"text": "exact text from body"}

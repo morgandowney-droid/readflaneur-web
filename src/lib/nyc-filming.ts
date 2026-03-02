@@ -408,12 +408,19 @@ Writing Style:
 
 ${toneGuidance}
 
-Task: Write a 40-50 word blurb alerting residents about this film shoot.
+Task: Write a 150-200 word article in 2-3 paragraphs alerting residents about this film shoot.
+
+WRITING RULES:
+- Paragraph 1: What is being filmed, on which specific streets and blocks, and when. Include the production name (or note if it is using a code name) and the category of production.
+- Paragraph 2: Production details - what residents can expect to see (crew, equipment, trailers, lighting rigs), whether road closures or lane restrictions are likely, and any known context about the show or film (season number, network, notable cast).
+- Paragraph 3: Practical information for residents - specific parking restrictions and where alternate parking is available, how long the shoot is expected to last, and which alternate routes to use during filming hours.
+- Active present tense. No emojis, no em dashes. Reference specific streets, cross streets, and block numbers.
+- Separate each paragraph with a blank line.
 
 Return JSON:
 {
   "headline": "Headline under 60 chars mentioning project and street",
-  "body": "40-50 word alert with specific streets and timing",
+  "body": "Crews for [Project Name] are set to film on [Streets] on [Date], starting at [Time]. The [category] production has permits covering [specific blocks and intersections].\n\n[What to expect on the ground - equipment, crew presence, whether full road closures or partial lane restrictions are planned, and any known details about the production that give context to its scale.]\n\n[Practical details for residents - parking suspension zones and times, recommended alternate routes, expected duration of the shoot, and when the streets should return to normal].",
   "previewText": "One sentence teaser for feed",
   "link_candidates": [
     {"text": "exact text from body"}

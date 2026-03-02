@@ -486,15 +486,21 @@ ${event.estimateRange ? `- Estimate Range: ${event.estimateRange}` : ''}
 House Note: ${houseStyle[event.house]}
 Reference Landmarks: ${hubConfig.landmarks.join(', ')}
 
-Task: Write a 35-word blurb about this upcoming auction for local residents.
+Task: Write a 150-200 word article in 2-3 paragraphs about this upcoming auction for local residents.
+
+WRITING RULES:
+- Paragraph 1: What is being auctioned, by which house, when and where. Reference the specific sale location or landmark.
+- Paragraph 2: Why this lot or collection matters - provenance, rarity, estimated value, notable artists or categories. Be specific with names and figures.
+- Paragraph 3: What this means for collectors in the area - local market context, whether the house has brought similar sales here before, what the bidding atmosphere is likely to be.
+- Active present tense. No emojis, no em dashes. Reference specific streets and landmarks.
+- Separate each paragraph with a blank line.
 
 Headline Format: "Auction Alert: [House] brings [Title] to [City]."
-Body: "The collectors are circling [Location/Landmark] for this key sale. Expect high interest in the [Specific Artist/Category] lots."
 
 Return JSON:
 {
   "headline": "Headline under 70 chars",
-  "body": "35-word description for local collectors",
+  "body": "[House] is staging [Title] at [Location] on [Date], a sale that has already drawn attention from serious collectors across the region.\n\n[Specific details about standout lots, notable artists or categories, estimated values, and what makes this particular collection rare or significant.]\n\nFor collectors near [Landmark], this marks [context about what the sale means locally - frequency of such events, market trends, competitive bidding expectations].",
   "previewText": "One sentence teaser for feed",
   "link_candidates": [
     {"text": "exact text from body"}

@@ -381,14 +381,21 @@ Writing Style:
 ${event.existingStories ? `- Existing Building: ${event.existingStories} stories` : ''}
 ${event.existingHeight ? `- Existing Height: ${event.existingHeight}` : ''}
 
-Task: Write a 40-word blurb about this ${event.type.toLowerCase()} filing.
+Task: Write a 150-200 word article in 2-3 paragraphs about this ${event.type.toLowerCase()} filing.
 
 Headline should start with "${headlinePrefix}:" and reference the address or street.
+
+WRITING RULES:
+- Paragraph 1: What type of heritage filing this is (landmark nomination, alteration permit, demolition application, etc.), for what building and address, and when it was filed. Be specific about the filing type and what it proposes.
+- Paragraph 2: The historical significance of the building - architectural details, what era it represents, notable architects or previous occupants, and what makes it worth preserving or noteworthy.
+- Paragraph 3: What this means for the neighborhood - implications for preservation, potential changes to a landmark or historic streetscape, and how the Landmarks Preservation Commission process works for filings like this.
+- Active present tense. No emojis, no em dashes. Reference specific streets and architectural details.
+- Separate each paragraph with a blank line.
 
 Return JSON:
 {
   "headline": "${headlinePrefix}: [specific detail about the filing] (under 70 chars)",
-  "body": "40-word description of the filing and its significance",
+  "body": "A ${event.type.toLowerCase()} filing has been submitted for [Address], proposing [specific work or designation]. The application, filed by [Owner], covers [scope of the proposed changes].\n\n[Historical significance of the building - when it was built, architectural style, notable features, previous uses, and what makes it a significant structure on this block or in this neighborhood.]\n\n[What this means for the neighborhood - whether this adds or removes protections, how LPC review works for this type of filing, what residents should watch for in upcoming hearings, and how it fits into broader preservation trends in the area].",
   "previewText": "One sentence teaser for feed",
   "link_candidates": [
     {"text": "exact text from body"}

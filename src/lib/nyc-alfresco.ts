@@ -414,12 +414,19 @@ ${statusNote}
 ${seasonalContext}
 ${alcoholNote}
 
-Task: Write a 35-40 word blurb about this ${event.isPending ? 'pending outdoor dining application' : 'new outdoor dining spot'}.
+Task: Write a 150-200 word article in 2-3 paragraphs about this ${event.isPending ? 'pending outdoor dining application' : 'new outdoor dining spot'}.
+
+WRITING RULES:
+- Paragraph 1: Who filed or received the outdoor dining permit, the exact address and cross streets, and when. State clearly whether this is a pending application or an approved permit.
+- Paragraph 2: What kind of establishment this is, whether the seating is sidewalk or roadway, and what this stretch of street is already known for. Mention nearby restaurants or the character of the block.
+- Paragraph 3: What this means for the block - more outdoor seating options for residents, potential noise or sidewalk space considerations, and how it fits the neighborhood's dining scene.
+- Active present tense. No emojis, no em dashes. Reference specific streets and cross streets.
+- Separate each paragraph with a blank line.
 
 Return JSON:
 {
   "headline": "Al Fresco Alert: [Restaurant Name] adds [seating type] seats (under 60 chars)",
-  "body": "35-40 word description mentioning location and vibe",
+  "body": "[Restaurant Name] at [Address] has ${event.isPending ? 'filed for' : 'received approval for'} [seating type] outdoor dining, adding an estimated [seats] seats to the [street/block].\n\n[Details about the establishment - cuisine type, whether alcohol service is included, what the surrounding stretch of street is known for, and how sidewalk vs roadway seating will change the streetscape.]\n\n[What this means for the block - more options for outdoor dining in the area, how it compares to other recent permits nearby, and any practical considerations for residents and pedestrians].",
   "previewText": "One sentence teaser for feed",
   "link_candidates": [
     {"text": "exact text from body"}

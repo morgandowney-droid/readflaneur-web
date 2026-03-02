@@ -559,10 +559,21 @@ Context:
 - Tone: 'Chaotic Chic'
 - This is Day ${summary.dayNumber} - make the headline UNIQUE to today. Do NOT reuse yesterday's angle.
 
-Task: Write a 35-word blurb for ${neighborhoodName} residents.
+Task: Write a 150-200 word article in 2-3 paragraphs for ${neighborhoodName} residents.
 Headline: MUST include "Day ${summary.dayNumber}" and reference something specific to today (a designer, venue, the ${dayPhase} energy, or the day's vibe). Never just "takes over [Location]" - that's too generic.
 
-Return JSON: { "headline": "...", "body": "...", "link_candidates": [{"text": "exact text from body"}] }
+PARAGRAPH STRUCTURE:
+- P1: What is happening today at fashion week, where, and which key shows are on the schedule. Set the scene for the day.
+- P2: Which designers are showing, notable collections or moments to watch for. Name specific designers and what makes their shows noteworthy.
+- P3: The street style scene around the venues, how the neighborhood is affected (traffic, crowds, celebrity sightings), and where to watch or follow along.
+
+WRITING RULES:
+- Active present tense throughout
+- No emojis, no em dashes
+- Name real designers, venues, and locations
+- Each paragraph should contain 2-3 sentences
+
+Return JSON: { "headline": "...", "body": "150-200 word article in 2-3 paragraphs. First paragraph covers today's schedule and key shows. Second paragraph names designers and notable collections. Third paragraph covers street style, neighborhood impact, and where to follow. Separate paragraphs with double newlines.", "link_candidates": [{"text": "exact text from body"}] }
 
 Include 1-3 link candidates for key entities mentioned in the body (designers, venues, fashion week name).`;
 
@@ -570,7 +581,7 @@ Include 1-3 link candidates for key entities mentioned in the body (designers, v
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.8,
-        maxOutputTokens: 300,
+        maxOutputTokens: 800,
       },
     });
 

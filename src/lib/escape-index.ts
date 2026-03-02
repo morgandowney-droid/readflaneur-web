@@ -1011,12 +1011,24 @@ Context:
 - ${conditionContext}
 - Tone: 'Urgent Leisure'. Think: "Pack your bags." Not salesy, but knowing.
 
-Task: Write a blurb for the Escape Index.
+Task: Write a 150-200 word article in 2-3 paragraphs for the Escape Index.
+
+PARAGRAPH STRUCTURE:
+- P1: What conditions make this escape destination perfect right now. Mention specific numbers - inches of snow, swell height in feet, temperature in degrees. Set the scene with current conditions.
+- P2: What to do there - specific activities, experiences, or natural features worth the trip. Name trails, beaches, runs, restaurants, or lodges. Be concrete about what makes this destination worth leaving the city for.
+- P3: Getting there - drive time or flight duration from the origin city, when to leave to beat traffic, what to pack for these specific conditions. End with a short action phrase.
+
+WRITING RULES:
+- Active present tense throughout
+- No emojis, no em dashes
+- Tone is knowing and urgent, not breathless or salesy
+- Must mention specific numbers (inches, feet, degrees)
+- Each paragraph should contain 2-3 sentences
 
 Format your response as JSON:
 {
   "headline": "${headlineHint}",
-  "body": "[30-35 word blurb that creates FOMO and urgency. Mention specific conditions (inches of snow, swell height, temperature). End with a short action phrase appropriate to the destination — e.g. 'Pack the car.' for driving-distance spots, 'Book the flight.' for far destinations.]",
+  "body": "150-200 word article in 2-3 paragraphs. First paragraph covers current conditions with specific numbers. Second paragraph details activities and experiences at the destination. Third paragraph covers travel logistics and what to pack. Separate paragraphs with double newlines.",
   "previewText": "[12-15 word teaser for feed cards]",
   "link_candidates": [
     {"text": "exact text from body"}
