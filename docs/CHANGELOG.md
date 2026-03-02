@@ -5,6 +5,11 @@
 
 ## 2026-03-02
 
+**Fix Image Repetition Across Article Types on Same Day:**
+- All articles for a neighborhood created on the same day showed the same thumbnail image because `selectLibraryImage()` used `getDayOfYear()` as the rotation index fallback - same value for all article types.
+- Added `typeOffset` per article type (brief_summary=0, look_ahead=7, weekly_recap=13, standard=19) so different article types index different photos from the full Unsplash pool on the same day. Applied in both sync (`selectLibraryImage`) and async (`selectLibraryImageAsync`) paths.
+- File: `src/lib/image-library.ts`
+
 **Fix 3 Translation Bugs - Event Listing, Browser Auto-Detect, Debug Logging:**
 - Look Ahead articles lost their interactive event listing (day headers, category badges, hyperlinked venues) when translated because Gemini translated `[[Event Listing]]` to e.g. `[[Ereignisauflistung]]` and the hardcoded regex in ArticleBody.tsx couldn't match it. Fix: `translateArticle()` in `translation-service.ts` now strips the `[[Event Listing]]...---` block before sending to Gemini, then recombines the original English block with the translated prose. Event data (times, venues, addresses) stays in English as it should.
 - Browser language not auto-detected on first visit - users had to manually click the globe icon. Fix: `useLanguage.ts` hydration `useEffect` now runs `detectBrowserLanguage()` when no `flaneur-language` exists in localStorage and `flaneur-language-offered` flag hasn't been set. Sets language, persists to localStorage, syncs to DB. The `flaneur-language-offered` localStorage flag prevents re-detection if user later switches back to English.
