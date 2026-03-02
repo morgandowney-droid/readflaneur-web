@@ -429,61 +429,81 @@ export async function generateExhibitionStory(
     day: 'numeric',
   });
 
+  const openingDateStr = exhibition.publicOpeningDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+
   const closingDateStr = exhibition.closingDate.toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
   });
 
-  // City-specific context
+  // Build date context - lead with what's imminent
+  let dateContext = '';
+  if (triggerType === 'member_preview') {
+    dateContext = `IMMINENT DATE: Member Preview starts ${triggerDateStr}. Public opening ${openingDateStr}. Exhibition runs through ${closingDateStr}.`;
+  } else {
+    dateContext = `IMMINENT DATE: Public opening ${openingDateStr}. Exhibition runs through ${closingDateStr}.`;
+  }
+
+  // City-specific cultural color
   const cityContext: Record<HubCity, string> = {
-    New_York: `Reference the Upper East Side Museum Mile, Fifth Avenue, or Central Park. New York collectors value being first. Mention the opening night social scene.`,
-    London: `Reference Bond Street, Mayfair, or the West End. British patrons value tradition and scholarship. Afternoon tea at the members' lounge.`,
-    Paris: `Reference the Rive Droite or Saint-Germain. French cultural appreciation. Intellectual discourse. The vernissage matters.`,
-    Tokyo: `Reference Roppongi or Ginza. Japanese attention to detail and craft. Quiet appreciation. Private viewings.`,
-    Los_Angeles: `Reference Beverly Hills, Brentwood, or the Westside. Hollywood collectors and patrons. Opening galas with celebrity sightings.`,
+    New_York: `Weave in Upper East Side Museum Mile, Fifth Avenue, or Central Park references. New York collectors value being first.`,
+    London: `Weave in Bond Street, Mayfair, or the West End references. British patrons value tradition and scholarship.`,
+    Paris: `Weave in the Rive Droite or Saint-Germain references. The vernissage matters. French cultural appreciation.`,
+    Tokyo: `Weave in Roppongi or Ginza references. Japanese attention to detail and craft. Quiet appreciation.`,
+    Los_Angeles: `Weave in Beverly Hills, Brentwood, or Westside references. Hollywood collectors and the opening gala scene.`,
   };
 
   const systemPrompt = `${insiderPersona(museum.city.replace('_', ' '), 'Culture Editor')}
 
-Context:
-- A major cultural event is opening at ${museum.name}.
-- Your audience: Museum Members and Patrons who value exclusive access.
-- Tone: Intellectual & Exclusive. "See it before the crowds."
+You write Culture Watch articles for Flaneur - a neighborhood newsletter read by culturally engaged locals.
 
-${cityContext[museum.city]}
-
-Writing Style:
-- Sophisticated, cultured, informed
-- Insider knowledge - you've been to the press preview
-- Create urgency for members to attend the preview
-- No emojis
-- Reference the artist's significance and the exhibition's importance`;
+WRITING RULES:
+- Write 150-200 words across 2-3 paragraphs. This is a proper article, not a blurb.
+- Write as someone who has actually visited the press preview and seen the work.
+- Lead with what's happening NOW or THIS WEEK - the imminent member preview or public opening.
+- Include specific details: name the key works or themes, the curatorial thesis, what makes this show different from past shows.
+- Mention the closing date only in passing ("through August" or "runs until August 23") - NEVER lead with it or frame it as the main point.
+- ${triggerType === 'member_preview' ? 'Create urgency for members: the preview window is narrow, and the opening-week crowds will be intense.' : 'Focus on why this show matters and what to see first.'}
+- No emojis, no em dashes.
+- Reference the artist's significance and the exhibition's importance in art history.
+- Use active, present-tense prose. "The Whitney's eighth-floor galleries are given over to..." not "Having attended the press preview, the exhibition is..."
+- NEVER open with "Having attended the press preview" or any passive construction.
+${cityContext[museum.city]}`;
 
   const prompt = `Exhibition: ${exhibition.title}
 ${exhibition.artist ? `Artist: ${exhibition.artist}` : ''}
 Museum: ${museum.name} (${museum.shortName})
 City: ${museum.city.replace('_', ' ')}
-${triggerType === 'member_preview' ? `Member Preview: ${triggerDateStr}` : `Public Opening: ${triggerDateStr}`}
-Closing: ${closingDateStr}
-Duration: ${exhibition.durationMonths} months
+
+${dateContext}
 
 Description: ${exhibition.description}
 
 Blockbuster indicators: ${exhibition.blockbusterKeywords.join(', ')}
 
-Task: Write a 35-word "Culture Watch" blurb for Flâneur members.
-${triggerType === 'member_preview' ? 'Focus on the exclusive Member Preview opportunity.' : 'Focus on the public opening and why this show matters.'}
+DATE FRAMING RULES:
+- The LEAD of the story must reference the imminent date (${triggerType === 'member_preview' ? 'member preview' : 'public opening'} on ${triggerDateStr}).
+- The closing date (${closingDateStr}) is background context only. Mention it once, briefly, near the end.
+- Frame times with explicit calendar dates: "Member previews run Wednesday through Saturday (March 4-7). Opens to the public March 8."
 
 Return JSON:
 {
-  "headline": "Culture Watch: [Exhibit Name] opens at [Museum] - under 70 chars",
-  "body": "35-word blurb emphasizing exclusivity and cultural significance",
-  "previewText": "One sentence teaser for the feed",
+  "headline": "Culture Watch: [Short punchy headline] - under 60 chars, no museum name needed",
+  "body": "150-200 word article in 2-3 paragraphs. First paragraph: what the show IS and when it opens. Second paragraph: specific works or themes and why it matters. Optional third paragraph: practical info (hours, tickets, member benefits).",
+  "previewText": "One compelling sentence about the exhibition for the feed card",
   "link_candidates": [
-    {"text": "exact text from body"}
+    {"text": "exact text from body to hyperlink"}
   ]
 }
+
+HEADLINE RULES:
+- Short and punchy, under 60 chars. Examples: "Culture Watch: The 82nd Whitney Biennial Opens", "Culture Watch: Kusama Returns to Tate Modern"
+- Do NOT include the full museum name if it makes the headline too long. Use shorthand: "The Whitney" not "Whitney Museum of American Art".
 
 Include 2-4 link candidates for key entities mentioned in the body (museum name, artist name, exhibition title).`;
 

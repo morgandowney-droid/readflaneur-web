@@ -94,7 +94,25 @@ export function useNeighborhoodPreferences(): {
           if (cancelled) return;
 
           if (ids && ids.length > 0) {
-            syncLocal(ids);
+            // Merge DB ids with localStorage order.
+            // DB is authoritative for WHICH neighborhoods the user has,
+            // but localStorage is authoritative for ORDER (drag-to-reorder).
+            const stored = localStorage.getItem(PREFS_KEY);
+            let localIds: string[] = [];
+            try {
+              localIds = stored ? (JSON.parse(stored) as string[]) : [];
+            } catch { /* ignore */ }
+
+            const dbSet = new Set(ids);
+            const localSet = new Set(localIds);
+
+            // Keep local order for neighborhoods still in DB, then append any new ones from DB
+            const merged = [
+              ...localIds.filter(id => dbSet.has(id)),
+              ...ids.filter((id: string) => !localSet.has(id)),
+            ];
+
+            syncLocal(merged);
           } else if (ids !== null) {
             // Logged in but DB is empty. Don't clear localStorage —
             // user may have neighborhoods from before they signed up.

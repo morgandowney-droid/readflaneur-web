@@ -385,11 +385,12 @@ export async function getCronImage(
     forceRegenerate?: boolean;
     usePlaceholderOnly?: boolean;
     neighborhoodId?: string;
+    articleIndex?: number;
   }
 ): Promise<string> {
   // Prefer Unsplash library photo when neighborhoodId is provided
   if (options?.neighborhoodId) {
-    const unsplashUrl = await getUnsplashForNeighborhood(supabase, options.neighborhoodId);
+    const unsplashUrl = await getUnsplashForNeighborhood(supabase, options.neighborhoodId, options.articleIndex);
     if (unsplashUrl) return unsplashUrl;
   }
 
@@ -418,28 +419,43 @@ export async function getCronImage(
 
 /**
  * Look up Unsplash photos for a neighborhood from DB.
- * Returns the 'rss-story' category URL (catch-all for non-brief articles)
- * or any available photo as fallback.
+ * Rotates across the full pool (8 category photos + alternates)
+ * using articleIndex so consecutive articles get different images.
+ * Falls back to day-of-year rotation when no index is provided.
  */
 async function getUnsplashForNeighborhood(
   supabase: SupabaseClient,
   neighborhoodId: string,
+  articleIndex?: number,
 ): Promise<string | null> {
   const { data } = await supabase
     .from('image_library_status')
-    .select('unsplash_photos')
+    .select('unsplash_photos, unsplash_alternates')
     .eq('neighborhood_id', neighborhoodId)
     .single();
 
   if (!data?.unsplash_photos) return null;
 
   const photos = data.unsplash_photos as UnsplashPhotosMap;
-  // Prefer rss-story category (catch-all for non-brief articles)
-  const rssPhoto = photos['rss-story'];
-  if (rssPhoto?.url) return rssPhoto.url;
-  // Any available photo as fallback
-  const any = Object.values(photos).find(p => p?.url);
-  return any?.url || null;
+
+  // Build full pool: all category URLs + alternates
+  const pool: string[] = [];
+  for (const photo of Object.values(photos)) {
+    if (photo?.url) pool.push(photo.url);
+  }
+  const alternates = data.unsplash_alternates as Array<{ url?: string }> | null;
+  if (alternates && Array.isArray(alternates)) {
+    for (const alt of alternates) {
+      if (alt?.url) pool.push(alt.url);
+    }
+  }
+
+  if (pool.length === 0) return null;
+
+  // Rotate: use articleIndex if provided, otherwise random from pool
+  // Random is fine here because the image_url is stored in DB at creation time
+  const idx = articleIndex ?? Math.floor(Math.random() * pool.length);
+  return pool[((idx % pool.length) + pool.length) % pool.length];
 }
 
 /**

@@ -13,6 +13,7 @@ import { FeedItem, Article, Ad } from '@/types';
 import { injectAds, injectEmailPrompt } from '@/lib/ad-engine';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { fetchCurrentWeather } from '@/lib/weather';
+import { toHeadlineCase } from '@/lib/utils';
 import { NEIGHBORHOODS_COOKIE } from '@/lib/neighborhood-cookie';
 
 export const dynamic = 'force-dynamic';
@@ -276,7 +277,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   if (singleNeighborhood) {
     const { data: briefData } = await supabase
       .from('neighborhood_briefs')
-      .select('id, headline, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
+      .select('id, headline, subject_teaser, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
       .eq('neighborhood_id', singleNeighborhood.id)
       .gt('expires_at', now)
       .order('generated_at', { ascending: false })
@@ -290,7 +291,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     if (primaryHood) {
       const { data: briefData } = await supabase
         .from('neighborhood_briefs')
-        .select('id, headline, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
+        .select('id, headline, subject_teaser, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
         .eq('neighborhood_id', primaryId)
         .gt('expires_at', now)
         .order('generated_at', { ascending: false })
@@ -343,7 +344,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               dailyBrief={brief ? (
                 <NeighborhoodBrief
                   briefId={brief.id}
-                  headline={brief.headline}
+                  headline={brief.subject_teaser ? toHeadlineCase(brief.subject_teaser) : brief.headline}
                   content={brief.content}
                   generatedAt={brief.generated_at}
                   neighborhoodName={singleNeighborhood.name}
@@ -399,7 +400,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               dailyBrief={multiBrief ? (
                 <NeighborhoodBrief
                   briefId={multiBrief.id}
-                  headline={multiBrief.headline}
+                  headline={multiBrief.subject_teaser ? toHeadlineCase(multiBrief.subject_teaser) : multiBrief.headline}
                   content={multiBrief.content}
                   generatedAt={multiBrief.generated_at}
                   neighborhoodName={multiBrief.neighborhood.name}

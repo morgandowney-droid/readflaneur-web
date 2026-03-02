@@ -8,6 +8,7 @@ import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { injectAds } from '@/lib/ad-engine';
 import { Article, Ad } from '@/types';
 import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
+import { toHeadlineCase } from '@/lib/utils';
 import { getNeighborhoodIdsForQuery, getComboInfo, getComboForComponent } from '@/lib/combo-utils';
 import { fetchCurrentWeather } from '@/lib/weather';
 import { NewNeighborhoodCelebration } from '@/components/feed/NewNeighborhoodCelebration';
@@ -124,7 +125,7 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
   const now = new Date().toISOString();
   let { data: brief } = await supabase
     .from('neighborhood_briefs')
-    .select('id, headline, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
+    .select('id, headline, subject_teaser, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
     .eq('neighborhood_id', neighborhoodId)
     .gt('expires_at', now)
     .order('generated_at', { ascending: false })
@@ -138,7 +139,7 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
     if (parentCombo) {
       const { data: comboBrief } = await supabase
         .from('neighborhood_briefs')
-        .select('id, headline, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
+        .select('id, headline, subject_teaser, content, generated_at, sources, enriched_content, enriched_categories, enriched_at')
         .eq('neighborhood_id', parentCombo.comboId)
         .gt('expires_at', now)
         .order('generated_at', { ascending: false })
@@ -225,7 +226,7 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
               )}
               <NeighborhoodBrief
                 briefId={brief.id}
-                headline={brief.headline}
+                headline={brief.subject_teaser ? toHeadlineCase(brief.subject_teaser) : brief.headline}
                 content={brief.content}
                 generatedAt={brief.generated_at}
                 neighborhoodName={neighborhoodData.name}
