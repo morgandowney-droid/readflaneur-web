@@ -17,6 +17,7 @@ export const SUPPORTED_LANGUAGES = {
 export type LanguageCode = keyof typeof SUPPORTED_LANGUAGES;
 
 const STORAGE_KEY = 'flaneur-language';
+const OFFERED_KEY = 'flaneur-language-offered';
 
 /** Map navigator.language prefixes to our supported codes */
 function detectBrowserLanguage(): LanguageCode | null {
@@ -38,13 +39,29 @@ export function useLanguage() {
   const [language, setLanguageState] = useState<LanguageCode>('en');
   const [isTranslated, setIsTranslated] = useState(false);
 
-  // Hydrate from localStorage
+  // Hydrate from localStorage, auto-detect browser language on first visit
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY) as LanguageCode | null;
       if (stored && stored in SUPPORTED_LANGUAGES) {
         setLanguageState(stored);
         setIsTranslated(stored !== 'en');
+      } else if (!localStorage.getItem(OFFERED_KEY)) {
+        // First visit: no stored preference and never auto-detected before
+        localStorage.setItem(OFFERED_KEY, '1');
+        const detected = detectBrowserLanguage();
+        if (detected) {
+          setLanguageState(detected);
+          setIsTranslated(true);
+          localStorage.setItem(STORAGE_KEY, detected);
+          document.documentElement.lang = detected;
+          // Fire-and-forget sync to DB for cross-device persistence
+          fetch('/api/preferences', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ language: detected }),
+          }).catch(() => {});
+        }
       }
     } catch {
       // localStorage unavailable

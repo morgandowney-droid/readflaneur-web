@@ -38,6 +38,14 @@ export async function translateArticle(
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
+  // Extract [[Event Listing]]...--- block before translation.
+  // Event listings contain structured data (times, venues, addresses, semicolons)
+  // that must stay in English for isEventLine() parsing and EventListingBlock rendering.
+  const eventListingRegex = /^\[\[Event Listing\]\]\s*[\s\S]*?\n---\s*\n/;
+  const eventMatch = body.match(eventListingRegex);
+  const eventListingBlock = eventMatch ? eventMatch[0] : null;
+  const bodyToTranslate = eventListingBlock ? body.substring(eventListingBlock.length) : body;
+
   const langName = LANGUAGE_NAMES[targetLang];
   const prompt = `Translate the following newspaper article from English to ${langName}.
 
@@ -55,10 +63,17 @@ HEADLINE:
 ${headline}
 
 BODY:
-${body}
+${bodyToTranslate}
 ${previewText ? `\nPREVIEW TEXT:\n${previewText}` : ''}`;
 
-  return callGeminiWithRetry<ArticleTranslation>(apiKey, prompt);
+  const result = await callGeminiWithRetry<ArticleTranslation>(apiKey, prompt);
+
+  // Recombine: prepend the original English event listing to the translated body
+  if (result && eventListingBlock) {
+    result.body = eventListingBlock + result.body;
+  }
+
+  return result;
 }
 
 /** Translate brief content via Gemini Flash. Returns null on failure. */

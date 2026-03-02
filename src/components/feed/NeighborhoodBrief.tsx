@@ -401,8 +401,9 @@ export function NeighborhoodBrief({
           setTranslatedContent(data.enriched_content || data.content || null);
         }
       })
-      .catch(() => {
+      .catch((err) => {
         // Fall back to English - state already cleared above
+        console.warn(`[NeighborhoodBrief] Translation fetch failed for brief ${briefId} lang ${language}:`, err?.message || err);
       });
 
     return () => { cancelled = true; };
