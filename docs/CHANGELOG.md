@@ -5,6 +5,12 @@
 
 ## 2026-03-02
 
+**Add flaneur.news Domain Redirect:**
+- Purchased flaneur.news via GoDaddy as international-friendly alternative to readflaneur.com ("read" is English-specific).
+- Middleware 301 redirects flaneur.news and www.flaneur.news to readflaneur.com, preserving path and query string.
+- readflaneur.com remains the canonical domain for SEO.
+- File: `src/middleware.ts`
+
 **Fix Image Repetition Across Article Types on Same Day:**
 - All articles for a neighborhood created on the same day showed the same thumbnail image because `selectLibraryImage()` used `getDayOfYear()` as the rotation index fallback - same value for all article types.
 - Added `typeOffset` per article type (brief_summary=0, look_ahead=7, weekly_recap=13, standard=19) so different article types index different photos from the full Unsplash pool on the same day. Applied in both sync (`selectLibraryImage`) and async (`selectLibraryImageAsync`) paths.
