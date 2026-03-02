@@ -5,6 +5,13 @@
 
 ## 2026-03-02
 
+**Expand All 18 Specialized Cron Articles from Blurbs to Proper Articles:**
+- Every specialized cron article generator was producing 30-45 word generic blurbs. All 18 now generate 150-200 word articles across 2-3 structured paragraphs with type-specific writing rules.
+- Affected services: archive-hunter, art-fairs, design-week, escape-index, fashion-week, gala-watch, global-auctions, nyc-alfresco, nyc-auctions, nyc-filming, nyc-heritage, nyc-liquor, overture-alert, political-wallet, residency-radar, review-watch, route-alert, sample-sale, specialty-auctions (2 prompts).
+- Each prompt now specifies what each paragraph should cover (P1: what happened, P2: context/significance, P3: neighborhood impact/practical info).
+- `maxOutputTokens` increased from 250-300 to 800 where set, to avoid truncating the longer responses.
+- Museum-watch was already upgraded in a previous session.
+
 **Expand Liquor License Articles from Blurbs to Proper Articles:**
 - `generateLiquorStory()` in `nyc-liquor.ts` was generating 35-50 word generic blurbs like "A new liquor license application... this development suggests a potential new addition to the neighborhood's dining landscape." with no useful detail.
 - Rewrote Gemini prompt to generate 150-200 word articles across 2-3 paragraphs: P1 what's happening (who/where/when), P2 business context (license type, legal entity, what the block is known for), P3 neighborhood implications.
