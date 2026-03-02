@@ -1,7 +1,17 @@
-import { type NextRequest } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 
 export async function middleware(request: NextRequest) {
+  // Redirect flaneur.news -> readflaneur.com (preserve path + query)
+  const host = request.headers.get('host') || '';
+  if (host === 'flaneur.news' || host === 'www.flaneur.news') {
+    const url = new URL(request.url);
+    url.hostname = 'readflaneur.com';
+    url.host = 'readflaneur.com';
+    url.port = '';
+    return NextResponse.redirect(url, 301);
+  }
+
   return await updateSession(request);
 }
 
