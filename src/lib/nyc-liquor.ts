@@ -277,12 +277,11 @@ export async function fetchNewActiveLicenses(
  * Build a direct link to the individual license application on NY State Open Data
  */
 function buildApplicationUrl(event: LiquorLicenseEvent): string {
+  // Use human-readable dataset page with search filter (not .json API which returns raw JSON)
   if (event.isPending) {
-    // Pending licenses dataset
-    return `https://data.ny.gov/resource/f8i8-k2gm.json?application_id=${encodeURIComponent(event.applicationId)}`;
+    return `https://data.ny.gov/Economic-Development/Pending-Liquor-Authority-Applications/f8i8-k2gm/data?search=${encodeURIComponent(event.applicationId)}`;
   }
-  // Active licenses dataset
-  return `https://data.ny.gov/resource/9s3h-dpkz.json?licensepermitid=${encodeURIComponent(event.applicationId)}`;
+  return `https://data.ny.gov/Economic-Development/Current-Liquor-Authority-Active-Licenses/9s3h-dpkz/data?search=${encodeURIComponent(event.applicationId)}`;
 }
 
 /**
