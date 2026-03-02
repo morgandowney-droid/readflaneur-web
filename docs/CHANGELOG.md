@@ -5,6 +5,12 @@
 
 ## 2026-03-02
 
+**Fix 3 Translation Bugs - Event Listing, Browser Auto-Detect, Debug Logging:**
+- Look Ahead articles lost their interactive event listing (day headers, category badges, hyperlinked venues) when translated because Gemini translated `[[Event Listing]]` to e.g. `[[Ereignisauflistung]]` and the hardcoded regex in ArticleBody.tsx couldn't match it. Fix: `translateArticle()` in `translation-service.ts` now strips the `[[Event Listing]]...---` block before sending to Gemini, then recombines the original English block with the translated prose. Event data (times, venues, addresses) stays in English as it should.
+- Browser language not auto-detected on first visit - users had to manually click the globe icon. Fix: `useLanguage.ts` hydration `useEffect` now runs `detectBrowserLanguage()` when no `flaneur-language` exists in localStorage and `flaneur-language-offered` flag hasn't been set. Sets language, persists to localStorage, syncs to DB. The `flaneur-language-offered` localStorage flag prevents re-detection if user later switches back to English.
+- Translation fetch failures in NeighborhoodBrief were silently swallowed. Added `console.warn` with brief ID and language code for debugging.
+- Files: `src/lib/translation-service.ts`, `src/hooks/useLanguage.ts`, `src/components/feed/NeighborhoodBrief.tsx`
+
 **Expand All 18 Specialized Cron Articles from Blurbs to Proper Articles:**
 - Every specialized cron article generator was producing 30-45 word generic blurbs. All 18 now generate 150-200 word articles across 2-3 structured paragraphs with type-specific writing rules.
 - Affected services: archive-hunter, art-fairs, design-week, escape-index, fashion-week, gala-watch, global-auctions, nyc-alfresco, nyc-auctions, nyc-filming, nyc-heritage, nyc-liquor, overture-alert, political-wallet, residency-radar, review-watch, route-alert, sample-sale, specialty-auctions (2 prompts).
