@@ -198,12 +198,18 @@ export function selectLibraryImage(
     const fullPool = [...allPhotos, ...cached.alternates.filter(a => a?.url)];
 
     if (fullPool.length > 1) {
-      // Determine rotation index based on article type:
-      // - RSS/standard with articleIndex: use articleIndex for per-article variety
-      // - Brief/Look Ahead/Sunday: use day-of-year so each day gets a different photo
+      // Determine rotation index:
+      // - With explicit articleIndex: use it directly for per-article variety
+      // - Without articleIndex: use day-of-year + type-based offset so different
+      //   article types (brief, look-ahead, nuisance watch, liquor) created on
+      //   the same day for the same neighborhood get DIFFERENT photos
+      const typeOffset = articleType === 'brief_summary' ? 0
+        : articleType === 'look_ahead' ? 7
+        : articleType === 'weekly_recap' ? 13
+        : 19; // standard/rss
       const rotationIndex = articleIndex != null
         ? articleIndex
-        : getDayOfYear();
+        : getDayOfYear() + typeOffset;
       return fullPool[rotationIndex % fullPool.length].url;
     }
 
@@ -259,7 +265,11 @@ export async function selectLibraryImageAsync(
     const allPhotos = Object.values(photos).filter((p): p is UnsplashPhoto => !!p?.url);
     const fullPool = [...allPhotos, ...alternates.filter(a => a?.url)];
     if (fullPool.length > 1) {
-      const rotationIndex = articleIndex != null ? articleIndex : getDayOfYear();
+      const typeOffset = articleType === 'brief_summary' ? 0
+        : articleType === 'look_ahead' ? 7
+        : articleType === 'weekly_recap' ? 13
+        : 19;
+      const rotationIndex = articleIndex != null ? articleIndex : getDayOfYear() + typeOffset;
       return fullPool[rotationIndex % fullPool.length].url;
     }
 
