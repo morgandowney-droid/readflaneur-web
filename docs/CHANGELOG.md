@@ -3,6 +3,17 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-02
+
+**Add `broader_area` Fallback to Unsplash Image Search:**
+- Small towns and obscure neighborhoods (e.g., Utrera, Spain) got few or zero Unsplash results because search queries were too narrow. The city name for Utrera is "Utrera" (town IS the city), so all queries searched variations of "Utrera" which returned almost nothing.
+- Added `broader_area` TEXT column to `neighborhoods` table storing the province/county/region (e.g., "Seville" for Utrera, "French Riviera" for Cap Ferrat, "Bali" for Canggu, "Silicon Valley" for Palo Alto). NULL for major cities where the city name alone produces good results.
+- Inserted into Unsplash fallback chain in both `searchAllCategories()` and `searchAllCategoriesWithAlternates()`: primary queries -> city -> **broader_area** -> city+country.
+- Added `broader_area` to `NeighborhoodInfo` interface in `image-library-generator.ts` and all 3 callers (refresh-image-library cron, admin generate-image-library, neighborhoods/create).
+- Community neighborhood creation now includes `broader_area` in Gemini Flash validation prompt and neighborhood INSERT.
+- 47 neighborhoods backfilled via Gemini Flash batch script (`scripts/backfill-broader-area.mjs`).
+- Files: `src/lib/unsplash.ts`, `src/lib/image-library-generator.ts`, `src/app/api/cron/refresh-image-library/route.ts`, `src/app/api/admin/generate-image-library/route.ts`, `src/app/api/neighborhoods/create/route.ts`, `supabase/migrations/20260307_add_broader_area_column.sql`
+
 ## 2026-03-01
 
 **Fix Image Rotation to Use Full Photo Pool:**
