@@ -5,6 +5,31 @@
 
 ## 2026-03-02
 
+**Fix Primary Neighborhood Reversion on Navigation:**
+- After drag-to-reorder or setPrimary, navigating to an article and back would revert the order because `syncFromDb()` in `useNeighborhoodPreferences` overwrote localStorage with DB results (which have no ordering - `user_neighborhood_preferences` has no `sort_order` column).
+- Fixed by merging: DB is authoritative for WHICH neighborhoods the user has, localStorage is authoritative for ORDER. New IDs from DB are appended after existing local order. Removals from DB are respected.
+- File: `src/hooks/useNeighborhoodPreferences.ts`
+
+**Fix Brief Card vs Article Headline Mismatch:**
+- Daily Brief card showed Grok's raw headline (e.g., "FiDi Trivia & Purim Tonight") while the article showed the Gemini-generated `subject_teaser` in Title Case (e.g., "A Tower for AmEx"). Both came from the same brief but used different headline sources.
+- All 4 brief rendering paths now prefer `subject_teaser` via `toHeadlineCase()` when available, falling back to Grok headline. Paths: `[city]/[neighborhood]/page.tsx` (2 places), `feed/page.tsx` (2 places), `MultiFeed.tsx` (1 place).
+- Files: `src/app/[city]/[neighborhood]/page.tsx`, `src/app/feed/page.tsx`, `src/components/feed/MultiFeed.tsx`
+
+**Fix Duplicate Cron Article Images:**
+- Multiple Culture Watch (and other specialized cron) articles for the same neighborhood had identical images because `getUnsplashForNeighborhood()` in `cron-images.ts` always returned the single `rss-story` category photo.
+- Rewrote to build the full pool (8 category photos + up to 40 alternates) and rotate via `articleIndex` when provided, or random selection otherwise.
+- Added `articleIndex` option to `getCronImage()` interface.
+- File: `src/lib/cron-images.ts`
+
+**Improve Culture Watch Article Quality:**
+- Museum Watch articles were only 35-word blurbs with generic writing ("Having attended the press preview, the exhibition is...") and wrong date framing (emphasized distant closing date instead of imminent member preview).
+- Expanded Gemini prompt from "35-word blurb" to 150-200 word articles (2-3 paragraphs) matching daily brief quality.
+- Added explicit date framing rules: lead with imminent member preview/opening date, closing date only in passing near the end.
+- Added writing rules: active present-tense prose, specific curatorial details, banned passive constructions like "Having attended the press preview".
+- Improved headline rules: short and punchy under 60 chars, use museum shorthand.
+- Backfilled 5 existing Whitney Biennial articles with proper content.
+- File: `src/lib/museum-watch.ts`
+
 **Add `broader_area` Fallback to Unsplash Image Search:**
 - Small towns and obscure neighborhoods (e.g., Utrera, Spain) got few or zero Unsplash results because search queries were too narrow. The city name for Utrera is "Utrera" (town IS the city), so all queries searched variations of "Utrera" which returned almost nothing.
 - Added `broader_area` TEXT column to `neighborhoods` table storing the province/county/region (e.g., "Seville" for Utrera, "French Riviera" for Cap Ferrat, "Bali" for Canggu, "Silicon Valley" for Palo Alto). NULL for major cities where the city name alone produces good results.
