@@ -251,6 +251,7 @@ function GlobalNeighborhoodModal({
 
   // Timezone selector visibility
   const [showTimezone, setShowTimezone] = useState(false);
+  const [currentTimezone, setCurrentTimezone] = useState('');
 
   // Suggestion feature state
   const [confirmClear, setConfirmClear] = useState(false);
@@ -585,6 +586,17 @@ function GlobalNeighborhoodModal({
       setActiveTab(initialTab);
       const stored = getStoredLocation();
       if (stored?.city) setSettingsCity(stored.city);
+
+      // Resolve current timezone for display
+      let tz = stored?.timezone || '';
+      try {
+        const prof = localStorage.getItem('flaneur-profile');
+        if (prof) {
+          const pp = JSON.parse(prof);
+          if (pp.timezone) tz = pp.timezone;
+        }
+      } catch { /* ignore */ }
+      setCurrentTimezone(tz);
 
       // Auto-focus search on desktop only (prevents keyboard covering screen on mobile)
       if (window.innerWidth >= 768) {
@@ -1144,7 +1156,7 @@ function GlobalNeighborhoodModal({
               {/* Inline timezone selector */}
               {showTimezone && (
                 <div className="mt-3">
-                <p className="text-[11px] text-fg-muted mb-2">Sets when your Daily Brief and Sunday Edition emails arrive (7 am local time). Does not affect your neighborhood selection.</p>
+                <p className="text-[11px] text-fg-muted mb-2">Sets when your Daily Brief and Sunday Edition emails arrive{currentTimezone ? ` (7 am local time, currently ${currentTimezone})` : ' (7 am local time)'}. Does not affect your neighborhood selection.</p>
                 <div className="flex items-center gap-3">
                   <label className="text-[11px] tracking-[0.15em] uppercase text-fg-subtle shrink-0">City</label>
                   <select
@@ -1192,6 +1204,23 @@ function GlobalNeighborhoodModal({
                       const tz = getTimezoneForCity(settingsCity);
                       if (tz) {
                         saveStoredLocation(settingsCity, tz);
+                        setCurrentTimezone(tz);
+                        // Sync timezone to DB for authenticated users
+                        try {
+                          const prof = localStorage.getItem('flaneur-profile');
+                          if (prof) {
+                            const pp = JSON.parse(prof);
+                            pp.timezone = tz;
+                            localStorage.setItem('flaneur-profile', JSON.stringify(pp));
+                          }
+                          if (localStorage.getItem('flaneur-auth')) {
+                            fetch('/api/preferences', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ timezone: tz, forceTimezone: true }),
+                            }).catch(() => {});
+                          }
+                        } catch { /* ignore */ }
                         setSettingsSaved(true);
                         setTimeout(() => setSettingsSaved(false), 2000);
                       }

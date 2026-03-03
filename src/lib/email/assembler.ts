@@ -564,9 +564,9 @@ export async function assembleDailyBrief(
     }
   }
 
-  // Fetch ads
+  // Fetch ads (recipientId for deterministic house ad rotation)
   const allIds = subscribedNeighborhoodIds;
-  const { headerAd, nativeAd } = await getEmailAds(supabase, primaryNeighborhoodId, allIds);
+  const { headerAd, nativeAd } = await getEmailAds(supabase, primaryNeighborhoodId, allIds, recipient.id);
 
   // Fetch Look Ahead URL for primary neighborhood
   let lookAheadUrl: string | null = null;

@@ -2,6 +2,7 @@
  * Ad selection for Daily Brief emails
  * Selects header and native ads from the ads table
  * Date-aware: only shows ads booked for today
+ * House ads rotate deterministically per recipient per day
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -14,6 +15,19 @@ interface EmailAdsResult {
 }
 
 /**
+ * Simple deterministic hash for rotation seeding.
+ * Combines date + recipientId so each person gets a different ad each day.
+ */
+function djb2Hash(str: string): number {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash);
+}
+
+/**
  * Get ads for email insertion
  * headerAd: Premium placement at top of email
  * nativeAd: Inline placement between stories in primary section
@@ -23,7 +37,8 @@ interface EmailAdsResult {
 export async function getEmailAds(
   supabase: SupabaseClient,
   primaryNeighborhoodId: string | null,
-  allNeighborhoodIds: string[]
+  allNeighborhoodIds: string[],
+  recipientId?: string
 ): Promise<EmailAdsResult> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://readflaneur.com';
   const today = new Date().toISOString().split('T')[0];
@@ -44,6 +59,7 @@ export async function getEmailAds(
     const houseAd = await getHouseAd(supabase, appUrl, {
       subscribedIds: allNeighborhoodIds,
       primaryNeighborhoodId,
+      recipientId,
     });
     return { headerAd: null, nativeAd: houseAd };
   }
@@ -67,28 +83,43 @@ export async function getEmailAds(
 }
 
 /**
- * Fetch a random house ad from the database as a fallback
- * when no paid ads are booked for today.
+ * Fetch a house ad with deterministic rotation per recipient per day.
+ * Uses weight column for weighted selection and djb2 hash of
+ * (date + recipientId) so each person sees a different ad each day.
  */
 async function getHouseAd(
   supabase: SupabaseClient,
   appUrl: string,
-  options?: { subscribedIds?: string[]; primaryNeighborhoodId?: string | null }
+  options?: { subscribedIds?: string[]; primaryNeighborhoodId?: string | null; recipientId?: string }
 ): Promise<EmailAd | null> {
   const { data: houseAds } = await supabase
     .from('house_ads')
-    .select('id, image_url, headline, body, click_url, type')
+    .select('id, image_url, headline, body, click_url, type, weight')
     .eq('active', true)
     .neq('type', 'newsletter') // Email recipients are already subscribed
     .neq('type', 'family_corner') // Family Corner promoted via in-email section, not house ad
-    .limit(10);
+    .order('id') // Stable ordering for deterministic rotation
+    .limit(20);
 
   if (!houseAds || houseAds.length === 0) {
     return null;
   }
 
-  // Pick a random house ad
-  const ad = houseAds[Math.floor(Math.random() * houseAds.length)];
+  // Build weighted pool: each ad appears (weight) times
+  const weightedPool: typeof houseAds = [];
+  for (const ha of houseAds) {
+    const w = Math.max(1, ha.weight || 1);
+    for (let i = 0; i < w; i++) {
+      weightedPool.push(ha);
+    }
+  }
+
+  // Deterministic rotation: hash(date + recipientId) picks the index
+  // Different recipients get different ads on the same day;
+  // same recipient gets a different ad each day
+  const today = new Date().toISOString().split('T')[0];
+  const seed = djb2Hash(`${today}:${options?.recipientId || 'anon'}`);
+  const ad = weightedPool[seed % weightedPool.length];
 
   let clickUrl = ad.click_url || appUrl;
 
