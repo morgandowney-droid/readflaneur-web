@@ -5,6 +5,21 @@
 
 ## 2026-03-03
 
+**Browser Timezone Auto-Detection for Email Delivery Timing:**
+- User's `primary_timezone` was set to `America/New_York` (from NYC primary neighborhood) even though they're physically in Stockholm. Email arrived at wrong time. Since user uses a VPN in EST, IP detection is unreliable.
+- `PreferencesSync` component (already in layout.tsx, runs once per session) now detects browser timezone via `Intl.DateTimeFormat().resolvedOptions().timeZone` - reads OS clock, immune to VPN.
+- Only fires when `flaneur-profile` exists but has no `timezone` field. Fire-and-forget POST to `/api/preferences`. Updates `flaneur-profile` localStorage cache immediately so modal shows it.
+- `/api/preferences` POST extended with `timezone` (IANA format, validated with `includes('/')`) and `forceTimezone` boolean. Auto-detect path checks DB first (only writes `primary_timezone` when null). Manual modal save sends `forceTimezone: true` (always overwrites).
+- Neighborhood Selector modal "Change my Timezone" panel now shows current saved timezone: "(7 am local time, currently Europe/Stockholm)". State populated from `flaneur-profile.timezone` on modal open. Manual save also syncs to DB for authenticated users.
+- Files: `src/components/providers/PreferencesSync.tsx`, `src/app/api/preferences/route.ts`, `src/components/neighborhoods/NeighborhoodSelectorModal.tsx`
+
+**Deterministic House Ad Rotation in Daily Brief Emails:**
+- House ads in daily brief emails used `Math.random()` to pick from ~5-7 active ads, causing the same ads to appear repeatedly with no rotation logic.
+- Replaced with `djb2Hash(date + recipientId) % weightedPoolLength` - deterministic rotation where each recipient sees a different ad each day, and the same recipient sees different ads on consecutive days.
+- Weighted selection now honors the `house_ads.weight` column (was ignored). Each ad appears `weight` times in the selection pool (e.g., weight=3 = 3x more likely).
+- Query uses `.order('id')` for stable ordering (deterministic rotation requires consistent array order). `recipientId` threaded from `assembleDailyBrief` through `getEmailAds` to `getHouseAd`.
+- Files: `src/lib/email/ads.ts`, `src/lib/email/assembler.ts`
+
 **Fix Timezone Overwrite on Primary Neighborhood Change:**
 - `sync-primary-neighborhood` was overwriting `primary_timezone` with the neighborhood's city timezone on every primary change. A reader in Stockholm with NYC as primary neighborhood got email delivery time set to 7 AM NYC instead of 7 AM Stockholm.
 - Now only sets timezone when `primary_timezone` is null (initial setup). Users control their delivery timezone via the settings page.
