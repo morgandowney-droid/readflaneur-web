@@ -86,14 +86,22 @@ export async function POST(request: NextRequest) {
 
     const cityChanged = profile?.primary_city !== neighborhood.city;
 
-    // Update profile with new primary city/timezone/neighborhood
+    // Update profile with new primary city/neighborhood
+    // Only set timezone if user doesn't have one yet — timezone is a user
+    // preference (physical location), not derived from neighborhood.
+    // A reader in Stockholm following NYC neighborhoods should get email at
+    // 7 AM Stockholm time, not 7 AM NYC time.
+    const updateData: Record<string, string> = {
+      primary_city: neighborhood.city,
+      primary_neighborhood_id: neighborhoodId,
+    };
+    if (!profile?.primary_timezone) {
+      updateData.primary_timezone = timezone;
+    }
+
     await serviceSupabase
       .from('profiles')
-      .update({
-        primary_city: neighborhood.city,
-        primary_timezone: timezone,
-        primary_neighborhood_id: neighborhoodId,
-      })
+      .update(updateData)
       .eq('id', userId);
 
     // Trigger instant resend on any primary change (same city or different)
