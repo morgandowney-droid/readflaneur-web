@@ -3,6 +3,14 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-03
+
+**Fix Timezone Overwrite on Primary Neighborhood Change:**
+- `sync-primary-neighborhood` was overwriting `primary_timezone` with the neighborhood's city timezone on every primary change. A reader in Stockholm with NYC as primary neighborhood got email delivery time set to 7 AM NYC instead of 7 AM Stockholm.
+- Now only sets timezone when `primary_timezone` is null (initial setup). Users control their delivery timezone via the settings page.
+- The `set-primary` endpoint (settings page) still sets timezone since that's an explicit user action. The `email-monitor` auto-fixer still fills null timezones.
+- File: `src/app/api/location/sync-primary-neighborhood/route.ts`
+
 ## 2026-03-02
 
 **Add flaneur.news Domain Redirect:**
