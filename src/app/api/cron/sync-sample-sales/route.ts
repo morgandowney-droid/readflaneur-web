@@ -282,13 +282,14 @@ export async function GET(request: Request) {
             continue;
           }
 
-          // Insert source attribution
+          // Insert source attribution with URL when available
           if (newArticle) {
             await supabase.from('article_sources').insert([
               {
                 article_id: newArticle.id,
                 source_name: story.sale.sourceDisplayName,
                 source_type: 'publication',
+                source_url: story.sale.url || null,
               },
             ]).then(null, (e: Error) => console.warn(`Failed to insert sources for ${newArticle.id}:`, e));
           }

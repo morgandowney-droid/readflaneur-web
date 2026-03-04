@@ -495,7 +495,8 @@ Return ONLY a JSON array (no markdown, no explanation). Each object must have:
 - discount: string (e.g. "Up to 80% off")
 - saleType: "sample_sale" | "trunk_show" | "warehouse_sale" | "private_sale" | "flash_sale"
 - isInviteOnly: boolean
-- url: string or null
+- url: string or null (the URL of the page where you found this sale)
+- sourceName: string (name of the website/publication where you found this, e.g. "Chicmi", "260 Sample Sale", "Vogue Scandinavia", "The Cut", "TimeOut London")
 
 IMPORTANT: The "city" field MUST be included for every entry so results can be attributed to the correct city.
 
@@ -522,6 +523,7 @@ If no sales are found for any city, return an empty array: []`;
       saleType?: string;
       isInviteOnly?: boolean;
       url?: string | null;
+      sourceName?: string | null;
     }>;
 
     const sales: DetectedSale[] = [];
@@ -554,7 +556,7 @@ If no sales are found for any city, return an empty array: []`;
       sales.push({
         id: `grok-${city}-${brand.name.replace(/\W/g, '-').toLowerCase()}-${Date.now()}`,
         source: 'Sample_Sale_Guide',
-        sourceDisplayName: `Grok Search (${cityName})`,
+        sourceDisplayName: p.sourceName || `Grok Search (${cityName})`,
         city,
         brand: brand.name,
         brandTier: brand.tier,
