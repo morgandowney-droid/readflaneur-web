@@ -260,7 +260,7 @@ export async function GET(request: Request) {
           }
 
           // Create article with cached image
-          const { error: insertError } = await supabase.from('articles').insert({
+          const { data: newArticle, error: insertError } = await supabase.from('articles').insert({
             neighborhood_id: finalNeighborhoodId,
             headline: story.headline,
             body_text: story.body,
@@ -275,11 +275,22 @@ export async function GET(request: Request) {
             category_label: story.categoryLabel,
             enriched_at: new Date().toISOString(),
             enrichment_model: 'gemini-2.5-flash',
-          });
+          }).select('id').single();
 
           if (insertError) {
             results.errors.push(`${story.sale.brand}/${neighborhoodId}: ${insertError.message}`);
             continue;
+          }
+
+          // Insert source attribution
+          if (newArticle) {
+            await supabase.from('article_sources').insert([
+              {
+                article_id: newArticle.id,
+                source_name: story.sale.sourceDisplayName,
+                source_type: 'publication',
+              },
+            ]).then(null, (e: Error) => console.warn(`Failed to insert sources for ${newArticle.id}:`, e));
           }
 
           results.articles_created++;
