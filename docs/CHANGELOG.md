@@ -5,6 +5,14 @@
 
 ## 2026-03-04
 
+**Fix Sample Sale Source Attribution:**
+- Sample sale cron was creating articles without inserting into `article_sources` table, causing generic "Synthesized from public news sources" text instead of actual source names.
+- Article INSERT now uses `.select('id').single()` to get article ID back, then inserts source rows with `source_type: 'publication'`.
+- Grok prompt now requests `sourceName` field - the name of the publication/site where the sale was found (e.g., "Chicmi", "Vogue Scandinavia", "TimeOut London") instead of generic "Grok Search (City)".
+- `source_url` passed through from Grok's `url` field and Shopify collection URLs (e.g., `https://blankens.com/collections/sale`) so `SourceAttribution` renders clickable links to the original source page.
+- Backfilled 12 existing sample sale articles with source attribution.
+- Files: `src/lib/sample-sale.ts`, `src/app/api/cron/sync-sample-sales/route.ts`
+
 **Surface Sample Sales & Flash Sales in Daily Briefs and Look Ahead:**
 - Added sample sale, flash sale, trunk show, pop-up shop, and warehouse sale search terms to 4 AI prompt files: `grok.ts` (generateNeighborhoodBrief + generateLookAhead), `gemini-search.ts` (searchNeighborhoodFacts + searchUpcomingEvents), `brief-enricher-gemini.ts` (dailyBriefStyle + lookAheadStyle). All 270 neighborhoods now search for time-sensitive retail events automatically at zero extra cost.
 - Added FLASH SALE / SAMPLE SALE PRIORITY rule to both daily brief and Look Ahead enrichment styles, ensuring these events are always included prominently with brand, venue address, dates, hours, and expected discounts.
