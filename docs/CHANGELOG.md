@@ -5,6 +5,13 @@
 
 ## 2026-03-04
 
+**Fix Translation Gaps in Feed Cards and Event Listing:**
+- Daily Brief card headline stayed English when language switched - brief translation API now accepts `neighborhoodId` and returns translated headline from `article_translations` via a joined query on the most recent `brief_summary` article.
+- "Look Ahead" category label in feed compact cards stayed English - added `feed.lookAheadLabel` translation key (short form) in all 9 languages, `CompactArticleCard.tsx` now translates it alongside "Daily Brief".
+- Translated article headlines kept translated prefixes like "RESUMEN DIARIO:" or "TAGESBRIEFING:" - extended `cleanArticleHeadline()` in `utils.ts` with regex patterns for all 9 language variants of both "Daily Brief" and "Look Ahead" prefixes. Applied `cleanArticleHeadline()` to translated headlines too (was only applied to English originals).
+- EventListingBlock on Look Ahead article pages had 11 hardcoded English UI strings (Filter, Morning, All days, No events match, etc.) - added 12 `events.*` translation keys in all 9 languages, threaded `t()` function from `TranslatedArticleBody` through `ArticleBody` to `EventListingBlock` with English fallback for direct usage.
+- Files: `src/lib/translations.ts`, `src/lib/utils.ts`, `src/components/feed/CompactArticleCard.tsx`, `src/components/feed/NeighborhoodBrief.tsx`, `src/app/api/translations/brief/route.ts`, `src/components/article/ArticleBody.tsx`, `src/components/article/TranslatedArticleBody.tsx`
+
 **Fix Combo Neighborhood Daily Brief Missing in Email:**
 - Tribeca, Ostermalm, Hamptons and other combo neighborhoods had no Daily Brief in the daily email. Root cause: `fetchBriefAsStory()` in assembler.ts queried `neighborhood_id = 'nyc-tribeca'` but briefs are stored under component IDs like `nyc-tribeca-core`.
 - Added `isCombo` param to `fetchBriefAsStory()` and uses `expandNeighborhoodIds()` with `.in('neighborhood_id', ids)` - same pattern already used by `fetchLookAheadAsStory()`.
