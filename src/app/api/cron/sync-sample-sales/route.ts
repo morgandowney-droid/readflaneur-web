@@ -114,7 +114,7 @@ export async function GET(request: Request) {
         const { data: lastExec } = await supabase
           .from('cron_executions')
           .select('response_data')
-          .eq('cron_name', 'sync-sample-sales')
+          .eq('job_name', 'sync-sample-sales')
           .order('created_at', { ascending: false })
           .limit(1)
           .single();
@@ -298,7 +298,7 @@ export async function GET(request: Request) {
     // Log to cron_executions (includes shopify_active_sales for next run's dedup)
     try {
       await supabase.from('cron_executions').insert({
-        cron_name: 'sync-sample-sales',
+        job_name: 'sync-sample-sales',
         status: results.articles_created > 0 || results.errors.length === 0 ? 'success' : 'partial',
         articles_created: results.articles_created,
         response_data: results,
@@ -318,7 +318,7 @@ export async function GET(request: Request) {
     // Log failure to cron_executions
     try {
       await supabase.from('cron_executions').insert({
-        cron_name: 'sync-sample-sales',
+        job_name: 'sync-sample-sales',
         status: 'error',
         articles_created: results.articles_created,
         response_data: { ...results, error: error instanceof Error ? error.message : 'Unknown error' },
