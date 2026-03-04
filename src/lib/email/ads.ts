@@ -1,8 +1,8 @@
 /**
  * Ad selection for Daily Brief emails
- * Selects header and native ads from the ads table
+ * Selects header, native, and interstitial ads from the ads table
  * Date-aware: only shows ads booked for today
- * House ads rotate deterministically per recipient per day
+ * Paid ads and house ads rotate deterministically per recipient per day
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -12,6 +12,7 @@ import { findDiscoveryBrief } from '@/lib/discover-neighborhood';
 interface EmailAdsResult {
   headerAd: EmailAd | null;
   nativeAd: EmailAd | null;
+  interstitialAds: EmailAd[];
 }
 
 /**
@@ -31,8 +32,10 @@ function djb2Hash(str: string): number {
  * Get ads for email insertion
  * headerAd: Premium placement at top of email
  * nativeAd: Inline placement between stories in primary section
+ * interstitialAds: Placed between satellite sections (every 3rd)
  *
- * With exclusivity, one ad per neighborhood per day fills both slots.
+ * Paid ads rotate deterministically per recipient per day via djb2Hash.
+ * House ads fall back with weighted rotation when no paid ads are booked.
  */
 export async function getEmailAds(
   supabase: SupabaseClient,
@@ -52,16 +55,20 @@ export async function getEmailAds(
     .gte('end_date', today)
     .or(`is_global.eq.true,is_global_takeover.eq.true,neighborhood_id.in.(${allNeighborhoodIds.join(',')})`)
     .order('is_global_takeover', { ascending: true }) // Prefer neighborhood-targeted over global
-    .order('created_at', { ascending: false });
+    .order('id'); // Stable ordering for deterministic rotation
 
   if (!paidAds || paidAds.length === 0) {
-    // Fallback: show a house ad in the native slot
-    const houseAd = await getHouseAd(supabase, appUrl, {
+    // Fallback: house ads for native + interstitial slots
+    const houseAds = await getHouseAds(supabase, appUrl, 4, {
       subscribedIds: allNeighborhoodIds,
       primaryNeighborhoodId,
       recipientId,
     });
-    return { headerAd: null, nativeAd: houseAd };
+    return {
+      headerAd: null,
+      nativeAd: houseAds[0] || null,
+      interstitialAds: houseAds.slice(1),
+    };
   }
 
   const toEmailAd = (ad: typeof paidAds[0]): EmailAd => ({
@@ -73,25 +80,33 @@ export async function getEmailAds(
     impressionUrl: `${appUrl}/api/ads/${ad.id}/impression?source=email`,
   });
 
-  // With exclusivity, the first matching ad fills both header and native
-  const headerAd = toEmailAd(paidAds[0]);
+  // Deterministic rotation: hash(date + recipientId) rotates the start index
+  // so different recipients see different ads each day
+  const seed = djb2Hash(`${today}:${recipientId || 'anon'}`);
+  const startIdx = seed % paidAds.length;
+  const rotated: typeof paidAds = [];
+  for (let i = 0; i < paidAds.length; i++) {
+    rotated.push(paidAds[(startIdx + i) % paidAds.length]);
+  }
 
-  // Use second ad for native if available, otherwise reuse header ad
-  const nativeAd = paidAds.length > 1 ? toEmailAd(paidAds[1]) : null;
+  const headerAd = toEmailAd(rotated[0]);
+  const nativeAd = rotated.length > 1 ? toEmailAd(rotated[1]) : null;
+  const interstitialAds = rotated.slice(2).map(toEmailAd);
 
-  return { headerAd, nativeAd };
+  return { headerAd, nativeAd, interstitialAds };
 }
 
 /**
- * Fetch a house ad with deterministic rotation per recipient per day.
- * Uses weight column for weighted selection and djb2 hash of
- * (date + recipientId) so each person sees a different ad each day.
+ * Fetch multiple unique house ads with deterministic rotation per recipient per day.
+ * Uses weight column for weighted selection and djb2 hash with slot offset
+ * so each slot gets a different ad while remaining deterministic.
  */
-async function getHouseAd(
+async function getHouseAds(
   supabase: SupabaseClient,
   appUrl: string,
+  count: number,
   options?: { subscribedIds?: string[]; primaryNeighborhoodId?: string | null; recipientId?: string }
-): Promise<EmailAd | null> {
+): Promise<EmailAd[]> {
   const { data: houseAds } = await supabase
     .from('house_ads')
     .select('id, image_url, headline, body, click_url, type, weight')
@@ -102,7 +117,7 @@ async function getHouseAd(
     .limit(20);
 
   if (!houseAds || houseAds.length === 0) {
-    return null;
+    return [];
   }
 
   // Build weighted pool: each ad appears (weight) times
@@ -114,51 +129,69 @@ async function getHouseAd(
     }
   }
 
-  // Deterministic rotation: hash(date + recipientId) picks the index
-  // Different recipients get different ads on the same day;
-  // same recipient gets a different ad each day
   const today = new Date().toISOString().split('T')[0];
-  const seed = djb2Hash(`${today}:${options?.recipientId || 'anon'}`);
-  const ad = weightedPool[seed % weightedPool.length];
+  const results: EmailAd[] = [];
+  const usedAdIds = new Set<number>();
+  let neighborhoodCount: number | null = null;
 
-  let clickUrl = ad.click_url || appUrl;
+  for (let slot = 0; slot < count && usedAdIds.size < houseAds.length; slot++) {
+    // Each slot uses a different hash seed for variety
+    const seed = djb2Hash(`${today}:${options?.recipientId || 'anon'}:${slot}`);
 
-  // For "app_download" types, resolve a dynamic discovery brief URL
-  if (ad.type === 'app_download' && options?.subscribedIds) {
-    try {
-      const result = await findDiscoveryBrief(
-        supabase,
-        options.subscribedIds,
-        options.primaryNeighborhoodId ?? null
-      );
-      if (result) {
-        clickUrl = `${appUrl}${result.url}`;
-      }
-    } catch {
-      // Keep static fallback URL
+    // Find a unique ad from pool (skip already-used ads)
+    let ad = weightedPool[seed % weightedPool.length];
+    let attempts = 0;
+    while (usedAdIds.has(ad.id) && attempts < weightedPool.length) {
+      ad = weightedPool[(seed + attempts + 1) % weightedPool.length];
+      attempts++;
     }
+    if (usedAdIds.has(ad.id)) break; // Exhausted unique ads
+    usedAdIds.add(ad.id);
+
+    let clickUrl = ad.click_url || appUrl;
+
+    // For "app_download" types, resolve a dynamic discovery brief URL
+    if (ad.type === 'app_download' && options?.subscribedIds) {
+      try {
+        const result = await findDiscoveryBrief(
+          supabase,
+          options.subscribedIds,
+          options.primaryNeighborhoodId ?? null
+        );
+        if (result) {
+          clickUrl = `${appUrl}${result.url}`;
+        }
+      } catch {
+        // Keep static fallback URL
+      }
+    }
+
+    let body: string | undefined = ad.body || undefined;
+
+    // Resolve {{neighborhood_count}} placeholder with live count (cached across slots)
+    if (body && body.includes('{{neighborhood_count}}')) {
+      if (neighborhoodCount === null) {
+        const { count: c } = await supabase
+          .from('neighborhoods')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true)
+          .eq('is_combo', false);
+        neighborhoodCount = c || 270;
+      }
+      body = body.replace(/\{\{neighborhood_count\}\}/g, String(neighborhoodCount));
+    }
+
+    results.push({
+      id: `house-${ad.id}`,
+      imageUrl: ad.image_url || '',
+      headline: ad.headline || '',
+      body,
+      clickUrl,
+      sponsorLabel: 'Flaneur',
+      impressionUrl: '',
+      ctaText: undefined,
+    });
   }
 
-  let body: string | undefined = ad.body || undefined;
-
-  // Resolve {{neighborhood_count}} placeholder with live count
-  if (body && body.includes('{{neighborhood_count}}')) {
-    const { count } = await supabase
-      .from('neighborhoods')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_active', true)
-      .eq('is_combo', false);
-    body = body.replace(/\{\{neighborhood_count\}\}/g, String(count || 270));
-  }
-
-  return {
-    id: `house-${ad.id}`,
-    imageUrl: ad.image_url || '',
-    headline: ad.headline || '',
-    body,
-    clickUrl,
-    sponsorLabel: 'Flaneur',
-    impressionUrl: '',
-    ctaText: undefined,
-  };
+  return results;
 }

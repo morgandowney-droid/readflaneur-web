@@ -102,8 +102,12 @@ async function fetchBriefAsStory(
   neighborhoodId: string,
   neighborhoodName: string,
   cityName: string,
-  timezone?: string
+  timezone?: string,
+  isCombo?: boolean
 ): Promise<EmailStory | null> {
+  // Expand combo neighborhoods to include component IDs
+  const ids = await expandNeighborhoodIds(supabase, neighborhoodId, isCombo);
+
   // First: check for a brief article in the articles table (14h window = today's brief only)
   // Using 14h instead of 48h prevents stale briefs from blocking fresh ones
   const since14h = new Date(Date.now() - 14 * 60 * 60 * 1000).toISOString();
@@ -111,7 +115,7 @@ async function fetchBriefAsStory(
     .from('articles')
     .select('headline, preview_text, body_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
     .eq('status', 'published')
-    .eq('neighborhood_id', neighborhoodId)
+    .in('neighborhood_id', ids)
     .ilike('category_label', '%daily brief%')
     .gte('published_at', since14h)
     .order('published_at', { ascending: false })
@@ -128,7 +132,7 @@ async function fetchBriefAsStory(
   const { data: brief } = await supabase
     .from('neighborhood_briefs')
     .select('id, headline, subject_teaser, content, enriched_content, enriched_categories, enrichment_model, model, generated_at, email_teaser')
-    .eq('neighborhood_id', neighborhoodId)
+    .in('neighborhood_id', ids)
     .not('enriched_content', 'is', null)
     .gte('expires_at', new Date().toISOString())
     .order('created_at', { ascending: false })
@@ -479,7 +483,7 @@ export async function assembleDailyBrief(
     }
 
     // Fetch exactly 1 Daily Brief + 1 Look Ahead
-    const briefStory = await fetchBriefAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city, recipient.timezone);
+    const briefStory = await fetchBriefAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city, recipient.timezone, primaryNeighborhood.is_combo);
     const lookAheadStory = await fetchLookAheadAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city, primaryNeighborhood.is_combo, recipient.timezone);
 
     const emailStories: EmailStory[] = [];
@@ -496,10 +500,11 @@ export async function assembleDailyBrief(
     // Must use same sort order (created_at) and enriched_content gate as fetchBriefAsStory
     // to ensure subject line teaser comes from the same brief used in the body
     let subjectTeaser: string | null = null;
+    const primaryIds = await expandNeighborhoodIds(supabase, primaryNeighborhood.id, primaryNeighborhood.is_combo);
     const { data: briefTeaser } = await supabase
       .from('neighborhood_briefs')
       .select('subject_teaser')
-      .eq('neighborhood_id', primaryNeighborhood.id)
+      .in('neighborhood_id', primaryIds)
       .not('subject_teaser', 'is', null)
       .not('enriched_content', 'is', null)
       .gte('expires_at', new Date().toISOString())
@@ -535,7 +540,7 @@ export async function assembleDailyBrief(
     const neighborhood = neighborhoodMap.get(satId);
     if (!neighborhood) continue;
 
-    const briefStory = await fetchBriefAsStory(supabase, satId, neighborhood.name, neighborhood.city, recipient.timezone);
+    const briefStory = await fetchBriefAsStory(supabase, satId, neighborhood.name, neighborhood.city, recipient.timezone, neighborhood.is_combo);
     const lookAheadStory = await fetchLookAheadAsStory(supabase, satId, neighborhood.name, neighborhood.city, neighborhood.is_combo, recipient.timezone);
 
     const emailStories: EmailStory[] = [];
@@ -564,9 +569,9 @@ export async function assembleDailyBrief(
     }
   }
 
-  // Fetch ads (recipientId for deterministic house ad rotation)
+  // Fetch ads (recipientId for deterministic rotation)
   const allIds = subscribedNeighborhoodIds;
-  const { headerAd, nativeAd } = await getEmailAds(supabase, primaryNeighborhoodId, allIds, recipient.id);
+  const { headerAd, nativeAd, interstitialAds } = await getEmailAds(supabase, primaryNeighborhoodId, allIds, recipient.id);
 
   // Fetch Look Ahead URL for primary neighborhood
   let lookAheadUrl: string | null = null;
@@ -598,6 +603,7 @@ export async function assembleDailyBrief(
     satelliteSections,
     headerAd,
     nativeAd,
+    interstitialAds,
     lookAheadUrl,
     familyCorner,
     postcard,

@@ -146,13 +146,18 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
             </Section>
           )}
 
-          {/* Satellite neighborhoods */}
+          {/* Satellite neighborhoods with interstitial ads every 3 sections */}
           {content.satelliteSections.length > 0 && (
             <Hr style={sectionDividerDark} />
           )}
-          {content.satelliteSections.map((section, i) => (
-            <SatelliteSection key={i} section={section} />
-          ))}
+          {content.satelliteSections.flatMap((section, i) => {
+            const elements = [<SatelliteSection key={`sat-${i}`} section={section} />];
+            const adIndex = Math.floor(i / 3);
+            if ((i + 1) % 3 === 0 && content.interstitialAds?.[adIndex]) {
+              elements.push(<NativeAd key={`intad-${adIndex}`} ad={content.interstitialAds[adIndex]} />);
+            }
+            return elements;
+          })}
 
           {/* Family Corner */}
           {content.familyCorner && (

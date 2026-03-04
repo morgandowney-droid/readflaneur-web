@@ -21,6 +21,7 @@ export interface DailyBriefContent {
   satelliteSections: SatelliteNeighborhoodSection[];
   headerAd: EmailAd | null;
   nativeAd: EmailAd | null;
+  interstitialAds: EmailAd[];
   lookAheadUrl?: string | null;
   familyCorner?: FamilyCornerSection | null;
   postcard?: PostcardSection | null;
