@@ -3,6 +3,27 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-04
+
+**Fix Combo Neighborhood Daily Brief Missing in Email:**
+- Tribeca, Ostermalm, Hamptons and other combo neighborhoods had no Daily Brief in the daily email. Root cause: `fetchBriefAsStory()` in assembler.ts queried `neighborhood_id = 'nyc-tribeca'` but briefs are stored under component IDs like `nyc-tribeca-core`.
+- Added `isCombo` param to `fetchBriefAsStory()` and uses `expandNeighborhoodIds()` with `.in('neighborhood_id', ids)` - same pattern already used by `fetchLookAheadAsStory()`.
+- Fixed in 3 call sites: primary section (line 483), satellite loop (line 540), and subject teaser query (line 500).
+- File: `src/lib/email/assembler.ts`
+
+**Deterministic Paid Ad Rotation in Daily Brief Emails:**
+- Same 2 paid/placeholder ads appeared in the same positions every day because the query used `created_at DESC` (static ordering).
+- Changed to `.order('id')` for stable ordering + `djb2Hash(date + recipientId) % paidAds.length` to compute a rotating start index. Different recipients see different ads on the same day; same recipient sees different ads each day.
+- `rotated[0]` = header ad, `rotated[1]` = native ad, `rotated[2+]` = interstitial ads.
+- Files: `src/lib/email/ads.ts`
+
+**Interstitial Ads Between Satellite Sections:**
+- Daily Brief email had a long stretch of black-and-white text between satellite neighborhoods with no visual breaks.
+- `DailyBriefTemplate.tsx` now inserts a `<NativeAd>` after every 3rd satellite section using `content.interstitialAds[Math.floor(i/3)]`.
+- `interstitialAds: EmailAd[]` added to `DailyBriefContent` type, populated from remaining rotated paid ads or additional unique house ads.
+- House ad fallback refactored: `getHouseAd()` replaced by `getHouseAds(count)` that picks up to N unique ads using per-slot hash offsets (`djb2Hash(date:recipientId:slotIndex)`). Neighborhood count placeholder cached across slots to avoid duplicate DB queries.
+- Files: `src/lib/email/ads.ts`, `src/lib/email/types.ts`, `src/lib/email/assembler.ts`, `src/lib/email/templates/DailyBriefTemplate.tsx`
+
 ## 2026-03-03
 
 **Browser Timezone Auto-Detection for Email Delivery Timing:**
