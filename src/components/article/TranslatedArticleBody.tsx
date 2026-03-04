@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLanguageContext } from '@/components/providers/LanguageProvider';
+import { useTranslation } from '@/hooks/useTranslation';
 import { ArticleBody } from './ArticleBody';
 
 interface TranslatedHeadlineProps {
@@ -64,6 +65,7 @@ export function TranslatedArticleBody({
   country,
 }: TranslatedArticleBodyProps) {
   const { language, isTranslated } = useLanguageContext();
+  const { t } = useTranslation();
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -119,6 +121,7 @@ export function TranslatedArticleBody({
       city={city}
       articleType={articleType}
       country={country}
+      t={t}
     />
   );
 }

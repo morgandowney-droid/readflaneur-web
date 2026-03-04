@@ -4,6 +4,7 @@ import { useState, useEffect, ReactNode } from 'react';
 import { useLanguageContext } from '@/components/providers/LanguageProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import { ShareButton } from '@/components/ui/ShareButton';
+import { cleanArticleHeadline } from '@/lib/utils';
 
 interface BriefSource {
   title?: string;
@@ -378,20 +379,25 @@ export function NeighborhoodBrief({
   const { language, isTranslated } = useLanguageContext();
   const { t } = useTranslation();
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
+  const [translatedHeadline, setTranslatedHeadline] = useState<string | null>(null);
 
 
-  // Fetch translated brief content when language changes
+  // Fetch translated brief content + headline when language changes
   useEffect(() => {
     if (!isTranslated || !briefId) {
       setTranslatedContent(null);
+      setTranslatedHeadline(null);
       return;
     }
 
     // Clear stale translation from previous language before fetching new one
     setTranslatedContent(null);
+    setTranslatedHeadline(null);
 
     let cancelled = false;
-    fetch(`/api/translations/brief?id=${briefId}&lang=${language}`)
+    const params = new URLSearchParams({ id: briefId, lang: language });
+    if (neighborhoodId) params.set('neighborhoodId', neighborhoodId);
+    fetch(`/api/translations/brief?${params}`)
       .then(res => {
         if (!res.ok) throw new Error('not found');
         return res.json();
@@ -399,6 +405,7 @@ export function NeighborhoodBrief({
       .then(data => {
         if (!cancelled) {
           setTranslatedContent(data.enriched_content || data.content || null);
+          setTranslatedHeadline(data.headline || null);
         }
       })
       .catch((err) => {
@@ -407,7 +414,7 @@ export function NeighborhoodBrief({
       });
 
     return () => { cancelled = true; };
-  }, [briefId, language, isTranslated]);
+  }, [briefId, neighborhoodId, language, isTranslated]);
 
   // Never display unenriched (raw Grok) content - wait for Gemini enrichment
   if (!enrichedContent) return null;
@@ -602,7 +609,7 @@ export function NeighborhoodBrief({
 
       {/* Headline */}
       <h3 className="font-display text-2xl md:text-3xl text-fg leading-tight mb-4 md:whitespace-nowrap md:overflow-hidden">
-        {headline}
+        {cleanArticleHeadline(translatedHeadline || headline)}
       </h3>
 
       {/* Content */}

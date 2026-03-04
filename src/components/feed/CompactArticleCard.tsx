@@ -130,6 +130,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
             {(() => {
               const stripped = article.category_label.replace(new RegExp(`^${article.neighborhood?.name}\\s+`, 'i'), '');
               if (isTranslated && /daily brief/i.test(stripped)) return t('feed.dailyBrief');
+              if (isTranslated && /look ahead/i.test(stripped)) return t('feed.lookAheadLabel');
               return stripped;
             })()}
           </span>
@@ -138,7 +139,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
     </div>
   );
 
-  const fullHeadline = translatedHeadline || cleanArticleHeadline(article.headline);
+  const fullHeadline = cleanArticleHeadline(translatedHeadline || article.headline);
 
   const headlineDesktop = (
     <h2 className="font-semibold text-lg md:text-xl leading-tight mb-1.5 whitespace-nowrap overflow-hidden">

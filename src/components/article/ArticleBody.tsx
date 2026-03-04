@@ -9,6 +9,7 @@ interface ArticleBodyProps {
   city: string;
   articleType?: string;
   country?: string;
+  t?: (key: string) => string;
 }
 
 /** Detect greeting lines across 9 languages - matches the patterns in NeighborhoodBrief.tsx */
@@ -28,7 +29,7 @@ function isGreetingLine(text: string): boolean {
   return patterns.some(p => p.test(trimmed));
 }
 
-export function ArticleBody({ content, neighborhoodName, city, articleType, country }: ArticleBodyProps) {
+export function ArticleBody({ content, neighborhoodName, city, articleType, country, t }: ArticleBodyProps) {
   // Strip all links (HTML and markdown) from content, keeping just the text
   let cleanedContent = content
     // Strip teaser labels that Gemini outputs as prose (for email/subject only, not display)
@@ -153,7 +154,7 @@ export function ArticleBody({ content, neighborhoodName, city, articleType, coun
     <article className="max-w-none" style={{ fontFamily: 'var(--font-body-serif)' }}>
       {/* Structured event listing block */}
       {eventListingBlock && (
-        <EventListingBlock content={eventListingBlock} city={city} country={country} />
+        <EventListingBlock content={eventListingBlock} city={city} country={country} t={t} />
       )}
 
       {/* Prose body (skipped for Look Ahead when event listing exists) */}
@@ -350,7 +351,18 @@ function parseEventListing(content: string, country?: string): { days: string[];
 /**
  * Interactive event listing with day/time/category filters and hyperlinked names.
  */
-function EventListingBlock({ content, city, country }: { content: string; city: string; country?: string }) {
+function EventListingBlock({ content, city, country, t }: { content: string; city: string; country?: string; t?: (key: string) => string }) {
+  // Fallback for when t is not provided (direct ArticleBody usage without TranslatedArticleBody)
+  const tr = t || ((key: string) => {
+    const fallbacks: Record<string, string> = {
+      'events.filter': 'Filter', 'events.clear': 'Clear', 'events.allDays': 'All days',
+      'events.morning': 'Morning', 'events.afternoon': 'Afternoon', 'events.evening': 'Evening',
+      'events.allDay': 'All Day', 'events.noMatch': 'No events match your filters.',
+      'events.clearFilters': 'Clear filters', 'events.more': `+{n} more`,
+      'events.showing': 'Showing {a} of {b} events', 'events.alsoOn': 'also on',
+    };
+    return fallbacks[key] || key;
+  });
   const { days, events } = useMemo(() => parseEventListing(content, country), [content, country]);
 
   // Filter state
@@ -433,11 +445,11 @@ function EventListingBlock({ content, city, country }: { content: string; city: 
           onClick={() => setFiltersOpen(!filtersOpen)}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-          Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+          {tr('events.filter')}{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${filtersOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         {hasFilters && !filtersOpen && (
-          <button onClick={clearFilters} className="text-fg-muted text-xs ml-3 hover:text-fg transition-colors">Clear</button>
+          <button onClick={clearFilters} className="text-fg-muted text-xs ml-3 hover:text-fg transition-colors">{tr('events.clear')}</button>
         )}
 
         {filtersOpen && (
@@ -448,7 +460,7 @@ function EventListingBlock({ content, city, country }: { content: string; city: 
                 <button
                   className={`${pillBase} ${activeDay === null ? pillActive : pillInactive}`}
                   onClick={() => setActiveDay(null)}
-                >All days</button>
+                >{tr('events.allDays')}</button>
                 {days.map(day => (
                   <button
                     key={day}
@@ -461,13 +473,19 @@ function EventListingBlock({ content, city, country }: { content: string; city: 
 
             {/* Time-of-day chips */}
             <div className="flex flex-wrap gap-2">
-              {(['morning', 'afternoon', 'evening', 'all-day'] as TimeOfDay[]).map(tod => (
-                <button
-                  key={tod}
-                  className={`${pillBase} ${activeTimeOfDay.has(tod) ? pillActive : pillInactive}`}
-                  onClick={() => toggleTimeOfDay(tod)}
-                >{tod === 'all-day' ? 'All Day' : tod.charAt(0).toUpperCase() + tod.slice(1)}</button>
-              ))}
+              {(['morning', 'afternoon', 'evening', 'all-day'] as TimeOfDay[]).map(tod => {
+                const todLabels: Record<TimeOfDay, string> = {
+                  morning: tr('events.morning'), afternoon: tr('events.afternoon'),
+                  evening: tr('events.evening'), 'all-day': tr('events.allDay'),
+                };
+                return (
+                  <button
+                    key={tod}
+                    className={`${pillBase} ${activeTimeOfDay.has(tod) ? pillActive : pillInactive}`}
+                    onClick={() => toggleTimeOfDay(tod)}
+                  >{todLabels[tod]}</button>
+                );
+              })}
             </div>
 
             {/* Category chips */}
@@ -484,7 +502,7 @@ function EventListingBlock({ content, city, country }: { content: string; city: 
                   <button
                     className={`${pillBase} ${pillInactive}`}
                     onClick={() => setShowAllCategories(true)}
-                  >+{hiddenCategoryCount} more</button>
+                  >{tr('events.more').replace('{n}', String(hiddenCategoryCount))}</button>
                 )}
               </div>
             )}
@@ -495,8 +513,8 @@ function EventListingBlock({ content, city, country }: { content: string; city: 
       {/* Events */}
       {filteredEvents.length === 0 ? (
         <div className="text-center py-8 text-fg-muted">
-          <p className="text-sm">No events match your filters.</p>
-          <button onClick={clearFilters} className="text-accent text-sm mt-2 hover:underline">Clear filters</button>
+          <p className="text-sm">{tr('events.noMatch')}</p>
+          <button onClick={clearFilters} className="text-accent text-sm mt-2 hover:underline">{tr('events.clearFilters')}</button>
         </div>
       ) : (
         <div className="space-y-2">
@@ -512,7 +530,7 @@ function EventListingBlock({ content, city, country }: { content: string; city: 
                 if (event.venue) metaParts.push(event.venue);
                 if (event.address) metaParts.push(event.address);
                 if (event.price) metaParts.push(event.price);
-                if (event.alsoOn) metaParts.push(`also on ${event.alsoOn}`);
+                if (event.alsoOn) metaParts.push(`${tr('events.alsoOn')} ${event.alsoOn}`);
 
                 return (
                   <div key={`${day}-${i}`} className="py-2 flex">
@@ -558,7 +576,7 @@ function EventListingBlock({ content, city, country }: { content: string; city: 
       {hasFilters && filteredEvents.length > 0 && (
         <div className="mt-4 pt-3 border-t border-border">
           <button onClick={clearFilters} className="text-fg-muted text-xs hover:text-fg transition-colors">
-            Showing {filteredEvents.length} of {events.length} events - Clear filters
+            {tr('events.showing').replace('{a}', String(filteredEvents.length)).replace('{b}', String(events.length))} - {tr('events.clearFilters')}
           </button>
         </div>
       )}

@@ -104,10 +104,16 @@ export function toHeadlineCase(text: string): string {
  * e.g., "Sweden LOOK AHEAD: Gothenburg Horse Show" → "Gothenburg Horse Show"
  */
 export function cleanArticleHeadline(headline: string): string {
-  // Strip patterns like "Neighborhood DAILY BRIEF:" or "Neighborhood Daily Brief:"
-  let cleaned = headline.replace(/^[^:]*DAILY\s+BRIEF\s*:\s*/i, '');
-  // Strip patterns like "Neighborhood LOOK AHEAD:" or "Neighborhood Look Ahead:"
-  cleaned = cleaned.replace(/^[^:]*LOOK\s+AHEAD\s*:\s*/i, '');
+  // Strip English and translated "Daily Brief:" prefixes
+  // Covers: DAILY BRIEF, RESUMEN DIARIO, DAGLIG SAMMANFATTNING, RESUME QUOTIDIEN,
+  // TAGESBRIEFING, RESUMO DIARIO, RASSEGNA QUOTIDIANA, 每日简报, デイリーブリーフ
+  const briefPrefixes = /^[^:]*(?:DAILY\s+BRIEF|RESUMEN\s+DIARIO|DAGLIG\s+SAMMANFATTNING|RESUM[EÉ]\s+QUOTIDIEN|TAGESBRIEFING|RESUMO\s+DI[AÁ]RIO|RASSEGNA\s+QUOTIDIANA|每日简报|デイリーブリーフ)\s*:\s*/i;
+  let cleaned = headline.replace(briefPrefixes, '');
+  // Strip English and translated "Look Ahead:" prefixes
+  // Covers: LOOK AHEAD, VORSCHAU, FRAMTIDSSPANING, A VENIR, PROXIMOS EVENTOS,
+  // PROSSIMI EVENTI, 活动预告, 今後の予定
+  const lookAheadPrefixes = /^[^:]*(?:LOOK\s+AHEAD|VORSCHAU|FRAMTIDSSPANING|[AÀ]\s+VENIR|PR[OÓ]XIMOS\s+EVENTOS|PROSSIMI\s+EVENTI|活动预告|今後の予定)\s*:\s*/i;
+  cleaned = cleaned.replace(lookAheadPrefixes, '');
   return cleaned || headline;
 }
 
