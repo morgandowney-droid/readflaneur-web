@@ -24,7 +24,9 @@ import {
   processSampleSales,
   createSampleSales,
   generateSampleSaleStory,
+  pollShopifyStores,
   SampleSaleStory,
+  DetectedSale,
   SAMPLE_SALE_SOURCES,
   CITY_NEIGHBORHOODS,
 } from '@/lib/sample-sale';
@@ -92,7 +94,7 @@ export async function GET(request: Request) {
     } else {
       console.log('Processing sample sale sources');
 
-      // Run the full pipeline
+      // Phase 1: Grok batched search across all cities
       const processResult = await processSampleSales();
 
       results.sources_scraped = processResult.sourcesScraped;
@@ -105,6 +107,65 @@ export async function GET(request: Request) {
       results.errors.push(...processResult.errors);
 
       stories = processResult.stories;
+
+      // Phase 2: Shopify collection polling
+      try {
+        // Load previous Shopify state from last cron execution
+        const { data: lastExec } = await supabase
+          .from('cron_executions')
+          .select('response_data')
+          .eq('cron_name', 'sync-sample-sales')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        const previousState = new Set<string>(
+          (lastExec?.response_data as Record<string, unknown>)?.shopify_active_sales as string[] || []
+        );
+
+        const shopifyResult = await pollShopifyStores(previousState);
+
+        if (shopifyResult.sales.length > 0) {
+          console.log(`Shopify polling found ${shopifyResult.sales.length} new sales`);
+          results.sales_detected += shopifyResult.sales.length;
+
+          // Deduplicate against Grok results by brand+city
+          const existingKeys = new Set(
+            processResult.stories.map(s => `${s.sale.brand.toLowerCase()}-${s.sale.city}`)
+          );
+
+          const newShopifySales: DetectedSale[] = [];
+          for (const sale of shopifyResult.sales) {
+            const key = `${sale.brand.toLowerCase()}-${sale.city}`;
+            if (!existingKeys.has(key)) {
+              existingKeys.add(key);
+              newShopifySales.push(sale);
+            }
+          }
+
+          // Generate stories for new Shopify-detected sales
+          for (const sale of newShopifySales) {
+            try {
+              const story = await generateSampleSaleStory(sale);
+              if (story) {
+                stories.push(story);
+                results.stories_generated++;
+              }
+              await new Promise(resolve => setTimeout(resolve, 500));
+            } catch (err) {
+              results.errors.push(`Shopify ${sale.brand}: ${err instanceof Error ? err.message : String(err)}`);
+            }
+          }
+
+          results.sales_matched += newShopifySales.length;
+        }
+
+        // Store current Shopify state for next run's dedup
+        (results as Record<string, unknown>).shopify_active_sales = shopifyResult.currentState;
+      } catch (err) {
+        console.warn('Shopify polling failed (non-fatal):', err instanceof Error ? err.message : err);
+        results.errors.push(`Shopify polling: ${err instanceof Error ? err.message : String(err)}`);
+      }
     }
 
     // Filter by source if specified
@@ -234,6 +295,18 @@ export async function GET(request: Request) {
       `Sample Sales: ${results.sales_matched} sales matched, ${results.stories_generated} stories, ${results.articles_created} articles`
     );
 
+    // Log to cron_executions (includes shopify_active_sales for next run's dedup)
+    try {
+      await supabase.from('cron_executions').insert({
+        cron_name: 'sync-sample-sales',
+        status: results.articles_created > 0 || results.errors.length === 0 ? 'success' : 'partial',
+        articles_created: results.articles_created,
+        response_data: results,
+      });
+    } catch {
+      console.warn('Failed to log cron execution');
+    }
+
     return NextResponse.json({
       success: results.errors.length === 0 || results.articles_created > 0,
       ...results,
@@ -241,6 +314,18 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('Sample sale sync failed:', error);
+
+    // Log failure to cron_executions
+    try {
+      await supabase.from('cron_executions').insert({
+        cron_name: 'sync-sample-sales',
+        status: 'error',
+        articles_created: results.articles_created,
+        response_data: { ...results, error: error instanceof Error ? error.message : 'Unknown error' },
+      });
+    } catch {
+      // Non-fatal
+    }
 
     return NextResponse.json(
       {

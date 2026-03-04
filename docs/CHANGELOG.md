@@ -5,6 +5,15 @@
 
 ## 2026-03-04
 
+**Surface Sample Sales & Flash Sales in Daily Briefs and Look Ahead:**
+- Added sample sale, flash sale, trunk show, pop-up shop, and warehouse sale search terms to 4 AI prompt files: `grok.ts` (generateNeighborhoodBrief + generateLookAhead), `gemini-search.ts` (searchNeighborhoodFacts + searchUpcomingEvents), `brief-enricher-gemini.ts` (dailyBriefStyle + lookAheadStyle). All 270 neighborhoods now search for time-sensitive retail events automatically at zero extra cost.
+- Added FLASH SALE / SAMPLE SALE PRIORITY rule to both daily brief and Look Ahead enrichment styles, ensuring these events are always included prominently with brand, venue address, dates, hours, and expected discounts.
+- Expanded `sync-sample-sales` cron from 5 cities (NYC, London, Paris, LA, Milan) to 10: added Stockholm, Copenhagen, Amsterdam, Berlin, Tokyo with 26 new neighborhood mappings and address/location regex patterns including Swedish diacritics, Danish slashed-o, and German umlauts.
+- Added 21 new brands to `LUXURY_BRANDS` whitelist: 13 Nordic/Scandinavian (Filippa K, Rodebjer, Blankens, Tiger of Sweden, Arket, COS, Samsoe Samsoe, Holzweiler, Baum und Pferdgarten, Stine Goya, Hope Stockholm, Minimarket, ATP Atelier), 3 Japanese (Issey Miyake, Comme des Garcons, Sacai), 4 European DTC (A.P.C., Sandro, Maje, Zadig & Voltaire).
+- Added Shopify collection polling via `pollShopifyStores()` - checks 8 DTC brand Shopify stores (Blankens, Filippa K, Rodebjer, Holzweiler, Kith, Reformation, Ganni, Samsoe Samsoe) for active sale collections using public `/collections/{handle}.json` endpoint (no API key needed). State tracking via `cron_executions.response_data.shopify_active_sales` detects only NEW sales to avoid re-alerting on ongoing sales.
+- Cron route now has Phase 2 (Shopify polling after Grok search) with brand+city dedup against Grok results, and logs to `cron_executions` on both success and error paths.
+- Files: `src/lib/grok.ts`, `src/lib/gemini-search.ts`, `src/lib/brief-enricher-gemini.ts`, `src/lib/sample-sale.ts`, `src/app/api/cron/sync-sample-sales/route.ts`
+
 **Fix Translation Gaps in Feed Cards and Event Listing:**
 - Daily Brief card headline stayed English when language switched - brief translation API now accepts `neighborhoodId` and returns translated headline from `article_translations` via a joined query on the most recent `brief_summary` article.
 - "Look Ahead" category label in feed compact cards stayed English - added `feed.lookAheadLabel` translation key (short form) in all 9 languages, `CompactArticleCard.tsx` now translates it alongside "Daily Brief".

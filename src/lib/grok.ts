@@ -120,6 +120,7 @@ Search for recent posts and news about ${location}. Focus on:
 - Local events happening today or this week
 - Community news and developments
 - Interesting local sightings
+- Sample sales, flash sales, trunk shows, pop-up shops, warehouse sales
 - Real estate and development news${nycDataContext ? `
 
 ADDITIONAL CONTEXT FROM NYC PUBLIC DATA:
@@ -427,6 +428,7 @@ Search X and the web for upcoming events, openings, and happenings in ${location
 - Community meetings, town halls, local government events
 - Sports events, races, outdoor activities
 - Seasonal happenings (markets, festivals, pop-ups)
+- Sample sales, flash sales, trunk shows, pop-up shops, warehouse sales (time-sensitive retail events)
 - Theater, opera, ballet, classical music, and live performance events
 - Performances at major cultural venues in ${city} (theaters, opera houses, concert halls, philharmonics) - these serve the whole city and are relevant even if not physically in ${neighborhoodName}
 

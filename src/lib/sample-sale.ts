@@ -35,7 +35,8 @@ import { insiderPersona } from '@/lib/ai-persona';
 
 export type SaleSource = 'Chicmi' | '260_Sample_Sale' | 'Arlettie' | 'The_Outnet' | 'Gilt' | 'Sample_Sale_Guide';
 
-export type SaleCity = 'New_York' | 'London' | 'Paris' | 'Los_Angeles' | 'Milan';
+export type SaleCity = 'New_York' | 'London' | 'Paris' | 'Los_Angeles' | 'Milan'
+  | 'Stockholm' | 'Copenhagen' | 'Amsterdam' | 'Berlin' | 'Tokyo';
 
 export type SaleType = 'sample_sale' | 'trunk_show' | 'warehouse_sale' | 'private_sale' | 'flash_sale';
 
@@ -159,6 +160,32 @@ export const LUXURY_BRANDS: LuxuryBrand[] = [
   { name: 'Ganni', pattern: /\bganni\b/i, category: 'Fashion', tier: 'Aspirational' },
   { name: 'Totême', pattern: /tot[eê]me/i, category: 'Fashion', tier: 'Aspirational' },
   { name: 'Nanushka', pattern: /nanushka/i, category: 'Fashion', tier: 'Aspirational' },
+
+  // Scandinavian/Nordic Brands
+  { name: 'Filippa K', pattern: /filippa\s*k/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Rodebjer', pattern: /rodebjer/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Blankens', pattern: /blankens/i, category: 'Shoes', tier: 'Aspirational' },
+  { name: 'Tiger of Sweden', pattern: /tiger\s*of\s*sweden/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Arket', pattern: /\barket\b/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'COS', pattern: /\bcos\b/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Samsøe Samsøe', pattern: /sams[oø]e/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Holzweiler', pattern: /holzweiler/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Baum und Pferdgarten', pattern: /baum\s*(und|&)\s*pferdgarten/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Stine Goya', pattern: /stine\s*goya/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Hope Stockholm', pattern: /\bhope\b.*stockholm/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Minimarket', pattern: /\bminimarket\b/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'ATP Atelier', pattern: /atp\s*atelier/i, category: 'Shoes', tier: 'Aspirational' },
+
+  // Japanese Brands
+  { name: 'Issey Miyake', pattern: /issey\s*miyake|miyake/i, category: 'Fashion', tier: 'Ultra' },
+  { name: 'Comme des Garçons', pattern: /comme\s*des\s*gar[cç]ons|cdg/i, category: 'Fashion', tier: 'Ultra' },
+  { name: 'Sacai', pattern: /\bsacai\b/i, category: 'Fashion', tier: 'Ultra' },
+
+  // European DTC
+  { name: 'A.P.C.', pattern: /\ba\.?p\.?c\.?\b/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Sandro', pattern: /\bsandro\b/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Maje', pattern: /\bmaje\b/i, category: 'Fashion', tier: 'Aspirational' },
+  { name: 'Zadig & Voltaire', pattern: /zadig/i, category: 'Fashion', tier: 'Aspirational' },
 
   // Shoes - Ultra Tier
   { name: 'Manolo Blahnik', pattern: /manolo\s*blahnik|manolo/i, category: 'Shoes', tier: 'Ultra' },
@@ -292,6 +319,38 @@ export const CITY_NEIGHBORHOODS: Record<SaleCity, string[]> = {
     'la-west-hollywood',
   ],
   Milan: ['milan-brera', 'milan-quadrilatero'],
+  Stockholm: [
+    'stockholm-ostermalm',
+    'stockholm-sodermalm',
+    'stockholm-vasastan',
+    'stockholm-norrmalm',
+    'stockholm-kungsholmen',
+    'stockholm-gamla-stan',
+  ],
+  Copenhagen: [
+    'copenhagen-norrebro',
+    'copenhagen-vesterbro',
+    'copenhagen-frederiksberg',
+    'copenhagen-indre-by',
+  ],
+  Amsterdam: [
+    'amsterdam-jordaan',
+    'amsterdam-de-pijp',
+    'amsterdam-grachtengordel',
+    'amsterdam-oud-zuid',
+  ],
+  Berlin: [
+    'berlin-mitte',
+    'berlin-charlottenburg',
+    'berlin-prenzlauer-berg',
+    'berlin-kreuzberg',
+  ],
+  Tokyo: [
+    'tokyo-shibuya',
+    'tokyo-ginza',
+    'tokyo-omotesando',
+    'tokyo-roppongi',
+  ],
 };
 
 /**
@@ -318,6 +377,38 @@ export const NEIGHBORHOOD_PATTERNS: Record<string, RegExp[]> = {
   // LA
   'la-beverly-hills': [/beverly\s*hills/i, /rodeo/i],
   'la-west-hollywood': [/west\s*hollywood/i, /weho/i, /melrose/i],
+
+  // Stockholm
+  'stockholm-ostermalm': [/[oö]stermalm/i, /grevgatan/i, /strandv[aä]gen/i, /karla\s*plan/i, /humleg[aå]rden/i],
+  'stockholm-sodermalm': [/s[oö]dermalm/i, /s[oö]fo/i, /hornsgatan/i, /g[oö]tgatan/i],
+  'stockholm-norrmalm': [/norrmalm/i, /drottninggatan/i, /hamngatan/i, /biblioteksgatan/i],
+  'stockholm-vasastan': [/vasastan/i, /odenplan/i, /odengatan/i],
+  'stockholm-kungsholmen': [/kungsholmen/i, /fleminggatan/i],
+  'stockholm-gamla-stan': [/gamla\s*stan/i, /v[aä]sterlånggatan/i],
+
+  // Copenhagen
+  'copenhagen-norrebro': [/n[oø]rrebro/i],
+  'copenhagen-vesterbro': [/vesterbro/i],
+  'copenhagen-frederiksberg': [/frederiksberg/i],
+  'copenhagen-indre-by': [/str[oø]get/i, /indre\s*by/i, /n[oy]havn/i],
+
+  // Amsterdam
+  'amsterdam-jordaan': [/jordaan/i],
+  'amsterdam-de-pijp': [/de\s*pijp/i, /albert\s*cuyp/i],
+  'amsterdam-grachtengordel': [/grachtengordel/i, /herengracht/i, /keizersgracht/i],
+  'amsterdam-oud-zuid': [/oud[\s-]*zuid/i, /p\.?c\.?\s*hooftstraat/i],
+
+  // Berlin
+  'berlin-mitte': [/\bmitte\b/i, /friedrichstra/i],
+  'berlin-charlottenburg': [/charlottenburg/i, /kurf[uü]rstendamm/i, /kudamm/i],
+  'berlin-prenzlauer-berg': [/prenzlauer\s*berg/i],
+  'berlin-kreuzberg': [/kreuzberg/i, /bergmannstra/i],
+
+  // Tokyo
+  'tokyo-shibuya': [/shibuya/i],
+  'tokyo-ginza': [/ginza/i],
+  'tokyo-omotesando': [/omotesando/i, /harajuku/i],
+  'tokyo-roppongi': [/roppongi/i],
 };
 
 // =============================================================================
@@ -360,6 +451,11 @@ const CITY_DISPLAY_NAMES: Record<SaleCity, string> = {
   Paris: 'Paris',
   Los_Angeles: 'Los Angeles',
   Milan: 'Milan',
+  Stockholm: 'Stockholm',
+  Copenhagen: 'Copenhagen',
+  Amsterdam: 'Amsterdam',
+  Berlin: 'Berlin',
+  Tokyo: 'Tokyo',
 };
 
 /**
@@ -740,6 +836,115 @@ export async function processSampleSales(): Promise<SampleSaleProcessResult> {
   }
 
   return result;
+}
+
+// =============================================================================
+// SHOPIFY COLLECTION POLLING
+// =============================================================================
+
+export interface ShopifyStoreConfig {
+  brand: string;
+  storeUrl: string;
+  collectionHandles: string[];
+  cities: SaleCity[];
+}
+
+export const SHOPIFY_STORES: ShopifyStoreConfig[] = [
+  // Nordic DTC
+  { brand: 'Blankens', storeUrl: 'blankens.com', collectionHandles: ['sale', 'sample-sale'], cities: ['Stockholm'] },
+  { brand: 'Filippa K', storeUrl: 'filippa-k.com', collectionHandles: ['sale'], cities: ['Stockholm', 'Copenhagen'] },
+  { brand: 'Rodebjer', storeUrl: 'rodebjer.com', collectionHandles: ['sale'], cities: ['Stockholm'] },
+  { brand: 'Holzweiler', storeUrl: 'holzweiler.com', collectionHandles: ['sale'], cities: ['Copenhagen', 'Stockholm'] },
+  // US DTC
+  { brand: 'Kith', storeUrl: 'kith.com', collectionHandles: ['sale'], cities: ['New_York'] },
+  { brand: 'Reformation', storeUrl: 'thereformation.com', collectionHandles: ['sale'], cities: ['New_York', 'Los_Angeles'] },
+  // UK/EU DTC
+  { brand: 'Ganni', storeUrl: 'ganni.com', collectionHandles: ['sale'], cities: ['Copenhagen', 'London'] },
+  { brand: 'Samsøe Samsøe', storeUrl: 'samsoe.com', collectionHandles: ['sale'], cities: ['Copenhagen', 'Stockholm'] },
+];
+
+/**
+ * Poll Shopify stores for active sale collections.
+ * Compares against previous state to detect NEW sales only.
+ *
+ * @param previousActiveSales - Set of "brand:handle" keys from last run (for dedup)
+ * @returns Array of newly detected sales + current active state for persistence
+ */
+export async function pollShopifyStores(
+  previousActiveSales: Set<string> = new Set()
+): Promise<{ sales: DetectedSale[]; currentState: string[] }> {
+  const newSales: DetectedSale[] = [];
+  const currentState: string[] = [];
+
+  for (const store of SHOPIFY_STORES) {
+    for (const handle of store.collectionHandles) {
+      const stateKey = `${store.brand}:${handle}`;
+      try {
+        const response = await fetch(
+          `https://${store.storeUrl}/collections/${handle}.json`,
+          {
+            headers: { 'Accept': 'application/json' },
+            signal: AbortSignal.timeout(5000),
+          }
+        );
+
+        if (!response.ok) continue;
+
+        const data = await response.json();
+        const collection = data?.collection;
+        if (!collection) continue;
+
+        const productCount = collection.products_count ?? collection.products?.length ?? 0;
+        if (productCount === 0) continue;
+
+        // This collection is active with products
+        currentState.push(stateKey);
+
+        // Only generate stories for NEW sales (weren't active last run)
+        if (previousActiveSales.has(stateKey)) continue;
+
+        const brand = matchBrand(store.brand);
+        if (!brand) continue;
+
+        // Create a DetectedSale for each city this store is associated with
+        for (const city of store.cities) {
+          const cityNeighborhoods = CITY_NEIGHBORHOODS[city] || [];
+          const defaultNeighborhoodId = cityNeighborhoods[0];
+          const defaultNeighborhoodName = defaultNeighborhoodId
+            ? defaultNeighborhoodId.split('-').slice(1).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+            : undefined;
+
+          newSales.push({
+            id: `shopify-${store.brand.replace(/\W/g, '-').toLowerCase()}-${handle}-${city}-${Date.now()}`,
+            source: 'Sample_Sale_Guide',
+            sourceDisplayName: `Shopify (${store.storeUrl})`,
+            city,
+            brand: brand.name,
+            brandTier: brand.tier,
+            brandCategory: brand.category,
+            title: `${brand.name} Sale`,
+            venue: `${store.storeUrl}`,
+            venueAddress: undefined,
+            neighborhood: defaultNeighborhoodName,
+            neighborhoodId: defaultNeighborhoodId,
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Assume 1 week
+            saleType: 'flash_sale',
+            discount: undefined,
+            isInviteOnly: false,
+            url: `https://${store.storeUrl}/collections/${handle}`,
+          });
+        }
+
+        console.log(`[shopify] NEW sale detected: ${store.brand} (${handle}) - ${productCount} products`);
+      } catch (err) {
+        // Silently skip - store may not use Shopify or collection may not exist
+        console.warn(`[shopify] Failed to poll ${store.storeUrl}/collections/${handle}:`, err instanceof Error ? err.message : err);
+      }
+    }
+  }
+
+  return { sales: newSales, currentState };
 }
 
 // =============================================================================

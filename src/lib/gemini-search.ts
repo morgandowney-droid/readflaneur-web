@@ -61,6 +61,7 @@ export async function searchNeighborhoodFacts(
 4. City government announcements (permits, zoning, infrastructure projects)
 5. Real estate listings and market movements from property sites
 6. Community board meeting agendas and outcomes
+7. Sample sales, flash sales, pop-up shops, trunk shows from fashion blogs and retail sites
 
 DO NOT search X/Twitter or social media - another system handles that.
 DO focus on official institutional sources, local journalism, and business directories.
@@ -139,6 +140,7 @@ Search specifically for:
 8. Food festivals, wine tastings, book signings
 9. Theater, opera, ballet, and classical music performances at major cultural venues in ${city}
 10. Performances at the city's national theater, opera house, concert halls, and philharmonic
+11. Sample sales, flash sales, trunk shows, pop-up shops, warehouse sales (these are time-sensitive retail events, often announced on Instagram)
 
 MAJOR CULTURAL VENUES: Always search for what's playing at ${city}'s major theaters, opera houses, concert halls, and philharmonics. These are NOT tourist traps - they are the cultural heartbeat of the city. Include tonight's performance, this week's opera, upcoming symphony concerts. These venues serve ALL neighborhoods in the city, not just the one they're located in.
 
