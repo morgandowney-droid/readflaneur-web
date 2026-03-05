@@ -352,7 +352,7 @@ export async function GET(request: Request) {
 
       // Calculate expiration (24 hours from now - one brief per day)
       const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24);
+      expiresAt.setHours(expiresAt.getHours() + 30);
 
       // Insert the brief with brief_date for unique constraint
       const { error: insertError } = await supabase

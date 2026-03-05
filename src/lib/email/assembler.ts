@@ -108,16 +108,18 @@ async function fetchBriefAsStory(
   // Expand combo neighborhoods to include component IDs
   const ids = await expandNeighborhoodIds(supabase, neighborhoodId, isCombo);
 
-  // First: check for a brief article in the articles table (14h window = today's brief only)
-  // Using 14h instead of 48h prevents stale briefs from blocking fresh ones
-  const since14h = new Date(Date.now() - 14 * 60 * 60 * 1000).toISOString();
+  // First: check for a brief article in the articles table (28h window)
+  // Must be wide enough for cross-timezone recipients: a Stockholm (UTC+1) user gets email
+  // at 6:00 UTC, but NYC (UTC-5) brief published_at is 12:00 UTC previous day = 18h gap.
+  // 28h covers the max practical timezone spread. ORDER BY DESC LIMIT 1 ensures freshest.
+  const since28h = new Date(Date.now() - 28 * 60 * 60 * 1000).toISOString();
   const { data: briefArticle } = await supabase
     .from('articles')
     .select('headline, preview_text, body_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
     .eq('status', 'published')
     .in('neighborhood_id', ids)
     .ilike('category_label', '%daily brief%')
-    .gte('published_at', since14h)
+    .gte('published_at', since28h)
     .order('published_at', { ascending: false })
     .limit(1)
     .single();
