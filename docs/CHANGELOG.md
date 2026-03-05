@@ -3,6 +3,14 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-05
+
+**Fix Cross-Timezone Daily Brief Missing From Email:**
+- Recipients in timezones ahead of their subscribed neighborhoods (e.g., Stockholm UTC+1 following NYC UTC-5) never received Daily Brief content because `fetchBriefAsStory()` used a 14h article lookup window. At 7 AM Stockholm (6:00 UTC), yesterday's NYC brief (`published_at` 12:00 UTC = 18h ago) fell outside the window, and today's brief hadn't been generated yet (only 1 AM in NYC).
+- Widened article lookup window from 14h to 28h, covering the maximum practical timezone spread. `ORDER BY published_at DESC LIMIT 1` still returns the freshest brief.
+- Extended brief `expires_at` from 24h to 30h so the fallback path (creating articles on-the-fly from `neighborhood_briefs`) also works for cross-timezone recipients.
+- Files: `src/lib/email/assembler.ts`, `src/app/api/cron/sync-neighborhood-briefs/route.ts`
+
 ## 2026-03-04
 
 **Fix Sample Sale Source Attribution:**
