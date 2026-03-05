@@ -132,6 +132,18 @@ export function getLibraryUrl(neighborhoodId: string, category: ImageCategory): 
 // ============================================================================
 
 /**
+ * Simple djb2 hash for deterministic per-neighborhood rotation offsets.
+ * Ensures combo components (nyc-tribeca vs nyc-fidi) get different photos.
+ */
+function djb2(str: string): number {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+/**
  * Get the day of year (1-366) for rotation purposes.
  */
 function getDayOfYear(date?: Date): number {
@@ -199,17 +211,18 @@ export function selectLibraryImage(
 
     if (fullPool.length > 1) {
       // Determine rotation index:
-      // - With explicit articleIndex: use it directly for per-article variety
-      // - Without articleIndex: use day-of-year + type-based offset so different
-      //   article types (brief, look-ahead, nuisance watch, liquor) created on
-      //   the same day for the same neighborhood get DIFFERENT photos
+      // - With explicit articleIndex: use it + neighborhood hash for per-article variety
+      //   while ensuring different neighborhoods don't collide at the same index
+      // - Without articleIndex: use day-of-year + type-based offset + neighborhood hash
+      //   so different article types AND different neighborhoods get DIFFERENT photos
+      const neighborhoodOffset = djb2(neighborhoodId);
       const typeOffset = articleType === 'brief_summary' ? 0
         : articleType === 'look_ahead' ? 7
         : articleType === 'weekly_recap' ? 13
         : 19; // standard/rss
       const rotationIndex = articleIndex != null
-        ? articleIndex
-        : getDayOfYear() + typeOffset;
+        ? articleIndex + neighborhoodOffset
+        : getDayOfYear() + typeOffset + neighborhoodOffset;
       return fullPool[rotationIndex % fullPool.length].url;
     }
 

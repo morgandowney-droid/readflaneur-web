@@ -418,10 +418,31 @@ export async function getCronImage(
 }
 
 /**
+ * Simple djb2 hash for deterministic rotation offsets.
+ */
+function djb2(str: string): number {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+/**
+ * Get day-of-year (1-366) for deterministic daily rotation.
+ */
+function getDayOfYear(): number {
+  const d = new Date();
+  const start = new Date(d.getFullYear(), 0, 0);
+  return Math.floor((d.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+/**
  * Look up Unsplash photos for a neighborhood from DB.
  * Rotates across the full pool (8 category photos + alternates)
  * using articleIndex so consecutive articles get different images.
- * Falls back to day-of-year rotation when no index is provided.
+ * Falls back to deterministic day-of-year + neighborhood hash rotation
+ * so different neighborhoods always get different photos on the same day.
  */
 async function getUnsplashForNeighborhood(
   supabase: SupabaseClient,
@@ -452,9 +473,11 @@ async function getUnsplashForNeighborhood(
 
   if (pool.length === 0) return null;
 
-  // Rotate: use articleIndex if provided, otherwise random from pool
-  // Random is fine here because the image_url is stored in DB at creation time
-  const idx = articleIndex ?? Math.floor(Math.random() * pool.length);
+  // Rotate: use articleIndex if provided, otherwise use day-of-year +
+  // neighborhood hash so different neighborhoods get different photos on the
+  // same day (prevents combo components like nyc-tribeca and nyc-fidi from
+  // showing the same red lantern image side by side in the feed).
+  const idx = articleIndex ?? (getDayOfYear() + djb2(neighborhoodId));
   return pool[((idx % pool.length) + pool.length) % pool.length];
 }
 
