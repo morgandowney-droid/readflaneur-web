@@ -601,30 +601,51 @@ export async function attemptFix(
       break;
 
     case 'unenriched_brief':
-    case 'missing_hyperlinks':
+    case 'missing_hyperlinks': {
       // Trigger re-enrichment for the neighborhood's brief
       if (!issue.neighborhood_id) {
         result = { success: false, message: 'No neighborhood ID provided' };
-      } else {
-        try {
-          const response = await fetch(
-            `${baseUrl}/api/cron/enrich-briefs?test=${issue.neighborhood_id}`,
-            {
-              method: 'GET',
-              headers: { 'Authorization': `Bearer ${cronSecret}` },
-            }
-          );
-          const data = await response.json();
-          if (response.ok && data.enriched > 0) {
-            result = { success: true, message: `Re-enriched brief for neighborhood` };
-          } else {
-            result = { success: false, message: data.error || 'Re-enrichment produced no results' };
-          }
-        } catch (err) {
-          result = { success: false, message: err instanceof Error ? err.message : 'Unknown error' };
+        break;
+      }
+      try {
+        // Look up the actual brief UUID — enrich-briefs expects a UUID, not a neighborhood ID
+        let briefQuery = supabase
+          .from('neighborhood_briefs')
+          .select('id')
+          .eq('neighborhood_id', issue.neighborhood_id)
+          .order('generated_at', { ascending: false })
+          .limit(1);
+
+        // For unenriched briefs, only find ones without enriched_content
+        if (issue.issue_type === 'unenriched_brief') {
+          briefQuery = briefQuery.is('enriched_content', null);
         }
+
+        const { data: brief } = await briefQuery.single();
+
+        if (!brief?.id) {
+          result = { success: false, message: `No matching brief found for ${issue.neighborhood_id}` };
+          break;
+        }
+
+        const response = await fetch(
+          `${baseUrl}/api/cron/enrich-briefs?test=${brief.id}`,
+          {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${cronSecret}` },
+          }
+        );
+        const data = await response.json();
+        if (response.ok && data.enriched > 0) {
+          result = { success: true, message: `Re-enriched brief ${brief.id} for ${issue.neighborhood_id}` };
+        } else {
+          result = { success: false, message: data.error || 'Re-enrichment produced no results' };
+        }
+      } catch (err) {
+        result = { success: false, message: err instanceof Error ? err.message : 'Unknown error' };
       }
       break;
+    }
 
     case 'missing_sources':
       if (!issue.article_id) {

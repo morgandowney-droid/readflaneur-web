@@ -127,6 +127,52 @@ function cleanEmailTeaser(teaser: string): string {
   return cleaned;
 }
 
+/**
+ * Extract link candidates from [[section headers]] in enriched prose as a fallback
+ * when Gemini omits link_candidates from its JSON response (~30% of the time).
+ * Section headers reliably contain business/venue/event names worth hyperlinking.
+ */
+function extractFallbackLinkCandidates(text: string): LinkCandidate[] {
+  const headerMatches = text.match(/\[\[([^\]]+)\]\]/g);
+  if (!headerMatches) return [];
+
+  // Generic headers that are NOT entity names
+  const genericHeaders = new Set([
+    'what to know', 'morning rundown', 'looking ahead', 'at a glance',
+    'the week ahead', 'good morning', 'quick hits', "what's next",
+    'coming up', 'the bottom line', 'in brief', 'the big picture',
+    'wrap up', 'the rundown', 'the download', 'the latest',
+    'on the radar', 'worth noting', 'heads up', 'icymi',
+  ]);
+
+  const dayDatePattern = /^(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i;
+
+  const candidates: LinkCandidate[] = [];
+  const seen = new Set<string>();
+
+  for (const match of headerMatches) {
+    const headerText = match.slice(2, -2).trim();
+
+    // Skip short headers (< 3 chars)
+    if (headerText.length < 3) continue;
+
+    // Skip generic non-entity headers
+    if (genericHeaders.has(headerText.toLowerCase())) continue;
+
+    // Skip day/date headers like "Today, Wednesday February 18"
+    if (dayDatePattern.test(headerText)) continue;
+
+    // Skip duplicates
+    const lower = headerText.toLowerCase();
+    if (seen.has(lower)) continue;
+    seen.add(lower);
+
+    candidates.push({ text: headerText });
+  }
+
+  return candidates;
+}
+
 // Blocked domains per neighborhood
 const BLOCKED_DOMAINS: Record<string, string[]> = {
   'tribeca': ['tribecacitizen.com'],
@@ -565,6 +611,14 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
         }
       } catch (e) {
         console.error('Failed to parse Gemini JSON:', e);
+      }
+    }
+
+    // Fallback: extract link candidates from [[section headers]] when Gemini omits them
+    if (linkCandidates.length === 0 && text) {
+      linkCandidates = extractFallbackLinkCandidates(text);
+      if (linkCandidates.length > 0) {
+        console.log(`Fallback: extracted ${linkCandidates.length} link candidates from section headers`);
       }
     }
 

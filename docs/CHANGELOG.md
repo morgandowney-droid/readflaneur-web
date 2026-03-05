@@ -5,6 +5,12 @@
 
 ## 2026-03-05
 
+**Fix Missing Hyperlinks: Auto-Fixer Bug + Fallback Extraction:**
+- Auto-fixer for `missing_hyperlinks` and `unenriched_brief` issues has **never worked** - it passed `neighborhood_id` (e.g., `"nyc-tribeca"`) as the `test` param to `enrich-briefs`, but that endpoint expects a brief UUID. Every attempt failed with `invalid input syntax for type uuid`.
+- Fixed: `attemptFix()` now queries `neighborhood_briefs` table to look up the actual brief UUID before calling `enrich-briefs`. For `unenriched_brief`, filters to briefs with `enriched_content IS NULL`; for `missing_hyperlinks`, grabs the latest brief (any enrichment status).
+- Added `extractFallbackLinkCandidates()` in `brief-enricher-gemini.ts` - when Gemini omits `link_candidates` from its JSON response (~30% of the time), extracts entity names from `[[section headers]]` in the enriched prose. Filters out generic headers (day/date references, common phrases like "What to Know", "Morning Rundown"). Runs after JSON parsing before both return paths, so hyperlink injection always has candidates.
+- Files: `src/lib/cron-monitor/auto-fixer.ts`, `src/lib/brief-enricher-gemini.ts`
+
 **Fix Cross-Timezone Daily Brief Missing From Email:**
 - Recipients in timezones ahead of their subscribed neighborhoods (e.g., Stockholm UTC+1 following NYC UTC-5) never received Daily Brief content because `fetchBriefAsStory()` used a 14h article lookup window. At 7 AM Stockholm (6:00 UTC), yesterday's NYC brief (`published_at` 12:00 UTC = 18h ago) fell outside the window, and today's brief hadn't been generated yet (only 1 AM in NYC).
 - Widened article lookup window from 14h to 28h, covering the maximum practical timezone spread. `ORDER BY published_at DESC LIMIT 1` still returns the freshest brief.
