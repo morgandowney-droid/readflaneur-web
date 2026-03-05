@@ -5,6 +5,11 @@
 
 ## 2026-03-05
 
+**Fix Duplicate Images Across Combo Component Neighborhoods:**
+- Combo components like nyc-tribeca and nyc-fidi showed the same red lantern photo side by side in the feed. Root cause: `getUnsplashForNeighborhood()` in `cron-images.ts` used `Math.random()` when no `articleIndex` was provided, and `selectLibraryImage()` in `image-library.ts` used bare `articleIndex` with no neighborhood-specific offset. Overlapping Unsplash pools (both neighborhoods search lower Manhattan) easily collided.
+- Both functions now include `djb2(neighborhoodId)` hash offset in rotation index, so different neighborhoods always select different photos from their pools on the same day. Consecutive articles for the same neighborhood still get different photos via incremented `articleIndex`.
+- Files: `src/lib/cron-images.ts`, `src/lib/image-library.ts`
+
 **Fix Missing Hyperlinks: Auto-Fixer Bug + Fallback Extraction:**
 - Auto-fixer for `missing_hyperlinks` and `unenriched_brief` issues has **never worked** - it passed `neighborhood_id` (e.g., `"nyc-tribeca"`) as the `test` param to `enrich-briefs`, but that endpoint expects a brief UUID. Every attempt failed with `invalid input syntax for type uuid`.
 - Fixed: `attemptFix()` now queries `neighborhood_briefs` table to look up the actual brief UUID before calling `enrich-briefs`. For `unenriched_brief`, filters to briefs with `enriched_content IS NULL`; for `missing_hyperlinks`, grabs the latest brief (any enrichment status).
