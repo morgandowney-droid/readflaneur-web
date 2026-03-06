@@ -30,7 +30,7 @@ import { searchNeighborhoodFacts, mergeContent } from '@/lib/gemini-search';
  * gaps up to ~6 hours.
  */
 
-const CONCURRENCY = 3;
+const CONCURRENCY = 5;
 
 /**
  * Check if it's currently between midnight-7am in a given timezone.

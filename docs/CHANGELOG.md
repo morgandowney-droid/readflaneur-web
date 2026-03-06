@@ -3,6 +3,20 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-06
+
+**Fix Email Date Display Using Neighborhood Timezone:**
+- APAC neighborhoods like Shibuya showed "Thu Mar 5" in Stockholm morning emails but "Fri Mar 6" on the website. Root cause: `formatDateline()` and `cleanCategoryLabel()` in assembler.ts used the recipient's timezone for date formatting, but the article's `published_at` (Mar 5 22:00 UTC = Mar 6 07:00 JST) needs to be displayed in the neighborhood's local timezone to match the website.
+- Added `timezone` to the neighborhoods DB query in `assembleDailyBrief()`. Threaded `neighborhoodTimezone` through `fetchBriefAsStory()`, `fetchLookAheadAsStory()`, `toEmailStory()`, and `cleanCategoryLabel()`.
+- `formatDateline()` now uses `neighborhoodTimezone || timezone` so dates reflect the neighborhood's perspective.
+- `cleanCategoryLabel()` "(Today)" logic updated: compares article's `published_at` in neighborhood timezone against recipient's current date in recipient timezone. Shibuya Mar 5 22:00Z = Mar 6 JST; Stockholm today = Mar 6 CET → match → "(Today)".
+- Files: `src/lib/email/assembler.ts`
+
+**Increase Brief Generation Throughput:**
+- Increased `CONCURRENCY` from 3 to 5 parallel Grok calls in `sync-neighborhood-briefs` cron. Throughput increases from ~27 to ~45 neighborhoods per 15-min run.
+- US neighborhoods enter their morning window at 5 AM UTC. With higher throughput, more are processed in the first 1-2 runs, giving NYC briefs ~30 extra minutes before the 6 AM UTC Stockholm email.
+- Files: `src/app/api/cron/sync-neighborhood-briefs/route.ts`
+
 ## 2026-03-05
 
 **Fix Duplicate Images Across Combo Component Neighborhoods:**

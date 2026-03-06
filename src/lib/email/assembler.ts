@@ -103,7 +103,8 @@ async function fetchBriefAsStory(
   neighborhoodName: string,
   cityName: string,
   timezone?: string,
-  isCombo?: boolean
+  isCombo?: boolean,
+  neighborhoodTimezone?: string
 ): Promise<EmailStory | null> {
   // Expand combo neighborhoods to include component IDs
   const ids = await expandNeighborhoodIds(supabase, neighborhoodId, isCombo);
@@ -125,7 +126,7 @@ async function fetchBriefAsStory(
     .single();
 
   if (briefArticle) {
-    return toEmailStory(briefArticle, neighborhoodName, cityName, timezone);
+    return toEmailStory(briefArticle, neighborhoodName, cityName, timezone, neighborhoodTimezone);
   }
 
   // Fallback: use neighborhood_briefs table and create an article on-the-fly
@@ -192,7 +193,7 @@ async function fetchBriefAsStory(
     .single();
 
   if (existingArticle) {
-    return toEmailStory(existingArticle, neighborhoodName, cityName, timezone);
+    return toEmailStory(existingArticle, neighborhoodName, cityName, timezone, neighborhoodTimezone);
   }
 
   // Get Unsplash image (async DB lookup - no cache preload needed)
@@ -229,7 +230,7 @@ async function fetchBriefAsStory(
       .eq('brief_id', brief.id)
       .single();
     if (raceArticle) {
-      return toEmailStory(raceArticle, neighborhoodName, cityName, timezone);
+      return toEmailStory(raceArticle, neighborhoodName, cityName, timezone, neighborhoodTimezone);
     }
   }
 
@@ -274,7 +275,7 @@ async function fetchBriefAsStory(
         console.error(`[assembler] Failed to insert sources for ${newArticle.id}:`, e)
       );
     }
-    return toEmailStory(newArticle, neighborhoodName, cityName, timezone);
+    return toEmailStory(newArticle, neighborhoodName, cityName, timezone, neighborhoodTimezone);
   }
 
   // If insert failed for any reason, still build a valid link to the article slug
@@ -285,7 +286,7 @@ async function fetchBriefAsStory(
     category_label: `${neighborhoodName} Daily Brief`,
     slug,
     neighborhood_id: neighborhoodId,
-  }, neighborhoodName, cityName, timezone);
+  }, neighborhoodName, cityName, timezone, neighborhoodTimezone);
 }
 
 /**
@@ -298,7 +299,8 @@ async function fetchLookAheadAsStory(
   neighborhoodName: string,
   cityName: string,
   isCombo?: boolean,
-  timezone?: string
+  timezone?: string,
+  neighborhoodTimezone?: string
 ): Promise<EmailStory | null> {
   const since48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
   const ids = await expandNeighborhoodIds(supabase, neighborhoodId, isCombo);
@@ -315,7 +317,7 @@ async function fetchLookAheadAsStory(
 
   if (!lookAheadArticle) return null;
 
-  return toEmailStory(lookAheadArticle, neighborhoodName, cityName, timezone);
+  return toEmailStory(lookAheadArticle, neighborhoodName, cityName, timezone, neighborhoodTimezone);
 }
 
 /**
@@ -441,7 +443,7 @@ export async function assembleDailyBrief(
   // Fetch all subscribed neighborhoods from DB
   const { data: neighborhoods } = await supabase
     .from('neighborhoods')
-    .select('id, name, city, country, latitude, longitude, is_combo')
+    .select('id, name, city, country, latitude, longitude, is_combo, timezone')
     .in('id', subscribedNeighborhoodIds);
 
   const neighborhoodMap = new Map(
@@ -485,8 +487,8 @@ export async function assembleDailyBrief(
     }
 
     // Fetch exactly 1 Daily Brief + 1 Look Ahead
-    const briefStory = await fetchBriefAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city, recipient.timezone, primaryNeighborhood.is_combo);
-    const lookAheadStory = await fetchLookAheadAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city, primaryNeighborhood.is_combo, recipient.timezone);
+    const briefStory = await fetchBriefAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city, recipient.timezone, primaryNeighborhood.is_combo, primaryNeighborhood.timezone);
+    const lookAheadStory = await fetchLookAheadAsStory(supabase, primaryNeighborhood.id, primaryNeighborhood.name, primaryNeighborhood.city, primaryNeighborhood.is_combo, recipient.timezone, primaryNeighborhood.timezone);
 
     const emailStories: EmailStory[] = [];
     if (briefStory) emailStories.push(briefStory);
@@ -542,8 +544,8 @@ export async function assembleDailyBrief(
     const neighborhood = neighborhoodMap.get(satId);
     if (!neighborhood) continue;
 
-    const briefStory = await fetchBriefAsStory(supabase, satId, neighborhood.name, neighborhood.city, recipient.timezone, neighborhood.is_combo);
-    const lookAheadStory = await fetchLookAheadAsStory(supabase, satId, neighborhood.name, neighborhood.city, neighborhood.is_combo, recipient.timezone);
+    const briefStory = await fetchBriefAsStory(supabase, satId, neighborhood.name, neighborhood.city, recipient.timezone, neighborhood.is_combo, neighborhood.timezone);
+    const lookAheadStory = await fetchLookAheadAsStory(supabase, satId, neighborhood.name, neighborhood.city, neighborhood.is_combo, recipient.timezone, neighborhood.timezone);
 
     const emailStories: EmailStory[] = [];
     if (briefStory) emailStories.push(briefStory);
@@ -617,16 +619,27 @@ export async function assembleDailyBrief(
  * e.g., "Beverly Hills Daily Brief" → "Daily Brief"
  * publishedAt is used to determine if "(Today)" is accurate
  */
-function cleanCategoryLabel(label: string | null, neighborhoodName: string, publishedAt?: string, timezone?: string): string | null {
+function cleanCategoryLabel(label: string | null, neighborhoodName: string, publishedAt?: string, recipientTimezone?: string, neighborhoodTimezone?: string): string | null {
   if (!label) return null;
   // Strip neighborhood name prefix (case-insensitive)
   let cleaned = label.replace(new RegExp(`^${escapeRegex(neighborhoodName)}\\s+`, 'i'), '');
   cleaned = cleaned || label;
   // Rename labels for email display
   if (/^Daily Brief$/i.test(cleaned)) {
-    // Only say "(Today)" if the article was actually published today in recipient's timezone
-    const isToday = publishedAt ? isSameDay(new Date(publishedAt), new Date(), timezone) : true;
-    return isToday ? 'Daily Brief (Today)' : 'Daily Brief';
+    // "(Today)" means the article's neighborhood-local date matches the recipient's current date
+    // e.g., Shibuya published_at Mar 5 22:00Z = Mar 6 JST; Stockholm today = Mar 6 CET -> match -> "(Today)"
+    if (publishedAt) {
+      const pubDate = new Date(publishedAt);
+      const neighborhoodDateStr = pubDate.toLocaleDateString('en-CA', {
+        timeZone: neighborhoodTimezone || recipientTimezone || undefined
+      });
+      const recipientTodayStr = new Date().toLocaleDateString('en-CA', {
+        timeZone: recipientTimezone || undefined
+      });
+      const isToday = neighborhoodDateStr === recipientTodayStr;
+      return isToday ? 'Daily Brief (Today)' : 'Daily Brief';
+    }
+    return 'Daily Brief (Today)';
   }
   if (/^Look Ahead$/i.test(cleaned)) return 'Look Ahead (next 7 days)';
   return cleaned;
@@ -834,10 +847,12 @@ function toEmailStory(
   },
   neighborhoodName: string,
   cityName: string,
-  timezone?: string
+  timezone?: string,
+  neighborhoodTimezone?: string
 ): EmailStory {
-  const cleanedLabel = cleanCategoryLabel(article.category_label, neighborhoodName, article.published_at, timezone);
-  const dateline = formatDateline(article.published_at || article.created_at, timezone);
+  const cleanedLabel = cleanCategoryLabel(article.category_label, neighborhoodName, article.published_at, timezone, neighborhoodTimezone);
+  // Use neighborhood timezone for date display so Shibuya shows "Fri Mar 6" (JST) not "Thu Mar 5" (recipient tz)
+  const dateline = formatDateline(article.published_at || article.created_at, neighborhoodTimezone || timezone);
   const labelWithDate = cleanedLabel ? `${cleanedLabel} - ${dateline}` : null;
 
   // Extract informative blurb: detect and replace greeting filler, label text, or missing preview
