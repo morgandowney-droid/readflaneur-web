@@ -3,6 +3,14 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-07
+
+**Fix Homepage Flash for Returning Users:**
+- Visiting `flaneur.news` or `readflaneur.com/` showed a flash of the cinematic homepage hero before the inline script redirected returning users to `/feed`. The browser painted the HTML before `window.location.replace()` fired.
+- Added `document.documentElement.style.visibility="hidden"` immediately before the redirect in both code paths (localStorage and cookie fallback) of the layout inline script. Page is invisible during the redirect so returning users see a blank page for the split second instead of the homepage flash.
+- New visitors (no neighborhoods in localStorage or cookie) are unaffected - the script doesn't hide anything.
+- Files: `src/app/layout.tsx`
+
 ## 2026-03-06
 
 **Fix Email Date Display Using Neighborhood Timezone:**
