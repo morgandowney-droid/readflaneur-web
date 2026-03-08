@@ -3,6 +3,12 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-08
+
+**Make Neighborhood Name Clickable on Daily Brief Article Pages:**
+- On daily brief article detail pages, the grey metadata neighborhood name (e.g., "Utrera") was plain text. Look Ahead and other article types already had a clickable `<Link>` to `/{city}/{neighborhood}`. Wrapped the brief metadata neighborhood name in a `<Link>` with `hover:text-accent` transition matching the non-brief path.
+- Files: `src/app/[city]/[neighborhood]/[slug]/page.tsx`
+
 ## 2026-03-07
 
 **Fix Homepage Flash for Returning Users:**
