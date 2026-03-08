@@ -188,7 +188,9 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
               return (
                 <>
                   <p className="text-xs uppercase tracking-wider text-fg-muted mb-1">
-                    {article.neighborhood?.name}
+                    <Link href={`/${city}/${neighborhood}`} className="hover:text-accent transition-colors">
+                      {article.neighborhood?.name}
+                    </Link>
                     {article.neighborhood?.city && <span> &middot; {article.neighborhood.city}</span>}
                   </p>
                   <p className="text-xs font-semibold uppercase tracking-wider text-amber-700 mb-3">
