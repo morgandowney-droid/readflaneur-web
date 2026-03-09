@@ -5,6 +5,11 @@
 
 ## 2026-03-09
 
+**X/Twitter Source Links Redirect to Google Search:**
+- X requires login to view tweets, making source attribution links useless for most readers. SourceAttribution now detects X/Twitter URLs (`x.com/` or `twitter.com/`) and redirects to Google Search with `site:x.com` instead of linking directly to the tweet.
+- Extracts actual username from URL pattern (`twitter.com/{user}/status/...`) when available (e.g., `@eat_dc`). Falls back to cleaning `source_name`: strips "Twitter" prefix, extracts names from parenthetical like "Twitter (Mayor Redler)" -> "Mayor Redler". Generic "X" or "Twitter" names display as "X post".
+- Files: `src/components/article/SourceAttribution.tsx`
+
 **Rich Social Previews and Share Buttons on Article Pages:**
 - Shared article links in iMessage, WhatsApp, Android Messages etc. now show the article's Unsplash photo, headline with neighborhood+city context, and preview text instead of generic Flaneur branding. Added full Open Graph (`og:title`, `og:description`, `og:image`, `og:url`, `og:site_name`, `og:type`) and Twitter Card (`summary_large_image`) meta tags to `generateMetadata()`. Title format: "Headline - Neighborhood, City".
 - Added share arrow button (uses `navigator.share()` on mobile, clipboard copy on desktop) in three locations: top metadata row on brief articles (right-aligned next to date), end of metadata row on non-brief articles (`ml-auto`), and bottom inline with bookmark/heart reactions in SourceAttribution actions slot.
