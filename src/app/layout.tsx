@@ -29,13 +29,22 @@ const merriweather = Merriweather({
 });
 
 export const metadata: Metadata = {
-  title: 'Flâneur | Hyper-local stories',
+  title: 'Flaneur | Hyper-local stories',
   description:
     'Discover hyper-local stories from the neighborhoods you love. West Village, Notting Hill, Paddington, and more.',
   openGraph: {
-    title: 'Flâneur | Hyper-local stories',
-    description: 'Discover hyper-local stories from the neighborhoods you love.',
+    title: 'Flaneur - Local stories, interesting neighborhoods',
+    description: 'Daily local news and events from 270+ neighborhoods worldwide. West Village, Notting Hill, Shibuya, and more.',
     type: 'website',
+    siteName: 'Flaneur',
+    url: 'https://readflaneur.com',
+    images: [{ url: 'https://readflaneur.com/og-default.png', width: 1200, height: 630, alt: 'Flaneur - Local stories, interesting neighborhoods' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Flaneur - Local stories, interesting neighborhoods',
+    description: 'Daily local news and events from 270+ neighborhoods worldwide.',
+    images: ['https://readflaneur.com/og-default.png'],
   },
   // Prevent AI training on our content
   robots: {

@@ -44,12 +44,45 @@ export async function generateMetadata({ params }: NeighborhoodPageProps) {
     .single();
 
   if (!data) {
-    return { title: 'Neighborhood | Flâneur' };
+    return { title: 'Neighborhood | Flaneur' };
   }
 
+  // Get Unsplash hero image for OG preview
+  let imageUrl = '';
+  if (data.id) {
+    const { data: libStatus } = await supabase
+      .from('image_library_status')
+      .select('unsplash_photos')
+      .eq('neighborhood_id', data.id)
+      .single();
+    if (libStatus?.unsplash_photos) {
+      const photos = libStatus.unsplash_photos as Record<string, { url: string }>;
+      const firstPhoto = Object.values(photos)[0];
+      if (firstPhoto?.url) imageUrl = firstPhoto.url;
+    }
+  }
+
+  const title = `${data.name}, ${data.city} - Local News and Events`;
+  const description = `Daily local stories, events, and insider news from ${data.name} in ${data.city}. Delivered fresh every morning.`;
+  const url = `https://readflaneur.com/${city}/${neighborhood}`;
+
   return {
-    title: `${data.name}, ${data.city} | Flâneur`,
-    description: `Local stories from ${data.name} in ${data.city}.`,
+    title: `${data.name}, ${data.city} | Flaneur`,
+    description,
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: 'Flaneur',
+      type: 'website',
+      ...(imageUrl ? { images: [{ url: imageUrl, width: 1200, height: 630, alt: `${data.name}, ${data.city}` }] } : {}),
+    },
+    twitter: {
+      card: imageUrl ? 'summary_large_image' : 'summary',
+      title,
+      description,
+      ...(imageUrl ? { images: [imageUrl] } : {}),
+    },
   };
 }
 
