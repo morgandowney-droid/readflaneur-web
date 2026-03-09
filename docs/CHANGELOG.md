@@ -3,6 +3,14 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-09
+
+**Rich Social Previews and Share Buttons on Article Pages:**
+- Shared article links in iMessage, WhatsApp, Android Messages etc. now show the article's Unsplash photo, headline with neighborhood+city context, and preview text instead of generic Flaneur branding. Added full Open Graph (`og:title`, `og:description`, `og:image`, `og:url`, `og:site_name`, `og:type`) and Twitter Card (`summary_large_image`) meta tags to `generateMetadata()`. Title format: "Headline - Neighborhood, City".
+- Added share arrow button (uses `navigator.share()` on mobile, clipboard copy on desktop) in three locations: top metadata row on brief articles (right-aligned next to date), end of metadata row on non-brief articles (`ml-auto`), and bottom inline with bookmark/heart reactions in SourceAttribution actions slot.
+- `generateMetadata()` now fetches `image_url`, `preview_text`, and `neighborhood:neighborhoods(name, city)` alongside headline/body for richer metadata.
+- Files: `src/app/[city]/[neighborhood]/[slug]/page.tsx`
+
 ## 2026-03-08
 
 **Make Neighborhood Name Clickable on Daily Brief Article Pages:**
