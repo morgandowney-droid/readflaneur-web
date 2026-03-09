@@ -5,6 +5,15 @@
 
 ## 2026-03-09
 
+**Rich OG Meta Tags on All Shareable Pages:**
+- Audited all pages for Open Graph / Twitter Card tags. Previously only article detail pages had rich previews - every other page fell back to generic "Flaneur | Hyper-local stories" with no image.
+- Root layout (`layout.tsx`): Added default `og:image`, `og:url`, `og:site_name`, `twitter:card` with `summary_large_image` so any page without its own metadata still gets branded previews.
+- Neighborhood feed pages (`/[city]/[neighborhood]`): Now fetch the neighborhood's Unsplash hero photo from `image_library_status` for og:image. Title format: "Name, City - Local News and Events". Description: "Daily local stories, events, and insider news from {name} in {city}."
+- Invite page (`/invite`): Full OG tags with "Join Flaneur - Your neighborhoods, every morning" and branded image.
+- Advertise page (`/advertise`): Full OG tags with dynamic neighborhood/city counts.
+- Created `/og-default.png` dynamic Edge route using `next/og` ImageResponse - generates a branded 1200x630 dark cinematic image with FLANEUR logo, tagline, and stats (matching homepage hero aesthetic).
+- Files: `src/app/layout.tsx`, `src/app/[city]/[neighborhood]/page.tsx`, `src/app/invite/page.tsx`, `src/app/advertise/layout.tsx`, `src/app/og-default.png/route.tsx` (new)
+
 **X/Twitter Source Links Redirect to Google Search:**
 - X requires login to view tweets, making source attribution links useless for most readers. SourceAttribution now detects X/Twitter URLs (`x.com/` or `twitter.com/`) and redirects to Google Search with `site:x.com` instead of linking directly to the tweet.
 - Extracts actual username from URL pattern (`twitter.com/{user}/status/...`) when available (e.g., `@eat_dc`). Falls back to cleaning `source_name`: strips "Twitter" prefix, extracts names from parenthetical like "Twitter (Mayor Redler)" -> "Mayor Redler". Generic "X" or "Twitter" names display as "X post".
