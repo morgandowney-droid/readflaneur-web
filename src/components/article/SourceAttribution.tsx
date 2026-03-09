@@ -130,20 +130,39 @@ export function SourceAttribution({ sources, editorNotes, isAIGenerated, headlin
 
     // Format the source name based on type
     let displayName = source.source_name;
-    if (source.source_type === 'x_user' && !displayName.startsWith('@')) {
-      displayName = `@${displayName}`;
-    }
-    if (source.source_type === 'x_user') {
-      displayName = `X user ${displayName}`;
+    let linkUrl = source.source_url;
+
+    // For X/Twitter sources: show username, link to Google search instead of x.com (requires login)
+    const isXUrl = source.source_url && (source.source_url.includes('x.com/') || source.source_url.includes('twitter.com/'));
+    if (source.source_type === 'x_user' || isXUrl) {
+      // Extract username from URL pattern twitter.com/{user}/status or from source_name
+      let username = '';
+      if (source.source_url) {
+        const userMatch = source.source_url.match(/(?:x\.com|twitter\.com)\/([^/]+)\/status/);
+        if (userMatch && userMatch[1] !== 'i') username = userMatch[1];
+      }
+      // Clean up display name
+      if (username) {
+        displayName = `@${username}`;
+      } else if (displayName.startsWith('@')) {
+        // Already has @handle
+      } else if (/^(X|Twitter)$/i.test(displayName.trim())) {
+        displayName = 'X post';
+      } else {
+        // Has a descriptive name like "Twitter (Mayor Redler)"
+        displayName = displayName.replace(/^Twitter\s*/i, '').replace(/^\(|\)$/g, '').trim() || 'X post';
+      }
+      // Link to Google search for the content instead of X (which requires login)
+      linkUrl = `https://www.google.com/search?q=${encodeURIComponent(displayName.replace(/^@/, '') + ' site:x.com')}`;
     }
 
     // If we have a valid URL, make it a link
-    if (source.source_url) {
+    if (linkUrl) {
       return (
         <span key={source.id}>
           {prefix}
           <a
-            href={source.source_url}
+            href={linkUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-current font-semibold underline decoration-dotted decoration-neutral-500/40 decoration-1 underline-offset-4 hover:decoration-neutral-300/60 hover:decoration-solid transition-all"
