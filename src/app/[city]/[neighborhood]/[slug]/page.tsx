@@ -21,6 +21,7 @@ import { MoreStoriesButton, TranslatedDailyBriefLabel } from '@/components/artic
 import { BriefDiscoveryFooter } from '@/components/article/BriefDiscoveryFooter';
 import { ExplorationNextSuggestions } from '@/components/article/ExplorationNextSuggestions';
 import { ExplorationBackLink, ExplorationBarWithSession, ExploreSubscribeNudge } from '@/components/article/ExplorationWrapper';
+import { ShareButton } from '@/components/ui/ShareButton';
 
 interface ArticlePageProps {
   params: Promise<{
@@ -32,7 +33,7 @@ interface ArticlePageProps {
 }
 
 export async function generateMetadata({ params }: ArticlePageProps) {
-  const { slug } = await params;
+  const { city, neighborhood, slug } = await params;
   const supabase = await createClient();
 
   // Check if slug looks like a UUID
@@ -40,7 +41,7 @@ export async function generateMetadata({ params }: ArticlePageProps) {
 
   let query = supabase
     .from('articles')
-    .select('headline, body_text');
+    .select('headline, body_text, image_url, preview_text, neighborhood:neighborhoods(name, city)');
 
   if (isUUID) {
     query = query.or(`slug.eq.${slug},id.eq.${slug}`);
@@ -51,12 +52,34 @@ export async function generateMetadata({ params }: ArticlePageProps) {
   const { data: article } = await query.single();
 
   if (!article) {
-    return { title: 'Article | Flâneur' };
+    return { title: 'Article | Flaneur' };
   }
 
+  const neighborhoodName = (article.neighborhood as { name?: string; city?: string } | null)?.name || '';
+  const cityName = (article.neighborhood as { name?: string; city?: string } | null)?.city || '';
+  const description = article.preview_text || article.body_text?.substring(0, 160) || '';
+  const title = neighborhoodName
+    ? `${article.headline} - ${neighborhoodName}, ${cityName}`
+    : article.headline;
+  const url = `https://readflaneur.com/${city}/${neighborhood}/${slug}`;
+
   return {
-    title: `${article.headline} | Flâneur`,
-    description: article.body_text.substring(0, 160),
+    title: `${title} | Flaneur`,
+    description,
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: 'Flaneur',
+      type: 'article',
+      ...(article.image_url ? { images: [{ url: article.image_url, width: 1200, height: 630, alt: article.headline }] } : {}),
+    },
+    twitter: {
+      card: article.image_url ? 'summary_large_image' : 'summary',
+      title,
+      description,
+      ...(article.image_url ? { images: [article.image_url] } : {}),
+    },
   };
 }
 
@@ -153,6 +176,7 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
   }
 
   const neighborhoodUrl = `/${city}/${neighborhood}`;
+  const articleUrl = `/${city}/${neighborhood}/${article.slug || article.id}`;
 
   return (
     <div className="py-8 px-4 relative">
@@ -199,12 +223,19 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
                   <h1 className="text-3xl font-light leading-tight mb-3">
                     <TranslatedHeadline articleId={article.id} headline={cleanArticleHeadline(article.headline)} />
                   </h1>
-                  <p className="text-xs text-fg-muted">
-                    {formatRelativeTime(
-                      article.article_type === 'look_ahead' ? (article.published_at || article.created_at) : article.created_at,
-                      'en', article.neighborhood?.timezone
-                    )}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-fg-muted">
+                      {formatRelativeTime(
+                        article.article_type === 'look_ahead' ? (article.published_at || article.created_at) : article.created_at,
+                        'en', article.neighborhood?.timezone
+                      )}
+                    </p>
+                    <ShareButton
+                      title={`${article.headline} - ${article.neighborhood?.name || ''}`}
+                      text={article.headline}
+                      url={articleUrl}
+                    />
+                  </div>
                 </>
               );
             }
@@ -251,6 +282,13 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
                       <span className="text-fg-muted" title={isAdmin ? (article.enrichment_model || '') : ''}>AI-Synthesized Brief{isAdmin && article.enrichment_model ? ` · ${article.enrichment_model.replace('gemini-', '').replace('2.5-', '')}` : ''}</span>
                     </>
                   )}
+                  <span className="ml-auto">
+                    <ShareButton
+                      title={`${article.headline} - ${article.neighborhood?.name || ''}`}
+                      text={article.headline}
+                      url={articleUrl}
+                    />
+                  </span>
                 </div>
                 <h1 className="text-3xl font-light leading-tight mb-6">
                   <TranslatedHeadline articleId={article.id} headline={article.headline} />
@@ -337,7 +375,16 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
             : article.category_label?.toLowerCase().includes('sunday edition') ? 'weekly_recap'
             : undefined}
           categoryLabel={article.category_label}
-          actions={<ArticleReactions articleId={article.id} />}
+          actions={
+            <div className="flex items-center gap-3">
+              <ArticleReactions articleId={article.id} />
+              <ShareButton
+                title={`${article.headline} - ${article.neighborhood?.name || ''}`}
+                text={article.headline}
+                url={articleUrl}
+              />
+            </div>
+          }
         />
 
         {/* Subscribe nudge for exploration visitors */}
