@@ -3,6 +3,20 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-10
+
+**Luxury Editorial Aesthetic Overhaul (Le Collectionist-Inspired):**
+- Complete visual identity shift from tech-amber to muted warm gold across 61 files. New accent color `#c9a96e` (dark) / `#8a6f3e` (light) replaces amber-400/amber-700 throughout the entire codebase - CSS variables, Tailwind classes, and inline styles.
+- Extended Cormorant Garamond serif font from homepage hero to feed card headlines, article page headlines, and neighborhood masthead for consistent luxury editorial typography.
+- Changed all rounded corners from `rounded-xl`/`rounded-lg` to `rounded-sm` for sharp, editorial card edges matching high-end property and fashion magazine aesthetics.
+- Doubled feed spacing (`space-y-6` to `space-y-12` in compact view, `space-y-4` to `space-y-8` in gallery) for breathing room between stories.
+- Removed aggressive email capture surfaces: `EmailCaptureCard` mid-feed injection removed from `ad-engine.ts`, `PostReadEmailCapture` bar removed from article pages, `ReturnVisitPrompt` slide-up toast removed from layout. Replaced with quiet "BE IN THE KNOW" footer section in `Footer.tsx` with email input and understated styling.
+- Simplified feed empty state from multi-element layout to single centered "Choose Your Neighborhoods" CTA button.
+- Enhanced Daily Brief card visual hierarchy: date/weather metadata row above headline, serif headline in Cormorant Garamond, clean content preview below.
+- Simplified neighborhood selector modal header from 5 visual layers (tabs, search, sort, selected pills, action row) to 3 clean layers.
+- Unsplash image queries now append editorial and lifestyle modifiers (e.g., "editorial", "architecture", "lifestyle") to search terms in `unsplash.ts` for higher-quality, magazine-style photography.
+- Files: `globals.css`, `tailwind.config.ts`, `src/app/layout.tsx`, `src/components/layout/Header.tsx`, `src/components/layout/Footer.tsx`, `src/components/feed/MultiFeed.tsx`, `src/components/feed/FeedList.tsx`, `src/components/feed/NeighborhoodBrief.tsx`, `src/components/feed/CompactArticleCard.tsx`, `src/components/feed/ArticleCard.tsx`, `src/components/feed/NeighborhoodHeader.tsx`, `src/components/feed/NeighborhoodSelectorModal.tsx`, `src/components/article/SourceAttribution.tsx`, `src/lib/ad-engine.ts`, `src/lib/unsplash.ts`, and 46 additional files with amber-to-gold accent migration.
+
 ## 2026-03-09
 
 **Rich OG Meta Tags on All Shareable Pages:**
