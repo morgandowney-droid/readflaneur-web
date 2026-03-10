@@ -58,9 +58,7 @@ export async function generateMetadata({ params }: ArticlePageProps) {
   const neighborhoodName = (article.neighborhood as { name?: string; city?: string } | null)?.name || '';
   const cityName = (article.neighborhood as { name?: string; city?: string } | null)?.city || '';
   const description = article.preview_text || article.body_text?.substring(0, 160) || '';
-  const title = neighborhoodName
-    ? `${article.headline} - ${neighborhoodName}, ${cityName}`
-    : article.headline;
+  const title = article.headline;
   const url = `https://readflaneur.com/${city}/${neighborhood}/${slug}`;
 
   return {
