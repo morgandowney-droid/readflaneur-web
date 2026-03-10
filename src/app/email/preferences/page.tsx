@@ -492,7 +492,7 @@ function PreferencesContent() {
                 name="frequency"
                 checked={data.daily_email_enabled === true}
                 onChange={() => handleToggleEmail(true)}
-                className="accent-amber-600"
+                className="accent-[var(--theme-accent)]"
               />
               <div>
                 <div className="text-sm font-medium text-neutral-200">Daily Brief</div>
@@ -505,7 +505,7 @@ function PreferencesContent() {
                 name="frequency"
                 checked={data.daily_email_enabled === false}
                 onChange={() => handleToggleEmail(false)}
-                className="accent-amber-600"
+                className="accent-[var(--theme-accent)]"
               />
               <div>
                 <div className="text-sm font-medium text-neutral-200">Paused</div>
@@ -533,7 +533,7 @@ function PreferencesContent() {
                 name="sunday_edition"
                 checked={data.sunday_edition_enabled === true}
                 onChange={() => handleToggleSundayEdition(true)}
-                className="accent-amber-600"
+                className="accent-[var(--theme-accent)]"
               />
               <div>
                 <div className="text-sm font-medium text-neutral-200">Enabled</div>
@@ -546,7 +546,7 @@ function PreferencesContent() {
                 name="sunday_edition"
                 checked={data.sunday_edition_enabled === false}
                 onChange={() => handleToggleSundayEdition(false)}
-                className="accent-amber-600"
+                className="accent-[var(--theme-accent)]"
               />
               <div>
                 <div className="text-sm font-medium text-neutral-200">Paused</div>
@@ -563,7 +563,7 @@ function PreferencesContent() {
         <section
           ref={familyCornerRef}
           id="family-corner"
-          className={`mb-8 -mx-4 px-4 py-4 rounded-lg transition-colors duration-1000 ${highlightFamily ? 'bg-amber-500/10' : ''}`}
+          className={`mb-8 -mx-4 px-4 py-4 rounded-lg transition-colors duration-1000 ${highlightFamily ? 'bg-accent/10' : ''}`}
         >
           <h2 className="text-xs font-medium tracking-[0.1em] uppercase text-neutral-400 mb-3">
             Family Corner
@@ -581,7 +581,7 @@ function PreferencesContent() {
                 name="childcare"
                 checked={childcareEnabled === true}
                 onChange={() => handleToggleChildcare(true)}
-                className="accent-amber-600"
+                className="accent-[var(--theme-accent)]"
               />
               <div>
                 <div className="text-sm font-medium text-neutral-200">Enabled</div>
@@ -594,7 +594,7 @@ function PreferencesContent() {
                 name="childcare"
                 checked={childcareEnabled === false}
                 onChange={() => handleToggleChildcare(false)}
-                className="accent-amber-600"
+                className="accent-[var(--theme-accent)]"
               />
               <div>
                 <div className="text-sm font-medium text-neutral-200">
@@ -868,7 +868,7 @@ function PreferencesContent() {
               value={suggestion}
               onChange={e => setSuggestion(e.target.value)}
               placeholder="What topic would you like to see?"
-              className="flex-1 px-3 py-2 border border-white/20 rounded-lg focus:border-amber-500 focus:outline-none text-sm bg-neutral-900 text-white"
+              className="flex-1 px-3 py-2 border border-white/20 rounded-lg focus:border-accent focus:outline-none text-sm bg-neutral-900 text-white"
               maxLength={200}
             />
             <button
@@ -911,7 +911,7 @@ function PreferencesContent() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search neighborhoods..."
-                className="w-full px-3 py-2 border border-white/20 rounded-lg focus:border-amber-500 focus:outline-none text-sm bg-neutral-900 text-white"
+                className="w-full px-3 py-2 border border-white/20 rounded-lg focus:border-accent focus:outline-none text-sm bg-neutral-900 text-white"
                 autoFocus
               />
             </div>

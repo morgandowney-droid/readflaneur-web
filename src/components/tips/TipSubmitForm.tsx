@@ -246,7 +246,7 @@ export default function TipSubmitForm({
                 w-8 h-8 rounded-full flex items-center justify-center
                 transition-colors
                 ${step === s
-                  ? 'bg-amber-600 text-white'
+                  ? 'bg-accent text-white'
                   : i < ['content', 'photos', 'contact', 'terms'].indexOf(step)
                     ? 'bg-elevated text-fg cursor-pointer hover:bg-fg-subtle'
                     : 'bg-elevated text-fg-subtle'
@@ -258,7 +258,7 @@ export default function TipSubmitForm({
             {i < 3 && (
               <div className={`w-12 sm:w-20 h-0.5 mx-1 ${
                 i < ['content', 'photos', 'contact', 'terms'].indexOf(step)
-                  ? 'bg-amber-600'
+                  ? 'bg-accent'
                   : 'bg-elevated'
               }`} />
             )}
@@ -285,7 +285,7 @@ export default function TipSubmitForm({
             <select
               value={neighborhoodId}
               onChange={(e) => setNeighborhoodId(e.target.value)}
-              className="w-full px-3 py-2 bg-canvas border border-border text-fg rounded placeholder:text-fg-subtle focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="w-full px-3 py-2 bg-canvas border border-border text-fg rounded placeholder:text-fg-subtle focus:outline-none focus:ring-1 focus:ring-accent"
             >
               <option value="">Select a neighborhood...</option>
               {Object.entries(neighborhoodsByCity).map(([city, hoods]) => (
@@ -310,7 +310,7 @@ export default function TipSubmitForm({
               onChange={(e) => setHeadline(e.target.value)}
               placeholder="Brief summary of your tip"
               maxLength={200}
-              className="w-full px-3 py-2 bg-canvas border border-border text-fg rounded placeholder:text-fg-subtle focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="w-full px-3 py-2 bg-canvas border border-border text-fg rounded placeholder:text-fg-subtle focus:outline-none focus:ring-1 focus:ring-accent"
             />
           </div>
 
@@ -323,7 +323,7 @@ export default function TipSubmitForm({
               onChange={(e) => setContent(e.target.value)}
               placeholder="Share what you know... The more detail, the better."
               rows={6}
-              className="w-full px-3 py-2 bg-canvas border border-border text-fg rounded placeholder:text-fg-subtle focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
+              className="w-full px-3 py-2 bg-canvas border border-border text-fg rounded placeholder:text-fg-subtle focus:outline-none focus:ring-1 focus:ring-accent resize-none"
             />
             <p className="text-xs text-fg-subtle mt-1">
               {content.length} characters
@@ -405,7 +405,7 @@ export default function TipSubmitForm({
               value={submitterName}
               onChange={(e) => setSubmitterName(e.target.value)}
               placeholder="Your name"
-              className="w-full px-3 py-2 bg-canvas border border-border text-fg rounded placeholder:text-fg-subtle focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="w-full px-3 py-2 bg-canvas border border-border text-fg rounded placeholder:text-fg-subtle focus:outline-none focus:ring-1 focus:ring-accent"
             />
           </div>
 
@@ -418,7 +418,7 @@ export default function TipSubmitForm({
               value={submitterEmail}
               onChange={(e) => setSubmitterEmail(e.target.value)}
               placeholder="your@email.com"
-              className="w-full px-3 py-2 bg-canvas border border-border text-fg rounded placeholder:text-fg-subtle focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="w-full px-3 py-2 bg-canvas border border-border text-fg rounded placeholder:text-fg-subtle focus:outline-none focus:ring-1 focus:ring-accent"
             />
           </div>
 
@@ -431,7 +431,7 @@ export default function TipSubmitForm({
               value={submitterPhone}
               onChange={(e) => setSubmitterPhone(e.target.value)}
               placeholder="(555) 555-5555"
-              className="w-full px-3 py-2 bg-canvas border border-border text-fg rounded placeholder:text-fg-subtle focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="w-full px-3 py-2 bg-canvas border border-border text-fg rounded placeholder:text-fg-subtle focus:outline-none focus:ring-1 focus:ring-accent"
             />
           </div>
 

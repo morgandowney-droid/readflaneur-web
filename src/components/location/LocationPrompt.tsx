@@ -183,7 +183,7 @@ export function LocationPrompt() {
               <button
                 onClick={handleSetPrimary}
                 disabled={isSaving}
-                className="px-3 py-1.5 bg-amber-600 text-white text-xs font-medium rounded hover:bg-amber-700 transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 bg-accent text-white text-xs font-medium rounded hover:opacity-80 transition-colors disabled:opacity-50"
               >
                 {isSaving ? 'Saving...' : `Yes, set ${detectedCity}`}
               </button>

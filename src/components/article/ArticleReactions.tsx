@@ -23,7 +23,7 @@ interface ReactionButton {
 }
 
 const REACTIONS: ReactionButton[] = [
-  { type: 'bookmark', icon: '🔖', activeIcon: '🔖', activeColor: 'text-amber-600', label: 'Save' },
+  { type: 'bookmark', icon: '🔖', activeIcon: '🔖', activeColor: 'text-accent', label: 'Save' },
   { type: 'heart', icon: '🤍', activeIcon: '❤️', activeColor: 'text-red-500', label: 'Like' },
 ];
 

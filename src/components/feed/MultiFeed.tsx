@@ -645,7 +645,7 @@ export function MultiFeed({
                   </svg>
                   <span className="text-sm text-fg font-medium">{t('feed.allStories')}</span>
                   {activeFilter === null && (
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto shrink-0 text-amber-500">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto shrink-0 text-accent">
                       <path d="M2.5 7l3 3 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   )}
@@ -663,19 +663,19 @@ export function MultiFeed({
                     }`}
                   >
                     <span className={`shrink-0 w-2 h-2 rounded-full ${
-                      i === 0 ? 'bg-amber-500' : 'bg-fg-subtle'
+                      i === 0 ? 'bg-accent' : 'bg-fg-subtle'
                     }`} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-fg truncate">{hood.name}</span>
                         {i === 0 && (
-                          <span className="text-[8px] tracking-wider font-bold text-amber-500/60 shrink-0">{t('feed.primary').toUpperCase()}</span>
+                          <span className="text-[8px] tracking-wider font-bold text-accent-muted shrink-0">{t('feed.primary').toUpperCase()}</span>
                         )}
                       </div>
                       <div className="text-[10px] text-fg-subtle truncate">{hood.city}</div>
                     </div>
                     {activeFilter === hood.id && (
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto shrink-0 text-amber-500">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto shrink-0 text-accent">
                         <path d="M2.5 7l3 3 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     )}
@@ -755,7 +755,7 @@ export function MultiFeed({
                     className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors flex items-center gap-1.5 cursor-grab active:cursor-grabbing select-none touch-none ${
                       dragIndex === i && isDragging.current ? 'opacity-50' : ''
                     } ${
-                      overIndex === i && dragIndex !== null && dragIndex !== i ? 'border-l-2 border-l-amber-500' : ''
+                      overIndex === i && dragIndex !== null && dragIndex !== i ? 'border-l-2 border-l-accent' : ''
                     } ${
                       activeFilter === hood.id
                         ? 'bg-hover text-fg border border-border-strong'
@@ -766,7 +766,7 @@ export function MultiFeed({
                     {hood.name}
                     {i === 0 && neighborhoods.length > 1 && (
                       <span className={`text-[8px] tracking-wider font-bold ${
-                        activeFilter === hood.id ? 'text-amber-600' : 'text-amber-500/60'
+                        activeFilter === hood.id ? 'text-accent' : 'text-accent-muted'
                       }`}>
                         {t('feed.primary')}
                       </span>
@@ -940,21 +940,15 @@ export function MultiFeed({
 
       {/* ── EMPTY STATE (only after confirming localStorage is also empty) ── */}
       {isEmpty && syncChecked && (
-        <div className="py-8 text-center">
-          <p className="text-sm text-fg-subtle mb-4">
-            {t('feed.selectNeighborhoods')}
-          </p>
+        <div className="py-16 text-center">
           <button
             onClick={() => openModal()}
-            className="inline-flex items-center gap-2 px-6 py-2.5 text-sm tracking-wide bg-fg text-canvas rounded-lg hover:opacity-80 transition-colors"
+            className="btn-secondary px-8 py-3 text-xs tracking-[0.2em] uppercase"
           >
-            {t('nav.chooseNeighborhoods')}
+            SELECT YOUR NEIGHBORHOODS
           </button>
-          <p className="text-sm text-fg-subtle mt-4">
-            {t('feed.alreadyHaveAccount')}{' '}
-            <a href="/login" className="text-accent hover:underline font-medium">
-              {t('nav.signIn')}
-            </a>
+          <p className="text-xs text-fg-subtle mt-4">
+            or <a href="/login" className="underline hover:text-fg transition-colors">sign in</a>
           </p>
         </div>
       )}

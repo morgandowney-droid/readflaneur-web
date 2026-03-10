@@ -35,7 +35,7 @@ export function StoryOpenAd({ ad, position }: StoryOpenAdProps) {
 
   return (
     <div
-      className="bg-surface border border-border overflow-hidden cursor-pointer hover:border-border-strong transition-colors rounded-xl"
+      className="bg-surface border border-border overflow-hidden cursor-pointer hover:border-border-strong transition-colors rounded-sm"
       onClick={handleClick}
     >
       <div className="flex flex-col sm:flex-row">

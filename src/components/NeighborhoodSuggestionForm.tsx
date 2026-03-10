@@ -97,7 +97,7 @@ export function NeighborhoodSuggestionForm({ variant }: NeighborhoodSuggestionFo
           onChange={(e) => setSuggestion(e.target.value)}
           placeholder="e.g. Williamsburg, Brooklyn"
           maxLength={200}
-          className="w-full px-4 py-3 bg-surface border border-border-strong text-white focus:border-amber-500 focus:outline-none text-sm placeholder:text-fg-subtle"
+          className="w-full px-4 py-3 bg-surface border border-border-strong text-white focus:border-accent focus:outline-none text-sm placeholder:text-fg-subtle"
           disabled={status === 'submitting'}
         />
       </div>
@@ -111,7 +111,7 @@ export function NeighborhoodSuggestionForm({ variant }: NeighborhoodSuggestionFo
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="your@email.com"
-          className="w-full px-4 py-3 bg-surface border border-border-strong text-white focus:border-amber-500 focus:outline-none text-sm placeholder:text-fg-subtle"
+          className="w-full px-4 py-3 bg-surface border border-border-strong text-white focus:border-accent focus:outline-none text-sm placeholder:text-fg-subtle"
           disabled={status === 'submitting'}
         />
       </div>

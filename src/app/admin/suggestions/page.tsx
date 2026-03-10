@@ -201,7 +201,7 @@ export default function AdminSuggestionsPage() {
                             value={notesValue}
                             onChange={e => setNotesValue(e.target.value)}
                             placeholder="Admin notes..."
-                            className="flex-1 px-2 py-1 text-xs bg-surface border border-border-strong text-white focus:border-amber-500 focus:outline-none"
+                            className="flex-1 px-2 py-1 text-xs bg-surface border border-border-strong text-white focus:border-accent focus:outline-none"
                           />
                           <button
                             onClick={() => saveNotes(s.id)}

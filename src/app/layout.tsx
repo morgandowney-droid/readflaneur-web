@@ -6,7 +6,7 @@ import { Footer } from '@/components/layout/Footer';
 import { PersonaSwitcher } from '@/components/admin/PersonaSwitcher';
 import { NeighborhoodModalProvider } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 import { LocationPrompt } from '@/components/location/LocationPrompt';
-import { ReturnVisitPrompt } from '@/components/feed/ReturnVisitPrompt';
+
 import { PrimaryChangeSuggestion } from '@/components/feed/PrimaryChangeSuggestion';
 import { LanguageProvider } from '@/components/providers/LanguageProvider';
 import { PreferencesSync } from '@/components/providers/PreferencesSync';
@@ -81,7 +81,7 @@ export default function RootLayout({
             <Footer />
             <PersonaSwitcher />
             <LocationPrompt />
-            <ReturnVisitPrompt />
+            {/* ReturnVisitPrompt removed - quiet footer capture handles email subscription */}
             <PrimaryChangeSuggestion />
             <PreferencesSync />
           </NeighborhoodModalProvider>

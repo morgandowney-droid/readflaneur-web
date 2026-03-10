@@ -141,7 +141,7 @@ export default function GenerateContentPage() {
                 </button>
               </div>
               {loading === 'batch' && (
-                <p className="text-sm text-amber-600 mt-2">
+                <p className="text-sm text-accent mt-2">
                   Running batches with 30s delay between each. Please wait...
                 </p>
               )}

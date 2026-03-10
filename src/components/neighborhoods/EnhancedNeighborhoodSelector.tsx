@@ -416,7 +416,7 @@ export function EnhancedNeighborhoodSelector({
             placeholder="Search neighborhoods, cities, or countries..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-12 py-3 text-sm bg-elevated border-0 rounded-lg text-fg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-surface transition-all placeholder:text-fg-subtle"
+            className="w-full pl-11 pr-12 py-3 text-sm bg-elevated border-0 rounded-lg text-fg focus:outline-none focus:ring-2 focus:ring-accent focus:bg-surface transition-all placeholder:text-fg-subtle"
           />
           {searchQuery ? (
             <button
@@ -443,7 +443,7 @@ export function EnhancedNeighborhoodSelector({
               onClick={() => setActiveRegion('all')}
               className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
                 activeRegion === 'all'
-                  ? 'bg-amber-600 text-white'
+                  ? 'bg-accent text-white'
                   : 'bg-elevated text-fg-muted hover:bg-white/10'
               }`}
             >
@@ -459,7 +459,7 @@ export function EnhancedNeighborhoodSelector({
                     activeRegion === region
                       ? isVacation
                         ? 'text-white'
-                        : 'bg-amber-600 text-white'
+                        : 'bg-accent text-white'
                       : isVacation
                         ? 'text-[#00563F] border border-[#00563F] hover:bg-[#00563F] hover:text-fg'
                         : 'bg-elevated text-fg-muted hover:bg-white/10'
@@ -544,9 +544,9 @@ export function EnhancedNeighborhoodSelector({
                     return (
                       <div
                         key={cityKey}
-                        className={`relative overflow-hidden rounded-xl border transition-all duration-200 ${
+                        className={`relative overflow-hidden rounded-sm border transition-all duration-200 ${
                           selectedInCity > 0
-                            ? 'border-amber-600 shadow-lg'
+                            ? 'border-accent shadow-lg'
                             : 'border-border hover:border-border-strong hover:shadow-md'
                         }`}
                       >
@@ -583,7 +583,7 @@ export function EnhancedNeighborhoodSelector({
 
                             {/* Trending indicator */}
                             {city.totalArticles > 50 && (
-                              <div className="absolute top-3 left-3 px-2 py-1 bg-amber-400 rounded-full text-xs font-medium text-amber-900">
+                              <div className="absolute top-3 left-3 px-2 py-1 bg-accent rounded-full text-xs font-medium text-canvas">
                                 Popular
                               </div>
                             )}

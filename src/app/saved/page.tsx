@@ -78,7 +78,7 @@ export default function SavedPage() {
               onClick={() => setActiveTab(tab.type)}
               className={`px-4 py-2 text-sm transition-colors border-b-2 -mb-px ${
                 activeTab === tab.type
-                  ? 'border-amber-600 text-fg'
+                  ? 'border-accent text-fg'
                   : 'border-transparent text-fg-muted hover:text-fg-muted'
               }`}
             >

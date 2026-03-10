@@ -298,7 +298,7 @@ export function Header() {
             className={cn(
               'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
               pathname === '/neighborhoods' || pathname === '/feed'
-                ? 'text-fg font-medium border-amber-500'
+                ? 'text-fg font-medium border-accent'
                 : 'text-fg-subtle border-transparent'
             )}
           >
@@ -317,7 +317,7 @@ export function Header() {
                   data-admin
                   className={cn(
                     'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
-                    pathname.startsWith('/admin') ? 'text-fg font-medium border-amber-500' : 'text-fg-subtle border-transparent'
+                    pathname.startsWith('/admin') ? 'text-fg font-medium border-accent' : 'text-fg-subtle border-transparent'
                   )}
                 >
                   Admin
@@ -329,7 +329,7 @@ export function Header() {
                   data-admin
                   className={cn(
                     'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
-                    pathname.startsWith('/advertiser') ? 'text-fg font-medium border-amber-500' : 'text-fg-subtle border-transparent'
+                    pathname.startsWith('/advertiser') ? 'text-fg font-medium border-accent' : 'text-fg-subtle border-transparent'
                   )}
                 >
                   Dashboard
@@ -339,7 +339,7 @@ export function Header() {
                 href="/feed"
                 className={cn(
                   'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
-                  pathname === '/feed' ? 'text-fg font-medium border-amber-500' : 'text-fg-subtle border-transparent'
+                  pathname === '/feed' ? 'text-fg font-medium border-accent' : 'text-fg-subtle border-transparent'
                 )}
               >
                 {t('nav.stories')}
@@ -348,7 +348,7 @@ export function Header() {
                 href="/account"
                 className={cn(
                   'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
-                  pathname === '/account' ? 'text-fg font-medium border-amber-500' : 'text-fg-subtle border-transparent'
+                  pathname === '/account' ? 'text-fg font-medium border-accent' : 'text-fg-subtle border-transparent'
                 )}
               >
                 {t('nav.account')}

@@ -7,7 +7,7 @@ import { StoryOpenAd } from '@/components/feed/StoryOpenAd';
 import { FallbackAd } from '@/components/feed/FallbackAd';
 import { ArticleViewTracker } from '@/components/tracking/ArticleViewTracker';
 import { ArticleReactions } from '@/components/article/ArticleReactions';
-import { PostReadEmailCapture } from '@/components/article/PostReadEmailCapture';
+
 import { TranslatedArticleBody, TranslatedHeadline } from '@/components/article/TranslatedArticleBody';
 import { AIImageDisclaimer, AIImageBadge } from '@/components/article/AIImageDisclaimer';
 import { ImageFeedback } from '@/components/article/ImageFeedback';
@@ -189,14 +189,10 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
           city={article.neighborhood?.city || ''}
         />
 
-        {/* Top Story Open Ad - hidden during explore sessions to preserve "next episode" flow */}
-        {!isExploring && (
+        {/* Top Story Open Ad - only show paid ads, no fallback house ad */}
+        {!isExploring && topAd && (
           <div className="mb-8">
-            {topAd ? (
-              <StoryOpenAd ad={topAd} position="top" />
-            ) : (
-              <FallbackAd variant="story_open" position="top" fallback={fallbackData} />
-            )}
+            <StoryOpenAd ad={topAd} position="top" />
           </div>
         )}
 
@@ -215,7 +211,7 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
                     </Link>
                     {article.neighborhood?.city && <span> &middot; {article.neighborhood.city}</span>}
                   </p>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-amber-700 mb-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-accent mb-3">
                     <TranslatedDailyBriefLabel dayAbbr={getDayAbbr(article.published_at || article.created_at, 'en', article.neighborhood?.timezone || undefined)} />
                   </p>
                   <h1 className="text-3xl font-light leading-tight mb-3">
@@ -252,7 +248,7 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
                       <span className="text-fg-muted/40">&middot;</span>
                       <Link
                         href={`/${city}/${neighborhoodToSlug(parentCombo.comboId)}`}
-                        className="uppercase tracking-wider text-amber-600/70 hover:text-amber-500 transition-colors"
+                        className="uppercase tracking-wider text-accent/70 hover:text-accent transition-colors"
                       >
                         {parentCombo.comboName}
                       </Link>
@@ -311,7 +307,7 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
           );
           return (
             <>
-              <div className="relative aspect-video w-full mb-2 rounded-xl overflow-hidden">
+              <div className="relative aspect-video w-full mb-2 rounded-sm overflow-hidden">
                 <Image
                   src={article.image_url}
                   alt={article.headline}
@@ -496,14 +492,7 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
           </div>
         )}
 
-        {/* Email capture for engaged readers - skip for editorial article types and explore sessions */}
-        {!isExploring &&
-         article.article_type !== 'look_ahead' &&
-         article.article_type !== 'brief_summary' &&
-         article.category_label !== 'The Sunday Edition' &&
-         !(article.category_label && article.category_label.toLowerCase().includes('daily brief')) && (
-          <PostReadEmailCapture neighborhoodName={article.neighborhood?.name || 'neighborhood'} />
-        )}
+        {/* Email capture removed - quiet footer capture handles this */}
 
         {/* More stories - hidden during explore sessions (sticky bar + hero card provide navigation) */}
         {!isExploring && (

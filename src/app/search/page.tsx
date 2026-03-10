@@ -96,7 +96,7 @@ function SearchContent() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('search.placeholder')}
-              className="flex-1 px-4 py-3 border border-border-strong rounded-lg focus:border-amber-500 focus:outline-none bg-surface text-fg placeholder:text-fg-subtle"
+              className="flex-1 px-4 py-3 border border-border-strong rounded-lg focus:border-accent focus:outline-none bg-surface text-fg placeholder:text-fg-subtle"
               autoFocus
             />
             <button

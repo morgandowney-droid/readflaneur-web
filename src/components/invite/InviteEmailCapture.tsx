@@ -86,13 +86,13 @@ export function InviteEmailCapture() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="your@email.com"
-          className="flex-1 bg-surface border border-border-strong text-white px-4 py-3 text-sm rounded-md focus:outline-none focus:border-amber-500 transition-colors placeholder:text-neutral-600"
+          className="flex-1 bg-surface border border-border-strong text-white px-4 py-3 text-sm rounded-md focus:outline-none focus:border-accent transition-colors placeholder:text-neutral-600"
           disabled={status === 'loading'}
         />
         <button
           type="submit"
           disabled={status === 'loading' || !email}
-          className="bg-fg text-canvas px-6 py-3 text-sm font-medium rounded-md hover:bg-amber-600 hover:text-fg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          className="bg-fg text-canvas px-6 py-3 text-sm font-medium rounded-md hover:opacity-80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
         >
           {status === 'loading' ? 'Sending...' : 'Subscribe'}
         </button>

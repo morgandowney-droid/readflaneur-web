@@ -253,7 +253,7 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
           dailyBrief={!category && brief ? (
             <>
               {comboBriefAttribution && (
-                <p className="text-[10px] text-amber-600 italic mb-1">
+                <p className="text-[10px] text-accent italic mb-1">
                   From {comboBriefAttribution} daily brief
                 </p>
               )}

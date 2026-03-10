@@ -91,12 +91,12 @@ export function BentoCard({
     <Link
       href={href}
       className={`
-        group relative overflow-hidden rounded-xl
+        group relative overflow-hidden rounded-sm
         ${sizeClasses[size]} ${heightClasses[size]}
         transition-transform duration-300 ease-out
         hover:scale-[1.015] hover:shadow-lg
         ${size === 'scroll' ? 'snap-start' : ''}
-        ${isUserNeighborhood ? 'ring-1 ring-amber-500/40' : ''}
+        ${isUserNeighborhood ? 'ring-1 ring-accent/40' : ''}
       `}
     >
       {/* Background image */}
@@ -111,9 +111,9 @@ export function BentoCard({
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
 
-      {/* User neighborhood amber accent */}
+      {/* User neighborhood accent */}
       {isUserNeighborhood && (
-        <div className="absolute top-0 left-0 w-1 h-full bg-amber-500/60 z-10" />
+        <div className="absolute top-0 left-0 w-1 h-full bg-accent/60 z-10" />
       )}
 
       {/* Subscribe toggle button on discovery cards */}
@@ -158,7 +158,7 @@ export function BentoCard({
 
         {/* Headline */}
         <h3 className={`
-          font-serif font-bold text-white leading-tight mb-1.5
+          font-display font-light text-white leading-tight mb-1.5
           [text-shadow:0_1px_4px_rgba(0,0,0,0.5)]
           ${headlineClasses[size]}
         `}>
@@ -180,7 +180,7 @@ export function BentoCard({
 export function BentoCardSkeleton({ size }: { size: BentoCardProps['size'] }) {
   return (
     <div className={`
-      relative animate-pulse rounded-xl bg-elevated
+      relative animate-pulse rounded-sm bg-elevated
       ${sizeClasses[size]} ${heightClasses[size]}
     `}>
       <div className="absolute bottom-4 left-4 right-4 space-y-2">

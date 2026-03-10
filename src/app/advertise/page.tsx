@@ -82,8 +82,8 @@ export default async function AdvertisePage() {
 
       {/* Global Takeover */}
       <section className="px-4 pb-20">
-        <div className="max-w-2xl mx-auto text-center border border-amber-800/30 bg-surface py-12 px-6">
-          <p className="text-xs tracking-[0.2em] uppercase text-amber-600 mb-4">
+        <div className="max-w-2xl mx-auto text-center border border-accent/30 bg-surface py-12 px-6">
+          <p className="text-xs tracking-[0.2em] uppercase text-accent mb-4">
             Premium
           </p>
           <h2 className="font-[family-name:var(--font-cormorant)] text-2xl font-light mb-4">

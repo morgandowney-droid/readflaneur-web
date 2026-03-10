@@ -20,7 +20,7 @@ export default function LegalPage() {
             onClick={() => setActiveTab('privacy')}
             className={`pb-3 text-sm transition-colors ${
               activeTab === 'privacy'
-                ? 'border-b-2 border-amber-500 text-fg font-medium'
+                ? 'border-b-2 border-accent text-fg font-medium'
                 : 'text-fg-subtle hover:text-fg'
             }`}
           >
@@ -30,7 +30,7 @@ export default function LegalPage() {
             onClick={() => setActiveTab('terms')}
             className={`pb-3 text-sm transition-colors ${
               activeTab === 'terms'
-                ? 'border-b-2 border-amber-500 text-fg font-medium'
+                ? 'border-b-2 border-accent text-fg font-medium'
                 : 'text-fg-subtle hover:text-fg'
             }`}
           >

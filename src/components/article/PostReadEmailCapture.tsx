@@ -125,13 +125,13 @@ export function PostReadEmailCapture({ neighborhoodName }: PostReadEmailCaptureP
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Your email"
-            className="w-48 px-3 py-1.5 bg-surface border border-border-strong text-white text-sm placeholder:text-fg-subtle focus:outline-none focus:border-amber-500 transition-colors"
+            className="w-48 px-3 py-1.5 bg-surface border border-border-strong text-white text-sm placeholder:text-fg-subtle focus:outline-none focus:border-accent transition-colors"
             disabled={status === 'loading'}
           />
           <button
             type="submit"
             disabled={status === 'loading'}
-            className="px-4 py-1.5 bg-fg text-canvas text-sm font-medium hover:bg-amber-600 hover:text-fg transition-colors disabled:opacity-50"
+            className="px-4 py-1.5 bg-fg text-canvas text-sm font-medium hover:opacity-80 transition-colors disabled:opacity-50"
           >
             {status === 'loading' ? '...' : 'Subscribe'}
           </button>

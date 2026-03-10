@@ -578,13 +578,13 @@ export function NeighborhoodBrief({
 
   return (
     <div
-      className="bg-surface p-5 md:p-6 mb-3 cursor-pointer border-l-2 border-amber-500/40"
+      className="bg-surface/50 px-6 py-6 md:px-8 md:py-7 mb-3 cursor-pointer border-l-2 border-accent/40 border-t border-t-border"
       onClick={() => { if (hasMore) setIsExpanded(!isExpanded); }}
     >
       {/* Eyebrow + Live Dot */}
-      <div className="flex items-center justify-between gap-2 font-mono text-xs uppercase tracking-[0.2em] text-amber-600/80 mb-3">
+      <div className="flex items-center justify-between gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-accent/80 mb-4">
         <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
           <span>
             {(() => {
               const d = new Date(generatedAt);
@@ -602,13 +602,13 @@ export function NeighborhoodBrief({
             title={`${neighborhoodName} Daily Brief`}
             text={headline}
             url={shareUrl}
-            className="text-amber-600/60 hover:text-amber-600"
+            className="text-accent/60 hover:text-accent"
           />
         )}
       </div>
 
       {/* Headline */}
-      <h3 className="font-display text-2xl md:text-3xl text-fg leading-tight mb-4 md:whitespace-nowrap md:overflow-hidden">
+      <h3 className="font-display font-light text-2xl md:text-3xl text-fg leading-tight tracking-wide mb-5 md:whitespace-nowrap md:overflow-hidden">
         {cleanArticleHeadline(translatedHeadline || headline)}
       </h3>
 
@@ -696,7 +696,7 @@ export function NeighborhoodBrief({
 
 export function NeighborhoodBriefSkeleton() {
   return (
-    <div className="bg-surface p-5 md:p-6 mb-3 animate-pulse">
+    <div className="bg-surface/50 px-6 py-6 md:px-8 md:py-7 mb-3 border-t border-t-border animate-pulse">
       <div className="flex items-center gap-2 mb-3">
         <div className="w-1.5 h-1.5 rounded-full bg-elevated" />
         <div className="h-3 w-28 bg-elevated rounded" />
@@ -807,19 +807,19 @@ function ArchivedBriefCard({
   };
 
   return (
-    <div className="border-l-2 border-amber-200 pl-3 py-3">
+    <div className="border-l-2 border-accent/20 pl-3 py-3">
       {/* Date header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-amber-700">
+          <span className="text-xs font-medium text-accent">
             {formatArchiveDate(brief.generated_at)}
           </span>
-          <span className="text-[9px] bg-amber-100 text-amber-600 px-1 py-0.5 rounded">
+          <span className="text-[9px] bg-accent/10 text-accent px-1 py-0.5 rounded">
             {t('brief.aiSynthesized')}
           </span>
         </div>
         {brief.enriched_at && (
-          <span className="text-[10px] text-amber-500">{t('brief.verified')}</span>
+          <span className="text-[10px] text-accent">{t('brief.verified')}</span>
         )}
       </div>
 
@@ -843,15 +843,15 @@ function ArchivedBriefCard({
 
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="mt-2 text-xs text-amber-600 hover:text-amber-800"
+        className="mt-2 text-xs text-accent hover:text-accent/80"
       >
         {isExpanded ? t('feed.showLess') : t('feed.readMore')}
       </button>
 
       {/* Source attribution - per editorial standards */}
       {isExpanded && brief.enriched_categories && brief.enriched_categories.length > 0 && (
-        <div className="mt-2 pt-2 border-t border-amber-100">
-          <p className="text-[9px] text-amber-500 leading-relaxed">
+        <div className="mt-2 pt-2 border-t border-accent/10">
+          <p className="text-[9px] text-accent leading-relaxed">
             <span className="italic">{t('brief.sources')}: </span>
             {(() => {
               const uniqueSources = new Map<string, { name: string; url: string }>();

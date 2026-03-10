@@ -423,7 +423,7 @@ export default function AdminTipsPage() {
                             value={reviewerNotes}
                             onChange={(e) => setReviewerNotes(e.target.value)}
                             placeholder="Internal notes..."
-                            className="w-full px-3 py-2 border border-border text-sm focus:border-amber-500 focus:outline-none"
+                            className="w-full px-3 py-2 border border-border text-sm focus:border-accent focus:outline-none"
                             rows={2}
                           />
                         </div>
@@ -485,7 +485,7 @@ export default function AdminTipsPage() {
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="e.g., Unable to verify information, Content doesn't meet our guidelines..."
-                className="w-full px-4 py-3 border border-border focus:border-amber-500 focus:outline-none mb-4"
+                className="w-full px-4 py-3 border border-border focus:border-accent focus:outline-none mb-4"
                 rows={3}
               />
               <div className="flex gap-3">

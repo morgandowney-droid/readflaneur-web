@@ -420,7 +420,7 @@ export function AdBookingCalendar() {
                 >
                   <span className="text-white">{item.item.name}</span>
                   {item.matchDetail && (
-                    <span className="text-amber-600 text-sm ml-1">
+                    <span className="text-accent text-sm ml-1">
                       ({item.matchDetail})
                     </span>
                   )}

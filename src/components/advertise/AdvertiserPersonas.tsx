@@ -121,12 +121,12 @@ export function AdvertiserPersonas() {
               key={persona.title}
               className={`relative bg-surface border p-8 flex flex-col ${
                 persona.highlight
-                  ? 'border-amber-700/50 shadow-[0_0_30px_-5px_rgba(217,169,78,0.12)]'
+                  ? 'border-accent/50 shadow-[0_0_30px_-5px_rgba(201,185,154,0.12)]'
                   : 'border-border'
               }`}
             >
               {persona.badge && (
-                <span className="absolute -top-3 left-6 bg-amber-700/90 text-white text-[10px] tracking-[0.2em] uppercase px-3 py-1">
+                <span className="absolute -top-3 left-6 bg-accent/90 text-white text-[10px] tracking-[0.2em] uppercase px-3 py-1">
                   {persona.badge}
                 </span>
               )}
@@ -170,7 +170,7 @@ export function AdvertiserPersonas() {
                 </p>
                 <button
                   onClick={() => handleRecommendedClick(persona.action)}
-                  className="text-sm text-amber-500/90 font-medium hover:text-amber-400 transition-colors cursor-pointer text-left"
+                  className="text-sm text-accent/90 font-medium hover:text-accent transition-colors cursor-pointer text-left"
                 >
                   {persona.recommended}
                 </button>

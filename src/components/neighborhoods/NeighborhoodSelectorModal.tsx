@@ -1042,8 +1042,8 @@ function GlobalNeighborhoodModal({
     const el = bodyRef.current.querySelector(`[data-neighborhood-id="${primaryId}"]`) as HTMLElement | null;
     if (!el) return;
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    el.classList.add('ring-1', 'ring-amber-500/60', 'rounded');
-    setTimeout(() => el.classList.remove('ring-1', 'ring-amber-500/60', 'rounded'), 2000);
+    el.classList.add('ring-1', 'ring-accent/60', 'rounded');
+    setTimeout(() => el.classList.remove('ring-1', 'ring-accent/60', 'rounded'), 2000);
   };
 
   // Click handler: selected hoods expand inline actions, unselected hoods get added
@@ -1104,224 +1104,76 @@ function GlobalNeighborhoodModal({
         className="absolute inset-x-0 top-2 bottom-0 sm:inset-8 md:inset-12 lg:inset-y-12 lg:inset-x-24 xl:inset-y-16 xl:inset-x-32 bg-surface/90 backdrop-blur-md border border-border-strong rounded-t-xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col animate-modal-slide-up select-none"
       >
         {/* Modal Header */}
-        <div className="flex-shrink-0 px-6 py-5 border-b border-border-strong">
+        <div className="flex-shrink-0 px-6 py-4 border-b border-border-strong">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-display text-2xl font-light tracking-wide text-fg">
                 City Search
               </h2>
-              {/* Selection counter + change primary + change timezone */}
+              {/* Selection counter + change primary */}
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 {selected.size > 0 && (
-                  <>
-                    <span className="text-xs font-mono text-accent tabular-nums">
-                      {selected.size} selected
-                    </span>
-                    <span className="text-fg-subtle text-xs">|</span>
-                  </>
+                  <span className="text-xs font-mono text-accent tabular-nums">
+                    {selected.size} selected
+                  </span>
                 )}
                 {primaryId && selected.size > 1 && (
                   <>
+                    {selected.size > 0 && <span className="text-fg-subtle text-xs">|</span>}
                     <button
                       onClick={scrollToPrimary}
                       className="text-xs text-fg-subtle hover:text-accent transition-colors"
                     >
-                      Change my Primary Neighborhood
+                      Change primary
                     </button>
-                    <span className="text-fg-subtle text-xs">|</span>
                   </>
                 )}
-                <button
-                  onClick={() => setShowTimezone(!showTimezone)}
-                  className={`text-xs transition-colors ${
-                    showTimezone ? 'text-accent' : 'text-fg-subtle hover:text-accent'
-                  }`}
-                  title="This will update the time at which you will receive daily or weekly 7am emails"
-                >
-                  Change my Timezone
-                </button>
-                <span className="text-fg-subtle text-xs">|</span>
-                <button
-                  onClick={() => {
-                    setShowSuggestion(!showSuggestion);
-                    if (!showSuggestion) setTimeout(() => suggestionInputRef.current?.focus(), 50);
-                  }}
-                  className={`text-xs transition-colors ${
-                    showSuggestion ? 'text-accent' : 'text-fg-subtle hover:text-accent'
-                  }`}
-                >
-                  Suggest a Neighborhood
-                </button>
               </div>
-              {/* Inline timezone selector */}
-              {showTimezone && (
-                <div className="mt-3">
-                <p className="text-[11px] text-fg-muted mb-2">Sets when your Daily Brief and Sunday Edition emails arrive{currentTimezone ? ` (7 am local time, currently ${currentTimezone})` : ' (7 am local time)'}. Does not affect your neighborhood selection.</p>
-                <div className="flex items-center gap-3">
-                  <label className="text-[11px] tracking-[0.15em] uppercase text-fg-subtle shrink-0">City</label>
-                  <select
-                    value={settingsCity}
-                    onChange={(e) => {
-                      setSettingsCity(e.target.value);
-                      setSettingsSaved(false);
-                    }}
-                    className="flex-1 bg-transparent border-b border-border-strong text-sm text-fg py-1.5 focus:outline-none focus:border-amber-500/50 appearance-none cursor-pointer max-w-[200px]"
-                  >
-                    <option value="" className="bg-surface">Select city...</option>
-                    {allCityNames.map(c => (
-                      <option key={c} value={c} className="bg-surface">{c}</option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={async () => {
-                      setSettingsDetecting(true);
-                      try {
-                        const res = await fetch('/api/location');
-                        const data = await res.json();
-                        if (data.location?.city) {
-                          setSettingsCity(data.location.city);
-                          setSettingsSaved(false);
-                        }
-                      } catch { /* silent */ }
-                      setSettingsDetecting(false);
-                    }}
-                    disabled={settingsDetecting}
-                    className="text-fg-subtle hover:text-fg transition-colors p-1.5 shrink-0"
-                    title="Detect my city"
-                  >
-                    {settingsDetecting ? (
-                      <div className="w-4 h-4 border border-border border-t-amber-400 rounded-full animate-spin" />
-                    ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (!settingsCity) return;
-                      const tz = getTimezoneForCity(settingsCity);
-                      if (tz) {
-                        saveStoredLocation(settingsCity, tz);
-                        setCurrentTimezone(tz);
-                        // Sync timezone to DB for authenticated users
-                        try {
-                          const prof = localStorage.getItem('flaneur-profile');
-                          if (prof) {
-                            const pp = JSON.parse(prof);
-                            pp.timezone = tz;
-                            localStorage.setItem('flaneur-profile', JSON.stringify(pp));
-                          }
-                          if (localStorage.getItem('flaneur-auth')) {
-                            fetch('/api/preferences', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ timezone: tz, forceTimezone: true }),
-                            }).catch(() => {});
-                          }
-                        } catch { /* ignore */ }
-                        setSettingsSaved(true);
-                        setTimeout(() => setSettingsSaved(false), 2000);
-                      }
-                    }}
-                    disabled={!settingsCity || settingsSaved}
-                    className="text-[11px] tracking-[0.1em] uppercase text-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
-                  >
-                    {settingsSaved ? 'Saved' : 'Save'}
-                  </button>
-                </div>
-                </div>
-              )}
-              {/* Inline suggestion form */}
-              {showSuggestion && (
-                suggestionStatus === 'success' ? (
-                  <p className="text-xs text-fg-subtle mt-3">
-                    Thank you. We have added this to our radar.
-                  </p>
-                ) : (
-                  <div className="flex items-center gap-3 mt-3">
-                    <input
-                      ref={suggestionInputRef}
-                      type="text"
-                      value={suggestionText}
-                      onChange={(e) => setSuggestionText(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSuggestionSubmit()}
-                      placeholder="e.g., Notting Hill, London"
-                      className="flex-1 bg-transparent border-b border-border-strong text-sm text-fg placeholder-fg-subtle py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors max-w-[200px]"
-                      disabled={suggestionStatus === 'submitting'}
-                    />
-                    <input
-                      type="email"
-                      value={suggestionEmail}
-                      onChange={(e) => setSuggestionEmail(e.target.value)}
-                      placeholder="Email (optional)"
-                      className="flex-1 bg-transparent border-b border-border-strong text-sm text-fg placeholder-fg-subtle py-1.5 focus:outline-none focus:border-amber-500/50 transition-colors max-w-[160px]"
-                      disabled={suggestionStatus === 'submitting'}
-                    />
-                    <button
-                      onClick={handleSuggestionSubmit}
-                      disabled={!suggestionText.trim() || suggestionText.trim().length < 3 || suggestionStatus === 'submitting'}
-                      className="text-[11px] tracking-[0.1em] uppercase text-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
-                    >
-                      {suggestionStatus === 'submitting' ? 'Sending...' : 'Submit'}
-                    </button>
-                  </div>
-                )
-              )}
             </div>
-            <div className="flex items-center gap-3">
-              <Link
-                href="/feed"
-                onClick={onClose}
-                className="text-xs tracking-wide uppercase text-fg-muted hover:text-fg transition-colors whitespace-nowrap"
-              >
-                Go to Stories &rsaquo;
-              </Link>
-              <button
-                onClick={onClose}
-                className="p-2 -m-2 text-fg-subtle hover:text-fg transition-colors"
-                aria-label="Close"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              className="p-2 -m-2 text-fg-subtle hover:text-fg transition-colors"
+              aria-label="Close"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
 
           {/* Tab Toggle */}
-          <div className="mt-4 flex items-center gap-2">
+          <div className="mt-3 flex items-center gap-3">
             <button
               onClick={() => setActiveTab('all')}
-              className={`px-3 py-1.5 text-xs rounded-full border transition-all ${
+              className={`text-[11px] tracking-wide uppercase transition-colors ${
                 activeTab === 'all'
-                  ? 'border-amber-500/50 text-accent bg-amber-500/10'
-                  : 'border-border-strong text-fg-muted hover:text-fg hover:border-border-strong'
+                  ? 'text-fg font-medium'
+                  : 'text-fg-subtle hover:text-fg'
               }`}
             >
               All Neighborhoods
             </button>
+            <span className="text-fg-subtle text-[10px]">|</span>
             <button
               onClick={() => setActiveTab('community')}
-              className={`px-3 py-1.5 text-xs rounded-full border transition-all ${
+              className={`text-[11px] tracking-wide uppercase transition-colors ${
                 activeTab === 'community'
-                  ? 'border-amber-500/50 text-accent bg-amber-500/10'
-                  : 'border-border-strong text-fg-muted hover:text-fg hover:border-border-strong'
+                  ? 'text-fg font-medium'
+                  : 'text-fg-subtle hover:text-fg'
               }`}
             >
-              Community Created
+              Community
             </button>
           </div>
 
-          {/* Search (All tab only) */}
+          {/* Search with inline sort (All tab only) */}
           {activeTab === 'all' && (
-          <div className="mt-4 max-w-[15rem]">
-            <div className="relative">
+          <div className="mt-3 flex items-center gap-2 max-w-sm">
+            <div className="relative flex-1">
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search..."
+                placeholder="Search neighborhoods, cities, countries..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => {
@@ -1334,7 +1186,7 @@ function GlobalNeighborhoodModal({
                   if (searchBlurTimer.current) clearTimeout(searchBlurTimer.current);
                   searchBlurTimer.current = setTimeout(() => setIsSearchActive(false), 200);
                 }}
-                className="w-full bg-transparent border-b border-border-strong text-sm text-fg placeholder-fg-subtle py-2 focus:outline-none focus:border-amber-500/50 transition-colors"
+                className="w-full bg-transparent border-b border-border-strong text-sm text-fg placeholder-fg-subtle py-2 focus:outline-none focus:border-accent/50 transition-colors"
               />
               {searchQuery && (
                 <button
@@ -1347,12 +1199,34 @@ function GlobalNeighborhoodModal({
                 </button>
               )}
             </div>
+            {/* Nearest sort icon button */}
+            {!(isSearchActive && searchQuery.trim()) && (
+              <button
+                onClick={handleSortByNearest}
+                disabled={locationLoading}
+                className={`p-1.5 rounded transition-colors shrink-0 ${
+                  sortBy === 'nearest'
+                    ? 'text-accent'
+                    : 'text-fg-subtle hover:text-fg'
+                }`}
+                title={sortBy === 'nearest' ? 'Sort alphabetically' : 'Sort by nearest'}
+              >
+                {locationLoading ? (
+                  <div className="w-4 h-4 border border-border border-t-accent rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                )}
+              </button>
+            )}
           </div>
           )}
 
           {/* No results - prominent create CTA (always visible above keyboard) */}
           {activeTab === 'all' && searchQuery.trim() && filteredCities.length === 0 && !loading && (
-            <div className="mt-4 rounded-lg border border-accent/30 bg-amber-500/5 p-4">
+            <div className="mt-4 rounded-lg border border-accent/30 bg-accent/5 p-4">
               <p className="text-sm text-fg-muted mb-3">
                 We don&apos;t cover <span className="text-fg font-medium">{searchQuery.trim()}</span> yet, but you can add it now.
               </p>
@@ -1365,86 +1239,7 @@ function GlobalNeighborhoodModal({
             </div>
           )}
 
-          {/* Sort buttons (All tab only, hide when search yields no results or when actively searching on mobile) */}
-          {activeTab === 'all' && !(searchQuery.trim() && filteredCities.length === 0) && !(isSearchActive && searchQuery.trim()) && (
-          <div className="mt-3 flex items-center gap-2">
-            <button
-              onClick={handleSortByNearest}
-              disabled={locationLoading}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full border transition-all whitespace-nowrap ${
-                sortBy === 'nearest'
-                  ? 'border-amber-500/50 text-accent bg-amber-500/10'
-                  : 'border-border-strong text-fg-muted hover:text-fg hover:border-border-strong'
-              }`}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              {locationLoading ? 'Locating...' : 'Sort by nearest to me'}
-            </button>
-            <button
-              onClick={handleSortByRegion}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full border transition-all whitespace-nowrap ${
-                sortBy === 'region'
-                  ? 'border-amber-500/50 text-accent bg-amber-500/10'
-                  : 'border-border-strong text-fg-muted hover:text-fg hover:border-border-strong'
-              }`}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {sortBy === 'region' ? 'Sort alphabetically' : 'Sort by region'}
-            </button>
-          </div>
-          )}
 
-          {/* Selected neighborhoods pills (All tab only, hide when search yields no results or when actively searching on mobile) */}
-          {activeTab === 'all' && selectedNeighborhoods.length > 0 && !(searchQuery.trim() && filteredCities.length === 0) && !(isSearchActive && searchQuery.trim()) && (
-            <div className="mt-3 flex flex-wrap gap-1.5 max-h-[160px] overflow-y-auto">
-              {selectedNeighborhoods.map(n => (
-                <div key={n.id} className="flex flex-col">
-                  <span
-                    className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded-full border border-border-strong bg-surface text-fg-muted cursor-pointer hover:border-neutral-500 transition-colors"
-                    onClick={() => setExpandedId(expandedId === n.id ? null : n.id)}
-                  >
-                    {n.id === primaryId && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70 shrink-0" />
-                    )}
-                    {n.name}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); toggleNeighborhood(n.id); }}
-                      className="ml-0.5 text-fg-subtle hover:text-fg transition-colors"
-                      aria-label={`Remove ${n.name}`}
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </span>
-                  {expandedId === n.id && (
-                    <div className="flex items-center gap-2.5 px-1 mt-1 mb-0.5">
-                      {n.id !== primaryId && selected.size > 1 && (
-                        <button
-                          onClick={() => makePrimary(n.id)}
-                          className="text-[10px] tracking-wider uppercase font-medium text-emerald-500/80 hover:text-emerald-400 transition-colors"
-                        >
-                          Set as Primary
-                        </button>
-                      )}
-                      <Link
-                        href={`/${getCitySlugFromId(n.id)}/${getNeighborhoodSlugFromId(n.id)}`}
-                        onClick={() => { setExpandedId(null); onClose(); }}
-                        className="text-[10px] tracking-wider uppercase font-medium text-accent hover:text-accent/80 transition-colors"
-                      >
-                        Go to stories
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Modal Body */}
@@ -1487,7 +1282,7 @@ function GlobalNeighborhoodModal({
                               onChange={(e) => { setExecutiveReason(e.target.value); setExecutiveError(''); }}
                               placeholder="e.g., I split my time between London and Zurich"
                               rows={2}
-                              className="w-full bg-transparent border border-border-strong rounded-lg text-sm text-fg placeholder-fg-subtle p-3 focus:outline-none focus:border-amber-500/50 transition-colors resize-none max-w-[400px]"
+                              className="w-full bg-transparent border border-border-strong rounded-lg text-sm text-fg placeholder-fg-subtle p-3 focus:outline-none focus:border-accent/50 transition-colors resize-none max-w-[400px]"
                               disabled={executiveStatus === 'submitting'}
                             />
                             <div className="flex items-center gap-3">
@@ -1545,7 +1340,7 @@ function GlobalNeighborhoodModal({
                           onChange={(e) => { setCommunityInput(e.target.value); setCommunityError(''); }}
                           onKeyDown={(e) => e.key === 'Enter' && handleCommunityCreate()}
                           placeholder="e.g., Notting Hill, London"
-                          className="flex-1 bg-transparent border-b border-border-strong text-sm text-fg placeholder-fg-subtle py-2 focus:outline-none focus:border-amber-500/50 transition-colors max-w-[300px]"
+                          className="flex-1 bg-transparent border-b border-border-strong text-sm text-fg placeholder-fg-subtle py-2 focus:outline-none focus:border-accent/50 transition-colors max-w-[300px]"
                         />
                         <button
                           onClick={handleCommunityCreate}
@@ -1680,7 +1475,7 @@ function GlobalNeighborhoodModal({
                                         onChange={(e) => setReportReason(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleReport(hood.id)}
                                         placeholder="Why is this inappropriate?"
-                                        className="flex-1 bg-transparent border-b border-border-strong text-xs text-fg placeholder-fg-subtle py-1 focus:outline-none focus:border-amber-500/50 max-w-[200px]"
+                                        className="flex-1 bg-transparent border-b border-border-strong text-xs text-fg placeholder-fg-subtle py-1 focus:outline-none focus:border-accent/50 max-w-[200px]"
                                         autoFocus
                                       />
                                       <button
@@ -1710,7 +1505,7 @@ function GlobalNeighborhoodModal({
             </div>
           ) : loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 border-2 border-border border-t-amber-400 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-border border-t-accent rounded-full animate-spin" />
             </div>
           ) : sortBy === 'region' ? (
             /* Region-grouped layout: separate masonry per region */
@@ -1781,7 +1576,7 @@ function GlobalNeighborhoodModal({
                                         <span className="text-[11px] text-fg-subtle">({hood.combo_component_names!.length} areas)</span>
                                       )}
                                       {isPrimary && (
-                                        <span className="text-[9px] tracking-wider uppercase text-amber-500/70 font-medium ml-1">Primary</span>
+                                        <span className="text-[9px] tracking-wider uppercase text-accent/70 font-medium ml-1">Primary</span>
                                       )}
                                     </button>
                                   </div>
@@ -1867,7 +1662,7 @@ function GlobalNeighborhoodModal({
                                 <span className="text-[11px] text-fg-subtle">({hood.combo_component_names!.length} areas)</span>
                               )}
                               {isPrimary && (
-                                <span className="text-[9px] tracking-wider uppercase text-amber-500/70 font-medium ml-1">Primary</span>
+                                <span className="text-[9px] tracking-wider uppercase text-accent/70 font-medium ml-1">Primary</span>
                               )}
                             </button>
                           </div>
@@ -1886,7 +1681,153 @@ function GlobalNeighborhoodModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex-shrink-0 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border-strong bg-surface/80 backdrop-blur-sm flex items-center justify-between">
+        <div className="flex-shrink-0 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border-strong bg-surface/80 backdrop-blur-sm">
+          {/* Timezone and suggestion controls */}
+          {(showTimezone || showSuggestion) && (
+            <div className="mb-3">
+              {/* Inline timezone selector */}
+              {showTimezone && (
+                <div className="mb-2">
+                  <p className="text-[11px] text-fg-muted mb-2">Sets when your Daily Brief and Sunday Edition emails arrive{currentTimezone ? ` (7 am local time, currently ${currentTimezone})` : ' (7 am local time)'}.</p>
+                  <div className="flex items-center gap-3">
+                    <label className="text-[11px] tracking-[0.15em] uppercase text-fg-subtle shrink-0">City</label>
+                    <select
+                      value={settingsCity}
+                      onChange={(e) => {
+                        setSettingsCity(e.target.value);
+                        setSettingsSaved(false);
+                      }}
+                      className="flex-1 bg-transparent border-b border-border-strong text-sm text-fg py-1.5 focus:outline-none focus:border-accent/50 appearance-none cursor-pointer max-w-[200px]"
+                    >
+                      <option value="" className="bg-surface">Select city...</option>
+                      {allCityNames.map(c => (
+                        <option key={c} value={c} className="bg-surface">{c}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={async () => {
+                        setSettingsDetecting(true);
+                        try {
+                          const res = await fetch('/api/location');
+                          const data = await res.json();
+                          if (data.location?.city) {
+                            setSettingsCity(data.location.city);
+                            setSettingsSaved(false);
+                          }
+                        } catch { /* silent */ }
+                        setSettingsDetecting(false);
+                      }}
+                      disabled={settingsDetecting}
+                      className="text-fg-subtle hover:text-fg transition-colors p-1.5 shrink-0"
+                      title="Detect my city"
+                    >
+                      {settingsDetecting ? (
+                        <div className="w-4 h-4 border border-border border-t-accent rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!settingsCity) return;
+                        const tz = getTimezoneForCity(settingsCity);
+                        if (tz) {
+                          saveStoredLocation(settingsCity, tz);
+                          setCurrentTimezone(tz);
+                          try {
+                            const prof = localStorage.getItem('flaneur-profile');
+                            if (prof) {
+                              const pp = JSON.parse(prof);
+                              pp.timezone = tz;
+                              localStorage.setItem('flaneur-profile', JSON.stringify(pp));
+                            }
+                            if (localStorage.getItem('flaneur-auth')) {
+                              fetch('/api/preferences', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ timezone: tz, forceTimezone: true }),
+                              }).catch(() => {});
+                            }
+                          } catch { /* ignore */ }
+                          setSettingsSaved(true);
+                          setTimeout(() => setSettingsSaved(false), 2000);
+                        }
+                      }}
+                      disabled={!settingsCity || settingsSaved}
+                      className="text-[11px] tracking-[0.1em] uppercase text-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                    >
+                      {settingsSaved ? 'Saved' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {/* Inline suggestion form */}
+              {showSuggestion && (
+                suggestionStatus === 'success' ? (
+                  <p className="text-xs text-fg-subtle">
+                    Thank you. We have added this to our radar.
+                  </p>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <input
+                      ref={suggestionInputRef}
+                      type="text"
+                      value={suggestionText}
+                      onChange={(e) => setSuggestionText(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSuggestionSubmit()}
+                      placeholder="e.g., Notting Hill, London"
+                      className="flex-1 bg-transparent border-b border-border-strong text-sm text-fg placeholder-fg-subtle py-1.5 focus:outline-none focus:border-accent/50 transition-colors max-w-[200px]"
+                      disabled={suggestionStatus === 'submitting'}
+                    />
+                    <input
+                      type="email"
+                      value={suggestionEmail}
+                      onChange={(e) => setSuggestionEmail(e.target.value)}
+                      placeholder="Email (optional)"
+                      className="flex-1 bg-transparent border-b border-border-strong text-sm text-fg placeholder-fg-subtle py-1.5 focus:outline-none focus:border-accent/50 transition-colors max-w-[160px]"
+                      disabled={suggestionStatus === 'submitting'}
+                    />
+                    <button
+                      onClick={handleSuggestionSubmit}
+                      disabled={!suggestionText.trim() || suggestionText.trim().length < 3 || suggestionStatus === 'submitting'}
+                      className="text-[11px] tracking-[0.1em] uppercase text-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                    >
+                      {suggestionStatus === 'submitting' ? 'Sending...' : 'Submit'}
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
+          )}
+          {/* Footer links: timezone, suggest */}
+          <div className="flex items-center gap-2 mb-2">
+            <button
+              onClick={() => { setShowTimezone(!showTimezone); setShowSuggestion(false); }}
+              className={`text-[11px] transition-colors ${
+                showTimezone ? 'text-accent' : 'text-fg-subtle hover:text-accent'
+              }`}
+              title="Sets when you receive daily emails"
+            >
+              Timezone
+            </button>
+            <span className="text-fg-subtle text-[10px]">|</span>
+            <button
+              onClick={() => {
+                setShowSuggestion(!showSuggestion);
+                setShowTimezone(false);
+                if (!showSuggestion) setTimeout(() => suggestionInputRef.current?.focus(), 50);
+              }}
+              className={`text-[11px] transition-colors ${
+                showSuggestion ? 'text-accent' : 'text-fg-subtle hover:text-accent'
+              }`}
+            >
+              Suggest
+            </button>
+          </div>
+          <div className="flex items-center justify-between">
           <div className="text-sm text-fg-subtle">
             {selected.size > 0 ? (
               confirmClear ? (
@@ -1924,6 +1865,7 @@ function GlobalNeighborhoodModal({
           >
             {selected.size > 0 ? 'Read Stories' : 'Browse All'}
           </button>
+          </div>
         </div>
       </div>
     </div>

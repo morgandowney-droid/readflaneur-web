@@ -317,7 +317,7 @@ export default function AdminJournalistsPage() {
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="e.g., Location too far from neighborhood..."
-                className="w-full px-4 py-3 border border-border focus:border-amber-500 focus:outline-none mb-4"
+                className="w-full px-4 py-3 border border-border focus:border-accent focus:outline-none mb-4"
                 rows={3}
               />
               <div className="flex gap-3">

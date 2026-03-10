@@ -139,7 +139,7 @@ export function PrimaryChangeSuggestion() {
                   setInteracted(true);
                   if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
                 }}
-                className="px-5 py-2 bg-fg text-canvas text-sm font-medium hover:bg-amber-600 hover:text-fg transition-colors whitespace-nowrap"
+                className="px-5 py-2 bg-fg text-canvas text-sm font-medium hover:opacity-80 transition-colors whitespace-nowrap"
               >
                 Yes, change
               </button>

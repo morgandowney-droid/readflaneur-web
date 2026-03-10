@@ -220,7 +220,7 @@ export default function SettingsPage() {
                 id="city"
                 value={primaryCity}
                 onChange={(e) => setPrimaryCity(e.target.value)}
-                className="flex-1 px-4 py-3 border border-border-strong focus:border-amber-500 focus:outline-none bg-surface text-fg"
+                className="flex-1 px-4 py-3 border border-border-strong focus:border-accent focus:outline-none bg-surface text-fg"
               >
                 <option value="">Select a city...</option>
                 {cities.map((city) => (

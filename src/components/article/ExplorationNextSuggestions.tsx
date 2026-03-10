@@ -93,7 +93,7 @@ export function ExplorationNextSuggestions({
     return (
       <div className="mt-10 space-y-3">
         <p className="text-[10px] tracking-[0.2em] uppercase text-fg-subtle">Keep exploring</p>
-        <div className="h-40 bg-surface animate-pulse rounded-xl" />
+        <div className="h-40 bg-surface animate-pulse rounded-sm" />
       </div>
     );
   }
@@ -126,7 +126,7 @@ export function ExplorationNextSuggestions({
       {/* Hero card with image */}
       {hero ? (
         <Link href={hero.suggestion.url} className="block group mb-4">
-          <div className="relative aspect-[2/1] md:aspect-[5/2] w-full rounded-xl overflow-hidden">
+          <div className="relative aspect-[2/1] md:aspect-[5/2] w-full rounded-sm overflow-hidden">
             <Image
               src={hero.suggestion.imageUrl!}
               alt={hero.suggestion.neighborhoodName}
@@ -150,7 +150,7 @@ export function ExplorationNextSuggestions({
         </Link>
       ) : (
         // No image available - render first suggestion as a styled card without photo
-        <Link href={suggestions[0].suggestion.url} className="block group mb-4 p-4 rounded-xl bg-surface border border-border hover:border-border-strong transition-colors">
+        <Link href={suggestions[0].suggestion.url} className="block group mb-4 p-4 rounded-sm bg-surface border border-border hover:border-border-strong transition-colors">
           <p className="text-[10px] tracking-[0.2em] uppercase text-fg-subtle mb-1">
             {suggestions[0].label}
           </p>

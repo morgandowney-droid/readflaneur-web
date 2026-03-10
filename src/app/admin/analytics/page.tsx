@@ -210,7 +210,7 @@ export default function AdminAnalyticsPage() {
                   </p>
                   <p className="text-2xl font-light">{formatCurrency(analytics.revenueByPeriod.last24Months)}</p>
                 </div>
-                <div className="bg-surface p-6 border border-amber-600">
+                <div className="bg-surface p-6 border border-accent">
                   <p className="text-xs tracking-widest uppercase text-fg-muted mb-2">
                     All Time
                   </p>

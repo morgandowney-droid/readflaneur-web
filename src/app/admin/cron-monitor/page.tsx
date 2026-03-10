@@ -177,7 +177,7 @@ export default function CronMonitorPage() {
     const colors: Record<string, string> = {
       missing_image: 'bg-orange-500/15 text-orange-400',
       placeholder_image: 'bg-purple-500/15 text-purple-400',
-      missed_email: 'bg-amber-500/15 text-amber-400',
+      missed_email: 'bg-accent/15 text-accent',
       thin_content: 'bg-rose-500/15 text-rose-400',
       missing_brief: 'bg-cyan-500/15 text-cyan-400',
       job_failure: 'bg-red-500/15 text-red-400',
@@ -422,7 +422,7 @@ export default function CronMonitorPage() {
                                 return (
                                   <div>
                                     <div className="text-sm text-fg">{diag.email}</div>
-                                    <div className="text-xs text-amber-400">
+                                    <div className="text-xs text-accent">
                                       Cause: {emailCauseLabels[diag.cause] || diag.cause}
                                     </div>
                                     <div className="text-xs text-fg-subtle truncate max-w-xs" title={diag.details}>

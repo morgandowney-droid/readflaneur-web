@@ -155,7 +155,7 @@ export function NewsletterSignup({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Your email"
-            className="w-full px-3 py-2 text-sm bg-canvas border border-border text-fg placeholder:text-fg-subtle focus:outline-none focus:border-amber-500"
+            className="w-full px-3 py-2 text-sm bg-canvas border border-border text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent"
             disabled={status === 'loading'}
           />
           <button
@@ -183,7 +183,7 @@ export function NewsletterSignup({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
-            className="px-4 py-2 bg-surface border border-border text-fg rounded-none text-center sm:text-left text-sm focus:outline-none focus:border-amber-500 placeholder:text-fg-subtle w-full sm:w-64"
+            className="px-4 py-2 bg-surface border border-border text-fg rounded-none text-center sm:text-left text-sm focus:outline-none focus:border-accent placeholder:text-fg-subtle w-full sm:w-64"
             disabled={status === 'loading'}
           />
           <button
@@ -222,7 +222,7 @@ export function NewsletterSignup({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
-            className="px-4 py-2 bg-surface border border-border text-fg placeholder:text-fg-subtle focus:outline-none focus:border-amber-500 min-w-[200px]"
+            className="px-4 py-2 bg-surface border border-border text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent min-w-[200px]"
             disabled={status === 'loading'}
           />
           <button

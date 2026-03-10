@@ -43,7 +43,7 @@ export function MobileDiscoverySection({
         /* Loading skeleton: 2x2 grid of pulsing rectangles */
         <div className="grid grid-cols-2 gap-3">
           {[0, 1, 2, 3].map(i => (
-            <div key={i} className="aspect-[4/3] rounded-xl bg-surface animate-pulse" />
+            <div key={i} className="aspect-[4/3] rounded-sm bg-surface animate-pulse" />
           ))}
         </div>
       ) : (

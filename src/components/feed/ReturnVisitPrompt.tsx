@@ -169,13 +169,13 @@ export function ReturnVisitPrompt() {
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={handleFocus}
                   placeholder="Enter your email"
-                  className="flex-1 px-3 py-2 bg-surface border border-border-strong text-white text-sm placeholder:text-fg-subtle focus:outline-none focus:border-amber-500 transition-colors"
+                  className="flex-1 px-3 py-2 bg-surface border border-border-strong text-white text-sm placeholder:text-fg-subtle focus:outline-none focus:border-accent transition-colors"
                   disabled={status === 'loading'}
                 />
                 <button
                   type="submit"
                   disabled={status === 'loading'}
-                  className="px-5 py-2 bg-fg text-canvas text-sm font-medium hover:bg-amber-600 hover:text-fg transition-colors disabled:opacity-50 whitespace-nowrap"
+                  className="px-5 py-2 bg-fg text-canvas text-sm font-medium hover:opacity-80 transition-colors disabled:opacity-50 whitespace-nowrap"
                 >
                   {status === 'loading' ? '...' : 'Subscribe'}
                 </button>

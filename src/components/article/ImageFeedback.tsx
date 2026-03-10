@@ -91,7 +91,7 @@ export function ImageFeedback({ imageUrl }: ImageFeedbackProps) {
         onClick={() => submit(1)}
         className={`p-0.5 transition-colors ${
           userFeedback === 1
-            ? 'text-amber-600'
+            ? 'text-accent'
             : 'text-fg-subtle hover:text-fg'
         }`}
         title="I like this image"
@@ -103,7 +103,7 @@ export function ImageFeedback({ imageUrl }: ImageFeedbackProps) {
       </button>
       {score !== 0 && (
         <span className={`text-[11px] tabular-nums ${
-          score > 0 ? 'text-amber-600' : 'text-red-500'
+          score > 0 ? 'text-accent' : 'text-red-500'
         }`}>
           {score > 0 ? `+${score}` : score}
         </span>

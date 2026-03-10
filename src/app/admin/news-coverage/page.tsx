@@ -260,7 +260,7 @@ export default function NewsCoveragePage() {
             onClick={() => setActiveTab('coverage')}
             className={`pb-2 text-sm font-medium border-b-2 -mb-px ${
               activeTab === 'coverage'
-                ? 'border-amber-500 text-fg'
+                ? 'border-accent text-fg'
                 : 'border-transparent text-fg-muted hover:text-fg'
             }`}
           >
@@ -270,7 +270,7 @@ export default function NewsCoveragePage() {
             onClick={() => setActiveTab('sources')}
             className={`pb-2 text-sm font-medium border-b-2 -mb-px ${
               activeTab === 'sources'
-                ? 'border-amber-500 text-fg'
+                ? 'border-accent text-fg'
                 : 'border-transparent text-fg-muted hover:text-fg'
             }`}
           >

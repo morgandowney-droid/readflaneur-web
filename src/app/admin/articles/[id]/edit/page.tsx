@@ -235,7 +235,7 @@ export default function AdminEditArticlePage() {
             <select
               value={formData.neighborhoodId}
               onChange={(e) => setFormData({ ...formData, neighborhoodId: e.target.value })}
-              className="w-full px-4 py-3 border border-border focus:border-amber-500 focus:outline-none bg-surface"
+              className="w-full px-4 py-3 border border-border focus:border-accent focus:outline-none bg-surface"
             >
               <option value="">Select a neighborhood</option>
               {Object.entries(neighborhoodsByCity).map(([city, hoods]) => (
@@ -260,7 +260,7 @@ export default function AdminEditArticlePage() {
               value={formData.headline}
               onChange={(e) => setFormData({ ...formData, headline: e.target.value })}
               maxLength={150}
-              className="w-full px-4 py-3 border border-border focus:border-amber-500 focus:outline-none text-lg"
+              className="w-full px-4 py-3 border border-border focus:border-accent focus:outline-none text-lg"
             />
             <p className="text-xs text-fg-muted mt-1">
               {formData.headline.length}/150 characters
@@ -277,7 +277,7 @@ export default function AdminEditArticlePage() {
               onChange={(e) => setFormData({ ...formData, previewText: e.target.value })}
               rows={2}
               maxLength={200}
-              className="w-full px-4 py-3 border border-border focus:border-amber-500 focus:outline-none resize-none"
+              className="w-full px-4 py-3 border border-border focus:border-accent focus:outline-none resize-none"
               placeholder="1-2 sentences shown on hover..."
             />
             <p className="text-xs text-fg-muted mt-1">
@@ -369,7 +369,7 @@ export default function AdminEditArticlePage() {
               value={formData.bodyText}
               onChange={(e) => setFormData({ ...formData, bodyText: e.target.value })}
               rows={14}
-              className="w-full px-4 py-3 border border-border focus:border-amber-500 focus:outline-none resize-none font-serif"
+              className="w-full px-4 py-3 border border-border focus:border-accent focus:outline-none resize-none font-serif"
             />
             <div className="flex justify-between mt-1">
               <p className="text-xs text-fg-muted">

@@ -5,12 +5,14 @@
  * per Unsplash terms (no downloading/re-hosting). Triggers download
  * endpoint for attribution tracking.
  *
- * Strategy: Two parallel searches per neighborhood — "{name} {city}"
- * for relevance and "{name}" alone for iconic shots — then interleave
- * the results so we get both city-accurate and visually striking photos.
- * 30 results per query, 8 assigned to categories. For ambiguous names
- * like "SoHo" the city-qualified search provides disambiguation while
- * the name-only search surfaces the most popular/curated shots.
+ * Strategy: Two parallel searches per neighborhood with editorial style
+ * modifiers — "{name} {city} architecture lifestyle" for relevant
+ * editorial shots and "{name} street photography" for iconic/candid
+ * shots — then interleave the results so we get both city-accurate and
+ * visually striking photos. 30 results per query, 8 assigned to
+ * categories. For ambiguous names like "SoHo" the city-qualified search
+ * provides disambiguation while the name-only search surfaces the most
+ * popular/curated shots.
  *
  * Rate limits: 50/hr (demo), 5000/hr (production)
  */
@@ -146,10 +148,11 @@ function interleave(
  * Search and collect photos for all 8 image categories for a neighborhood.
  *
  * Two parallel searches, then interleave for best of both worlds:
- * 1. "{neighborhood} {city}" (30 results) — disambiguates "SoHo New York"
- *    vs "SoHo London", ensures city-relevance
- * 2. "{neighborhood}" alone (30 results) — surfaces the most iconic/popular
- *    shots that photographers tag with just the neighborhood name
+ * 1. "{neighborhood} {city} architecture lifestyle" (30 results) —
+ *    disambiguates "SoHo New York" vs "SoHo London", ensures city-relevance,
+ *    style modifiers bias toward editorial/architectural photography
+ * 2. "{neighborhood} street photography" (30 results) — surfaces iconic
+ *    candid/editorial shots that photographers tag with the neighborhood name
  *
  * Results are merged with 3:1 city-qualified priority so ambiguous names
  * (SoHo, Chelsea, Downtown) get the correct city's photos in 6+ of 8 slots.
@@ -168,20 +171,21 @@ export async function searchAllCategories(
   const needed = IMAGE_CATEGORIES.length;
 
   // Primary searches: run in parallel for speed
+  // Style modifiers bias Unsplash toward editorial/lifestyle photography
   const [cityQualified, nameOnly] = await Promise.all([
-    searchUnsplash(accessKey, `${neighborhoodName} ${city}`, 30),
-    searchUnsplash(accessKey, neighborhoodName, 30),
+    searchUnsplash(accessKey, `${neighborhoodName} ${city} architecture lifestyle`, 30),
+    searchUnsplash(accessKey, `${neighborhoodName} street photography`, 30),
   ]);
 
   // Interleave: alternates city-qualified (relevant) with name-only (iconic)
   let results = interleave(cityQualified, nameOnly);
 
-  // Fallback: if still short, try broader queries
+  // Fallback: if still short, try broader queries (less aggressive modifiers)
   if (results.length < needed) {
     const seenIds = new Set(results.map(r => r.id));
 
     const fallbackQueries = [
-      city,
+      `${city} architecture`,
       ...(broaderArea ? [broaderArea] : []),
       ...(country ? [`${city} ${country}`] : []),
     ];
@@ -240,9 +244,10 @@ export async function searchAllCategoriesWithAlternates(
   const rejected = new Set(rejectedIds || []);
 
   // Primary searches: run in parallel for speed
+  // Style modifiers bias Unsplash toward editorial/lifestyle photography
   const [cityQualified, nameOnly] = await Promise.all([
-    searchUnsplash(accessKey, `${neighborhoodName} ${city}`, 30),
-    searchUnsplash(accessKey, neighborhoodName, 30),
+    searchUnsplash(accessKey, `${neighborhoodName} ${city} architecture lifestyle`, 30),
+    searchUnsplash(accessKey, `${neighborhoodName} street photography`, 30),
   ]);
 
   // Interleave: alternates city-qualified (relevant) with name-only (iconic)
@@ -253,12 +258,12 @@ export async function searchAllCategoriesWithAlternates(
     results = results.filter(r => !rejected.has(r.id));
   }
 
-  // Fallback: if still short, try broader queries
+  // Fallback: if still short, try broader queries (less aggressive modifiers)
   if (results.length < needed) {
     const seenIds = new Set(results.map(r => r.id));
 
     const fallbackQueries = [
-      city,
+      `${city} architecture`,
       ...(broaderArea ? [broaderArea] : []),
       ...(country ? [`${city} ${country}`] : []),
     ];

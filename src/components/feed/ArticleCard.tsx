@@ -126,7 +126,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
         {/* Mobile: headline → metadata → blurb (no hover state on mobile) */}
         {!isHovered && (
           <div className="md:hidden px-4 pt-3 pb-2">
-            <h2 className="text-fg text-xl font-semibold leading-tight mb-1 whitespace-nowrap overflow-hidden">
+            <h2 className="text-fg font-display font-light text-xl leading-tight mb-1 whitespace-nowrap overflow-hidden">
               {truncateHeadline(translatedHeadline || cleanArticleHeadline(article.headline))}
             </h2>
             <div className="flex items-center gap-2 text-xs text-fg-muted mb-2">
@@ -153,7 +153,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
           </div>
         )}
 
-        <div className="relative aspect-video w-full bg-elevated rounded-xl overflow-hidden">
+        <div className="relative aspect-video w-full bg-elevated rounded-sm overflow-hidden">
           {article.image_url ? (
             <Image
               src={article.image_url}
@@ -193,7 +193,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
                   </>
                 )}
               </div>
-              <h2 className="text-white text-xl font-semibold leading-tight whitespace-nowrap overflow-hidden">
+              <h2 className="text-white font-display font-light text-xl md:text-2xl leading-tight whitespace-nowrap overflow-hidden">
                 {translatedHeadline || cleanArticleHeadline(article.headline)}
               </h2>
             </div>
@@ -255,11 +255,11 @@ export function ArticleCard({ article }: ArticleCardProps) {
                 </>
               )}
             </div>
-            <h2 className="text-xl md:text-2xl font-semibold mb-3 whitespace-nowrap overflow-hidden">{translatedHeadline || cleanArticleHeadline(article.headline)}</h2>
+            <h2 className="font-display font-light text-xl md:text-2xl mb-3 whitespace-nowrap overflow-hidden">{translatedHeadline || cleanArticleHeadline(article.headline)}</h2>
             <p className="text-fg-muted text-[1.05rem] leading-7 mb-4">
               {article.preview_text || article.body_text.substring(0, 200)}
             </p>
-            <span className="text-sm font-bold tracking-wider uppercase text-amber-500 hover:text-amber-400">
+            <span className="text-sm font-bold tracking-wider uppercase text-accent hover:text-accent/80">
               Read More
             </span>
           </div>

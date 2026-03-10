@@ -120,7 +120,7 @@ export function PersonaSwitcher() {
     <>
       {/* Persona Banner */}
       {currentPersona !== 'admin' && currentConfig.showBanner && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-amber-100 border-b border-amber-300 py-1 px-4 text-center text-xs text-amber-800">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-accent/10 border-b border-accent/30 py-1 px-4 text-center text-xs text-accent">
           {currentConfig.showBanner}
           <button
             onClick={() => switchPersona('admin')}

@@ -109,14 +109,14 @@ function CollectionCard({
     <div
       className={`bg-surface border p-8 flex flex-col ${
         collection.key === 'tier1'
-          ? 'border-amber-800/40'
+          ? 'border-accent/40'
           : 'border-border'
       }`}
     >
       {/* Top section */}
       <div className="md:min-h-[180px]">
         {collection.key === 'tier1' ? (
-          <span className="text-xs tracking-[0.2em] uppercase text-amber-600 mb-3 block">
+          <span className="text-xs tracking-[0.2em] uppercase text-accent mb-3 block">
             Flagship
           </span>
         ) : (

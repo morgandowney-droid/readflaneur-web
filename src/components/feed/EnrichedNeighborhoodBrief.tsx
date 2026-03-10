@@ -116,20 +116,20 @@ export function EnrichedNeighborhoodBrief({
   );
 
   return (
-    <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4 mb-6">
+    <div className="bg-gradient-to-br from-accent/5 to-accent/10 border border-accent/20 rounded-lg p-4 mb-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-amber-700">
+          <span className="text-xs font-medium uppercase tracking-wider text-accent">
             What&apos;s Happening Today Live
           </span>
           {storiesWithSources > 0 && (
-            <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] bg-accent/20 text-accent px-1.5 py-0.5 rounded-full">
               {storiesWithSources} sources
             </span>
           )}
         </div>
-        <span className="text-xs text-amber-600">
+        <span className="text-xs text-accent">
           {formatTime(generatedAt)}
         </span>
       </div>
@@ -154,7 +154,7 @@ export function EnrichedNeighborhoodBrief({
           {cleanedContent.length > 200 && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="mt-2 text-xs font-medium text-amber-700 hover:text-amber-900 transition-colors"
+              className="mt-2 text-xs font-medium text-accent hover:text-accent/80 transition-colors"
             >
               {isExpanded ? 'Show less' : 'Read more'}
             </button>
@@ -167,7 +167,7 @@ export function EnrichedNeighborhoodBrief({
         <div className="space-y-4 mb-3">
           {categories.map((category, catIdx) => (
             <div key={catIdx}>
-              <h4 className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+              <h4 className="text-xs font-semibold text-accent uppercase tracking-wide mb-2 flex items-center gap-1.5">
                 <span>{categoryIcons[category.name] || '📌'}</span>
                 {category.name}
               </h4>
@@ -175,7 +175,7 @@ export function EnrichedNeighborhoodBrief({
                 {category.stories.map((story, storyIdx) => (
                   <div
                     key={storyIdx}
-                    className="bg-white/5 rounded-md p-3 border border-amber-900/30"
+                    className="bg-white/5 rounded-md p-3 border border-accent/30"
                   >
                     {/* Entity name */}
                     <div className="font-medium text-sm text-fg mb-1">
@@ -214,7 +214,7 @@ export function EnrichedNeighborhoodBrief({
 
                     {/* Note/caveat */}
                     {story.note && (
-                      <p className="text-[10px] text-amber-600 mt-1 italic">
+                      <p className="text-[10px] text-accent mt-1 italic">
                         Note: {story.note}
                       </p>
                     )}
@@ -227,10 +227,10 @@ export function EnrichedNeighborhoodBrief({
       )}
 
       {/* Toggle between views */}
-      <div className="flex items-center gap-3 mt-3 pt-3 border-t border-amber-200">
+      <div className="flex items-center gap-3 mt-3 pt-3 border-t border-accent/20">
         <button
           onClick={() => setShowSources(!showSources)}
-          className="text-xs font-medium text-amber-700 hover:text-amber-900 transition-colors flex items-center gap-1"
+          className="text-xs font-medium text-accent hover:text-accent/80 transition-colors flex items-center gap-1"
         >
           {showSources ? (
             <>
@@ -245,8 +245,8 @@ export function EnrichedNeighborhoodBrief({
       </div>
 
       {/* Footer attribution */}
-      <div className="mt-2 pt-2 border-t border-amber-200">
-        <p className="text-[10px] text-amber-600">
+      <div className="mt-2 pt-2 border-t border-accent/20">
+        <p className="text-[10px] text-accent">
           Powered by Flâneur real-time local intel • Sources verified by AI
         </p>
       </div>

@@ -421,7 +421,7 @@ export function GuidesClient({
               onClick={() => setSortBy('best')}
               className={`px-2.5 py-1.5 text-[11px] transition-colors ${
                 sortBy === 'best'
-                  ? 'bg-amber-600 text-white'
+                  ? 'bg-accent text-white'
                   : 'text-fg-subtle hover:text-fg'
               }`}
             >
@@ -431,7 +431,7 @@ export function GuidesClient({
               onClick={() => setSortBy('rating')}
               className={`px-2.5 py-1.5 text-[11px] transition-colors ${
                 sortBy === 'rating'
-                  ? 'bg-amber-600 text-white'
+                  ? 'bg-accent text-white'
                   : 'text-fg-subtle hover:text-fg'
               }`}
             >
@@ -441,7 +441,7 @@ export function GuidesClient({
               onClick={() => setSortBy('reviews')}
               className={`px-2.5 py-1.5 text-[11px] transition-colors ${
                 sortBy === 'reviews'
-                  ? 'bg-amber-600 text-white'
+                  ? 'bg-accent text-white'
                   : 'text-fg-subtle hover:text-fg'
               }`}
             >
@@ -457,7 +457,7 @@ export function GuidesClient({
               }}
               className={`px-2.5 py-1.5 text-[11px] transition-colors flex items-center gap-0.5 ${
                 sortBy === 'distance'
-                  ? 'bg-amber-600 text-white'
+                  ? 'bg-accent text-white'
                   : 'text-fg-subtle hover:text-fg'
               }`}
             >
@@ -529,7 +529,7 @@ export function GuidesClient({
                   disabled={filterLoading}
                   className={`px-2.5 py-1.5 text-[11px] whitespace-nowrap transition-colors disabled:opacity-50 ${
                     selectedCategory === cat.slug && !showBookmarks
-                      ? 'bg-amber-600 text-white'
+                      ? 'bg-accent text-white'
                       : 'border border-border hover:border-border-strong'
                   }`}
                 >
@@ -542,7 +542,7 @@ export function GuidesClient({
               disabled={filterLoading}
               className={`px-2.5 py-1.5 text-[11px] whitespace-nowrap transition-colors disabled:opacity-50 flex items-center gap-1 ${
                 showBookmarks
-                  ? 'bg-amber-600 text-white'
+                  ? 'bg-accent text-white'
                   : 'border border-border hover:border-border-strong'
               }`}
             >
@@ -561,7 +561,7 @@ export function GuidesClient({
                 disabled={filterLoading}
                 className={`px-2.5 py-1 text-[11px] whitespace-nowrap transition-colors disabled:opacity-50 ${
                   !selectedSubcategory
-                    ? 'bg-amber-600 text-white'
+                    ? 'bg-accent text-white'
                     : 'bg-surface border border-border hover:border-border-strong'
                 }`}
               >

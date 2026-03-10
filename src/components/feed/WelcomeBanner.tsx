@@ -51,7 +51,7 @@ export function WelcomeBanner() {
         <span className="text-fg font-medium">{welcomeCity}</span>.{' '}
         <button
           onClick={handleCustomize}
-          className="text-amber-500 hover:text-amber-400 font-medium underline underline-offset-2 decoration-amber-500/40"
+          className="text-accent hover:text-accent/80 font-medium underline underline-offset-2 decoration-accent/40"
         >
           {t('welcome.customize')}
         </button>

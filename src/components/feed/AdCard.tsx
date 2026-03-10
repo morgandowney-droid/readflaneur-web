@@ -39,7 +39,7 @@ export function AdCard({ ad, variant = 'gallery' }: AdCardProps) {
       className={cn(
         'overflow-hidden cursor-pointer transition-all',
         variant === 'gallery'
-          ? 'bg-amber-950/30 border-2 border-amber-500/30 rounded-lg'
+          ? 'bg-accent/5 border-2 border-accent/30 rounded-lg'
           : 'bg-surface'
       )}
       onClick={handleClick}
@@ -47,7 +47,7 @@ export function AdCard({ ad, variant = 'gallery' }: AdCardProps) {
       <div className="px-4 py-2">
         <span className={cn(
           'text-[10px] tracking-[0.2em] uppercase',
-          variant === 'gallery' ? 'text-amber-600 font-medium' : 'text-fg-muted'
+          variant === 'gallery' ? 'text-accent font-medium' : 'text-fg-muted'
         )}>
           {ad.sponsor_label}
         </span>

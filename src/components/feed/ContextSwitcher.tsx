@@ -129,7 +129,7 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
               </svg>
               <span className="text-xs uppercase tracking-wide text-fg-muted">{t('feed.allNeighborhoods')}</span>
               {currentContext === 'all' && (
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="ml-auto text-amber-500 shrink-0">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="ml-auto text-accent shrink-0">
                   <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}
@@ -155,12 +155,12 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
                     onClick={() => handleSelectNeighborhood(n.id)}
                     className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-hover transition-colors group"
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isPrimary ? 'bg-amber-500' : 'bg-fg-subtle'}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isPrimary ? 'bg-accent' : 'bg-fg-subtle'}`} />
                     <span className="flex-1 min-w-0">
                       <span className="flex items-center gap-2">
                         <span className="text-xs text-fg truncate">{n.name}</span>
                         {isPrimary && (
-                          <span className="text-[9px] tracking-wider uppercase text-amber-500/70 font-medium shrink-0">{t('feed.primary')}</span>
+                          <span className="text-[9px] tracking-wider uppercase text-accent/70 font-medium shrink-0">{t('feed.primary')}</span>
                         )}
                       </span>
                       <span className="text-[10px] text-fg-subtle block">{n.city}</span>
@@ -175,7 +175,7 @@ export function ContextSwitcher({ currentContext, currentLabel }: ContextSwitche
                       </button>
                     )}
                     {currentContext === n.id && (
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-amber-500 shrink-0">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-accent shrink-0">
                         <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}

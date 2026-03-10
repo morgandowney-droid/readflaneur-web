@@ -59,7 +59,7 @@ export function MobileDiscoveryCard({
   };
 
   return (
-    <Link href={href} className="block aspect-[4/3] rounded-xl overflow-hidden relative group">
+    <Link href={href} className="block aspect-[4/3] rounded-sm overflow-hidden relative group">
       <Image
         src={imageUrl}
         alt={`${neighborhoodName}, ${city}`}

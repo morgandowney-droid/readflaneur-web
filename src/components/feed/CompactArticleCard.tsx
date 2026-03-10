@@ -142,19 +142,19 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
   const fullHeadline = cleanArticleHeadline(translatedHeadline || article.headline);
 
   const headlineDesktop = (
-    <h2 className="font-semibold text-lg md:text-xl leading-tight mb-1.5 whitespace-nowrap overflow-hidden">
+    <h2 className="font-display font-light text-xl md:text-2xl leading-tight mb-1.5 whitespace-nowrap overflow-hidden">
       {fullHeadline}
     </h2>
   );
 
   const headlineMobile = (
-    <h2 className="font-semibold text-lg leading-tight mb-1.5">
+    <h2 className="font-display font-light text-xl leading-tight mb-1.5">
       {truncateHeadline(fullHeadline)}
     </h2>
   );
 
   const imageEl = article.image_url ? (
-    <div className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden">
+    <div className="relative w-24 h-24 flex-shrink-0 rounded-sm overflow-hidden">
       <Image
         src={article.image_url}
         alt={article.headline}
@@ -172,7 +172,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
 
   return (
     <Link href={articleUrl}>
-      <article className="py-4 border-b border-border hover:bg-hover transition-colors">
+      <article className="py-5 border-b border-border hover:bg-hover transition-colors">
         {/* Desktop: original row layout */}
         <div className="hidden md:flex gap-4">
           {imageEl}

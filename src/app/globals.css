@@ -17,10 +17,10 @@
   --theme-overlay: rgba(0,0,0,0.8);
   --theme-header-bg: rgba(0,0,0,0.8);
   --theme-modal-bg: rgba(23,23,23,0.9);
-  --theme-selection-bg: #d97706;
+  --theme-selection-bg: #a89a85;
   --theme-selection-fg: #ffffff;
-  --theme-accent: #fbbf24;
-  --theme-accent-muted: rgba(251, 191, 36, 0.7);
+  --theme-accent: #c9b99a;
+  --theme-accent-muted: rgba(201, 185, 154, 0.6);
 }
 
 [data-theme="light"] {
@@ -38,10 +38,10 @@
   --theme-overlay: rgba(0,0,0,0.5);
   --theme-header-bg: rgba(255,255,255,0.85);
   --theme-modal-bg: rgba(255,255,255,0.92);
-  --theme-selection-bg: #d97706;
+  --theme-selection-bg: #8a7a68;
   --theme-selection-fg: #ffffff;
-  --theme-accent: #b45309;
-  --theme-accent-muted: rgba(180, 83, 9, 0.6);
+  --theme-accent: #8a7a68;
+  --theme-accent-muted: rgba(138, 122, 104, 0.5);
 }
 
 @theme inline {
@@ -90,7 +90,7 @@ main {
   @apply inline-flex items-center justify-center px-8 py-3 text-sm tracking-[0.2em] uppercase font-medium rounded-lg;
   @apply bg-fg text-canvas border border-fg;
   @apply transition-all duration-300 ease-out;
-  @apply hover:bg-amber-600 hover:text-white hover:border-amber-600;
+  @apply hover:opacity-80;
 }
 
 .btn-secondary {

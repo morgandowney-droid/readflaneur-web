@@ -158,7 +158,7 @@ export default function AddPlacePage() {
               required
               value={formData.neighborhood_id}
               onChange={(e) => setFormData({ ...formData, neighborhood_id: e.target.value })}
-              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-accent"
             >
               <option value="">Select neighborhood...</option>
               {neighborhoods.map((n) => (
@@ -178,7 +178,7 @@ export default function AddPlacePage() {
               required
               value={formData.category_id}
               onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-accent"
             >
               <option value="">Select category...</option>
               {categories.map((c) => (
@@ -200,7 +200,7 @@ export default function AddPlacePage() {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g., Bubby's"
-              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-accent"
             />
           </div>
 
@@ -214,7 +214,7 @@ export default function AddPlacePage() {
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               placeholder="e.g., 120 Hudson St, New York, NY"
-              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-accent"
             />
           </div>
 
@@ -228,7 +228,7 @@ export default function AddPlacePage() {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="A brief description of the place..."
               rows={3}
-              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-accent"
             />
           </div>
 
@@ -242,7 +242,7 @@ export default function AddPlacePage() {
               value={formData.website_url}
               onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
               placeholder="https://..."
-              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-accent"
             />
           </div>
 
@@ -256,7 +256,7 @@ export default function AddPlacePage() {
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="(212) 555-1234"
-              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-accent"
             />
           </div>
 
@@ -268,7 +268,7 @@ export default function AddPlacePage() {
             <select
               value={formData.price_range}
               onChange={(e) => setFormData({ ...formData, price_range: e.target.value })}
-              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-accent"
             >
               <option value="">Select...</option>
               <option value="$">$ - Inexpensive</option>
@@ -288,7 +288,7 @@ export default function AddPlacePage() {
               value={formData.tags}
               onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
               placeholder="e.g., brunch, family-friendly, outdoor seating"
-              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+              className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-accent"
             />
           </div>
 

@@ -74,7 +74,7 @@ export function LanguageToggle({ className = '' }: { className?: string }) {
         {isTranslated && (
           <button
             onClick={() => setPickerOpen(!pickerOpen)}
-            className="ml-[-8px] px-1.5 py-0.5 text-[10px] font-mono font-medium tracking-wider uppercase bg-amber-500/20 text-accent rounded"
+            className="ml-[-8px] px-1.5 py-0.5 text-[10px] font-mono font-medium tracking-wider uppercase bg-accent/20 text-accent rounded"
             aria-label="Choose language"
             title="Choose language"
             data-testid="language-badge"

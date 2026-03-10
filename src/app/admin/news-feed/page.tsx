@@ -168,8 +168,8 @@ export default function NewsFeedAdmin() {
             <div className="text-3xl font-light text-red-600">{stats?.neighborhoodsWithNoContent.length || 0}</div>
             <div className="text-xs text-fg-subtle uppercase tracking-wide">No Content (24h)</div>
           </div>
-          <div className="bg-surface border border-amber-500/20 p-4">
-            <div className="text-3xl font-light text-amber-600">{stats?.neighborhoodsWithoutRss?.length || 0}</div>
+          <div className="bg-surface border border-accent/20 p-4">
+            <div className="text-3xl font-light text-accent">{stats?.neighborhoodsWithoutRss?.length || 0}</div>
             <div className="text-xs text-fg-subtle uppercase tracking-wide">No RSS Stories (24h)</div>
           </div>
           <button
@@ -218,14 +218,14 @@ export default function NewsFeedAdmin() {
 
         {/* No RSS Stories Box */}
         {stats && stats.neighborhoodsWithoutRss && stats.neighborhoodsWithoutRss.length > 0 && (
-          <div className="bg-amber-500/10 border border-amber-500/20 p-5 mb-6">
+          <div className="bg-accent/10 border border-accent/20 p-5 mb-6">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-amber-300 uppercase tracking-wide">
+              <h3 className="text-sm font-semibold text-accent uppercase tracking-wide">
                 No RSS Feed Stories in 24h ({stats.neighborhoodsWithoutRss.length} neighborhoods)
               </h3>
               <button
                 onClick={() => setShowNoContent(!showNoContent)}
-                className="text-xs text-amber-400 hover:text-amber-300 underline"
+                className="text-xs text-accent hover:text-accent underline"
               >
                 {showNoContent ? 'Collapse' : 'Expand'}
               </button>
@@ -236,14 +236,14 @@ export default function NewsFeedAdmin() {
                   <button
                     key={n.id}
                     onClick={() => setFilter({ ...filter, neighborhood: n.id, category: '', storyType: '', source: 'rss' })}
-                    className="text-xs bg-surface px-2 py-1 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                    className="text-xs bg-surface px-2 py-1 border border-accent/20 text-accent hover:bg-accent/20 transition-colors cursor-pointer"
                   >
                     {n.name}, {n.city}
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="text-xs text-amber-400">
+              <div className="text-xs text-accent">
                 {stats.neighborhoodsWithoutRss.slice(0, 8).map(n => n.name).join(', ')}
                 {stats.neighborhoodsWithoutRss.length > 8 && ` and ${stats.neighborhoodsWithoutRss.length - 8} more...`}
               </div>

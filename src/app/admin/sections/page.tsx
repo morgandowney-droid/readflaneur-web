@@ -204,7 +204,7 @@ export default function AdminSectionsPage() {
                       slug: generateSlug(e.target.value),
                     });
                   }}
-                  className="w-full px-3 py-2 border border-border focus:border-amber-500 focus:outline-none text-sm"
+                  className="w-full px-3 py-2 border border-border focus:border-accent focus:outline-none text-sm"
                   placeholder="Section name"
                 />
               </div>
@@ -214,7 +214,7 @@ export default function AdminSectionsPage() {
                   type="text"
                   value={newSection.slug}
                   onChange={(e) => setNewSection({ ...newSection, slug: e.target.value })}
-                  className="w-full px-3 py-2 border border-border focus:border-amber-500 focus:outline-none text-sm"
+                  className="w-full px-3 py-2 border border-border focus:border-accent focus:outline-none text-sm"
                   placeholder="section-slug"
                 />
               </div>
@@ -224,7 +224,7 @@ export default function AdminSectionsPage() {
                   type="text"
                   value={newSection.icon}
                   onChange={(e) => setNewSection({ ...newSection, icon: e.target.value })}
-                  className="w-full px-3 py-2 border border-border focus:border-amber-500 focus:outline-none text-sm"
+                  className="w-full px-3 py-2 border border-border focus:border-accent focus:outline-none text-sm"
                   placeholder="e.g. 🎨"
                 />
               </div>
@@ -234,7 +234,7 @@ export default function AdminSectionsPage() {
                   type="number"
                   value={newSection.display_order}
                   onChange={(e) => setNewSection({ ...newSection, display_order: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-border focus:border-amber-500 focus:outline-none text-sm"
+                  className="w-full px-3 py-2 border border-border focus:border-accent focus:outline-none text-sm"
                 />
               </div>
               <div className="col-span-2">
@@ -243,7 +243,7 @@ export default function AdminSectionsPage() {
                   type="text"
                   value={newSection.description}
                   onChange={(e) => setNewSection({ ...newSection, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-border focus:border-amber-500 focus:outline-none text-sm"
+                  className="w-full px-3 py-2 border border-border focus:border-accent focus:outline-none text-sm"
                   placeholder="Brief description of this section"
                 />
               </div>
@@ -288,28 +288,28 @@ export default function AdminSectionsPage() {
                     type="number"
                     value={editForm.display_order}
                     onChange={(e) => setEditForm({ ...editForm, display_order: parseInt(e.target.value) || 0 })}
-                    className="w-16 px-2 py-1 border border-border focus:border-amber-500 focus:outline-none text-sm"
+                    className="w-16 px-2 py-1 border border-border focus:border-accent focus:outline-none text-sm"
                   />
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
                       value={editForm.icon || ''}
                       onChange={(e) => setEditForm({ ...editForm, icon: e.target.value })}
-                      className="w-12 px-2 py-1 border border-border focus:border-amber-500 focus:outline-none text-sm text-center"
+                      className="w-12 px-2 py-1 border border-border focus:border-accent focus:outline-none text-sm text-center"
                       placeholder="Icon"
                     />
                     <input
                       type="text"
                       value={editForm.name}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="flex-1 px-2 py-1 border border-border focus:border-amber-500 focus:outline-none text-sm"
+                      className="flex-1 px-2 py-1 border border-border focus:border-accent focus:outline-none text-sm"
                     />
                   </div>
                   <input
                     type="text"
                     value={editForm.slug}
                     onChange={(e) => setEditForm({ ...editForm, slug: e.target.value })}
-                    className="w-32 px-2 py-1 border border-border focus:border-amber-500 focus:outline-none text-sm"
+                    className="w-32 px-2 py-1 border border-border focus:border-accent focus:outline-none text-sm"
                   />
                   <span className="text-sm text-fg-subtle">{section.article_count}</span>
                   <label className="flex items-center gap-2">

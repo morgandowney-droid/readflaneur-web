@@ -244,7 +244,7 @@ export function NeighborhoodSelector({
         hood.is_coming_soon
           ? 'bg-elevated text-fg-subtle border-border cursor-not-allowed'
           : selected.includes(hood.id)
-          ? 'bg-amber-600 text-white border-amber-600'
+          ? 'bg-accent text-white border-accent'
           : 'bg-surface text-fg-muted border-border hover:border-border-strong'
       } disabled:opacity-50`}
     >
@@ -337,7 +337,7 @@ export function NeighborhoodSelector({
                 hood.is_coming_soon
                   ? 'bg-elevated text-fg-subtle border-border cursor-not-allowed'
                   : selected.includes(hood.id)
-                  ? 'bg-amber-600 text-white border-amber-600'
+                  ? 'bg-accent text-white border-accent'
                   : 'bg-surface text-fg-muted border-border hover:border-border-strong'
               } disabled:opacity-50`}
             >
@@ -531,7 +531,7 @@ export function NeighborhoodSelector({
             placeholder="Search neighborhoods, cities, or countries..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm bg-surface border border-border text-fg rounded placeholder:text-fg-subtle focus:outline-none focus:border-amber-500"
+            className="w-full pl-10 pr-4 py-2 text-sm bg-surface border border-border text-fg rounded placeholder:text-fg-subtle focus:outline-none focus:border-accent"
           />
           {searchQuery && (
             <button

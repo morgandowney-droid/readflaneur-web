@@ -168,9 +168,9 @@ export default function ProofPage() {
       <div className="min-h-screen bg-canvas flex items-center justify-center">
         <div className="text-center max-w-md">
           <h1 className="text-xl font-light tracking-wide mb-4">FLANEUR</h1>
-          <div className="bg-amber-50 border border-amber-200 p-8 rounded-lg">
-            <p className="text-amber-800 font-medium text-lg mb-2">Changes Requested</p>
-            <p className="text-amber-600 text-sm">We have received your feedback and our team will make the adjustments. You will receive a new proof link once the changes are ready.</p>
+          <div className="bg-accent/5 border border-accent/20 p-8 rounded-lg">
+            <p className="text-accent font-medium text-lg mb-2">Changes Requested</p>
+            <p className="text-accent/80 text-sm">We have received your feedback and our team will make the adjustments. You will receive a new proof link once the changes are ready.</p>
           </div>
         </div>
       </div>
@@ -199,7 +199,7 @@ export default function ProofPage() {
             )}
             <span className={`px-2 py-1 text-[10px] tracking-widest uppercase rounded ${
               ad.approval_status === 'pending_approval'
-                ? 'bg-amber-100 text-amber-800'
+                ? 'bg-accent/10 text-accent'
                 : ad.approval_status === 'changes_requested'
                   ? 'bg-orange-100 text-orange-800'
                   : 'bg-elevated text-fg-muted'
@@ -279,7 +279,7 @@ export default function ProofPage() {
             <div className="flex items-center gap-3">
               <div className={`text-2xl font-light ${
                 ad.ai_quality_score >= 70 ? 'text-green-600' :
-                ad.ai_quality_score >= 40 ? 'text-amber-600' : 'text-red-600'
+                ad.ai_quality_score >= 40 ? 'text-accent' : 'text-red-600'
               }`}>
                 {ad.ai_quality_score}
               </div>
@@ -290,7 +290,7 @@ export default function ProofPage() {
               </div>
             </div>
             {ad.ai_flag_reason && (
-              <p className="text-xs text-amber-600 mt-2">{ad.ai_flag_reason}</p>
+              <p className="text-xs text-accent mt-2">{ad.ai_flag_reason}</p>
             )}
           </div>
         )}
@@ -319,7 +319,7 @@ export default function ProofPage() {
               value={changeMessage}
               onChange={(e) => setChangeMessage(e.target.value)}
               placeholder="Describe the changes you'd like made to your placement..."
-              className="w-full px-4 py-3 border border-border rounded-lg focus:border-amber-500 focus:outline-none text-sm mb-4"
+              className="w-full px-4 py-3 border border-border rounded-lg focus:border-accent focus:outline-none text-sm mb-4"
               rows={4}
             />
             <div className="flex gap-3">

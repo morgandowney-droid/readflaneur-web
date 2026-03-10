@@ -247,7 +247,7 @@ export default function MichelinAdminPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Restaurant name..."
-                className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+                className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-accent"
               />
             </div>
 
@@ -262,7 +262,7 @@ export default function MichelinAdminPage() {
                   setSelectedCity(e.target.value);
                   setSelectedNeighborhood('');
                 }}
-                className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+                className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-accent"
               >
                 <option value="">All Cities</option>
                 {cities.map(city => (
@@ -279,7 +279,7 @@ export default function MichelinAdminPage() {
               <select
                 value={selectedNeighborhood}
                 onChange={(e) => setSelectedNeighborhood(e.target.value)}
-                className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+                className="w-full border border-border px-3 py-2 text-sm focus:outline-none focus:border-accent"
               >
                 <option value="">All Neighborhoods</option>
                 {filteredNeighborhoods.map(n => (
@@ -523,7 +523,7 @@ function MichelinSelector({
           onChange(null, 'green_star');
         }
       }}
-      className="border border-border px-2 py-1 text-xs focus:outline-none focus:border-amber-500 disabled:opacity-50"
+      className="border border-border px-2 py-1 text-xs focus:outline-none focus:border-accent disabled:opacity-50"
       defaultValue=""
     >
       <option value="">Add rating...</option>

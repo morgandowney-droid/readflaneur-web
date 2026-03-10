@@ -45,16 +45,10 @@ export function FeedList({ items, view = 'gallery' }: FeedListProps) {
   }
 
   return (
-    <div className={view === 'compact' ? 'space-y-0' : 'space-y-14 md:space-y-4'}>
+    <div className={view === 'compact' ? 'space-y-1' : 'space-y-16 md:space-y-8'}>
       {displayItems.map((item, index) => {
         if (item.type === 'email-prompt') {
-          return (
-            <div key="email-prompt" className="py-4">
-              <EmailCaptureCard
-                neighborhoodName={(item.data as any).neighborhoodName}
-              />
-            </div>
-          );
+          return null;
         }
         if (item.type === 'article') {
           return view === 'compact' ? (

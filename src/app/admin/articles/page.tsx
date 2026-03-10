@@ -406,7 +406,7 @@ export default function AdminArticlesPage() {
                 placeholder={reviewAction === 'reject'
                   ? 'e.g., Content does not meet our guidelines...'
                   : 'e.g., Please add more detail about the location...'}
-                className="w-full px-4 py-3 border border-border focus:border-amber-500 focus:outline-none mb-4"
+                className="w-full px-4 py-3 border border-border focus:border-accent focus:outline-none mb-4"
                 rows={4}
               />
               <div className="flex gap-3">

@@ -127,7 +127,7 @@ export function SectionInterestSelector({ onSave, compact = false }: SectionInte
               onClick={() => toggleSection(section.id)}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs border transition-colors ${
                 selectedIds.includes(section.id)
-                  ? 'bg-amber-600 text-white border-amber-600'
+                  ? 'bg-accent text-white border-accent'
                   : 'bg-surface text-fg-muted border-border hover:border-border-strong'
               }`}
             >
@@ -163,7 +163,7 @@ export function SectionInterestSelector({ onSave, compact = false }: SectionInte
             onClick={() => toggleSection(section.id)}
             className={`flex flex-col items-center gap-2 p-4 border transition-colors ${
               selectedIds.includes(section.id)
-                ? 'bg-amber-600 text-white border-amber-600'
+                ? 'bg-accent text-white border-accent'
                 : 'bg-surface text-fg-muted border-border hover:border-border-strong'
             }`}
           >

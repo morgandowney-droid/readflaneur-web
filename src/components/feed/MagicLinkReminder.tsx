@@ -62,7 +62,7 @@ export function MagicLinkReminder() {
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleResend()}
               placeholder={t('email.enterEmail')}
-              className="px-3 py-2 bg-surface border border-border-strong text-sm text-white placeholder-fg-subtle rounded-lg w-56 focus:outline-none focus:border-amber-500/50 transition-colors"
+              className="px-3 py-2 bg-surface border border-border-strong text-sm text-white placeholder-fg-subtle rounded-lg w-56 focus:outline-none focus:border-accent/50 transition-colors"
             />
             <button
               onClick={handleResend}

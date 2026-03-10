@@ -279,7 +279,7 @@ export function InviteHero() {
                   <div className="flex gap-3 justify-center">
                     <button
                       onClick={handleCopy}
-                      className="bg-white text-neutral-900 px-6 py-3 text-sm font-medium rounded-md hover:bg-amber-600 hover:text-white transition-colors shrink-0"
+                      className="bg-white text-neutral-900 px-6 py-3 text-sm font-medium rounded-md hover:opacity-80 transition-colors shrink-0"
                     >
                       {copied ? 'Link copied!' : 'Copy Link'}
                     </button>
@@ -336,13 +336,13 @@ export function InviteHero() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email"
-                      className="flex-1 bg-white/5 border border-white/15 text-white px-4 py-3 text-sm rounded-md focus:outline-none focus:border-amber-500 transition-colors placeholder:text-neutral-600"
+                      className="flex-1 bg-white/5 border border-white/15 text-white px-4 py-3 text-sm rounded-md focus:outline-none focus:border-accent transition-colors placeholder:text-neutral-600"
                       disabled={status === 'loading'}
                     />
                     <button
                       type="submit"
                       disabled={status === 'loading' || !email}
-                      className="bg-white text-neutral-900 px-6 py-3 text-sm font-medium rounded-md hover:bg-amber-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                      className="bg-white text-neutral-900 px-6 py-3 text-sm font-medium rounded-md hover:opacity-80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                     >
                       {status === 'loading' ? 'Joining...' : 'Join'}
                     </button>

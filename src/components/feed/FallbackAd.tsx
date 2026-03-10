@@ -71,7 +71,7 @@ function BonusAdDisplay({ ad, variant }: { ad: NonNullable<FallbackData['bonusAd
   if (variant === 'story_open') {
     return (
       <div
-        className="bg-surface border border-border overflow-hidden cursor-pointer hover:border-border-strong transition-colors rounded-xl"
+        className="bg-surface border border-border overflow-hidden cursor-pointer hover:border-border-strong transition-colors rounded-sm"
         onClick={handleClick}
       >
         <div className="flex flex-col sm:flex-row">
@@ -103,7 +103,7 @@ function BonusAdDisplay({ ad, variant }: { ad: NonNullable<FallbackData['bonusAd
   // Card variant
   return (
     <div
-      className="border border-border bg-surface overflow-hidden cursor-pointer hover:border-border-strong transition-colors rounded-xl"
+      className="border border-border bg-surface overflow-hidden cursor-pointer hover:border-border-strong transition-colors rounded-sm"
       onClick={handleClick}
     >
       <div className="px-3 py-2 border-b border-border">
@@ -194,7 +194,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
   if (houseAd.type === 'suggest_neighborhood') {
     if (variant === 'story_open') {
       return (
-        <div className="border border-border bg-surface p-6 rounded-xl">
+        <div className="border border-border bg-surface p-6 rounded-sm">
           <div className="flex flex-col md:flex-row md:items-start gap-4">
             <div className="flex-1">
               <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">
@@ -223,7 +223,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
 
     // Card variant
     return (
-      <div className="border border-border bg-surface rounded-xl">
+      <div className="border border-border bg-surface rounded-sm">
         <div className="px-3 py-2 border-b border-border">
           <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">
             Flaneur
@@ -256,7 +256,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
 
     if (variant === 'story_open') {
       return (
-        <div className="border border-border bg-surface p-6 hover:border-border-strong transition-colors rounded-xl">
+        <div className="border border-border bg-surface p-6 hover:border-border-strong transition-colors rounded-sm">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex-1">
               <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">
@@ -280,7 +280,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
 
     // Card variant
     return (
-      <div className="border border-border bg-surface rounded-xl">
+      <div className="border border-border bg-surface rounded-sm">
         <div className="px-3 py-2 border-b border-border">
           <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">
             Flaneur
@@ -316,7 +316,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
 
     if (variant === 'story_open') {
       return (
-        <div className="border border-border bg-surface p-6 relative rounded-xl">
+        <div className="border border-border bg-surface p-6 relative rounded-sm">
           <button
             onClick={handleDismiss}
             className="absolute top-2 right-3 text-fg-muted hover:text-fg text-lg leading-none"
@@ -343,7 +343,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
 
     // Card variant
     return (
-      <div className="border border-border bg-surface relative rounded-xl">
+      <div className="border border-border bg-surface relative rounded-sm">
         <button
           onClick={handleDismiss}
           className="absolute top-2 right-3 text-fg-muted hover:text-fg text-lg leading-none z-10"
@@ -375,7 +375,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
     return (
       <a
         href={clickUrl}
-        className="block border border-border bg-surface p-6 hover:border-border-strong transition-colors rounded-xl"
+        className="block border border-border bg-surface p-6 hover:border-border-strong transition-colors rounded-sm"
       >
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
@@ -399,7 +399,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
   return (
     <a
       href={clickUrl}
-      className="block border border-border bg-surface hover:border-border-strong transition-colors rounded-xl"
+      className="block border border-border bg-surface hover:border-border-strong transition-colors rounded-sm"
     >
       <div className="px-3 py-2 border-b border-border">
         <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">
@@ -477,7 +477,7 @@ function NewsletterSignup({ variant }: { variant: 'card' | 'story_open' }) {
 
   if (variant === 'story_open') {
     return (
-      <div className="border border-border bg-surface p-6 rounded-xl">
+      <div className="border border-border bg-surface p-6 rounded-sm">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
             <p className="text-xs tracking-[0.2em] uppercase text-fg-muted mb-2">
@@ -520,7 +520,7 @@ function NewsletterSignup({ variant }: { variant: 'card' | 'story_open' }) {
 
   // Card variant
   return (
-    <div className="border border-border bg-surface rounded-xl">
+    <div className="border border-border bg-surface rounded-sm">
       <div className="px-3 py-2 border-b border-border">
         <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">
           Newsletter
@@ -568,7 +568,7 @@ function StaticHouseAd({ variant }: { variant: 'card' | 'story_open' }) {
     return (
       <a
         href="/advertise"
-        className="block border border-border bg-surface p-6 hover:border-border-strong transition-colors rounded-xl"
+        className="block border border-border bg-surface p-6 hover:border-border-strong transition-colors rounded-sm"
       >
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
@@ -594,7 +594,7 @@ function StaticHouseAd({ variant }: { variant: 'card' | 'story_open' }) {
   return (
     <a
       href="/advertise"
-      className="block border border-border bg-surface hover:border-border-strong transition-colors rounded-xl"
+      className="block border border-border bg-surface hover:border-border-strong transition-colors rounded-sm"
     >
       <div className="px-3 py-2 border-b border-border">
         <span className="text-[10px] tracking-[0.2em] uppercase text-fg-muted">
