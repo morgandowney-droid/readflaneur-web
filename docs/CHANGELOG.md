@@ -5,6 +5,11 @@
 
 ## 2026-03-11
 
+**Fix wishlist dropdown rendering behind Leaflet map:**
+- WishlistDropdown wrapper div was `relative` with no z-index, causing dropdown to render behind Leaflet map's stacking context on destinations page.
+- Added `z-[60]` to wrapper div.
+- File: `src/components/layout/WishlistDropdown.tsx`
+
 **LC-style destination cards with text below image:**
 - Card text (name/city/country) moved below image instead of overlaid on gradient. Gradient overlay removed entirely.
 - Heart icon is now the only element on the image (white outline, no circular button background). Newspaper/feed toggle icon moved to text area next to neighborhood name.
