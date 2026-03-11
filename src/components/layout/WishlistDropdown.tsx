@@ -225,7 +225,7 @@ export function WishlistDropdown({ className }: { className?: string }) {
               {/* Footer actions */}
               <div className="px-4 py-3 border-t border-border flex items-center justify-between">
                 <Link
-                  href="/destinations"
+                  href="/lists"
                   onClick={() => setOpen(false)}
                   className="text-[11px] tracking-[0.15em] uppercase text-fg-muted hover:text-fg transition-colors"
                 >

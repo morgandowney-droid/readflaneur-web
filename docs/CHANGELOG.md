@@ -5,6 +5,26 @@
 
 ## 2026-03-11
 
+**My Lists page (`/lists`):**
+- Full authenticated page for viewing and managing destination lists, inspired by Le Collectionist's curated collection pages.
+- Photo card grid with warm charcoal gradient scrim `linear-gradient(180deg, transparent 30%, rgba(32,32,32,0.75) 100%)` on destination images, hover zoom effect, neighborhood name and city overlay.
+- Features: create new lists (inline input), share lists (copy link / native share), delete non-default lists (with confirmation), remove individual items, "Add more" dashed card linking to `/destinations`.
+- Default list badge, back-to-feed link, list count subtitle.
+- Auth-gated: redirects to `/login` if no `flaneur-auth` localStorage.
+- WishlistDropdown "VIEW ALL" footer link changed from `/destinations` to `/lists`.
+- Files: `src/app/lists/page.tsx` (new), `src/components/layout/WishlistDropdown.tsx`
+
+**LC-inspired warm charcoal gradient scrim on editorial grid and feed hero:**
+- Replaced pure black gradient overlays with warm charcoal `rgba(32,32,32)` inspired by Le Collectionist's text-over-image technique. LC uses warm charcoal instead of pure black for a more editorial feel.
+- EditorialGrid: gradient starts at 10% (not 25%) with mid-point at 50% opacity 0.4, bottom at 82% - ensures text readability even on shorter secondary cards with bright sky/water photos. Location label bumped to `text-white/70`, city dot to `text-white/40`, blurb to `text-white/70`.
+- FeedHero: three-stop gradient from top `rgba(32,32,32,0.1)` through mid `rgba(32,32,32,0.35)` to bottom `rgba(32,32,32,0.85)`.
+- No text-shadow used (LC never uses text-shadow - gradient scrim only).
+- Files: `src/components/feed/EditorialGrid.tsx`, `src/components/feed/FeedHero.tsx`
+
+**Remove dead sections table query from Header:**
+- Header.tsx had a `fetchSections()` call querying a `sections` table that doesn't exist in production, causing a 404 console error on every page load. The sections UI was already gated behind `sections.length > 0` so it never rendered.
+- File: `src/components/layout/Header.tsx`
+
 **Fix Unsplash search returning irrelevant photos for generic neighborhood names:**
 - Both search queries in `unsplash.ts` now include city name: `"{name} {city} architecture lifestyle"` + `"{name} {city} street photography"`. Previously the second query was `"{name} street photography"` with no city, so "West Village street photography" returned photos from villages in Africa.
 - Affects both `searchAllCategories()` and `searchAllCategoriesWithAlternates()`.
