@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { ReactNode, useState, useEffect, useRef } from 'react';
 import { getWikipediaUrl, getMapLocation, getNeighborhoodSlugFromId, getCitySlugFromId } from '@/lib/neighborhood-utils';
 import { ShareButton } from '@/components/ui/ShareButton';
@@ -38,7 +37,7 @@ function joinWithAnd(names: string[]): string {
   return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
 }
 
-type DropdownKey = 'guide' | 'map' | 'history' | 'mobile-overflow';
+type DropdownKey = 'map' | 'history' | 'mobile-overflow';
 
 export function NeighborhoodHeader({
   mode = 'single',
@@ -218,29 +217,6 @@ export function NeighborhoodHeader({
                 <div className="hidden md:flex items-center gap-6">
                   {isCombo ? (
                     <>
-                      {/* GUIDE dropdown */}
-                      <div className="relative">
-                        <button
-                          onClick={() => setOpenDropdown(openDropdown === 'guide' ? null : 'guide')}
-                          className={linkClass}
-                        >
-                          {t('header.guide').toUpperCase()}
-                        </button>
-                        {openDropdown === 'guide' && (
-                          <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-border shadow-sm rounded py-2 min-w-[160px] z-10">
-                            {comboInfo!.components.map(c => (
-                              <a
-                                key={c.id}
-                                href={`/${citySlug}/${getNeighborhoodSlugFromId(c.id)}/guides`}
-                                className="block px-4 py-1.5 text-xs text-fg-subtle hover:text-fg hover:bg-hover w-full text-left"
-                              >
-                                {c.name}
-                              </a>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
                       {/* MAP dropdown */}
                       <div className="relative">
                         <button
@@ -300,9 +276,6 @@ export function NeighborhoodHeader({
                     </>
                   ) : (
                     <>
-                      <Link href={`/${citySlug}/${neighborhoodSlug}/guides`} className={linkClass}>
-                        {t('header.guide').toUpperCase()}
-                      </Link>
                       <a
                         href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(neighborhoodId, neighborhoodName, city))}`}
                         target="_blank"
@@ -345,13 +318,6 @@ export function NeighborhoodHeader({
                   </button>
                   {openDropdown === 'mobile-overflow' && (
                     <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-surface border border-border shadow-lg rounded py-2 min-w-[140px] z-10">
-                      <Link
-                        href={isCombo ? `/${citySlug}/${getNeighborhoodSlugFromId(comboInfo!.components[0]?.id || neighborhoodId)}/guides` : `/${citySlug}/${neighborhoodSlug}/guides`}
-                        className="block px-4 py-2 text-xs tracking-[0.2em] uppercase text-fg-muted hover:text-fg hover:bg-hover"
-                        onClick={() => setOpenDropdown(null)}
-                      >
-                        {t('header.guide')}
-                      </Link>
                       <a
                         href={`https://www.google.com/maps/place/${encodeURIComponent(getMapLocation(neighborhoodId, neighborhoodName, city))}`}
                         target="_blank"

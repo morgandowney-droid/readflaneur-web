@@ -67,12 +67,18 @@ export default async function DestinationsPage() {
     }
   }
 
+  // Normalize country names
+  const normalizeCountry = (c: string) => {
+    if (c === 'United States') return 'USA';
+    return c;
+  };
+
   // Build destination data for client
   const destinations = neighborhoods.map(n => ({
     id: n.id,
     name: n.name,
     city: n.city,
-    country: n.country,
+    country: normalizeCountry(n.country),
     region: n.region,
     lat: n.latitude,
     lng: n.longitude,

@@ -198,11 +198,11 @@ export function WishlistDropdown({ className }: { className?: string }) {
 
   return (
     <div ref={dropdownRef} className={cn('relative', className)}>
-      {/* Heart icon button */}
+      {/* Heart icon button with count badge */}
       <button
         onClick={() => setOpen(!open)}
         className={cn(
-          'min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors',
+          'relative min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors',
           hasItems ? 'text-accent' : 'text-fg-muted hover:text-fg'
         )}
         aria-label={t('wishlist.savedDestinations')}
@@ -216,6 +216,11 @@ export function WishlistDropdown({ className }: { className?: string }) {
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
           </svg>
+        )}
+        {totalItemCount > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-fg text-canvas text-[9px] font-medium flex items-center justify-center leading-none">
+            {totalItemCount}
+          </span>
         )}
       </button>
 

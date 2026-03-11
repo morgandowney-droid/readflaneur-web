@@ -61,12 +61,12 @@ export function DestinationCard({
 
   return (
     <div
-      className={`group relative rounded-xl overflow-hidden border transition-all duration-200 cursor-pointer ${
+      className={`group relative rounded-sm overflow-hidden border transition-all duration-200 cursor-pointer ${
         isSelected
-          ? 'border-accent ring-1 ring-accent/30'
+          ? 'border-fg/40'
           : isHovered
             ? 'border-border-strong'
-            : 'border-border hover:border-border-strong'
+            : 'border-transparent hover:border-border-strong'
       }`}
       onMouseEnter={() => onHover(d.id)}
       onMouseLeave={() => onHover(null)}
