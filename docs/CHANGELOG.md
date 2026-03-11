@@ -14,6 +14,15 @@
 - Removed `/lists` page entirely - wishlist dropdown is the sole lists interface (pure LC pattern).
 - Files: `src/components/layout/Header.tsx`
 
+**LC share modal and empty list state:**
+- "Share with a friend" (three-dot menu) and footer "SHARE LIST" button now open a centered modal overlay matching Le Collectionist's "Share my list" pattern: COPY THE LINK (with checkmark feedback), SEND BY E-MAIL (mailto: with pre-filled subject/body), SEND ON WHATSAPP (wa.me deep link). Modal has close X button + click-outside-to-close.
+- Empty list state (when active list has 0 items) now shows list selector + three-dot menu above heart icon + "No favorites yet" + description + dark full-width "ADD DESTINATIONS" CTA button (matching LC's empty list pattern).
+- Footer share CTA hidden when list is empty (only shown when items exist).
+- Removed count badge from heart icon (LC has no badge).
+- Default list can now be renamed (only Delete is disabled for default).
+- 7 new translation keys in all 9 languages: `wishlist.shareMyList`, `wishlist.copyTheLink`, `wishlist.linkCopiedCheck`, `wishlist.sendByEmail`, `wishlist.sendOnWhatsApp`, `wishlist.noFavoritesYet`, `wishlist.emptyListDescription`.
+- Files: `src/components/layout/WishlistDropdown.tsx`, `src/lib/translations.ts`
+
 **LC-style wishlist dropdown with full list management:**
 - Three-dot "Parameters" menu matches Le Collectionist exactly: SHARE WITH A FRIEND (share icon), RENAME THE LIST (pencil icon), DELETE THE LIST (trash icon) - each with tracked-caps uppercase labels.
 - "CREATE A NEW LIST" moved from three-dot menu to list selector dropdown (bottom of list names, separated by border divider), matching LC's second dropdown panel.
