@@ -112,10 +112,10 @@ function EditorialCard({
         />
       )}
 
-      {/* Gradient scrim - LC-inspired warm charcoal covering bottom 60% */}
+      {/* Gradient scrim - LC-inspired warm charcoal, starts early for short cards */}
       <div
         className="absolute inset-0"
-        style={{ background: 'linear-gradient(180deg, transparent 25%, rgba(32,32,32,0.75) 100%)' }}
+        style={{ background: 'linear-gradient(180deg, transparent 10%, rgba(32,32,32,0.4) 50%, rgba(32,32,32,0.82) 100%)' }}
       />
 
       {/* Content */}
