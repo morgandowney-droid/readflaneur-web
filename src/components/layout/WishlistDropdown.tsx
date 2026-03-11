@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useDestinationLists } from '@/hooks/useDestinationLists';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -24,39 +24,37 @@ export function WishlistDropdown({ className }: { className?: string }) {
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const fetchedIdsRef = useRef<string>('');
 
   const itemCount = defaultListIds.length;
   const hasItems = itemCount > 0;
+  const idsKey = defaultListIds.join(',');
 
   // Fetch neighborhood details when dropdown opens and items exist
-  const fetchDetails = useCallback(async () => {
-    if (!defaultListIds.length) {
-      setDetails([]);
-      return;
-    }
+  useEffect(() => {
+    if (!open || !hasItems || !idsKey) return;
+    // Skip if we already fetched these exact IDs
+    if (fetchedIdsRef.current === idsKey) return;
+    fetchedIdsRef.current = idsKey;
+
+    let cancelled = false;
     setDetailsLoading(true);
-    try {
-      const ids = defaultListIds.join(',');
-      const res = await fetch(`/api/lists/details?ids=${encodeURIComponent(ids)}`);
-      if (res.ok) {
-        const { items } = await res.json();
-        // Sort by defaultListIds order
-        const ordered = defaultListIds
-          .map(id => (items as NeighborhoodDetail[]).find(n => n.id === id))
+
+    fetch(`/api/lists/details?ids=${encodeURIComponent(idsKey)}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (cancelled || !data) return;
+        const ids = idsKey.split(',');
+        const ordered = ids
+          .map(id => (data.items as NeighborhoodDetail[]).find(n => n.id === id))
           .filter((n): n is NeighborhoodDetail => !!n);
         setDetails(ordered);
-      }
-    } catch {
-      // Silently fail
-    }
-    setDetailsLoading(false);
-  }, [defaultListIds]);
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setDetailsLoading(false); });
 
-  useEffect(() => {
-    if (open && hasItems) {
-      fetchDetails();
-    }
-  }, [open, hasItems, fetchDetails]);
+    return () => { cancelled = true; };
+  }, [open, hasItems, idsKey]);
 
   // Get share token from the list
   useEffect(() => {
@@ -88,6 +86,7 @@ export function WishlistDropdown({ className }: { className?: string }) {
     if (!defaultList) return;
     await removeFromList(defaultList.id, neighborhoodId);
     setDetails(prev => prev.filter(d => d.id !== neighborhoodId));
+    fetchedIdsRef.current = ''; // Reset so next open refetches
   };
 
   const handleShare = async () => {
