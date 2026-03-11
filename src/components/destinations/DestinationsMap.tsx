@@ -17,8 +17,8 @@ interface Props {
 }
 
 const TILE_URLS = {
-  dark: 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}',
-  light: 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}',
+  dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  light: 'https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png',
 };
 
 export function DestinationsMap({
@@ -107,7 +107,7 @@ export function DestinationsMap({
 
       const isDark = theme === 'dark';
       const tileLayer = L.tileLayer(isDark ? TILE_URLS.dark : TILE_URLS.light, {
-        attribution: '<a href="https://www.esri.com">Esri</a>',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
         maxZoom: 19,
       }).addTo(map);
       tileRef.current = tileLayer;
@@ -208,7 +208,7 @@ export function DestinationsMap({
     const dest = allDestinations.find(d => d.id === selectedId);
     if (dest?.lat && dest?.lng) {
       isUserPanning.current = false;
-      mapInstanceRef.current.flyTo([dest.lat, dest.lng], 12, { duration: 0.8 });
+      mapInstanceRef.current.flyTo([dest.lat, dest.lng], 9, { duration: 0.8 });
     }
   }, [selectedId, allDestinations]);
 
@@ -223,7 +223,7 @@ export function DestinationsMap({
       }
       const isDark = theme === 'dark';
       tileRef.current = L.tileLayer(isDark ? TILE_URLS.dark : TILE_URLS.light, {
-        attribution: '<a href="https://www.esri.com">Esri</a>',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
         maxZoom: 19,
       }).addTo(mapInstanceRef.current!);
     };
@@ -260,7 +260,7 @@ export function DestinationsMap({
     <div
       ref={mapRef}
       className="destinations-map w-full h-full"
-      style={{ background: '#a8c8d8' }}
+      style={{ background: 'var(--theme-surface, #121212)' }}
     />
   );
 }
