@@ -13,9 +13,11 @@
 - Attribution updated from Esri to OSM/CARTO.
 - File: `src/components/destinations/DestinationsMap.tsx`
 
-**Fix wishlist dropdown rendering behind Leaflet map:**
-- WishlistDropdown wrapper div was `relative` with no z-index, causing dropdown to render behind Leaflet map's stacking context on destinations page.
-- Added `z-[60]` to wrapper div.
+**Fix wishlist dropdown rendering behind Leaflet map + LC-style remove confirmation:**
+- WishlistDropdown panel changed from `absolute` to `fixed` positioning with dynamically computed position from button bounding rect. `z-index: 9999` escapes Leaflet's internal stacking contexts entirely. Previous `z-[60]` approach failed because Leaflet creates its own stacking context with z-indices in the hundreds.
+- Added `buttonRef` to heart icon button, `updateDropdownPos()` computes `top` (bottom of button + 8px) and `right` (viewport right edge - button right edge) on open.
+- Added LC-style "Are you sure?" inline confirmation overlay when un-hearting a neighborhood from the wishlist dropdown. Clicking the filled heart shows a `bg-elevated/95 backdrop-blur-sm` overlay sliding over the item row with "Remove?" text and Yes/Cancel buttons. Prevents accidental removes.
+- `confirmRemoveId` state tracks which item is pending confirmation, reset on close or after removal.
 - File: `src/components/layout/WishlistDropdown.tsx`
 
 **LC-style destination cards with text below image:**
