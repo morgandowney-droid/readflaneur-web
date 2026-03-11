@@ -5,6 +5,14 @@
 
 ## 2026-03-12
 
+**Feed hero clickability and destinations page polish:**
+- Feed hero image (neighborhood photo + headline on /feed) now clickable - wraps in Next.js Link to daily brief article. Hover underline on headline. Photographer credit separately clickable at z-2.
+- Rename "feed" to "news feed" across destinations page: confirmation dialogs, tooltips, badges ("In your news feed", "Remove from your daily news feed?", etc.).
+- Heart and newspaper icons moved from image overlay to text area below destination card images. Black outline heart turns solid black when favorited. News feed icon same size, fills when active.
+- LC-style loading bar on map: thin animated bar slides across top during zoom/pan (movestart/moveend), 800ms debounce waits for user to stop moving before card grid update.
+- Fix floating sticky section headers: opaque `bg-canvas` with `border-b border-border/30` instead of semi-transparent `bg-canvas/95 backdrop-blur-sm`.
+- Files: `FeedHero.tsx`, `feed/page.tsx`, `DestinationCard.tsx`, `DestinationsClient.tsx`, `DestinationsMap.tsx`, `globals.css`
+
 **LC-style add-to-list modal and share fixes:**
 - Heart click on destination cards now opens `AddToListModal` (LC pattern) instead of directly toggling default list.
 - Modal shows all user's lists with 2x2 thumbnail grids of existing items (fetched from `/api/lists/details`), radio button selection, VALIDATE button.
