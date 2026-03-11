@@ -43,7 +43,14 @@ export async function POST() {
       return NextResponse.json({ listId: existing.id, created: false });
     }
 
-    // Create default list
+    // Generate share token
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let shareToken = '';
+    for (let i = 0; i < 8; i++) {
+      shareToken += chars[Math.floor(Math.random() * chars.length)];
+    }
+
+    // Create default list with share token
     const { data: list, error } = await admin
       .from('destination_lists')
       .insert({
@@ -51,6 +58,7 @@ export async function POST() {
         name: 'Favourites',
         slug: 'favourites',
         is_default: true,
+        share_token: shareToken,
       })
       .select('id')
       .single();

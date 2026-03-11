@@ -83,7 +83,7 @@ export function DestinationCard({
           </div>
         )}
 
-        {/* Top-right heart only (LC pattern) */}
+        {/* Top-right heart - opens list picker (LC pattern) */}
         <div className="absolute top-2.5 right-2.5">
           <button
             onClick={(e) => {
@@ -91,7 +91,7 @@ export function DestinationCard({
               if (isAuth) onToggleFavorite(d.id);
             }}
             className="text-white/80 hover:text-white transition-colors"
-            title={isAuth ? (isFavorite ? 'Remove from Favourites' : 'Add to Favourites') : 'Sign in to save destinations'}
+            title={isAuth ? (isFavorite ? 'Saved to list' : 'Add to a list') : 'Sign in to save destinations'}
           >
             {isFavorite ? (
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

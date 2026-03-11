@@ -53,6 +53,22 @@ export async function GET() {
       return NextResponse.json({ lists: [] });
     }
 
+    // Backfill share_token for any lists missing one
+    if (lists) {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+      for (const list of lists) {
+        if (!list.share_token) {
+          let token = '';
+          for (let i = 0; i < 8; i++) token += chars[Math.floor(Math.random() * chars.length)];
+          await admin
+            .from('destination_lists')
+            .update({ share_token: token })
+            .eq('id', list.id);
+          list.share_token = token;
+        }
+      }
+    }
+
     return NextResponse.json({ lists: lists || [] });
   } catch {
     return NextResponse.json({ lists: [] });

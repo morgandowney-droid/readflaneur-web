@@ -9,6 +9,7 @@ import { getGeoRegion, GEO_REGION_ORDER } from '@/lib/region-utils';
 import { syncNeighborhoodCookie } from '@/lib/neighborhood-cookie';
 import { DestinationsMap } from './DestinationsMap';
 import { DestinationCard } from './DestinationCard';
+import { AddToListModal } from './AddToListModal';
 
 export interface Destination {
   id: string;
@@ -53,7 +54,7 @@ const REGIONS = GEO_REGION_ORDER.filter(r => r.key !== 'other');
 
 export function DestinationsClient({ destinations, countries }: Props) {
   const { theme } = useTheme();
-  const { defaultList, addToList, removeFromList, isInList } = useDestinationLists();
+  const { lists, defaultList, addToList, removeFromList, isInList, isInAnyList, createList } = useDestinationLists();
 
   // Filter state
   const [search, setSearch] = useState('');
@@ -74,6 +75,8 @@ export function DestinationsClient({ destinations, countries }: Props) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [addToListNeighborhood, setAddToListNeighborhood] = useState<Destination | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   const cardListRef = useRef<HTMLDivElement>(null);
   const coastalRef = useRef<HTMLButtonElement>(null);
@@ -293,14 +296,22 @@ export function DestinationsClient({ destinations, countries }: Props) {
     return counts;
   }, [destinations]);
 
-  const handleToggleFavorite = useCallback(async (neighborhoodId: string) => {
-    if (!defaultList) return;
-    if (isInList(defaultList.id, neighborhoodId)) {
-      await removeFromList(defaultList.id, neighborhoodId);
-    } else {
-      await addToList(defaultList.id, neighborhoodId);
+  const handleToggleFavorite = useCallback((neighborhoodId: string) => {
+    const dest = destinations.find(d => d.id === neighborhoodId);
+    if (dest) setAddToListNeighborhood(dest);
+  }, [destinations]);
+
+  const handleAddToList = useCallback(async (listId: string): Promise<boolean> => {
+    if (!addToListNeighborhood) return false;
+    const success = await addToList(listId, addToListNeighborhood.id);
+    if (success) {
+      const list = lists.find(l => l.id === listId);
+      setToast(`${addToListNeighborhood.name} added to ${list?.name || 'list'}`);
+      setAddToListNeighborhood(null);
+      setTimeout(() => setToast(null), 3000);
     }
-  }, [defaultList, isInList, addToList, removeFromList]);
+    return success;
+  }, [addToListNeighborhood, addToList, lists]);
 
   const handleCardClick = useCallback((id: string) => {
     setSelectedId(prev => prev === id ? null : id);
@@ -768,7 +779,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
                       <DestinationCard
                         key={dest.id}
                         destination={dest}
-                        isFavorite={defaultList ? isInList(defaultList.id, dest.id) : false}
+                        isFavorite={isInAnyList(dest.id)}
                         isInFeed={isInFeed(dest.id)}
                         isAuth={isAuth}
                         isHovered={hoveredId === dest.id}
@@ -804,6 +815,25 @@ export function DestinationsClient({ destinations, countries }: Props) {
           </div>
         )}
       </div>
+
+      {/* Add to List Modal */}
+      {addToListNeighborhood && (
+        <AddToListModal
+          neighborhoodId={addToListNeighborhood.id}
+          neighborhoodName={addToListNeighborhood.name}
+          lists={lists}
+          onAdd={handleAddToList}
+          onClose={() => setAddToListNeighborhood(null)}
+          onCreateList={createList}
+        />
+      )}
+
+      {/* Toast confirmation */}
+      {toast && (
+        <div className="fixed top-6 right-6 z-[10000] bg-fg text-canvas px-5 py-3 rounded-sm shadow-lg text-sm font-medium animate-fade-in">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

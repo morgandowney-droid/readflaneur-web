@@ -546,21 +546,30 @@ export function WishlistDropdown({ className }: { className?: string }) {
                 )}
               </div>
 
-              {/* Footer CTA - Share this list */}
-              {activeItems.length > 0 && (
-                <div className="px-4 py-4 border-t border-border">
-                  <p className="text-sm text-fg-muted text-center mb-3">
-                    {t('wishlist.shareDescription')}
-                  </p>
-                  <button
-                    onClick={handleOpenShareModal}
-                    disabled={!activeList?.share_token}
-                    className="w-full bg-fg text-canvas text-[11px] tracking-[0.2em] uppercase py-3 rounded-sm hover:opacity-90 transition-opacity disabled:opacity-30 font-medium"
-                  >
-                    {t('wishlist.shareList')}
-                  </button>
-                </div>
-              )}
+              {/* Footer CTAs - Share + Add Destinations */}
+              <div className="px-4 py-4 border-t border-border space-y-2.5">
+                {activeItems.length > 0 && (
+                  <>
+                    <p className="text-sm text-fg-muted text-center mb-3">
+                      {t('wishlist.shareDescription')}
+                    </p>
+                    <button
+                      onClick={handleOpenShareModal}
+                      disabled={!activeList?.share_token}
+                      className="w-full bg-fg text-canvas text-[11px] tracking-[0.2em] uppercase py-3 rounded-sm hover:opacity-90 transition-opacity disabled:opacity-30 font-medium"
+                    >
+                      {t('wishlist.shareList')}
+                    </button>
+                  </>
+                )}
+                <Link
+                  href="/destinations"
+                  onClick={() => setOpen(false)}
+                  className="w-full block text-center text-[11px] tracking-[0.2em] uppercase text-fg border border-border-strong py-3 rounded-sm hover:bg-hover transition-colors font-medium"
+                >
+                  {t('wishlist.addDestinations')}
+                </Link>
+              </div>
             </div>
           )}
         </div>
