@@ -5,14 +5,13 @@
  * per Unsplash terms (no downloading/re-hosting). Triggers download
  * endpoint for attribution tracking.
  *
- * Strategy: Two parallel searches per neighborhood with editorial style
- * modifiers — "{name} {city} architecture lifestyle" for relevant
- * editorial shots and "{name} street photography" for iconic/candid
- * shots — then interleave the results so we get both city-accurate and
- * visually striking photos. 30 results per query, 8 assigned to
- * categories. For ambiguous names like "SoHo" the city-qualified search
- * provides disambiguation while the name-only search surfaces the most
- * popular/curated shots.
+ * Strategy: Two parallel searches per neighborhood — both include city
+ * name for geographic accuracy: "{name} {city} architecture lifestyle"
+ * for editorial shots and "{name} {city} street photography" for candid
+ * shots — then interleave the results so we get visual variety while
+ * always staying geographically correct. 30 results per query, 8
+ * assigned to categories. City name in both queries prevents generic
+ * name pollution (e.g., "West Village" returning African villages).
  *
  * Rate limits: 50/hr (demo), 5000/hr (production)
  */
@@ -151,11 +150,14 @@ function interleave(
  * 1. "{neighborhood} {city} architecture lifestyle" (30 results) —
  *    disambiguates "SoHo New York" vs "SoHo London", ensures city-relevance,
  *    style modifiers bias toward editorial/architectural photography
- * 2. "{neighborhood} street photography" (30 results) — surfaces iconic
- *    candid/editorial shots that photographers tag with the neighborhood name
+ * 2. "{neighborhood} {city} street photography" (30 results) — surfaces
+ *    candid/editorial shots with city context to prevent generic name
+ *    pollution (e.g., "West Village" returning African villages)
  *
- * Results are merged with 3:1 city-qualified priority so ambiguous names
- * (SoHo, Chelsea, Downtown) get the correct city's photos in 6+ of 8 slots.
+ * Both queries include the city name for geographic accuracy. Different style
+ * modifiers (architecture/lifestyle vs street photography) provide visual variety.
+ * Results are merged with 3:1 primary priority so the first query's editorial
+ * shots dominate while the second adds candid variety.
  * Falls back to city-only if still short.
  *
  * Cost: 2 API calls per neighborhood (was 1-4). Well within 5000/hr budget.
@@ -171,14 +173,15 @@ export async function searchAllCategories(
   const needed = IMAGE_CATEGORIES.length;
 
   // Primary searches: run in parallel for speed
-  // Style modifiers bias Unsplash toward editorial/lifestyle photography
-  const [cityQualified, nameOnly] = await Promise.all([
+  // Both include city name to prevent generic name pollution
+  // (e.g., "West Village" returning African villages)
+  const [editorial, candid] = await Promise.all([
     searchUnsplash(accessKey, `${neighborhoodName} ${city} architecture lifestyle`, 30),
-    searchUnsplash(accessKey, `${neighborhoodName} street photography`, 30),
+    searchUnsplash(accessKey, `${neighborhoodName} ${city} street photography`, 30),
   ]);
 
-  // Interleave: alternates city-qualified (relevant) with name-only (iconic)
-  let results = interleave(cityQualified, nameOnly);
+  // Interleave: editorial shots dominate (3:1) with candid variety
+  let results = interleave(editorial, candid);
 
   // Fallback: if still short, try broader queries (less aggressive modifiers)
   if (results.length < needed) {
@@ -244,14 +247,14 @@ export async function searchAllCategoriesWithAlternates(
   const rejected = new Set(rejectedIds || []);
 
   // Primary searches: run in parallel for speed
-  // Style modifiers bias Unsplash toward editorial/lifestyle photography
-  const [cityQualified, nameOnly] = await Promise.all([
+  // Both include city name to prevent generic name pollution
+  const [editorial, candid] = await Promise.all([
     searchUnsplash(accessKey, `${neighborhoodName} ${city} architecture lifestyle`, 30),
-    searchUnsplash(accessKey, `${neighborhoodName} street photography`, 30),
+    searchUnsplash(accessKey, `${neighborhoodName} ${city} street photography`, 30),
   ]);
 
-  // Interleave: alternates city-qualified (relevant) with name-only (iconic)
-  let results = interleave(cityQualified, nameOnly);
+  // Interleave: editorial shots dominate (3:1) with candid variety
+  let results = interleave(editorial, candid);
 
   // Filter out rejected photos
   if (rejected.size > 0) {

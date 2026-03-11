@@ -5,6 +5,12 @@
 
 ## 2026-03-11
 
+**Fix Unsplash search returning irrelevant photos for generic neighborhood names:**
+- Both search queries in `unsplash.ts` now include city name: `"{name} {city} architecture lifestyle"` + `"{name} {city} street photography"`. Previously the second query was `"{name} street photography"` with no city, so "West Village street photography" returned photos from villages in Africa.
+- Affects both `searchAllCategories()` and `searchAllCategoriesWithAlternates()`.
+- Next `refresh-image-library` cron run will regenerate all neighborhoods with corrected queries.
+- Files: `src/lib/unsplash.ts`
+
 **Le Collectionist-inspired feed redesign - expansive editorial layout:**
 - Full-bleed `FeedHero` component (`src/components/feed/FeedHero.tsx`) with Ken Burns animation on primary neighborhood's Unsplash photo, gradient overlay, Cormorant Garamond headline, neighborhood name + weather/time, photographer credit with Unsplash UTM links. Height: 50vh mobile, 60vh desktop.
 - Wide `EditorialGrid` component (`src/components/feed/EditorialGrid.tsx`) showing today's top 5 stories in asymmetric magazine-style grid at `max-w-7xl` (vs `max-w-3xl` linear feed below). Primary article gets 7/12 columns with large imagery + preview text, secondary articles stack in 5/12 right column, optional bottom row of two equal 6/12 cards. Hover zoom on images, gradient overlays, display font headlines. Visible to all visitors including unauthenticated.
