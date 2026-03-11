@@ -31,7 +31,10 @@ export function WishlistDropdown({ className }: { className?: string }) {
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const fetchedIdsRef = useRef<string>('');
 
   // Set active list to default on first load
@@ -110,6 +113,7 @@ export function WishlistDropdown({ className }: { className?: string }) {
     setMenuOpen(false);
     setShowCreateInput(false);
     setRenaming(false);
+    setConfirmRemoveId(null);
   };
 
   const handleRemove = async (neighborhoodId: string) => {
@@ -117,6 +121,17 @@ export function WishlistDropdown({ className }: { className?: string }) {
     await removeFromList(activeList.id, neighborhoodId);
     setDetails(prev => prev.filter(d => d.id !== neighborhoodId));
     fetchedIdsRef.current = '';
+    setConfirmRemoveId(null);
+  };
+
+  // Compute fixed dropdown position from button rect
+  const updateDropdownPos = () => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    setDropdownPos({
+      top: rect.bottom + 8,
+      right: window.innerWidth - rect.right,
+    });
   };
 
   const getShareUrl = () =>
@@ -197,10 +212,14 @@ export function WishlistDropdown({ className }: { className?: string }) {
   if (isLoading) return null;
 
   return (
-    <div ref={dropdownRef} className={cn('relative z-[60]', className)}>
+    <div ref={dropdownRef} className={cn('relative', className)}>
       {/* Heart icon button with count badge */}
       <button
-        onClick={() => setOpen(!open)}
+        ref={buttonRef}
+        onClick={() => {
+          if (!open) updateDropdownPos();
+          setOpen(!open);
+        }}
         className={cn(
           'relative min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors',
           hasItems ? 'text-accent' : 'text-fg-muted hover:text-fg'
@@ -224,9 +243,12 @@ export function WishlistDropdown({ className }: { className?: string }) {
         )}
       </button>
 
-      {/* Dropdown panel */}
+      {/* Dropdown panel - fixed positioning to escape Leaflet stacking context */}
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-elevated border border-border rounded-sm shadow-lg z-50 overflow-hidden">
+        <div
+          className="fixed w-80 bg-elevated border border-border rounded-sm shadow-lg overflow-hidden"
+          style={{ top: dropdownPos.top, right: dropdownPos.right, zIndex: 9999 }}
+        >
           {!hasItems && lists.length === 0 ? (
             // Empty state - no lists at all
             <div className="px-6 py-10 flex flex-col items-center text-center">
@@ -458,46 +480,67 @@ export function WishlistDropdown({ className }: { className?: string }) {
                   details.map(item => (
                     <div
                       key={item.id}
-                      className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-b-0"
+                      className="relative border-b border-border last:border-b-0"
                     >
-                      {/* Thumbnail */}
-                      <Link
-                        href={`/${getCitySlugFromId(item.id)}/${getNeighborhoodSlugFromId(item.id)}`}
-                        onClick={() => setOpen(false)}
-                        className="flex-shrink-0 w-14 h-14 rounded-sm overflow-hidden bg-surface"
-                      >
-                        {item.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={item.imageUrl}
-                            alt={item.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-elevated" />
-                        )}
-                      </Link>
+                      <div className="flex items-center gap-3 px-4 py-3">
+                        {/* Thumbnail */}
+                        <Link
+                          href={`/${getCitySlugFromId(item.id)}/${getNeighborhoodSlugFromId(item.id)}`}
+                          onClick={() => setOpen(false)}
+                          className="flex-shrink-0 w-14 h-14 rounded-sm overflow-hidden bg-surface"
+                        >
+                          {item.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-elevated" />
+                          )}
+                        </Link>
 
-                      {/* Info */}
-                      <Link
-                        href={`/${getCitySlugFromId(item.id)}/${getNeighborhoodSlugFromId(item.id)}`}
-                        onClick={() => setOpen(false)}
-                        className="flex-1 min-w-0"
-                      >
-                        <p className="text-sm font-medium text-fg truncate">{item.name}</p>
-                        <p className="text-xs text-fg-muted truncate">{item.city}, {item.country}</p>
-                      </Link>
+                        {/* Info */}
+                        <Link
+                          href={`/${getCitySlugFromId(item.id)}/${getNeighborhoodSlugFromId(item.id)}`}
+                          onClick={() => setOpen(false)}
+                          className="flex-1 min-w-0"
+                        >
+                          <p className="text-sm font-medium text-fg truncate">{item.name}</p>
+                          <p className="text-xs text-fg-muted truncate">{item.city}, {item.country}</p>
+                        </Link>
 
-                      {/* Filled heart to remove (LC pattern) */}
-                      <button
-                        onClick={() => handleRemove(item.id)}
-                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-accent hover:text-accent-muted transition-colors"
-                        aria-label={t('general.remove')}
-                      >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                        </svg>
-                      </button>
+                        {/* Filled heart to remove (LC pattern) */}
+                        <button
+                          onClick={() => setConfirmRemoveId(item.id)}
+                          className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-accent hover:text-accent-muted transition-colors"
+                          aria-label={t('general.remove')}
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      {/* LC-style "Are you sure?" confirmation overlay */}
+                      {confirmRemoveId === item.id && (
+                        <div className="absolute inset-0 bg-elevated/95 backdrop-blur-sm flex items-center justify-center gap-3 px-4">
+                          <p className="text-sm text-fg-muted">Remove?</p>
+                          <button
+                            onClick={() => handleRemove(item.id)}
+                            className="text-[11px] tracking-[0.12em] uppercase px-4 py-1.5 bg-fg text-canvas rounded-sm hover:opacity-90 transition-opacity font-medium"
+                          >
+                            Yes
+                          </button>
+                          <button
+                            onClick={() => setConfirmRemoveId(null)}
+                            className="text-[11px] tracking-[0.12em] uppercase px-4 py-1.5 border border-border text-fg-muted rounded-sm hover:text-fg hover:border-fg-muted transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
