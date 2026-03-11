@@ -167,6 +167,7 @@ export function DestinationsMap({
           if (boundsTimeoutRef.current) clearTimeout(boundsTimeoutRef.current);
           boundsTimeoutRef.current = setTimeout(() => {
             const b = map.getBounds();
+            if (!b) return;
             onBoundsChange({
               north: b.getNorth(),
               south: b.getSouth(),
