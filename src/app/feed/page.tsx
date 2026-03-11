@@ -16,6 +16,7 @@ import { fetchCurrentWeather } from '@/lib/weather';
 import { toHeadlineCase } from '@/lib/utils';
 import { NEIGHBORHOODS_COOKIE } from '@/lib/neighborhood-cookie';
 import { FeedHero } from '@/components/feed/FeedHero';
+import { EditorialGrid } from '@/components/feed/EditorialGrid';
 
 export const dynamic = 'force-dynamic';
 
@@ -339,6 +340,9 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     ? toHeadlineCase(briefForHeadline.subject_teaser)
     : briefForHeadline?.headline || undefined;
 
+  // Separate featured articles (with images) for editorial grid from the rest
+  const editorialArticles = (articles || []).filter((a: any) => a.image_url && a.neighborhood).slice(0, 5);
+
   return (
     <div className="bg-canvas">
       {/* Full-bleed hero with primary neighborhood image */}
@@ -357,6 +361,19 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
           photographerUrl={heroImage.photographerUrl}
         />
       )}
+
+      {/* Wide editorial grid for featured stories */}
+      {neighborhoodIds.length > 0 && editorialArticles.length >= 2 && (
+        <EditorialGrid articles={editorialArticles} />
+      )}
+
+      {/* Divider between editorial grid and linear feed */}
+      {neighborhoodIds.length > 0 && editorialArticles.length >= 2 && (
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
+          <div className="border-t border-border" />
+        </div>
+      )}
+
       <div className="mx-auto max-w-3xl px-4 pt-4 pb-8">
         <WelcomeBanner />
         {/* Section filter indicator */}
