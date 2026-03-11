@@ -257,13 +257,14 @@ export function Header() {
         shouldHideHeader && '-translate-y-full'
       )}
     >
-      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
-        <Link href="/feed" className="font-display text-xl tracking-[0.35em] font-light hover:opacity-70 transition-opacity">
+      <div className="mx-auto flex h-16 items-center px-4 md:px-8">
+        {/* Left: Logo */}
+        <Link href="/feed" className="font-display text-lg tracking-[0.35em] font-light text-fg hover:opacity-70 transition-opacity shrink-0">
           FLÂNEUR
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
+        {/* Center: Navigation links (desktop) */}
+        <nav className="hidden md:flex items-center justify-center gap-6 flex-1">
           <Link
             href="/search"
             className={cn(
@@ -332,34 +333,35 @@ export function Header() {
           >
             {t('nav.stories')}
           </Link>
-          {/* Icon controls - LC pattern: heart then person then theme/language */}
-          <div className="flex items-center gap-1 pl-3 border-l border-border -ml-2">
-            <WishlistDropdown />
-            {loading ? (
-              <span className="min-w-[44px] min-h-[44px] flex items-center justify-center" aria-hidden />
-            ) : (
-              <Link
-                href={user ? '/account' : '/login'}
-                className={cn(
-                  'min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors',
-                  pathname === '/account' || pathname === '/login' ? 'text-fg' : 'text-fg-muted hover:text-fg'
-                )}
-                aria-label={user ? t('nav.account') : t('nav.signIn')}
-                title={user ? t('nav.account') : t('nav.signIn')}
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              </Link>
-            )}
-            <ThemeToggle />
-            <LanguageToggle />
-          </div>
         </nav>
 
+        {/* Right: Icon controls (desktop) */}
+        <div className="hidden md:flex items-center gap-1 shrink-0">
+          <WishlistDropdown />
+          {loading ? (
+            <span className="min-w-[44px] min-h-[44px] flex items-center justify-center" aria-hidden />
+          ) : (
+            <Link
+              href={user ? '/account' : '/login'}
+              className={cn(
+                'min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors',
+                pathname === '/account' || pathname === '/login' ? 'text-fg' : 'text-fg-muted hover:text-fg'
+              )}
+              aria-label={user ? t('nav.account') : t('nav.signIn')}
+              title={user ? t('nav.account') : t('nav.signIn')}
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </Link>
+          )}
+          <ThemeToggle />
+          <LanguageToggle />
+        </div>
+
         {/* Mobile Navigation */}
-        <div className="flex md:hidden items-center gap-2">
+        <div className="flex md:hidden items-center gap-2 ml-auto">
           <Link
             href="/search"
             className={cn(
@@ -372,8 +374,9 @@ export function Header() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </Link>
-          <LanguageToggle className="md:hidden" />
+          <WishlistDropdown />
           <ThemeToggle className="md:hidden" />
+          <LanguageToggle className="md:hidden" />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="min-w-[44px] min-h-[44px] flex items-center justify-center text-fg-muted hover:text-fg"
