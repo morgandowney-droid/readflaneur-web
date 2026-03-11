@@ -771,7 +771,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
             <div className="space-y-6">
               {grouped.map(({ country, items }) => (
                 <div key={country}>
-                  <h2 className="text-[10px] tracking-[0.25em] uppercase text-fg-subtle mb-3 sticky top-0 bg-canvas/95 backdrop-blur-sm py-1.5 z-10">
+                  <h2 className="text-[10px] tracking-[0.25em] uppercase text-fg-subtle mb-3 sticky top-0 bg-canvas py-2 z-10 border-b border-border/30">
                     {country} <span className="text-fg-subtle/50 ml-1">{items.length}</span>
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">

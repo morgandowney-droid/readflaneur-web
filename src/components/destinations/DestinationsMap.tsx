@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { Destination } from './DestinationsClient';
 
@@ -36,6 +36,7 @@ export function DestinationsMap({
   const mapInstanceRef = useRef<mapboxgl.Map | null>(null);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
   const isUserPanning = useRef(false);
   const boundsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hoveredIdRef = useRef<string | null>(null);
@@ -48,6 +49,23 @@ export function DestinationsMap({
   // Keep refs in sync for event handlers
   useEffect(() => { hoveredIdRef.current = hoveredId; }, [hoveredId]);
   useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
+
+  // Debounced bounds change - wait for user to stop moving
+  const debouncedBoundsChange = useCallback(() => {
+    if (boundsTimeoutRef.current) clearTimeout(boundsTimeoutRef.current);
+    boundsTimeoutRef.current = setTimeout(() => {
+      const map = mapInstanceRef.current;
+      if (!map || !isUserPanning.current) return;
+      const b = map.getBounds();
+      if (!b) return;
+      onBoundsChange({
+        north: b.getNorth(),
+        south: b.getSouth(),
+        east: b.getEast(),
+        west: b.getWest(),
+      });
+    }, 800); // 800ms debounce - wait for user to stop moving
+  }, [onBoundsChange]);
 
   // Initialize map
   useEffect(() => {
@@ -161,20 +179,16 @@ export function DestinationsMap({
           if (id) onSelect(id);
         });
 
-        // Bounds change on user pan/zoom
+        // Bounds change on user pan/zoom - debounced
         map.on('moveend', () => {
-          if (!isUserPanning.current) return;
-          if (boundsTimeoutRef.current) clearTimeout(boundsTimeoutRef.current);
-          boundsTimeoutRef.current = setTimeout(() => {
-            const b = map.getBounds();
-            if (!b) return;
-            onBoundsChange({
-              north: b.getNorth(),
-              south: b.getSouth(),
-              east: b.getEast(),
-              west: b.getWest(),
-            });
-          }, 300);
+          setIsMoving(false);
+          if (isUserPanning.current) {
+            debouncedBoundsChange();
+          }
+        });
+
+        map.on('movestart', () => {
+          setIsMoving(true);
         });
 
         map.on('dragstart', () => { isUserPanning.current = true; });
@@ -187,6 +201,7 @@ export function DestinationsMap({
     initMap();
 
     return () => {
+      if (boundsTimeoutRef.current) clearTimeout(boundsTimeoutRef.current);
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -352,10 +367,18 @@ export function DestinationsMap({
   }
 
   return (
-    <div
-      ref={mapRef}
-      className="destinations-map w-full h-full"
-      style={{ background: 'var(--theme-surface, #121212)' }}
-    />
+    <div className="relative w-full h-full">
+      {/* Loading bar - slides across top during map movement */}
+      {isMoving && (
+        <div className="absolute top-0 left-0 right-0 h-0.5 z-10 overflow-hidden">
+          <div className="h-full bg-fg/80 animate-loading-bar" />
+        </div>
+      )}
+      <div
+        ref={mapRef}
+        className="destinations-map w-full h-full"
+        style={{ background: 'var(--theme-surface, #121212)' }}
+      />
+    </div>
   );
 }

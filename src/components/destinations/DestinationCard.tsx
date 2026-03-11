@@ -83,28 +83,6 @@ export function DestinationCard({
           </div>
         )}
 
-        {/* Top-right heart - opens list picker (LC pattern) */}
-        <div className="absolute top-2.5 right-2.5">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (isAuth) onToggleFavorite(d.id);
-            }}
-            className="text-white/80 hover:text-white transition-colors"
-            title={isAuth ? (isFavorite ? 'Saved to list' : 'Add to a list') : 'Sign in to save destinations'}
-          >
-            {isFavorite ? (
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-            )}
-          </button>
-        </div>
-
         {/* Community badge */}
         {d.isCommunity && (
           <span className="absolute top-2.5 left-2.5 text-[9px] tracking-[0.15em] uppercase bg-black/40 text-white/80 px-2 py-0.5 rounded backdrop-blur-sm">
@@ -113,33 +91,55 @@ export function DestinationCard({
         )}
       </div>
 
-      {/* Text below image (LC pattern) */}
+      {/* Text below image */}
       <div className="px-1 pt-2.5 pb-1">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-display text-[15px] text-fg tracking-[0.02em] font-normal leading-tight uppercase">
             {d.name}
           </h3>
-          {/* Feed toggle icon */}
-          <button
-            onClick={handleFeedToggle}
-            className={`shrink-0 mt-0.5 transition-colors ${
-              isInFeed ? 'text-accent' : 'text-fg-subtle hover:text-fg'
-            }`}
-            title={isAuth
-              ? (isInFeed ? 'Remove from daily feed' : 'Add to daily feed')
-              : 'Sign in to manage your feed'
-            }
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6" />
-            </svg>
-          </button>
+          {/* Icon row: heart + news feed toggle */}
+          <div className="flex items-center gap-2.5 shrink-0 mt-0.5">
+            {/* Heart - add to list */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isAuth) onToggleFavorite(d.id);
+              }}
+              className="transition-colors text-fg/70 hover:text-fg"
+              title={isAuth ? (isFavorite ? 'Saved to list' : 'Add to a list') : 'Sign in to save destinations'}
+            >
+              {isFavorite ? (
+                <svg className="w-4.5 h-4.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+              ) : (
+                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              )}
+            </button>
+            {/* News feed toggle */}
+            <button
+              onClick={handleFeedToggle}
+              className={`transition-colors ${
+                isInFeed ? 'text-fg' : 'text-fg/40 hover:text-fg/70'
+              }`}
+              title={isAuth
+                ? (isInFeed ? 'Remove from daily news feed' : 'Add to daily news feed')
+                : 'Sign in to manage your news feed'
+              }
+            >
+              <svg className="w-4.5 h-4.5" fill={isInFeed ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={isInFeed ? '0' : '1.5'} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6" />
+              </svg>
+            </button>
+          </div>
         </div>
         <p className="text-[11px] text-fg-muted mt-0.5">
           {d.city}{d.city !== d.country ? `, ${d.country}` : ''}
         </p>
         {isInFeed && (
-          <p className="text-[10px] text-accent mt-1">In your feed</p>
+          <p className="text-[10px] text-fg/60 mt-1">In your news feed</p>
         )}
       </div>
 
@@ -150,7 +150,7 @@ export function DestinationCard({
           onClick={e => e.stopPropagation()}
         >
           <p className="text-white text-sm text-center font-medium">
-            Remove {d.name} from your daily feed?
+            Remove {d.name} from your daily news feed?
           </p>
           <p className="text-white/60 text-xs text-center">
             You will stop receiving daily briefs and emails for this neighborhood.
