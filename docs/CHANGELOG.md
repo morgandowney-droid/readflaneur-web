@@ -5,12 +5,17 @@
 
 ## 2026-03-11
 
-**Switch map from ArcGIS Ocean to CARTO tiles, fix zoom-in tile failure:**
-- ArcGIS Ocean basemap had no tile coverage at zoom 10+ for land areas, showing "Map data not yet available" when clicking a neighborhood card and flying to it.
-- Switched to CARTO tiles: Voyager (light mode), dark_all (dark mode). Free, works at all zoom levels, clean Mapbox-like style.
-- FlyTo zoom reduced from 12 to 9 for better surrounding context when selecting a neighborhood.
-- Background color changed from ocean blue (#a8c8d8) to theme surface variable (`var(--theme-surface)`).
-- Attribution updated from Esri to OSM/CARTO.
+**Switch destinations map to Mapbox GL JS:**
+- Replaced Leaflet + CARTO raster tiles with Mapbox GL JS vector tiles. Vector tiles render perfectly at all zoom levels (CARTO raster tiles had occasional gaps, ArcGIS Ocean had no coverage at zoom 10+).
+- Mapbox styles: `streets-v12` (light mode), `dark-v11` (dark mode). Smooth vector rendering, proper labels, clean cartography.
+- GeoJSON source with `circle` layer type replaces individual Leaflet CircleMarkers. Data-driven paint properties for hover/selected states (radius 4.5 -> 7, color #444444 -> #333333, stroke 1.5 -> 2).
+- Popup on hover via `mapboxgl.Popup` with theme-aware styling.
+- Theme switching: `map.setStyle()` + re-add source/layer on `style.load` event.
+- NavigationControl (zoom +/- only, no compass).
+- Free tier: 50,000 map loads/month, then $5/1,000.
+- Env var: `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` (set in Vercel production + preview).
+- URL restrictions on token: `readflaneur.com`, `flaneur.news`.
+- Dependencies added: `mapbox-gl`, `@types/mapbox-gl`.
 - File: `src/components/destinations/DestinationsMap.tsx`
 
 **Fix wishlist dropdown rendering behind Leaflet map + LC-style remove confirmation:**
