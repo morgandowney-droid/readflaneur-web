@@ -197,7 +197,7 @@ export function WishlistDropdown({ className }: { className?: string }) {
   if (isLoading) return null;
 
   return (
-    <div ref={dropdownRef} className={cn('relative', className)}>
+    <div ref={dropdownRef} className={cn('relative z-[60]', className)}>
       {/* Heart icon button with count badge */}
       <button
         onClick={() => setOpen(!open)}
