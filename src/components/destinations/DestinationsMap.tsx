@@ -17,8 +17,8 @@ interface Props {
 }
 
 const TILE_URLS = {
-  dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  dark: 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}',
+  light: 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}',
 };
 
 export function DestinationsMap({
@@ -107,7 +107,7 @@ export function DestinationsMap({
 
       const isDark = theme === 'dark';
       const tileLayer = L.tileLayer(isDark ? TILE_URLS.dark : TILE_URLS.light, {
-        attribution: '<a href="https://www.openstreetmap.org/copyright">OSM</a> · <a href="https://carto.com/attributions">CARTO</a>',
+        attribution: '<a href="https://www.esri.com">Esri</a>',
         maxZoom: 19,
       }).addTo(map);
       tileRef.current = tileLayer;
@@ -159,11 +159,11 @@ export function DestinationsMap({
 
       const marker = L.circleMarker([d.lat, d.lng], {
         radius: 5,
-        fillColor: '#f59e0b',
-        fillOpacity: 0.8,
-        color: '#f59e0b',
+        fillColor: '#1a1a1a',
+        fillOpacity: 0.9,
+        color: '#000000',
         weight: 1,
-        opacity: 0.6,
+        opacity: 0.7,
       }).addTo(map);
 
       marker.on('mouseover', () => {
@@ -194,10 +194,10 @@ export function DestinationsMap({
     markersRef.current.forEach((marker, id) => {
       if (id === hoveredId || id === selectedId) {
         marker.setRadius(9);
-        marker.setStyle({ fillColor: '#fbbf24', fillOpacity: 1, weight: 2, color: '#fbbf24' });
+        marker.setStyle({ fillColor: '#333333', fillOpacity: 1, weight: 2, color: '#000000' });
       } else {
         marker.setRadius(5);
-        marker.setStyle({ fillColor: '#f59e0b', fillOpacity: 0.8, weight: 1, color: '#f59e0b' });
+        marker.setStyle({ fillColor: '#1a1a1a', fillOpacity: 0.9, weight: 1, color: '#000000' });
       }
     });
   }, [hoveredId, selectedId]);
@@ -223,7 +223,7 @@ export function DestinationsMap({
       }
       const isDark = theme === 'dark';
       tileRef.current = L.tileLayer(isDark ? TILE_URLS.dark : TILE_URLS.light, {
-        attribution: '<a href="https://www.openstreetmap.org/copyright">OSM</a> · <a href="https://carto.com/attributions">CARTO</a>',
+        attribution: '<a href="https://www.esri.com">Esri</a>',
         maxZoom: 19,
       }).addTo(mapInstanceRef.current!);
     };
@@ -260,7 +260,7 @@ export function DestinationsMap({
     <div
       ref={mapRef}
       className="destinations-map w-full h-full"
-      style={{ background: theme === 'dark' ? '#0a0a0a' : '#f5f5f5' }}
+      style={{ background: '#a8c8d8' }}
     />
   );
 }

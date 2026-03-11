@@ -269,7 +269,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
       </div>
 
       {/* Main content: split layout */}
-      <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row" style={{ height: 'calc(100vh - 260px)' }}>
+      <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row" style={{ height: 'calc(100vh - 180px)' }}>
         {/* Card grid (scrollable) */}
         <div
           ref={cardListRef}
@@ -316,7 +316,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
 
         {/* Map (sticky right panel on desktop, collapsible on mobile) */}
         {showMap && (
-          <div className="w-full md:w-[45%] lg:w-[50%] h-[50vh] md:h-full border-t md:border-t-0 md:border-l border-border relative">
+          <div className="w-full md:w-[45%] lg:w-[50%] h-[70vh] md:h-full border-t md:border-t-0 md:border-l border-border relative">
             <DestinationsMap
               destinations={filtered}
               allDestinations={destinations}
