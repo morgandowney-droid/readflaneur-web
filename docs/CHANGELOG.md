@@ -5,6 +5,15 @@
 
 ## 2026-03-11
 
+**LC-pattern header icon cluster:**
+- Replaced "Account" text link with person circle SVG icon, matching Le Collectionist's header layout where heart and person icons sit at the far right.
+- Header layout: `FLANEUR ... [search] NEIGHBORHOODS DESTINATIONS STORIES | [heart] [person] [theme] [language]`
+- Icon cluster separated from text nav links by a left border divider.
+- Person icon links to `/account` when signed in, `/login` when not. Invisible placeholder during auth loading prevents layout shift.
+- Admin text links (Admin, Dashboard) remain as text before the icon group for signed-in admins.
+- Removed `/lists` page entirely - wishlist dropdown is the sole lists interface (pure LC pattern).
+- Files: `src/components/layout/Header.tsx`
+
 **Fix Unsplash search returning irrelevant photos for generic neighborhood names:**
 - Both search queries in `unsplash.ts` now include city name: `"{name} {city} architecture lifestyle"` + `"{name} {city} street photography"`. Previously the second query was `"{name} street photography"` with no city, so "West Village street photography" returned photos from villages in Africa.
 - Affects both `searchAllCategories()` and `searchAllCategoriesWithAlternates()`.
