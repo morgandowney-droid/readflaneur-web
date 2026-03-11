@@ -36,51 +36,14 @@ export function WishlistDropdown({ className }: { className?: string }) {
     }
     setDetailsLoading(true);
     try {
-      const { createClient } = await import('@/lib/supabase/client');
-      const supabase = createClient();
-
-      // Fetch neighborhoods
-      const { data: neighborhoods } = await supabase
-        .from('neighborhoods')
-        .select('id, name, city, country')
-        .in('id', defaultListIds);
-
-      // Fetch images
-      const { data: images } = await supabase
-        .from('image_library_status')
-        .select('neighborhood_id, unsplash_photos')
-        .in('neighborhood_id', defaultListIds);
-
-      const imageMap: Record<string, string> = {};
-      if (images) {
-        for (const row of images) {
-          if (!row.unsplash_photos) continue;
-          const cats = ['daily-brief-1', 'daily-brief-2', 'look-ahead-1', 'sunday-edition', 'rss-story'];
-          for (const cat of cats) {
-            const photo = (row.unsplash_photos as Record<string, { url?: string }>)[cat];
-            if (photo?.url) {
-              const url = photo.url.includes('?')
-                ? photo.url.replace(/&w=\d+/, '&w=200')
-                : `${photo.url}&w=200&q=80&fm=webp`;
-              imageMap[row.neighborhood_id] = url;
-              break;
-            }
-          }
-        }
-      }
-
-      if (neighborhoods) {
+      const ids = defaultListIds.join(',');
+      const res = await fetch(`/api/lists/details?ids=${encodeURIComponent(ids)}`);
+      if (res.ok) {
+        const { items } = await res.json();
         // Sort by defaultListIds order
         const ordered = defaultListIds
-          .map(id => neighborhoods.find(n => n.id === id))
-          .filter(Boolean)
-          .map(n => ({
-            id: n!.id,
-            name: n!.name,
-            city: n!.city,
-            country: n!.country,
-            imageUrl: imageMap[n!.id] || null,
-          }));
+          .map(id => (items as NeighborhoodDetail[]).find(n => n.id === id))
+          .filter((n): n is NeighborhoodDetail => !!n);
         setDetails(ordered);
       }
     } catch {
