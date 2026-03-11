@@ -3,6 +3,18 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-12
+
+**LC-style add-to-list modal and share fixes:**
+- Heart click on destination cards now opens `AddToListModal` (LC pattern) instead of directly toggling default list.
+- Modal shows all user's lists with 2x2 thumbnail grids of existing items (fetched from `/api/lists/details`), radio button selection, VALIDATE button.
+- CREATE A NEW LIST inline input at modal footer with OK/Cancel.
+- Dark toast confirmation ("X added to Y") in top-right corner for 3s after adding.
+- Fix: Default "Favourites" list was created without `share_token` in `ensure-default` endpoint, causing "Share List" button to be greyed out. Now generates 8-char token on creation.
+- Backfill: GET `/api/lists` now generates `share_token` for any existing lists missing one.
+- "Add Destinations" button added to wishlist dropdown footer below Share List on every list.
+- Files: `AddToListModal.tsx` (new), `DestinationsClient.tsx`, `DestinationCard.tsx`, `WishlistDropdown.tsx`, `ensure-default/route.ts`, `lists/route.ts`
+
 ## 2026-03-11
 
 **Switch destinations map to Mapbox GL JS:**
