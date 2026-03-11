@@ -299,70 +299,60 @@ export function Header() {
           >
             {t('nav.destinations')}
           </Link>
-          <WishlistDropdown />
-          {loading ? (
-            // Invisible placeholder while auth loads - prevents "SIGN IN" flash
-            <span className="text-[11px] tracking-[0.2em] uppercase text-transparent min-h-[44px] flex items-center select-none" aria-hidden>
-              {t('nav.account')}
-            </span>
-          ) : user ? (
-            <div className="flex items-center gap-4">
-              {isAdmin && (
-                <Link
-                  href="/admin/ads"
-                  data-admin
-                  className={cn(
-                    'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
-                    pathname.startsWith('/admin') ? 'text-fg font-medium border-accent' : 'text-fg-subtle border-transparent'
-                  )}
-                >
-                  Admin
-                </Link>
-              )}
-              {isAdmin && (
-                <Link
-                  href="/advertiser"
-                  data-admin
-                  className={cn(
-                    'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
-                    pathname.startsWith('/advertiser') ? 'text-fg font-medium border-accent' : 'text-fg-subtle border-transparent'
-                  )}
-                >
-                  Dashboard
-                </Link>
-              )}
-              <Link
-                href="/feed"
-                className={cn(
-                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
-                  pathname === '/feed' ? 'text-fg font-medium border-accent' : 'text-fg-subtle border-transparent'
-                )}
-              >
-                {t('nav.stories')}
-              </Link>
-              <Link
-                href="/account"
-                className={cn(
-                  'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
-                  pathname === '/account' ? 'text-fg font-medium border-accent' : 'text-fg-subtle border-transparent'
-                )}
-              >
-                {t('nav.account')}
-              </Link>
-            </div>
-          ) : (
+          {user && isAdmin && (
             <Link
-              href="/login"
+              href="/admin/ads"
+              data-admin
               className={cn(
-                'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center',
-                pathname === '/login' ? 'text-fg font-medium' : 'text-fg-subtle'
+                'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
+                pathname.startsWith('/admin') ? 'text-fg font-medium border-accent' : 'text-fg-subtle border-transparent'
               )}
             >
-              {t('nav.signIn')}
+              Admin
             </Link>
           )}
-          {/* Icon controls pinned to far right - never shift when text labels change width */}
-          <div className="flex items-center gap-3 pl-3 border-l border-border -ml-2">
+          {user && isAdmin && (
+            <Link
+              href="/advertiser"
+              data-admin
+              className={cn(
+                'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
+                pathname.startsWith('/advertiser') ? 'text-fg font-medium border-accent' : 'text-fg-subtle border-transparent'
+              )}
+            >
+              Dashboard
+            </Link>
+          )}
+          <Link
+            href="/feed"
+            className={cn(
+              'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
+              pathname === '/feed' ? 'text-fg font-medium border-accent' : 'text-fg-subtle border-transparent'
+            )}
+          >
+            {t('nav.stories')}
+          </Link>
+          {/* Icon controls - LC pattern: heart then person then theme/language */}
+          <div className="flex items-center gap-1 pl-3 border-l border-border -ml-2">
+            <WishlistDropdown />
+            {loading ? (
+              <span className="min-w-[44px] min-h-[44px] flex items-center justify-center" aria-hidden />
+            ) : (
+              <Link
+                href={user ? '/account' : '/login'}
+                className={cn(
+                  'min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors',
+                  pathname === '/account' || pathname === '/login' ? 'text-fg' : 'text-fg-muted hover:text-fg'
+                )}
+                aria-label={user ? t('nav.account') : t('nav.signIn')}
+                title={user ? t('nav.account') : t('nav.signIn')}
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </Link>
+            )}
             <ThemeToggle />
             <LanguageToggle />
           </div>
