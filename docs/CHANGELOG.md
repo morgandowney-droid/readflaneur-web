@@ -5,6 +5,16 @@
 
 ## 2026-03-11
 
+**Wishlist Heart Dropdown and Shareable Destination Lists:**
+- Le Collectionist-inspired `WishlistDropdown` component in header top-right: heart icon with outline (empty) / filled (has items) states, amber count badge showing saved destination count.
+- Empty state: centered heart outline, "No list yet" heading, description text, "ADD DESTINATIONS" CTA linking to `/destinations`.
+- With items: scrollable list (max 320px) of saved destinations with Unsplash thumbnails (200px), neighborhood name, city/country, remove X button (opacity on hover), links to neighborhood feed pages.
+- Footer actions: "View all" link to `/destinations`, "Share list" button that copies shareable URL to clipboard (with checkmark + "Link copied" confirmation).
+- Mobile hamburger menu: "My List" link with heart icon navigates to `/destinations`.
+- Shareable list page at `/lists/[shareToken]`: server component fetches list by 8-char share token with full OG metadata (`{name} - Flaneur`, `A curated list of N destinations`). Client component renders hero section with list name, creator name, country count, copy link button, responsive 3-column neighborhood grid with 4:3 Unsplash photos and hover scale, photographer credits, bottom "ADD DESTINATIONS" CTA.
+- 12 `wishlist.*` translation keys in all 9 languages: `noList`, `addDestinations`, `shareList`, `emptyDescription`, `savedDestinations`, `copyLink`, `linkCopied`, `viewAll`, `title`, `sharedList`, `neighborhoods`.
+- Files: `src/components/layout/WishlistDropdown.tsx`, `src/app/lists/[shareToken]/page.tsx`, `src/app/lists/[shareToken]/SharedListClient.tsx`, `src/components/layout/Header.tsx`, `src/lib/translations.ts`
+
 **Destinations Page with Interactive Map and Destination Lists:**
 - New `/destinations` page with Le Collectionist-inspired split-view layout: scrollable neighborhood card grid on the left, interactive Leaflet map with CARTO tile layers on the right. Map collapsible on mobile.
 - Bidirectional filtering: region pills, country dropdown, search, and map bounds all filter the card grid. Region/country changes trigger map `fitBounds` animation. Map pan/zoom filters cards within visible bounds (300ms debounce).
