@@ -5,6 +5,12 @@
 
 ## 2026-03-11
 
+**Fix theme persistence - light mode reverting to dark:**
+- Added `suppressHydrationWarning` to `<html>` element in `layout.tsx` - prevents React hydration from stripping the `data-theme` attribute that the inline script sets before first paint.
+- `useTheme` hook now re-sets `data-theme` attribute on `<html>` during mount useEffect as a safety net, ensuring the attribute is always present even if hydration removed it.
+- Root cause: inline `<script>` sets `data-theme="light"` before hydration, but React reconciliation could remove it since the server-rendered `<html>` doesn't include the attribute. Without `data-theme`, CSS falls back to `:root` dark variables.
+- Files: `src/app/layout.tsx`, `src/hooks/useTheme.ts`
+
 **Wishlist Heart Dropdown and Shareable Destination Lists:**
 - Le Collectionist-inspired `WishlistDropdown` component in header top-right: heart icon with outline (empty) / filled (has items) states, amber count badge showing saved destination count.
 - Empty state: centered heart outline, "No list yet" heading, description text, "ADD DESTINATIONS" CTA linking to `/destinations`.
