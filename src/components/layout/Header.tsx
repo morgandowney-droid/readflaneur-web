@@ -11,6 +11,7 @@ import type { Section, Neighborhood } from '@/types';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { LanguageToggle } from '@/components/layout/LanguageToggle';
+import { WishlistDropdown } from '@/components/layout/WishlistDropdown';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 
@@ -315,6 +316,7 @@ export function Header() {
           >
             {t('nav.destinations')}
           </Link>
+          <WishlistDropdown />
           {loading ? (
             // Invisible placeholder while auth loads - prevents "SIGN IN" flash
             <span className="text-[11px] tracking-[0.2em] uppercase text-transparent min-h-[44px] flex items-center select-none" aria-hidden>
@@ -514,6 +516,16 @@ export function Header() {
               )}
             >
               {t('nav.destinations')}
+            </Link>
+            <Link
+              href="/destinations"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-sm tracking-widest uppercase transition-colors hover:text-fg py-3 border-b border-border text-fg-muted flex items-center justify-end gap-2"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+              </svg>
+              {t('wishlist.title')}
             </Link>
 
             {!loading && user ? (
