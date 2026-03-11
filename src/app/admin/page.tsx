@@ -15,6 +15,7 @@ const adminPages = [
   { href: '/admin/analytics', title: 'Analytics', description: 'View site analytics' },
   { href: '/admin/newsletter', title: 'Newsletter', description: 'Manage newsletter subscribers' },
   { href: '/admin/sections', title: 'Sections', description: 'Manage content sections' },
+  { href: '/admin/image-review', title: 'Image Review', description: 'Review and remove bad Unsplash photos' },
 ];
 
 export default function AdminPage() {
