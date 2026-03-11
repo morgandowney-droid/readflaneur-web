@@ -5,6 +5,13 @@
 
 ## 2026-03-11
 
+**LC-style destination cards with text below image:**
+- Card text (name/city/country) moved below image instead of overlaid on gradient. Gradient overlay removed entirely.
+- Heart icon is now the only element on the image (white outline, no circular button background). Newspaper/feed toggle icon moved to text area next to neighborhood name.
+- "In your feed" changed from badge on image to simple accent text below image. Card border/hover removed (just opacity change on selected). Community badge repositioned to text area.
+- Grid changed to 2-column (removed `lg:grid-cols-3`). "Our Neighborhoods" page heading removed. All Filters panel narrowed to 380px. Map narrowed to 40%/45% (was 45%/50%). Tighter spacing throughout.
+- Files: `src/components/destinations/DestinationCard.tsx`, `src/components/destinations/DestinationsClient.tsx`
+
 **LC-style destinations filter bar:**
 - Replaced bordered region pills + country dropdown with 4-button LC-style filter bar: ALL FILTERS (slide-out panel), COASTAL (multi-select dropdown with coastal regions), SLOPES (multi-select dropdown with mountain regions), COLLECTIONS (dropdown with list items).
 - Buttons use `text-[13px] tracking-[0.08em] uppercase` with `ml-6` spacing, no borders/backgrounds.
