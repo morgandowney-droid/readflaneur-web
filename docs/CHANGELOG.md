@@ -5,6 +5,14 @@
 
 ## 2026-03-11
 
+**Switch map from ArcGIS Ocean to CARTO tiles, fix zoom-in tile failure:**
+- ArcGIS Ocean basemap had no tile coverage at zoom 10+ for land areas, showing "Map data not yet available" when clicking a neighborhood card and flying to it.
+- Switched to CARTO tiles: Voyager (light mode), dark_all (dark mode). Free, works at all zoom levels, clean Mapbox-like style.
+- FlyTo zoom reduced from 12 to 9 for better surrounding context when selecting a neighborhood.
+- Background color changed from ocean blue (#a8c8d8) to theme surface variable (`var(--theme-surface)`).
+- Attribution updated from Esri to OSM/CARTO.
+- File: `src/components/destinations/DestinationsMap.tsx`
+
 **Fix wishlist dropdown rendering behind Leaflet map:**
 - WishlistDropdown wrapper div was `relative` with no z-index, causing dropdown to render behind Leaflet map's stacking context on destinations page.
 - Added `z-[60]` to wrapper div.
@@ -37,13 +45,11 @@
 - Removed unused `Link` import and `'guide'` from `DropdownKey` union type.
 - File: `src/components/feed/NeighborhoodHeader.tsx`
 
-**LC-style map with ocean tiles, black dots, and full height:**
-- Switched map tiles from CARTO (dark/light abstract) to ArcGIS Ocean World_Ocean_Base (blue sea, green/white land) matching Le Collectionist's natural geography map style.
+**LC-style map with black dots and full height (ArcGIS Ocean tiles, later reverted to CARTO):**
+- Switched map tiles from CARTO to ArcGIS Ocean World_Ocean_Base (later reverted - no tile coverage at zoom 10+).
 - Changed all marker dots from amber (#f59e0b/#fbbf24) to black (#1a1a1a/#000000). Hover/selected state uses slightly lighter dark grey (#333333) for subtle differentiation.
-- Map background color changed from theme-dependent (#0a0a0a/#f5f5f5) to ocean blue (#a8c8d8) matching the tile style.
 - Desktop container height increased from `calc(100vh - 260px)` to `calc(100vh - 180px)` for fuller map display.
 - Mobile map height increased from `h-[50vh]` to `h-[70vh]` for more immersive mobile experience.
-- Attribution updated from OSM/CARTO to Esri.
 - Files: `src/components/destinations/DestinationsMap.tsx`, `src/components/destinations/DestinationsClient.tsx`
 
 **LC-pattern header icon cluster:**
