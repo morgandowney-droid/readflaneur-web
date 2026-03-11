@@ -748,7 +748,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
       {/* Main content: split layout */}
       <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row md:h-[calc(100vh-120px)]">
         {/* Card grid (scrollable) */}
-        <div ref={cardListRef} className="flex-1 overflow-y-auto px-4 md:px-6 py-4 min-h-0">
+        <div ref={cardListRef} className="flex-1 overflow-y-auto px-4 md:px-6 py-4 min-h-0 scrollbar-hide">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <p className="text-fg-muted text-sm">No destinations match your filters.</p>

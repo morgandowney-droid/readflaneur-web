@@ -159,17 +159,17 @@ export function DestinationsMap({
 
       const marker = L.circleMarker([d.lat, d.lng], {
         radius: 5,
-        fillColor: '#1a1a1a',
-        fillOpacity: 0.9,
-        color: '#000000',
-        weight: 1,
-        opacity: 0.7,
+        fillColor: '#444444',
+        fillOpacity: 0.95,
+        color: '#ffffff',
+        weight: 1.5,
+        opacity: 0.9,
       }).addTo(map);
 
       marker.on('mouseover', () => {
         onHover(d.id);
         marker.setRadius(8);
-        marker.setStyle({ fillOpacity: 1, weight: 2 });
+        marker.setStyle({ fillOpacity: 1, weight: 2, color: '#ffffff' });
         marker.bindPopup(
           `<div style="font-family: var(--font-display); font-size: 13px; font-weight: 300; letter-spacing: 0.05em;">${d.name}<br/><span style="font-size: 10px; opacity: 0.6; letter-spacing: 0.1em; text-transform: uppercase;">${d.city}, ${d.country}</span></div>`,
           { className: 'dest-popup', closeButton: false, offset: [0, -4] }
@@ -179,7 +179,7 @@ export function DestinationsMap({
       marker.on('mouseout', () => {
         onHover(null);
         marker.setRadius(5);
-        marker.setStyle({ fillOpacity: 0.8, weight: 1 });
+        marker.setStyle({ fillOpacity: 0.95, weight: 1.5, color: '#ffffff' });
         marker.closePopup();
       });
 
@@ -194,10 +194,10 @@ export function DestinationsMap({
     markersRef.current.forEach((marker, id) => {
       if (id === hoveredId || id === selectedId) {
         marker.setRadius(9);
-        marker.setStyle({ fillColor: '#333333', fillOpacity: 1, weight: 2, color: '#000000' });
+        marker.setStyle({ fillColor: '#333333', fillOpacity: 1, weight: 2, color: '#ffffff' });
       } else {
         marker.setRadius(5);
-        marker.setStyle({ fillColor: '#1a1a1a', fillOpacity: 0.9, weight: 1, color: '#000000' });
+        marker.setStyle({ fillColor: '#444444', fillOpacity: 0.95, weight: 1.5, color: '#ffffff' });
       }
     });
   }, [hoveredId, selectedId]);
