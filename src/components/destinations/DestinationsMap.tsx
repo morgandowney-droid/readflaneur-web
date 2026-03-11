@@ -17,8 +17,8 @@ interface Props {
 }
 
 const TILE_URLS = {
-  dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-  light: 'https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}@2x.png',
+  dark: 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png',
+  light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
 };
 
 export function DestinationsMap({
