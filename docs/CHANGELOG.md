@@ -14,6 +14,16 @@
 - Removed `/lists` page entirely - wishlist dropdown is the sole lists interface (pure LC pattern).
 - Files: `src/components/layout/Header.tsx`
 
+**LC-style wishlist dropdown with full list management:**
+- Three-dot "Parameters" menu matches Le Collectionist exactly: SHARE WITH A FRIEND (share icon), RENAME THE LIST (pencil icon), DELETE THE LIST (trash icon) - each with tracked-caps uppercase labels.
+- "CREATE A NEW LIST" moved from three-dot menu to list selector dropdown (bottom of list names, separated by border divider), matching LC's second dropdown panel.
+- Rename functionality: clicking "Rename the List" shows inline input below selector with current name pre-filled, OK/cancel buttons. Uses `updateList(id, { name })` from hook.
+- List selector shows all lists with item counts, active list highlighted with `bg-surface`.
+- Share copies list URL to clipboard with "Link copied" feedback, also works via three-dot menu.
+- Default list cannot be renamed or deleted (buttons disabled with opacity).
+- 6 new translation keys in all 9 languages: `wishlist.myFavourites`, `wishlist.createNewList`, `wishlist.deleteList`, `wishlist.shareWithFriend`, `wishlist.renameList`, `wishlist.shareDescription`.
+- Files: `src/components/layout/WishlistDropdown.tsx`, `src/lib/translations.ts`
+
 **Fix Unsplash search returning irrelevant photos for generic neighborhood names:**
 - Both search queries in `unsplash.ts` now include city name: `"{name} {city} architecture lifestyle"` + `"{name} {city} street photography"`. Previously the second query was `"{name} street photography"` with no city, so "West Village street photography" returned photos from villages in Africa.
 - Affects both `searchAllCategories()` and `searchAllCategoriesWithAlternates()`.
