@@ -340,6 +340,14 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     ? toHeadlineCase(briefForHeadline.subject_teaser)
     : briefForHeadline?.headline || undefined;
 
+  // Find the brief article URL for the hero (first brief_summary for primary neighborhood)
+  const primaryBriefArticle = (articles || []).find((a: any) =>
+    a.article_type === 'brief_summary' && a.neighborhood_id === primaryId
+  );
+  const heroArticleUrl = primaryBriefArticle
+    ? `/${getCitySlugFromId(primaryBriefArticle.neighborhood_id)}/${getNeighborhoodSlugFromId(primaryBriefArticle.neighborhood_id)}/${primaryBriefArticle.slug}`
+    : undefined;
+
   // Separate featured articles (with images) for editorial grid from the rest
   const editorialArticles = (articles || []).filter((a: any) => a.image_url && a.neighborhood).slice(0, 5);
 
@@ -352,6 +360,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
           neighborhoodName={primaryHoodForWeather.name}
           city={primaryHoodForWeather.city}
           headline={heroHeadline}
+          articleUrl={heroArticleUrl}
           timezone={primaryHoodForWeather.timezone}
           country={primaryHoodForWeather.country}
           latitude={primaryHoodForWeather.latitude}
