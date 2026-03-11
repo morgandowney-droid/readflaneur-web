@@ -5,6 +5,26 @@
 
 ## 2026-03-11
 
+**LC-style destinations filter bar:**
+- Replaced bordered region pills + country dropdown with 4-button LC-style filter bar: ALL FILTERS (slide-out panel), COASTAL (multi-select dropdown with coastal regions), SLOPES (multi-select dropdown with mountain regions), COLLECTIONS (dropdown with list items).
+- Buttons use `text-[13px] tracking-[0.08em] uppercase` with `ml-6` spacing, no borders/backgrounds.
+- Count/sort row moved below buttons: "270 neighborhoods | Sort by: recommended".
+- Coastal/Slopes dropdowns have "See the selection" editorial links (future pages at `/destinations/coastal` and `/destinations/slopes`), Validate/Erase All buttons.
+- Recommended sort now falls back to region grouping (Europe, Asia, Middle East, etc.) when user geolocation is unavailable.
+- All Filters panel uses `slideInLeft` CSS animation with `scrollbar-hide` utility.
+- Destination cards changed from `rounded-xl` to `rounded-sm` for sharper LC aesthetic.
+- Files: `src/components/destinations/DestinationsClient.tsx`, `src/components/destinations/DestinationCard.tsx`, `src/app/destinations/page.tsx`, `src/app/globals.css`
+
+**Restore heart count badge:**
+- Re-added visible count badge on header heart icon showing total items across all lists when > 0.
+- Badge: `absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-fg text-canvas text-[9px]`.
+- File: `src/components/layout/WishlistDropdown.tsx`
+
+**Remove Guide link from neighborhood pages:**
+- Removed Guide link from 3 locations: desktop combo dropdown, non-combo desktop inline links, and mobile overflow menu.
+- Removed unused `Link` import and `'guide'` from `DropdownKey` union type.
+- File: `src/components/feed/NeighborhoodHeader.tsx`
+
 **LC-style map with ocean tiles, black dots, and full height:**
 - Switched map tiles from CARTO (dark/light abstract) to ArcGIS Ocean World_Ocean_Base (blue sea, green/white land) matching Le Collectionist's natural geography map style.
 - Changed all marker dots from amber (#f59e0b/#fbbf24) to black (#1a1a1a/#000000). Hover/selected state uses slightly lighter dark grey (#333333) for subtle differentiation.
