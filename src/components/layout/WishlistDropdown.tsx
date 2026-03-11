@@ -30,6 +30,7 @@ export function WishlistDropdown({ className }: { className?: string }) {
   const [creating, setCreating] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fetchedIdsRef = useRef<string>('');
 
@@ -118,19 +119,39 @@ export function WishlistDropdown({ className }: { className?: string }) {
     fetchedIdsRef.current = '';
   };
 
-  const handleShare = async () => {
-    if (!activeList?.share_token) return;
-    const url = `${window.location.origin}/lists/${activeList.share_token}`;
+  const getShareUrl = () =>
+    activeList?.share_token ? `${window.location.origin}/lists/${activeList.share_token}` : '';
+
+  const handleOpenShareModal = () => {
+    setMenuOpen(false);
+    setShareModalOpen(true);
+  };
+
+  const handleCopyLink = async () => {
+    const url = getShareUrl();
+    if (!url) return;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      if (navigator.share) {
-        navigator.share({ title: activeList.name, url }).catch(() => {});
-      }
+      // fallback handled by other share options
     }
-    setMenuOpen(false);
+  };
+
+  const handleShareEmail = () => {
+    const url = getShareUrl();
+    const subject = encodeURIComponent(`Check out my ${activeList?.name || 'list'} on Flaneur`);
+    const body = encodeURIComponent(`I wanted to share my curated list of destinations with you:\n\n${url}`);
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_self');
+    setShareModalOpen(false);
+  };
+
+  const handleShareWhatsApp = () => {
+    const url = getShareUrl();
+    const text = encodeURIComponent(`Check out my curated list of destinations on Flaneur: ${url}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+    setShareModalOpen(false);
   };
 
   const handleCreateList = async () => {
@@ -328,7 +349,7 @@ export function WishlistDropdown({ className }: { className?: string }) {
                     <div className="absolute top-full right-0 mt-1 w-52 bg-elevated border border-border rounded-sm shadow-lg z-10 overflow-hidden">
                       {/* SHARE WITH A FRIEND */}
                       <button
-                        onClick={handleShare}
+                        onClick={handleOpenShareModal}
                         disabled={!activeList?.share_token}
                         className="w-full text-left px-3 py-2.5 text-sm text-fg-muted hover:text-fg hover:bg-hover transition-colors flex items-center gap-2.5 disabled:opacity-30"
                       >
@@ -412,14 +433,20 @@ export function WishlistDropdown({ className }: { className?: string }) {
                     {t('general.loading')}
                   </div>
                 ) : activeItems.length === 0 ? (
-                  <div className="px-4 py-8 text-center">
-                    <p className="text-sm text-fg-muted mb-3">This list is empty</p>
+                  <div className="px-6 py-8 flex flex-col items-center text-center">
+                    <svg className="w-12 h-12 text-fg-subtle mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                    <p className="text-sm text-fg-muted mb-1">{t('wishlist.noFavoritesYet')}</p>
+                    <p className="text-sm text-fg-muted mb-5 max-w-[240px]">
+                      {t('wishlist.emptyListDescription')}
+                    </p>
                     <Link
                       href="/destinations"
                       onClick={() => setOpen(false)}
-                      className="text-xs text-accent hover:underline"
+                      className="w-full bg-fg text-canvas text-[11px] tracking-[0.2em] uppercase py-3 rounded-sm hover:opacity-90 transition-opacity font-medium text-center block"
                     >
-                      Browse destinations to add
+                      {t('wishlist.addDestinations')}
                     </Link>
                   </div>
                 ) : (
@@ -472,20 +499,81 @@ export function WishlistDropdown({ className }: { className?: string }) {
               </div>
 
               {/* Footer CTA - Share this list */}
-              <div className="px-4 py-4 border-t border-border">
-                <p className="text-sm text-fg-muted text-center mb-3">
-                  {t('wishlist.shareDescription')}
-                </p>
-                <button
-                  onClick={handleShare}
-                  disabled={!activeList?.share_token || activeItems.length === 0}
-                  className="w-full bg-fg text-canvas text-[11px] tracking-[0.2em] uppercase py-3 rounded-sm hover:opacity-90 transition-opacity disabled:opacity-30 font-medium"
-                >
-                  {copied ? t('wishlist.linkCopied') : t('wishlist.shareList')}
-                </button>
-              </div>
+              {activeItems.length > 0 && (
+                <div className="px-4 py-4 border-t border-border">
+                  <p className="text-sm text-fg-muted text-center mb-3">
+                    {t('wishlist.shareDescription')}
+                  </p>
+                  <button
+                    onClick={handleOpenShareModal}
+                    disabled={!activeList?.share_token}
+                    className="w-full bg-fg text-canvas text-[11px] tracking-[0.2em] uppercase py-3 rounded-sm hover:opacity-90 transition-opacity disabled:opacity-30 font-medium"
+                  >
+                    {t('wishlist.shareList')}
+                  </button>
+                </div>
+              )}
             </div>
           )}
+        </div>
+      )}
+      {/* Share modal overlay (LC "Share my list" pattern) */}
+      {shareModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center"
+          onClick={() => { setShareModalOpen(false); setCopied(false); }}
+        >
+          <div
+            className="bg-elevated rounded-sm shadow-xl w-[420px] max-w-[90vw] overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-6 pb-4">
+              <h3 className="font-display text-lg text-fg">{t('wishlist.shareMyList')}</h3>
+              <button
+                onClick={() => { setShareModalOpen(false); setCopied(false); }}
+                className="text-fg-muted hover:text-fg transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Share options */}
+            <div className="border-t border-border">
+              {/* COPY THE LINK */}
+              <button
+                onClick={handleCopyLink}
+                className="w-full text-left px-6 py-4 text-sm hover:bg-hover transition-colors border-b border-border flex items-center justify-between"
+              >
+                <span className="text-[11px] tracking-[0.15em] uppercase text-fg">
+                  {copied ? t('wishlist.linkCopiedCheck') : t('wishlist.copyTheLink')}
+                </span>
+                {copied && (
+                  <svg className="w-4 h-4 text-fg" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
+
+              {/* SEND BY E-MAIL */}
+              <button
+                onClick={handleShareEmail}
+                className="w-full text-left px-6 py-4 text-sm hover:bg-hover transition-colors border-b border-border"
+              >
+                <span className="text-[11px] tracking-[0.15em] uppercase text-fg">{t('wishlist.sendByEmail')}</span>
+              </button>
+
+              {/* SEND ON WHATSAPP */}
+              <button
+                onClick={handleShareWhatsApp}
+                className="w-full text-left px-6 py-4 text-sm hover:bg-hover transition-colors"
+              >
+                <span className="text-[11px] tracking-[0.15em] uppercase text-fg">{t('wishlist.sendOnWhatsApp')}</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
