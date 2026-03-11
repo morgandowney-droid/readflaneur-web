@@ -1,8 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import type L from 'leaflet';
-import type { Map as LeafletMap, CircleMarker, TileLayer } from 'leaflet';
+import { useEffect, useRef, useState } from 'react';
 import type { Destination } from './DestinationsClient';
 
 interface Props {
@@ -16,10 +14,12 @@ interface Props {
   theme: 'dark' | 'light';
 }
 
-const TILE_URLS = {
-  dark: 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png',
-  light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+const MAPBOX_STYLES = {
+  dark: 'mapbox://styles/mapbox/dark-v11',
+  light: 'mapbox://styles/mapbox/streets-v12',
 };
+
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 
 export function DestinationsMap({
   destinations,
@@ -32,221 +32,315 @@ export function DestinationsMap({
   theme,
 }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<LeafletMap | null>(null);
-  const markersRef = useRef<Map<string, CircleMarker>>(new Map());
-  const tileRef = useRef<TileLayer | null>(null);
+  const mapInstanceRef = useRef<mapboxgl.Map | null>(null);
+  const popupRef = useRef<mapboxgl.Popup | null>(null);
   const [isClient, setIsClient] = useState(false);
   const isUserPanning = useRef(false);
   const boundsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoveredIdRef = useRef<string | null>(null);
+  const selectedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // Keep refs in sync for event handlers
+  useEffect(() => { hoveredIdRef.current = hoveredId; }, [hoveredId]);
+  useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
+
   // Initialize map
   useEffect(() => {
-    if (!isClient || !mapRef.current || mapInstanceRef.current) return;
+    if (!isClient || !mapRef.current || mapInstanceRef.current || !MAPBOX_TOKEN) return;
 
-    const loadMap = async () => {
-      // Inject Leaflet CSS
-      if (!document.getElementById('leaflet-css')) {
-        const link = document.createElement('link');
-        link.id = 'leaflet-css';
-        link.rel = 'stylesheet';
-        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-        document.head.appendChild(link);
-      }
+    const initMap = async () => {
+      const mapboxgl = (await import('mapbox-gl')).default;
+      await import('mapbox-gl/dist/mapbox-gl.css');
 
-      if (!document.getElementById('destinations-map-css')) {
-        const style = document.createElement('style');
-        style.id = 'destinations-map-css';
-        style.textContent = `
-          .leaflet-control-attribution {
-            font-size: 9px !important;
-            color: #999 !important;
-            background: transparent !important;
-          }
-          .leaflet-control-attribution a { color: #888 !important; }
-          .destinations-map .leaflet-control-zoom { border: none !important; }
-          .destinations-map .leaflet-control-zoom a {
-            background: var(--theme-surface, #121212) !important;
-            color: var(--theme-fg, #e5e5e5) !important;
-            border: 1px solid var(--theme-border, rgba(255,255,255,0.08)) !important;
-            width: 32px !important; height: 32px !important;
-            line-height: 32px !important; font-size: 16px !important;
-          }
-          .destinations-map .leaflet-control-zoom a:hover {
-            background: var(--theme-elevated, #1a1a1a) !important;
-          }
-          .dest-popup .leaflet-popup-content-wrapper {
-            background: var(--theme-surface, #121212);
-            color: var(--theme-fg, #e5e5e5);
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            padding: 0;
-          }
-          .dest-popup .leaflet-popup-tip { background: var(--theme-surface, #121212); }
-          .dest-popup .leaflet-popup-content { margin: 10px 14px; }
-        `;
-        document.head.appendChild(style);
-      }
+      mapboxgl.accessToken = MAPBOX_TOKEN;
 
-      const L = (await import('leaflet')).default;
-
-      const map = L.map(mapRef.current!, {
-        center: [30, 10],
-        zoom: 2,
-        scrollWheelZoom: true,
-        zoomControl: true,
-        attributionControl: false,
-        minZoom: 2,
+      const map = new mapboxgl.Map({
+        container: mapRef.current!,
+        style: theme === 'dark' ? MAPBOX_STYLES.dark : MAPBOX_STYLES.light,
+        center: [10, 30],
+        zoom: 1.8,
+        minZoom: 1.5,
         maxZoom: 16,
+        attributionControl: true,
+        projection: 'mercator',
       });
 
-      L.control.attribution({ prefix: false }).addTo(map);
+      // Compact attribution
+      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
 
-      const isDark = theme === 'dark';
-      const tileLayer = L.tileLayer(isDark ? TILE_URLS.dark : TILE_URLS.light, {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-        maxZoom: 19,
-      }).addTo(map);
-      tileRef.current = tileLayer;
-
-      // Emit bounds on move
-      map.on('moveend', () => {
-        if (!isUserPanning.current) return;
-        if (boundsTimeoutRef.current) clearTimeout(boundsTimeoutRef.current);
-        boundsTimeoutRef.current = setTimeout(() => {
-          const b = map.getBounds();
-          onBoundsChange({
-            north: b.getNorth(),
-            south: b.getSouth(),
-            east: b.getEast(),
-            west: b.getWest(),
-          });
-        }, 300);
+      // Create popup (reused)
+      const popup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false,
+        offset: 8,
+        className: 'dest-mapbox-popup',
       });
+      popupRef.current = popup;
 
-      map.on('dragstart', () => { isUserPanning.current = true; });
-      map.on('zoomstart', () => { isUserPanning.current = true; });
+      map.on('load', () => {
+        // Add GeoJSON source for all destinations
+        const features = allDestinations
+          .filter(d => d.lat && d.lng)
+          .map(d => ({
+            type: 'Feature' as const,
+            geometry: {
+              type: 'Point' as const,
+              coordinates: [d.lng, d.lat],
+            },
+            properties: {
+              id: d.id,
+              name: d.name,
+              city: d.city,
+              country: d.country,
+            },
+          }));
+
+        map.addSource('destinations', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features },
+        });
+
+        // Circle layer - all dots
+        map.addLayer({
+          id: 'destination-dots',
+          type: 'circle',
+          source: 'destinations',
+          paint: {
+            'circle-radius': [
+              'case',
+              ['any',
+                ['==', ['get', 'id'], hoveredId || ''],
+                ['==', ['get', 'id'], selectedId || ''],
+              ],
+              7,
+              4.5,
+            ],
+            'circle-color': '#444444',
+            'circle-opacity': 0.95,
+            'circle-stroke-width': 1.5,
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-opacity': 0.9,
+          },
+        });
+
+        // Hover interaction
+        map.on('mouseenter', 'destination-dots', (e) => {
+          map.getCanvas().style.cursor = 'pointer';
+          if (!e.features?.[0]) return;
+          const feat = e.features[0];
+          const id = feat.properties?.id;
+          const name = feat.properties?.name;
+          const city = feat.properties?.city;
+          const country = feat.properties?.country;
+          const coords = (feat.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
+
+          onHover(id);
+
+          popup
+            .setLngLat(coords)
+            .setHTML(
+              `<div style="font-family: var(--font-display, Georgia, serif); font-size: 13px; font-weight: 300; letter-spacing: 0.05em; padding: 6px 10px;">${name}<br/><span style="font-size: 10px; opacity: 0.6; letter-spacing: 0.1em; text-transform: uppercase;">${city}, ${country}</span></div>`
+            )
+            .addTo(map);
+        });
+
+        map.on('mouseleave', 'destination-dots', () => {
+          map.getCanvas().style.cursor = '';
+          onHover(null);
+          popup.remove();
+        });
+
+        // Click interaction
+        map.on('click', 'destination-dots', (e) => {
+          if (!e.features?.[0]) return;
+          const id = e.features[0].properties?.id;
+          if (id) onSelect(id);
+        });
+
+        // Bounds change on user pan/zoom
+        map.on('moveend', () => {
+          if (!isUserPanning.current) return;
+          if (boundsTimeoutRef.current) clearTimeout(boundsTimeoutRef.current);
+          boundsTimeoutRef.current = setTimeout(() => {
+            const b = map.getBounds();
+            onBoundsChange({
+              north: b.getNorth(),
+              south: b.getSouth(),
+              east: b.getEast(),
+              west: b.getWest(),
+            });
+          }, 300);
+        });
+
+        map.on('dragstart', () => { isUserPanning.current = true; });
+        map.on('zoomstart', () => { isUserPanning.current = true; });
+      });
 
       mapInstanceRef.current = map;
-
-      // Add markers for all destinations
-      addMarkers(L, map, allDestinations);
     };
 
-    loadMap();
+    initMap();
 
     return () => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
-      markersRef.current.clear();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isClient]);
 
-  // Add/update markers
-  const addMarkers = useCallback((L: typeof import('leaflet'), map: LeafletMap, dests: Destination[]) => {
-    // Clear existing
-    markersRef.current.forEach(m => m.remove());
-    markersRef.current.clear();
-
-    for (const d of dests) {
-      if (!d.lat || !d.lng) continue;
-
-      const marker = L.circleMarker([d.lat, d.lng], {
-        radius: 5,
-        fillColor: '#444444',
-        fillOpacity: 0.95,
-        color: '#ffffff',
-        weight: 1.5,
-        opacity: 0.9,
-      }).addTo(map);
-
-      marker.on('mouseover', () => {
-        onHover(d.id);
-        marker.setRadius(8);
-        marker.setStyle({ fillOpacity: 1, weight: 2, color: '#ffffff' });
-        marker.bindPopup(
-          `<div style="font-family: var(--font-display); font-size: 13px; font-weight: 300; letter-spacing: 0.05em;">${d.name}<br/><span style="font-size: 10px; opacity: 0.6; letter-spacing: 0.1em; text-transform: uppercase;">${d.city}, ${d.country}</span></div>`,
-          { className: 'dest-popup', closeButton: false, offset: [0, -4] }
-        ).openPopup();
-      });
-
-      marker.on('mouseout', () => {
-        onHover(null);
-        marker.setRadius(5);
-        marker.setStyle({ fillOpacity: 0.95, weight: 1.5, color: '#ffffff' });
-        marker.closePopup();
-      });
-
-      marker.on('click', () => onSelect(d.id));
-
-      markersRef.current.set(d.id, marker);
-    }
-  }, [onHover, onSelect]);
-
-  // Highlight hovered marker
+  // Update hovered/selected marker styling
   useEffect(() => {
-    markersRef.current.forEach((marker, id) => {
-      if (id === hoveredId || id === selectedId) {
-        marker.setRadius(9);
-        marker.setStyle({ fillColor: '#333333', fillOpacity: 1, weight: 2, color: '#ffffff' });
-      } else {
-        marker.setRadius(5);
-        marker.setStyle({ fillColor: '#444444', fillOpacity: 0.95, weight: 1.5, color: '#ffffff' });
-      }
-    });
+    const map = mapInstanceRef.current;
+    if (!map || !map.isStyleLoaded() || !map.getLayer('destination-dots')) return;
+
+    map.setPaintProperty('destination-dots', 'circle-radius', [
+      'case',
+      ['any',
+        ['==', ['get', 'id'], hoveredId || ''],
+        ['==', ['get', 'id'], selectedId || ''],
+      ],
+      7,
+      4.5,
+    ]);
+
+    map.setPaintProperty('destination-dots', 'circle-color', [
+      'case',
+      ['any',
+        ['==', ['get', 'id'], hoveredId || ''],
+        ['==', ['get', 'id'], selectedId || ''],
+      ],
+      '#333333',
+      '#444444',
+    ]);
+
+    map.setPaintProperty('destination-dots', 'circle-stroke-width', [
+      'case',
+      ['any',
+        ['==', ['get', 'id'], hoveredId || ''],
+        ['==', ['get', 'id'], selectedId || ''],
+      ],
+      2,
+      1.5,
+    ]);
   }, [hoveredId, selectedId]);
 
-  // Fly to selected
+  // Fly to selected destination
   useEffect(() => {
     if (!selectedId || !mapInstanceRef.current) return;
     const dest = allDestinations.find(d => d.id === selectedId);
     if (dest?.lat && dest?.lng) {
       isUserPanning.current = false;
-      mapInstanceRef.current.flyTo([dest.lat, dest.lng], 9, { duration: 0.8 });
+      mapInstanceRef.current.flyTo({
+        center: [dest.lng, dest.lat],
+        zoom: 9,
+        speed: 1.2,
+        curve: 1.42,
+        essential: true,
+      });
     }
   }, [selectedId, allDestinations]);
 
-  // Update tile layer on theme change
+  // Switch style on theme change
   useEffect(() => {
-    if (!mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+    if (!map) return;
 
-    const updateTiles = async () => {
-      const L = (await import('leaflet')).default;
-      if (tileRef.current) {
-        tileRef.current.remove();
+    const newStyle = theme === 'dark' ? MAPBOX_STYLES.dark : MAPBOX_STYLES.light;
+    map.setStyle(newStyle);
+
+    // Re-add source and layer after style load
+    map.once('style.load', () => {
+      const features = allDestinations
+        .filter(d => d.lat && d.lng)
+        .map(d => ({
+          type: 'Feature' as const,
+          geometry: {
+            type: 'Point' as const,
+            coordinates: [d.lng, d.lat],
+          },
+          properties: {
+            id: d.id,
+            name: d.name,
+            city: d.city,
+            country: d.country,
+          },
+        }));
+
+      if (!map.getSource('destinations')) {
+        map.addSource('destinations', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features },
+        });
       }
-      const isDark = theme === 'dark';
-      tileRef.current = L.tileLayer(isDark ? TILE_URLS.dark : TILE_URLS.light, {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-        maxZoom: 19,
-      }).addTo(mapInstanceRef.current!);
-    };
 
-    updateTiles();
-  }, [theme]);
+      if (!map.getLayer('destination-dots')) {
+        map.addLayer({
+          id: 'destination-dots',
+          type: 'circle',
+          source: 'destinations',
+          paint: {
+            'circle-radius': 4.5,
+            'circle-color': '#444444',
+            'circle-opacity': 0.95,
+            'circle-stroke-width': 1.5,
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-opacity': 0.9,
+          },
+        });
+      }
+    });
+  }, [theme, allDestinations]);
 
-  // Fit bounds when region/country changes (reset map view)
+  // Fit bounds when filtered destinations change
   useEffect(() => {
-    if (!mapInstanceRef.current || destinations.length === 0) return;
+    const map = mapInstanceRef.current;
+    if (!map || destinations.length === 0) return;
 
-    const lats = destinations.filter(d => d.lat && d.lng).map(d => d.lat);
-    const lngs = destinations.filter(d => d.lat && d.lng).map(d => d.lng);
-    if (lats.length === 0) return;
+    const valid = destinations.filter(d => d.lat && d.lng);
+    if (valid.length === 0) return;
 
     isUserPanning.current = false;
 
-    const padding = 40;
-    mapInstanceRef.current.fitBounds(
-      [[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]],
-      { padding: [padding, padding], maxZoom: 12, animate: true, duration: 0.6 }
+    const lngs = valid.map(d => d.lng);
+    const lats = valid.map(d => d.lat);
+
+    map.fitBounds(
+      [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+      { padding: 40, maxZoom: 12, duration: 600 }
     );
   }, [destinations]);
+
+  // Inject popup styles
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (document.getElementById('mapbox-popup-css')) return;
+    const style = document.createElement('style');
+    style.id = 'mapbox-popup-css';
+    style.textContent = `
+      .dest-mapbox-popup .mapboxgl-popup-content {
+        background: var(--theme-surface, #121212);
+        color: var(--theme-fg, #e5e5e5);
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        padding: 0;
+      }
+      .dest-mapbox-popup .mapboxgl-popup-tip {
+        border-top-color: var(--theme-surface, #121212);
+      }
+      .mapboxgl-ctrl-attrib {
+        font-size: 9px !important;
+        background: transparent !important;
+      }
+      .mapboxgl-ctrl-attrib a { color: #888 !important; }
+    `;
+    document.head.appendChild(style);
+  }, []);
 
   if (!isClient) {
     return (
