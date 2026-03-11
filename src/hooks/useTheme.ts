@@ -13,6 +13,8 @@ export function useTheme() {
       const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
       if (stored === 'light' || stored === 'dark') {
         setThemeState(stored);
+        // Re-set attribute as safety net in case hydration stripped it
+        document.documentElement.setAttribute('data-theme', stored);
       }
     } catch {
       // localStorage unavailable
