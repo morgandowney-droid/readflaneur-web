@@ -3,6 +3,19 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-11
+
+**Destinations Page with Interactive Map and Destination Lists:**
+- New `/destinations` page with Le Collectionist-inspired split-view layout: scrollable neighborhood card grid on the left, interactive Leaflet map with CARTO tile layers on the right. Map collapsible on mobile.
+- Bidirectional filtering: region pills, country dropdown, search, and map bounds all filter the card grid. Region/country changes trigger map `fitBounds` animation. Map pan/zoom filters cards within visible bounds (300ms debounce).
+- Neighborhood cards show 4:3 Unsplash photos from `image_library_status`, gradient overlay, neighborhood/city/country text, community badge, and heart toggle button for wishlisting.
+- Destination lists API (`/api/lists/`) with full CRUD: create/read/update/delete lists, add/remove items, share via 8-char tokens. Default "My Feed" list auto-created on first access with migration from existing `user_neighborhood_preferences`.
+- `useDestinationLists` hook with optimistic UI for heart toggle, list management, and query helpers (`isInList`, `getListsContaining`).
+- Dual-write sync: default list changes propagate to legacy `user_neighborhood_preferences` and `newsletter_subscribers.neighborhood_ids` so feed and email systems continue working unchanged.
+- Account page now includes inline timezone editor with IANA timezone dropdown, save/cancel buttons, and `flaneur-profile` cache update.
+- DB migration: `destination_lists` and `destination_list_items` tables with RLS policies, auto-migration from existing preferences, `has_migrated_lists` flag on profiles.
+- Files: `src/app/destinations/page.tsx`, `src/components/destinations/` (4 components), `src/hooks/useDestinationLists.ts`, `src/app/api/lists/` (5 routes), `src/app/account/page.tsx`, `supabase/migrations/20260310_destination_lists.sql`
+
 ## 2026-03-10
 
 **Luxury Editorial Aesthetic Overhaul (Le Collectionist-Inspired):**
