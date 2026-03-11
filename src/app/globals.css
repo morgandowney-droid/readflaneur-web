@@ -121,6 +121,16 @@ main {
   scrollbar-width: none;
 }
 
+/* Ken Burns slow zoom for hero images */
+@keyframes kenBurns {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.08); }
+}
+.animate-ken-burns {
+  animation: kenBurns 30s ease-out forwards;
+  will-change: transform;
+}
+
 /* Subtle bounce for jump-to-feed arrow */
 @keyframes bounce-subtle {
   0%, 100% { transform: translateY(0); }

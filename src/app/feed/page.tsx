@@ -15,6 +15,7 @@ import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood
 import { fetchCurrentWeather } from '@/lib/weather';
 import { toHeadlineCase } from '@/lib/utils';
 import { NEIGHBORHOODS_COOKIE } from '@/lib/neighborhood-cookie';
+import { FeedHero } from '@/components/feed/FeedHero';
 
 export const dynamic = 'force-dynamic';
 
@@ -309,8 +310,53 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     ? await fetchCurrentWeather(primaryHoodForWeather.latitude, primaryHoodForWeather.longitude, primaryHoodForWeather.timezone)
     : null;
 
+  // Fetch hero image from Unsplash library for primary neighborhood
+  let heroImage: { url: string; photographer?: string; photographerUrl?: string } | null = null;
+  const primaryId = neighborhoodIds[0];
+  if (primaryId) {
+    const { data: libStatus } = await supabase
+      .from('image_library_status')
+      .select('unsplash_photos')
+      .eq('neighborhood_id', primaryId)
+      .single();
+    if (libStatus?.unsplash_photos) {
+      const photos = libStatus.unsplash_photos as Record<string, { url: string; photographer?: string; photographer_url?: string }>;
+      const heroPhoto = photos['sunday-edition'] || photos['daily-brief-1'] || Object.values(photos)[0];
+      if (heroPhoto?.url) {
+        // Use larger resolution for hero
+        heroImage = {
+          url: heroPhoto.url.replace(/w=\d+/, 'w=1920').replace(/q=\d+/, 'q=85'),
+          photographer: heroPhoto.photographer,
+          photographerUrl: heroPhoto.photographer_url,
+        };
+      }
+    }
+  }
+
+  // Determine hero headline from brief
+  const briefForHeadline = multiBrief || brief;
+  const heroHeadline = briefForHeadline?.subject_teaser
+    ? toHeadlineCase(briefForHeadline.subject_teaser)
+    : briefForHeadline?.headline || undefined;
+
   return (
     <div className="bg-canvas">
+      {/* Full-bleed hero with primary neighborhood image */}
+      {heroImage && primaryHoodForWeather && (
+        <FeedHero
+          imageUrl={heroImage.url}
+          neighborhoodName={primaryHoodForWeather.name}
+          city={primaryHoodForWeather.city}
+          headline={heroHeadline}
+          timezone={primaryHoodForWeather.timezone}
+          country={primaryHoodForWeather.country}
+          latitude={primaryHoodForWeather.latitude}
+          longitude={primaryHoodForWeather.longitude}
+          initialWeather={initialWeather || undefined}
+          photographerName={heroImage.photographer}
+          photographerUrl={heroImage.photographerUrl}
+        />
+      )}
       <div className="mx-auto max-w-3xl px-4 pt-4 pb-8">
         <WelcomeBanner />
         {/* Section filter indicator */}
@@ -397,6 +443,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               defaultView="compact"
               reminder={<MagicLinkReminder />}
               initialWeather={initialWeather || undefined}
+              heroImage={heroImage || undefined}
               dailyBrief={multiBrief ? (
                 <NeighborhoodBrief
                   briefId={multiBrief.id}

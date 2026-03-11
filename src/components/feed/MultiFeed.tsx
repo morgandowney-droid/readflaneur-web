@@ -45,6 +45,8 @@ interface MultiFeedProps {
   initialWeather?: { tempC: number; weatherCode: number };
   /** Rendered below the feed only when no pill filter is active ("All Neighborhoods" mode) */
   loadMoreAll?: ReactNode;
+  /** Hero image data from Unsplash library for primary neighborhood */
+  heroImage?: { url: string; photographer?: string; photographerUrl?: string };
 }
 
 export function MultiFeed({
@@ -55,6 +57,7 @@ export function MultiFeed({
   dailyBrief,
   initialWeather,
   loadMoreAll,
+  heroImage,
 }: MultiFeedProps) {
   const router = useRouter();
   const { t } = useTranslation();
