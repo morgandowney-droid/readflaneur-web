@@ -304,6 +304,17 @@ export function Header() {
           >
             {t('nav.neighborhoods')}
           </button>
+          <Link
+            href="/destinations"
+            className={cn(
+              'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
+              pathname === '/destinations'
+                ? 'text-fg font-medium border-accent'
+                : 'text-fg-subtle border-transparent'
+            )}
+          >
+            {t('nav.destinations')}
+          </Link>
           {loading ? (
             // Invisible placeholder while auth loads - prevents "SIGN IN" flash
             <span className="text-[11px] tracking-[0.2em] uppercase text-transparent min-h-[44px] flex items-center select-none" aria-hidden>
@@ -493,6 +504,16 @@ export function Header() {
               )}
             >
               {t('nav.stories')}
+            </Link>
+            <Link
+              href="/destinations"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                'text-sm tracking-widest uppercase transition-colors hover:text-fg py-3 border-b border-border block text-right',
+                pathname === '/destinations' ? 'text-fg font-medium' : 'text-fg-muted'
+              )}
+            >
+              {t('nav.destinations')}
             </Link>
 
             {!loading && user ? (

@@ -10,6 +10,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
     // Navigation
     'nav.neighborhoods': 'Neighborhoods',
     'nav.stories': 'Stories',
+    'nav.destinations': 'Destinations',
     'nav.admin': 'Admin',
     'nav.dashboard': 'Dashboard',
     'nav.signIn': 'Sign In',
@@ -362,6 +363,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   sv: {
     'nav.neighborhoods': 'Stadsdelar',
     'nav.stories': 'Artiklar',
+    'nav.destinations': 'Destinationer',
     'nav.admin': 'Admin',
     'nav.dashboard': 'Kontrollpanel',
     'nav.signIn': 'Logga in',
@@ -702,6 +704,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   fr: {
     'nav.neighborhoods': 'Quartiers',
     'nav.stories': 'Articles',
+    'nav.destinations': 'Destinations',
     'nav.admin': 'Admin',
     'nav.dashboard': 'Tableau de bord',
     'nav.signIn': 'Se connecter',
@@ -1042,6 +1045,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   de: {
     'nav.neighborhoods': 'Viertel',
     'nav.stories': 'Artikel',
+    'nav.destinations': 'Reiseziele',
     'nav.admin': 'Admin',
     'nav.dashboard': 'Dashboard',
     'nav.signIn': 'Anmelden',
@@ -1382,6 +1386,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   es: {
     'nav.neighborhoods': 'Barrios',
     'nav.stories': 'Articulos',
+    'nav.destinations': 'Destinos',
     'nav.admin': 'Admin',
     'nav.dashboard': 'Panel',
     'nav.signIn': 'Iniciar sesion',
@@ -1723,6 +1728,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   pt: {
     'nav.neighborhoods': 'Bairros',
     'nav.stories': 'Artigos',
+    'nav.destinations': 'Destinos',
     'nav.admin': 'Admin',
     'nav.dashboard': 'Painel',
     'nav.signIn': 'Entrar',
@@ -2064,6 +2070,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   it: {
     'nav.neighborhoods': 'Quartieri',
     'nav.stories': 'Articoli',
+    'nav.destinations': 'Destinazioni',
     'nav.admin': 'Admin',
     'nav.dashboard': 'Pannello',
     'nav.signIn': 'Accedi',
@@ -2405,6 +2412,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   zh: {
     'nav.neighborhoods': '街区',
     'nav.stories': '文章',
+    'nav.destinations': '目的地',
     'nav.admin': '管理',
     'nav.dashboard': '控制台',
     'nav.signIn': '登录',
@@ -2745,6 +2753,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   ja: {
     'nav.neighborhoods': 'エリア',
     'nav.stories': '記事',
+    'nav.destinations': 'デスティネーション',
     'nav.admin': '管理',
     'nav.dashboard': 'ダッシュボード',
     'nav.signIn': 'ログイン',
