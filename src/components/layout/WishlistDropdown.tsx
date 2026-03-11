@@ -16,24 +16,47 @@ interface NeighborhoodDetail {
 }
 
 export function WishlistDropdown({ className }: { className?: string }) {
-  const { defaultList, defaultListIds, removeFromList, isLoading } = useDestinationLists();
+  const { lists, defaultList, isLoading, createList, removeFromList, deleteList, updateList } = useDestinationLists();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const [activeListId, setActiveListId] = useState<string | null>(null);
   const [details, setDetails] = useState<NeighborhoodDetail[]>([]);
   const [detailsLoading, setDetailsLoading] = useState(false);
-  const [shareToken, setShareToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [listSelectorOpen, setListSelectorOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [newListName, setNewListName] = useState('');
+  const [showCreateInput, setShowCreateInput] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fetchedIdsRef = useRef<string>('');
 
-  const itemCount = defaultListIds.length;
-  const hasItems = itemCount > 0;
-  const idsKey = defaultListIds.join(',');
+  // Set active list to default on first load
+  useEffect(() => {
+    if (!activeListId && defaultList) {
+      setActiveListId(defaultList.id);
+    }
+  }, [activeListId, defaultList]);
+
+  const activeList = lists.find(l => l.id === activeListId) || defaultList;
+  const activeItems = activeList
+    ? activeList.destination_list_items
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map(i => i.neighborhood_id)
+    : [];
+
+  const totalItemCount = lists.reduce((sum, l) => sum + l.destination_list_items.length, 0);
+  const hasItems = totalItemCount > 0;
+  const idsKey = activeItems.join(',');
 
   // Fetch neighborhood details when dropdown opens and items exist
   useEffect(() => {
-    if (!open || !hasItems || !idsKey) return;
-    // Skip if we already fetched these exact IDs
+    if (!open || !activeItems.length || !idsKey) {
+      if (open && !activeItems.length) setDetails([]);
+      return;
+    }
     if (fetchedIdsRef.current === idsKey) return;
     fetchedIdsRef.current = idsKey;
 
@@ -54,25 +77,23 @@ export function WishlistDropdown({ className }: { className?: string }) {
       .finally(() => { if (!cancelled) setDetailsLoading(false); });
 
     return () => { cancelled = true; };
-  }, [open, hasItems, idsKey]);
+  }, [open, idsKey, activeItems.length]);
 
-  // Get share token from the list
+  // Reset fetched IDs when active list changes
   useEffect(() => {
-    if (defaultList?.share_token) {
-      setShareToken(defaultList.share_token);
-    }
-  }, [defaultList]);
+    fetchedIdsRef.current = '';
+  }, [activeListId]);
 
   // Click outside to close
   useEffect(() => {
     if (!open) return;
     const handleClick = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
+        closeAll();
       }
     };
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') closeAll();
     };
     document.addEventListener('mousedown', handleClick);
     document.addEventListener('keydown', handleEscape);
@@ -82,26 +103,74 @@ export function WishlistDropdown({ className }: { className?: string }) {
     };
   }, [open]);
 
+  const closeAll = () => {
+    setOpen(false);
+    setListSelectorOpen(false);
+    setMenuOpen(false);
+    setShowCreateInput(false);
+    setRenaming(false);
+  };
+
   const handleRemove = async (neighborhoodId: string) => {
-    if (!defaultList) return;
-    await removeFromList(defaultList.id, neighborhoodId);
+    if (!activeList) return;
+    await removeFromList(activeList.id, neighborhoodId);
     setDetails(prev => prev.filter(d => d.id !== neighborhoodId));
-    fetchedIdsRef.current = ''; // Reset so next open refetches
+    fetchedIdsRef.current = '';
   };
 
   const handleShare = async () => {
-    if (!shareToken) return;
-    const url = `${window.location.origin}/lists/${shareToken}`;
+    if (!activeList?.share_token) return;
+    const url = `${window.location.origin}/lists/${activeList.share_token}`;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
       if (navigator.share) {
-        navigator.share({ title: 'My Flaneur List', url }).catch(() => {});
+        navigator.share({ title: activeList.name, url }).catch(() => {});
       }
     }
+    setMenuOpen(false);
+  };
+
+  const handleCreateList = async () => {
+    if (!newListName.trim()) return;
+    setCreating(true);
+    const newList = await createList(newListName.trim());
+    if (newList) {
+      setActiveListId(newList.id);
+      fetchedIdsRef.current = '';
+    }
+    setNewListName('');
+    setShowCreateInput(false);
+    setCreating(false);
+    setListSelectorOpen(false);
+  };
+
+  const handleRename = async () => {
+    if (!activeList || !renameValue.trim() || renameValue.trim() === activeList.name) {
+      setRenaming(false);
+      return;
+    }
+    await updateList(activeList.id, { name: renameValue.trim() });
+    setRenaming(false);
+    setMenuOpen(false);
+  };
+
+  const handleDeleteList = async () => {
+    if (!activeList || activeList.is_default) return;
+    if (!confirm(`Delete "${activeList.name}"?`)) return;
+    await deleteList(activeList.id);
+    setActiveListId(defaultList?.id || null);
+    fetchedIdsRef.current = '';
+    setMenuOpen(false);
+  };
+
+  const handleSwitchList = (listId: string) => {
+    setActiveListId(listId);
+    setListSelectorOpen(false);
+    setShowCreateInput(false);
+    fetchedIdsRef.current = '';
   };
 
   if (isLoading) return null;
@@ -119,19 +188,17 @@ export function WishlistDropdown({ className }: { className?: string }) {
         title={t('wishlist.savedDestinations')}
       >
         {hasItems ? (
-          // Filled heart
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" stroke="none">
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
           </svg>
         ) : (
-          // Outline heart
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
           </svg>
         )}
         {hasItems && (
           <span className="absolute -top-0.5 -right-0.5 bg-accent text-canvas text-[9px] font-medium w-4 h-4 rounded-full flex items-center justify-center leading-none">
-            {itemCount > 9 ? '9+' : itemCount}
+            {totalItemCount > 9 ? '9+' : totalItemCount}
           </span>
         )}
       </button>
@@ -139,8 +206,8 @@ export function WishlistDropdown({ className }: { className?: string }) {
       {/* Dropdown panel */}
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 bg-elevated border border-border rounded-sm shadow-lg z-50 overflow-hidden">
-          {!hasItems ? (
-            // Empty state
+          {!hasItems && lists.length === 0 ? (
+            // Empty state - no lists at all
             <div className="px-6 py-10 flex flex-col items-center text-center">
               <svg className="w-10 h-10 text-fg-subtle mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
@@ -160,30 +227,217 @@ export function WishlistDropdown({ className }: { className?: string }) {
               </Link>
             </div>
           ) : (
-            // Items list
+            // LC-style list interface
             <div>
-              <div className="px-4 pt-4 pb-2 border-b border-border">
-                <p className="text-[11px] tracking-[0.2em] uppercase text-fg-muted">
-                  {t('wishlist.savedDestinations')}
-                </p>
+              {/* Header - "My favourites" */}
+              <div className="px-4 pt-4 pb-3">
+                <p className="text-sm text-fg-muted">{t('wishlist.myFavourites')}</p>
               </div>
 
-              <div className="max-h-[320px] overflow-y-auto">
+              {/* List selector + three-dot menu */}
+              <div className="px-4 pb-3 flex items-center gap-2">
+                {/* List dropdown selector */}
+                <div className="relative flex-1">
+                  <button
+                    onClick={() => { setListSelectorOpen(!listSelectorOpen); setMenuOpen(false); setRenaming(false); }}
+                    className="w-full flex items-center justify-between border border-border rounded-sm px-3 py-2 text-sm text-fg hover:border-fg-muted transition-colors"
+                  >
+                    <span className="truncate">{activeList?.name || 'Favourites'}</span>
+                    <svg className={cn('w-4 h-4 text-fg-muted transition-transform', listSelectorOpen && 'rotate-180')} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {/* List selector dropdown with CREATE A NEW LIST at bottom */}
+                  {listSelectorOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-elevated border border-border rounded-sm shadow-lg z-10 overflow-hidden">
+                      {lists.map(list => (
+                        <button
+                          key={list.id}
+                          onClick={() => handleSwitchList(list.id)}
+                          className={cn(
+                            'w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between',
+                            list.id === activeListId
+                              ? 'text-fg bg-surface'
+                              : 'text-fg-muted hover:text-fg hover:bg-hover'
+                          )}
+                        >
+                          <span className="truncate">{list.name}</span>
+                          <span className="text-xs text-fg-subtle ml-2">{list.destination_list_items.length}</span>
+                        </button>
+                      ))}
+
+                      {/* Separator */}
+                      <div className="border-t border-border" />
+
+                      {/* CREATE A NEW LIST - inline input or button */}
+                      {showCreateInput ? (
+                        <div className="px-3 py-2 flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={newListName}
+                            onChange={e => setNewListName(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleCreateList()}
+                            placeholder="List name"
+                            className="flex-1 bg-surface border border-border rounded-sm px-2 py-1 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent"
+                            autoFocus
+                            maxLength={50}
+                          />
+                          <button
+                            onClick={handleCreateList}
+                            disabled={creating || !newListName.trim()}
+                            className="text-xs uppercase tracking-wider bg-fg text-canvas px-2.5 py-1 rounded-sm hover:opacity-90 disabled:opacity-40"
+                          >
+                            {creating ? '...' : 'OK'}
+                          </button>
+                          <button
+                            onClick={() => { setShowCreateInput(false); setNewListName(''); }}
+                            className="text-fg-muted hover:text-fg"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setShowCreateInput(true)}
+                          className="w-full text-left px-3 py-2.5 text-sm text-fg-muted hover:text-fg hover:bg-hover transition-colors flex items-center gap-2"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                          </svg>
+                          <span className="text-[11px] tracking-[0.15em] uppercase">{t('wishlist.createNewList')}</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Three-dot menu */}
+                <div className="relative">
+                  <button
+                    onClick={() => { setMenuOpen(!menuOpen); setListSelectorOpen(false); setRenaming(false); }}
+                    className="w-8 h-8 flex items-center justify-center text-fg-muted hover:text-fg transition-colors"
+                    aria-label="List options"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="5" r="1.5" />
+                      <circle cx="12" cy="12" r="1.5" />
+                      <circle cx="12" cy="19" r="1.5" />
+                    </svg>
+                  </button>
+
+                  {/* LC "Parameters" menu: Share / Rename / Delete */}
+                  {menuOpen && (
+                    <div className="absolute top-full right-0 mt-1 w-52 bg-elevated border border-border rounded-sm shadow-lg z-10 overflow-hidden">
+                      {/* SHARE WITH A FRIEND */}
+                      <button
+                        onClick={handleShare}
+                        disabled={!activeList?.share_token}
+                        className="w-full text-left px-3 py-2.5 text-sm text-fg-muted hover:text-fg hover:bg-hover transition-colors flex items-center gap-2.5 disabled:opacity-30"
+                      >
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+                        </svg>
+                        <span className="text-[11px] tracking-[0.12em] uppercase">
+                          {copied ? t('wishlist.linkCopied') : t('wishlist.shareWithFriend')}
+                        </span>
+                      </button>
+
+                      {/* RENAME THE LIST */}
+                      <button
+                        onClick={() => {
+                          setRenameValue(activeList?.name || '');
+                          setRenaming(true);
+                          setMenuOpen(false);
+                        }}
+                        disabled={!activeList || activeList.is_default}
+                        className="w-full text-left px-3 py-2.5 text-sm text-fg-muted hover:text-fg hover:bg-hover transition-colors flex items-center gap-2.5 disabled:opacity-30"
+                      >
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                        </svg>
+                        <span className="text-[11px] tracking-[0.12em] uppercase">{t('wishlist.renameList')}</span>
+                      </button>
+
+                      {/* DELETE THE LIST */}
+                      <button
+                        onClick={handleDeleteList}
+                        disabled={!activeList || activeList.is_default}
+                        className="w-full text-left px-3 py-2.5 text-sm text-red-400 hover:bg-hover transition-colors flex items-center gap-2.5 disabled:opacity-30"
+                      >
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                        <span className="text-[11px] tracking-[0.12em] uppercase">{t('wishlist.deleteList')}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Rename inline input - shown below selector when renaming */}
+              {renaming && (
+                <div className="px-4 pb-3 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={renameValue}
+                    onChange={e => setRenameValue(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleRename();
+                      if (e.key === 'Escape') setRenaming(false);
+                    }}
+                    className="flex-1 bg-surface border border-border rounded-sm px-3 py-1.5 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent"
+                    autoFocus
+                    maxLength={50}
+                  />
+                  <button
+                    onClick={handleRename}
+                    disabled={!renameValue.trim()}
+                    className="text-xs uppercase tracking-wider bg-fg text-canvas px-3 py-1.5 rounded-sm hover:opacity-90 disabled:opacity-40"
+                  >
+                    OK
+                  </button>
+                  <button
+                    onClick={() => setRenaming(false)}
+                    className="text-fg-muted hover:text-fg p-1"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+
+              {/* Items list */}
+              <div className="max-h-[320px] overflow-y-auto border-t border-border">
                 {detailsLoading ? (
                   <div className="px-4 py-6 text-center text-sm text-fg-muted">
                     {t('general.loading')}
+                  </div>
+                ) : activeItems.length === 0 ? (
+                  <div className="px-4 py-8 text-center">
+                    <p className="text-sm text-fg-muted mb-3">This list is empty</p>
+                    <Link
+                      href="/destinations"
+                      onClick={() => setOpen(false)}
+                      className="text-xs text-accent hover:underline"
+                    >
+                      Browse destinations to add
+                    </Link>
                   </div>
                 ) : (
                   details.map(item => (
                     <div
                       key={item.id}
-                      className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-b-0 group"
+                      className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-b-0"
                     >
                       {/* Thumbnail */}
                       <Link
                         href={`/${getCitySlugFromId(item.id)}/${getNeighborhoodSlugFromId(item.id)}`}
                         onClick={() => setOpen(false)}
-                        className="flex-shrink-0 w-12 h-12 rounded-sm overflow-hidden bg-surface"
+                        className="flex-shrink-0 w-14 h-14 rounded-sm overflow-hidden bg-surface"
                       >
                         {item.imageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -207,14 +461,14 @@ export function WishlistDropdown({ className }: { className?: string }) {
                         <p className="text-xs text-fg-muted truncate">{item.city}, {item.country}</p>
                       </Link>
 
-                      {/* Remove button */}
+                      {/* Filled heart to remove (LC pattern) */}
                       <button
                         onClick={() => handleRemove(item.id)}
-                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-fg-subtle hover:text-fg transition-colors opacity-0 group-hover:opacity-100"
+                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-accent hover:text-accent-muted transition-colors"
                         aria-label={t('general.remove')}
                       >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                         </svg>
                       </button>
                     </div>
@@ -222,38 +476,18 @@ export function WishlistDropdown({ className }: { className?: string }) {
                 )}
               </div>
 
-              {/* Footer actions */}
-              <div className="px-4 py-3 border-t border-border flex items-center justify-between">
-                <Link
-                  href="/destinations"
-                  onClick={() => setOpen(false)}
-                  className="text-[11px] tracking-[0.15em] uppercase text-fg-muted hover:text-fg transition-colors"
+              {/* Footer CTA - Share this list */}
+              <div className="px-4 py-4 border-t border-border">
+                <p className="text-sm text-fg-muted text-center mb-3">
+                  {t('wishlist.shareDescription')}
+                </p>
+                <button
+                  onClick={handleShare}
+                  disabled={!activeList?.share_token || activeItems.length === 0}
+                  className="w-full bg-fg text-canvas text-[11px] tracking-[0.2em] uppercase py-3 rounded-sm hover:opacity-90 transition-opacity disabled:opacity-30 font-medium"
                 >
-                  {t('wishlist.viewAll')}
-                </Link>
-
-                {shareToken && (
-                  <button
-                    onClick={handleShare}
-                    className="text-[11px] tracking-[0.15em] uppercase text-fg-muted hover:text-fg transition-colors flex items-center gap-1.5"
-                  >
-                    {copied ? (
-                      <>
-                        <svg className="w-3.5 h-3.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                        {t('wishlist.linkCopied')}
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.504a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.343 8.93" />
-                        </svg>
-                        {t('wishlist.shareList')}
-                      </>
-                    )}
-                  </button>
-                )}
+                  {copied ? t('wishlist.linkCopied') : t('wishlist.shareList')}
+                </button>
               </div>
             </div>
           )}
