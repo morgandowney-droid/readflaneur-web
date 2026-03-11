@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-// POST /api/lists/ensure-default - Create a default "My Feed" list if one doesn't exist
+// POST /api/lists/ensure-default - Create a default "Favourites" list if one doesn't exist
 // Called on login and when accessing lists for the first time
 export async function POST() {
   try {
@@ -48,8 +48,8 @@ export async function POST() {
       .from('destination_lists')
       .insert({
         user_id: session.user.id,
-        name: 'My Feed',
-        slug: 'my-feed',
+        name: 'Favourites',
+        slug: 'favourites',
         is_default: true,
       })
       .select('id')
@@ -67,27 +67,6 @@ export async function POST() {
         return NextResponse.json({ listId: retry?.id, created: false });
       }
       return NextResponse.json({ error: 'Failed to create' }, { status: 500 });
-    }
-
-    // Migrate any existing user_neighborhood_preferences into the new list
-    const { data: prefs } = await admin
-      .from('user_neighborhood_preferences')
-      .select('neighborhood_id, created_at')
-      .eq('user_id', session.user.id)
-      .order('created_at', { ascending: true });
-
-    if (prefs && prefs.length > 0) {
-      const items = prefs.map((p, i) => ({
-        list_id: list.id,
-        neighborhood_id: p.neighborhood_id,
-        sort_order: i,
-        added_at: p.created_at || new Date().toISOString(),
-      }));
-
-      await admin
-        .from('destination_list_items')
-        .insert(items)
-        .then(null, () => {}); // Ignore duplicates
     }
 
     return NextResponse.json({ listId: list.id, created: true });

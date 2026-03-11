@@ -83,11 +83,6 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to add' }, { status: 500 });
     }
 
-    // If this is the default list, also sync to legacy systems
-    if (list.is_default) {
-      await syncDefaultListToLegacy(admin, session.user.id, listId, session.user.email);
-    }
-
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
@@ -136,58 +131,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Failed to remove' }, { status: 500 });
     }
 
-    // If this is the default list, sync to legacy systems
-    if (list.is_default) {
-      await syncDefaultListToLegacy(admin, session.user.id, listId, session.user.email);
-    }
-
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
-  }
-}
-
-/**
- * Dual-write: sync default list changes to the legacy systems
- * (user_neighborhood_preferences + newsletter_subscribers.neighborhood_ids)
- * so email delivery and existing feed code continue working.
- */
-async function syncDefaultListToLegacy(
-  admin: ReturnType<typeof getAdminClient>,
-  userId: string,
-  listId: string,
-  email?: string | null
-) {
-  try {
-    // Get current list items ordered by sort_order
-    const { data: items } = await admin
-      .from('destination_list_items')
-      .select('neighborhood_id, sort_order')
-      .eq('list_id', listId)
-      .order('sort_order', { ascending: true });
-
-    const ids = (items || []).map(i => i.neighborhood_id);
-
-    // Sync to user_neighborhood_preferences (delete all, insert new)
-    await admin
-      .from('user_neighborhood_preferences')
-      .delete()
-      .eq('user_id', userId);
-
-    if (ids.length > 0) {
-      await admin
-        .from('user_neighborhood_preferences')
-        .insert(ids.map(id => ({ user_id: userId, neighborhood_id: id })));
-    }
-
-    // Sync to newsletter_subscribers
-    if (email) {
-      await admin
-        .from('newsletter_subscribers')
-        .update({ neighborhood_ids: ids })
-        .eq('email', email);
-    }
-  } catch (err) {
-    console.error('Failed to sync default list to legacy:', err);
   }
 }

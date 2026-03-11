@@ -15,15 +15,22 @@
 - 12 `wishlist.*` translation keys in all 9 languages: `noList`, `addDestinations`, `shareList`, `emptyDescription`, `savedDestinations`, `copyLink`, `linkCopied`, `viewAll`, `title`, `sharedList`, `neighborhoods`.
 - Files: `src/components/layout/WishlistDropdown.tsx`, `src/app/lists/[shareToken]/page.tsx`, `src/app/lists/[shareToken]/SharedListClient.tsx`, `src/components/layout/Header.tsx`, `src/lib/translations.ts`
 
+**Separate lists from feed - two distinct card icons:**
+- Heart icon = save to Favourites list (curation/sharing, independent from news feed). Default list renamed from "My Feed" to "Favourites". Auto-migration from `user_neighborhood_preferences` removed - lists are now fully independent.
+- Newspaper icon = toggle daily feed + email subscription. Reads/writes `flaneur-neighborhood-preferences` localStorage, syncs cookie via `syncNeighborhoodCookie()`, fire-and-forget DB sync via `/api/neighborhoods/add` (adding) and `/api/neighborhoods/save-preferences` (removing).
+- "Are you sure?" confirmation overlay when removing from feed - full-card dark overlay with "Remove" (red) and "Keep" buttons, explains "You will stop receiving daily briefs and emails."
+- "In your feed" badge on destination cards for subscribed neighborhoods (accent-colored, bottom-left).
+- Dual-write sync removed from `/api/lists/[listId]/items/route.ts` - `syncDefaultListToLegacy()` function and both calls deleted.
+- Files: `src/components/destinations/DestinationCard.tsx`, `src/components/destinations/DestinationsClient.tsx`, `src/app/api/lists/[listId]/items/route.ts`, `src/app/api/lists/ensure-default/route.ts`
+
 **Destinations Page with Interactive Map and Destination Lists:**
 - New `/destinations` page with Le Collectionist-inspired split-view layout: scrollable neighborhood card grid on the left, interactive Leaflet map with CARTO tile layers on the right. Map collapsible on mobile.
 - Bidirectional filtering: region pills, country dropdown, search, and map bounds all filter the card grid. Region/country changes trigger map `fitBounds` animation. Map pan/zoom filters cards within visible bounds (300ms debounce).
-- Neighborhood cards show 4:3 Unsplash photos from `image_library_status`, gradient overlay, neighborhood/city/country text, community badge, and heart toggle button for wishlisting.
-- Destination lists API (`/api/lists/`) with full CRUD: create/read/update/delete lists, add/remove items, share via 8-char tokens. Default "My Feed" list auto-created on first access with migration from existing `user_neighborhood_preferences`.
+- Neighborhood cards show 4:3 Unsplash photos from `image_library_status`, gradient overlay, neighborhood/city/country text, community badge.
+- Destination lists API (`/api/lists/`) with full CRUD: create/read/update/delete lists, add/remove items, share via 8-char tokens. Default "Favourites" list auto-created on first access.
 - `useDestinationLists` hook with optimistic UI for heart toggle, list management, and query helpers (`isInList`, `getListsContaining`).
-- Dual-write sync: default list changes propagate to legacy `user_neighborhood_preferences` and `newsletter_subscribers.neighborhood_ids` so feed and email systems continue working unchanged.
 - Account page now includes inline timezone editor with IANA timezone dropdown, save/cancel buttons, and `flaneur-profile` cache update.
-- DB migration: `destination_lists` and `destination_list_items` tables with RLS policies, auto-migration from existing preferences, `has_migrated_lists` flag on profiles.
+- DB migration: `destination_lists` and `destination_list_items` tables with RLS policies, `has_migrated_lists` flag on profiles.
 - Files: `src/app/destinations/page.tsx`, `src/components/destinations/` (4 components), `src/hooks/useDestinationLists.ts`, `src/app/api/lists/` (5 routes), `src/app/account/page.tsx`, `supabase/migrations/20260310_destination_lists.sql`
 
 ## 2026-03-10

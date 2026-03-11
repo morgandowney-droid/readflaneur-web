@@ -6,6 +6,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useDestinationLists } from '@/hooks/useDestinationLists';
 import { resolveSearchQuery } from '@/lib/search-aliases';
 import { getGeoRegion, GEO_REGION_ORDER } from '@/lib/region-utils';
+import { syncNeighborhoodCookie } from '@/lib/neighborhood-cookie';
 import { DestinationsMap } from './DestinationsMap';
 import { DestinationCard } from './DestinationCard';
 import { RegionFilter } from './RegionFilter';
@@ -29,6 +30,8 @@ interface Props {
   countries: string[];
 }
 
+const PREFS_KEY = 'flaneur-neighborhood-preferences';
+
 export function DestinationsClient({ destinations, countries }: Props) {
   const { theme } = useTheme();
   const { defaultList, addToList, removeFromList, isInList, isLoading: listsLoading } = useDestinationLists();
@@ -47,6 +50,54 @@ export function DestinationsClient({ destinations, countries }: Props) {
   useEffect(() => {
     try {
       setIsAuth(!!localStorage.getItem('flaneur-auth'));
+    } catch { /* ignore */ }
+  }, []);
+
+  // Feed subscription state from localStorage
+  const [feedIds, setFeedIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(PREFS_KEY);
+      if (stored) {
+        const ids = JSON.parse(stored);
+        if (Array.isArray(ids)) setFeedIds(new Set(ids));
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  const isInFeed = useCallback((id: string) => feedIds.has(id), [feedIds]);
+
+  const handleToggleFeed = useCallback((neighborhoodId: string, adding: boolean) => {
+    try {
+      const stored = localStorage.getItem(PREFS_KEY);
+      let ids: string[] = stored ? JSON.parse(stored) : [];
+
+      if (adding) {
+        if (!ids.includes(neighborhoodId)) {
+          ids.push(neighborhoodId);
+        }
+      } else {
+        ids = ids.filter(id => id !== neighborhoodId);
+      }
+
+      localStorage.setItem(PREFS_KEY, JSON.stringify(ids));
+      setFeedIds(new Set(ids));
+      syncNeighborhoodCookie();
+
+      // Fire-and-forget DB sync
+      if (adding) {
+        fetch('/api/neighborhoods/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ neighborhoodId }),
+        }).catch(() => {});
+      } else {
+        fetch('/api/neighborhoods/save-preferences', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ neighborhoodIds: ids }),
+        }).catch(() => {});
+      }
     } catch { /* ignore */ }
   }, []);
 
@@ -244,12 +295,14 @@ export function DestinationsClient({ destinations, countries }: Props) {
                         key={dest.id}
                         destination={dest}
                         isFavorite={defaultList ? isInList(defaultList.id, dest.id) : false}
+                        isInFeed={isInFeed(dest.id)}
                         isAuth={isAuth}
                         isHovered={hoveredId === dest.id}
                         isSelected={selectedId === dest.id}
                         onHover={setHoveredId}
                         onClick={handleCardClick}
                         onToggleFavorite={handleToggleFavorite}
+                        onToggleFeed={handleToggleFeed}
                         citySlug={getCitySlug(dest.city)}
                         neighborhoodSlug={getNeighborhoodSlug(dest.id)}
                       />
