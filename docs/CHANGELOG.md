@@ -5,6 +5,15 @@
 
 ## 2026-03-11
 
+**LC-style map with ocean tiles, black dots, and full height:**
+- Switched map tiles from CARTO (dark/light abstract) to ArcGIS Ocean World_Ocean_Base (blue sea, green/white land) matching Le Collectionist's natural geography map style.
+- Changed all marker dots from amber (#f59e0b/#fbbf24) to black (#1a1a1a/#000000). Hover/selected state uses slightly lighter dark grey (#333333) for subtle differentiation.
+- Map background color changed from theme-dependent (#0a0a0a/#f5f5f5) to ocean blue (#a8c8d8) matching the tile style.
+- Desktop container height increased from `calc(100vh - 260px)` to `calc(100vh - 180px)` for fuller map display.
+- Mobile map height increased from `h-[50vh]` to `h-[70vh]` for more immersive mobile experience.
+- Attribution updated from OSM/CARTO to Esri.
+- Files: `src/components/destinations/DestinationsMap.tsx`, `src/components/destinations/DestinationsClient.tsx`
+
 **LC-pattern header icon cluster:**
 - Replaced "Account" text link with person circle SVG icon, matching Le Collectionist's header layout where heart and person icons sit at the far right.
 - Header layout: `FLANEUR ... [search] NEIGHBORHOODS DESTINATIONS STORIES | [heart] [person] [theme] [language]`
