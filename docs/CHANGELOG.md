@@ -5,6 +5,14 @@
 
 ## 2026-03-11
 
+**Le Collectionist-inspired feed redesign - expansive editorial layout:**
+- Full-bleed `FeedHero` component (`src/components/feed/FeedHero.tsx`) with Ken Burns animation on primary neighborhood's Unsplash photo, gradient overlay, Cormorant Garamond headline, neighborhood name + weather/time, photographer credit with Unsplash UTM links. Height: 50vh mobile, 60vh desktop.
+- Wide `EditorialGrid` component (`src/components/feed/EditorialGrid.tsx`) showing today's top 5 stories in asymmetric magazine-style grid at `max-w-7xl` (vs `max-w-3xl` linear feed below). Primary article gets 7/12 columns with large imagery + preview text, secondary articles stack in 5/12 right column, optional bottom row of two equal 6/12 cards. Hover zoom on images, gradient overlays, display font headlines. Visible to all visitors including unauthenticated.
+- Hero image sourced from `image_library_status.unsplash_photos` preferring `sunday-edition` or `daily-brief-1` category, upscaled to w=1920 q=85 for full-viewport rendering. Hero headline from brief's `subject_teaser` via `toHeadlineCase()`.
+- Ken Burns CSS animation (`@keyframes kenBurns` scale 1 to 1.08 over 30s with `will-change: transform`) in `globals.css`.
+- Layout restructured: hero renders outside `max-w-3xl` container, editorial grid at `max-w-7xl`, thin border divider transitions to narrow linear feed below. Retains existing feed functionality intact.
+- Files: `src/components/feed/FeedHero.tsx` (new), `src/components/feed/EditorialGrid.tsx` (new), `src/app/feed/page.tsx`, `src/app/globals.css`
+
 **Fix theme persistence - light mode reverting to dark:**
 - Added `suppressHydrationWarning` to `<html>` element in `layout.tsx` - prevents React hydration from stripping the `data-theme` attribute that the inline script sets before first paint.
 - `useTheme` hook now re-sets `data-theme` attribute on `<html>` during mount useEffect as a safety net, ensuring the attribute is always present even if hydration removed it.
