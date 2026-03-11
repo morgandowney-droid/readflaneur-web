@@ -44,8 +44,11 @@ export function FeedHero({
         />
       </div>
 
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+      {/* Gradient scrim - LC-inspired warm charcoal */}
+      <div
+        className="absolute inset-0"
+        style={{ background: 'linear-gradient(180deg, rgba(32,32,32,0.1) 0%, rgba(32,32,32,0.35) 50%, rgba(32,32,32,0.85) 100%)' }}
+      />
 
       {/* Content overlay */}
       <div className="absolute inset-0 flex flex-col justify-end">

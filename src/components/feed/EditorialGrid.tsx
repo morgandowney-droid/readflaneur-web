@@ -112,14 +112,17 @@ function EditorialCard({
         />
       )}
 
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+      {/* Gradient scrim - LC-inspired warm charcoal covering bottom 60% */}
+      <div
+        className="absolute inset-0"
+        style={{ background: 'linear-gradient(180deg, transparent 25%, rgba(32,32,32,0.75) 100%)' }}
+      />
 
       {/* Content */}
       <div className="absolute inset-0 flex flex-col justify-end p-5 md:p-7">
         {/* Location label */}
-        <p className="text-[10px] tracking-[0.25em] uppercase text-white/50 mb-1.5">
-          {neighborhoodName} {city && <span className="text-white/30">&middot; {city}</span>}
+        <p className="text-[10px] tracking-[0.25em] uppercase text-white/70 mb-1.5">
+          {neighborhoodName} {city && <span className="text-white/40">&middot; {city}</span>}
         </p>
 
         {/* Headline */}
@@ -133,7 +136,7 @@ function EditorialCard({
 
         {/* Blurb - only on large card */}
         {headlineSize === 'large' && article.preview_text && (
-          <p className="hidden md:block text-sm text-white/60 mt-2 max-w-md line-clamp-2 font-light">
+          <p className="hidden md:block text-sm text-white/70 mt-2 max-w-md line-clamp-2 font-light">
             {article.preview_text}
           </p>
         )}

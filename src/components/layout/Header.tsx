@@ -131,23 +131,6 @@ export function Header() {
 
     initAuth();
 
-    // Fetch sections
-    const fetchSections = async () => {
-      try {
-        const { data } = await supabase
-          .from('sections')
-          .select('*')
-          .eq('is_active', true)
-          .order('display_order', { ascending: true });
-        if (data && mounted) {
-          setSections(data as Section[]);
-        }
-      } catch {
-        // Ignore
-      }
-    };
-    fetchSections();
-
     // Fetch selected neighborhoods — use localStorage directly (no getSession lock)
     const fetchSelectedNeighborhoods = async () => {
       let selectedIds: string[] = [];
