@@ -367,19 +367,11 @@ export function DestinationsClient({ destinations, countries }: Props) {
 
   return (
     <div className="min-h-screen bg-canvas">
-      {/* Page heading - LC style */}
-      <div className="border-b border-border">
-        <div className="max-w-[1800px] mx-auto px-4 md:px-8 py-6 md:py-8">
-          <h1 className="font-display text-2xl md:text-3xl font-light tracking-[0.02em]">Our Neighborhoods</h1>
-          <p className="text-xs text-fg-muted mt-1 tracking-[0.05em]">{destinations.length} neighborhoods across {cityCount} cities</p>
-        </div>
-      </div>
-
-      {/* Filter Bar - LC style: exactly 4 buttons */}
+      {/* Filter Bar - LC style: exactly 4 buttons, no page heading */}
       <div className="border-b border-border sticky top-[var(--header-offset,64px)] bg-canvas/95 backdrop-blur-sm z-20">
-        <div className="max-w-[1800px] mx-auto px-4 md:px-8">
+        <div className="max-w-[1800px] mx-auto px-4 md:px-6">
           {/* 4 filter buttons */}
-          <div className="flex items-center gap-0 py-3 overflow-x-auto md:overflow-x-visible scrollbar-hide">
+          <div className="flex items-center gap-0 py-2.5 overflow-x-auto md:overflow-x-visible scrollbar-hide">
             {/* 1. ALL FILTERS */}
             <button
               onClick={() => { closeAllDropdowns(); setAllFiltersOpen(true); }}
@@ -530,7 +522,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
           </div>
 
           {/* Count + Sort row (below buttons, like LC) */}
-          <div className="flex items-center gap-3 pb-3 text-[13px] text-fg-muted">
+          <div className="flex items-center gap-3 pb-2 text-[12px] text-fg-muted">
             <span>{filtered.length} neighborhood{filtered.length !== 1 ? 's' : ''}</span>
             <span className="text-border">|</span>
             <div className="relative">
@@ -579,7 +571,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
 
           {/* Active filter tags */}
           {(themeFilter || activeRegions.size > 0 || activeCountries.size > 0 || neighborhoodType !== 'all') && (
-            <div className="flex items-center gap-2 pb-3 flex-wrap">
+            <div className="flex items-center gap-2 pb-2 flex-wrap">
               {themeFilter && (
                 <button
                   onClick={() => setThemeFilter(null)}
@@ -634,9 +626,9 @@ export function DestinationsClient({ destinations, countries }: Props) {
             onClick={() => setAllFiltersOpen(false)}
           />
           {/* Panel */}
-          <div className="absolute left-0 top-0 bottom-0 w-full sm:w-[400px] bg-canvas border-r border-border overflow-hidden flex flex-col animate-slide-in-left">
+          <div className="absolute left-0 top-0 bottom-0 w-full sm:w-[380px] bg-canvas border-r border-border overflow-hidden flex flex-col animate-slide-in-left">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-border">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <h2 className="text-[13px] tracking-[0.2em] uppercase font-medium">All Filters</h2>
               <button onClick={() => setAllFiltersOpen(false)} className="text-fg-muted hover:text-fg transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -754,9 +746,9 @@ export function DestinationsClient({ destinations, countries }: Props) {
       )}
 
       {/* Main content: split layout */}
-      <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row md:h-[calc(100vh-180px)]">
+      <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row md:h-[calc(100vh-120px)]">
         {/* Card grid (scrollable) */}
-        <div ref={cardListRef} className="flex-1 overflow-y-auto px-4 md:px-8 py-6 min-h-0">
+        <div ref={cardListRef} className="flex-1 overflow-y-auto px-4 md:px-6 py-4 min-h-0">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <p className="text-fg-muted text-sm">No destinations match your filters.</p>
@@ -765,13 +757,13 @@ export function DestinationsClient({ destinations, countries }: Props) {
               </button>
             </div>
           ) : (
-            <div className="space-y-10">
+            <div className="space-y-6">
               {grouped.map(({ country, items }) => (
                 <div key={country}>
-                  <h2 className="text-[10px] tracking-[0.25em] uppercase text-fg-subtle mb-4 sticky top-0 bg-canvas/95 backdrop-blur-sm py-2 z-10">
+                  <h2 className="text-[10px] tracking-[0.25em] uppercase text-fg-subtle mb-3 sticky top-0 bg-canvas/95 backdrop-blur-sm py-1.5 z-10">
                     {country} <span className="text-fg-subtle/50 ml-1">{items.length}</span>
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
                     {items.map(dest => (
                       <DestinationCard
                         key={dest.id}
@@ -798,7 +790,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
 
         {/* Map */}
         {showMap && (
-          <div className="w-full md:w-[45%] lg:w-[50%] h-[50vh] md:h-full border-t md:border-t-0 md:border-l border-border relative flex-shrink-0">
+          <div className="w-full md:w-[40%] lg:w-[45%] h-[50vh] md:h-full border-t md:border-t-0 md:border-l border-border relative flex-shrink-0">
             <DestinationsMap
               destinations={filtered}
               allDestinations={destinations}
