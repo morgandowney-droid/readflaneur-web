@@ -15,6 +15,10 @@ export default function AccountPage() {
   const [childcareEnabled, setChildcareEnabled] = useState(false);
   const [hasChildren, setHasChildren] = useState(false);
   const [prefsToken, setPrefsToken] = useState<string | null>(null);
+  const [editingTimezone, setEditingTimezone] = useState(false);
+  const [tzInput, setTzInput] = useState('');
+  const [tzSaving, setTzSaving] = useState(false);
+  const [tzSaved, setTzSaved] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -257,13 +261,73 @@ export default function AccountPage() {
             <p className="text-sm text-fg">{email}</p>
           </div>
 
-          {timezone && (
-            <div>
-              <p className="text-[10px] tracking-[0.2em] uppercase text-fg-subtle mb-1">Timezone</p>
-              <p className="text-sm text-fg">{timezone.replace(/_/g, ' ')}</p>
-              <p className="text-[11px] text-fg-muted mt-1">Your Daily Brief and Sunday Edition emails arrive at 7 am in this timezone.</p>
-            </div>
-          )}
+          <div>
+            <p className="text-[10px] tracking-[0.2em] uppercase text-fg-subtle mb-1">Timezone</p>
+            {!editingTimezone ? (
+              <>
+                <p className="text-sm text-fg">{timezone ? timezone.replace(/_/g, ' ') : 'Not set'}</p>
+                <p className="text-[11px] text-fg-muted mt-1">Your Daily Brief and Sunday Edition emails arrive at 7 am in this timezone.</p>
+                <button
+                  onClick={() => { setEditingTimezone(true); setTzInput(timezone || Intl.DateTimeFormat().resolvedOptions().timeZone); setTzSaved(false); }}
+                  className="text-[11px] text-accent hover:underline mt-1.5"
+                >
+                  Change timezone &rsaquo;
+                </button>
+              </>
+            ) : (
+              <div className="mt-2 space-y-3">
+                <select
+                  value={tzInput}
+                  onChange={e => setTzInput(e.target.value)}
+                  className="w-full bg-surface border border-border rounded-sm px-3 py-2 text-sm text-fg"
+                >
+                  {Intl.supportedValuesOf('timeZone').map(tz => (
+                    <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-fg-muted">Emails will arrive at 7 am in this timezone.</p>
+                <div className="flex gap-3">
+                  <button
+                    disabled={tzSaving}
+                    onClick={async () => {
+                      setTzSaving(true);
+                      try {
+                        await fetch('/api/preferences', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ timezone: tzInput, forceTimezone: true }),
+                          credentials: 'same-origin',
+                        });
+                        setTimezone(tzInput);
+                        // Update cached profile
+                        try {
+                          const cached = localStorage.getItem('flaneur-profile');
+                          if (cached) {
+                            const profile = JSON.parse(cached);
+                            profile.timezone = tzInput;
+                            localStorage.setItem('flaneur-profile', JSON.stringify(profile));
+                          }
+                        } catch { /* ignore */ }
+                        setTzSaved(true);
+                        setEditingTimezone(false);
+                      } catch { /* ignore */ }
+                      setTzSaving(false);
+                    }}
+                    className="btn-primary text-xs px-4 py-1.5"
+                  >
+                    {tzSaving ? '...' : 'Save'}
+                  </button>
+                  <button
+                    onClick={() => setEditingTimezone(false)}
+                    className="text-xs text-fg-muted hover:text-fg"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                {tzSaved && <p className="text-[11px] text-accent">Timezone updated.</p>}
+              </div>
+            )}
+          </div>
 
           <div>
             <p className="text-[10px] tracking-[0.2em] uppercase text-fg-subtle mb-1">Newsletter</p>
