@@ -363,12 +363,12 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       )}
 
       {/* Wide editorial grid for featured stories */}
-      {neighborhoodIds.length > 0 && editorialArticles.length >= 2 && (
+      {editorialArticles.length >= 2 && (
         <EditorialGrid articles={editorialArticles} />
       )}
 
       {/* Divider between editorial grid and linear feed */}
-      {neighborhoodIds.length > 0 && editorialArticles.length >= 2 && (
+      {editorialArticles.length >= 2 && (
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="border-t border-border" />
         </div>
