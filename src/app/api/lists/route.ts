@@ -53,18 +53,27 @@ export async function GET() {
       return NextResponse.json({ lists: [] });
     }
 
-    // Backfill share_token for any lists missing one
+    // Backfill share_token and rename old default lists
     if (lists) {
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
       for (const list of lists) {
+        const updates: Record<string, string> = {};
         if (!list.share_token) {
           let token = '';
           for (let i = 0; i < 8; i++) token += chars[Math.floor(Math.random() * chars.length)];
+          updates.share_token = token;
+          list.share_token = token;
+        }
+        // Rename old default list names to "My News Feed"
+        if (list.is_default && (list.name === 'My Feed' || list.name === 'Favourites')) {
+          updates.name = 'My News Feed';
+          list.name = 'My News Feed';
+        }
+        if (Object.keys(updates).length > 0) {
           await admin
             .from('destination_lists')
-            .update({ share_token: token })
+            .update(updates)
             .eq('id', list.id);
-          list.share_token = token;
         }
       }
     }

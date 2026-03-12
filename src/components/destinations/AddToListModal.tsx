@@ -214,7 +214,7 @@ export function AddToListModal({
             disabled={!selectedListId || adding}
             className="bg-fg text-canvas text-[11px] tracking-[0.15em] uppercase px-6 py-2.5 rounded-sm hover:opacity-90 transition-opacity disabled:opacity-30 font-medium"
           >
-            {adding ? '...' : 'VALIDATE'}
+            {adding ? '...' : 'SELECT'}
           </button>
         </div>
       </div>

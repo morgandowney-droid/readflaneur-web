@@ -371,7 +371,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
     'wishlist.title': 'My List',
     'wishlist.sharedList': 'Shared List',
     'wishlist.neighborhoods': 'neighborhoods',
-    'wishlist.myFavourites': 'My favourites',
+    'wishlist.myFavourites': 'My news feed',
     'wishlist.createNewList': 'Create a new list',
     'wishlist.deleteList': 'Delete the list',
     'wishlist.shareWithFriend': 'Share with a friend',

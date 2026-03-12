@@ -317,6 +317,19 @@ export function DestinationsClient({ destinations, countries }: Props) {
     setSelectedId(prev => prev === id ? null : id);
   }, []);
 
+  // Incremented when filter/search changes to signal the map to fitBounds. Not incremented on map pan/zoom.
+  const [fitBoundsKey, setFitBoundsKey] = useState(0);
+
+  // Bump fitBoundsKey when any filter (not map bounds) changes
+  const prevFiltersRef = useRef({ search, activeRegions, activeCountries, neighborhoodType, themeFilter });
+  useEffect(() => {
+    const prev = prevFiltersRef.current;
+    if (prev.search !== search || prev.activeRegions !== activeRegions || prev.activeCountries !== activeCountries || prev.neighborhoodType !== neighborhoodType || prev.themeFilter !== themeFilter) {
+      setFitBoundsKey(k => k + 1);
+      prevFiltersRef.current = { search, activeRegions, activeCountries, neighborhoodType, themeFilter };
+    }
+  }, [search, activeRegions, activeCountries, neighborhoodType, themeFilter]);
+
   const handleMapBoundsChange = useCallback((bounds: { north: number; south: number; east: number; west: number }) => {
     setMapBounds(bounds);
   }, []);
@@ -431,7 +444,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
                       onClick={() => { setThemeFilter('coastal'); setCoastalOpen(false); }}
                       className="flex-1 text-[11px] tracking-[0.15em] uppercase py-2.5 bg-fg text-canvas hover:opacity-90 transition-opacity"
                     >
-                      Validate
+                      Select
                     </button>
                   </div>
                 </div>
@@ -473,7 +486,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
                       onClick={() => { setThemeFilter('slopes'); setSlopesOpen(false); }}
                       className="flex-1 text-[11px] tracking-[0.15em] uppercase py-2.5 bg-fg text-canvas hover:opacity-90 transition-opacity"
                     >
-                      Validate
+                      Select
                     </button>
                   </div>
                 </div>
@@ -524,7 +537,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
                       onClick={() => setCollectionsOpen(false)}
                       className="flex-1 text-[11px] tracking-[0.15em] uppercase py-2.5 bg-fg text-canvas hover:opacity-90 transition-opacity"
                     >
-                      Validate
+                      Select
                     </button>
                   </div>
                 </div>
@@ -811,6 +824,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
               onSelect={handleCardClick}
               onBoundsChange={handleMapBoundsChange}
               theme={theme}
+              fitBoundsKey={fitBoundsKey}
             />
           </div>
         )}

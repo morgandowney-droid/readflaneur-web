@@ -13,6 +13,7 @@ interface Props {
   onSelect: (id: string) => void;
   onBoundsChange: (bounds: { north: number; south: number; east: number; west: number }) => void;
   theme: 'dark' | 'light';
+  fitBoundsKey?: number;
 }
 
 const MAPBOX_STYLES = {
@@ -31,6 +32,7 @@ export function DestinationsMap({
   onSelect,
   onBoundsChange,
   theme,
+  fitBoundsKey = 0,
 }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<mapboxgl.Map | null>(null);
@@ -313,8 +315,9 @@ export function DestinationsMap({
     });
   }, [theme, allDestinations]);
 
-  // Fit bounds when filtered destinations change
+  // Fit bounds only when filter/search changes (fitBoundsKey increments), not on map pan/zoom
   useEffect(() => {
+    if (fitBoundsKey === 0) return; // Skip initial mount
     const map = mapInstanceRef.current;
     if (!map || destinations.length === 0) return;
 
@@ -330,7 +333,8 @@ export function DestinationsMap({
       [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
       { padding: 40, maxZoom: 12, duration: 600 }
     );
-  }, [destinations]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitBoundsKey]);
 
   // Inject popup styles
   useEffect(() => {

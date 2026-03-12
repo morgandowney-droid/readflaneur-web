@@ -285,7 +285,7 @@ export function WishlistDropdown({ className }: { className?: string }) {
                     onClick={() => { setListSelectorOpen(!listSelectorOpen); setMenuOpen(false); setRenaming(false); }}
                     className="w-full flex items-center justify-between border border-border rounded-sm px-3 py-2 text-sm text-fg hover:border-fg-muted transition-colors"
                   >
-                    <span className="truncate">{activeList?.name || 'Favourites'}</span>
+                    <span className="truncate">{activeList?.name || 'My News Feed'}</span>
                     <svg className={cn('w-4 h-4 text-fg-muted transition-transform', listSelectorOpen && 'rotate-180')} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>

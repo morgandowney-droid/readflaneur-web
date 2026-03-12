@@ -55,8 +55,8 @@ export async function POST() {
       .from('destination_lists')
       .insert({
         user_id: session.user.id,
-        name: 'Favourites',
-        slug: 'favourites',
+        name: 'My News Feed',
+        slug: 'my-news-feed',
         is_default: true,
         share_token: shareToken,
       })
