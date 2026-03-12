@@ -25,16 +25,34 @@ export default function ResetPasswordPage() {
           setIsValidSession(false);
         } else {
           setIsValidSession(true);
-          // Clean up URL
           window.history.replaceState({}, '', '/reset-password');
         }
       });
+    } else if (window.location.hash.includes('access_token')) {
+      // Arrived via Supabase direct link with #access_token in hash fragment.
+      // Supabase client auto-detects hash tokens via onAuthStateChange.
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+          setIsValidSession(true);
+          window.history.replaceState({}, '', '/reset-password');
+          subscription.unsubscribe();
+        }
+      });
+      // Safety timeout - if no auth event fires in 5s, check session directly
+      setTimeout(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (isValidSession === null) {
+            setIsValidSession(!!session);
+          }
+        });
+      }, 5000);
     } else {
-      // No code - check if already has a valid session (e.g. already logged in)
+      // No code or hash - check if already has a valid session
       supabase.auth.getSession().then(({ data: { session } }) => {
         setIsValidSession(!!session);
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,7 +113,7 @@ export default function ResetPasswordPage() {
             Please request a new one.
           </p>
           <Link
-            href="/forgot-password"
+            href="/forgot"
             className="inline-block bg-fg text-canvas px-6 py-3 text-sm tracking-widest uppercase hover:bg-elevated transition-colors rounded-lg"
           >
             Request New Link

@@ -289,14 +289,14 @@ function LoginForm() {
       </form>
 
       <div className="text-center mt-6 space-y-2">
-        <p className="text-sm text-fg-subtle">
-          <Link href="/forgot-password" className="text-white hover:underline">
+        <p className="text-sm">
+          <Link href="/forgot" className="text-accent hover:underline">
             Forgot your password?
           </Link>
         </p>
         <p className="text-sm text-fg-subtle">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-white hover:underline">
+          <Link href="/signup" className="text-accent hover:underline">
             Sign up
           </Link>
         </p>
