@@ -5,6 +5,13 @@
 
 ## 2026-03-12
 
+**Destinations page refinements and admin image review:**
+- Rename all "Validate" buttons to "Select" on Coastal/Slopes/Collections dropdowns and AddToListModal.
+- Default list renamed from "My Feed"/"Favourites" to "My News Feed". Backfill on GET renames existing default lists automatically.
+- Fix map zoom magnetizing to cities: `fitBounds` only fires when filter/search changes (tracked via `fitBoundsKey`), not on user pan/zoom. Was creating a feedback loop where panning filtered cards, then `fitBounds` snapped the map back.
+- Admin image review page at `/admin/image-review`: paginated view of all Unsplash photos (10 per page), one-click Remove button that blacklists the photo ID in `rejected_image_ids`, replaces it with an alternate, and updates any articles using it.
+- Files: `DestinationsClient.tsx`, `DestinationsMap.tsx`, `AddToListModal.tsx`, `WishlistDropdown.tsx`, `translations.ts`, `lists/route.ts`, `ensure-default/route.ts`, `admin/image-review/` (new)
+
 **Feed hero clickability and destinations page polish:**
 - Feed hero image (neighborhood photo + headline on /feed) now clickable - wraps in Next.js Link to daily brief article. Hover underline on headline. Photographer credit separately clickable at z-2.
 - Rename "feed" to "news feed" across destinations page: confirmation dialogs, tooltips, badges ("In your news feed", "Remove from your daily news feed?", etc.).
