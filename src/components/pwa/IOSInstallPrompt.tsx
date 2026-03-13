@@ -5,8 +5,9 @@ import { useState, useEffect } from 'react';
 /**
  * iOS Safari "Add to Home Screen" install prompt.
  *
- * Shows a top card guide after the user has read 3+ articles
- * across 2+ sessions on iOS Safari (not already installed as PWA).
+ * Shows a top card guide for any iOS Safari user (not already PWA).
+ * First dismissal: re-shows after 7 days.
+ * Subsequent dismissals: re-shows every 30 days.
  * 4 steps matching exact Safari UI flow.
  */
 
@@ -22,9 +23,8 @@ function isIOSSafari(): boolean {
 
 const DISMISS_KEY = 'flaneur-pwa-prompt-dismissed';
 const DISMISS_COUNT_KEY = 'flaneur-pwa-prompt-dismiss-count';
-const READS_KEY = 'flaneur-article-reads';
-const SESSION_KEY = 'flaneur-session-count';
-const DISMISS_DAYS = 30;
+const FIRST_DISMISS_DAYS = 7;
+const REPEAT_DISMISS_DAYS = 30;
 
 // Safari "..." more icon (three dots in circle)
 function MoreIcon({ className }: { className?: string }) {
@@ -102,21 +102,13 @@ export function IOSInstallPrompt() {
 
     if (!forceShow && !isIOSSafari()) return;
 
+    // Check cooldown: 7 days after first dismiss, 30 days after subsequent
     const dismissedAt = localStorage.getItem(DISMISS_KEY);
-    if (dismissedAt) {
+    if (dismissedAt && !forceShow) {
       const daysSince = (Date.now() - parseInt(dismissedAt, 10)) / (1000 * 60 * 60 * 24);
-      if (daysSince < DISMISS_DAYS) return;
-    }
-
-    if (!forceShow) {
       const dismissCount = parseInt(localStorage.getItem(DISMISS_COUNT_KEY) || '0', 10);
-      if (dismissCount >= 2) return;
-
-      const reads = parseInt(localStorage.getItem(READS_KEY) || '0', 10);
-      if (reads < 3) return;
-
-      const sessions = parseInt(localStorage.getItem(SESSION_KEY) || '0', 10);
-      if (sessions < 2) return;
+      const cooldown = dismissCount <= 1 ? FIRST_DISMISS_DAYS : REPEAT_DISMISS_DAYS;
+      if (daysSince < cooldown) return;
     }
 
     const timer = setTimeout(() => setVisible(true), 2000);
