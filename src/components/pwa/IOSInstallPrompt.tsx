@@ -5,10 +5,9 @@ import { useState, useEffect } from 'react';
 /**
  * iOS Safari "Add to Home Screen" install prompt.
  *
- * Shows a bottom-sheet guide after the user has read 3+ articles
+ * Shows a top card guide after the user has read 3+ articles
  * across 2+ sessions on iOS Safari (not already installed as PWA).
- *
- * Inspired by FT, Pinterest, and Morning Brew install prompts.
+ * 4 steps matching exact Safari UI flow.
  */
 
 function isIOSSafari(): boolean {
@@ -16,7 +15,6 @@ function isIOSSafari(): boolean {
   const ua = navigator.userAgent;
   const isIOS = /iPhone|iPad|iPod/.test(ua);
   const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|OPiOS|EdgiOS/.test(ua);
-  // Already installed as standalone PWA
   const isStandalone = ('standalone' in navigator && (navigator as { standalone?: boolean }).standalone === true)
     || window.matchMedia('(display-mode: standalone)').matches;
   return isIOS && isSafari && !isStandalone;
@@ -28,18 +26,82 @@ const READS_KEY = 'flaneur-article-reads';
 const SESSION_KEY = 'flaneur-session-count';
 const DISMISS_DAYS = 30;
 
+// Safari "..." more icon (three dots in circle)
+function MoreIcon({ className }: { className?: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="8" cy="12" r="1.5" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+      <circle cx="16" cy="12" r="1.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+// Safari share icon (box with upward arrow)
+function ShareIcon({ className }: { className?: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className={className}>
+      <path d="M12 3v12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M8 7l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 14v5a2 2 0 002 2h12a2 2 0 002-2v-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// "View More" ellipsis rows icon
+function ViewMoreIcon({ className }: { className?: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className={className}>
+      <rect x="3" y="4" width="18" height="3" rx="1" fill="currentColor" opacity="0.4" />
+      <rect x="3" y="10.5" width="18" height="3" rx="1" fill="currentColor" opacity="0.6" />
+      <rect x="3" y="17" width="18" height="3" rx="1" fill="currentColor" opacity="0.8" />
+    </svg>
+  );
+}
+
+// Add to Home Screen icon (square with plus)
+function AddIcon({ className }: { className?: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className={className}>
+      <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M12 8v8M8 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+const STEPS = [
+  {
+    icon: MoreIcon,
+    title: 'Tap the \u2026 icon',
+    subtitle: 'Three dots in the bottom-right corner of Safari',
+  },
+  {
+    icon: ShareIcon,
+    title: 'Tap Share',
+    subtitle: 'The box with an upward arrow',
+  },
+  {
+    icon: ViewMoreIcon,
+    title: 'Scroll down and tap "Add to Home Screen"',
+    subtitle: 'You may need to scroll the share sheet',
+  },
+  {
+    icon: AddIcon,
+    title: 'Tap "Add"',
+    subtitle: 'Flaneur will appear on your home screen',
+  },
+];
+
 export function IOSInstallPrompt() {
   const [visible, setVisible] = useState(false);
-  const [step, setStep] = useState(1);
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
-    // ?pwa-test=true bypasses all checks for preview
     const forceShow = new URLSearchParams(window.location.search).get('pwa-test') === 'true';
 
     if (!forceShow && !isIOSSafari()) return;
 
-    // Check dismiss state (skipped in test mode)
     const dismissedAt = localStorage.getItem(DISMISS_KEY);
     if (dismissedAt) {
       const daysSince = (Date.now() - parseInt(dismissedAt, 10)) / (1000 * 60 * 60 * 24);
@@ -47,20 +109,16 @@ export function IOSInstallPrompt() {
     }
 
     if (!forceShow) {
-      // Permanently dismissed after 2 dismissals
       const dismissCount = parseInt(localStorage.getItem(DISMISS_COUNT_KEY) || '0', 10);
       if (dismissCount >= 2) return;
 
-      // Check engagement: 3+ article reads
       const reads = parseInt(localStorage.getItem(READS_KEY) || '0', 10);
       if (reads < 3) return;
 
-      // Check engagement: 2+ sessions
       const sessions = parseInt(localStorage.getItem(SESSION_KEY) || '0', 10);
       if (sessions < 2) return;
     }
 
-    // Show after 2s delay
     const timer = setTimeout(() => setVisible(true), 2000);
     return () => clearTimeout(timer);
   }, []);
@@ -85,116 +143,82 @@ export function IOSInstallPrompt() {
         onClick={dismiss}
       />
 
-      {/* Bottom sheet */}
+      {/* Top card */}
       <div
-        className={`fixed bottom-0 left-0 right-0 z-[9999] transition-transform duration-300 ease-out ${exiting ? 'translate-y-full' : 'translate-y-0'}`}
-        style={{ animation: exiting ? undefined : 'slideUpSheet 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }}
+        className={`fixed top-0 left-0 right-0 z-[9999] transition-transform duration-300 ease-out ${exiting ? '-translate-y-full' : 'translate-y-0'}`}
+        style={{ animation: exiting ? undefined : 'slideDownCard 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }}
       >
-        <div className="bg-surface border-t border-border rounded-t-2xl mx-auto max-w-lg pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-          {/* Drag handle */}
-          <div className="flex justify-center pt-3 pb-2">
-            <div className="w-10 h-1 rounded-full bg-fg-subtle/30" />
-          </div>
-
+        <div className="bg-surface border-b border-border rounded-b-2xl mx-auto max-w-lg pt-[max(1rem,env(safe-area-inset-top))]">
           {/* Content */}
-          <div className="px-6 pb-4">
-            {/* Header */}
-            <div className="flex items-start justify-between mb-5">
+          <div className="px-5 pb-5 pt-3">
+            {/* Header row */}
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                {/* App icon placeholder */}
-                <div className="w-12 h-12 rounded-xl bg-canvas border border-border flex items-center justify-center shrink-0">
-                  <span className="font-display text-lg tracking-[0.15em] text-fg">F</span>
+                <div className="w-10 h-10 rounded-xl bg-canvas border border-border flex items-center justify-center shrink-0">
+                  <span className="font-display text-base tracking-[0.15em] text-fg">F</span>
                 </div>
                 <div>
-                  <h3 className="font-display text-lg text-fg">Add Flaneur</h3>
-                  <p className="text-xs text-fg-subtle">readflaneur.com</p>
+                  <h3 className="text-sm font-medium text-fg">Add Flaneur to Home Screen</h3>
+                  <p className="text-xs text-fg-subtle">One tap access to your morning brief</p>
                 </div>
               </div>
               <button
                 onClick={dismiss}
-                className="text-fg-subtle hover:text-fg p-1 -mr-1 -mt-1"
+                className="text-fg-subtle hover:text-fg p-1.5 -mr-1"
                 aria-label="Close"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            {/* Value prop */}
-            <p className="text-sm text-fg-muted mb-6 leading-relaxed">
-              Get your morning brief right from your home screen. One tap, no browser needed.
-            </p>
-
             {/* Steps */}
-            <div className="space-y-4">
-              {/* Step 1 */}
-              <button
-                onClick={() => setStep(1)}
-                className={`w-full flex items-center gap-4 p-3 rounded-xl transition-colors ${step === 1 ? 'bg-canvas border border-border' : 'opacity-60'}`}
-              >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${step === 1 ? 'bg-accent/10 text-accent' : 'bg-surface text-fg-subtle'}`}>
-                  {/* iOS Share icon */}
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M8.59 13.51l6.83-6.83M15.42 12.5V6.68h-5.83M20.33 15.87v3.75a.83.83 0 01-.83.83H4.5a.83.83 0 01-.83-.83v-3.75" />
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-medium text-fg">
-                    Tap the share button
-                  </p>
-                  <p className="text-xs text-fg-subtle mt-0.5">
-                    The square with arrow at the bottom of Safari
-                  </p>
-                </div>
-                <div className={`ml-auto shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${step === 1 ? 'bg-accent text-canvas' : 'bg-surface text-fg-subtle border border-border'}`}>
-                  1
-                </div>
-              </button>
-
-              {/* Step 2 */}
-              <button
-                onClick={() => setStep(2)}
-                className={`w-full flex items-center gap-4 p-3 rounded-xl transition-colors ${step === 2 ? 'bg-canvas border border-border' : 'opacity-60'}`}
-              >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${step === 2 ? 'bg-accent/10 text-accent' : 'bg-surface text-fg-subtle'}`}>
-                  {/* Plus in square icon */}
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="3" />
-                    <path d="M12 8v8M8 12h8" />
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-medium text-fg">
-                    Tap "Add to Home Screen"
-                  </p>
-                  <p className="text-xs text-fg-subtle mt-0.5">
-                    Scroll down in the share menu to find it
-                  </p>
-                </div>
-                <div className={`ml-auto shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${step === 2 ? 'bg-accent text-canvas' : 'bg-surface text-fg-subtle border border-border'}`}>
-                  2
-                </div>
-              </button>
+            <div className="space-y-1">
+              {STEPS.map((s, i) => {
+                const Icon = s.icon;
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 py-2.5 px-2 rounded-lg"
+                  >
+                    {/* Number badge */}
+                    <div className="w-6 h-6 rounded-full bg-accent text-canvas flex items-center justify-center text-xs font-semibold shrink-0">
+                      {i + 1}
+                    </div>
+                    {/* Icon */}
+                    <div className="w-8 h-8 rounded-lg bg-canvas border border-border flex items-center justify-center shrink-0">
+                      <Icon className="text-fg" />
+                    </div>
+                    {/* Text */}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-fg leading-snug">{s.title}</p>
+                      <p className="text-xs text-fg-subtle leading-snug mt-0.5">{s.subtitle}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Animated arrow pointing to Safari share button */}
-            {step === 1 && (
-              <div className="flex justify-center mt-4 pt-2">
-                <div className="animate-bounce text-accent">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M12 5v14M5 12l7 7 7-7" />
-                  </svg>
-                </div>
-              </div>
-            )}
+            {/* Dismiss link */}
+            <button
+              onClick={dismiss}
+              className="w-full text-center text-xs text-fg-subtle hover:text-fg-muted mt-3 py-1"
+            >
+              Maybe later
+            </button>
+          </div>
+
+          {/* Drag handle at bottom */}
+          <div className="flex justify-center pb-2">
+            <div className="w-10 h-1 rounded-full bg-fg-subtle/20" />
           </div>
         </div>
       </div>
 
       <style jsx>{`
-        @keyframes slideUpSheet {
-          from { transform: translateY(100%); }
+        @keyframes slideDownCard {
+          from { transform: translateY(-100%); }
           to { transform: translateY(0); }
         }
       `}</style>
