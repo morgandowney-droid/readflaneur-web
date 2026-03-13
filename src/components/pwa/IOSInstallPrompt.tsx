@@ -73,8 +73,8 @@ function AddIcon({ className }: { className?: string }) {
 const STEPS = [
   {
     icon: MoreIcon,
-    title: 'Tap the \u2026 icon',
-    subtitle: 'Three dots in the bottom-right corner of Safari',
+    title: 'Tap the three dots \u2026 on the lower right',
+    subtitle: 'The circle icon in Safari\u2019s toolbar',
   },
   {
     icon: ShareIcon,
@@ -83,12 +83,12 @@ const STEPS = [
   },
   {
     icon: ViewMoreIcon,
-    title: 'Scroll down and tap "Add to Home Screen"',
-    subtitle: 'You may need to scroll the share sheet',
+    title: 'Tap "View More"',
+    subtitle: 'Scroll down in the share menu if needed',
   },
   {
     icon: AddIcon,
-    title: 'Tap "Add"',
+    title: 'Tap "Add to Home Screen"',
     subtitle: 'Flaneur will appear on your home screen',
   },
 ];
