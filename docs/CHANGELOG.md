@@ -3,6 +3,16 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-13
+
+**PWA iOS install prompt and auth fixes:**
+- iOS Safari "Add to Home Screen" install prompt: top card guide with 4-step visual instructions matching Safari UI flow (three dots, Share, View More, Add to Home Screen). Shows on first iOS Safari visit with no engagement gate. Re-shows after 7 days on first dismissal, then every 30 days indefinitely. `?pwa-test=true` URL param for testing.
+- PWA manifest (`public/manifest.json`) with standalone display mode, dark theme, and generated app icons (192x192, 512x512, apple-touch-icon 180x180). Apple web app meta tags in layout.tsx.
+- Move forgot password page from `/forgot-password` to `/forgot` (shorter URL, API route unchanged).
+- Fix reset password page stuck on "Loading..." when arriving via Supabase native email links with `#access_token=` hash fragment (was only handling PKCE `?code=` params). Added `onAuthStateChange` listener for `PASSWORD_RECOVERY` event with 5s safety timeout.
+- Fix forgot password and signup links invisible on light theme (`text-white` changed to `text-accent`).
+- Files: `IOSInstallPrompt.tsx` (new), `manifest.json` (new), `icon-192.png`/`icon-512.png`/`apple-touch-icon.png` (new), `layout.tsx`, `login/page.tsx`, `forgot/page.tsx` (moved from `forgot-password/`), `reset-password/page.tsx`
+
 ## 2026-03-12
 
 **Destinations page refinements and admin image review:**
