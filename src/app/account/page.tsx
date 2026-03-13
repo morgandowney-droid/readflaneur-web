@@ -19,6 +19,7 @@ export default function AccountPage() {
   const [tzInput, setTzInput] = useState('');
   const [tzSaving, setTzSaving] = useState(false);
   const [tzSaved, setTzSaved] = useState(false);
+  const [showIOSLink, setShowIOSLink] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,6 +60,15 @@ export default function AccountPage() {
       } catch { /* ignore */ }
     }
     setAuthReady(true); // Page can render now (no spinner)
+
+    // Show "Add to Home Screen" link for iOS Safari users not in standalone PWA
+    try {
+      const ua = navigator.userAgent;
+      const isIOS = /iPhone|iPad|iPod/.test(ua);
+      const isStandalone = ('standalone' in navigator && (navigator as { standalone?: boolean }).standalone === true)
+        || window.matchMedia('(display-mode: standalone)').matches;
+      if (isIOS && !isStandalone) setShowIOSLink(true);
+    } catch { /* ignore */ }
 
     if (!userId) return; // Not logged in — nothing more to load
 
@@ -365,6 +375,17 @@ export default function AccountPage() {
               </Link>
             )}
           </div>
+          {showIOSLink && (
+            <div>
+              <p className="text-[10px] tracking-[0.2em] uppercase text-fg-subtle mb-1">App</p>
+              <button
+                onClick={() => window.dispatchEvent(new Event('flaneur-show-pwa-prompt'))}
+                className="text-[11px] text-accent hover:underline"
+              >
+                Add Flaneur to your Home Screen &rsaquo;
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Sign out at the very bottom */}

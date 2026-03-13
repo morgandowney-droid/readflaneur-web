@@ -115,6 +115,13 @@ export function IOSInstallPrompt() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Allow external trigger via custom event (e.g. from account page link)
+  useEffect(() => {
+    function handleShow() { setExiting(false); setVisible(true); }
+    window.addEventListener('flaneur-show-pwa-prompt', handleShow);
+    return () => window.removeEventListener('flaneur-show-pwa-prompt', handleShow);
+  }, []);
+
   function dismiss() {
     setExiting(true);
     setTimeout(() => {
