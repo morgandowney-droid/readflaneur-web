@@ -17,6 +17,7 @@ import { toHeadlineCase } from '@/lib/utils';
 import { NEIGHBORHOODS_COOKIE } from '@/lib/neighborhood-cookie';
 import { FeedHero } from '@/components/feed/FeedHero';
 import { EditorialGrid } from '@/components/feed/EditorialGrid';
+import { PWARefreshBar } from '@/components/pwa/PWARefreshBar';
 
 export const dynamic = 'force-dynamic';
 
@@ -353,6 +354,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
   return (
     <div className="bg-canvas">
+      <PWARefreshBar />
       {/* Full-bleed hero with primary neighborhood image */}
       {heroImage && primaryHoodForWeather && (
         <FeedHero
