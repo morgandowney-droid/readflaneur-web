@@ -11,7 +11,10 @@
 - Move forgot password page from `/forgot-password` to `/forgot` (shorter URL, API route unchanged).
 - Fix reset password page stuck on "Loading..." when arriving via Supabase native email links with `#access_token=` hash fragment (was only handling PKCE `?code=` params). Added `onAuthStateChange` listener for `PASSWORD_RECOVERY` event with 5s safety timeout.
 - Fix forgot password and signup links invisible on light theme (`text-white` changed to `text-accent`).
-- Files: `IOSInstallPrompt.tsx` (new), `manifest.json` (new), `icon-192.png`/`icon-512.png`/`apple-touch-icon.png` (new), `layout.tsx`, `login/page.tsx`, `forgot/page.tsx` (moved from `forgot-password/`), `reset-password/page.tsx`
+- iOS-only "Add Flaneur to your Home Screen" link on account page (under App section). Detects iOS + not standalone, dispatches custom event to trigger the install prompt overlay.
+- PWA refresh bar at top of feed page in standalone mode: shows "Updated {time} - Refresh" since PWA has no browser refresh button or URL bar. Hidden in normal browser mode.
+- IOSInstallPrompt now listens for `flaneur-show-pwa-prompt` custom event for external triggering.
+- Files: `IOSInstallPrompt.tsx` (new), `PWARefreshBar.tsx` (new), `manifest.json` (new), `icon-192.png`/`icon-512.png`/`apple-touch-icon.png` (new), `layout.tsx`, `login/page.tsx`, `forgot/page.tsx` (moved from `forgot-password/`), `reset-password/page.tsx`, `account/page.tsx`, `feed/page.tsx`
 
 ## 2026-03-12
 
