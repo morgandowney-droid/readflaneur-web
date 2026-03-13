@@ -10,6 +10,7 @@ import { LocationPrompt } from '@/components/location/LocationPrompt';
 import { PrimaryChangeSuggestion } from '@/components/feed/PrimaryChangeSuggestion';
 import { LanguageProvider } from '@/components/providers/LanguageProvider';
 import { PreferencesSync } from '@/components/providers/PreferencesSync';
+import { IOSInstallPrompt } from '@/components/pwa/IOSInstallPrompt';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -32,6 +33,15 @@ export const metadata: Metadata = {
   title: 'Flaneur | Hyper-local stories',
   description:
     'Discover hyper-local stories from the neighborhoods you love. West Village, Notting Hill, Paddington, and more.',
+  manifest: '/manifest.json',
+  icons: {
+    apple: '/apple-touch-icon.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Flaneur',
+  },
   openGraph: {
     title: 'Flaneur - Local stories, interesting neighborhoods',
     description: 'Daily local news and events from 270+ neighborhoods worldwide. West Village, Notting Hill, Shibuya, and more.',
@@ -57,7 +67,7 @@ export const metadata: Metadata = {
     },
   },
   other: {
-    // Additional AI scraper prevention
+    'mobile-web-app-capable': 'yes',
     'X-Robots-Tag': 'noai, noimageai',
   },
 };
@@ -84,6 +94,7 @@ export default function RootLayout({
             {/* ReturnVisitPrompt removed - quiet footer capture handles email subscription */}
             <PrimaryChangeSuggestion />
             <PreferencesSync />
+            <IOSInstallPrompt />
           </NeighborhoodModalProvider>
         </LanguageProvider>
       </body>
