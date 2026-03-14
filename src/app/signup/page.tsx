@@ -37,12 +37,15 @@ export default function SignupPage() {
   const [success, setSuccess] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [lastAuthMethod, setLastAuthMethod] = useState<string | null>(null);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const turnstileRef = useRef<TurnstileInstance>(null);
 
   useEffect(() => {
     try {
       const method = localStorage.getItem('flaneur-auth-method');
       if (method) setLastAuthMethod(method);
+      const t = localStorage.getItem('flaneur-theme');
+      if (t === 'light') setTheme('light');
     } catch { /* ignore */ }
   }, []);
 
@@ -231,7 +234,7 @@ export default function SignupPage() {
                 siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY.trim()}
                 onSuccess={setCaptchaToken}
                 onExpire={() => setCaptchaToken(null)}
-                options={{ theme: 'dark', size: 'flexible' }}
+                options={{ theme, size: 'flexible' }}
               />
             </div>
           )}

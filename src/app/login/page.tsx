@@ -39,6 +39,7 @@ function LoginForm() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [lastAuthMethod, setLastAuthMethod] = useState<string | null>(null);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const turnstileRef = useRef<TurnstileInstance>(null);
 
   // Redirect already-authenticated users — only via getSession (real cookie check).
@@ -65,10 +66,12 @@ function LoginForm() {
         // Timeout or error — show login form, don't clear flaneur-auth
         // (could be a transient navigator.locks issue)
       }
-      // Read last auth method for returning user hint
+      // Read last auth method and theme for returning user hint + Turnstile
       try {
         const method = localStorage.getItem('flaneur-auth-method');
         if (method) setLastAuthMethod(method);
+        const t = localStorage.getItem('flaneur-theme');
+        if (t === 'light') setTheme('light');
       } catch { /* ignore */ }
       setCheckingSession(false);
     }
@@ -291,7 +294,7 @@ function LoginForm() {
               siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY.trim()}
               onSuccess={setCaptchaToken}
               onExpire={() => setCaptchaToken(null)}
-              options={{ theme: 'dark', size: 'flexible' }}
+              options={{ theme, size: 'flexible' }}
             />
           </div>
         )}
