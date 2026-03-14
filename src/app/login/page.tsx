@@ -38,6 +38,7 @@ function LoginForm() {
   const [success, setSuccess] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [lastAuthMethod, setLastAuthMethod] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileInstance>(null);
 
   // Redirect already-authenticated users — only via getSession (real cookie check).
@@ -64,6 +65,11 @@ function LoginForm() {
         // Timeout or error — show login form, don't clear flaneur-auth
         // (could be a transient navigator.locks issue)
       }
+      // Read last auth method for returning user hint
+      try {
+        const method = localStorage.getItem('flaneur-auth-method');
+        if (method) setLastAuthMethod(method);
+      } catch { /* ignore */ }
       setCheckingSession(false);
     }
     checkSession();
@@ -74,6 +80,9 @@ function LoginForm() {
     setIsOAuthLoading(provider);
 
     try {
+      // Store auth method before redirect so we can highlight it on return
+      try { localStorage.setItem('flaneur-auth-method', provider); } catch { /* ignore */ }
+
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -133,6 +142,7 @@ function LoginForm() {
       // Write flaneur-auth flag + GoTrue localStorage key for Header.
       // No navigator.locks — just plain localStorage writes.
       try {
+        localStorage.setItem('flaneur-auth-method', 'email');
         if (result.user) {
           localStorage.setItem('flaneur-auth', JSON.stringify({
             id: result.user.id,
@@ -204,13 +214,20 @@ function LoginForm() {
       <button
         onClick={() => handleOAuthLogin('google')}
         disabled={isOAuthLoading === 'google'}
-        className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-border-strong rounded-lg hover:bg-hover transition-colors disabled:opacity-50"
+        className={`w-full flex items-center justify-center gap-3 px-4 py-3 border rounded-lg hover:bg-hover transition-colors disabled:opacity-50 ${
+          lastAuthMethod === 'google'
+            ? 'ring-2 ring-blue-500 border-blue-500/50 bg-blue-500/5'
+            : 'border-border-strong'
+        }`}
       >
         <GoogleIcon />
         <span className="text-sm text-fg">
           {isOAuthLoading === 'google' ? 'Redirecting...' : 'Continue with Google'}
         </span>
       </button>
+      {lastAuthMethod === 'google' && (
+        <p className="text-xs text-fg-subtle text-center mt-2">You previously used &ldquo;Continue with Google&rdquo;</p>
+      )}
 
       <div className="flex items-center gap-4 my-6">
         <div className="flex-1 h-px bg-border" />
@@ -218,7 +235,7 @@ function LoginForm() {
         <div className="flex-1 h-px bg-border" />
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className={`space-y-5 ${lastAuthMethod === 'google' ? 'opacity-60' : ''}`}>
         {error && (
           <div className="p-3 text-sm text-red-400 bg-red-900/20 border border-red-800/30 rounded-lg">
             {error}

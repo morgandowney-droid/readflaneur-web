@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
@@ -36,13 +36,23 @@ export default function SignupPage() {
   const [isOAuthLoading, setIsOAuthLoading] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [lastAuthMethod, setLastAuthMethod] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileInstance>(null);
+
+  useEffect(() => {
+    try {
+      const method = localStorage.getItem('flaneur-auth-method');
+      if (method) setLastAuthMethod(method);
+    } catch { /* ignore */ }
+  }, []);
 
   const handleOAuthSignup = async (provider: 'google' | 'apple') => {
     setError(null);
     setIsOAuthLoading(provider);
 
     try {
+      try { localStorage.setItem('flaneur-auth-method', provider); } catch { /* ignore */ }
+
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -95,6 +105,7 @@ export default function SignupPage() {
       return;
     }
 
+    try { localStorage.setItem('flaneur-auth-method', 'email'); } catch { /* ignore */ }
     setSuccess(true);
     setIsLoading(false);
   };
@@ -130,13 +141,20 @@ export default function SignupPage() {
         <button
           onClick={() => handleOAuthSignup('google')}
           disabled={isOAuthLoading === 'google'}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-border-strong rounded-lg hover:bg-hover transition-colors disabled:opacity-50"
+          className={`w-full flex items-center justify-center gap-3 px-4 py-3 border rounded-lg hover:bg-hover transition-colors disabled:opacity-50 ${
+            lastAuthMethod === 'google'
+              ? 'ring-2 ring-blue-500 border-blue-500/50 bg-blue-500/5'
+              : 'border-border-strong'
+          }`}
         >
           <GoogleIcon />
           <span className="text-sm text-fg">
             {isOAuthLoading === 'google' ? 'Redirecting...' : 'Continue with Google'}
           </span>
         </button>
+        {lastAuthMethod === 'google' && (
+          <p className="text-xs text-fg-subtle text-center mt-2">You previously used &ldquo;Continue with Google&rdquo;</p>
+        )}
 
         <div className="flex items-center gap-4 my-6">
           <div className="flex-1 h-px bg-border" />
@@ -144,7 +162,7 @@ export default function SignupPage() {
           <div className="flex-1 h-px bg-border" />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className={`space-y-5 ${lastAuthMethod === 'google' ? 'opacity-60' : ''}`}>
           {error && (
             <div className="p-3 text-sm text-red-400 bg-red-900/20 border border-red-800/30 rounded-lg">
               {error}
@@ -229,7 +247,7 @@ export default function SignupPage() {
 
         <p className="text-center text-sm text-fg-subtle mt-6">
           Already have an account?{' '}
-          <Link href="/login" className="text-white hover:underline">
+          <Link href="/login" className="text-accent hover:underline">
             Sign in
           </Link>
         </p>
