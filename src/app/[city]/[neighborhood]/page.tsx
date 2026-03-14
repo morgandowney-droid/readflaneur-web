@@ -123,7 +123,8 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
     .from('articles')
     .select('*, neighborhood:neighborhoods(id, name, city, timezone)')
     .in('neighborhood_id', queryIds)
-    .eq('status', 'published');
+    .eq('status', 'published')
+    .lte('published_at', new Date().toISOString());
 
   // Apply category filter if provided
   // Category slug format: 'weekly-civic-recap' matches category_label like 'Weekly Civic Recap'

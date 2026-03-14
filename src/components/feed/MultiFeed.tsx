@@ -123,7 +123,7 @@ export function MultiFeed({
         for (const cid of hood.combo_component_ids) allIds.add(cid);
       }
     }
-    const url = `${supabaseUrl}/rest/v1/articles?select=slug,headline,preview_text,image_url,neighborhood_id&status=eq.published&article_type=eq.brief_summary&neighborhood_id=in.(${Array.from(allIds).join(',')})&image_url=not.is.null&order=published_at.desc.nullsfirst&limit=${allIds.size * 2}`;
+    const url = `${supabaseUrl}/rest/v1/articles?select=slug,headline,preview_text,image_url,neighborhood_id&status=eq.published&published_at=lte.${encodeURIComponent(new Date().toISOString())}&article_type=eq.brief_summary&neighborhood_id=in.(${Array.from(allIds).join(',')})&image_url=not.is.null&order=published_at.desc.nullsfirst&limit=${allIds.size * 2}`;
     fetch(url, {
       headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` },
     })
@@ -367,7 +367,7 @@ export function MultiFeed({
       ? [activeFilter, ...activeHoodData.combo_component_ids]
       : [activeFilter];
 
-    const articlesUrl = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city,timezone)&status=eq.published&neighborhood_id=in.(${filterIds.join(',')})&order=published_at.desc.nullsfirst,created_at.desc.nullsfirst&limit=20`;
+    const articlesUrl = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city,timezone)&status=eq.published&published_at=lte.${encodeURIComponent(new Date().toISOString())}&neighborhood_id=in.(${filterIds.join(',')})&order=published_at.desc.nullsfirst,created_at.desc.nullsfirst&limit=20`;
     const adsUrl = `${supabaseUrl}/rest/v1/ads?select=*&or=(is_global.eq.true,${filterIds.map(id => `neighborhood_id.eq.${id}`).join(',')})`;
 
     Promise.all([
@@ -575,7 +575,7 @@ export function MultiFeed({
       const loadIds = loadHood?.combo_component_ids
         ? [activeFilter!, ...loadHood.combo_component_ids]
         : [activeFilter!];
-      const url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city,timezone)&status=eq.published&neighborhood_id=in.(${loadIds.join(',')})&order=published_at.desc.nullsfirst,created_at.desc.nullsfirst&offset=${articleCount}&limit=20`;
+      const url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city,timezone)&status=eq.published&published_at=lte.${encodeURIComponent(new Date().toISOString())}&neighborhood_id=in.(${loadIds.join(',')})&order=published_at.desc.nullsfirst,created_at.desc.nullsfirst&offset=${articleCount}&limit=20`;
 
       const res = await fetch(url, {
         headers: {

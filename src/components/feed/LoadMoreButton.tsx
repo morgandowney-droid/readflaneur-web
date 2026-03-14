@@ -111,7 +111,7 @@ export function LoadMoreButton({
       }
 
       // Build articles URL
-      let url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city,timezone)&status=eq.published&order=published_at.desc.nullsfirst,created_at.desc.nullsfirst&offset=${offset}&limit=${pageSize}`;
+      let url = `${supabaseUrl}/rest/v1/articles?select=*,neighborhood:neighborhoods(id,name,city,timezone)&status=eq.published&published_at=lte.${encodeURIComponent(new Date().toISOString())}&order=published_at.desc.nullsfirst,created_at.desc.nullsfirst&offset=${offset}&limit=${pageSize}`;
 
       url += `&neighborhood_id=in.(${allIds.join(',')})`;
 

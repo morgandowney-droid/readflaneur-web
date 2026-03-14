@@ -86,6 +86,7 @@ export async function GET(request: NextRequest) {
       .from('articles')
       .select('slug, headline, preview_text, body_text, image_url, neighborhood_id')
       .eq('status', 'published')
+      .lte('published_at', new Date().toISOString())
       .eq('article_type', 'brief_summary')
       .in('neighborhood_id', allPickedIds)
       .not('image_url', 'is', null)

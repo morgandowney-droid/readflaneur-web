@@ -105,6 +105,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       )
     `)
     .eq('status', 'published')
+    .lte('published_at', new Date().toISOString())
     .order('published_at', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(feedLimit);
