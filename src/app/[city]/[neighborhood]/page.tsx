@@ -34,6 +34,7 @@ export async function generateMetadata({ params }: NeighborhoodPageProps) {
   const possibleIds = [
     `${city}-${neighborhood}`,
     `${city.slice(0, 3)}-${neighborhood}`,
+    `${neighborhood}-${neighborhood}`,
     neighborhood,
   ];
 
@@ -91,19 +92,26 @@ export default async function NeighborhoodPage({ params, searchParams }: Neighbo
   const { category, created } = await searchParams;
   const supabase = await createClient();
 
-  // Map city slug to neighborhood prefix
-  const neighborhoodId = buildNeighborhoodId(city, neighborhood);
+  // Map city slug to neighborhood prefix, with fallbacks for community neighborhoods
+  const primaryId = buildNeighborhoodId(city, neighborhood);
+  const possibleIds = [
+    primaryId,
+    `${neighborhood}-${neighborhood}`,
+    neighborhood,
+  ];
 
-  // Fetch neighborhood details
+  // Fetch neighborhood details - try multiple ID patterns
   const { data: neighborhoodData } = await supabase
     .from('neighborhoods')
     .select('*')
-    .eq('id', neighborhoodId)
+    .or(possibleIds.map((id) => `id.eq.${id}`).join(','))
     .single();
 
   if (!neighborhoodData) {
     notFound();
   }
+
+  const neighborhoodId = neighborhoodData.id;
 
   // Get combo info and query IDs for combo neighborhoods
   const comboInfo = await getComboInfo(supabase, neighborhoodId);

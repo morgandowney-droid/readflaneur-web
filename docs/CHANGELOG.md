@@ -3,6 +3,14 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-14
+
+**Community neighborhood 404 fix and auth UX:**
+- Fix community neighborhood pages returning 404 when URL-derived ID doesn't match DB ID (e.g., `/seville/utrera` produces `seville-utrera` but DB has `utrera-utrera`). Added `${neighborhood}-${neighborhood}` fallback pattern to both `generateMetadata` and page function lookups in `[city]/[neighborhood]/page.tsx`.
+- Last-used auth method highlighting on login and signup pages: stores method in `flaneur-auth-method` localStorage, highlights Google button with blue ring when previously used, fades email form to `opacity-60`, shows hint text "You previously used Continue with Google".
+- Turnstile CAPTCHA theme awareness: reads `flaneur-theme` from localStorage and passes to Turnstile widget options (was hardcoded to dark).
+- Files: `[city]/[neighborhood]/page.tsx`, `login/page.tsx`, `signup/page.tsx`
+
 ## 2026-03-13
 
 **PWA iOS install prompt and auth fixes:**
