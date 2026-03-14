@@ -5,6 +5,10 @@
 
 ## 2026-03-14
 
+**Hide future-dated articles from feed and community neighborhood fix:**
+- Fix Sunday Edition articles appearing in feed on Saturday: added `published_at <= now` filter to all 7 article query locations (feed/page.tsx server query, MultiFeed.tsx 3 REST queries, LoadMoreButton.tsx, MultiLoadMoreButton.tsx, discovery-briefs API). Sunday Editions are generated Saturday for 270-neighborhood coverage but should only be visible from Sunday.
+- Files: `feed/page.tsx`, `MultiFeed.tsx`, `LoadMoreButton.tsx`, `MultiLoadMoreButton.tsx`, `discovery-briefs/route.ts`, `[city]/[neighborhood]/page.tsx`
+
 **Community neighborhood 404 fix and auth UX:**
 - Fix community neighborhood pages returning 404 when URL-derived ID doesn't match DB ID (e.g., `/seville/utrera` produces `seville-utrera` but DB has `utrera-utrera`). Added `${neighborhood}-${neighborhood}` fallback pattern to both `generateMetadata` and page function lookups in `[city]/[neighborhood]/page.tsx`.
 - Last-used auth method highlighting on login and signup pages: stores method in `flaneur-auth-method` localStorage, highlights Google button with blue ring when previously used, fades email form to `opacity-60`, shows hint text "You previously used Continue with Google".
