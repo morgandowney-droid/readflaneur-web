@@ -105,7 +105,7 @@ export function BentoCard({
         alt={`${neighborhoodName}, ${city}`}
         fill
         sizes={size === 'scroll' ? '280px' : size === 'standard' ? '25vw' : '50vw'}
-        className="object-cover transition-all duration-500 group-hover:scale-105 group-hover:brightness-110"
+        className="object-cover animate-ken-burns-card transition-all duration-700 ease-out group-hover:scale-110 group-hover:brightness-110"
       />
 
       {/* Gradient overlay */}

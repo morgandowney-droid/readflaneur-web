@@ -6,6 +6,7 @@ import { CompactArticleCard } from './CompactArticleCard';
 import { AdCard } from './AdCard';
 import { EmailCaptureCard } from './EmailCaptureCard';
 import { FeedView } from './ViewToggle';
+import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { useNewUserGracePeriod } from '@/hooks/useNewUserGracePeriod';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -52,17 +53,19 @@ export function FeedList({ items, view = 'gallery' }: FeedListProps) {
         }
         if (item.type === 'article') {
           return view === 'compact' ? (
-            <CompactArticleCard
-              key={`article-${item.data.id}-${index}`}
-              article={item.data as Article}
-            />
+            <ScrollReveal key={`article-${item.data.id}-${index}`} delay={Math.min(index * 0.05, 0.3)}>
+              <CompactArticleCard
+                article={item.data as Article}
+              />
+            </ScrollReveal>
           ) : (
-            <div
+            <ScrollReveal
               key={`article-${item.data.id}-${index}`}
               className="pb-4 md:pb-3 border-b border-border/30 last:border-b-0"
+              delay={Math.min(index * 0.08, 0.4)}
             >
               <ArticleCard article={item.data as Article} />
-            </div>
+            </ScrollReveal>
           );
         }
         return (

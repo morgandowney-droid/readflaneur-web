@@ -119,7 +119,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
   return (
     <Link href={articleUrl}>
       <article
-        className="bg-surface overflow-hidden transition-all cursor-pointer"
+        className="group bg-surface overflow-hidden transition-all cursor-pointer"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -159,7 +159,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
               src={article.image_url}
               alt={article.headline}
               fill
-              className="object-cover"
+              className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
               sizes="(max-width: 768px) 100vw, 800px"
             />
           ) : (

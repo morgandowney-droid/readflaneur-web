@@ -74,7 +74,7 @@ export function DestinationCard({
           <img
             src={d.imageUrl}
             alt={`${d.name}, ${d.city}`}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
             loading="lazy"
           />
         ) : (

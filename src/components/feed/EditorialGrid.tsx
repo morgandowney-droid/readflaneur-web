@@ -107,7 +107,7 @@ function EditorialCard({
           src={article.image_url}
           alt={headline}
           fill
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          className="object-cover animate-ken-burns-card transition-transform duration-700 ease-out group-hover:scale-110"
           sizes={headlineSize === 'large' ? '(max-width: 768px) 100vw, 58vw' : '(max-width: 768px) 100vw, 42vw'}
         />
       )}

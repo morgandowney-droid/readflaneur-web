@@ -159,7 +159,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
         src={article.image_url}
         alt={article.headline}
         fill
-        className="object-cover"
+        className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
         sizes="96px"
       />
       {(article.article_type === 'community_news' || article.article_type === 'brief_summary' || article.author_type === 'ai') && article.image_url && !article.image_url.includes('unsplash.com') && (
@@ -172,7 +172,7 @@ export function CompactArticleCard({ article }: CompactArticleCardProps) {
 
   return (
     <Link href={articleUrl}>
-      <article className="py-5 border-b border-border hover:bg-hover transition-colors">
+      <article className="group py-5 border-b border-border hover:bg-hover transition-colors">
         {/* Desktop: original row layout */}
         <div className="hidden md:flex gap-4">
           {imageEl}

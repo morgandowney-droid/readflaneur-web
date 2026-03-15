@@ -5,6 +5,12 @@
 
 ## 2026-03-15
 
+**Le Collectionist-inspired image motion:**
+- Ken Burns continuous slow zoom animation (`animate-ken-burns-card`, 20s scale 1→1.06) on bento grid cards and editorial grid cards for a "living photograph" feel.
+- Increased hover zoom from `scale-105` to `scale-[1.08]`/`scale-110` with 700ms ease-out duration across all card types: DestinationCard, ArticleCard, CompactArticleCard, BentoCard, EditorialGrid.
+- Scroll-triggered fade-in on feed article cards via `ScrollReveal` IntersectionObserver component (0.6s ease-out translateY + opacity, staggered delays per card index, capped at 0.3-0.4s max delay).
+- Files: `globals.css` (keyframes), `ScrollReveal.tsx` (new), `FeedList.tsx`, `BentoCard.tsx`, `EditorialGrid.tsx`, `ArticleCard.tsx`, `CompactArticleCard.tsx`, `DestinationCard.tsx`
+
 **Pre-launch password gate and Irish counties:**
 - Simple password gate on all pages during pre-launch. Middleware checks `flaneur-gate` cookie, redirects to `/gate` page if missing. Password "downey" sets cookie for 1 year. API routes, auth callbacks, and Sentry monitoring excluded. Remove middleware gate block when launching publicly.
 - Add all 32 Irish counties as test neighborhoods (region `test`, hidden from non-admin users). ID pattern `ie-county-{name}`, timezone `Europe/Dublin`, coordinates set to county capital. Crons will generate daily briefs and look-aheads automatically.
