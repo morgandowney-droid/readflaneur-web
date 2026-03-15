@@ -3,6 +3,13 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-15
+
+**Pre-launch password gate and Irish counties:**
+- Simple password gate on all pages during pre-launch. Middleware checks `flaneur-gate` cookie, redirects to `/gate` page if missing. Password "downey" sets cookie for 1 year. API routes, auth callbacks, and Sentry monitoring excluded. Remove middleware gate block when launching publicly.
+- Add all 32 Irish counties as test neighborhoods (region `test`, hidden from non-admin users). ID pattern `ie-county-{name}`, timezone `Europe/Dublin`, coordinates set to county capital. Crons will generate daily briefs and look-aheads automatically.
+- Files: `middleware.ts`, `gate/page.tsx` (new), `gate/layout.tsx` (new), `scripts/insert-irish-counties.mjs` (new)
+
 ## 2026-03-14
 
 **Hide future-dated articles from feed and community neighborhood fix:**
