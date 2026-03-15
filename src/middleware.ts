@@ -12,6 +12,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
 
+  // Simple password gate (remove when launching publicly)
+  const path = request.nextUrl.pathname;
+  const isGatePage = path === '/gate';
+  const isApiRoute = path.startsWith('/api/');
+  const isAuthRoute = path.startsWith('/auth/');
+  const isMonitoring = path === '/monitoring';
+  if (!isGatePage && !isApiRoute && !isAuthRoute && !isMonitoring) {
+    const gatePass = request.cookies.get('flaneur-gate')?.value;
+    if (gatePass !== 'granted') {
+      const gateUrl = new URL('/gate', request.url);
+      gateUrl.searchParams.set('next', path + (request.nextUrl.search || ''));
+      return NextResponse.redirect(gateUrl);
+    }
+  }
+
   return await updateSession(request);
 }
 
