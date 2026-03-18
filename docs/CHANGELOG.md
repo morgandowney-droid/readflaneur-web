@@ -3,6 +3,17 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-18
+
+**Swagger API documentation:**
+- Public `/api-docs` page with Swagger UI serving OpenAPI 3.0 spec via `/api/docs` JSON endpoint.
+- 151 API paths, 172 methods documented across 24 tags: Auth, Neighborhoods, Community, Briefs, Feed, Search, Reactions, Image Feedback, Lists, Explore, Newsletter, Referral, Email, Location, Preferences, Ads, Comments, Translations, Guides, Articles, Admin, Cron, Internal, Account.
+- JSDoc `@swagger` annotations on every `route.ts` file in `src/app/api/`.
+- Central config in `src/lib/swagger.ts` with reusable schemas (Neighborhood, ArticleSummary, ReactionCounts, DestinationList, ExploreSuggestion, Error) and security schemes (supabaseAuth cookie, cronSecret header).
+- Middleware excludes `/api-docs` from password gate so docs are publicly accessible.
+- Dependencies: `next-swagger-doc`, `swagger-ui-react`, `@types/swagger-ui-react`.
+- Files: `src/lib/swagger.ts` (new), `src/app/api-docs/page.tsx` (new), `src/app/api/docs/route.ts` (new), `src/middleware.ts`, 151 route.ts files annotated.
+
 ## 2026-03-15
 
 **Le Collectionist-inspired image motion:**
