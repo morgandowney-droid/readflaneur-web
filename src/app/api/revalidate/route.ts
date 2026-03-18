@@ -1,6 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
+/**
+ * @swagger
+ * /api/revalidate:
+ *   get:
+ *     summary: Revalidate Next.js cached paths
+ *     description: Triggers on-demand revalidation of cached pages. If no path specified, revalidates all common paths.
+ *     tags: [Internal]
+ *     parameters:
+ *       - in: query
+ *         name: secret
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Revalidation secret
+ *       - in: query
+ *         name: path
+ *         schema:
+ *           type: string
+ *         description: Specific path to revalidate (e.g., /feed)
+ *     responses:
+ *       200:
+ *         description: Revalidation successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 revalidated:
+ *                   type: boolean
+ *                   example: true
+ *                 path:
+ *                   type: string
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *       401:
+ *         description: Invalid secret
+ */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const secret = searchParams.get('secret');

@@ -2,6 +2,44 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/admin/articles/review:
+ *   post:
+ *     summary: Review an article (publish, reject, request changes, or suspend)
+ *     tags: [Admin]
+ *     security:
+ *       - supabaseAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [articleId, action]
+ *             properties:
+ *               articleId:
+ *                 type: string
+ *               action:
+ *                 type: string
+ *                 enum: [publish, reject, request_changes, suspend]
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Review result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized (admin role required)
+ */
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();

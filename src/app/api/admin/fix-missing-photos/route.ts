@@ -15,6 +15,54 @@ import { getPlaceDetails, getPhotoUrl } from '@/lib/google-places';
 export const runtime = 'nodejs';
 export const maxDuration = 120;
 
+/**
+ * @swagger
+ * /api/admin/fix-missing-photos:
+ *   get:
+ *     summary: Fix missing photos for listings using Google Places
+ *     tags: [Admin]
+ *     security:
+ *       - cronSecret: []
+ *     parameters:
+ *       - in: query
+ *         name: neighborhood
+ *         schema:
+ *           type: string
+ *         description: Specific neighborhood ID to fix
+ *       - in: query
+ *         name: all
+ *         schema:
+ *           type: string
+ *         description: Set to "true" to fix all neighborhoods
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Maximum number of listings to fix
+ *     responses:
+ *       200:
+ *         description: Fix results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 found:
+ *                   type: integer
+ *                 fixed:
+ *                   type: integer
+ *                 failed:
+ *                   type: integer
+ *                 details:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: Unauthorized
+ */
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;

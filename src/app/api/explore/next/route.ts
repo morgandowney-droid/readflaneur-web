@@ -7,6 +7,62 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL?.replace(/\n$/, '').replace(/\/$/, '')
   || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
+/**
+ * @swagger
+ * /api/explore/next:
+ *   get:
+ *     tags: [Explore]
+ *     summary: Get exploration suggestions
+ *     description: Returns up to 3 contextual neighborhood suggestions for multi-level exploration. Three strategies - same city, same theme/category, and geographic hop (different country, nearest by Haversine distance). Cached for 5 minutes.
+ *     parameters:
+ *       - in: query
+ *         name: neighborhoodId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: city
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: country
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: lat
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: lng
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Category label for same-theme matching
+ *       - in: query
+ *         name: exclude
+ *         schema:
+ *           type: string
+ *         description: Comma-separated neighborhood IDs to exclude (visited)
+ *     responses:
+ *       200:
+ *         description: Exploration suggestions (each may be null)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 sameCity:
+ *                   $ref: '#/components/schemas/ExploreSuggestion'
+ *                 sameTheme:
+ *                   $ref: '#/components/schemas/ExploreSuggestion'
+ *                 geoHop:
+ *                   $ref: '#/components/schemas/ExploreSuggestion'
+ */
 interface Suggestion {
   neighborhoodName: string;
   city: string;

@@ -3,6 +3,50 @@ import { createClient } from '@/lib/supabase/server';
 import { notifyTipSubmitterApproved, notifyTipSubmitterRejected } from '@/lib/email';
 import type { TipStatus } from '@/types';
 
+/**
+ * @swagger
+ * /api/admin/tips/review:
+ *   post:
+ *     summary: Review a submitted tip
+ *     tags: [Admin]
+ *     security:
+ *       - supabaseAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [tipId, action]
+ *             properties:
+ *               tipId:
+ *                 type: string
+ *               action:
+ *                 type: string
+ *                 description: TipStatus value
+ *               rejectionReason:
+ *                 type: string
+ *               reviewerNotes:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Review result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 action:
+ *                   type: string
+ *                 tipId:
+ *                   type: string
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized (admin role required)
+ */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();

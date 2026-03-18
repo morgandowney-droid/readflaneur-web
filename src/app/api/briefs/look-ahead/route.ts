@@ -3,6 +3,48 @@ import { createClient } from '@/lib/supabase/server';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 
 /**
+ * @swagger
+ * /api/briefs/look-ahead:
+ *   get:
+ *     tags: [Briefs]
+ *     summary: Get Look Ahead article for a neighborhood
+ *     description: Returns the most recent Look Ahead article URL for a neighborhood published within the last 48 hours. Expands combo neighborhoods to include component IDs.
+ *     parameters:
+ *       - in: query
+ *         name: neighborhoodId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Neighborhood ID (e.g. nyc-tribeca)
+ *     responses:
+ *       200:
+ *         description: Look Ahead article data (url is null if none found)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 url:
+ *                   type: string
+ *                   nullable: true
+ *                 headline:
+ *                   type: string
+ *                 bodyText:
+ *                   type: string
+ *                 previewText:
+ *                   type: string
+ *                 publishedAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Missing neighborhoodId
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
  * GET /api/briefs/look-ahead?neighborhoodId=xxx
  *
  * Returns the most recent Look Ahead article URL for a neighborhood

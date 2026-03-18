@@ -20,6 +20,68 @@ import { checkLibraryStatus } from '@/lib/image-library';
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
+/**
+ * @swagger
+ * /api/admin/generate-image-library:
+ *   get:
+ *     summary: Check image library status counts
+ *     tags: [Admin]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Library status counts
+ *       401:
+ *         description: Unauthorized
+ *   post:
+ *     summary: Generate Unsplash image library for neighborhoods
+ *     tags: [Admin]
+ *     security:
+ *       - cronSecret: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               batchSize:
+ *                 type: integer
+ *                 default: 5
+ *               startFrom:
+ *                 type: string
+ *                 description: Neighborhood ID cursor for pagination
+ *               forceRegenerate:
+ *                 type: boolean
+ *                 default: false
+ *               neighborhoodId:
+ *                 type: string
+ *                 description: Generate for a single neighborhood
+ *     responses:
+ *       200:
+ *         description: Generation results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 processed:
+ *                   type: integer
+ *                 photos_found:
+ *                   type: integer
+ *                 errors:
+ *                   type: integer
+ *                 neighborhoods:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 duration_seconds:
+ *                   type: number
+ *       401:
+ *         description: Unauthorized
+ */
+
 const TIME_BUDGET_MS = 270_000;
 
 function isAdmin(request: Request): boolean {

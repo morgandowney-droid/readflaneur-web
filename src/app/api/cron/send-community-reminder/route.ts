@@ -26,6 +26,29 @@ function getSupabaseAdmin() {
   );
 }
 
+/**
+ * @swagger
+ * /api/cron/send-community-reminder:
+ *   get:
+ *     summary: Send 1-week reminder email to community neighborhood creators
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Reminder send results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 sent:
+ *                   type: number
+ *                 skipped:
+ *                   type: number
+ */
 export async function GET(request: NextRequest) {
   const startTime = Date.now();
 

@@ -2,10 +2,43 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * GET /api/ads/[id]/info
- *
- * Returns basic ad info for the upload page.
- * No auth required — secured by knowing the ad UUID.
+ * @swagger
+ * /api/ads/{id}/info:
+ *   get:
+ *     summary: Get ad info for upload page
+ *     description: Returns basic ad info. No auth required - secured by knowing the ad UUID.
+ *     tags: [Ads]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The ad ID
+ *     responses:
+ *       200:
+ *         description: Ad info
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 neighborhood_name:
+ *                   type: string
+ *                 city_name:
+ *                   type: string
+ *                 start_date:
+ *                   type: string
+ *                   format: date
+ *                 placement_type:
+ *                   type: string
+ *       404:
+ *         description: Ad not found
  */
 export async function GET(
   _request: NextRequest,

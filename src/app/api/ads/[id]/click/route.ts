@@ -1,6 +1,33 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/ads/{id}/click:
+ *   post:
+ *     summary: Record an ad click
+ *     description: Fire-and-forget endpoint to increment click count for an ad.
+ *     tags: [Ads]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The ad ID
+ *     responses:
+ *       200:
+ *         description: Click recorded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

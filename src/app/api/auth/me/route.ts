@@ -2,6 +2,27 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Get current user
+ *     description: Returns the currently authenticated user or null if not authenticated. Uses cookie-based session.
+ *     tags:
+ *       - Auth
+ *     responses:
+ *       200:
+ *         description: Current user object or null
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   nullable: true
+ *                   description: Supabase user object or null if not authenticated
+ */
 export async function GET() {
   try {
     const cookieStore = await cookies();

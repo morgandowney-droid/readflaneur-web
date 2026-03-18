@@ -2,6 +2,88 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/admin/articles/{id}:
+ *   get:
+ *     summary: Get a single article by ID for admin editing
+ *     tags: [Admin]
+ *     security:
+ *       - supabaseAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Article ID
+ *     responses:
+ *       200:
+ *         description: Article details with neighborhoods
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 article:
+ *                   type: object
+ *                 neighborhoods:
+ *                   type: array
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized (admin role required)
+ *   put:
+ *     summary: Update an article
+ *     tags: [Admin]
+ *     security:
+ *       - supabaseAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Article ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               headline:
+ *                 type: string
+ *               preview_text:
+ *                 type: string
+ *               body_text:
+ *                 type: string
+ *               images:
+ *                 type: array
+ *               image_url:
+ *                 type: string
+ *               neighborhood_id:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *               scheduled_for:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Update result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized (admin role required)
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

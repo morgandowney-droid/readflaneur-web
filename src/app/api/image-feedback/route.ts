@@ -2,8 +2,69 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 /**
- * GET /api/image-feedback?imageUrl=...&anonymousId=...
- * Returns aggregate score and user's own feedback for an image
+ * @swagger
+ * /api/image-feedback:
+ *   get:
+ *     tags: [Image Feedback]
+ *     summary: Get feedback score for an image
+ *     description: Returns the aggregate score and current user's feedback for an image URL. Feedback is keyed on image URL (cross-article).
+ *     parameters:
+ *       - in: query
+ *         name: imageUrl
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: anonymousId
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Image feedback data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 score:
+ *                   type: integer
+ *                   description: Aggregate score (sum of +1/-1 votes)
+ *                 userFeedback:
+ *                   type: integer
+ *                   nullable: true
+ *                   enum: [1, -1, null]
+ *   post:
+ *     tags: [Image Feedback]
+ *     summary: Submit feedback on an image
+ *     description: Thumbs up (+1) or thumbs down (-1) on an image. Same feedback toggles off; opposite feedback switches.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [imageUrl, feedback]
+ *             properties:
+ *               imageUrl:
+ *                 type: string
+ *               feedback:
+ *                 type: integer
+ *                 enum: [1, -1]
+ *               anonymousId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Feedback recorded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 action:
+ *                   type: string
+ *                   enum: [added, switched, removed]
+ *                 score:
+ *                   type: integer
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

@@ -10,9 +10,36 @@ function getSupabaseAdmin() {
 }
 
 /**
- * POST /api/referral/track
- * Record a click when someone visits /invite?ref=CODE
- * Fire-and-forget from the client - always returns 200
+ * @swagger
+ * /api/referral/track:
+ *   post:
+ *     summary: Track a referral link click
+ *     description: Records a click when someone visits /invite?ref=CODE. Fire-and-forget, always returns 200. No auth required.
+ *     tags:
+ *       - Referral
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 description: Referral code from URL
+ *     responses:
+ *       200:
+ *         description: Click recorded (or silently ignored on error)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
  */
 export async function POST(request: NextRequest) {
   try {

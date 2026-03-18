@@ -5,6 +5,50 @@ import { performInstantResend, ResendTrigger } from '@/lib/email/instant-resend'
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
+/**
+ * @swagger
+ * /api/internal/resend-daily-brief:
+ *   post:
+ *     summary: Trigger instant resend of daily brief email
+ *     description: Resends the daily brief email to a user, typically triggered by a neighborhood or city change. Requires cron secret auth.
+ *     tags: [Internal]
+ *     security:
+ *       - cronSecret: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [userId, source, trigger]
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 format: uuid
+ *               source:
+ *                 type: string
+ *               trigger:
+ *                 type: string
+ *                 enum: [city_change, neighborhood_change, topic_change]
+ *     responses:
+ *       200:
+ *         description: Resend result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 reason:
+ *                   type: string
+ *                 details:
+ *                   type: object
+ *       400:
+ *         description: Missing required fields
+ *       401:
+ *         description: Unauthorized
+ */
 export async function POST(request: Request) {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;

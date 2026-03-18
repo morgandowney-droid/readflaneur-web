@@ -14,6 +14,56 @@ import { NextRequest, NextResponse } from 'next/server';
  * POST: Actually perform the update
  */
 
+/**
+ * @swagger
+ * /api/admin/backfill-rss-metadata:
+ *   get:
+ *     summary: Preview RSS metadata backfill (dry run)
+ *     tags: [Admin]
+ *     security:
+ *       - adminAuth: []
+ *     responses:
+ *       200:
+ *         description: Dry run preview
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 dryRun:
+ *                   type: boolean
+ *                   example: true
+ *                 articlesToUpdate:
+ *                   type: integer
+ *                 preview:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: Unauthorized
+ *   post:
+ *     summary: Execute RSS metadata backfill
+ *     tags: [Admin]
+ *     security:
+ *       - adminAuth: []
+ *     responses:
+ *       200:
+ *         description: Backfill results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 dryRun:
+ *                   type: boolean
+ *                   example: false
+ *                 articlesFound:
+ *                   type: integer
+ *                 articlesUpdated:
+ *                   type: integer
+ *       401:
+ *         description: Unauthorized
+ */
 export async function GET(request: NextRequest) {
   return handleBackfill(request, true);
 }

@@ -6,6 +6,44 @@ function hashIP(ip: string): string {
   return createHash('sha256').update(ip + process.env.CRON_SECRET).digest('hex').slice(0, 16);
 }
 
+/**
+ * @swagger
+ * /api/comments/vote:
+ *   post:
+ *     summary: Vote on a comment (upvote or downvote)
+ *     tags: [Comments]
+ *     description: Toggle a vote on a comment. Uses authenticated user ID or IP hash for anonymous voting.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [commentId, voteType]
+ *             properties:
+ *               commentId:
+ *                 type: string
+ *               voteType:
+ *                 type: string
+ *                 enum: [up, down]
+ *     responses:
+ *       200:
+ *         description: Vote processed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 action:
+ *                   type: string
+ *                   enum: [removed, changed, voted]
+ *       400:
+ *         description: Invalid request (missing commentId or invalid voteType)
+ *       500:
+ *         description: Server error
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

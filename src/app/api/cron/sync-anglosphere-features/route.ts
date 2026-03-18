@@ -147,6 +147,25 @@ async function arcomAlertToArticle(
   };
 }
 
+/**
+ * @swagger
+ * /api/cron/sync-anglosphere-features:
+ *   get:
+ *     summary: Syncs English-language travel features
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: NextRequest) {
   // Verify cron secret
   const authHeader = request.headers.get('authorization');

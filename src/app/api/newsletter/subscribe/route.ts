@@ -2,6 +2,51 @@ import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/email';
 
+/**
+ * @swagger
+ * /api/newsletter/subscribe:
+ *   post:
+ *     tags: [Newsletter]
+ *     summary: Subscribe to the daily newsletter
+ *     description: Subscribe an email to receive Daily Brief emails. If already verified, updates preferences. If new, sends a magic link verification email via Resend.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               neighborhoodIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Neighborhood IDs to subscribe to
+ *               timezone:
+ *                 type: string
+ *                 description: IANA timezone for delivery time (e.g. Europe/Stockholm)
+ *     responses:
+ *       200:
+ *         description: Subscribed or preferences updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 export async function POST(request: NextRequest) {
   try {
     const { email, neighborhoodIds = [], timezone } = await request.json();

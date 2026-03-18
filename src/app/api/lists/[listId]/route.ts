@@ -26,7 +26,91 @@ function getAdminClient() {
   );
 }
 
-// GET /api/lists/[listId] - Get a specific list with items
+/**
+ * @swagger
+ * /api/lists/{listId}:
+ *   get:
+ *     summary: Get a specific destination list with items
+ *     description: Returns list details and items. Public access with owner check for edit permissions.
+ *     tags: [Lists]
+ *     parameters:
+ *       - in: path
+ *         name: listId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The list ID
+ *     responses:
+ *       200:
+ *         description: List with items
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 list:
+ *                   type: object
+ *                 isOwner:
+ *                   type: boolean
+ *       404:
+ *         description: List not found
+ *   patch:
+ *     summary: Update a destination list
+ *     description: Update list name or visibility. Requires session auth and list ownership.
+ *     tags: [Lists]
+ *     parameters:
+ *       - in: path
+ *         name: listId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               is_public:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Updated list
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not the list owner
+ *   delete:
+ *     summary: Delete a destination list
+ *     description: Deletes a list and all its items. Requires session auth and list ownership.
+ *     tags: [Lists]
+ *     parameters:
+ *       - in: path
+ *         name: listId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: List deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not the list owner
+ */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ listId: string }> }

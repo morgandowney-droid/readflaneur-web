@@ -3,13 +3,38 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * POST /api/neighborhoods/add
- *
- * Adds a neighborhood to the authenticated user's preferences in the DB.
- * Anonymous users just get { success: true } (localStorage-only is fine).
- * Called fire-and-forget from AddToCollectionCTA.
- *
- * Body: { neighborhoodId: string }
+ * @swagger
+ * /api/neighborhoods/add:
+ *   post:
+ *     summary: Add a neighborhood to user preferences
+ *     description: Adds a neighborhood to the authenticated user's DB preferences. Anonymous users receive a silent success (localStorage-only).
+ *     tags:
+ *       - Neighborhoods
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - neighborhoodId
+ *             properties:
+ *               neighborhoodId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Neighborhood added (or silent success for anonymous)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       400:
+ *         description: Missing or invalid neighborhoodId
  */
 export async function POST(request: NextRequest) {
   try {

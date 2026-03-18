@@ -9,9 +9,41 @@ function getSupabaseAdmin() {
 }
 
 /**
- * POST /api/referral/convert
- * Record a conversion when a referred user subscribes.
- * Called fire-and-forget after successful subscribe.
+ * @swagger
+ * /api/referral/convert:
+ *   post:
+ *     summary: Record a referral conversion
+ *     description: Records a conversion when a referred user subscribes. Fire-and-forget, always returns 200. No auth required.
+ *     tags:
+ *       - Referral
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *               - email
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 description: Referral code
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Email of the referred user
+ *     responses:
+ *       200:
+ *         description: Conversion recorded (or silently ignored on error)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
  */
 export async function POST(request: NextRequest) {
   try {

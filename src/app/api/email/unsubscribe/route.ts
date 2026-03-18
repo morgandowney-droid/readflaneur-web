@@ -8,6 +8,38 @@ import { createClient } from '@supabase/supabase-js';
  * GET /api/email/unsubscribe?token=xxx&confirm=1 — Actually unsubscribe
  */
 
+/**
+ * @swagger
+ * /api/email/unsubscribe:
+ *   get:
+ *     summary: Unsubscribe from emails (CAN-SPAM compliant)
+ *     description: Two-step unsubscribe flow. Without confirm=1, shows a confirmation page. With confirm=1, performs the unsubscribe. Returns HTML.
+ *     tags:
+ *       - Email
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Unsubscribe token identifying the subscriber
+ *       - in: query
+ *         name: confirm
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: ["1"]
+ *         description: Set to "1" to confirm unsubscribe
+ *     responses:
+ *       200:
+ *         description: HTML confirmation page or success page
+ *         content:
+ *           text/html:
+ *             schema:
+ *               type: string
+ *       400:
+ *         description: Missing token (HTML error page)
+ */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const token = url.searchParams.get('token');

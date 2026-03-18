@@ -9,6 +9,41 @@ import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood
  * published BEFORE the given date. This ensures "yesterday" is always
  * relative to the brief the user is currently reading.
  */
+
+/**
+ * @swagger
+ * /api/briefs/yesterday:
+ *   get:
+ *     summary: Get previous daily brief URL for a neighborhood
+ *     description: Returns the most recent daily brief article URL published before the given date.
+ *     tags:
+ *       - Briefs
+ *     parameters:
+ *       - in: query
+ *         name: neighborhoodId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The neighborhood ID to look up
+ *       - in: query
+ *         name: beforeDate
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: ISO date string; returns briefs published before this date
+ *     responses:
+ *       200:
+ *         description: The previous brief URL or null if none found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 url:
+ *                   type: string
+ *                   nullable: true
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

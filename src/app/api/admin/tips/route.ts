@@ -1,6 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+/**
+ * @swagger
+ * /api/admin/tips:
+ *   get:
+ *     summary: Get submitted tips for admin review
+ *     tags: [Admin]
+ *     security:
+ *       - supabaseAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by tip status
+ *       - in: query
+ *         name: neighborhood_id
+ *         schema:
+ *           type: string
+ *         description: Filter by neighborhood ID
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Number of tips to return
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Pagination offset
+ *     responses:
+ *       200:
+ *         description: Paginated list of tips
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 tips:
+ *                   type: array
+ *                 total:
+ *                   type: integer
+ *                 limit:
+ *                   type: integer
+ *                 offset:
+ *                   type: integer
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized (admin role required)
+ */
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();

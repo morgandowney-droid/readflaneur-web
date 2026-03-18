@@ -18,6 +18,52 @@ export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 /**
+ * @swagger
+ * /api/admin/preview-sunday-edition:
+ *   get:
+ *     summary: Preview a Sunday Edition email for a neighborhood and date
+ *     tags: [Admin]
+ *     security:
+ *       - cronSecret: []
+ *     parameters:
+ *       - in: query
+ *         name: neighborhood
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Neighborhood ID
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Date in YYYY-MM-DD format
+ *     responses:
+ *       200:
+ *         description: Sunday Edition preview
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 subject:
+ *                   type: string
+ *                 html:
+ *                   type: string
+ *                 briefWeekDate:
+ *                   type: string
+ *                 articleExists:
+ *                   type: boolean
+ *                 articleUrl:
+ *                   type: string
+ *                 warning:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized
+ */
+
+/**
  * Build Sunday Edition subject line (duplicated from send cron for admin preview).
  */
 function buildSundaySubject(name: string, content: SundayEditionContent): string {

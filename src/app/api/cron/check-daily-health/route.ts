@@ -18,6 +18,25 @@ import { sendEmail } from '@/lib/email';
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
+/**
+ * @swagger
+ * /api/cron/check-daily-health:
+ *   get:
+ *     summary: Run 9 automated content health checks and email admin report
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Health checks completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: Request) {
   const startTime = new Date();
   const cronSecret = process.env.CRON_SECRET;

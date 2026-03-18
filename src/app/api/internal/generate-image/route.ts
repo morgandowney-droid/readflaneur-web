@@ -82,6 +82,50 @@ function generatePlaceholderSVG(neighborhoodName: string): string {
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
+/**
+ * @swagger
+ * /api/internal/generate-image:
+ *   post:
+ *     summary: Generate images for articles
+ *     description: Generates placeholder or library images for articles missing images. Requires cron secret auth.
+ *     tags: [Internal]
+ *     security:
+ *       - cronSecret: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               article_id:
+ *                 type: string
+ *                 format: uuid
+ *               neighborhood_id:
+ *                 type: string
+ *               limit:
+ *                 type: integer
+ *                 default: 5
+ *     responses:
+ *       200:
+ *         description: Image generation results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 successful:
+ *                   type: integer
+ *                 failed:
+ *                   type: integer
+ *                 results:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: Unauthorized
+ */
 export async function POST(request: Request) {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;

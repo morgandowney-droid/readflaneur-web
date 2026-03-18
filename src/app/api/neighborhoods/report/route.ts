@@ -9,6 +9,51 @@ function getSupabaseAdmin() {
   );
 }
 
+/**
+ * @swagger
+ * /api/neighborhoods/report:
+ *   post:
+ *     summary: Report a community neighborhood
+ *     description: Submit a report for a community neighborhood. One report per user per neighborhood.
+ *     tags:
+ *       - Community
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - neighborhoodId
+ *               - reason
+ *             properties:
+ *               neighborhoodId:
+ *                 type: string
+ *               reason:
+ *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 500
+ *     responses:
+ *       200:
+ *         description: Report submitted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       400:
+ *         description: Missing fields or reason too short
+ *       401:
+ *         description: Authentication required
+ *       404:
+ *         description: Neighborhood not found
+ *       409:
+ *         description: Already reported by this user
+ */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();

@@ -3,6 +3,91 @@ import { createClient } from '@/lib/supabase/server';
 import { calculateDistance, NEIGHBORHOOD_CENTERS } from '@/lib/google-places';
 import { getNeighborhoodIdsForQuery } from '@/lib/combo-utils';
 
+/**
+ * @swagger
+ * /api/guides:
+ *   get:
+ *     summary: Fetch guide listings for a neighborhood
+ *     tags: [Guides]
+ *     parameters:
+ *       - in: query
+ *         name: neighborhoodId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The neighborhood ID to fetch guides for
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter by category slug
+ *       - in: query
+ *         name: subcategory
+ *         schema:
+ *           type: string
+ *         description: Filter by subcategory slug
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [best, rating, reviews, distance]
+ *           default: best
+ *         description: Sort order for listings
+ *       - in: query
+ *         name: filter
+ *         schema:
+ *           type: string
+ *           enum: [new, closed]
+ *         description: Filter by status
+ *       - in: query
+ *         name: michelin
+ *         schema:
+ *           type: string
+ *           enum: ['true']
+ *         description: Filter to Michelin-rated only
+ *       - in: query
+ *         name: lat
+ *         schema:
+ *           type: number
+ *         description: User latitude for distance sorting
+ *       - in: query
+ *         name: lng
+ *         schema:
+ *           type: number
+ *         description: User longitude for distance sorting
+ *     responses:
+ *       200:
+ *         description: Guide data with categories, subcategories, and listings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 categories:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 subcategories:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 listings:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 total:
+ *                   type: integer
+ *                 newCount:
+ *                   type: integer
+ *                 closedCount:
+ *                   type: integer
+ *                 michelinCount:
+ *                   type: integer
+ *       400:
+ *         description: Missing neighborhoodId parameter
+ *       500:
+ *         description: Server error
+ */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const neighborhoodId = searchParams.get('neighborhoodId');

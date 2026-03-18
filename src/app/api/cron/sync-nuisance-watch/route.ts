@@ -29,6 +29,25 @@ import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/
 export const runtime = 'nodejs';
 export const maxDuration = 180; // 3 minutes for clustering + generation
 
+/**
+ * @swagger
+ * /api/cron/sync-nuisance-watch:
+ *   get:
+ *     summary: Syncs NYC 311 noise and quality-of-life complaints
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: Request) {
   // Verify cron authorization
   const authHeader = request.headers.get('authorization');

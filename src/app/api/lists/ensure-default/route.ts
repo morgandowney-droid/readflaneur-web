@@ -3,8 +3,31 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-// POST /api/lists/ensure-default - Create a default "Favourites" list if one doesn't exist
-// Called on login and when accessing lists for the first time
+/**
+ * @swagger
+ * /api/lists/ensure-default:
+ *   post:
+ *     summary: Ensure a default Favourites list exists
+ *     description: Creates a default "Favourites" list if one doesn't exist. Requires authenticated session.
+ *     tags:
+ *       - Lists
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Default list ensured
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 listId:
+ *                   type: string
+ *                 created:
+ *                   type: boolean
+ *       401:
+ *         description: Not authenticated
+ */
 export async function POST() {
   try {
     const cookieStore = cookies();

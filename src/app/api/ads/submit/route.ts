@@ -3,6 +3,72 @@ import { createClient } from '@/lib/supabase/server';
 import { moderateAd } from '@/lib/moderation';
 import { notifyAdminNewAd } from '@/lib/email';
 
+/**
+ * @swagger
+ * /api/ads/submit:
+ *   post:
+ *     summary: Submit an ad for review
+ *     description: Submit ad creative for moderation. Requires authenticated session.
+ *     tags:
+ *       - Ads
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - headline
+ *               - imageUrl
+ *               - clickUrl
+ *             properties:
+ *               headline:
+ *                 type: string
+ *               imageUrl:
+ *                 type: string
+ *               clickUrl:
+ *                 type: string
+ *               isGlobal:
+ *                 type: boolean
+ *               neighborhoodId:
+ *                 type: string
+ *               placement:
+ *                 type: string
+ *                 default: feed
+ *     responses:
+ *       200:
+ *         description: Ad submitted or rejected
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - type: object
+ *                   properties:
+ *                     success:
+ *                       type: boolean
+ *                     adId:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                     message:
+ *                       type: string
+ *                 - type: object
+ *                   properties:
+ *                     rejected:
+ *                       type: boolean
+ *                     reason:
+ *                       type: string
+ *                     flags:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *       401:
+ *         description: Unauthorized
+ *       400:
+ *         description: Missing required fields
+ */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();

@@ -9,6 +9,76 @@ import type { TipSubmission, CreditPreference } from '@/types';
 const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
 const RATE_LIMIT_MAX = 5;
 
+/**
+ * @swagger
+ * /api/tips/submit:
+ *   post:
+ *     summary: Submit a news tip
+ *     tags: [Internal]
+ *     description: Submit a news tip with optional photos. Rate limited to 5 per hour. Content is moderated via OpenAI.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [content, neighborhood_id, terms_accepted]
+ *             properties:
+ *               content:
+ *                 type: string
+ *                 description: The tip content
+ *               headline:
+ *                 type: string
+ *                 description: Optional headline for the tip
+ *               neighborhood_id:
+ *                 type: string
+ *                 description: The neighborhood this tip relates to
+ *               submitter_name:
+ *                 type: string
+ *               submitter_email:
+ *                 type: string
+ *               credit_preference:
+ *                 type: string
+ *                 description: How the submitter wants to be credited
+ *               photo_urls:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 maxItems: 5
+ *                 description: URLs of uploaded photos (max 5)
+ *               terms_accepted:
+ *                 type: boolean
+ *                 description: Must be true to submit
+ *     responses:
+ *       201:
+ *         description: Tip submitted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 tipId:
+ *                   type: string
+ *       400:
+ *         description: Validation error (missing content, neighborhood, or terms)
+ *       422:
+ *         description: Tip rejected by moderation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 rejected:
+ *                   type: boolean
+ *                 reason:
+ *                   type: string
+ *       429:
+ *         description: Rate limit exceeded (5 per hour)
+ *       500:
+ *         description: Server error
+ */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();

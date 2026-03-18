@@ -2,6 +2,74 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/journalist/apply:
+ *   get:
+ *     summary: Check journalist application eligibility
+ *     tags: [Internal]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Eligibility status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 alreadyApproved:
+ *                   type: boolean
+ *                 alreadyApplied:
+ *                   type: boolean
+ *                 neighborhoods:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: Not authenticated
+ *   post:
+ *     summary: Submit a journalist application
+ *     tags: [Internal]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [neighborhoodId, zipCode, phone, bio, photoUrl1, photoUrl2]
+ *             properties:
+ *               neighborhoodId:
+ *                 type: string
+ *               zipCode:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               bio:
+ *                 type: string
+ *               whyInterested:
+ *                 type: string
+ *               photoUrl1:
+ *                 type: string
+ *               photoUrl2:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Application submitted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Not authenticated
+ */
 export async function GET() {
   try {
     const cookieStore = await cookies();

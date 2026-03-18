@@ -30,6 +30,25 @@ import { getCronImage } from '@/lib/cron-images';
 export const runtime = 'nodejs';
 export const maxDuration = 180; // 3 minutes
 
+/**
+ * @swagger
+ * /api/cron/sync-design-week:
+ *   get:
+ *     summary: Sync design week and festival events
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Design week sync completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: Request) {
   // Verify cron authorization
   const authHeader = request.headers.get('authorization');

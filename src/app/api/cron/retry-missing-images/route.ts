@@ -16,6 +16,31 @@ import { selectLibraryImage, preloadUnsplashCache, swapNegativeImage } from '@/l
 export const runtime = 'nodejs';
 export const maxDuration = 120;
 
+/**
+ * @swagger
+ * /api/cron/retry-missing-images:
+ *   get:
+ *     summary: Fill articles with missing images and swap negatively-scored photos
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Image retry results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 filled:
+ *                   type: number
+ *                 swapped:
+ *                   type: number
+ *                 errors:
+ *                   type: number
+ */
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;

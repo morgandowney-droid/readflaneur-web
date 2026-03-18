@@ -250,6 +250,29 @@ function extractSourcesFromCategories(categories: EnrichedCategory[] | null): Ar
   return sources;
 }
 
+/**
+ * @swagger
+ * /api/cron/enrich-briefs:
+ *   get:
+ *     summary: Enrich briefs with Gemini Pro (Phase 1) and RSS articles with Flash (Phase 2)
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Enrichment results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 enriched:
+ *                   type: number
+ *                 errors:
+ *                   type: number
+ */
 export async function GET(request: Request) {
   const functionStart = Date.now();
 

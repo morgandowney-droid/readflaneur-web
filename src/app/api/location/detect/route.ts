@@ -2,10 +2,48 @@ import { NextRequest, NextResponse } from 'next/server';
 import { detectLocationFromIP } from '@/lib/location';
 
 /**
- * GET /api/location/detect
- *
- * Detect user location from IP address using ipinfo.io
- * Returns detected city, country, timezone, and matched Flaneur city
+ * @swagger
+ * /api/location/detect:
+ *   get:
+ *     summary: Detect user location from IP
+ *     description: Detects user location from IP address using ipinfo.io. Returns detected city, country, timezone, and matched Flaneur city. Uses x-forwarded-for and x-real-ip headers.
+ *     tags:
+ *       - Location
+ *     responses:
+ *       200:
+ *         description: Location detection result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 location:
+ *                   type: object
+ *                   properties:
+ *                     detectedCity:
+ *                       type: string
+ *                     detectedCountry:
+ *                       type: string
+ *                     timezone:
+ *                       type: string
+ *                     matchedCity:
+ *                       type: string
+ *                     matchedCountry:
+ *                       type: string
+ *                     matchedTimezone:
+ *                       type: string
+ *                     confidence:
+ *                       type: string
+ *                     method:
+ *                       type: string
+ *       500:
+ *         description: Detection failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 export async function GET(request: NextRequest) {
   try {

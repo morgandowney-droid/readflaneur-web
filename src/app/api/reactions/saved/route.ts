@@ -2,8 +2,60 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 /**
- * GET /api/reactions/saved?anonymousId=...&type=bookmark
- * Returns articles the user has reacted to
+ * @swagger
+ * /api/reactions/saved:
+ *   get:
+ *     summary: Get saved/bookmarked articles for a user
+ *     tags: [Reactions]
+ *     description: Returns articles the user has reacted to. Uses authenticated session or anonymous ID.
+ *     parameters:
+ *       - in: query
+ *         name: anonymousId
+ *         schema:
+ *           type: string
+ *         description: Anonymous user ID (from localStorage) when not authenticated
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           default: bookmark
+ *         description: Reaction type to filter by
+ *     responses:
+ *       200:
+ *         description: List of saved articles with neighborhood info
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 articles:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       headline:
+ *                         type: string
+ *                       preview_text:
+ *                         type: string
+ *                       slug:
+ *                         type: string
+ *                       neighborhood_id:
+ *                         type: string
+ *                       image_url:
+ *                         type: string
+ *                       created_at:
+ *                         type: string
+ *                       neighborhood:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
+ *                           city:
+ *                             type: string
+ *       500:
+ *         description: Server error
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

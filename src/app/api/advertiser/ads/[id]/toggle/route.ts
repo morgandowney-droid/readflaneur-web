@@ -2,6 +2,37 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/advertiser/ads/{id}/toggle:
+ *   post:
+ *     summary: Toggle ad active/paused status
+ *     description: Toggles an ad between active and paused states. Requires session auth and ad ownership.
+ *     tags: [Ads]
+ *     security:
+ *       - session: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The ad ID
+ *     responses:
+ *       200:
+ *         description: Toggled status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   enum: [active, paused]
+ *       401:
+ *         description: Not authenticated or not owner
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

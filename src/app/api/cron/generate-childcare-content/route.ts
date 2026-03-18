@@ -5,6 +5,29 @@ import { generateChildcareContent } from '@/lib/childcare/generate-childcare-con
 
 export const maxDuration = 300;
 
+/**
+ * @swagger
+ * /api/cron/generate-childcare-content:
+ *   get:
+ *     summary: Generate Family Corner content by age band per neighborhood
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Childcare content generation results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 generated:
+ *                   type: number
+ *                 errors:
+ *                   type: number
+ */
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;

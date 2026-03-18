@@ -10,8 +10,43 @@ function getSupabaseAdmin() {
 }
 
 /**
- * GET /api/referral/stats
- * Return click/conversion counts for the current user's referral code
+ * @swagger
+ * /api/referral/stats:
+ *   get:
+ *     summary: Get referral statistics
+ *     description: Returns click and conversion counts for the current user's referral code. Supports session auth or email+token auth.
+ *     tags:
+ *       - Referral
+ *     parameters:
+ *       - in: query
+ *         name: email
+ *         schema:
+ *           type: string
+ *           format: email
+ *         description: Email for token-based auth (alternative to session)
+ *       - in: query
+ *         name: token
+ *         schema:
+ *           type: string
+ *         description: Unsubscribe token for email-based auth
+ *     responses:
+ *       200:
+ *         description: Referral statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: string
+ *                   nullable: true
+ *                   description: User's referral code
+ *                 clicks:
+ *                   type: number
+ *                   description: Total referral link clicks
+ *                 conversions:
+ *                   type: number
+ *                   description: Total successful conversions
  */
 export async function GET(request: NextRequest) {
   try {

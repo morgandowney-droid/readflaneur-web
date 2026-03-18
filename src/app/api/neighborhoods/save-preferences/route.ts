@@ -2,10 +2,46 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
-// Save neighborhood preferences to DB (replace all).
-// Called from the selector modal on close and from useNeighborhoodPreferences.
-// Uses cookie-based auth to identify the user, then direct REST API with service
-// role key for the actual DB write (bypasses any RLS issues with expired JWTs).
+/**
+ * @swagger
+ * /api/neighborhoods/save-preferences:
+ *   post:
+ *     summary: Save neighborhood preferences (replace all)
+ *     description: Replaces all neighborhood preferences for the authenticated user. Uses cookie-based auth with service role key for DB write.
+ *     tags:
+ *       - Neighborhoods
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - neighborhoodIds
+ *             properties:
+ *               neighborhoodIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: Preferences saved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 saved:
+ *                   type: number
+ *       400:
+ *         description: neighborhoodIds not provided or not an array
+ *       401:
+ *         description: Not authenticated
+ */
 export async function POST(request: NextRequest) {
   try {
     const { neighborhoodIds } = await request.json();

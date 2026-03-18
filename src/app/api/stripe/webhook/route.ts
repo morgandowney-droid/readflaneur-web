@@ -4,6 +4,40 @@ import { createClient } from '@supabase/supabase-js';
 import { sendEmail } from '@/lib/email';
 import Stripe from 'stripe';
 
+/**
+ * @swagger
+ * /api/stripe/webhook:
+ *   post:
+ *     summary: Handle Stripe webhook events
+ *     description: Receives Stripe webhook events (checkout.session.completed, payment_intent.payment_failed). Verified via Stripe signature.
+ *     tags: [Ads]
+ *     parameters:
+ *       - in: header
+ *         name: stripe-signature
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Stripe webhook signature
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Webhook received
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 received:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Missing signature or verification failed
+ */
 export async function POST(request: NextRequest) {
   // Create clients at runtime
   const supabaseAdmin = createClient(

@@ -84,6 +84,25 @@ function fallbackStoryToArticle(
   };
 }
 
+/**
+ * @swagger
+ * /api/cron/sync-global-fallback:
+ *   get:
+ *     summary: Generates fallback news for coverage gaps
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: NextRequest) {
   // Verify cron secret
   const authHeader = request.headers.get('authorization');

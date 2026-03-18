@@ -5,6 +5,59 @@ import { createClient } from '@/lib/supabase/server';
  *  Returns cached brief translation or 404.
  *  When neighborhoodId is provided, also returns translated headline from the
  *  corresponding brief_summary article translation. */
+
+/**
+ * @swagger
+ * /api/translations/brief:
+ *   get:
+ *     summary: Get a cached brief translation
+ *     description: Returns a pre-translated brief in the requested language. Optionally includes translated headline from the corresponding article. No authentication required. Cached for 1 hour.
+ *     tags:
+ *       - Translations
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Brief ID (UUID)
+ *       - in: query
+ *         name: lang
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [sv, fr, de, es, pt, it, zh, ja]
+ *         description: Target language code (not "en")
+ *       - in: query
+ *         name: neighborhoodId
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Neighborhood ID to also fetch the translated article headline
+ *     responses:
+ *       200:
+ *         description: Translated brief content
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: string
+ *                 enriched_content:
+ *                   type: string
+ *                 translated_at:
+ *                   type: string
+ *                   format: date-time
+ *                 headline:
+ *                   type: string
+ *                   nullable: true
+ *                   description: Translated headline from the corresponding brief_summary article (only when neighborhoodId provided)
+ *       400:
+ *         description: Missing id or lang, or lang is "en"
+ *       404:
+ *         description: Translation not available
+ */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const briefId = url.searchParams.get('id');

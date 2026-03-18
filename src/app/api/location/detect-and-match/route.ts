@@ -4,10 +4,46 @@ import { createClient } from '@/lib/supabase/server';
 import { getDistance } from '@/lib/geo-utils';
 
 /**
- * GET /api/location/detect-and-match
- *
- * Detects user location from IP and returns the 4 nearest neighborhoods.
- * Used by SmartRedirect to auto-feed new users.
+ * @swagger
+ * /api/location/detect-and-match:
+ *   get:
+ *     summary: Detect location and match nearest neighborhoods
+ *     description: Detects user location from IP and returns the 4 nearest neighborhoods sorted by Haversine distance. Used by the homepage to auto-populate new users' feeds.
+ *     tags:
+ *       - Location
+ *     responses:
+ *       200:
+ *         description: Matched neighborhoods near detected location
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 city:
+ *                   type: string
+ *                 latitude:
+ *                   type: number
+ *                 longitude:
+ *                   type: number
+ *                 neighborhoods:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       city:
+ *                         type: string
+ *       500:
+ *         description: Detection or matching failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 export async function GET(request: NextRequest) {
   try {

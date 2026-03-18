@@ -14,6 +14,64 @@ import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 
 export const maxDuration = 120; // Allow up to 120 seconds for Gemini API
 
+/**
+ * @swagger
+ * /api/briefs/enrich-gemini:
+ *   post:
+ *     summary: Enrich a brief using Gemini with Google Search grounding
+ *     description: Accepts either a briefId to enrich an existing brief, or raw brief content for direct enrichment. Requires service role authentication.
+ *     tags:
+ *       - Briefs
+ *     security:
+ *       - serviceRole: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             oneOf:
+ *               - type: object
+ *                 required: [briefId]
+ *                 properties:
+ *                   briefId:
+ *                     type: string
+ *                     description: UUID of an existing brief to enrich
+ *               - type: object
+ *                 required: [briefContent, neighborhoodName, neighborhoodSlug]
+ *                 properties:
+ *                   briefContent:
+ *                     type: string
+ *                   neighborhoodName:
+ *                     type: string
+ *                   neighborhoodSlug:
+ *                     type: string
+ *                   city:
+ *                     type: string
+ *                   country:
+ *                     type: string
+ *     responses:
+ *       200:
+ *         description: Enrichment result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 briefId:
+ *                   type: string
+ *                 enrichedAt:
+ *                   type: string
+ *                 model:
+ *                   type: string
+ *                 categoriesCount:
+ *                   type: number
+ *                 storiesCount:
+ *                   type: number
+ *                 result:
+ *                   type: object
+ */
 export async function POST(request: Request) {
   try {
     const body = await request.json();

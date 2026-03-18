@@ -2,6 +2,46 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/auth/session:
+ *   post:
+ *     summary: Set auth session from tokens
+ *     description: Sets server-side auth cookies from access and refresh tokens. Used after client-side authentication to sync session to server.
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - access_token
+ *               - refresh_token
+ *             properties:
+ *               access_token:
+ *                 type: string
+ *               refresh_token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Session set successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Missing tokens
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 export async function POST(request: NextRequest) {
   try {
     const { access_token, refresh_token } = await request.json();

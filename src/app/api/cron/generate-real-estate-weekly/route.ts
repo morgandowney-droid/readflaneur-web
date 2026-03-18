@@ -47,6 +47,25 @@ interface NeighborhoodData {
   timezone: string;
 }
 
+/**
+ * @swagger
+ * /api/cron/generate-real-estate-weekly:
+ *   get:
+ *     summary: Generates real estate weekly digest articles
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const secret = searchParams.get('secret');

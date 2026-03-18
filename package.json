@@ -29,6 +29,7 @@
     "leaflet": "^1.9.4",
     "mapbox-gl": "^3.19.1",
     "next": "16.1.4",
+    "next-swagger-doc": "^0.4.1",
     "openai": "^6.16.0",
     "pdf-parse": "^2.4.5",
     "react": "19.2.3",
@@ -37,6 +38,7 @@
     "resend": "^6.9.1",
     "rss-parser": "^3.13.0",
     "stripe": "^20.2.0",
+    "swagger-ui-react": "^5.32.1",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
@@ -46,6 +48,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/swagger-ui-react": "^5.18.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.4",
     "pg": "^8.17.2",

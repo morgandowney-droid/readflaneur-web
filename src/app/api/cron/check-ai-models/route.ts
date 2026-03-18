@@ -63,6 +63,25 @@ function isNewerInFamily(candidateName: string, currentId: string): boolean {
   return candidate !== currentId && candidate > currentId;
 }
 
+/**
+ * @swagger
+ * /api/cron/check-ai-models:
+ *   get:
+ *     summary: Monthly check for new AI model versions
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Model check completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: Request) {
   const functionStart = Date.now();
   const startedAt = new Date().toISOString();

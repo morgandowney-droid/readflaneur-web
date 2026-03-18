@@ -77,6 +77,62 @@ function scoreArticle(article: Article): number {
   return score;
 }
 
+/**
+ * @swagger
+ * /api/admin/cleanup-duplicates:
+ *   get:
+ *     summary: Find and archive duplicate articles
+ *     tags: [Admin]
+ *     security:
+ *       - serviceRole: []
+ *     parameters:
+ *       - in: query
+ *         name: dry-run
+ *         schema:
+ *           type: string
+ *           enum: ['true', 'false']
+ *           default: 'true'
+ *         description: Preview mode (true) or execute (false)
+ *       - in: query
+ *         name: days
+ *         schema:
+ *           type: integer
+ *           default: 30
+ *         description: Number of days to scan
+ *       - in: query
+ *         name: mode
+ *         schema:
+ *           type: string
+ *           enum: [standard, tight]
+ *           default: standard
+ *         description: Matching mode (standard = first 40 chars, tight = fuzzy word overlap)
+ *     responses:
+ *       200:
+ *         description: Duplicate cleanup results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 dry_run:
+ *                   type: boolean
+ *                 mode:
+ *                   type: string
+ *                 total_articles_scanned:
+ *                   type: integer
+ *                 duplicate_groups_found:
+ *                   type: integer
+ *                 articles_to_archive:
+ *                   type: integer
+ *                 archived:
+ *                   type: integer
+ *                 groups:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: Unauthorized
+ */
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const dryRun = url.searchParams.get('dry-run') !== 'false';

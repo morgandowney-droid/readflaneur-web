@@ -4,6 +4,52 @@ import { createClient } from '@supabase/supabase-js';
 import { notifyAdvertiserApproved, notifyAdvertiserRejected, notifyCustomerProofReady } from '@/lib/email';
 import { processAdQuality } from '@/lib/ad-quality-service';
 
+/**
+ * @swagger
+ * /api/admin/ads/review:
+ *   post:
+ *     summary: Review an ad (approve, reject, run AI check, or send proof)
+ *     tags: [Admin]
+ *     security:
+ *       - supabaseAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [adId, action]
+ *             properties:
+ *               adId:
+ *                 type: string
+ *               action:
+ *                 type: string
+ *                 enum: [approve, reject, run_ai_check, send_proof]
+ *               reason:
+ *                 type: string
+ *               headline:
+ *                 type: string
+ *               adminNotes:
+ *                 type: string
+ *               body:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Review result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 action:
+ *                   type: string
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized (admin role required)
+ */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerClient();

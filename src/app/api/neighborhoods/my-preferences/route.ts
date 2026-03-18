@@ -2,9 +2,32 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-// Server-side endpoint to fetch neighborhood preferences for the logged-in user.
-// Bypasses GoTrue's navigator.locks deadlock on mobile Safari by using
-// cookie-based auth (server-side) instead of client-side getSession().
+/**
+ * @swagger
+ * /api/neighborhoods/my-preferences:
+ *   get:
+ *     summary: Get user's neighborhood preferences
+ *     description: Fetches neighborhood preferences for the logged-in user via cookie-based auth. Returns null ids for unauthenticated users.
+ *     tags:
+ *       - Neighborhoods
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: User neighborhood preferences
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ids:
+ *                   type: array
+ *                   nullable: true
+ *                   items:
+ *                     type: string
+ *                 userId:
+ *                   type: string
+ */
 export async function GET() {
   try {
     const cookieStore = await cookies();

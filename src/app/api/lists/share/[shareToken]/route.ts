@@ -1,7 +1,34 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
-// GET /api/lists/share/[shareToken] - Resolve a shared list
+/**
+ * @swagger
+ * /api/lists/share/{shareToken}:
+ *   get:
+ *     summary: Resolve a shared destination list
+ *     description: Returns a public shared list with its items and neighborhood details. No auth required.
+ *     tags: [Lists]
+ *     parameters:
+ *       - in: path
+ *         name: shareToken
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 8
+ *           maxLength: 8
+ *         description: The 8-character share token
+ *     responses:
+ *       200:
+ *         description: Shared list with items and neighborhoods
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       400:
+ *         description: Invalid token format
+ *       404:
+ *         description: List not found or not public
+ */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ shareToken: string }> }

@@ -27,6 +27,25 @@ import { getCronImage } from '@/lib/cron-images';
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for multiple source scraping
 
+/**
+ * @swagger
+ * /api/cron/sync-gala-watch:
+ *   get:
+ *     summary: Sync social calendar galas
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Gala watch sync completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: Request) {
   // Verify cron authorization
   const authHeader = request.headers.get('authorization');

@@ -23,6 +23,25 @@ import { getCronImage } from '@/lib/cron-images';
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for all neighborhoods
 
+/**
+ * @swagger
+ * /api/cron/sync-nyc-crime-blotter:
+ *   get:
+ *     summary: Generates NYC crime blotter articles
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: Request) {
   // Verify cron authorization
   const authHeader = request.headers.get('authorization');

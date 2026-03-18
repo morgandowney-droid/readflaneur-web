@@ -30,6 +30,31 @@ function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * @swagger
+ * /api/cron/send-daily-brief:
+ *   get:
+ *     summary: Send Daily Brief emails at 7 AM local per recipient (skips Sundays)
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Email send results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 sent:
+ *                   type: number
+ *                 skipped:
+ *                   type: number
+ *                 errors:
+ *                   type: number
+ */
 export async function GET(request: Request) {
   // Verify cron authorization
   const authHeader = request.headers.get('authorization');

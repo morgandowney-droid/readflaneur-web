@@ -36,6 +36,25 @@ import { getCronImage } from '@/lib/cron-images';
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for RSS parsing and story generation
 
+/**
+ * @swagger
+ * /api/cron/sync-review-watch:
+ *   get:
+ *     summary: Syncs restaurant review articles
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: Request) {
   // Verify cron authorization
   const authHeader = request.headers.get('authorization');

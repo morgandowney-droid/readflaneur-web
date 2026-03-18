@@ -61,6 +61,29 @@ Guidelines:
 - Include ratings when notable (4.5+ stars)
 - Include a brief closing line inviting readers to explore`;
 
+/**
+ * @swagger
+ * /api/cron/generate-guide-digests:
+ *   get:
+ *     summary: Generate guide digest content
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Guide digest generation results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 generated:
+ *                   type: number
+ *                 errors:
+ *                   type: number
+ */
 export async function GET(request: Request) {
   // Verify cron authorization
   const authHeader = request.headers.get('authorization');

@@ -9,6 +9,61 @@ function getSupabaseAdmin() {
   );
 }
 
+/**
+ * @swagger
+ * /api/neighborhoods/delete-community:
+ *   post:
+ *     summary: Delete a community neighborhood
+ *     description: Soft-deletes a community neighborhood created by the user. Only allowed within 24 hours of creation and with 0 other followers.
+ *     tags:
+ *       - Community
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - neighborhoodId
+ *             properties:
+ *               neighborhoodId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Neighborhood deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       400:
+ *         description: Missing neighborhoodId or not eligible for deletion
+ *       401:
+ *         description: Authentication required
+ *   get:
+ *     summary: Check deletion eligibility for community neighborhoods
+ *     description: Returns a map of neighborhood IDs to their deletion eligibility (within 24h, 0 followers).
+ *     tags:
+ *       - Community
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Eligibility map
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 eligible:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: boolean
+ */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();

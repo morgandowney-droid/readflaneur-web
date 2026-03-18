@@ -2,10 +2,42 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
-// Push client-side neighborhood preferences to DB.
-// Called when a logged-in user has neighborhoods in localStorage but DB is empty
-// (e.g., they selected neighborhoods before creating an account, or DB sync
-// was failing due to expired sessions).
+/**
+ * @swagger
+ * /api/neighborhoods/sync-to-db:
+ *   post:
+ *     summary: Sync client-side preferences to DB
+ *     description: Pushes localStorage neighborhood preferences to DB when the DB is empty. Only inserts if the user has no existing DB preferences.
+ *     tags:
+ *       - Neighborhoods
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - neighborhoodIds
+ *             properties:
+ *               neighborhoodIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: Sync result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 synced:
+ *                   type: number
+ */
 export async function POST(request: NextRequest) {
   try {
     const { neighborhoodIds } = await request.json();

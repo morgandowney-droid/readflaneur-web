@@ -9,6 +9,81 @@ function getSupabase() {
   );
 }
 
+/**
+ * @swagger
+ * /api/admin/rss-sources:
+ *   get:
+ *     summary: List all RSS sources
+ *     tags: [Admin]
+ *     security:
+ *       - serviceRole: []
+ *     responses:
+ *       200:
+ *         description: List of RSS sources
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 sources:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *   post:
+ *     summary: Add a new RSS source
+ *     tags: [Admin]
+ *     security:
+ *       - serviceRole: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [city, name, feed_url]
+ *             properties:
+ *               city:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               feed_url:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Source created
+ *   patch:
+ *     summary: Update an existing RSS source
+ *     tags: [Admin]
+ *     security:
+ *       - serviceRole: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [id]
+ *             properties:
+ *               id:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Source updated
+ *   delete:
+ *     summary: Delete an RSS source
+ *     tags: [Admin]
+ *     security:
+ *       - serviceRole: []
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Source deleted
+ */
 // GET - List all RSS sources
 export async function GET() {
   const supabase = getSupabase();

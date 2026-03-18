@@ -301,6 +301,29 @@ function combineBriefsIntoContent(briefs: CommunityBrief[]): string {
   return sections.join('\n\n');
 }
 
+/**
+ * @swagger
+ * /api/cron/generate-community-news:
+ *   get:
+ *     summary: Generate articles for community neighborhoods
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Community news generation results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 articles_created:
+ *                   type: number
+ *                 errors:
+ *                   type: number
+ */
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;

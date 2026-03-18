@@ -241,6 +241,25 @@ Return JSON format:
   }
 }
 
+/**
+ * @swagger
+ * /api/cron/generate-opening-closing-news:
+ *   get:
+ *     summary: Tracks business openings and closings
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: Request) {
   // Verify cron authorization
   const authHeader = request.headers.get('authorization');

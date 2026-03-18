@@ -204,6 +204,31 @@ function extractSources(enrichedData: { categories?: Array<{ stories: Array<{ so
   ];
 }
 
+/**
+ * @swagger
+ * /api/cron/generate-look-ahead:
+ *   get:
+ *     summary: Generate 7-day Look Ahead articles per neighborhood
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Look Ahead generation results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 articles_created:
+ *                   type: number
+ *                 skipped:
+ *                   type: number
+ *                 errors:
+ *                   type: number
+ */
 export async function GET(request: Request) {
   const functionStart = Date.now();
 

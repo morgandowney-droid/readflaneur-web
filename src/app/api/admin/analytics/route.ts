@@ -2,6 +2,41 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/admin/analytics:
+ *   get:
+ *     summary: Get admin analytics dashboard data
+ *     tags: [Admin]
+ *     security:
+ *       - supabaseAuth: []
+ *     responses:
+ *       200:
+ *         description: Analytics data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 revenueByPeriod:
+ *                   type: object
+ *                 topAdvertisers:
+ *                   type: array
+ *                 topNeighborhoods:
+ *                   type: array
+ *                 recentOrders:
+ *                   type: array
+ *                 topArticles:
+ *                   type: array
+ *                 neighborhoodViews:
+ *                   type: array
+ *                 authorViews:
+ *                   type: array
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized (admin role required)
+ */
 export async function GET() {
   try {
     const cookieStore = await cookies();

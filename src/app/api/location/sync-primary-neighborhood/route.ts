@@ -6,13 +6,53 @@ import { findSupportedCity } from '@/lib/location';
 import { performInstantResend } from '@/lib/email/instant-resend';
 
 /**
- * POST /api/location/sync-primary-neighborhood
- *
- * Called fire-and-forget from useNeighborhoodPreferences.setPrimary()
- * so all primary-change paths (ContextSwitcher, modal, drag-reorder)
- * sync to the DB and trigger an instant email resend when the city changes.
- *
- * Body: { neighborhoodId: string }
+ * @swagger
+ * /api/location/sync-primary-neighborhood:
+ *   post:
+ *     summary: Sync primary neighborhood to database
+ *     description: Called fire-and-forget when user changes their primary neighborhood. Updates profiles table and triggers instant email resend when city changes. Requires session auth.
+ *     tags:
+ *       - Location
+ *     security:
+ *       - sessionAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - neighborhoodId
+ *             properties:
+ *               neighborhoodId:
+ *                 type: string
+ *                 description: The neighborhood ID to set as primary
+ *     responses:
+ *       200:
+ *         description: Primary neighborhood synced
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 cityChanged:
+ *                   type: boolean
+ *                   description: Whether the primary city changed (triggers instant resend)
+ *       400:
+ *         description: Missing or invalid neighborhoodId
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Not authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 export async function POST(request: NextRequest) {
   try {

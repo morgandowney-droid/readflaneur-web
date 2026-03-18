@@ -10,6 +10,39 @@ import { createClient } from '@supabase/supabase-js';
 
 const FLANEUR_API_URL = process.env.FLANEUR_API_URL || 'https://flaneur-azure.vercel.app';
 
+/**
+ * @swagger
+ * /api/admin/check-images:
+ *   get:
+ *     summary: Get article image statistics
+ *     tags: [Admin]
+ *     responses:
+ *       200:
+ *         description: Image statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total:
+ *                   type: integer
+ *                 withImages:
+ *                   type: integer
+ *                 withoutImages:
+ *                   type: integer
+ *                 percentMissing:
+ *                   type: number
+ *                 sampleMissingImages:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *   post:
+ *     summary: Test image API connection
+ *     tags: [Admin]
+ *     responses:
+ *       200:
+ *         description: Connection test result
+ */
 export async function GET() {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -5,6 +5,52 @@ import { hashIPSHA256 } from '@/lib/device-detection';
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
+/**
+ * @swagger
+ * /api/tips/upload-photo:
+ *   post:
+ *     summary: Upload a photo for a news tip
+ *     tags: [Internal]
+ *     description: Upload a photo to attach to a tip submission. Optional authentication.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Image file (JPEG, PNG, WebP, or HEIC, max 10MB)
+ *     responses:
+ *       200:
+ *         description: Photo uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 url:
+ *                   type: string
+ *                   description: Public URL of the uploaded photo
+ *                 path:
+ *                   type: string
+ *                   description: Storage path of the file
+ *                 filename:
+ *                   type: string
+ *                 size:
+ *                   type: integer
+ *                   description: File size in bytes
+ *                 type:
+ *                   type: string
+ *                   description: MIME type of the file
+ *       400:
+ *         description: No file provided or invalid file type/size
+ *       500:
+ *         description: Server error
+ */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();

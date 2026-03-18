@@ -2,6 +2,47 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/advertiser/ads/{id}/activate-free:
+ *   post:
+ *     summary: Activate an ad for free (admin only)
+ *     description: Activates an ad without payment. Requires admin authentication.
+ *     tags: [Ads]
+ *     security:
+ *       - session: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The ad ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [packageId]
+ *             properties:
+ *               packageId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Ad activated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       401:
+ *         description: Not authenticated or not admin
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

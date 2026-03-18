@@ -2,6 +2,39 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/admin/ads:
+ *   get:
+ *     summary: Get ads for admin management
+ *     tags: [Admin]
+ *     security:
+ *       - supabaseAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: filter
+ *         schema:
+ *           type: string
+ *           default: pending_review
+ *           enum: [pending_review, needs_design, active, sunday_edition, awaiting_client, changes_requested]
+ *         description: Filter ads by status
+ *     responses:
+ *       200:
+ *         description: Filtered list of ads
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ads:
+ *                   type: array
+ *                 isAdmin:
+ *                   type: boolean
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized (admin role required)
+ */
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();

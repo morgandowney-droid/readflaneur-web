@@ -2,6 +2,45 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getStripe } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
 
+/**
+ * @swagger
+ * /api/stripe/checkout:
+ *   post:
+ *     summary: Create a Stripe checkout session for an ad
+ *     description: Creates a Stripe checkout session for purchasing an ad package. Requires session auth.
+ *     tags: [Ads]
+ *     security:
+ *       - session: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [adId, packageId]
+ *             properties:
+ *               adId:
+ *                 type: string
+ *                 format: uuid
+ *               packageId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Checkout session created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 url:
+ *                   type: string
+ *                   format: uri
+ *                   description: Stripe checkout URL to redirect user to
+ *       400:
+ *         description: Missing adId or packageId
+ *       401:
+ *         description: Not authenticated
+ */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();

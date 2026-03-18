@@ -23,6 +23,47 @@ import {
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for all generations
 
+/**
+ * @swagger
+ * /api/admin/pregenerate-cron-images:
+ *   get:
+ *     summary: List current cached cron images
+ *     tags: [Admin]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Status of cached cron images
+ *   post:
+ *     summary: Generate all missing cron images
+ *     tags: [Admin]
+ *     security:
+ *       - cronSecret: []
+ *     parameters:
+ *       - in: query
+ *         name: force
+ *         schema:
+ *           type: boolean
+ *         description: Regenerate all images even if cached
+ *     responses:
+ *       200:
+ *         description: Generation results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 total_categories:
+ *                   type: integer
+ *                 successful_count:
+ *                   type: integer
+ *                 failed_count:
+ *                   type: integer
+ *       401:
+ *         description: Unauthorized
+ */
 export async function GET(request: Request) {
   // Verify admin authorization
   const authHeader = request.headers.get('authorization');

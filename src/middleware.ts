@@ -18,7 +18,8 @@ export async function middleware(request: NextRequest) {
   const isApiRoute = path.startsWith('/api/');
   const isAuthRoute = path.startsWith('/auth/');
   const isMonitoring = path === '/monitoring';
-  if (!isGatePage && !isApiRoute && !isAuthRoute && !isMonitoring) {
+  const isApiDocs = path.startsWith('/api-docs');
+  if (!isGatePage && !isApiRoute && !isAuthRoute && !isMonitoring && !isApiDocs) {
     const gatePass = request.cookies.get('flaneur-gate')?.value;
     if (gatePass !== 'granted') {
       const gateUrl = new URL('/gate', request.url);

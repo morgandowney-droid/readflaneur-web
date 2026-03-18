@@ -1,8 +1,46 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
-// GET /api/lists/details?ids=id1,id2,id3
-// Returns neighborhood details + thumbnail images for the wishlist dropdown
+/**
+ * @swagger
+ * /api/lists/details:
+ *   get:
+ *     summary: Get neighborhood details for list items
+ *     description: Returns neighborhood details and thumbnail images for the wishlist dropdown. No auth required. 5-minute cache.
+ *     tags:
+ *       - Lists
+ *     parameters:
+ *       - in: query
+ *         name: ids
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Comma-separated neighborhood IDs (max 50)
+ *         example: "nyc-tribeca,nyc-soho,paris-marais"
+ *     responses:
+ *       200:
+ *         description: Neighborhood details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 items:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       city:
+ *                         type: string
+ *                       country:
+ *                         type: string
+ *                       imageUrl:
+ *                         type: string
+ */
 export async function GET(request: NextRequest) {
   try {
     const idsParam = request.nextUrl.searchParams.get('ids');

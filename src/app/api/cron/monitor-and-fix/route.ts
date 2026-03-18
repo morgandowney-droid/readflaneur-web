@@ -33,6 +33,25 @@ export const maxDuration = 300;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+/**
+ * @swagger
+ * /api/cron/monitor-and-fix:
+ *   get:
+ *     summary: Auto-fix detected issues from health checks
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Auto-fix cycle completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: Request) {
   const startTime = new Date();
 

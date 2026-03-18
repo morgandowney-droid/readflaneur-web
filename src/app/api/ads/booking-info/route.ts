@@ -2,10 +2,46 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * GET /api/ads/booking-info?session_id=cs_xxx
- *
- * Returns booking details for the success page.
- * Supports multi-neighborhood bookings (multiple ads per session).
+ * @swagger
+ * /api/ads/booking-info:
+ *   get:
+ *     summary: Get booking details by Stripe session ID
+ *     description: Returns booking details for the success page. Supports multi-neighborhood bookings. No auth required.
+ *     tags:
+ *       - Ads
+ *     parameters:
+ *       - in: query
+ *         name: session_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Stripe checkout session ID
+ *     responses:
+ *       200:
+ *         description: Booking details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 adId:
+ *                   type: string
+ *                 neighborhoodName:
+ *                   type: string
+ *                 cityName:
+ *                   type: string
+ *                 date:
+ *                   type: string
+ *                 placementType:
+ *                   type: string
+ *                 bookings:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       400:
+ *         description: Missing session_id
+ *       404:
+ *         description: Booking not found
  */
 export async function GET(request: NextRequest) {
   const sessionId = new URL(request.url).searchParams.get('session_id');

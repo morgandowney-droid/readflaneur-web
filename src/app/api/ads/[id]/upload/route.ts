@@ -7,10 +7,53 @@ const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 /**
- * POST /api/ads/[id]/upload
- *
- * Handles creative asset upload for a booked ad.
- * No auth required — secured by knowing the ad UUID (sent via email).
+ * @swagger
+ * /api/ads/{id}/upload:
+ *   post:
+ *     summary: Upload ad creative assets
+ *     description: Handles creative asset upload for a booked ad. No auth required - secured by knowing the ad UUID.
+ *     tags: [Ads]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The ad ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [sponsorLabel, headline, clickUrl, image]
+ *             properties:
+ *               sponsorLabel:
+ *                 type: string
+ *               headline:
+ *                 type: string
+ *               body:
+ *                 type: string
+ *               clickUrl:
+ *                 type: string
+ *                 format: uri
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Upload successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       404:
+ *         description: Ad not found
  */
 export async function POST(
   request: NextRequest,

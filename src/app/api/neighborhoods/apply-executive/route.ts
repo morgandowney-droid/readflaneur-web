@@ -9,6 +9,46 @@ function getSupabaseAdmin() {
   );
 }
 
+/**
+ * @swagger
+ * /api/neighborhoods/apply-executive:
+ *   post:
+ *     summary: Apply for executive status
+ *     description: Submit an application for executive status to create more than 2 community neighborhoods. One pending application per user.
+ *     tags:
+ *       - Community
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reason
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 minLength: 10
+ *                 maxLength: 1000
+ *     responses:
+ *       200:
+ *         description: Application submitted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       400:
+ *         description: Invalid reason (too short or too long)
+ *       401:
+ *         description: Authentication required
+ *       409:
+ *         description: A pending application already exists
+ */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();

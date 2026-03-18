@@ -22,6 +22,25 @@ import {
 export const runtime = 'nodejs';
 export const maxDuration = 300; // Allow up to 5 minutes for all neighborhoods
 
+/**
+ * @swagger
+ * /api/cron/sync-nyc-crime:
+ *   get:
+ *     summary: Syncs NYC crime data
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: Request) {
   // Verify cron authorization
   const authHeader = request.headers.get('authorization');

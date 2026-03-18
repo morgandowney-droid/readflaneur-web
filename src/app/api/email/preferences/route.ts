@@ -124,6 +124,61 @@ async function triggerInstantResend(
   }
 }
 
+/**
+ * @swagger
+ * /api/email/preferences:
+ *   get:
+ *     summary: Get subscriber email preferences
+ *     description: Returns email preferences for a subscriber identified by unsubscribe token.
+ *     tags:
+ *       - Email
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Unsubscribe token identifying the subscriber
+ *     responses:
+ *       200:
+ *         description: Subscriber preferences
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 email:
+ *                   type: string
+ *                 source:
+ *                   type: string
+ *                   enum: [newsletter, profile]
+ *                 daily_email_enabled:
+ *                   type: boolean
+ *                 sunday_edition_enabled:
+ *                   type: boolean
+ *                 neighborhood_ids:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                 neighborhoods:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 paused_topics:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                 childcare_mode_enabled:
+ *                   type: boolean
+ *                 children:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       400:
+ *         description: Missing token
+ *       404:
+ *         description: Subscriber not found
+ */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const token = url.searchParams.get('token');
@@ -204,6 +259,65 @@ export async function GET(request: Request) {
   });
 }
 
+/**
+ * @swagger
+ * /api/email/preferences:
+ *   post:
+ *     summary: Update subscriber email preferences
+ *     description: Updates email preferences for a subscriber identified by unsubscribe token.
+ *     tags:
+ *       - Email
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token, action]
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Unsubscribe token identifying the subscriber
+ *               action:
+ *                 type: string
+ *                 description: Action to perform (e.g. save, suggest)
+ *               neighborhood_ids:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               daily_email_enabled:
+ *                 type: boolean
+ *               sunday_edition_enabled:
+ *                 type: boolean
+ *               paused_topics:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               childcare_mode_enabled:
+ *                 type: boolean
+ *               children:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *               suggestion:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Preferences updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 emailResend:
+ *                   type: boolean
+ *       400:
+ *         description: Missing token
+ *       404:
+ *         description: Subscriber not found
+ */
 export async function POST(request: Request) {
   const body = await request.json();
   const { token, action, neighborhood_ids, daily_email_enabled, sunday_edition_enabled, paused_topics, suggestion, childcare_mode_enabled, children } = body;

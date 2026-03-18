@@ -4,6 +4,40 @@ import { NextRequest, NextResponse } from 'next/server';
 // Alias for /api/cron/publish-scheduled
 // Kept for backwards compatibility with existing cron jobs
 
+/**
+ * @swagger
+ * /api/process-queue:
+ *   get:
+ *     summary: Process scheduled article publish queue
+ *     description: Publishes articles whose scheduled time has passed. Alias for /api/cron/publish-scheduled. Requires cron secret auth.
+ *     tags: [Internal]
+ *     security:
+ *       - cronSecret: []
+ *     parameters:
+ *       - in: query
+ *         name: secret
+ *         schema:
+ *           type: string
+ *         description: Cron secret for authentication
+ *     responses:
+ *       200:
+ *         description: Queue processed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 count:
+ *                   type: integer
+ *                 articles:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: Unauthorized
+ */
 export async function GET(request: NextRequest) {
   try {
     const supabase = createClient(

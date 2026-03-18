@@ -2,6 +2,44 @@ import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/referral/code:
+ *   get:
+ *     tags: [Referral]
+ *     summary: Get or generate referral code
+ *     description: Returns the user's referral code, generating one if it doesn't exist. Supports both authenticated users (via session) and newsletter subscribers (via email + unsubscribe token).
+ *     security:
+ *       - supabaseAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: email
+ *         schema:
+ *           type: string
+ *         description: Email for newsletter subscriber auth (alternative to session)
+ *       - in: query
+ *         name: token
+ *         schema:
+ *           type: string
+ *         description: Unsubscribe token for newsletter subscriber auth
+ *     responses:
+ *       200:
+ *         description: Referral code
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: string
+ *                   example: a1b2c3d4
+ *       401:
+ *         description: Not authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 function getSupabaseAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

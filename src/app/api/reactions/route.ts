@@ -4,8 +4,70 @@ import { createClient } from '@/lib/supabase/server';
 const VALID_REACTIONS = ['bookmark', 'heart', 'fire'] as const;
 
 /**
- * GET /api/reactions?articleId=...&anonymousId=...
- * Returns reaction counts and user's own reactions
+ * @swagger
+ * /api/reactions:
+ *   get:
+ *     tags: [Reactions]
+ *     summary: Get reaction counts for an article
+ *     description: Returns aggregate counts per reaction type and the current user's own reactions (via session or anonymous ID).
+ *     parameters:
+ *       - in: query
+ *         name: articleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: anonymousId
+ *         schema:
+ *           type: string
+ *         description: Anonymous user ID from localStorage (used when not authenticated)
+ *     responses:
+ *       200:
+ *         description: Reaction counts and user reactions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 counts:
+ *                   $ref: '#/components/schemas/ReactionCounts'
+ *                 userReactions:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                     enum: [bookmark, heart, fire]
+ *   post:
+ *     tags: [Reactions]
+ *     summary: Toggle a reaction on an article
+ *     description: Adds or removes a reaction. Same reaction type toggles off; different type switches.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [articleId, reactionType]
+ *             properties:
+ *               articleId:
+ *                 type: string
+ *                 format: uuid
+ *               reactionType:
+ *                 type: string
+ *                 enum: [bookmark, heart, fire]
+ *               anonymousId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Reaction toggled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 action:
+ *                   type: string
+ *                   enum: [added, removed]
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

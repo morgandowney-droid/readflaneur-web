@@ -65,6 +65,29 @@ Relevance criteria:
 - Real estate/development news for the area
 - NOT relevant: city-wide policy, sports, national news`;
 
+/**
+ * @swagger
+ * /api/cron/sync-news:
+ *   get:
+ *     summary: Fetch and deduplicate RSS feed articles
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: RSS sync results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 articles_created:
+ *                   type: number
+ *                 duplicates_skipped:
+ *                   type: number
+ */
 export async function GET(request: Request) {
   // Verify cron authorization
   const authHeader = request.headers.get('authorization');

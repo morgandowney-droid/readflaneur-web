@@ -2,6 +2,29 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/admin/newsletter:
+ *   get:
+ *     summary: Get newsletter subscribers list
+ *     tags: [Admin]
+ *     security:
+ *       - supabaseAuth: []
+ *     responses:
+ *       200:
+ *         description: List of newsletter subscribers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 subscribers:
+ *                   type: array
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized (admin role required)
+ */
 export async function GET() {
   try {
     const cookieStore = await cookies();

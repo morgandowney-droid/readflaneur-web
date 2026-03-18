@@ -29,6 +29,29 @@ function getRotatedLanguages(): LanguageCode[] {
   return [...ALL_LANGUAGES.slice(offset), ...ALL_LANGUAGES.slice(0, offset)];
 }
 
+/**
+ * @swagger
+ * /api/cron/translate-content:
+ *   get:
+ *     summary: Batch translate articles and briefs to 9 languages via Gemini Flash
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Translation results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 translated:
+ *                   type: number
+ *                 errors:
+ *                   type: number
+ */
 export async function GET(request: Request) {
   const functionStart = Date.now();
   const languages = getRotatedLanguages();

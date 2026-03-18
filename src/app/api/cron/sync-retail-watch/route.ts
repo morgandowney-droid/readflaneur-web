@@ -25,6 +25,25 @@ import { getCronImage } from '@/lib/cron-images';
 export const runtime = 'nodejs';
 export const maxDuration = 120; // 2 minutes
 
+/**
+ * @swagger
+ * /api/cron/sync-retail-watch:
+ *   get:
+ *     summary: Syncs NYC retail sign changes from DOB
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: Request) {
   // Verify cron authorization
   const authHeader = request.headers.get('authorization');

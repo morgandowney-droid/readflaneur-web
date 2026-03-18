@@ -1,8 +1,86 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Server-side sign-in via GoTrue REST API with service role key.
-// Primary login path — client sends credentials + optional Turnstile token.
-// Validates Turnstile server-side, then authenticates with GoTrue.
+/**
+ * @swagger
+ * /api/auth/signin:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Sign in with email and password
+ *     description: Server-side login via GoTree REST API. Validates Turnstile CAPTCHA server-side, authenticates, and returns session tokens plus user profile data. Also auto-subscribes to newsletter and bootstraps neighborhoods from client state.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *               captchaToken:
+ *                 type: string
+ *                 description: Cloudflare Turnstile token (optional, validated server-side)
+ *               clientNeighborhoods:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Neighborhood IDs from localStorage for cross-device sync
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 access_token:
+ *                   type: string
+ *                 refresh_token:
+ *                   type: string
+ *                 expires_in:
+ *                   type: integer
+ *                 expires_at:
+ *                   type: integer
+ *                 token_type:
+ *                   type: string
+ *                   example: bearer
+ *                 user:
+ *                   type: object
+ *                 neighborhood_ids:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                 is_subscribed:
+ *                   type: boolean
+ *                 profile:
+ *                   type: object
+ *                   properties:
+ *                     timezone:
+ *                       type: string
+ *                     childcare:
+ *                       type: boolean
+ *                     prefsToken:
+ *                       type: string
+ *                     theme:
+ *                       type: string
+ *                     language:
+ *                       type: string
+ *       400:
+ *         description: Missing email or password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 export async function POST(request: NextRequest) {
   try {
     const { email, password, captchaToken, clientNeighborhoods } = await request.json();

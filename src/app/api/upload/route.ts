@@ -2,6 +2,47 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/upload:
+ *   post:
+ *     summary: Upload an image file
+ *     tags: [Internal]
+ *     security:
+ *       - cookieAuth: []
+ *     description: Upload an image file to storage. Requires journalist or admin role.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Image file (JPEG, PNG, WebP, or HEIC, max 10MB)
+ *     responses:
+ *       200:
+ *         description: File uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 url:
+ *                   type: string
+ *                   description: Public URL of the uploaded file
+ *       400:
+ *         description: No file provided or invalid file type/size
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized (requires journalist or admin role)
+ *       500:
+ *         description: Server error
+ */
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();

@@ -70,6 +70,46 @@ function buildSundaySubject(name: string, content: SundayEditionContent, subject
   return `${teaser.toLowerCase()}${suffix}`;
 }
 
+/**
+ * @swagger
+ * /api/email/sunday-edition-request:
+ *   get:
+ *     summary: Request an on-demand Sunday Edition email
+ *     description: Two-step confirmation flow to send a Sunday Edition email. Without confirm param, shows confirmation page. With confirm=1, sends the email. Rate limited to 5 per week. Returns HTML.
+ *     tags:
+ *       - Email
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Unsubscribe token identifying the subscriber
+ *       - in: query
+ *         name: neighborhood
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Neighborhood ID for the Sunday Edition
+ *       - in: query
+ *         name: confirm
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: ["1"]
+ *         description: Set to "1" to confirm and send the email
+ *     responses:
+ *       200:
+ *         description: HTML confirmation page or success page
+ *         content:
+ *           text/html:
+ *             schema:
+ *               type: string
+ *       400:
+ *         description: Missing required parameters (HTML error page)
+ *       429:
+ *         description: Rate limit exceeded (HTML error page)
+ */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const token = url.searchParams.get('token');

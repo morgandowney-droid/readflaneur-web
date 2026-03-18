@@ -9,6 +9,46 @@ import { Resend } from 'resend';
  * unexpected inbound emails for debugging.
  */
 
+/**
+ * @swagger
+ * /api/webhooks/resend-inbound:
+ *   post:
+ *     summary: Handle inbound email webhook from Resend
+ *     description: Receives inbound email events verified via Svix signature. Logs unexpected inbound emails.
+ *     tags: [Internal]
+ *     parameters:
+ *       - in: header
+ *         name: svix-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: header
+ *         name: svix-timestamp
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: header
+ *         name: svix-signature
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Webhook processed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Missing signature headers
+ *       500:
+ *         description: Server misconfigured
+ */
 export async function POST(request: NextRequest) {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);

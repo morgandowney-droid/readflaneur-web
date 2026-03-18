@@ -60,6 +60,79 @@ async function moderateContent(content: string): Promise<{
   }
 }
 
+/**
+ * @swagger
+ * /api/comments:
+ *   get:
+ *     summary: Fetch comments for an article
+ *     tags: [Comments]
+ *     parameters:
+ *       - in: query
+ *         name: articleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The article ID to fetch comments for
+ *     responses:
+ *       200:
+ *         description: List of comments with votes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 comments:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       400:
+ *         description: Missing articleId parameter
+ *       500:
+ *         description: Server error
+ *   post:
+ *     summary: Submit a new comment
+ *     tags: [Comments]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [articleId, content, authorName]
+ *             properties:
+ *               articleId:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 2000
+ *               authorName:
+ *                 type: string
+ *               authorEmail:
+ *                 type: string
+ *               parentId:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Comment created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 comment:
+ *                   type: object
+ *       400:
+ *         description: Validation error
+ *       429:
+ *         description: Rate limit exceeded (5 per hour)
+ *       500:
+ *         description: Server error
+ */
 // GET - Fetch comments for an article
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

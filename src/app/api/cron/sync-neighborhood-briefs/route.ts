@@ -66,6 +66,31 @@ function getLocalHour(timezone: string): number {
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
+/**
+ * @swagger
+ * /api/cron/sync-neighborhood-briefs:
+ *   get:
+ *     summary: Generate daily briefs via Grok + Gemini Search for neighborhoods in morning window
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Brief generation results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 generated:
+ *                   type: number
+ *                 skipped:
+ *                   type: number
+ *                 errors:
+ *                   type: number
+ */
 export async function GET(request: Request) {
   // Verify cron authorization
   const authHeader = request.headers.get('authorization');

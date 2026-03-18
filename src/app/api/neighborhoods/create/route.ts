@@ -196,6 +196,74 @@ Return ONLY valid JSON with this exact schema:
   return JSON.parse(jsonMatch[0]) as ValidationResult;
 }
 
+/**
+ * @swagger
+ * /api/neighborhoods/create:
+ *   post:
+ *     summary: Create a community neighborhood
+ *     description: Creates a new community neighborhood with AI validation, brief generation, enrichment, article creation, and image library. Max 2 per user.
+ *     tags:
+ *       - Community
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - input
+ *             properties:
+ *               input:
+ *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 200
+ *     responses:
+ *       200:
+ *         description: Neighborhood created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 neighborhood:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     city:
+ *                       type: string
+ *                     country:
+ *                       type: string
+ *                     region:
+ *                       type: string
+ *                 pipeline:
+ *                   type: object
+ *                   properties:
+ *                     brief:
+ *                       type: string
+ *                     enrichment:
+ *                       type: string
+ *                     article:
+ *                       type: string
+ *                     image:
+ *                       type: string
+ *                 elapsed_ms:
+ *                   type: number
+ *       400:
+ *         description: Validation failed (invalid place name)
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Community neighborhood limit reached
+ *       409:
+ *         description: Duplicate neighborhood (exact ID or within 500m)
+ */
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
 

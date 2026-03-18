@@ -23,6 +23,60 @@ async function checkAdmin() {
   return profile?.role === 'admin' ? user : null;
 }
 
+/**
+ * @swagger
+ * /api/admin/suggestions:
+ *   get:
+ *     summary: List all neighborhood suggestions
+ *     tags: [Admin]
+ *     security:
+ *       - adminAuth: []
+ *     responses:
+ *       200:
+ *         description: List of suggestions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 suggestions:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: Unauthorized
+ *   patch:
+ *     summary: Update a neighborhood suggestion
+ *     tags: [Admin]
+ *     security:
+ *       - adminAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [id]
+ *             properties:
+ *               id:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *               admin_notes:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Update result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       401:
+ *         description: Unauthorized
+ */
 export async function GET() {
   try {
     const admin = await checkAdmin();

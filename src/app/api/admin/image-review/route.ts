@@ -23,6 +23,77 @@ async function checkAdmin() {
   return profile?.role === 'admin' ? user : null;
 }
 
+/**
+ * @swagger
+ * /api/admin/image-review:
+ *   get:
+ *     summary: List Unsplash photos for review (paginated)
+ *     tags: [Admin]
+ *     security:
+ *       - adminAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *     responses:
+ *       200:
+ *         description: Paginated photo list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 photos:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 page:
+ *                   type: integer
+ *                 totalPages:
+ *                   type: integer
+ *                 total:
+ *                   type: integer
+ *       401:
+ *         description: Unauthorized
+ *   delete:
+ *     summary: Remove and blacklist a photo
+ *     tags: [Admin]
+ *     security:
+ *       - adminAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [neighborhoodId, photoId]
+ *             properties:
+ *               neighborhoodId:
+ *                 type: string
+ *               photoId:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Removal result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 photoId:
+ *                   type: string
+ *                 removedUrl:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized
+ */
 export async function GET(request: NextRequest) {
   try {
     const admin = await checkAdmin();

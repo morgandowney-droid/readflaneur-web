@@ -6,17 +6,58 @@ const BOOKING_LEAD_HOURS = 48;
 const BOOKING_MAX_DAYS = 90;
 
 /**
- * POST /api/ads/checkout
- *
- * Creates a Stripe Checkout Session for ad booking(s).
- * Supports single or multi-neighborhood bookings.
- *
- * Body:
- *   date            - YYYY-MM-DD
- *   neighborhoodId  - single neighborhood slug (legacy)
- *   neighborhoodIds - array of neighborhood slugs (multi)
- *   placementType   - 'daily_brief' | 'sunday_edition'
- *   customerEmail   - buyer's email
+ * @swagger
+ * /api/ads/checkout:
+ *   post:
+ *     summary: Create a Stripe checkout session for ad booking
+ *     description: Creates a Stripe Checkout Session for single or multi-neighborhood ad bookings. No auth required.
+ *     tags:
+ *       - Ads
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - date
+ *               - placementType
+ *               - customerEmail
+ *             properties:
+ *               date:
+ *                 type: string
+ *                 description: Booking date in YYYY-MM-DD format
+ *               neighborhoodId:
+ *                 type: string
+ *                 description: Single neighborhood slug (legacy)
+ *               neighborhoodIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of neighborhood slugs (multi-booking)
+ *               placementType:
+ *                 type: string
+ *                 enum: [daily_brief, sunday_edition]
+ *               customerEmail:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Stripe checkout session created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 url:
+ *                   type: string
+ *                   description: Stripe checkout URL
+ *                 adIds:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *       400:
+ *         description: Missing required fields or invalid input
  */
 export async function POST(request: NextRequest) {
   try {

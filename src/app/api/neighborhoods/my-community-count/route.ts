@@ -2,6 +2,27 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 
+/**
+ * @swagger
+ * /api/neighborhoods/my-community-count:
+ *   get:
+ *     summary: Get count of user's community neighborhoods
+ *     description: Returns the number of active community neighborhoods created by the authenticated user. Returns 0 for anonymous users.
+ *     tags:
+ *       - Community
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Community neighborhood count
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 count:
+ *                   type: number
+ */
 export async function GET() {
   try {
     const supabase = await createClient();

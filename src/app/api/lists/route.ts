@@ -3,6 +3,63 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/lists:
+ *   get:
+ *     tags: [Lists]
+ *     summary: Get user's destination lists
+ *     description: Returns all destination lists for the authenticated user with items. Renames legacy default lists to "My News Feed". Backfills missing share tokens.
+ *     security:
+ *       - supabaseAuth: []
+ *     responses:
+ *       200:
+ *         description: User's lists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 lists:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/DestinationList'
+ *   post:
+ *     tags: [Lists]
+ *     summary: Create a new destination list
+ *     description: Creates a new destination list with an auto-generated share token.
+ *     security:
+ *       - supabaseAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 maxLength: 50
+ *               isDefault:
+ *                 type: boolean
+ *     responses:
+ *       201:
+ *         description: List created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 list:
+ *                   $ref: '#/components/schemas/DestinationList'
+ *       401:
+ *         description: Not authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 function getAuthClient() {
   const cookieStore = cookies();
   return createServerClient(

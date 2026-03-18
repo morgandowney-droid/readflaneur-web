@@ -35,6 +35,25 @@ import { getCronImage } from '@/lib/cron-images';
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for scraping multiple sources
 
+/**
+ * @swagger
+ * /api/cron/sync-sample-sales:
+ *   get:
+ *     summary: Sync sample sales and flash sales via Grok and Shopify
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Sample sales sync completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: Request) {
   // Verify cron authorization
   const authHeader = request.headers.get('authorization');

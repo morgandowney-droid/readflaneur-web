@@ -2,6 +2,42 @@ import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/auth/callback:
+ *   get:
+ *     summary: OAuth callback handler
+ *     description: Handles OAuth redirect after provider authentication. Exchanges code for session, optionally completes newsletter subscription and neighborhood sync.
+ *     tags:
+ *       - Auth
+ *     parameters:
+ *       - in: query
+ *         name: code
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: OAuth authorization code from provider
+ *       - in: query
+ *         name: redirect
+ *         schema:
+ *           type: string
+ *           default: /
+ *         description: URL to redirect to after successful auth
+ *       - in: query
+ *         name: newsletter
+ *         schema:
+ *           type: string
+ *           enum: ['true']
+ *         description: If 'true', completes newsletter subscription for the authenticated user
+ *       - in: query
+ *         name: neighborhoods
+ *         schema:
+ *           type: string
+ *         description: Comma-separated neighborhood IDs to sync after auth
+ *     responses:
+ *       302:
+ *         description: Redirect to the specified redirect URL or /feed on success, /login on error
+ */
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');

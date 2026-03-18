@@ -16,6 +16,31 @@ import { sendEmail } from '@/lib/email';
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
+/**
+ * @swagger
+ * /api/cron/refresh-image-library:
+ *   get:
+ *     summary: Refresh Unsplash image pools every 4 hours
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Image refresh results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 refreshed:
+ *                   type: number
+ *                 skipped:
+ *                   type: number
+ *                 errors:
+ *                   type: number
+ */
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;

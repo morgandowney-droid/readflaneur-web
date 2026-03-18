@@ -24,6 +24,54 @@ const CATEGORIES = [
   'family-kids',
 ];
 
+/**
+ * @swagger
+ * /api/admin/seed-neighborhood:
+ *   post:
+ *     summary: Seed a neighborhood with Google Places data
+ *     tags: [Admin]
+ *     security:
+ *       - adminAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [neighborhoodId]
+ *             properties:
+ *               neighborhoodId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Seed results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 results:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       category:
+ *                         type: string
+ *                       added:
+ *                         type: integer
+ *                       updated:
+ *                         type: integer
+ *                 totalAdded:
+ *                   type: integer
+ *                 totalUpdated:
+ *                   type: integer
+ *       401:
+ *         description: Unauthorized
+ */
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();

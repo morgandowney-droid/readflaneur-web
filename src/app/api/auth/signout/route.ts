@@ -2,6 +2,32 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/auth/signout:
+ *   post:
+ *     summary: Sign out current user
+ *     description: Clears the server-side auth session and cookies. Works even if no session exists.
+ *     tags:
+ *       - Auth
+ *     responses:
+ *       200:
+ *         description: Sign out successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       500:
+ *         description: Sign out failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 export async function POST() {
   try {
     const cookieStore = await cookies();

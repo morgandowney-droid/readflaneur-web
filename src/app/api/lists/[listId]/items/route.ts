@@ -26,7 +26,85 @@ function getAdminClient() {
   );
 }
 
-// POST /api/lists/[listId]/items - Add a neighborhood to a list
+/**
+ * @swagger
+ * /api/lists/{listId}/items:
+ *   post:
+ *     summary: Add a neighborhood to a list
+ *     description: Adds a neighborhood to the specified list. Requires session auth and list ownership.
+ *     tags: [Lists]
+ *     parameters:
+ *       - in: path
+ *         name: listId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The list ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [neighborhoodId]
+ *             properties:
+ *               neighborhoodId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Item added
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 alreadyExists:
+ *                   type: boolean
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not the list owner
+ *   delete:
+ *     summary: Remove a neighborhood from a list
+ *     description: Removes a neighborhood from the specified list. Requires session auth and list ownership.
+ *     tags: [Lists]
+ *     parameters:
+ *       - in: path
+ *         name: listId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [neighborhoodId]
+ *             properties:
+ *               neighborhoodId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Item removed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not the list owner
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ listId: string }> }

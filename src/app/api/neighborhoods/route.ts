@@ -2,6 +2,66 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { Neighborhood, GlobalRegion } from '@/types';
 
+/**
+ * @swagger
+ * /api/neighborhoods:
+ *   get:
+ *     tags: [Neighborhoods]
+ *     summary: Get all active neighborhoods
+ *     description: Returns all active neighborhoods with hierarchical grouping by region, country, and city. Admin users see test-region neighborhoods; non-admins do not. Excludes removed community neighborhoods.
+ *     parameters:
+ *       - in: query
+ *         name: region
+ *         schema:
+ *           type: string
+ *           enum: [north_america, south_america, europe, middle_east, asia_pacific, vacation, enclave, community]
+ *         description: Filter by region
+ *       - in: query
+ *         name: country
+ *         schema:
+ *           type: string
+ *         description: Filter by country name
+ *       - in: query
+ *         name: city
+ *         schema:
+ *           type: string
+ *         description: Filter by city name
+ *       - in: query
+ *         name: activeOnly
+ *         schema:
+ *           type: boolean
+ *           default: true
+ *         description: Only return active neighborhoods
+ *     responses:
+ *       200:
+ *         description: Neighborhood data with groupings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 neighborhoods:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Neighborhood'
+ *                 total:
+ *                   type: integer
+ *                 filters:
+ *                   type: object
+ *                   properties:
+ *                     regions:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     countries:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     cities:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ */
 interface NeighborhoodsByCity {
   [city: string]: Neighborhood[];
 }

@@ -3,10 +3,49 @@ import { createClient } from '@/lib/supabase/server';
 import { findDiscoveryBrief } from '@/lib/discover-neighborhood';
 
 /**
- * GET /api/discover-neighborhood?subscribedIds=id1,id2&referenceId=id3&mode=nearby|random&excludeCity=Paris
- *
- * Returns a URL to a nearby unsubscribed neighborhood's latest brief.
- * Used by the "Check Out a New Neighborhood" house ad and daily brief discovery CTAs.
+ * @swagger
+ * /api/discover-neighborhood:
+ *   get:
+ *     summary: Find a nearby unsubscribed neighborhood's latest brief
+ *     tags: [Explore]
+ *     description: Returns a URL to a nearby unsubscribed neighborhood's latest brief. Used by the "Check Out a New Neighborhood" house ad and daily brief discovery CTAs.
+ *     parameters:
+ *       - in: query
+ *         name: subscribedIds
+ *         schema:
+ *           type: string
+ *         description: Comma-separated list of already-subscribed neighborhood IDs to exclude
+ *       - in: query
+ *         name: referenceId
+ *         schema:
+ *           type: string
+ *         description: Reference neighborhood ID for proximity sorting
+ *       - in: query
+ *         name: mode
+ *         schema:
+ *           type: string
+ *           enum: [nearby, random]
+ *         description: Discovery mode (default nearby)
+ *       - in: query
+ *         name: excludeCity
+ *         schema:
+ *           type: string
+ *         description: City to exclude (used in random mode for diversity)
+ *     responses:
+ *       200:
+ *         description: Discovery result with URL and neighborhood name
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 url:
+ *                   type: string
+ *                   description: URL to the discovered neighborhood's brief, or /discover as fallback
+ *                 neighborhoodName:
+ *                   type: string
+ *                   nullable: true
+ *                   description: Name of the discovered neighborhood, or null if fallback
  */
 export async function GET(request: NextRequest) {
   try {

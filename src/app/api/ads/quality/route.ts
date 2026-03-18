@@ -4,11 +4,42 @@ import { processAdQuality } from '@/lib/ad-quality-service';
 import { notifyCustomerProofReady } from '@/lib/email';
 
 /**
- * POST /api/ads/quality
- *
- * Triggers AI quality check on an ad (image analysis + copy polish).
- * Auth: CRON_SECRET in Authorization header.
- * After processing, sends proof email to customer if client_email exists.
+ * @swagger
+ * /api/ads/quality:
+ *   post:
+ *     summary: Trigger AI quality check on an ad
+ *     description: Runs image analysis and copy polish on an ad. Requires CRON_SECRET in Authorization header.
+ *     tags:
+ *       - Ads
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - adId
+ *             properties:
+ *               adId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Quality check completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 autoRejected:
+ *                   type: boolean
+ *       401:
+ *         description: Unauthorized - invalid or missing CRON_SECRET
+ *       400:
+ *         description: Missing adId
  */
 export async function POST(request: NextRequest) {
   try {

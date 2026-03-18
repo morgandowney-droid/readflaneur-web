@@ -134,6 +134,29 @@ function generatePreviewText(content: string): string {
   return lastSpace > 0 ? cleaned.slice(0, lastSpace) : slice;
 }
 
+/**
+ * @swagger
+ * /api/cron/generate-brief-articles:
+ *   get:
+ *     summary: Create articles from enriched neighborhood briefs
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Article creation results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 articles_created:
+ *                   type: number
+ *                 skipped:
+ *                   type: number
+ */
 export async function GET(request: Request) {
   // Verify cron authorization
   const authHeader = request.headers.get('authorization');

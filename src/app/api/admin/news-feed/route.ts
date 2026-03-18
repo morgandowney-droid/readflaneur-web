@@ -2,6 +2,62 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/admin/news-feed:
+ *   get:
+ *     summary: Get news feed statistics and articles
+ *     tags: [Admin]
+ *     security:
+ *       - adminAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: days
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Number of days to look back
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter by category
+ *       - in: query
+ *         name: neighborhood
+ *         schema:
+ *           type: string
+ *         description: Filter by neighborhood ID
+ *       - in: query
+ *         name: source
+ *         schema:
+ *           type: string
+ *           enum: [rss, grok, gemini]
+ *         description: Filter by content source
+ *     responses:
+ *       200:
+ *         description: News feed data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 stats:
+ *                   type: object
+ *                 articles:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 failedContent:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 neighborhoods:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: Unauthorized
+ */
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();

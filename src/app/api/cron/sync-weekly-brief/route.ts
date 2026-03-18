@@ -27,6 +27,31 @@ const MODEL_FLASH = AI_MODELS.GEMINI_FLASH;
 // Pro RPD limit is 1K. enrich-briefs uses up to 900. We get the remainder.
 const PRO_RPD_LIMIT = 1000;
 
+/**
+ * @swagger
+ * /api/cron/sync-weekly-brief:
+ *   get:
+ *     summary: Generate Sunday Edition content via Gemini Pro + Grok
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Sunday Edition generation results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 generated:
+ *                   type: number
+ *                 skipped:
+ *                   type: number
+ *                 errors:
+ *                   type: number
+ */
 export async function GET(request: Request) {
   const functionStart = Date.now();
 

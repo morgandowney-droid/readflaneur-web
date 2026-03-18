@@ -2,6 +2,33 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/articles/{id}/view:
+ *   post:
+ *     summary: Increment the view count for an article
+ *     tags: [Articles]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The article ID
+ *     responses:
+ *       200:
+ *         description: View count incremented
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       500:
+ *         description: Server error
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

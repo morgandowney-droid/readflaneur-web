@@ -6,15 +6,65 @@ const BOOKING_LEAD_HOURS = 48;
 const BOOKING_MAX_DAYS = 90;
 
 /**
- * GET /api/ads/availability
- *
- * Returns booked/blocked dates and pricing for the booking calendar.
- * No auth required (public).
- *
- * Query params:
- *   month      - YYYY-MM (required)
- *   neighborhood_id - neighborhood slug (required)
- *   type       - 'daily_brief' | 'sunday_edition' (required)
+ * @swagger
+ * /api/ads/availability:
+ *   get:
+ *     summary: Get ad availability and pricing for a neighborhood
+ *     description: Returns booked/blocked dates and pricing for the booking calendar. No auth required.
+ *     tags:
+ *       - Ads
+ *     parameters:
+ *       - in: query
+ *         name: month
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "2026-03"
+ *         description: Month in YYYY-MM format
+ *       - in: query
+ *         name: neighborhood_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Neighborhood slug
+ *       - in: query
+ *         name: type
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [daily_brief, sunday_edition]
+ *         description: Ad placement type
+ *     responses:
+ *       200:
+ *         description: Availability and pricing data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 bookedDates:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                 blockedDates:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                 minDate:
+ *                   type: string
+ *                 maxDate:
+ *                   type: string
+ *                 price:
+ *                   type: object
+ *                   properties:
+ *                     dailyBrief:
+ *                       type: number
+ *                     sundayEdition:
+ *                       type: number
+ *                     tier:
+ *                       type: string
+ *       400:
+ *         description: Missing required parameters
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

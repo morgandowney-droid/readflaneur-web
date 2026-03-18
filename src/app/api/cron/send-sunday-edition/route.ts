@@ -75,6 +75,31 @@ export const maxDuration = 300;
 const MAX_EMAILS_PER_RUN = 80;
 const DELAY_BETWEEN_SENDS_MS = 500;
 
+/**
+ * @swagger
+ * /api/cron/send-sunday-edition:
+ *   get:
+ *     summary: Send Sunday Edition emails with per-recipient dedup
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Sunday Edition send results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 sent:
+ *                   type: number
+ *                 skipped:
+ *                   type: number
+ *                 errors:
+ *                   type: number
+ */
 export async function GET(request: Request) {
   const functionStart = Date.now();
 

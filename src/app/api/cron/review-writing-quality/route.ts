@@ -174,6 +174,25 @@ function buildReportEmail(
   `;
 }
 
+/**
+ * @swagger
+ * /api/cron/review-writing-quality:
+ *   get:
+ *     summary: Daily editorial analysis via Gemini Pro and Claude Sonnet
+ *     tags: [Cron]
+ *     security:
+ *       - cronSecret: []
+ *     responses:
+ *       200:
+ *         description: Writing quality review completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ */
 export async function GET(request: Request) {
   const startTime = new Date();
   const cronSecret = process.env.CRON_SECRET;

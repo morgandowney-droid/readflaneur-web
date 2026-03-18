@@ -25,6 +25,64 @@ export interface DiscoveryBriefsResponse {
  * Fetches daily brief articles for non-subscribed neighborhoods, grouped by bento region.
  * Used by the desktop bento grid discovery layout.
  */
+
+/**
+ * @swagger
+ * /api/feed/discovery-briefs:
+ *   get:
+ *     summary: Fetch discovery brief cards grouped by region
+ *     description: Returns daily brief articles for non-subscribed neighborhoods, grouped by bento region. No authentication required. Cached for 5 minutes.
+ *     tags:
+ *       - Feed
+ *     parameters:
+ *       - in: query
+ *         name: subscribedIds
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Comma-separated neighborhood IDs to exclude (already subscribed)
+ *       - in: query
+ *         name: count
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 3
+ *           maximum: 12
+ *         description: Number of briefs per region
+ *     responses:
+ *       200:
+ *         description: Discovery briefs grouped by region
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 regions:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         slug:
+ *                           type: string
+ *                         headline:
+ *                           type: string
+ *                         previewText:
+ *                           type: string
+ *                         imageUrl:
+ *                           type: string
+ *                         neighborhoodName:
+ *                           type: string
+ *                         neighborhoodId:
+ *                           type: string
+ *                         city:
+ *                           type: string
+ *                         citySlug:
+ *                           type: string
+ *                         neighborhoodSlug:
+ *                           type: string
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

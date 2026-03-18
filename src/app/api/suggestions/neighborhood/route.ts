@@ -13,6 +13,45 @@ function getSupabaseAdmin() {
 const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
 const RATE_LIMIT_MAX = 5;
 
+/**
+ * @swagger
+ * /api/suggestions/neighborhood:
+ *   post:
+ *     summary: Submit a neighborhood suggestion
+ *     description: Submit a suggestion for a new neighborhood. Rate limited to 5 submissions per hour per IP. No authentication required.
+ *     tags:
+ *       - Neighborhoods
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - suggestion
+ *             properties:
+ *               suggestion:
+ *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 200
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Suggestion submitted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       400:
+ *         description: Invalid suggestion or email format
+ *       429:
+ *         description: Rate limit exceeded (5 per hour)
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

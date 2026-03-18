@@ -9,6 +9,51 @@
 import { NextResponse } from 'next/server';
 import { findSourcesForBrief } from '@/lib/brief-sources';
 
+/**
+ * @swagger
+ * /api/briefs/enrich-sources:
+ *   post:
+ *     summary: Enrich a brief with source links
+ *     description: Finds and attaches source URLs to brief content. No authentication required.
+ *     tags:
+ *       - Briefs
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [briefContent, neighborhoodName, neighborhoodSlug]
+ *             properties:
+ *               briefContent:
+ *                 type: string
+ *               neighborhoodName:
+ *                 type: string
+ *               neighborhoodSlug:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               maxStories:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Enriched brief with stories and sources
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 stories:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 sources:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       400:
+ *         description: Missing required fields
+ */
 export async function POST(request: Request) {
   try {
     const body = await request.json();
