@@ -67,8 +67,12 @@ export function DestinationCard({
       onMouseLeave={() => onHover(null)}
       onClick={() => onClick(d.id)}
     >
-      {/* Image */}
-      <div className="aspect-[4/3] relative bg-surface overflow-hidden rounded-sm">
+      {/* Image - links to neighborhood feed */}
+      <Link
+        href={`/${citySlug}/${neighborhoodSlug}`}
+        className="block aspect-[4/3] relative bg-surface overflow-hidden rounded-sm"
+        onClick={e => e.stopPropagation()}
+      >
         {d.imageUrl ? (
           <img
             src={d.imageUrl}
@@ -88,14 +92,18 @@ export function DestinationCard({
             Community
           </span>
         )}
-      </div>
+      </Link>
 
       {/* Text below image */}
       <div className="px-1 pt-2.5 pb-1">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-display text-[15px] text-fg tracking-[0.02em] font-normal leading-tight uppercase">
+          <Link
+            href={`/${citySlug}/${neighborhoodSlug}`}
+            className="font-display text-[15px] text-fg tracking-[0.02em] font-normal leading-tight uppercase hover:text-accent transition-colors"
+            onClick={e => e.stopPropagation()}
+          >
             {d.name}
-          </h3>
+          </Link>
           {/* Icon row: heart + news feed toggle */}
           <div className="flex items-center gap-2.5 shrink-0 mt-0.5">
             {/* Heart - add to list */}
@@ -168,18 +176,6 @@ export function DestinationCard({
         </div>
       )}
 
-      {/* Expanded detail when selected */}
-      {isSelected && !confirmRemove && (
-        <div className="px-1 pb-2 space-y-1">
-          <Link
-            href={`/${citySlug}/${neighborhoodSlug}`}
-            className="text-xs text-accent hover:underline tracking-[0.05em]"
-            onClick={e => e.stopPropagation()}
-          >
-            Read stories &rsaquo;
-          </Link>
-        </div>
-      )}
     </div>
   );
 }
