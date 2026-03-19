@@ -5,6 +5,10 @@
 
 ## 2026-03-19
 
+**Remove pre-launch password gate:**
+- Site is now publicly accessible. Removed `/gate` password page and middleware gate block that checked `flaneur-gate` cookie.
+- File: `src/middleware.ts`
+
 **Content syndication API for yous.news:**
 - `GET /api/syndicate/irish-briefs` returns enriched Daily Brief and Look Ahead content for all 32 Irish counties.
 - Secured by `CRON_SECRET`. Supports `?date=YYYY-MM-DD` and `?county=dublin` filters.
