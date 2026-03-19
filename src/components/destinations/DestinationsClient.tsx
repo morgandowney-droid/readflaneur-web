@@ -297,9 +297,19 @@ export function DestinationsClient({ destinations, countries }: Props) {
   }, [destinations]);
 
   const handleToggleFavorite = useCallback((neighborhoodId: string) => {
+    // Anonymous users: add to feed directly (list modal requires auth)
+    if (!isAuth) {
+      handleToggleFeed(neighborhoodId, true);
+      const dest = destinations.find(d => d.id === neighborhoodId);
+      if (dest) {
+        setToast(`${dest.name} added to your feed`);
+        setTimeout(() => setToast(null), 3000);
+      }
+      return;
+    }
     const dest = destinations.find(d => d.id === neighborhoodId);
     if (dest) setAddToListNeighborhood(dest);
-  }, [destinations]);
+  }, [destinations, isAuth, handleToggleFeed]);
 
   const handleAddToList = useCallback(async (listId: string): Promise<boolean> => {
     if (!addToListNeighborhood) return false;

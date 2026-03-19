@@ -38,7 +38,6 @@ export function DestinationCard({
 
   const handleFeedToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isAuth) return;
 
     if (isInFeed) {
       // Show confirmation before removing
@@ -103,10 +102,10 @@ export function DestinationCard({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (isAuth) onToggleFavorite(d.id);
+                onToggleFavorite(d.id);
               }}
               className="transition-colors text-fg/70 hover:text-fg"
-              title={isAuth ? (isFavorite ? 'Saved to list' : 'Add to a list') : 'Sign in to save destinations'}
+              title={isFavorite ? 'Saved to list' : 'Add to a list'}
             >
               {isFavorite ? (
                 <svg className="w-4.5 h-4.5" fill="currentColor" viewBox="0 0 24 24">
@@ -124,10 +123,7 @@ export function DestinationCard({
               className={`transition-colors ${
                 isInFeed ? 'text-fg' : 'text-fg/40 hover:text-fg/70'
               }`}
-              title={isAuth
-                ? (isInFeed ? 'Remove from daily news feed' : 'Add to daily news feed')
-                : 'Sign in to manage your news feed'
-              }
+              title={isInFeed ? 'Remove from daily news feed' : 'Add to daily news feed'}
             >
               <svg className="w-4.5 h-4.5" fill={isInFeed ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={isInFeed ? '0' : '1.5'} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6" />
@@ -182,11 +178,6 @@ export function DestinationCard({
           >
             Read stories &rsaquo;
           </Link>
-          {!isAuth && (
-            <p className="text-[10px] text-fg-subtle">
-              <Link href="/login" className="text-accent hover:underline" onClick={e => e.stopPropagation()}>Sign in</Link> to save destinations to your lists.
-            </p>
-          )}
         </div>
       )}
     </div>
