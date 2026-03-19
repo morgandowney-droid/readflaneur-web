@@ -5,6 +5,21 @@
 
 ## 2026-03-19
 
+**Heart and newspaper icons on neighborhood pages:**
+- New `NeighborhoodActions` component (`src/components/feed/NeighborhoodActions.tsx`) renders heart and newspaper icons below the neighborhood name on single-view pages (e.g., `/stockholm/vasastan`).
+- Heart adds neighborhood to feed via localStorage with toast confirmation. Newspaper toggles daily email subscription.
+- Works for both anonymous and authenticated users. Anonymous users interact via localStorage; engagement-triggered email capture handles signup later.
+- Files: `src/components/feed/NeighborhoodActions.tsx` (new), `src/components/feed/NeighborhoodHeader.tsx`
+
+**Destination card direct links and anonymous UX:**
+- Destination card image and neighborhood name now link directly to the neighborhood feed page. Removes the two-tap flow (click card then click "Read stories").
+- Anonymous users can interact with heart and newspaper icons without sign-in gate. Heart adds to feed with toast; newspaper toggles feed subscription. Removed "Sign in to save destinations" message.
+- Files: `src/components/destinations/DestinationCard.tsx`, `src/components/destinations/DestinationsClient.tsx`
+
+**MD toggle for test neighborhoods on destinations page:**
+- Small "MD" button at bottom-left of `/destinations` toggles visibility of test-region neighborhoods (Irish counties etc.). Off by default, persisted in `flaneur-show-test` localStorage. Does not affect syndication API which queries test neighborhoods directly.
+- Files: `src/app/destinations/page.tsx`, `src/components/destinations/DestinationsClient.tsx`
+
 **Remove pre-launch password gate:**
 - Site is now publicly accessible. Removed `/gate` password page and middleware gate block that checked `flaneur-gate` cookie.
 - File: `src/middleware.ts`
