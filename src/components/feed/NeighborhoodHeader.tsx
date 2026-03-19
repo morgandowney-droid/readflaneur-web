@@ -8,6 +8,7 @@ import { NeighborhoodLiveStatus } from './NeighborhoodLiveStatus';
 import { ContextSwitcher } from './ContextSwitcher';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 import { useTranslation } from '@/hooks/useTranslation';
+import { NeighborhoodActions } from './NeighborhoodActions';
 
 interface NeighborhoodHeaderProps {
   mode?: 'single' | 'all';
@@ -174,6 +175,13 @@ export function NeighborhoodHeader({
               <p className="font-serif italic text-base text-fg-subtle mb-3">
                 {t('feed.covering')} {joinWithAnd(componentNames)}
               </p>
+            )}
+
+            {/* Heart + newspaper actions */}
+            {neighborhoodId && (
+              <div className="mb-3">
+                <NeighborhoodActions neighborhoodId={neighborhoodId} neighborhoodName={neighborhoodName} />
+              </div>
             )}
 
             {/* Live local time + weather */}
