@@ -27,6 +27,7 @@ export interface Destination {
 
 interface Props {
   destinations: Destination[];
+  testDestinations?: Destination[];
   countries: string[];
 }
 
@@ -52,7 +53,7 @@ type ThemeFilter = 'coastal' | 'slopes' | null;
 
 const REGIONS = GEO_REGION_ORDER.filter(r => r.key !== 'other');
 
-export function DestinationsClient({ destinations, countries }: Props) {
+export function DestinationsClient({ destinations, testDestinations = [], countries }: Props) {
   const { theme } = useTheme();
   const { lists, defaultList, addToList, removeFromList, isInList, isInAnyList, createList } = useDestinationLists();
 
@@ -77,6 +78,22 @@ export function DestinationsClient({ destinations, countries }: Props) {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [addToListNeighborhood, setAddToListNeighborhood] = useState<Destination | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+
+  // Test neighborhoods toggle (off by default, persisted in localStorage)
+  const [showTestNeighborhoods, setShowTestNeighborhoods] = useState(false);
+  useEffect(() => {
+    try {
+      setShowTestNeighborhoods(localStorage.getItem('flaneur-show-test') === 'true');
+    } catch { /* ignore */ }
+  }, []);
+
+  // Merge test neighborhoods into destinations when toggle is on
+  const allDestinations = useMemo(() => {
+    if (!showTestNeighborhoods || testDestinations.length === 0) return destinations;
+    const existingIds = new Set(destinations.map(d => d.id));
+    const newTest = testDestinations.filter(d => !existingIds.has(d.id));
+    return [...destinations, ...newTest];
+  }, [destinations, testDestinations, showTestNeighborhoods]);
 
   const cardListRef = useRef<HTMLDivElement>(null);
   const coastalRef = useRef<HTMLButtonElement>(null);
@@ -136,8 +153,8 @@ export function DestinationsClient({ destinations, countries }: Props) {
 
   // Searchable list
   const searchable = useMemo(() =>
-    destinations.map(d => ({ ...d, combo_component_names: undefined })),
-    [destinations]
+    allDestinations.map(d => ({ ...d, combo_component_names: undefined })),
+    [allDestinations]
   );
 
   // Haversine distance
@@ -154,7 +171,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
 
   // Filter destinations
   const filtered = useMemo(() => {
-    let results = destinations;
+    let results = allDestinations;
 
     // Search
     if (search.length >= 2) {
@@ -209,7 +226,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
     // 'region' sort handled in grouped
 
     return results;
-  }, [destinations, searchable, search, activeRegions, activeCountries, neighborhoodType, themeFilter, mapBounds, showMap, sortMode, userLocation, haversine]);
+  }, [allDestinations, searchable, search, activeRegions, activeCountries, neighborhoodType, themeFilter, mapBounds, showMap, sortMode, userLocation, haversine]);
 
   // Group by country or region for display
   const grouped = useMemo(() => {
@@ -270,46 +287,46 @@ export function DestinationsClient({ destinations, countries }: Props) {
 
   // Countries available within current region selection
   const availableCountries = useMemo(() => {
-    let pool = destinations;
+    let pool = allDestinations;
     if (activeRegions.size > 0) {
       pool = pool.filter(d => activeRegions.has(getGeoRegion(d.region)));
     }
     return [...new Set(pool.map(d => d.country))].sort();
-  }, [destinations, activeRegions]);
+  }, [allDestinations, activeRegions]);
 
   // Region counts
   const regionCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const d of destinations) {
+    for (const d of allDestinations) {
       const r = getGeoRegion(d.region);
       counts[r] = (counts[r] || 0) + 1;
     }
     return counts;
-  }, [destinations]);
+  }, [allDestinations]);
 
   // Country counts
   const countryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const d of destinations) {
+    for (const d of allDestinations) {
       counts[d.country] = (counts[d.country] || 0) + 1;
     }
     return counts;
-  }, [destinations]);
+  }, [allDestinations]);
 
   const handleToggleFavorite = useCallback((neighborhoodId: string) => {
     // Anonymous users: add to feed directly (list modal requires auth)
     if (!isAuth) {
       handleToggleFeed(neighborhoodId, true);
-      const dest = destinations.find(d => d.id === neighborhoodId);
+      const dest = allDestinations.find(d => d.id === neighborhoodId);
       if (dest) {
         setToast(`${dest.name} added to your feed`);
         setTimeout(() => setToast(null), 3000);
       }
       return;
     }
-    const dest = destinations.find(d => d.id === neighborhoodId);
+    const dest = allDestinations.find(d => d.id === neighborhoodId);
     if (dest) setAddToListNeighborhood(dest);
-  }, [destinations, isAuth, handleToggleFeed]);
+  }, [allDestinations, isAuth, handleToggleFeed]);
 
   const handleAddToList = useCallback(async (listId: string): Promise<boolean> => {
     if (!addToListNeighborhood) return false;
@@ -397,7 +414,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
   };
 
   // Unique city count
-  const cityCount = useMemo(() => new Set(destinations.map(d => d.city)).size, [destinations]);
+  const cityCount = useMemo(() => new Set(allDestinations.map(d => d.city)).size, [allDestinations]);
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -827,7 +844,7 @@ export function DestinationsClient({ destinations, countries }: Props) {
           <div className="w-full md:w-[40%] lg:w-[45%] h-[50vh] md:h-full border-t md:border-t-0 md:border-l border-border relative flex-shrink-0">
             <DestinationsMap
               destinations={filtered}
-              allDestinations={destinations}
+              allDestinations={allDestinations}
               hoveredId={hoveredId}
               selectedId={selectedId}
               onHover={setHoveredId}
@@ -857,6 +874,25 @@ export function DestinationsClient({ destinations, countries }: Props) {
         <div className="fixed top-6 right-6 z-[10000] bg-fg text-canvas px-5 py-3 rounded-sm shadow-lg text-sm font-medium animate-fade-in">
           {toast}
         </div>
+      )}
+
+      {/* Test neighborhoods toggle */}
+      {testDestinations.length > 0 && (
+        <button
+          onClick={() => {
+            const next = !showTestNeighborhoods;
+            setShowTestNeighborhoods(next);
+            try { localStorage.setItem('flaneur-show-test', String(next)); } catch { /* ignore */ }
+          }}
+          className={`fixed bottom-4 left-4 z-40 w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-mono font-bold transition-all ${
+            showTestNeighborhoods
+              ? 'bg-accent text-canvas'
+              : 'bg-surface/60 text-fg-subtle hover:text-fg-muted border border-border'
+          }`}
+          title={showTestNeighborhoods ? 'Hide test neighborhoods' : 'Show test neighborhoods'}
+        >
+          MD
+        </button>
       )}
     </div>
   );

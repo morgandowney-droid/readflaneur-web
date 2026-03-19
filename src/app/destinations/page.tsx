@@ -31,8 +31,8 @@ export default async function DestinationsPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Fetch all active neighborhoods + their Unsplash photos in parallel
-  const [neighbRes, imageRes] = await Promise.all([
+  // Fetch all active neighborhoods + Irish counties + Unsplash photos in parallel
+  const [neighbRes, irishRes, imageRes] = await Promise.all([
     supabase
       .from('neighborhoods')
       .select('id, name, city, country, region, latitude, longitude, is_combo, is_community')
@@ -41,11 +41,18 @@ export default async function DestinationsPage() {
       .neq('region', 'test')
       .order('name'),
     supabase
+      .from('neighborhoods')
+      .select('id, name, city, country, region, latitude, longitude, is_combo, is_community')
+      .eq('region', 'test')
+      .eq('is_active', true)
+      .order('name'),
+    supabase
       .from('image_library_status')
       .select('neighborhood_id, unsplash_photos'),
   ]);
 
   const neighborhoods: NeighborhoodRow[] = neighbRes.data || [];
+  const testNeighborhoods: NeighborhoodRow[] = irishRes.data || [];
   const imageRows: ImageRow[] = imageRes.data || [];
 
   // Build a map of neighborhoodId -> first Unsplash photo URL
@@ -88,8 +95,23 @@ export default async function DestinationsPage() {
     photographer: imageMap[n.id]?.photographer || null,
   }));
 
+  // Build test neighborhood destinations (Irish counties etc.)
+  const testDestinations = testNeighborhoods.map(n => ({
+    id: n.id,
+    name: n.name,
+    city: n.city,
+    country: normalizeCountry(n.country),
+    region: n.region,
+    lat: n.latitude,
+    lng: n.longitude,
+    isCombo: n.is_combo,
+    isCommunity: n.is_community,
+    imageUrl: imageMap[n.id]?.url || null,
+    photographer: imageMap[n.id]?.photographer || null,
+  }));
+
   // Unique countries for filter
   const countries = [...new Set(neighborhoods.map(n => n.country))].sort();
 
-  return <DestinationsClient destinations={destinations} countries={countries} />;
+  return <DestinationsClient destinations={destinations} testDestinations={testDestinations} countries={countries} />;
 }
