@@ -25,9 +25,9 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
     ? `${appUrl}/invite?ref=${content.recipient.referralCode}`
     : undefined;
 
-  const primaryName = content.primarySection?.neighborhoodName || 'your neighborhoods';
-  const hasSatellites = content.satelliteSections.length > 0;
-  const previewText = `Your morning brief from ${primaryName}${hasSatellites ? '+' : ''}`;
+  // Use the primary neighborhood's lead story blurb as preview text (shown on lock screen)
+  const primaryStoryBlurb = content.primarySection?.stories?.[0]?.previewText || '';
+  const previewText = primaryStoryBlurb || `Your morning brief from ${content.primarySection?.neighborhoodName || 'your neighborhoods'}`;
 
   const primary = content.primarySection;
 

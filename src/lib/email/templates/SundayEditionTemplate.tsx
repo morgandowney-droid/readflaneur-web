@@ -43,7 +43,11 @@ export interface SundayEditionContent {
 }
 
 export function SundayEditionTemplate(content: SundayEditionContent) {
-  const preview = `The Sunday Edition: ${content.neighborhoodName} - Your week in review and the week ahead.`;
+  // Use the rearview narrative teaser as preview text (shown on lock screen)
+  const narrativeTeaser = content.rearviewNarrative
+    ?.split(/\n\n+/)
+    .filter(p => p.trim().length > 0)[0] || '';
+  const preview = narrativeTeaser || `The Sunday Edition: ${content.neighborhoodName} - Your week in review and the week ahead.`;
 
   // Split narrative into paragraphs and show first as teaser
   const paragraphs = content.rearviewNarrative
