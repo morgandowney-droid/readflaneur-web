@@ -3,6 +3,21 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-19
+
+**Content syndication API for yous.news:**
+- `GET /api/syndicate/irish-briefs` returns enriched Daily Brief and Look Ahead content for all 32 Irish counties.
+- Secured by `CRON_SECRET`. Supports `?date=YYYY-MM-DD` and `?county=dublin` filters.
+- Returns per-county: enriched prose, structured categories with sources, article body text, preview text, image URLs, Look Ahead events, subject/email teasers.
+- Designed for yous.news to replace its own county brief generation pipeline with higher-quality Flaneur content.
+- File: `src/app/api/syndicate/irish-briefs/route.ts`
+
+**Email preview text for lock screen notifications:**
+- Daily Brief preview text now shows the primary neighborhood's lead story blurb instead of generic "Your morning brief from X+".
+- Sunday Edition preview text now shows The Letter's opening paragraph instead of generic "The Sunday Edition: X - Your week in review...".
+- Falls back to original generic text when no blurb is available.
+- Files: `DailyBriefTemplate.tsx`, `SundayEditionTemplate.tsx`
+
 ## 2026-03-18
 
 **Swagger API documentation:**

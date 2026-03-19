@@ -404,6 +404,15 @@ Recent work: Swagger API documentation (public /api-docs page with Swagger UI se
 - **Shared list page:** `/lists/[shareToken]` - server component fetches list by share token with OG metadata. `SharedListClient` renders hero (name, creator, country count), copy link, 3-col neighborhood grid with 4:3 photos + hover scale, bottom "ADD DESTINATIONS" CTA. Returns 404 for invalid/non-public tokens.
 - **Translation keys:** 25 `wishlist.*` keys in all 9 languages (`noList`, `addDestinations`, `shareList`, `emptyDescription`, `savedDestinations`, `copyLink`, `linkCopied`, `viewAll`, `title`, `sharedList`, `neighborhoods`, `myFavourites`, `createNewList`, `deleteList`, `shareWithFriend`, `renameList`, `shareDescription`, `shareMyList`, `copyTheLink`, `linkCopiedCheck`, `sendByEmail`, `sendOnWhatsApp`, `noFavoritesYet`, `emptyListDescription`).
 
+### Content Syndication API
+- **Endpoint:** `GET /api/syndicate/irish-briefs?date=YYYY-MM-DD&county=dublin&secret=CRON_SECRET`
+- **Auth:** `CRON_SECRET` via `Authorization: Bearer` header or `?secret=` query param
+- **Purpose:** Provides enriched Daily Brief and Look Ahead content for all 32 Irish counties to yous.news
+- **Params:** `date` (optional, defaults to today in Europe/Dublin), `county` (optional single county slug)
+- **Response:** `{ date, count, coverage: { dailyBriefs, lookAheads }, counties: [{ county, countyName, dailyBrief: { briefId, headline, subjectTeaser, emailTeaser, enrichedContent, categories, article: { headline, bodyText, previewText, sources } }, lookAhead: { headline, bodyText, sources } }] }`
+- **Consumer:** yous.news fetches this daily to replace its own county brief generation for the 32 Irish counties
+- **Cache:** 5 min private (secret-gated)
+
 ### Swagger API Documentation
 - **Page:** `/api-docs` - public Swagger UI page (excluded from password gate via middleware)
 - **Spec endpoint:** `GET /api/docs` - returns OpenAPI 3.0 JSON spec
