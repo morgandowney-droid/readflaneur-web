@@ -164,20 +164,28 @@ export default function OnboardPage() {
 
               {/* Selected pills */}
               {selected.size > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {Array.from(selected).map(id => {
-                    const n = neighborhoods.find(nb => nb.id === id);
-                    return n ? (
-                      <button
-                        key={id}
-                        onClick={() => toggleNeighborhood(id)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent/20 text-accent text-xs tracking-wider rounded-full border border-accent/30"
-                      >
-                        {n.name}
-                        <span className="text-accent/60">&times;</span>
-                      </button>
-                    ) : null;
-                  })}
+                <div className="mb-4">
+                  <p className="text-[10px] tracking-[0.2em] uppercase text-fg-subtle mb-2">
+                    {detecting ? 'Finding neighborhoods near you...' : `${selected.size} selected`}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {Array.from(selected).map(id => {
+                      const n = neighborhoods.find(nb => nb.id === id);
+                      return n ? (
+                        <button
+                          key={id}
+                          onClick={() => toggleNeighborhood(id)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent/20 text-accent text-xs tracking-wider rounded-full border border-accent/30"
+                          title="Click to remove"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                          {n.name}
+                        </button>
+                      ) : null;
+                    })}
+                  </div>
                 </div>
               )}
 
@@ -206,12 +214,19 @@ export default function OnboardPage() {
                           <button
                             key={n.id}
                             onClick={() => toggleNeighborhood(n.id)}
-                            className={`w-full text-left px-3 py-2 rounded-sm text-sm transition-colors ${
+                            className={`w-full text-left px-3 py-2 rounded-sm text-sm transition-colors flex items-center gap-2 ${
                               selected.has(n.id)
                                 ? 'bg-accent/15 text-accent'
                                 : 'text-fg-muted hover:text-fg hover:bg-surface'
                             }`}
                           >
+                            {selected.has(n.id) ? (
+                              <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <span className="w-3.5 h-3.5 shrink-0 rounded-sm border border-border" />
+                            )}
                             {n.name}
                           </button>
                         ))}
