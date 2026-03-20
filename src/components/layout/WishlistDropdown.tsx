@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { syncNeighborhoodCookie } from '@/lib/neighborhood-cookie';
-import { createClient } from '@/lib/supabase/client';
 
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
 
@@ -33,18 +32,16 @@ export function WishlistDropdown({ className }: { className?: string }) {
         const ids = JSON.parse(stored);
         if (!Array.isArray(ids) || ids.length === 0) return;
 
-        const supabase = createClient();
-        const { data } = await supabase
-          .from('neighborhoods')
-          .select('id, name, city')
-          .in('id', ids);
-
-        if (data) {
-          // Sort by localStorage order
-          const sorted = ids
-            .map((id: string) => data.find(n => n.id === id))
-            .filter(Boolean) as SavedNeighborhood[];
-          setNeighborhoods(sorted);
+        // Use public API (no auth required) to fetch neighborhood names
+        const res = await fetch(`/api/lists/details?ids=${ids.join(',')}`);
+        if (res.ok) {
+          const { items } = await res.json();
+          if (items) {
+            const sorted = ids
+              .map((id: string) => items.find((n: SavedNeighborhood) => n.id === id))
+              .filter(Boolean) as SavedNeighborhood[];
+            setNeighborhoods(sorted);
+          }
         }
       } catch { /* ignore */ }
     })();

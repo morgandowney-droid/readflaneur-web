@@ -174,8 +174,9 @@ export function Header() {
           setLoading(false); // Clear loading in case initAuth timed out
           fetchAdminRole(session.user.id);
 
-          // On login (including OAuth), set flaneur-auth flag and sync neighborhoods.
-          if (event === 'SIGNED_IN') {
+          // On any session establishment (SIGNED_IN for password login, INITIAL_SESSION for OAuth),
+          // set flaneur-auth flag and sync neighborhoods.
+          if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
             try {
               localStorage.setItem('flaneur-auth', JSON.stringify({
                 id: session.user.id,
