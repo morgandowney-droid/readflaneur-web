@@ -116,6 +116,16 @@ export function Header() {
           // Upgrade to full User object (has metadata, confirmed_at, etc.)
           setUser(session.user);
           fetchAdminRole(session.user.id);
+          // If valid session but no flaneur-auth (OAuth return), set it now
+          if (!authFlagUser) {
+            try {
+              localStorage.setItem('flaneur-auth', JSON.stringify({
+                id: session.user.id,
+                email: session.user.email,
+              }));
+              localStorage.setItem('flaneur-onboarded', 'true');
+            } catch { /* ignore */ }
+          }
         }
         // If session is null (expired JWT), keep flaneur-auth user — don't clear.
         // Sign-out goes through /account which clears everything explicitly.
@@ -174,9 +184,11 @@ export function Header() {
           setLoading(false); // Clear loading in case initAuth timed out
           fetchAdminRole(session.user.id);
 
-          // On any session establishment (SIGNED_IN for password login, INITIAL_SESSION for OAuth),
-          // set flaneur-auth flag and sync neighborhoods.
-          if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          // On new login, set flaneur-auth flag and sync neighborhoods.
+          // SIGNED_IN fires for password login. For OAuth, session already exists
+          // so we check INITIAL_SESSION but ONLY if flaneur-auth is missing (first load after OAuth).
+          const isFreshOAuth = event === 'INITIAL_SESSION' && !localStorage.getItem('flaneur-auth');
+          if (event === 'SIGNED_IN' || isFreshOAuth) {
             try {
               localStorage.setItem('flaneur-auth', JSON.stringify({
                 id: session.user.id,

@@ -231,7 +231,12 @@ export default function AccountPage() {
     localStorage.removeItem('flaneur-newsletter-subscribed');
     localStorage.removeItem('flaneur-neighborhood-preferences');
     localStorage.removeItem('flaneur-profile');
-    document.cookie = 'flaneur-neighborhoods=;path=/;max-age=0;SameSite=Strict';
+    // Clear all cookies (flaneur + supabase auth)
+    document.cookie.split(';').forEach(c => {
+      const name = c.trim().split('=')[0];
+      document.cookie = name + '=;path=/;max-age=0;SameSite=Strict';
+      document.cookie = name + '=;path=/;max-age=0';
+    });
     window.location.href = '/';
   };
 
