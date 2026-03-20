@@ -39,6 +39,8 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
       <div style={previewHidden}>{previewText}</div>
       <Body style={main}>
         <Container style={container}>
+          {/* Email open tracking pixel */}
+          <img src={`${appUrl}/api/email/pixel?token=${content.recipient.unsubscribeToken}`} width="1" height="1" alt="" style={{ display: 'block', width: '1px', height: '1px', overflow: 'hidden' }} />
           <Header date={content.date} headerAd={content.headerAd} />
 
           {primary && (

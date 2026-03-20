@@ -32,4 +32,12 @@ export function syncNeighborhoodCookie(): void {
  * Inline script string for layout.tsx <script> tag.
  * Syncs cookie on every page load AND redirects returning users from / to /feed.
  */
-export const NEIGHBORHOOD_SYNC_SCRIPT = `(function(){try{var k="flaneur-neighborhood-preferences",c="flaneur-neighborhoods",s=localStorage.getItem(k);if(s){var ids=JSON.parse(s);if(Array.isArray(ids)&&ids.length>0){document.cookie=c+"="+ids.join(",")+";path=/;max-age=31536000;SameSite=Strict";if(location.pathname==="/")window.location.replace("/feed")}}else{document.cookie=c+"=;path=/;max-age=0;SameSite=Strict"}}catch(e){}})()`;
+/**
+ * Inline script for layout.tsx:
+ * 1. Syncs localStorage neighborhoods to cookie on every page load
+ * 2. Redirects returning users from / to /feed
+ * 3. Hard gate: redirects /feed and /{city}/{neighborhood} to /onboard if not onboarded
+ *
+ * Onboarded = has flaneur-auth (logged in) OR flaneur-onboarded (completed onboarding) OR has neighborhoods in localStorage
+ */
+export const NEIGHBORHOOD_SYNC_SCRIPT = `(function(){try{var k="flaneur-neighborhood-preferences",c="flaneur-neighborhoods",s=localStorage.getItem(k),a=localStorage.getItem("flaneur-auth"),o=localStorage.getItem("flaneur-onboarded"),p=location.pathname;if(s){var ids=JSON.parse(s);if(Array.isArray(ids)&&ids.length>0){document.cookie=c+"="+ids.join(",")+";path=/;max-age=31536000;SameSite=Strict";if(p==="/")window.location.replace("/feed")}}else{document.cookie=c+"=;path=/;max-age=0;SameSite=Strict"}if(!a&&!o&&!s){if(p==="/feed"||p.match(/^\\/[a-z][a-z0-9-]+\\/[a-z]/))window.location.replace("/onboard")}}catch(e){}})()`;

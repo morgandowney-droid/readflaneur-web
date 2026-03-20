@@ -77,6 +77,12 @@ export function SundayEditionTemplate(content: SundayEditionContent) {
       <div style={previewHidden}>{preview}</div>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
+          {/* Email open tracking pixel */}
+          {(() => {
+            const tokenMatch = content.unsubscribeUrl?.match(/token=([^&]+)/);
+            const pixelToken = tokenMatch?.[1] || '';
+            return pixelToken ? <img src={`https://readflaneur.com/api/email/pixel?token=${pixelToken}`} width="1" height="1" alt="" style={{ display: 'block', width: '1px', height: '1px', overflow: 'hidden' }} /> : null;
+          })()}
           {/* Masthead — Letterhead style */}
           <Section style={mastheadSection}>
             <Text style={mastheadBrand}><Link href="https://readflaneur.com" style={mastheadBrandLink}>FLANEUR</Link></Text>
