@@ -3,13 +3,11 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/hooks/useTheme';
-import { useDestinationLists } from '@/hooks/useDestinationLists';
 import { resolveSearchQuery } from '@/lib/search-aliases';
 import { getGeoRegion, GEO_REGION_ORDER } from '@/lib/region-utils';
 import { syncNeighborhoodCookie } from '@/lib/neighborhood-cookie';
 import { DestinationsMap } from './DestinationsMap';
 import { DestinationCard } from './DestinationCard';
-import { AddToListModal } from './AddToListModal';
 
 export interface Destination {
   id: string;
@@ -55,7 +53,6 @@ const REGIONS = GEO_REGION_ORDER.filter(r => r.key !== 'other');
 
 export function DestinationsClient({ destinations, testDestinations = [], countries }: Props) {
   const { theme } = useTheme();
-  const { lists, defaultList, addToList, removeFromList, isInList, isInAnyList, createList } = useDestinationLists();
 
   // Filter state
   const [search, setSearch] = useState('');
@@ -76,7 +73,6 @@ export function DestinationsClient({ destinations, testDestinations = [], countr
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [addToListNeighborhood, setAddToListNeighborhood] = useState<Destination | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   // Test neighborhoods toggle (off by default, persisted in localStorage)
@@ -314,31 +310,14 @@ export function DestinationsClient({ destinations, testDestinations = [], countr
   }, [allDestinations]);
 
   const handleToggleFavorite = useCallback((neighborhoodId: string) => {
-    // Anonymous users: add to feed directly (list modal requires auth)
-    if (!isAuth) {
-      handleToggleFeed(neighborhoodId, true);
-      const dest = allDestinations.find(d => d.id === neighborhoodId);
-      if (dest) {
-        setToast(`${dest.name} added to your feed`);
-        setTimeout(() => setToast(null), 3000);
-      }
-      return;
-    }
+    const isCurrentlyInFeed = feedIds.has(neighborhoodId);
+    handleToggleFeed(neighborhoodId, !isCurrentlyInFeed);
     const dest = allDestinations.find(d => d.id === neighborhoodId);
-    if (dest) setAddToListNeighborhood(dest);
-  }, [allDestinations, isAuth, handleToggleFeed]);
-
-  const handleAddToList = useCallback(async (listId: string): Promise<boolean> => {
-    if (!addToListNeighborhood) return false;
-    const success = await addToList(listId, addToListNeighborhood.id);
-    if (success) {
-      const list = lists.find(l => l.id === listId);
-      setToast(`${addToListNeighborhood.name} added to ${list?.name || 'list'}`);
-      setAddToListNeighborhood(null);
+    if (dest) {
+      setToast(isCurrentlyInFeed ? `${dest.name} removed from your feed` : `${dest.name} added to your feed`);
       setTimeout(() => setToast(null), 3000);
     }
-    return success;
-  }, [addToListNeighborhood, addToList, lists]);
+  }, [allDestinations, feedIds, handleToggleFeed]);
 
   const handleCardClick = useCallback((id: string) => {
     setSelectedId(prev => prev === id ? null : id);
@@ -819,7 +798,7 @@ export function DestinationsClient({ destinations, testDestinations = [], countr
                       <DestinationCard
                         key={dest.id}
                         destination={dest}
-                        isFavorite={isInAnyList(dest.id)}
+                        isFavorite={isInFeed(dest.id)}
                         isInFeed={isInFeed(dest.id)}
                         isAuth={isAuth}
                         isHovered={hoveredId === dest.id}
@@ -856,18 +835,6 @@ export function DestinationsClient({ destinations, testDestinations = [], countr
           </div>
         )}
       </div>
-
-      {/* Add to List Modal */}
-      {addToListNeighborhood && (
-        <AddToListModal
-          neighborhoodId={addToListNeighborhood.id}
-          neighborhoodName={addToListNeighborhood.name}
-          lists={lists}
-          onAdd={handleAddToList}
-          onClose={() => setAddToListNeighborhood(null)}
-          onCreateList={createList}
-        />
-      )}
 
       {/* Toast confirmation */}
       {toast && (
