@@ -8,6 +8,7 @@ import { getGeoRegion, GEO_REGION_ORDER } from '@/lib/region-utils';
 import { syncNeighborhoodCookie } from '@/lib/neighborhood-cookie';
 import { DestinationsMap } from './DestinationsMap';
 import { DestinationCard } from './DestinationCard';
+import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 
 export interface Destination {
   id: string;
@@ -53,6 +54,7 @@ const REGIONS = GEO_REGION_ORDER.filter(r => r.key !== 'other');
 
 export function DestinationsClient({ destinations, testDestinations = [], countries }: Props) {
   const { theme } = useTheme();
+  const { openModal } = useNeighborhoodModal();
 
   // Filter state
   const [search, setSearch] = useState('');
@@ -549,6 +551,14 @@ export function DestinationsClient({ destinations, testDestinations = [], countr
                 </div>
               )}
             </div>
+
+            {/* TABLE VIEW - opens neighborhood selector modal */}
+            <button
+              onClick={() => openModal()}
+              className="text-[13px] tracking-[0.08em] uppercase py-2 text-fg-muted transition-colors whitespace-nowrap hover:text-fg ml-6"
+            >
+              Table View
+            </button>
           </div>
 
           {/* Count + Sort row (below buttons, like LC) */}
