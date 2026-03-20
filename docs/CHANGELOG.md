@@ -5,6 +5,12 @@
 
 ## 2026-03-19
 
+**Fix OAuth login auth state:**
+- Header `onAuthStateChange` `SIGNED_IN` handler now sets `flaneur-auth`, `flaneur-onboarded`, and `flaneur-newsletter-subscribed` in localStorage for all logins including OAuth. Previously only email/password login set these flags, causing Header to show "Sign In" after Google OAuth login even though the session was valid.
+- Fixed neighborhood sync query in Header referencing non-existent `sort_order` column on `user_neighborhood_preferences` - query silently returned an error object instead of data, so DB neighborhoods never synced to localStorage after OAuth login.
+- Both `/auth/callback` and `/api/auth/callback` now default redirect to `/feed` instead of `/` to avoid unnecessary homepage-to-feed redirect hop.
+- Files: `src/components/layout/Header.tsx`, `src/app/auth/callback/route.ts`, `src/app/api/auth/callback/route.ts`
+
 **Onboarding flow with hard gate for email capture:**
 - New `/onboard` page with two steps: pick neighborhoods (with geo auto-detect, search, grouped by city) then enter email (just email, no password).
 - Hard gate on `/feed` and `/{city}/{neighborhood}` pages via inline layout script - redirects to `/onboard` if no auth, no onboarded flag, and no neighborhoods in localStorage. Bypassed by Google OAuth, password login, or completing onboarding.
