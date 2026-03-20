@@ -5,6 +5,14 @@
 
 ## 2026-03-19
 
+**Onboarding flow with hard gate for email capture:**
+- New `/onboard` page with two steps: pick neighborhoods (with geo auto-detect, search, grouped by city) then enter email (just email, no password).
+- Hard gate on `/feed` and `/{city}/{neighborhood}` pages via inline layout script - redirects to `/onboard` if no auth, no onboarded flag, and no neighborhoods in localStorage. Bypassed by Google OAuth, password login, or completing onboarding.
+- "Read Stories" button on homepage now goes to `/onboard` instead of auto-detecting location and skipping to `/feed`.
+- "Already have an account? Sign in" link at top-right of onboarding page.
+- Email open tracking pixel (`GET /api/email/pixel?token=`) embedded in Daily Brief and Sunday Edition emails. Marks `newsletter_subscribers.email_verified = true` on first open. 1x1 transparent PNG, fire-and-forget.
+- Files: `src/app/onboard/page.tsx` (new), `src/app/api/email/pixel/route.ts` (new), `src/components/home/HomepageEnterButton.tsx`, `src/lib/neighborhood-cookie.ts`, `DailyBriefTemplate.tsx`, `SundayEditionTemplate.tsx`
+
 **Heart and newspaper icons on neighborhood pages:**
 - New `NeighborhoodActions` component (`src/components/feed/NeighborhoodActions.tsx`) renders heart and newspaper icons below the neighborhood name on single-view pages (e.g., `/stockholm/vasastan`).
 - Heart adds neighborhood to feed via localStorage with toast confirmation. Newspaper toggles daily email subscription.
