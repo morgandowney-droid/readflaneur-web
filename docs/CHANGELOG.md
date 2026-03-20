@@ -5,6 +5,11 @@
 
 ## 2026-03-19
 
+**Sign-out and mobile header cleanup:**
+- Sign-out now clears all localStorage keys (`flaneur-auth`, `flaneur-onboarded`, `flaneur-onboard-email`, `flaneur-newsletter-subscribed`, `flaneur-neighborhood-preferences`, `flaneur-profile`) and the `flaneur-neighborhoods` cookie. Previously only cleared `flaneur-auth`, leaving stale heart badge count and neighborhoods after logout.
+- Removed duplicate red heart badge from mobile header - the gold WishlistDropdown heart already shows the saved count.
+- Files: `src/app/account/page.tsx`, `src/components/layout/Header.tsx`
+
 **Unify heart and feed into single save concept:**
 - Removed separate lists system from destinations UI. Heart icon now toggles feed subscription directly (same action for anonymous and authenticated users).
 - Removed newspaper icon from destination cards - heart is the only action icon. "Saved" label replaces "In your news feed".
