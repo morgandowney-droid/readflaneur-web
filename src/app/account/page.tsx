@@ -224,8 +224,14 @@ export default function AccountPage() {
     } catch {
       // Continue to redirect regardless
     }
-    // Clear simple auth flag
+    // Clear all client-side state
     localStorage.removeItem('flaneur-auth');
+    localStorage.removeItem('flaneur-onboarded');
+    localStorage.removeItem('flaneur-onboard-email');
+    localStorage.removeItem('flaneur-newsletter-subscribed');
+    localStorage.removeItem('flaneur-neighborhood-preferences');
+    localStorage.removeItem('flaneur-profile');
+    document.cookie = 'flaneur-neighborhoods=;path=/;max-age=0;SameSite=Strict';
     window.location.href = '/';
   };
 
