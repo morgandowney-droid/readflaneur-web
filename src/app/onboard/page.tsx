@@ -282,7 +282,7 @@ export default function OnboardPage() {
                   Get your morning brief
                 </h2>
                 <p className="text-sm text-fg-muted">
-                  Enter your email to receive a daily brief at 7 AM with the latest from your neighborhoods. Free, always.
+                  A daily brief at 7 AM with the latest from your neighborhoods. Free, always. Simple to cancel.
                 </p>
               </div>
 
