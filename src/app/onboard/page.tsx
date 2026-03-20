@@ -141,8 +141,11 @@ export default function OnboardPage() {
   return (
     <div className="min-h-screen bg-canvas flex flex-col" data-theme="dark">
       {/* Minimal header */}
-      <header className="text-center pt-8 pb-4">
+      <header className="text-center pt-8 pb-4 relative">
         <h1 className="font-display text-2xl tracking-[0.3em] text-fg">FLANEUR</h1>
+        <a href="/login" className="absolute right-4 top-8 text-xs text-fg-subtle hover:text-fg transition-colors">
+          Already have an account? Sign in
+        </a>
       </header>
 
       <div className="flex-1 flex flex-col items-center px-4 pb-12">
