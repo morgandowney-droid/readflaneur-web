@@ -174,14 +174,23 @@ export function Header() {
           setLoading(false); // Clear loading in case initAuth timed out
           fetchAdminRole(session.user.id);
 
-          // On login, sync DB neighborhood preferences to localStorage + cookie.
-          // DB is authoritative - overwrites whatever localStorage has.
+          // On login (including OAuth), set flaneur-auth flag and sync neighborhoods.
           if (event === 'SIGNED_IN') {
+            try {
+              localStorage.setItem('flaneur-auth', JSON.stringify({
+                id: session.user.id,
+                email: session.user.email,
+              }));
+              localStorage.setItem('flaneur-onboarded', 'true');
+              localStorage.setItem('flaneur-newsletter-subscribed', 'true');
+            } catch { /* ignore */ }
+
+            // DB is authoritative - overwrites whatever localStorage has.
             try {
               const { data: dbPrefs } = await supabase
                 .from('user_neighborhood_preferences')
-                .select('neighborhood_id, sort_order')
-                .order('sort_order', { ascending: true });
+                .select('neighborhood_id')
+                .eq('user_id', session.user.id);
 
               if (dbPrefs && dbPrefs.length > 0) {
                 const dbIds = dbPrefs.map(p => p.neighborhood_id);

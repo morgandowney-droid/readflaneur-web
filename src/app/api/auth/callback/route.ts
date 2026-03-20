@@ -41,7 +41,7 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
-  const redirect = requestUrl.searchParams.get('redirect') || '/';
+  const redirect = requestUrl.searchParams.get('redirect') || '/feed';
   const isNewsletter = requestUrl.searchParams.get('newsletter') === 'true';
   const neighborhoodsParam = requestUrl.searchParams.get('neighborhoods');
 
