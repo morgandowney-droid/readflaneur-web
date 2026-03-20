@@ -23,6 +23,7 @@ export default function OnboardPage() {
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [detecting, setDetecting] = useState(true);
+  const [suggested, setSuggested] = useState<{ id: string; name: string; city: string }[]>([]);
   const emailRef = useRef<HTMLInputElement>(null);
 
   // Skip if already onboarded
@@ -61,7 +62,9 @@ export default function OnboardPage() {
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.neighborhoods?.length) {
-            setSelected(new Set(data.neighborhoods.map((n: { id: string }) => n.id)));
+            setSuggested(data.neighborhoods.map((n: { id: string; name: string; city: string }) => ({
+              id: n.id, name: n.name, city: n.city,
+            })));
           }
         }
       } catch { /* timeout or error */ }
@@ -166,11 +169,11 @@ export default function OnboardPage() {
               {selected.size > 0 && (
                 <div className="mb-4">
                   <p className="text-[10px] tracking-[0.2em] uppercase text-fg-subtle mb-2">
-                    {detecting ? 'Finding neighborhoods near you...' : `${selected.size} selected`}
+                    {selected.size} selected
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {Array.from(selected).map(id => {
-                      const n = neighborhoods.find(nb => nb.id === id);
+                      const n = neighborhoods.find(nb => nb.id === id) || suggested.find(s => s.id === id);
                       return n ? (
                         <button
                           key={id}
@@ -189,6 +192,27 @@ export default function OnboardPage() {
                 </div>
               )}
 
+              {/* Suggested near you */}
+              {suggested.length > 0 && !search && (
+                <div className="mb-4">
+                  <p className="text-[10px] tracking-[0.2em] uppercase text-fg-subtle mb-2">Suggested near you</p>
+                  <div className="flex flex-wrap gap-2">
+                    {suggested.filter(s => !selected.has(s.id)).map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => toggleNeighborhood(s.id)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-fg text-xs tracking-wider rounded-full border border-border hover:border-accent hover:text-accent transition-colors"
+                      >
+                        + {s.name}
+                      </button>
+                    ))}
+                    {suggested.every(s => selected.has(s.id)) && (
+                      <p className="text-xs text-fg-subtle italic">All nearby neighborhoods added</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Search */}
               <input
                 type="text"
@@ -202,7 +226,7 @@ export default function OnboardPage() {
               {/* Neighborhood list */}
               <div className="max-h-[50vh] overflow-y-auto space-y-4 mb-6">
                 {detecting && neighborhoods.length === 0 ? (
-                  <p className="text-center text-fg-subtle text-sm py-8">Loading neighborhoods...</p>
+                  <p className="text-center text-fg-subtle text-sm py-8">Finding neighborhoods near you...</p>
                 ) : sortedCities.length === 0 ? (
                   <p className="text-center text-fg-subtle text-sm py-8">No neighborhoods match your search.</p>
                 ) : (
