@@ -5,6 +5,18 @@
 
 ## 2026-03-19
 
+**Unify heart and feed into single save concept:**
+- Removed separate lists system from destinations UI. Heart icon now toggles feed subscription directly (same action for anonymous and authenticated users).
+- Removed newspaper icon from destination cards - heart is the only action icon. "Saved" label replaces "In your news feed".
+- WishlistDropdown simplified from 638-line multi-list manager to simple saved-neighborhoods list reading from localStorage with remove buttons and "Browse destinations" link. -551 lines removed.
+- Removed AddToListModal and useDestinationLists hook from DestinationsClient.
+- One concept: save a neighborhood = add to feed + get daily brief emails.
+- Files: `DestinationCard.tsx`, `DestinationsClient.tsx`, `WishlistDropdown.tsx`
+
+**Red heart badge with saved neighborhood count on mobile header:**
+- Filled red heart with count badge next to hamburger menu on mobile. Only shows when user has saved neighborhoods. Tapping goes to `/feed`.
+- File: `src/components/layout/Header.tsx`
+
 **Fix OAuth login auth state:**
 - Header `onAuthStateChange` `SIGNED_IN` handler now sets `flaneur-auth`, `flaneur-onboarded`, and `flaneur-newsletter-subscribed` in localStorage for all logins including OAuth. Previously only email/password login set these flags, causing Header to show "Sign In" after Google OAuth login even though the session was valid.
 - Fixed neighborhood sync query in Header referencing non-existent `sort_order` column on `user_neighborhood_preferences` - query silently returned an error object instead of data, so DB neighborhoods never synced to localStorage after OAuth login.
