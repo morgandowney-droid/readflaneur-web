@@ -136,6 +136,8 @@ export async function GET(request: Request) {
     }
   }
 
-  // Redirect to the original destination or home
-  return NextResponse.redirect(new URL(redirect, requestUrl.origin));
+  // Redirect to feed with oauth marker so client can set flaneur-auth
+  const finalUrl = new URL(redirect === '/' ? '/feed' : redirect, requestUrl.origin);
+  finalUrl.searchParams.set('auth', 'oauth');
+  return NextResponse.redirect(finalUrl);
 }
