@@ -1,9 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 function GoogleIcon() {
@@ -17,35 +15,18 @@ function GoogleIcon() {
   );
 }
 
-function AppleIcon() {
-  return (
-    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-    </svg>
-  );
-}
-
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/';
+  const redirect = searchParams.get('redirect') || '/feed';
 
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isOAuthLoading, setIsOAuthLoading] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [isOAuthLoading, setIsOAuthLoading] = useState(false);
+  const [sent, setSent] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
-  const [lastAuthMethod, setLastAuthMethod] = useState<string | null>(null);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const turnstileRef = useRef<TurnstileInstance>(null);
 
-  // Redirect already-authenticated users — only via getSession (real cookie check).
-  // Do NOT check flaneur-auth here: if cookies expired, flaneur-auth creates a
-  // redirect loop (login → / → /feed → sees SIGN IN → /login → flaneur-auth → /).
-  // If getSession returns null (expired), clear stale flaneur-auth and show form.
+  // Redirect already-authenticated users
   useEffect(() => {
     async function checkSession() {
       try {
@@ -55,150 +36,64 @@ function LoginForm() {
           new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000)),
         ]);
         if (session?.user) {
-          // Real valid session — redirect
-          window.location.href = redirect === '/' ? '/feed' : redirect;
+          window.location.href = redirect;
           return;
         }
-        // Session null = expired cookies. Clear stale flaneur-auth so Header
-        // doesn't show "Account" pointing to a broken session.
         localStorage.removeItem('flaneur-auth');
-      } catch {
-        // Timeout or error — show login form, don't clear flaneur-auth
-        // (could be a transient navigator.locks issue)
-      }
-      // Read last auth method and theme for returning user hint + Turnstile
-      try {
-        const method = localStorage.getItem('flaneur-auth-method');
-        if (method) setLastAuthMethod(method);
-        const t = localStorage.getItem('flaneur-theme');
-        if (t === 'light') setTheme('light');
-      } catch { /* ignore */ }
+      } catch { /* show form */ }
       setCheckingSession(false);
     }
     checkSession();
   }, [redirect]);
 
-  const handleOAuthLogin = async (provider: 'google' | 'apple') => {
+  const handleGoogleLogin = async () => {
     setError(null);
-    setIsOAuthLoading(provider);
-
+    setIsOAuthLoading(true);
     try {
-      // Store auth method before redirect so we can highlight it on return
-      try { localStorage.setItem('flaneur-auth-method', provider); } catch { /* ignore */ }
-
+      localStorage.setItem('flaneur-auth-method', 'google');
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
-        provider,
+        provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/api/auth/callback?redirect=${encodeURIComponent(redirect)}`,
         },
       });
-
       if (error) {
         setError(error.message);
-        setIsOAuthLoading(null);
+        setIsOAuthLoading(false);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-      setIsOAuthLoading(null);
+      setIsOAuthLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.includes('@')) return;
     setError(null);
-
-    // Turnstile token is sent to server if available, but not required.
-    // Server validates it when present; skips if widget didn't render.
-
     setIsLoading(true);
 
     try {
-      const target = redirect === '/' ? '/feed' : redirect;
-
-      // Server-only sign-in: zero navigator.locks calls.
-      // POST to /api/auth/signin which validates credentials via GoTrue REST API
-      // (service role key) and sets auth cookies on the response.
-      // Also sends client neighborhoods so server can bootstrap DB if empty.
-      let clientNeighborhoods: string[] = [];
-      try {
-        const stored = localStorage.getItem('flaneur-neighborhood-preferences');
-        if (stored) clientNeighborhoods = JSON.parse(stored);
-      } catch { /* ignore */ }
-
-      const res = await fetch('/api/auth/signin', {
+      // Send magic link via our API (uses admin.generateLink + Resend for deliverability)
+      const res = await fetch('/api/auth/magic-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, captchaToken, clientNeighborhoods }),
-        credentials: 'same-origin',
+        body: JSON.stringify({ email, redirect }),
       });
       const result = await res.json();
 
-      if (!res.ok || !result.access_token) {
-        setError(result.error || 'Sign in failed');
+      if (!res.ok) {
+        setError(result.error || 'Failed to send login link');
         setIsLoading(false);
-        turnstileRef.current?.reset();
-        setCaptchaToken(null);
         return;
       }
 
-      // Write flaneur-auth flag + GoTrue localStorage key for Header.
-      // No navigator.locks — just plain localStorage writes.
-      try {
-        localStorage.setItem('flaneur-auth-method', 'email');
-        if (result.user) {
-          localStorage.setItem('flaneur-auth', JSON.stringify({
-            id: result.user.id,
-            email: result.user.email,
-          }));
-        }
-        const ref = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split('.')[0];
-        const storageKey = `sb-${ref}-auth-token`;
-        localStorage.setItem(storageKey, JSON.stringify({
-          access_token: result.access_token,
-          refresh_token: result.refresh_token,
-          token_type: result.token_type || 'bearer',
-          expires_in: result.expires_in,
-          expires_at: result.expires_at,
-          user: result.user,
-        }));
-      } catch {
-        // Non-critical — cookies are already set by server response
-      }
-
-      // Write neighborhood prefs + subscription status from server response.
-      // Server fetches these with service role key (no navigator.locks).
-      if (result.neighborhood_ids?.length > 0) {
-        localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(result.neighborhood_ids));
-        document.cookie = `flaneur-neighborhoods=${result.neighborhood_ids.join(',')};path=/;max-age=31536000;SameSite=Strict`;
-      }
-      if (result.is_subscribed) {
-        localStorage.setItem('flaneur-newsletter-subscribed', 'true');
-      }
-      // Cache profile data for instant account page rendering
-      if (result.profile) {
-        localStorage.setItem('flaneur-profile', JSON.stringify(result.profile));
-        // Restore theme and language preferences from DB
-        if (result.profile.theme === 'light' || result.profile.theme === 'dark') {
-          localStorage.setItem('flaneur-theme', result.profile.theme);
-          document.documentElement.setAttribute('data-theme', result.profile.theme);
-        }
-        if (result.profile.language && result.profile.language !== 'en') {
-          localStorage.setItem('flaneur-language', result.profile.language);
-          document.documentElement.lang = result.profile.language;
-        }
-      }
-
-      setSuccess(true);
-
-      // Full page navigation — cookies are set, flaneur-auth is set,
-      // neighborhood prefs synced, Header shows Account instantly.
-      window.location.href = target;
+      localStorage.setItem('flaneur-auth-method', 'email');
+      setSent(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       setIsLoading(false);
-      turnstileRef.current?.reset();
-      setCaptchaToken(null);
     }
   };
 
@@ -210,27 +105,39 @@ function LoginForm() {
     );
   }
 
+  if (sent) {
+    return (
+      <div className="w-full max-w-sm text-center">
+        <h1 className="text-2xl font-light text-fg mb-4">Check your email</h1>
+        <p className="text-sm text-fg-muted mb-2">
+          We sent a sign-in link to <span className="text-fg font-medium">{email}</span>
+        </p>
+        <p className="text-xs text-fg-subtle mb-8">Click the link in your email to sign in. Check spam if you don't see it.</p>
+        <button
+          onClick={() => { setSent(false); setIsLoading(false); }}
+          className="text-xs text-fg-subtle hover:text-fg transition-colors"
+        >
+          Use a different email
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-sm">
       <h1 className="text-2xl font-light text-center text-fg mb-10">Sign In</h1>
 
+      {/* Google OAuth */}
       <button
-        onClick={() => handleOAuthLogin('google')}
-        disabled={isOAuthLoading === 'google'}
-        className={`w-full flex items-center justify-center gap-3 px-4 py-3 border rounded-lg hover:bg-hover transition-colors disabled:opacity-50 ${
-          lastAuthMethod === 'google'
-            ? 'ring-2 ring-blue-500 border-blue-500/50 bg-blue-500/5'
-            : 'border-border-strong'
-        }`}
+        onClick={handleGoogleLogin}
+        disabled={isOAuthLoading}
+        className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-border-strong rounded-lg hover:bg-hover transition-colors disabled:opacity-50"
       >
         <GoogleIcon />
         <span className="text-sm text-fg">
-          {isOAuthLoading === 'google' ? 'Redirecting...' : 'Continue with Google'}
+          {isOAuthLoading ? 'Redirecting...' : 'Continue with Google'}
         </span>
       </button>
-      {lastAuthMethod === 'google' && (
-        <p className="text-xs text-fg-subtle text-center mt-2">You previously used &ldquo;Continue with Google&rdquo;</p>
-      )}
 
       <div className="flex items-center gap-4 my-6">
         <div className="flex-1 h-px bg-border" />
@@ -238,89 +145,36 @@ function LoginForm() {
         <div className="flex-1 h-px bg-border" />
       </div>
 
-      <form onSubmit={handleSubmit} className={`space-y-5 ${lastAuthMethod === 'google' ? 'opacity-60' : ''}`}>
+      {/* Magic link email */}
+      <form onSubmit={handleEmailSubmit} className="space-y-4">
         {error && (
           <div className="p-3 text-sm text-red-400 bg-red-900/20 border border-red-800/30 rounded-lg">
             {error}
           </div>
         )}
 
-        {success && (
-          <div className="text-center py-3">
-            <p className="text-sm text-fg-muted tracking-wide">Welcome back. Redirecting...</p>
-          </div>
-        )}
-
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-xs tracking-widest uppercase text-fg-muted mb-2"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full px-4 py-3 border border-border-strong focus:border-accent focus:outline-none bg-surface text-fg rounded-lg"
-            placeholder="you@example.com"
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-xs tracking-widest uppercase text-fg-muted mb-2"
-          >
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full px-4 py-3 border border-border-strong focus:border-accent focus:outline-none bg-surface text-fg rounded-lg"
-            placeholder="Your password"
-          />
-        </div>
-
-        {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() && (
-          <div className="flex justify-center">
-            <Turnstile
-              ref={turnstileRef}
-              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY.trim()}
-              onSuccess={setCaptchaToken}
-              onExpire={() => setCaptchaToken(null)}
-              options={{ theme, size: 'flexible' }}
-            />
-          </div>
-        )}
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="w-full px-4 py-3 border border-border-strong focus:border-accent focus:outline-none bg-surface text-fg rounded-lg"
+          placeholder="Enter your email"
+          autoFocus
+        />
 
         <button
           type="submit"
-          disabled={isLoading || success}
+          disabled={isLoading || !email.includes('@')}
           className="w-full bg-fg text-canvas py-3 text-sm tracking-widest uppercase hover:opacity-80 transition-colors disabled:opacity-50 rounded-lg"
         >
-          {isLoading ? 'Signing in...' : success ? 'Redirecting...' : 'Sign In'}
+          {isLoading ? 'Sending...' : 'Continue with email'}
         </button>
       </form>
 
-      <div className="text-center mt-6 space-y-2">
-        <p className="text-sm">
-          <Link href="/forgot" className="text-accent hover:underline">
-            Forgot your password?
-          </Link>
-        </p>
-        <p className="text-sm text-fg-subtle">
-          Don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-accent hover:underline">
-            Sign up
-          </Link>
-        </p>
-      </div>
+      <p className="text-xs text-fg-subtle text-center mt-6">
+        No password needed. We'll send you a sign-in link.
+      </p>
     </div>
   );
 }
