@@ -7,6 +7,14 @@
 
 ## 2026-03-21
 
+**Story rewrite syndication endpoint for yous.news:**
+- `POST /api/syndicate/rewrite-stories` accepts story data (headline, source URLs, blurb, category) and returns Flaneur-quality rewrites via Gemini Flash with Google Search grounding.
+- Returns 3-sentence Morning Brew-style blurbs + 150-200 word article bodies using `insiderPersona('Ireland', 'News Editor')`.
+- Processes up to 20 stories per request in parallel batches of 5. Exponential backoff on 429/RESOURCE_EXHAUSTED.
+- `maxOutputTokens: 2000` (was 800, caused truncation). `responseMimeType: 'application/json'` removed (incompatible with Google Search grounding tools). `repairJson()` regex fallback extracts blurb/bodyText from truncated free-text output.
+- Secured by `CRON_SECRET`. Cost ~$0.003/story.
+- File: `src/app/api/syndicate/rewrite-stories/route.ts`
+
 **Confirm dialog before removing a saved neighborhood:**
 - All three removal surfaces now show "Remove {name}?" confirmation with Keep/Remove buttons before removing.
 - Neighborhood page heart: full-screen modal. Destinations page heart: full-screen modal. Wishlist dropdown X: inline confirmation within the row.
