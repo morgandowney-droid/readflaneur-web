@@ -7,6 +7,15 @@
 
 ## 2026-03-21
 
+**Passwordless login with magic link:**
+- Login page rewritten to show Google OAuth + email magic link only. No password field, no signup link, no forgot password link. One unified flow.
+- "Continue with email" sends a branded sign-in link via `POST /api/auth/magic-link` (uses `admin.generateLink({ type: 'magiclink' })` + Resend). Always returns success to prevent email enumeration.
+- After sending, shows "Check your email" screen with the email address and "Use a different email" link.
+- Magic link routes through `/auth/callback?next=/feed` for PKCE session exchange.
+- "No password needed. We'll send you a sign-in link." below the form.
+- Legacy `/api/auth/signin` (password login) still exists for backward compatibility.
+- Files: `src/app/login/page.tsx` (rewritten), `src/app/api/auth/magic-link/route.ts` (new)
+
 **Story rewrite syndication endpoint for yous.news:**
 - `POST /api/syndicate/rewrite-stories` accepts story data (headline, source URLs, blurb, category) and returns Flaneur-quality rewrites via Gemini Flash with Google Search grounding.
 - Returns 3-sentence Morning Brew-style blurbs + 150-200 word article bodies using `insiderPersona('Ireland', 'News Editor')`.
