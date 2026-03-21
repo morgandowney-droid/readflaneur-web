@@ -77,6 +77,10 @@ export function DestinationsClient({ destinations, testDestinations = [], countr
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<{ id: string; name: string } | null>(null);
+  const [showSuggest, setShowSuggest] = useState(false);
+  const [suggestText, setSuggestText] = useState('');
+  const [suggestEmail, setSuggestEmail] = useState('');
+  const [suggestStatus, setSuggestStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
 
   // Test neighborhoods toggle (off by default, persisted in localStorage)
   const [showTestNeighborhoods, setShowTestNeighborhoods] = useState(false);
@@ -607,6 +611,13 @@ export function DestinationsClient({ destinations, testDestinations = [], countr
               )}
             </div>
             {/* Map toggle - minimal, right-aligned */}
+            <span className="text-border">|</span>
+            <button
+              onClick={() => setShowSuggest(!showSuggest)}
+              className="hover:text-fg transition-colors"
+            >
+              Suggest
+            </button>
             <div className="flex-1" />
             <button
               onClick={() => setShowMap(!showMap)}
@@ -622,6 +633,52 @@ export function DestinationsClient({ destinations, testDestinations = [], countr
               </svg>
             </button>
           </div>
+
+          {/* Suggest a destination */}
+          {showSuggest && (
+            <div className="pb-3">
+              {suggestStatus === 'success' ? (
+                <p className="text-xs text-accent">Thank you for your suggestion.</p>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Neighborhood, city, country..."
+                    value={suggestText}
+                    onChange={e => setSuggestText(e.target.value)}
+                    className="flex-1 px-3 py-2 bg-surface border border-border rounded text-xs text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent/50"
+                    autoFocus
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email (optional)"
+                    value={suggestEmail}
+                    onChange={e => setSuggestEmail(e.target.value)}
+                    className="w-40 px-3 py-2 bg-surface border border-border rounded text-xs text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent/50"
+                  />
+                  <button
+                    onClick={async () => {
+                      if (!suggestText.trim() || suggestText.trim().length < 3) return;
+                      setSuggestStatus('submitting');
+                      try {
+                        await fetch('/api/suggestions/neighborhood', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ suggestion: suggestText.trim(), email: suggestEmail.trim() || undefined }),
+                        });
+                      } catch { /* silent */ }
+                      setSuggestStatus('success');
+                      setTimeout(() => { setShowSuggest(false); setSuggestText(''); setSuggestEmail(''); setSuggestStatus('idle'); }, 2000);
+                    }}
+                    disabled={suggestText.trim().length < 3 || suggestStatus === 'submitting'}
+                    className="px-4 py-2 text-xs tracking-[0.1em] uppercase bg-fg text-canvas rounded hover:bg-fg/90 transition-colors disabled:opacity-30"
+                  >
+                    {suggestStatus === 'submitting' ? '...' : 'Send'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Active filter tags */}
           {(themeFilter || activeRegions.size > 0 || activeCountries.size > 0 || neighborhoodType !== 'all') && (
