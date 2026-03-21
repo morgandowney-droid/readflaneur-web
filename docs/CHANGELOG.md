@@ -5,6 +5,46 @@
 
 ## 2026-03-19
 
+## 2026-03-21
+
+**Confirm dialog before removing a saved neighborhood:**
+- All three removal surfaces now show "Remove {name}?" confirmation with Keep/Remove buttons before removing.
+- Neighborhood page heart: full-screen modal. Destinations page heart: full-screen modal. Wishlist dropdown X: inline confirmation within the row.
+- Files: `NeighborhoodActions.tsx`, `DestinationsClient.tsx`, `WishlistDropdown.tsx`
+
+**Suggest link on destinations page:**
+- "Suggest" link in count/sort row (next to "Sort by: recommended") opens inline form with neighborhood text input, optional email, and Send button. Posts to `/api/suggestions/neighborhood`. Auto-closes after 2 seconds.
+- File: `DestinationsClient.tsx`
+
+**Move Neighborhoods to destinations page as Table View:**
+- Removed "Neighborhoods" link from header nav. Added "Table View" button on destinations page filter bar (after Collections) that opens the neighborhood selector modal.
+- Files: `Header.tsx`, `DestinationsClient.tsx`
+
+**Bigger red hearts and remove newspaper icon:**
+- Hearts on destination cards and neighborhood pages are now `w-6`/`w-7` (was `w-4`), bright red (`text-red-500`) when saved, thicker outline (`strokeWidth="2"`) when unsaved, hover turns red.
+- Removed newspaper icon from `NeighborhoodActions` on individual neighborhood pages since heart = save to feed.
+- Replaced bad Brooklyn Heights personal photo (Tomas Lundahl) with Timo Wagner Unsplash image, blacklisted old photo ID.
+- Files: `DestinationCard.tsx`, `NeighborhoodActions.tsx`
+
+**Fix bidirectional neighborhood sync re-uploading after sign-out:**
+- Root cause: `useNeighborhoodPreferences.syncFromDb()` pushed localStorage to DB when DB was empty for a logged-in user, creating impossible-to-clear cycle across devices.
+- Removed localStorage-to-DB push when DB is empty (was in `syncFromDb`).
+- `INITIAL_SESSION` no longer sets `flaneur-auth` (only `SIGNED_IN` does now).
+- OAuth callback adds `?auth=oauth` to redirect URL; layout inline script detects it and sets `flaneur-auth`.
+- `initAuth` no longer auto-sets `flaneur-auth` from surviving HttpOnly cookies.
+- Sign-out now clears ALL cookies including Supabase auth HttpOnly chunks.
+- Files: `useNeighborhoodPreferences.ts`, `Header.tsx`, `/api/auth/callback/route.ts`, `neighborhood-cookie.ts`, `account/page.tsx`
+
+**Onboarding UX improvements:**
+- Auto-detected neighborhoods shown as "Suggested near you" `+ buttons` to add (not pre-selected pills that confused users by removing on click).
+- Continue button is sticky at bottom of viewport (always visible above neighborhood list).
+- Step 2 has "Continue with Google" OAuth button above email input with OR divider.
+- "Already have an account? Sign in" link at top-right.
+- Updated copy: "A daily brief at 7 AM...Free, always. Simple to cancel."
+- Files: `onboard/page.tsx`
+
+## 2026-03-20
+
 **Sign-out and mobile header cleanup:**
 - Sign-out now clears all localStorage keys (`flaneur-auth`, `flaneur-onboarded`, `flaneur-onboard-email`, `flaneur-newsletter-subscribed`, `flaneur-neighborhood-preferences`, `flaneur-profile`) and the `flaneur-neighborhoods` cookie. Previously only cleared `flaneur-auth`, leaving stale heart badge count and neighborhoods after logout.
 - Removed duplicate red heart badge from mobile header - the gold WishlistDropdown heart already shows the saved count.
