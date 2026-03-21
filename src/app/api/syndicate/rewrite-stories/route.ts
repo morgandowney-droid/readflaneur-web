@@ -187,7 +187,6 @@ Return ONLY a JSON object (no markdown, no code fences):
         config: {
           temperature: 0.4,
           maxOutputTokens: 2000,
-          responseMimeType: 'application/json',
           tools: [{ googleSearch: {} }],
         },
       });
