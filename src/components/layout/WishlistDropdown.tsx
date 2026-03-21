@@ -80,7 +80,9 @@ export function WishlistDropdown({ className }: { className?: string }) {
     setOpen(!open);
   };
 
-  const handleRemove = (id: string) => {
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
+
+  const doRemove = (id: string) => {
     try {
       const stored = localStorage.getItem(PREFS_KEY);
       let ids: string[] = stored ? JSON.parse(stored) : [];
@@ -89,8 +91,8 @@ export function WishlistDropdown({ className }: { className?: string }) {
       syncNeighborhoodCookie();
       setNeighborhoods(prev => prev.filter(n => n.id !== id));
       setCount(ids.length);
+      setConfirmRemoveId(null);
 
-      // Fire-and-forget DB sync
       fetch('/api/neighborhoods/save-preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -145,27 +147,46 @@ export function WishlistDropdown({ className }: { className?: string }) {
               </div>
             ) : (
               neighborhoods.map(n => (
-                <div
-                  key={n.id}
-                  className="flex items-center justify-between px-4 py-2.5 hover:bg-hover transition-colors group"
-                >
-                  <Link
-                    href={`/${getCitySlugFromId(n.id)}/${getNeighborhoodSlugFromId(n.id)}`}
-                    onClick={() => setOpen(false)}
-                    className="flex-1 min-w-0"
-                  >
-                    <p className="text-sm text-fg truncate">{n.name}</p>
-                    <p className="text-[10px] text-fg-subtle">{n.city}</p>
-                  </Link>
-                  <button
-                    onClick={() => handleRemove(n.id)}
-                    className="ml-2 text-fg-subtle hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 shrink-0"
-                    title="Remove"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                <div key={n.id} className="relative">
+                  {confirmRemoveId === n.id ? (
+                    <div className="px-4 py-3 bg-elevated">
+                      <p className="text-xs text-fg mb-2">Remove {n.name}?</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setConfirmRemoveId(null)}
+                          className="flex-1 py-1.5 text-[10px] tracking-[0.1em] uppercase border border-border text-fg-muted rounded hover:text-fg transition-colors"
+                        >
+                          Keep
+                        </button>
+                        <button
+                          onClick={() => doRemove(n.id)}
+                          className="flex-1 py-1.5 text-[10px] tracking-[0.1em] uppercase bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between px-4 py-2.5 hover:bg-hover transition-colors group">
+                      <Link
+                        href={`/${getCitySlugFromId(n.id)}/${getNeighborhoodSlugFromId(n.id)}`}
+                        onClick={() => setOpen(false)}
+                        className="flex-1 min-w-0"
+                      >
+                        <p className="text-sm text-fg truncate">{n.name}</p>
+                        <p className="text-[10px] text-fg-subtle">{n.city}</p>
+                      </Link>
+                      <button
+                        onClick={() => setConfirmRemoveId(n.id)}
+                        className="ml-2 text-fg-subtle hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 shrink-0"
+                        title="Remove"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))
             )}

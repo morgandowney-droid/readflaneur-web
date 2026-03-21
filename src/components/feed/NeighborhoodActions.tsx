@@ -18,6 +18,7 @@ interface Props {
 export function NeighborhoodActions({ neighborhoodId, neighborhoodName }: Props) {
   const [isInFeed, setIsInFeed] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   useEffect(() => {
     try {
@@ -54,7 +55,16 @@ export function NeighborhoodActions({ neighborhoodId, neighborhoodName }: Props)
       toggleFeed(true);
       setToast(`${neighborhoodName} added to your feed`);
       setTimeout(() => setToast(null), 3000);
+    } else {
+      setConfirmRemove(true);
     }
+  };
+
+  const handleConfirmRemove = () => {
+    toggleFeed(false);
+    setConfirmRemove(false);
+    setToast(`${neighborhoodName} removed`);
+    setTimeout(() => setToast(null), 3000);
   };
 
   return (
@@ -74,6 +84,30 @@ export function NeighborhoodActions({ neighborhoodId, neighborhoodName }: Props)
           </svg>
         )}
       </button>
+
+      {/* Confirm remove */}
+      {confirmRemove && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-surface border border-border rounded-lg p-6 max-w-sm mx-4 text-center">
+            <p className="text-fg text-sm font-medium mb-2">Remove {neighborhoodName}?</p>
+            <p className="text-fg-muted text-xs mb-5">You will stop receiving daily briefs for this neighborhood.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmRemove(false)}
+                className="flex-1 py-2.5 text-xs tracking-[0.1em] uppercase border border-border text-fg-muted rounded-lg hover:text-fg transition-colors"
+              >
+                Keep
+              </button>
+              <button
+                onClick={handleConfirmRemove}
+                className="flex-1 py-2.5 text-xs tracking-[0.1em] uppercase bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast */}
       {toast && (

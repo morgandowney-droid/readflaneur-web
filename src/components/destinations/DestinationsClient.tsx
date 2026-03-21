@@ -76,6 +76,7 @@ export function DestinationsClient({ destinations, testDestinations = [], countr
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<{ id: string; name: string } | null>(null);
 
   // Test neighborhoods toggle (off by default, persisted in localStorage)
   const [showTestNeighborhoods, setShowTestNeighborhoods] = useState(false);
@@ -313,13 +314,26 @@ export function DestinationsClient({ destinations, testDestinations = [], countr
 
   const handleToggleFavorite = useCallback((neighborhoodId: string) => {
     const isCurrentlyInFeed = feedIds.has(neighborhoodId);
-    handleToggleFeed(neighborhoodId, !isCurrentlyInFeed);
+    if (isCurrentlyInFeed) {
+      const dest = allDestinations.find(d => d.id === neighborhoodId);
+      setConfirmRemove(dest ? { id: dest.id, name: dest.name } : null);
+      return;
+    }
+    handleToggleFeed(neighborhoodId, true);
     const dest = allDestinations.find(d => d.id === neighborhoodId);
     if (dest) {
-      setToast(isCurrentlyInFeed ? `${dest.name} removed from your feed` : `${dest.name} added to your feed`);
+      setToast(`${dest.name} added to your feed`);
       setTimeout(() => setToast(null), 3000);
     }
   }, [allDestinations, feedIds, handleToggleFeed]);
+
+  const handleConfirmRemove = useCallback(() => {
+    if (!confirmRemove) return;
+    handleToggleFeed(confirmRemove.id, false);
+    setToast(`${confirmRemove.name} removed`);
+    setTimeout(() => setToast(null), 3000);
+    setConfirmRemove(null);
+  }, [confirmRemove, handleToggleFeed]);
 
   const handleCardClick = useCallback((id: string) => {
     setSelectedId(prev => prev === id ? null : id);
@@ -845,6 +859,30 @@ export function DestinationsClient({ destinations, testDestinations = [], countr
           </div>
         )}
       </div>
+
+      {/* Confirm remove modal */}
+      {confirmRemove && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-surface border border-border rounded-lg p-6 max-w-sm mx-4 text-center">
+            <p className="text-fg text-sm font-medium mb-2">Remove {confirmRemove.name}?</p>
+            <p className="text-fg-muted text-xs mb-5">You will stop receiving daily briefs for this neighborhood.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmRemove(null)}
+                className="flex-1 py-2.5 text-xs tracking-[0.1em] uppercase border border-border text-fg-muted rounded-lg hover:text-fg transition-colors"
+              >
+                Keep
+              </button>
+              <button
+                onClick={handleConfirmRemove}
+                className="flex-1 py-2.5 text-xs tracking-[0.1em] uppercase bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast confirmation */}
       {toast && (
