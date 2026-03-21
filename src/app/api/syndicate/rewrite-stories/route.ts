@@ -186,7 +186,8 @@ Return ONLY a JSON object (no markdown, no code fences):
         contents: prompt,
         config: {
           temperature: 0.4,
-          maxOutputTokens: 800,
+          maxOutputTokens: 2000,
+          responseMimeType: 'application/json',
           tools: [{ googleSearch: {} }],
         },
       });
@@ -196,7 +197,13 @@ Return ONLY a JSON object (no markdown, no code fences):
 
       // Parse JSON from response (strip markdown fences if present)
       const jsonStr = text.replace(/^```json\s*/, '').replace(/```\s*$/, '').trim();
-      const parsed = JSON.parse(jsonStr);
+      let parsed;
+      try {
+        parsed = JSON.parse(jsonStr);
+      } catch {
+        // Attempt JSON repair for truncated output
+        parsed = repairJson(jsonStr);
+      }
 
       if (parsed.blurb && parsed.bodyText) {
         return {
@@ -214,6 +221,20 @@ Return ONLY a JSON object (no markdown, no code fences):
     }
   }
 
+  return null;
+}
+
+function repairJson(text: string): { blurb?: string; bodyText?: string } | null {
+  // Try to extract blurb and bodyText from truncated JSON
+  const blurbMatch = text.match(/"blurb"\s*:\s*"((?:[^"\\]|\\.)*)(?:"|$)/);
+  const bodyMatch = text.match(/"bodyText"\s*:\s*"((?:[^"\\]|\\.)*)(?:"|$)/);
+
+  if (blurbMatch?.[1] || bodyMatch?.[1]) {
+    return {
+      blurb: blurbMatch?.[1]?.replace(/\\"/g, '"').replace(/\\n/g, '\n') || '',
+      bodyText: bodyMatch?.[1]?.replace(/\\"/g, '"').replace(/\\n/g, '\n') || '',
+    };
+  }
   return null;
 }
 
