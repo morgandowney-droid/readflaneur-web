@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { GoogleGenAI } from '@google/genai';
+import { AI_MODELS } from '@/config/ai-models';
+import { insiderPersona } from '@/lib/ai-persona';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -52,15 +55,18 @@ export async function GET(request: NextRequest) {
   // Optional: single county filter
   const countyFilter = searchParams.get('county');
 
+  // If requesting just the national brief, we still need all county data to synthesize it
+  const isNationalOnly = countyFilter === 'ireland';
+
   try {
-    // 1. Fetch Irish county neighborhoods
+    // 1. Fetch Irish county neighborhoods (always fetch all for national brief)
     let neighborhoodQuery = supabaseAdmin
       .from('neighborhoods')
       .select('id, name, city, country, latitude, longitude, timezone')
       .like('id', 'ie-county-%')
       .eq('is_active', true);
 
-    if (countyFilter) {
+    if (countyFilter && !isNationalOnly) {
       neighborhoodQuery = neighborhoodQuery.eq('id', `ie-county-${countyFilter}`);
     }
 
@@ -191,14 +197,46 @@ export async function GET(request: NextRequest) {
     const withBrief = counties.filter(c => c.dailyBrief !== null).length;
     const withLookAhead = counties.filter(c => c.lookAhead !== null).length;
 
+    // 7. Generate national "ireland" brief from county data
+    // Include when: no filter (all counties + national), or explicitly requesting ireland
+    const includeNational = !countyFilter || isNationalOnly;
+    let nationalEntry = null;
+
+    if (includeNational && withBrief > 0) {
+      nationalEntry = await generateNationalBrief(counties, targetDate);
+    }
+
+    // If requesting only the national brief, return just that
+    if (isNationalOnly) {
+      const nationalEntries = nationalEntry ? [nationalEntry] : [];
+      return NextResponse.json({
+        date: targetDate,
+        count: nationalEntries.length,
+        coverage: {
+          dailyBriefs: nationalEntry?.dailyBrief ? 1 : 0,
+          lookAheads: 0,
+        },
+        counties: nationalEntries,
+      }, {
+        headers: {
+          'Cache-Control': 'private, max-age=300',
+        },
+      });
+    }
+
+    // Build final response - national entry first if present
+    const allEntries = nationalEntry
+      ? [nationalEntry, ...counties]
+      : counties;
+
     return NextResponse.json({
       date: targetDate,
-      count: counties.length,
+      count: allEntries.length,
       coverage: {
-        dailyBriefs: withBrief,
-        lookAheads: withLookAhead,
+        dailyBriefs: withBrief + (nationalEntry?.dailyBrief ? 1 : 0),
+        lookAheads: withLookAhead + (nationalEntry?.lookAhead ? 1 : 0),
       },
-      counties,
+      counties: allEntries,
     }, {
       headers: {
         'Cache-Control': 'private, max-age=300', // 5 min cache, private (secret-gated)
@@ -212,4 +250,184 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// National brief generation — synthesizes top stories from all 32 counties
+// ---------------------------------------------------------------------------
+
+interface CountyEntry {
+  county: string;
+  countyName: string;
+  dailyBrief: {
+    headline: string;
+    subjectTeaser: string | null;
+    emailTeaser: string | null;
+    enrichedContent: string | null;
+    categories: unknown;
+    article: {
+      headline: string;
+      bodyText: string;
+      previewText: string;
+      sources: { source_name: string; source_url: string | null }[];
+    } | null;
+  } | null;
+  lookAhead: {
+    headline: string;
+    bodyText: string;
+    previewText: string;
+    sources: { source_name: string; source_url: string | null }[];
+  } | null;
+}
+
+const RETRY_DELAYS = [2000, 5000];
+
+async function generateNationalBrief(
+  counties: CountyEntry[],
+  targetDate: string
+) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+
+  // Collect top stories from counties that have briefs
+  const countyStories: string[] = [];
+  const allSources: { source_name: string; source_url: string | null }[] = [];
+
+  for (const c of counties) {
+    if (!c.dailyBrief?.article?.bodyText) continue;
+    // Take first 300 chars of each county's brief for context
+    const snippet = c.dailyBrief.article.bodyText.slice(0, 300);
+    countyStories.push(`[${c.countyName}] ${c.dailyBrief.article.headline}: ${snippet}`);
+
+    // Collect sources
+    if (c.dailyBrief.article.sources) {
+      for (const s of c.dailyBrief.article.sources) {
+        if (!allSources.some(x => x.source_name === s.source_name)) {
+          allSources.push(s);
+        }
+      }
+    }
+  }
+
+  if (countyStories.length < 3) return null;
+
+  const persona = insiderPersona('Ireland', 'National Editor');
+
+  const prompt = `${persona}
+
+You are writing the All Ireland national daily brief for ${targetDate}. This is a summary of the most important stories happening across all 32 Irish counties today.
+
+COUNTY BRIEFS (${countyStories.length} counties reporting):
+${countyStories.join('\n\n')}
+
+TASK: Write a national brief that:
+1. Leads with the single biggest story across all of Ireland today
+2. Covers 5-7 of the most significant stories from across the counties
+3. Groups related stories (e.g., if multiple counties report on the same national issue)
+4. Mentions which counties/cities are affected where relevant
+5. Ends with a lighter or human interest story if available
+
+RULES:
+- 300-400 words in 4-6 paragraphs
+- Active present tense, no em dashes
+- Write as a national overview, not a county-by-county list
+- Include specific names, numbers, dates, locations
+- Use Google Search to verify and add the latest facts to the stories
+- Do NOT include a greeting or sign-off
+
+Also generate:
+- A 1-4 word "information gap" subject teaser (lowercase, punchy, e.g. "fuel duty bombshell")
+- A 2-3 sentence email teaser packed with specific facts
+
+Return ONLY valid JSON (no markdown fences):
+{
+  "headline": "Short headline for the national brief",
+  "subjectTeaser": "fuel duty bombshell",
+  "emailTeaser": "Two-three sentence information-dense teaser.",
+  "bodyText": "Full 300-400 word national brief...",
+  "previewText": "First sentence or two for card display."
+}`;
+
+  const genAI = new GoogleGenAI({ apiKey });
+
+  for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
+    try {
+      const response = await genAI.models.generateContent({
+        model: AI_MODELS.GEMINI_FLASH,
+        contents: prompt,
+        config: {
+          temperature: 0.4,
+          maxOutputTokens: 2000,
+          tools: [{ googleSearch: {} }],
+        },
+      });
+
+      const text = response.text?.trim();
+      if (!text) continue;
+
+      const jsonStr = text.replace(/^```json\s*/, '').replace(/```\s*$/, '').trim();
+      let parsed;
+      try {
+        parsed = JSON.parse(jsonStr);
+      } catch {
+        // Try to extract fields from malformed JSON
+        const headlineMatch = jsonStr.match(/"headline"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        const bodyMatch = jsonStr.match(/"bodyText"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        if (headlineMatch?.[1] && bodyMatch?.[1]) {
+          parsed = {
+            headline: headlineMatch[1].replace(/\\"/g, '"'),
+            bodyText: bodyMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n'),
+          };
+        }
+      }
+
+      if (parsed?.bodyText) {
+        const cleanBody = parsed.bodyText
+          .replace(/\u2014/g, ' - ')
+          .replace(/\u2013/g, '-')
+          .trim();
+
+        return {
+          county: 'ireland',
+          countyName: 'Ireland',
+          city: 'Ireland',
+          neighborhoodId: 'ie-ireland',
+          dailyBrief: {
+            briefId: null,
+            headline: parsed.headline || 'All Ireland Brief',
+            subjectTeaser: parsed.subjectTeaser || null,
+            emailTeaser: parsed.emailTeaser || null,
+            enrichedContent: null,
+            categories: null,
+            model: AI_MODELS.GEMINI_FLASH,
+            enrichmentModel: null,
+            briefDate: targetDate,
+            generatedAt: new Date().toISOString(),
+            article: {
+              articleId: null,
+              headline: parsed.headline || 'All Ireland Brief',
+              previewText: parsed.previewText || cleanBody.split('.').slice(0, 2).join('.') + '.',
+              bodyText: cleanBody,
+              imageUrl: null,
+              slug: null,
+              publishedAt: new Date().toISOString(),
+              categoryLabel: 'All Ireland Brief',
+              sources: allSources.slice(0, 10),
+            },
+          },
+          lookAhead: null,
+        };
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (attempt < RETRY_DELAYS.length && (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED'))) {
+        await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt]));
+        continue;
+      }
+      console.error('National brief generation failed:', msg);
+      return null;
+    }
+  }
+
+  return null;
 }
