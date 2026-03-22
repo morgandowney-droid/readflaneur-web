@@ -333,7 +333,8 @@ RULES:
 - Write as a national overview, not a county-by-county list
 - Include specific names, numbers, dates, locations
 - Use Google Search to verify and add the latest facts to the stories
-- Do NOT include a greeting or sign-off
+- MUST start with an Irish-language greeting as the very first line, e.g. "Maidin mhaith, a chomharsana." (Good morning, neighbors) or "Tráthnóna maith, a chomharsana." (Good afternoon) depending on time of day
+- MUST end with an Irish-language sign-off as the very last line, e.g. "Bain sult as an lá." (Enjoy the day) or "Oíche mhaith." (Good night) depending on time of day
 
 Also generate:
 - A 1-4 word "information gap" subject teaser (lowercase, punchy, e.g. "fuel duty bombshell")
