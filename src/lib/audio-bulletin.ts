@@ -361,16 +361,14 @@ For ANY proper noun that might be mispronounced by text-to-speech (Irish names, 
 Format: the exact text as written in the script maps to a phonetic guide.
 Check the script for EVERY proper noun and add pronunciation if there's any ambiguity.
 
-Return ONLY valid JSON (no markdown fences):
-{
-  "script": "From yous.news, here is the news at ${currentHour} o'clock...",
-  "pronunciations": {
-    "Taoiseach": "TEE-shuck",
-    "Dún Laoghaire": "Dun LEER-ee"
-  },
-  "story_count": 5,
-  "lead_category": "Politics"
-}`;
+CRITICAL OUTPUT FORMAT:
+Return ONLY valid JSON (no markdown fences, no comments).
+The "script" value MUST be a single JSON string with \\n for paragraph breaks.
+Do NOT use actual line breaks inside the JSON string values.
+The script should be ~1500-2000 characters and ~280-320 words.
+
+Example format:
+{"script": "From yous.news, here is the news at ${currentHour} o'clock. ${irishTime.split(',')[0]}.\\n\\nThe lead story text goes here. Multiple sentences for the lead.\\n\\nIn politics, the second story here.\\n\\nOn the business front, third story.\\n\\nIn sport, fourth story.\\n\\nAnd finally, the lighter story.\\n\\nThat is the news from yous.news. Updates on the hour, every hour.", "pronunciations": {"Taoiseach": "TEE-shuck"}, "story_count": 5, "lead_category": "Politics"}`;
 
   for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
     try {
@@ -379,7 +377,7 @@ Return ONLY valid JSON (no markdown fences):
         contents: prompt,
         config: {
           temperature: 0.6,
-          maxOutputTokens: 2000,
+          maxOutputTokens: 4000,
           tools: [{ googleSearch: {} }],
         },
       });
@@ -396,6 +394,17 @@ Return ONLY valid JSON (no markdown fences):
       }
 
       if (parsed?.script) {
+        const cleanedScript = cleanBulletinText(parsed.script);
+
+        // Validate minimum length — a proper 2-min bulletin is ~1200-2000 chars
+        if (cleanedScript.length < 800) {
+          console.warn(`Bulletin script too short (${cleanedScript.length} chars), retrying...`);
+          continue;
+        }
+
+        // Count actual stories by looking for transitions/segments
+        const actualStoryCount = countStories(cleanedScript);
+
         // Merge static dictionary into dynamic pronunciations
         const mergedPronunciations = { ...IRISH_PHONETICS };
         if (parsed.pronunciations && typeof parsed.pronunciations === 'object') {
@@ -405,15 +414,15 @@ Return ONLY valid JSON (no markdown fences):
         // Filter to only pronunciations for terms that appear in the script
         const relevantPronunciations: Record<string, string> = {};
         for (const [term, phonetic] of Object.entries(mergedPronunciations)) {
-          if (parsed.script.includes(term)) {
+          if (cleanedScript.includes(term)) {
             relevantPronunciations[term] = phonetic;
           }
         }
 
         return {
-          script: cleanBulletinText(parsed.script),
+          script: cleanedScript,
           pronunciations: relevantPronunciations,
-          story_count: parsed.story_count || 5,
+          story_count: actualStoryCount,
           generated_at: now.toISOString(),
           hour: currentHour,
         };
@@ -432,28 +441,109 @@ Return ONLY valid JSON (no markdown fences):
 }
 
 function repairBulletinJson(text: string): { script?: string; pronunciations?: Record<string, string>; story_count?: number } | null {
-  const scriptMatch = text.match(/"script"\s*:\s*"((?:[^"\\]|\\.)*)(?:"|$)/);
-  if (scriptMatch?.[1]) {
-    const script = scriptMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+  // Strategy 1: Find "script" value between first and last quote boundaries
+  // Gemini often outputs the script with real newlines inside the JSON string
+  const scriptStartMatch = text.match(/"script"\s*:\s*"/);
+  if (scriptStartMatch) {
+    const startIdx = (scriptStartMatch.index || 0) + scriptStartMatch[0].length;
 
-    // Try to extract pronunciations
-    let pronunciations: Record<string, string> = {};
-    const pronMatch = text.match(/"pronunciations"\s*:\s*\{([^}]*)\}/);
-    if (pronMatch?.[1]) {
-      try {
-        pronunciations = JSON.parse(`{${pronMatch[1]}}`);
-      } catch {
-        // Parse individual entries
-        const entries = pronMatch[1].matchAll(/"([^"]+)"\s*:\s*"([^"]+)"/g);
-        for (const entry of entries) {
-          pronunciations[entry[1]] = entry[2];
-        }
+    // Find the closing pattern: ", followed by "pronunciations" or "story_count" or end
+    const remainingText = text.slice(startIdx);
+    // Look for the end of the script value - either `","` or `"\n` followed by next key
+    const endPatterns = [
+      /",\s*"pronunciations"/,
+      /",\s*"story_count"/,
+      /",\s*"lead_category"/,
+      /"\s*\}/,
+    ];
+
+    let endIdx = remainingText.length;
+    for (const pattern of endPatterns) {
+      const match = remainingText.match(pattern);
+      if (match?.index !== undefined && match.index < endIdx) {
+        endIdx = match.index;
       }
     }
 
-    return { script, pronunciations, story_count: 5 };
+    const rawScript = remainingText.slice(0, endIdx);
+    const script = rawScript
+      .replace(/\\"/g, '"')
+      .replace(/\\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+
+    if (script.length > 100) {
+      // Try to extract pronunciations from the rest
+      let pronunciations: Record<string, string> = {};
+      const pronMatch = text.match(/"pronunciations"\s*:\s*\{([^}]*)\}/);
+      if (pronMatch?.[1]) {
+        try {
+          pronunciations = JSON.parse(`{${pronMatch[1]}}`);
+        } catch {
+          const entries = pronMatch[1].matchAll(/"([^"]+)"\s*:\s*"([^"]+)"/g);
+          for (const entry of entries) {
+            pronunciations[entry[1]] = entry[2];
+          }
+        }
+      }
+
+      return { script, pronunciations };
+    }
   }
+
+  // Strategy 2: Simple regex fallback (handles well-formed escaped JSON)
+  const simpleMatch = text.match(/"script"\s*:\s*"((?:[^"\\]|\\.)*)(?:"|$)/);
+  if (simpleMatch?.[1] && simpleMatch[1].length > 100) {
+    const script = simpleMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+    return { script, pronunciations: {} };
+  }
+
   return null;
+}
+
+/**
+ * Count actual stories in the script by detecting transitions and segments.
+ */
+function countStories(script: string): number {
+  // Count story segments by looking for typical broadcast transitions
+  const transitions = [
+    /from yous\.news/i,
+    /\b(in|on the)\s+(politics|sport|business|health|culture|property|technology|education|environment)/i,
+    /\band finally\b/i,
+    /\bthat is the news\b/i,
+    /\bturning to\b/i,
+    /\bmeanwhile\b/i,
+    /\belsewhere\b/i,
+    /\bstaying with\b/i,
+    /\bmoving on\b/i,
+    /\bin other news\b/i,
+    /\bon a lighter note\b/i,
+  ];
+
+  let count = 0;
+  const sentences = script.split(/[.!?]+/).filter(s => s.trim().length > 20);
+
+  // Each major transition marks a new story segment
+  for (const sentence of sentences) {
+    for (const pattern of transitions) {
+      if (pattern.test(sentence)) {
+        count++;
+        break;
+      }
+    }
+  }
+
+  // Subtract 2 for opener and sign-off, minimum 1
+  const storyCount = Math.max(1, count - 2);
+
+  // Sanity check: a 300-word script should have ~5 stories
+  // If detection is low, estimate from word count
+  const wordCount = script.split(/\s+/).length;
+  if (storyCount < 3 && wordCount > 200) {
+    return 5; // reasonable default for a full bulletin
+  }
+
+  return storyCount;
 }
 
 function cleanBulletinText(text: string): string {
