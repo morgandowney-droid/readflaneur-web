@@ -3,6 +3,14 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-23
+
+**Fix Irish county Look Ahead generation for yous.news syndication:**
+- All 32 Irish counties stopped receiving Look Ahead articles because `generate-look-ahead` cron filtered neighborhoods by `activeSubscriberIds` — Irish counties have 0 Flaneur subscribers (content is syndication-only for yous.news).
+- Only 3 counties (Limerick, Cavan, Armagh) ever received look-aheads, likely from brief subscriber overlap.
+- Fix: `ie-county-*` neighborhoods are now always included in the eligible set regardless of subscriber count, matching the pattern already used by `sync-neighborhood-briefs` for daily briefs.
+- File: `src/app/api/cron/generate-look-ahead/route.ts`
+
 ## 2026-03-22
 
 **National Ireland brief in irish-briefs syndication:**
