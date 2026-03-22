@@ -3,6 +3,21 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-22
+
+**Hourly audio bulletin script generation for yous.news:**
+- New cron `generate-audio-bulletin` runs at :55 every hour, generates 2-minute news bulletin scripts for yous.news Irish TTS (Azure en-IE-EmilyNeural voice).
+- Script follows real Irish radio bulletin structure: lead story (~40s), 3 Ireland-linked stories (~20s each), human interest "and finally..." closer (~20s). Weather/markets appended by yous.news.
+- Sources: fetches yous.news homepage stories via `GET /api/internal/homepage-stories` + last 3 bulletin scripts via `GET /api/internal/recent-bulletins` for continuity context. Gemini Flash with Google Search grounding for latest facts.
+- 120+ entry static phonetic pronunciation dictionary (`IRISH_PHONETICS`) covering Irish government terms (Taoiseach, Tánaiste, Dáil), Irish names (Siobhán, Caoimhe, Oisín), cities/towns (Dún Laoghaire, Cobh, Drogheda), counties (Laois, Meath), organisations (Gardaí, RTÉ, GAA), sports (camogie, Croke Park), and commonly mispronounced international names (Macron, Scholz, Erdoğan, von der Leyen).
+- Gemini also generates dynamic per-script pronunciations for any proper nouns it encounters. Static + dynamic dicts merged, filtered to only terms appearing in the script.
+- Plain text output with pronunciations dictionary - yous.news owns SSML conversion (applies as Layer 0 before its existing 4-layer pipeline) and Azure TTS generation.
+- `GET /api/syndicate/audio-bulletin?lang=en` endpoint polled by yous.news at :05. Supports `?hour=` param for specific hour. Falls back to most recent today's bulletin. Returns `{ script, pronunciations, story_count, generated_at, hour }`.
+- `audio_bulletin_scripts` table with `UNIQUE(bulletin_date, hour)` constraint, upsert on each generation.
+- If Flaneur is down, yous.news silently falls back to its own local script generation.
+- Cost: ~$0.15/day (24 Gemini Flash calls with search grounding).
+- Files: `src/lib/audio-bulletin.ts`, `src/app/api/cron/generate-audio-bulletin/route.ts`, `src/app/api/syndicate/audio-bulletin/route.ts`.
+
 ## 2026-03-19
 
 ## 2026-03-21
