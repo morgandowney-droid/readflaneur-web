@@ -5,6 +5,14 @@
 
 ## 2026-03-22
 
+**National Ireland brief in irish-briefs syndication:**
+- `GET /api/syndicate/irish-briefs` now includes an "All Ireland" national brief alongside the 32 county briefs. Generated on-the-fly by synthesizing the top stories from all county briefs via Gemini Flash with Google Search grounding.
+- Returns as `county: "ireland"`, `neighborhoodId: "ie-ireland"` - maps to yous.news's existing `ie-ireland` pseudo-county, `SLUG_TO_ID` mapping, and `/local/ireland/brief` page.
+- Supports `?county=ireland` for national-only requests (still fetches all county data internally to synthesize).
+- National entry appears first in the response array. Includes `subjectTeaser`, `emailTeaser`, 300-400 word `bodyText`, `previewText`, and aggregated `sources` from contributing counties.
+- Structure: leads with the biggest story across Ireland, covers 5-7 significant stories grouping related county reports, mentions affected counties/cities, ends with lighter story.
+- Cost: 1 additional Gemini Flash call per request (~$0.006/call).
+
 **Hourly audio bulletin script generation for yous.news:**
 - New cron `generate-audio-bulletin` runs at :55 every hour, generates 2-minute news bulletin scripts for yous.news Irish TTS (Azure en-IE-EmilyNeural voice).
 - Script follows real Irish radio bulletin structure: lead story (~40s), 3 Ireland-linked stories (~20s each), human interest "and finally..." closer (~20s). Weather/markets appended by yous.news.
