@@ -311,8 +311,13 @@ export async function GET(request: Request) {
         .select('component_id');
       const componentIds = new Set((comboComponents || []).map(c => c.component_id));
 
-      // Filter to only neighborhoods with active subscribers, excluding components
-      neighborhoods = data.filter(n => activeSubscriberIds.has(n.id) && !componentIds.has(n.id));
+      // Filter to only neighborhoods with active subscribers, excluding components.
+      // Irish counties (ie-county-*) are always included — they have no Flaneur subscribers
+      // but their Look Ahead articles are syndicated to yous.news via /api/syndicate/irish-briefs.
+      neighborhoods = data.filter(n =>
+        !componentIds.has(n.id) &&
+        (activeSubscriberIds.has(n.id) || n.id.startsWith('ie-county-'))
+      );
     }
 
     if (neighborhoods.length === 0) {
