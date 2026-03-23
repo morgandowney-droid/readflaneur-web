@@ -360,6 +360,7 @@ Return ONLY valid JSON (no markdown fences):
           temperature: 0.4,
           maxOutputTokens: 2000,
           tools: [{ googleSearch: {} }],
+          thinkingConfig: { thinkingBudget: 0 },
         },
       });
 

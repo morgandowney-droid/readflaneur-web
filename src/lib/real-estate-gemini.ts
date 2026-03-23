@@ -70,6 +70,7 @@ async function queryGemini(query: string, systemPrompt: string): Promise<{ conte
       generationConfig: {
         temperature: 0.3,
         maxOutputTokens: 2048,
+        thinkingConfig: { thinkingBudget: 0 },
       }
     }),
   });

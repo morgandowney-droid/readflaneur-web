@@ -515,6 +515,9 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
           config: {
             tools: [{ googleSearch: {} }],
             temperature: 0.6,
+            // Disable thinking for Flash to avoid costly hidden reasoning tokens ($2.50/M)
+            // Pro keeps thinking enabled for higher quality daily brief enrichment
+            ...(modelId.includes('flash') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
           },
         });
         break; // Success - exit retry loop

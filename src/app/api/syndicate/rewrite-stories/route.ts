@@ -188,6 +188,7 @@ Return ONLY a JSON object (no markdown, no code fences):
           temperature: 0.4,
           maxOutputTokens: 2000,
           tools: [{ googleSearch: {} }],
+          thinkingConfig: { thinkingBudget: 0 },
         },
       });
 

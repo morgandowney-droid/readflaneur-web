@@ -113,6 +113,9 @@ async function callGeminiWithRetry<T>(apiKey: string, prompt: string): Promise<T
       const result = await ai.models.generateContent({
         model: AI_MODELS.GEMINI_FLASH,
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        config: {
+          thinkingConfig: { thinkingBudget: 0 },
+        },
       });
 
       const text = result.text?.trim() || '';

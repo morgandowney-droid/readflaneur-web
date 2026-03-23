@@ -770,7 +770,7 @@ export async function generateNimbyStory(
   alert: NimbyAlert
 ): Promise<NimbyStory | null> {
   try {
-    const model = genAI.getGenerativeModel({ model: AI_MODELS.GEMINI_FLASH });
+    const model = genAI.getGenerativeModel({ model: AI_MODELS.GEMINI_FLASH, generationConfig: { thinkingConfig: { thinkingBudget: 0 } } });
 
     // Get neighborhood name from ID
     const neighborhoodName = alert.neighborhoodId

@@ -69,6 +69,9 @@ Return ONLY valid JSON, no markdown or explanation.`,
           ],
         },
       ],
+      config: {
+        thinkingConfig: { thinkingBudget: 0 },
+      },
     });
 
     const text = result.text?.trim() || '';
@@ -132,6 +135,9 @@ Return ONLY valid JSON with "headline" and "body" fields. If no body was provide
           ],
         },
       ],
+      config: {
+        thinkingConfig: { thinkingBudget: 0 },
+      },
     });
 
     const text = result.text?.trim() || '';

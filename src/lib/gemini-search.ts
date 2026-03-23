@@ -296,6 +296,7 @@ async function callGeminiWithRetry(
         config: {
           tools: [{ googleSearch: {} }],
           temperature: 0.5,
+          thinkingConfig: { thinkingBudget: 0 },
         },
       });
       return { text: response.text || '' };

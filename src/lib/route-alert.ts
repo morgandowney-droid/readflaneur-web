@@ -567,7 +567,7 @@ export async function generateRouteStory(
   announcement: RouteAnnouncement
 ): Promise<RouteStory | null> {
   try {
-    const model = genAI.getGenerativeModel({ model: AI_MODELS.GEMINI_FLASH });
+    const model = genAI.getGenerativeModel({ model: AI_MODELS.GEMINI_FLASH, generationConfig: { thinkingConfig: { thinkingBudget: 0 } } });
 
     const originCity = getCityForAirport(announcement.originAirport.code);
     const targetNeighborhoods = getNeighborhoodsForAirport(announcement.originAirport.code);

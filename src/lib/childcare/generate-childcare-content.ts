@@ -98,6 +98,7 @@ BODY: [your organized paragraphs]`;
       contents: prompt,
       config: {
         temperature: 0.6,
+        thinkingConfig: { thinkingBudget: 0 },
       },
     });
 

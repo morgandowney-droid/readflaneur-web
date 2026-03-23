@@ -530,7 +530,7 @@ export async function generateResidencyStory(
   announcement: ResidencyAnnouncement
 ): Promise<ResidencyStory | null> {
   try {
-    const model = genAI.getGenerativeModel({ model: AI_MODELS.GEMINI_FLASH });
+    const model = genAI.getGenerativeModel({ model: AI_MODELS.GEMINI_FLASH, generationConfig: { thinkingConfig: { thinkingBudget: 0 } } });
 
     const season = announcement.location.season;
     const targetNeighborhoods = getTargetNeighborhoods(announcement);

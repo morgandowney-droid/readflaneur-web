@@ -379,6 +379,7 @@ Example format:
           temperature: 0.6,
           maxOutputTokens: 4000,
           tools: [{ googleSearch: {} }],
+          thinkingConfig: { thinkingBudget: 0 },
         },
       });
 
