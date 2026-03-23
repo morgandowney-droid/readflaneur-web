@@ -511,7 +511,7 @@ export async function generateFashionWeekStory(
   neighborhoodId: string
 ): Promise<FashionWeekStory | null> {
   try {
-    const model = genAI.getGenerativeModel({ model: AI_MODELS.GEMINI_FLASH, generationConfig: { thinkingConfig: { thinkingBudget: 0 } } });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     const neighborhoodShows = summary.showsByNeighborhood[neighborhoodId] || [];
     const showCount = neighborhoodShows.length;

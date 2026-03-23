@@ -597,7 +597,7 @@ export async function generateReviewStory(review: DetectedReview): Promise<Revie
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: AI_MODELS.GEMINI_FLASH, generationConfig: { thinkingConfig: { thinkingBudget: 0 } } });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
   const tierDisplay = TIER_CONFIG[review.tier].displayName;
   const neighborhoodName = review.neighborhood || review.city.replace(/_/g, ' ');

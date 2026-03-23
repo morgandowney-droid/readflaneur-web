@@ -469,7 +469,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function generateArchiveStory(item: ArchiveItem): Promise<ArchiveStory | null> {
   try {
-    const model = genAI.getGenerativeModel({ model: AI_MODELS.GEMINI_FLASH, generationConfig: { thinkingConfig: { thinkingBudget: 0 } } });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     // Get neighborhood name
     const neighborhoodName = item.storeLocation.neighborhoodId

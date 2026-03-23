@@ -638,7 +638,7 @@ export async function generateSampleSaleStory(sale: DetectedSale): Promise<Sampl
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: AI_MODELS.GEMINI_FLASH, generationConfig: { thinkingConfig: { thinkingBudget: 0 } } });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
   const neighborhoodName = sale.neighborhood || sale.city.replace(/_/g, ' ');
 
