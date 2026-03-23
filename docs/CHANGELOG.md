@@ -5,6 +5,15 @@
 
 ## 2026-03-23
 
+**Disable Gemini Flash thinking tokens to cut ~$1,835/month:**
+- Gemini 2.5 Flash generates hidden internal reasoning ("thinking") tokens on every API call, billed at $2.50/M output tokens - 4x the visible output rate ($0.60/M). These accounted for 63% of the Google Cloud bill ($1,835 of $2,913 in March).
+- Added `thinkingConfig: { thinkingBudget: 0 }` to all 9 new SDK (`@google/genai`) Flash call sites: `gemini-search.ts`, `translation-service.ts`, `brief-enricher-gemini.ts` (Flash only, Pro keeps thinking), `audio-bulletin.ts`, `ad-quality-service.ts` (2 sites), `childcare/generate-childcare-content.ts`, `syndicate/irish-briefs/route.ts`, `syndicate/rewrite-stories/route.ts`.
+- Switched 10 old SDK (`@google/generative-ai`) story generators to `gemini-2.0-flash` model which has no thinking tokens by design (old SDK doesn't support `thinkingConfig` parameter): sample-sale, fashion-week, escape-index, political-wallet, route-alert, residency-radar, archive-hunter, review-watch, gala-watch, nimby-alert.
+- Added `thinkingConfig` to REST API call in `real-estate-gemini.ts`.
+- Pro enrichment (daily briefs) retains thinking for quality - only Flash is affected.
+- Zero product impact: Flash thinking adds no value for editorial writing, translation, and search grounding tasks.
+- 19 files changed.
+
 **Fix Irish county Look Ahead generation for yous.news syndication:**
 - All 32 Irish counties stopped receiving Look Ahead articles because `generate-look-ahead` cron filtered neighborhoods by `activeSubscriberIds` — Irish counties have 0 Flaneur subscribers (content is syndication-only for yous.news).
 - Only 3 counties (Limerick, Cavan, Armagh) ever received look-aheads, likely from brief subscriber overlap.
