@@ -7,6 +7,17 @@
         "@supabase/mcp-server-supabase@latest",
         "--project-ref=ujpdhueytlfqkwzvqetd"
       ]
+    },
+    "bigquery": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@ergut/mcp-bigquery-server",
+        "--project-id",
+        "gen-lang-client-0527325266",
+        "--location",
+        "US"
+      ]
     }
   }
 }
