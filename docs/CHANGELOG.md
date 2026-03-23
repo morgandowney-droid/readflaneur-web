@@ -5,6 +5,12 @@
 
 ## 2026-03-23
 
+**BigQuery MCP server for Google Cloud billing monitoring:**
+- Added `@ergut/mcp-bigquery-server` to `.mcp.json` pointing at `gen-lang-client-0527325266` (Default Gemini Project where Flaneur's Gemini API key lives).
+- Reads from `billing_export` dataset (BigQuery billing export enabled same day).
+- Enables Claude Code to query AI API costs directly in future sessions (read-only, uses application default credentials).
+- Data available ~24h after export enabled.
+
 **Disable Gemini Flash thinking tokens to cut ~$1,835/month:**
 - Gemini 2.5 Flash generates hidden internal reasoning ("thinking") tokens on every API call, billed at $2.50/M output tokens - 4x the visible output rate ($0.60/M). These accounted for 63% of the Google Cloud bill ($1,835 of $2,913 in March).
 - Added `thinkingConfig: { thinkingBudget: 0 }` to all 9 new SDK (`@google/genai`) Flash call sites: `gemini-search.ts`, `translation-service.ts`, `brief-enricher-gemini.ts` (Flash only, Pro keeps thinking), `audio-bulletin.ts`, `ad-quality-service.ts` (2 sites), `childcare/generate-childcare-content.ts`, `syndicate/irish-briefs/route.ts`, `syndicate/rewrite-stories/route.ts`.

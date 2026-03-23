@@ -721,4 +721,4 @@ npx supabase db push --include-all --yes  # Run migrations
 
 ## MCP Servers
 
-Supabase, Vercel, Playwright, Supermemory, Frontend Design, Resend, Stripe, Sentry
+Supabase, Vercel, Playwright, Supermemory, Frontend Design, Resend, Stripe, Sentry, BigQuery (Google Cloud billing monitoring - read-only, `gen-lang-client-0527325266.billing_export` dataset, data available ~24h after billing export enabled 2026-03-23)
