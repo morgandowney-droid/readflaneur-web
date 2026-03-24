@@ -3,6 +3,13 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-24
+
+**Fix national Ireland Look Ahead for yous.news syndication:**
+- `ie-ireland` was excluded from `generate-look-ahead` cron since March 20 because the subscriber bypass only matched `ie-county-*` pattern. Added `ie-ireland` to the bypass.
+- Syndication endpoint (`/api/syndicate/irish-briefs`) hardcoded `lookAhead: null` for the national entry even though `ie-ireland` Look Ahead articles existed in the DB. Now queries `ie-ireland` look_ahead articles and includes them in the response with sources.
+- National-only requests (`?county=ireland`) now correctly report `lookAheads` coverage count.
+
 ## 2026-03-23
 
 **BigQuery MCP server for Google Cloud billing monitoring:**
