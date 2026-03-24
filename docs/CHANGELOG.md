@@ -5,6 +5,12 @@
 
 ## 2026-03-24
 
+**Disable sync-tonight and sync-spotted crons (~$785/month savings):**
+- These crons called Google Places API for the discontinued "places" feature but were never removed from `vercel.json`.
+- `sync-spotted` ran every 30 minutes (48x/day), generating 32,394 Place Details requests in Feb alone at ~$785/month.
+- `sync-tonight` ran daily at 2 PM UTC with additional Nearby Search calls.
+- Removed both from `vercel.json`. Route files kept for reference but no longer triggered.
+
 **Fix national Ireland Look Ahead for yous.news syndication:**
 - `ie-ireland` was excluded from `generate-look-ahead` cron since March 20 because the subscriber bypass only matched `ie-county-*` pattern. Added `ie-ireland` to the bypass.
 - Syndication endpoint (`/api/syndicate/irish-briefs`) hardcoded `lookAhead: null` for the national entry even though `ie-ireland` Look Ahead articles existed in the DB. Now queries `ie-ireland` look_ahead articles and includes them in the response with sources.
