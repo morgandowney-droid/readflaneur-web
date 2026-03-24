@@ -13,14 +13,6 @@
       "schedule": "55 * * * *"
     },
     {
-      "path": "/api/cron/sync-tonight",
-      "schedule": "0 14 * * *"
-    },
-    {
-      "path": "/api/cron/sync-spotted",
-      "schedule": "*/30 * * * *"
-    },
-    {
       "path": "/api/cron/process-property-watch",
       "schedule": "0 7 * * *"
     },
