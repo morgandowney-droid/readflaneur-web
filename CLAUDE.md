@@ -688,7 +688,7 @@ src/
 
 ## Environment Variables
 
-**Required:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_PLACES_API_KEY`, `CRON_SECRET`
+**Required:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, `CRON_SECRET`
 **Optional:** `GEMINI_API_KEY`, `GROK_API_KEY`, `OPENAI_API_KEY`, `UNSPLASH_ACCESS_KEY`, `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`, `RESEND_WEBHOOK_SECRET`, `STRIPE_WEBHOOK_SECRET`, `SENTRY_AUTH_TOKEN`
 
 ## Key Database Tables
@@ -721,4 +721,4 @@ npx supabase db push --include-all --yes  # Run migrations
 
 ## MCP Servers
 
-Supabase, Vercel, Playwright, Supermemory, Frontend Design, Resend, Stripe, Sentry, BigQuery (Google Cloud billing monitoring - read-only, `gen-lang-client-0527325266.billing_export` dataset, data available ~24h after billing export enabled 2026-03-23)
+Supabase, Vercel, Playwright, Supermemory, Frontend Design, Resend, Stripe, Sentry, BigQuery (Google Cloud billing monitoring - read-only, table `gen-lang-client-0527325266.billing_export.gcp_billing_export_resource_v1_01B232_408E93_0A6CD7`, data has ~5 week lag from billing export enabled 2026-03-23, `GOOGLE_PLACES_API_KEY` removed from Vercel 2026-03-24)
