@@ -102,13 +102,15 @@ export async function GET(request: NextRequest) {
       .order('published_at', { ascending: false });
 
     // 4. Fetch Look Ahead articles (48h window for timezone coverage)
+    // Include ie-ireland for national Look Ahead alongside county articles
     const lookAheadCutoff = new Date();
     lookAheadCutoff.setHours(lookAheadCutoff.getHours() - 48);
+    const lookAheadNeighborhoodIds = [...neighborhoodIds, 'ie-ireland'];
 
     const { data: lookAheadArticles, error: lError } = await supabaseAdmin
       .from('articles')
       .select('id, neighborhood_id, headline, preview_text, body_text, image_url, slug, published_at, category_label')
-      .in('neighborhood_id', neighborhoodIds)
+      .in('neighborhood_id', lookAheadNeighborhoodIds)
       .eq('article_type', 'look_ahead')
       .eq('status', 'published')
       .gte('published_at', lookAheadCutoff.toISOString())
@@ -202,8 +204,11 @@ export async function GET(request: NextRequest) {
     const includeNational = !countyFilter || isNationalOnly;
     let nationalEntry = null;
 
+    // Find the national ie-ireland Look Ahead article if it exists
+    const nationalLookAheadArticle = (lookAheadArticles || []).find(a => a.neighborhood_id === 'ie-ireland') || null;
+
     if (includeNational && withBrief > 0) {
-      nationalEntry = await generateNationalBrief(counties, targetDate);
+      nationalEntry = await generateNationalBrief(counties, targetDate, nationalLookAheadArticle, sourcesMap);
     }
 
     // If requesting only the national brief, return just that
@@ -214,7 +219,7 @@ export async function GET(request: NextRequest) {
         count: nationalEntries.length,
         coverage: {
           dailyBriefs: nationalEntry?.dailyBrief ? 1 : 0,
-          lookAheads: 0,
+          lookAheads: nationalEntry?.lookAhead ? 1 : 0,
         },
         counties: nationalEntries,
       }, {
@@ -284,7 +289,9 @@ const RETRY_DELAYS = [2000, 5000];
 
 async function generateNationalBrief(
   counties: CountyEntry[],
-  targetDate: string
+  targetDate: string,
+  nationalLookAhead?: { id: string; headline: string; preview_text: string; body_text: string; image_url: string; slug: string; published_at: string; category_label: string } | null,
+  sourcesMap?: Record<string, { source_name: string; source_url: string | null }[]>,
 ) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
@@ -417,7 +424,17 @@ Return ONLY valid JSON (no markdown fences):
               sources: allSources.slice(0, 10),
             },
           },
-          lookAhead: null,
+          lookAhead: nationalLookAhead ? {
+            articleId: nationalLookAhead.id,
+            headline: nationalLookAhead.headline,
+            previewText: nationalLookAhead.preview_text,
+            bodyText: nationalLookAhead.body_text,
+            imageUrl: nationalLookAhead.image_url,
+            slug: nationalLookAhead.slug,
+            publishedAt: nationalLookAhead.published_at,
+            categoryLabel: nationalLookAhead.category_label,
+            sources: sourcesMap?.[nationalLookAhead.id] || [],
+          } : null,
         };
       }
     } catch (err: unknown) {
