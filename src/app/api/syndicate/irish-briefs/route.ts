@@ -342,6 +342,7 @@ RULES:
 - Use Google Search to verify and add the latest facts to the stories
 - MUST start with an Irish-language greeting as the very first line, e.g. "Maidin mhaith, a chomharsana." (Good morning, neighbors) or "Tráthnóna maith, a chomharsana." (Good afternoon) depending on time of day
 - MUST end with an Irish-language sign-off as the very last line, e.g. "Bain sult as an lá." (Enjoy the day) or "Oíche mhaith." (Good night) depending on time of day
+- Each story/topic MUST have a [[Section Header]] marker on its own line before the paragraph, e.g. "[[Fuel Duty Bombshell]]" then the paragraph text. This matches the county brief format. One header per story, short and punchy (2-5 words).
 
 Also generate:
 - A 1-4 word "information gap" subject teaser (lowercase, punchy, e.g. "fuel duty bombshell")
@@ -352,7 +353,7 @@ Return ONLY valid JSON (no markdown fences):
   "headline": "Short headline for the national brief",
   "subjectTeaser": "fuel duty bombshell",
   "emailTeaser": "Two-three sentence information-dense teaser.",
-  "bodyText": "Full 300-400 word national brief...",
+  "bodyText": "Maidin mhaith, a chomharsana.\n\n[[Fuel Duty Bombshell]]\nThe government faces a revolt over proposed fuel duty increases...\n\n[[Cork Port Expansion]]\nCork County Council has approved the first phase...",
   "previewText": "First sentence or two for card display."
 }`;
 
