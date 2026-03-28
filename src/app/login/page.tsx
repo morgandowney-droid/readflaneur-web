@@ -3,6 +3,17 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
+
+function PasskeyIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="10" cy="7" r="4" />
+      <path d="M10 13c-4.42 0-8 1.79-8 4v2h10" />
+      <path d="M17 15l2 2 4-4" />
+    </svg>
+  );
+}
 
 function GoogleIcon() {
   return (
@@ -23,8 +34,10 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState(false);
+  const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [supportsPasskey, setSupportsPasskey] = useState(false);
 
   // Redirect already-authenticated users
   useEffect(() => {
@@ -44,7 +57,64 @@ function LoginForm() {
       setCheckingSession(false);
     }
     checkSession();
+
+    // Check passkey support
+    if (browserSupportsWebAuthn()) {
+      setSupportsPasskey(true);
+    }
   }, [redirect]);
+
+  const handlePasskeyLogin = async () => {
+    setError(null);
+    setIsPasskeyLoading(true);
+    try {
+      // Get authentication options from server
+      const optionsRes = await fetch('/api/auth/passkey/authenticate/options', { method: 'POST' });
+      if (!optionsRes.ok) throw new Error('Failed to get passkey options');
+      const options = await optionsRes.json();
+
+      // Trigger browser passkey dialog
+      const authResponse = await startAuthentication({ optionsJSON: options });
+
+      // Verify with server
+      const verifyRes = await fetch('/api/auth/passkey/authenticate/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: authResponse }),
+      });
+
+      if (!verifyRes.ok) {
+        const err = await verifyRes.json();
+        throw new Error(err.error || 'Passkey verification failed');
+      }
+
+      const data = await verifyRes.json();
+
+      // Write auth state to localStorage (same pattern as signin)
+      localStorage.setItem('flaneur-auth', JSON.stringify({ id: data.user.id, email: data.user.email }));
+      localStorage.setItem('flaneur-auth-method', 'passkey');
+      if (data.is_subscribed) localStorage.setItem('flaneur-newsletter-subscribed', 'true');
+      if (data.neighborhood_ids?.length) {
+        localStorage.setItem('flaneur-neighborhood-preferences', JSON.stringify(data.neighborhood_ids));
+      }
+      localStorage.setItem('flaneur-onboarded', 'true');
+      if (data.profile) {
+        localStorage.setItem('flaneur-profile', JSON.stringify(data.profile));
+        if (data.profile.theme) localStorage.setItem('flaneur-theme', data.profile.theme);
+        if (data.profile.language) localStorage.setItem('flaneur-language', data.profile.language);
+      }
+
+      window.location.href = redirect;
+    } catch (err) {
+      // NotAllowedError = user cancelled the dialog, don't show error
+      if (err instanceof Error && err.name === 'NotAllowedError') {
+        setIsPasskeyLoading(false);
+        return;
+      }
+      setError(err instanceof Error ? err.message : 'Passkey login failed');
+      setIsPasskeyLoading(false);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     setError(null);
@@ -126,6 +196,28 @@ function LoginForm() {
   return (
     <div className="w-full max-w-sm">
       <h1 className="text-2xl font-light text-center text-fg mb-10">Sign In</h1>
+
+      {/* Passkey */}
+      {supportsPasskey && (
+        <>
+          <button
+            onClick={handlePasskeyLogin}
+            disabled={isPasskeyLoading}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-fg text-canvas rounded-lg hover:opacity-80 transition-colors disabled:opacity-50"
+          >
+            <PasskeyIcon />
+            <span className="text-sm">
+              {isPasskeyLoading ? 'Verifying...' : 'Sign in with passkey'}
+            </span>
+          </button>
+
+          <div className="flex items-center gap-4 my-6">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-fg-subtle uppercase tracking-widest">or</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+        </>
+      )}
 
       {/* Google OAuth */}
       <button

@@ -19,6 +19,8 @@
     "@marsidev/react-turnstile": "^1.4.2",
     "@react-email/components": "^1.0.7",
     "@sentry/nextjs": "^10.38.0",
+    "@simplewebauthn/browser": "^11.0.0",
+    "@simplewebauthn/server": "^11.0.0",
     "@stripe/stripe-js": "^8.6.4",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.91.1",

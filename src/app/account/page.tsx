@@ -1,9 +1,150 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useTranslation } from '@/hooks/useTranslation';
+
+interface PasskeyEntry {
+  id: string;
+  credential_id: string;
+  device_type: string | null;
+  backed_up: boolean;
+  friendly_name: string | null;
+  created_at: string;
+  last_used_at: string | null;
+}
+
+function PasskeySection() {
+  const [passkeys, setPasskeys] = useState<PasskeyEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [registering, setRegistering] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [supported, setSupported] = useState(false);
+
+  const fetchPasskeys = useCallback(async () => {
+    try {
+      const res = await fetch('/api/auth/passkey/list');
+      if (res.ok) {
+        const data = await res.json();
+        setPasskeys(data.passkeys || []);
+      }
+    } catch { /* ignore */ }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    import('@simplewebauthn/browser').then(mod => {
+      if (mod.browserSupportsWebAuthn()) setSupported(true);
+    });
+    fetchPasskeys();
+  }, [fetchPasskeys]);
+
+  const handleRegister = async () => {
+    setError(null);
+    setSuccess(null);
+    setRegistering(true);
+    try {
+      const { startRegistration } = await import('@simplewebauthn/browser');
+
+      const optionsRes = await fetch('/api/auth/passkey/register/options', { method: 'POST' });
+      if (!optionsRes.ok) throw new Error('Failed to get registration options');
+      const options = await optionsRes.json();
+
+      const regResponse = await startRegistration({ optionsJSON: options });
+
+      const verifyRes = await fetch('/api/auth/passkey/register/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: regResponse }),
+      });
+
+      if (!verifyRes.ok) throw new Error('Registration failed');
+
+      setSuccess('Passkey added');
+      fetchPasskeys();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      if (err instanceof Error && err.name === 'NotAllowedError') {
+        // User cancelled
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to add passkey');
+      }
+    }
+    setRegistering(false);
+  };
+
+  const handleDelete = async (credentialId: string) => {
+    setDeleting(credentialId);
+    try {
+      const res = await fetch('/api/auth/passkey/list', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credentialId }),
+      });
+      if (res.ok) {
+        setPasskeys(prev => prev.filter(p => p.credential_id !== credentialId));
+      }
+    } catch { /* ignore */ }
+    setDeleting(null);
+  };
+
+  if (!supported) return null;
+
+  return (
+    <div>
+      <p className="text-[10px] tracking-[0.2em] uppercase text-fg-subtle mb-1">Passkeys</p>
+      <p className="text-[11px] text-fg-muted mb-3">
+        Sign in with your fingerprint, face, or device PIN.
+      </p>
+
+      {loading ? (
+        <p className="text-[11px] text-fg-subtle">Loading...</p>
+      ) : (
+        <>
+          {passkeys.length > 0 && (
+            <div className="space-y-2 mb-3">
+              {passkeys.map(pk => (
+                <div key={pk.id} className="flex items-center justify-between text-sm">
+                  <div>
+                    <span className="text-fg">
+                      {pk.friendly_name || (pk.backed_up ? 'Synced passkey' : 'Device passkey')}
+                    </span>
+                    <span className="text-[10px] text-fg-subtle ml-2">
+                      {pk.last_used_at
+                        ? `Used ${new Date(pk.last_used_at).toLocaleDateString()}`
+                        : 'Never used'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(pk.credential_id)}
+                    disabled={deleting === pk.credential_id}
+                    className="text-[10px] text-fg-subtle hover:text-red-400 transition-colors"
+                  >
+                    {deleting === pk.credential_id ? '...' : 'Remove'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {error && <p className="text-[11px] text-red-400 mb-2">{error}</p>}
+          {success && <p className="text-[11px] text-accent mb-2">{success}</p>}
+
+          <button
+            onClick={handleRegister}
+            disabled={registering}
+            className="text-[11px] text-accent hover:underline"
+          >
+            {registering ? 'Follow the prompt...' : 'Add a passkey'} &rsaquo;
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function AccountPage() {
   const { t } = useTranslation();
@@ -356,6 +497,8 @@ export default function AccountPage() {
               {isSubscribed ? 'Subscribed' : 'Not subscribed'}
             </p>
           </div>
+
+          <PasskeySection />
 
           {prefsToken && (
             <div>
