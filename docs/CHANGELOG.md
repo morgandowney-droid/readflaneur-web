@@ -3,6 +3,20 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-28
+
+**Passkey/WebAuthn authentication - first news publication with passkeys:**
+- Biometric login via fingerprint, Face ID, or device PIN. No email roundtrip needed.
+- `@simplewebauthn/server` + `@simplewebauthn/browser` v11 for WebAuthn protocol handling.
+- Session creation via server-side magic link mint-and-verify: `admin.generateLink({ type: 'magiclink' })` → immediate `/auth/v1/verify` → real Supabase session tokens. User never sees a link.
+- Shared `src/lib/auth-session.ts` utility extracts session cookie-setting logic from signin route (`createSessionForUser`, `fetchUserState`, `setSessionCookies`).
+- `user_passkeys` table stores credential_id, base64 public key, counter, device_type, backed_up, transports, friendly_name. `passkey_challenges` table for ephemeral 5-minute TTL challenges (Vercel functions are stateless).
+- 5 API routes: register options/verify (authenticated), authenticate options/verify (unauthenticated), list/delete (authenticated).
+- Login page shows passkey button as primary option (above Google OAuth) when browser supports WebAuthn. NotAllowedError (user cancel) handled gracefully.
+- Account page passkey management section: list registered passkeys with last-used date, add new, remove existing.
+- Discoverable credentials (conditional UI): no email input needed, browser shows all passkeys for readflaneur.com.
+- RP_ID bound to `readflaneur.com` (prod) / `localhost` (dev). `flaneur.news` redirects to readflaneur.com so passkeys work on both domains.
+
 ## 2026-03-24
 
 **Disable sync-tonight and sync-spotted crons (~$785/month savings):**
