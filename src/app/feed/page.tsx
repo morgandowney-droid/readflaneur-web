@@ -9,6 +9,7 @@ import { MultiFeed } from '@/components/feed/MultiFeed';
 import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { MultiLoadMoreButton } from '@/components/feed/MultiLoadMoreButton';
 import { WelcomeBanner } from '@/components/feed/WelcomeBanner';
+import { PasskeyPrompt } from '@/components/feed/PasskeyPrompt';
 import { FeedItem, Article, Ad } from '@/types';
 import { injectAds, injectEmailPrompt } from '@/lib/ad-engine';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
@@ -388,6 +389,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
       <div className="mx-auto max-w-3xl px-4 pt-4 pb-8">
         <WelcomeBanner />
+        <PasskeyPrompt />
         {/* Section filter indicator */}
         {sectionFilter && (
           <div className="mb-6 flex items-center justify-between">
