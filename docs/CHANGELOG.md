@@ -3,6 +3,16 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-29
+
+**Reduce Look Ahead cron frequency to cut xAI costs:**
+- Changed `generate-look-ahead` schedule from `0 0-7 * * *` (8 runs/day) to `0 0,2,4,6 * * *` (4 runs/day).
+- xAI billing analysis revealed web searches (75%, $1,278/month) and X searches (15%, $264/month) dominate costs - tokens are negligible.
+- Each Grok call triggers multiple web+X search tool calls at $5/1000. Halving runs halves search call volume.
+- Still covers all timezone windows: APAC at midnight/2am, Europe at 4am, Americas at 6am. Dedup ensures no gaps.
+- Estimated savings: ~$90-150/month on xAI bill.
+- Separately, yous.news identified ~$31/day (~$950/month) of xAI costs from their crons running on Flaneur's API key (scan-breaking-news alone was $20+/day).
+
 ## 2026-03-28
 
 **Passkey/WebAuthn authentication - first news publication with passkeys:**

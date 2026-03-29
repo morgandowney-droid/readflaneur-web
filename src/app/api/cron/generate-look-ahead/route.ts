@@ -19,7 +19,7 @@ import { toHeadlineCase } from '@/lib/utils';
  * local day they refer to as "today". Each neighborhood gets its local date
  * computed via IANA timezone, and published_at is set to 7 AM local time.
  *
- * Schedule: 0 0-7 * * * (hourly midnight-7 AM UTC, dedup skips already-processed)
+ * Schedule: 0 0,2,4,6 * * * (every 2h midnight-6 AM UTC, halved from hourly to cut xAI search costs, dedup skips already-processed)
  */
 
 export const runtime = 'nodejs';
