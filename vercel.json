@@ -194,7 +194,7 @@
     },
     {
       "path": "/api/cron/generate-look-ahead",
-      "schedule": "0 0-7 * * *"
+      "schedule": "0 0,2,4,6 * * *"
     },
     {
       "path": "/api/cron/refresh-image-library",
