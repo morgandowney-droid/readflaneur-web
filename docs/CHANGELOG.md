@@ -8,6 +8,7 @@
 **Fix syndication API missing all 32 Irish county articles:**
 - `generate-brief-articles` sets `published_at: brief.generated_at`. Irish briefs generated at ~11pm UTC for the next day's `brief_date` had `published_at` on Mar 29 while syndication API queried within Mar 30 range - missed all 32 counties.
 - Changed syndication article lookup from `published_at` date range to `brief_id` join. Briefs are already fetched by `brief_date` (correct local date), so joining by `brief_id` avoids timezone boundary issues entirely.
+- Root cause fix: `generate-brief-articles` now computes `published_at` as 7 AM local time from `brief_date` + neighborhood timezone (via `computeLocalPublishTime()`), matching the pattern used by `generate-look-ahead`. Previously used `brief.generated_at` which falls on the wrong UTC calendar day for neighborhoods near the date boundary.
 - Same UTC midnight boundary bug pattern (7th occurrence) but in a new location.
 
 ## 2026-03-29
