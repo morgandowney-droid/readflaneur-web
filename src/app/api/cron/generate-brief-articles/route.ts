@@ -102,6 +102,44 @@ function extractSourcesFromCategories(categories: EnrichedCategory[] | null): Ar
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
+/**
+ * Compute 7 AM local time in UTC for a given date (YYYY-MM-DD) and IANA timezone.
+ * Used for published_at so articles are dated to the reader's local day,
+ * not the UTC timestamp of when the brief was generated.
+ */
+function computeLocalPublishTime(briefDate: string, timezone: string): string {
+  const tz = timezone || 'America/New_York';
+  const [year, month, day] = briefDate.split('-').map(Number);
+
+  // Find what local time midnight UTC corresponds to in this timezone
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+    hour12: false,
+  });
+
+  const guessUtc = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+  const parts = formatter.formatToParts(guessUtc);
+  const getPart = (type: string) => parts.find(p => p.type === type)?.value || '0';
+  const localHour = parseInt(getPart('hour'), 10);
+  const localDay = parseInt(getPart('day'), 10);
+  const localMonth = parseInt(getPart('month'), 10);
+
+  let offsetHours: number;
+  if (localMonth === month && localDay === day) {
+    offsetHours = localHour;
+  } else if (localDay > day || localMonth > month) {
+    offsetHours = localHour + 24;
+  } else {
+    offsetHours = localHour - 24;
+  }
+
+  // 7 AM local = (7 - offset) hours UTC
+  const utcHour = 7 - offsetHours;
+  return new Date(Date.UTC(year, month - 1, day, utcHour, 0, 0)).toISOString();
+}
+
 function generateSlug(headline: string, neighborhoodSlug: string, generatedAt: string, timezone?: string): string {
   // Use brief's generation date in the neighborhood's local timezone for correct date in slug
   const date = timezone
@@ -350,6 +388,12 @@ export async function GET(request: Request) {
       // Extract sources from enriched categories
       const extractedSources = extractSourcesFromCategories(brief.enriched_categories as EnrichedCategory[] | null);
 
+      // Compute published_at as 7 AM local time on brief_date (not generated_at).
+      // generated_at can fall on the wrong UTC calendar day when briefs are created
+      // near midnight UTC for the next local date (e.g., Irish briefs at 11pm UTC for tomorrow).
+      const neighborhoodTz = (brief.neighborhoods as any)?.timezone || 'America/New_York';
+      const publishedAt = computeLocalPublishTime(brief.brief_date, neighborhoodTz);
+
       // Create the article
       const { data: insertedArticle, error: insertError } = await supabase
         .from('articles')
@@ -360,7 +404,7 @@ export async function GET(request: Request) {
           preview_text: previewText,
           slug,
           status: 'published',
-          published_at: brief.generated_at,
+          published_at: publishedAt,
           author_type: 'ai',
           ai_model: brief.model ? `${brief.model} + ${brief.enrichment_model || 'gemini'}` : `grok + ${brief.enrichment_model || 'gemini'}`,
           article_type: 'brief_summary',
