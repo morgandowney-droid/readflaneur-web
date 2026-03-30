@@ -87,19 +87,24 @@ export async function GET(request: NextRequest) {
       .not('enriched_content', 'is', null)
       .order('created_at', { ascending: false });
 
-    // 3. Fetch brief_summary articles for target date
-    const dayStart = `${targetDate}T00:00:00Z`;
-    const dayEnd = `${targetDate}T23:59:59Z`;
+    // 3. Fetch brief_summary articles by brief_id (not published_at date range)
+    // Briefs generated late evening UTC for next day's brief_date have published_at
+    // on the wrong calendar day, so date-range queries miss them.
+    const briefIds = (briefs || []).map(b => b.id);
+    let briefArticles: any[] | null = null;
+    let aError: any = null;
 
-    const { data: briefArticles, error: aError } = await supabaseAdmin
-      .from('articles')
-      .select('id, neighborhood_id, headline, preview_text, body_text, image_url, slug, published_at, category_label')
-      .in('neighborhood_id', neighborhoodIds)
-      .eq('article_type', 'brief_summary')
-      .eq('status', 'published')
-      .gte('published_at', dayStart)
-      .lte('published_at', dayEnd)
-      .order('published_at', { ascending: false });
+    if (briefIds.length > 0) {
+      const result = await supabaseAdmin
+        .from('articles')
+        .select('id, neighborhood_id, headline, preview_text, body_text, image_url, slug, published_at, category_label, brief_id')
+        .in('brief_id', briefIds)
+        .eq('article_type', 'brief_summary')
+        .eq('status', 'published')
+        .order('published_at', { ascending: false });
+      briefArticles = result.data;
+      aError = result.error;
+    }
 
     // 4. Fetch Look Ahead articles (48h window for timezone coverage)
     // Include ie-ireland for national Look Ahead alongside county articles
