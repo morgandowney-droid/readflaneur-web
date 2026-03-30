@@ -3,6 +3,13 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-03-30
+
+**Fix syndication API missing all 32 Irish county articles:**
+- `generate-brief-articles` sets `published_at: brief.generated_at`. Irish briefs generated at ~11pm UTC for the next day's `brief_date` had `published_at` on Mar 29 while syndication API queried within Mar 30 range - missed all 32 counties.
+- Changed syndication article lookup from `published_at` date range to `brief_id` join. Briefs are already fetched by `brief_date` (correct local date), so joining by `brief_id` avoids timezone boundary issues entirely.
+- Same UTC midnight boundary bug pattern (7th occurrence) but in a new location.
+
 ## 2026-03-29
 
 **Reduce Look Ahead cron frequency to cut xAI costs:**
