@@ -3,6 +3,21 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-04-03
+
+**Rename "Destinations" to "Neighborhoods" across all UI:**
+- Nav link updated in all 9 languages (en: "Neighborhoods", sv: "Grannar", fr: "Quartiers", de: "Viertel", es: "Barrios", pt: "Bairros", it: "Quartieri", zh: "街区", ja: "エリア")
+- Wishlist strings (addDestinations, savedDestinations, emptyDescription) updated in all 9 languages
+- Page title changed to "Neighborhoods - Flaneur"
+- Shared list meta description updated
+- Hardcoded "Browse destinations" in WishlistDropdown changed to "Browse neighborhoods"
+
+**Expedia-style save buttons:**
+- NeighborhoodActions and DestinationCard heart icons replaced with pill-shaped `rounded-full border` buttons containing heart icon + "Save"/"Saved" text
+- Saved state: `border-red-500/30 text-red-500` with filled heart
+- Unsaved state: `border-border-strong` with outlined heart, hover transitions to red
+- Removed separate "Saved" accent text below DestinationCard (now in the pill)
+
 ## 2026-03-30
 
 **Fix syndication API missing all 32 Irish county articles:**
