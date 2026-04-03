@@ -122,10 +122,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `${list.name} - Flaneur`,
-    description: `A curated list of ${list.items.length} destinations on Flaneur.`,
+    description: `A curated list of ${list.items.length} neighborhoods on Flaneur.`,
     openGraph: {
       title: `${list.name} - Flaneur`,
-      description: `A curated list of ${list.items.length} destinations on Flaneur.`,
+      description: `A curated list of ${list.items.length} neighborhoods on Flaneur.`,
     },
   };
 }

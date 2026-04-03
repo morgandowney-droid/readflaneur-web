@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { DestinationsClient } from '@/components/destinations/DestinationsClient';
 
 export const metadata = {
-  title: 'Destinations - Flaneur',
+  title: 'Neighborhoods - Flaneur',
   description: 'Explore 270+ neighborhoods across 91 cities worldwide.',
 };
 

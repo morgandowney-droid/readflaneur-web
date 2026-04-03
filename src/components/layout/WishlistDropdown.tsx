@@ -142,7 +142,7 @@ export function WishlistDropdown({ className }: { className?: string }) {
                   onClick={() => setOpen(false)}
                   className="text-xs text-accent hover:underline"
                 >
-                  Browse destinations
+                  Browse neighborhoods
                 </Link>
               </div>
             ) : (
@@ -199,7 +199,7 @@ export function WishlistDropdown({ className }: { className?: string }) {
               onClick={() => setOpen(false)}
               className="text-xs text-fg-muted hover:text-accent transition-colors"
             >
-              Browse destinations
+              Browse neighborhoods
             </Link>
           </div>
         </div>
