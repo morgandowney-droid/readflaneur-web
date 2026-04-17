@@ -18,6 +18,14 @@ interface SearchResult {
   published_at: string;
 }
 
+interface NeighborhoodResult {
+  id: string;
+  name: string;
+  city: string;
+  country: string;
+  url: string;
+}
+
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -25,6 +33,7 @@ function SearchContent() {
 
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [neighborhoods, setNeighborhoods] = useState<NeighborhoodResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const { t } = useTranslation();
@@ -32,6 +41,7 @@ function SearchContent() {
   const performSearch = useCallback(async (searchQuery: string) => {
     if (!searchQuery || searchQuery.length < 2) {
       setResults([]);
+      setNeighborhoods([]);
       setSearched(false);
       return;
     }
@@ -45,12 +55,15 @@ function SearchContent() {
 
       if (res.ok) {
         setResults(data.results || []);
+        setNeighborhoods(data.neighborhoods || []);
       } else {
         setResults([]);
+        setNeighborhoods([]);
       }
     } catch (error) {
       console.error('Search failed:', error);
       setResults([]);
+      setNeighborhoods([]);
     } finally {
       setLoading(false);
     }
@@ -118,57 +131,87 @@ function SearchContent() {
             <p className="text-fg-muted">{t('search.searching')}</p>
           </div>
         ) : searched ? (
-          results.length > 0 ? (
+          (neighborhoods.length > 0 || results.length > 0) ? (
             <div>
-              <p className="text-sm text-fg-muted mb-6">
-                {results.length} result{results.length !== 1 ? 's' : ''} for &ldquo;{initialQuery}&rdquo;
-              </p>
-
-              <div className="space-y-4">
-                {results.map((result) => (
-                  <Link
-                    key={result.id}
-                    href={result.url}
-                    className="group block border border-border hover:border-border-strong rounded-lg overflow-hidden transition-colors"
-                  >
-                    <div className="flex gap-4">
-                      {/* Thumbnail */}
-                      <div className="relative w-28 h-24 md:w-32 flex-shrink-0">
-                        <Image
-                          src={result.image_url}
-                          alt={result.headline}
-                          fill
-                          className="object-cover"
-                          sizes="128px"
-                        />
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 py-3 pr-4">
-                        <div className="flex items-center gap-2 text-xs text-fg-muted mb-1">
-                          {result.neighborhood && (
-                            <>
-                              <span className="uppercase tracking-wide">{result.neighborhood}</span>
-                              <span>&middot;</span>
-                            </>
-                          )}
-                          <span>
-                            {formatDistanceToNow(new Date(result.published_at), { addSuffix: true })}
-                          </span>
+              {/* Neighborhood results */}
+              {neighborhoods.length > 0 && (
+                <div className="mb-8">
+                  <p className="text-xs uppercase tracking-widest text-fg-muted mb-3">{t('search.neighborhoods')}</p>
+                  <div className="space-y-2">
+                    {neighborhoods.map((n) => (
+                      <Link
+                        key={n.id}
+                        href={n.url}
+                        className="group flex items-center gap-3 px-4 py-3 border border-border hover:border-border-strong rounded-lg transition-colors"
+                      >
+                        <svg className="w-4 h-4 text-fg-subtle flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <div>
+                          <span className="font-medium text-fg group-hover:underline">{n.name}</span>
+                          <span className="text-fg-muted text-sm ml-2">{n.city}, {n.country}</span>
                         </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-                        <h2 className="font-medium text-fg group-hover:underline line-clamp-2 mb-1">
-                          {result.headline}
-                        </h2>
+              {/* Article results */}
+              {results.length > 0 && (
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-fg-muted mb-3">
+                    {results.length} {results.length !== 1 ? t('search.results') : t('search.result')}
+                  </p>
 
-                        <p className="text-sm text-fg-subtle line-clamp-2 hidden md:block">
-                          {result.excerpt}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+                  <div className="space-y-4">
+                    {results.map((result) => (
+                      <Link
+                        key={result.id}
+                        href={result.url}
+                        className="group block border border-border hover:border-border-strong rounded-lg overflow-hidden transition-colors"
+                      >
+                        <div className="flex gap-4">
+                          {/* Thumbnail */}
+                          <div className="relative w-28 h-24 md:w-32 flex-shrink-0">
+                            <Image
+                              src={result.image_url}
+                              alt={result.headline}
+                              fill
+                              className="object-cover"
+                              sizes="128px"
+                            />
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 py-3 pr-4">
+                            <div className="flex items-center gap-2 text-xs text-fg-muted mb-1">
+                              {result.neighborhood && (
+                                <>
+                                  <span className="uppercase tracking-wide">{result.neighborhood}</span>
+                                  <span>&middot;</span>
+                                </>
+                              )}
+                              <span>
+                                {formatDistanceToNow(new Date(result.published_at), { addSuffix: true })}
+                              </span>
+                            </div>
+
+                            <h2 className="font-medium text-fg group-hover:underline line-clamp-2 mb-1">
+                              {result.headline}
+                            </h2>
+
+                            <p className="text-sm text-fg-subtle line-clamp-2 hidden md:block">
+                              {result.excerpt}
+                            </p>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-12 bg-surface rounded-lg">

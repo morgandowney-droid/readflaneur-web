@@ -39,3 +39,14 @@ CREATE POLICY "Service role full access" ON agent_partners FOR ALL USING (true) 
 
 -- Add partner_agent_id to newsletter_subscribers for tracking agent-sourced subscribers
 ALTER TABLE newsletter_subscribers ADD COLUMN partner_agent_id UUID REFERENCES agent_partners(id);
+
+-- Create storage bucket for agent partner assets (photos, listing images)
+INSERT INTO storage.buckets (id, name, public) VALUES ('partner-assets', 'partner-assets', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Allow public read access to partner-assets
+CREATE POLICY "Public read access" ON storage.objects FOR SELECT USING (bucket_id = 'partner-assets');
+-- Allow authenticated uploads to partner-assets
+CREATE POLICY "Authenticated upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'partner-assets');
+CREATE POLICY "Authenticated update" ON storage.objects FOR UPDATE USING (bucket_id = 'partner-assets');
+CREATE POLICY "Authenticated delete" ON storage.objects FOR DELETE USING (bucket_id = 'partner-assets');

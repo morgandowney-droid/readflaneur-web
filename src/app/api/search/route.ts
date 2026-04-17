@@ -57,38 +57,49 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
-  // Search articles using Supabase text search
-  // Using ilike for simple search - for production, consider adding a tsvector column
-  const { data: articles, error } = await supabase
-    .from('articles')
-    .select(`
-      id,
-      headline,
-      preview_text,
-      body_text,
-      image_url,
-      slug,
-      created_at,
-      published_at,
-      neighborhood:neighborhoods(
+  // Search articles and neighborhoods in parallel
+  const [articlesResult, neighborhoodsResult] = await Promise.all([
+    // Article search
+    supabase
+      .from('articles')
+      .select(`
         id,
-        name,
-        city
-      )
-    `)
-    .eq('status', 'published')
-    .or(`headline.ilike.%${query}%,body_text.ilike.%${query}%,preview_text.ilike.%${query}%`)
-    .order('published_at', { ascending: false, nullsFirst: false })
-    .limit(limit);
+        headline,
+        preview_text,
+        body_text,
+        image_url,
+        slug,
+        created_at,
+        published_at,
+        neighborhood:neighborhoods(
+          id,
+          name,
+          city
+        )
+      `)
+      .eq('status', 'published')
+      .or(`headline.ilike.%${query}%,body_text.ilike.%${query}%,preview_text.ilike.%${query}%`)
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .limit(limit),
 
-  if (error) {
-    console.error('Search error:', error);
+    // Neighborhood search - match name or city
+    supabase
+      .from('neighborhoods')
+      .select('id, name, city, country, region, is_combo, is_community')
+      .eq('is_active', true)
+      .neq('region', 'test')
+      .or(`name.ilike.%${query}%,city.ilike.%${query}%`)
+      .order('name')
+      .limit(10),
+  ]);
+
+  if (articlesResult.error) {
+    console.error('Search error:', articlesResult.error);
     return NextResponse.json({ error: 'Search failed' }, { status: 500 });
   }
 
-  // Transform results with article URLs
-  const results = (articles || []).map((article: any) => {
-    // Supabase returns a single object for foreign key relations, not an array
+  // Transform article results
+  const results = (articlesResult.data || []).map((article: any) => {
     const neighborhood = Array.isArray(article.neighborhood)
       ? article.neighborhood[0]
       : article.neighborhood;
@@ -100,7 +111,6 @@ export async function GET(request: NextRequest) {
       url = `/${citySlug}/${neighborhoodSlug}/${article.slug || article.id}`;
     }
 
-    // Create excerpt with highlighted match
     let excerpt = article.preview_text || article.body_text?.substring(0, 200) || '';
     if (excerpt.length > 200) {
       excerpt = excerpt.substring(0, 200) + '...';
@@ -118,9 +128,23 @@ export async function GET(request: NextRequest) {
     };
   });
 
+  // Transform neighborhood results
+  const neighborhoods = (neighborhoodsResult.data || []).map((n: any) => {
+    const citySlug = n.city.toLowerCase().replace(/\s+/g, '-');
+    const neighborhoodSlug = n.id.split('-').slice(1).join('-');
+    return {
+      id: n.id,
+      name: n.name,
+      city: n.city,
+      country: n.country,
+      url: `/${citySlug}/${neighborhoodSlug}`,
+    };
+  });
+
   return NextResponse.json({
     query,
     count: results.length,
-    results
+    neighborhoods,
+    results,
   });
 }

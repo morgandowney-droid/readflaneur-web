@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateLookAhead } from '@/lib/grok';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
-import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
 import { getComboInfo } from '@/lib/combo-utils';
 import { getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
@@ -290,10 +289,7 @@ export async function GET(request: Request) {
 
       neighborhoods = data;
     } else {
-      // Get active subscriber set for filtering
-      const activeSubscriberIds = await getActiveNeighborhoodIds(supabase);
-
-      // Fetch is_active=true neighborhoods (combos + standalone, excludes components)
+      // Fetch all is_active=true neighborhoods (combos + standalone, excludes components)
       const { data, error: fetchError } = await supabase
         .from('neighborhoods')
         .select('id, name, city, country, timezone, is_combo, is_active')
@@ -311,14 +307,9 @@ export async function GET(request: Request) {
         .select('component_id');
       const componentIds = new Set((comboComponents || []).map(c => c.component_id));
 
-      // Filter to only neighborhoods with active subscribers, excluding components.
-      // Irish counties (ie-county-*) and national Ireland (ie-ireland) are always included —
-      // they have no Flaneur subscribers but their Look Ahead articles are syndicated to
-      // yous.news via /api/syndicate/irish-briefs.
-      neighborhoods = data.filter(n =>
-        !componentIds.has(n.id) &&
-        (activeSubscriberIds.has(n.id) || n.id.startsWith('ie-county-') || n.id === 'ie-ireland')
-      );
+      // Generate Look Aheads for ALL active neighborhoods so every neighborhood
+      // page has fresh content regardless of subscriber count.
+      neighborhoods = data.filter(n => !componentIds.has(n.id));
     }
 
     if (neighborhoods.length === 0) {

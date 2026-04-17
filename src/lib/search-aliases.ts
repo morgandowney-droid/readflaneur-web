@@ -205,6 +205,47 @@ export function findStateForQuery(query: string): { label: string; cities?: stri
   return null;
 }
 
+// ─── FUZZY MATCHING ─────────────────────────────────────────────
+
+/** Levenshtein edit distance between two strings */
+function editDistance(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+/** Check if query fuzzy-matches target (allows 1 edit for 4-5 char queries, 2 for 6+) */
+function fuzzyMatch(query: string, target: string): boolean {
+  if (query.length < 4) return false;
+  const maxDist = query.length >= 6 ? 2 : 1;
+  // Check if any substring of target of similar length fuzzy-matches the query
+  if (target.length < query.length) {
+    return editDistance(query, target) <= maxDist;
+  }
+  // For starts-with fuzzy: compare query against the first query.length chars of target
+  const prefix = target.substring(0, query.length);
+  if (editDistance(query, prefix) <= maxDist) return true;
+  // For contains fuzzy: slide a window
+  if (query.length >= 4 && target.length > query.length) {
+    for (let i = 0; i <= target.length - query.length; i++) {
+      const window = target.substring(i, i + query.length);
+      if (editDistance(query, window) <= maxDist) return true;
+    }
+  }
+  return false;
+}
+
 // ─── MAIN SEARCH FUNCTION ────────────────────────────────────────
 
 interface Searchable {
@@ -262,6 +303,8 @@ export function resolveSearchQuery<T extends Searchable>(
       addResult(n, 'name', 2);
     } else if (!hasAliasMatch && nameLower.includes(lower)) {
       addResult(n, 'name', 3);
+    } else if (!hasAliasMatch && fuzzyMatch(lower, nameLower)) {
+      addResult(n, 'name', 3.5);
     }
   }
 
@@ -274,6 +317,8 @@ export function resolveSearchQuery<T extends Searchable>(
       addResult(n, 'city', 5);
     } else if (!hasAliasMatch && cityLower.includes(lower)) {
       addResult(n, 'city', 5.5);
+    } else if (!hasAliasMatch && fuzzyMatch(lower, cityLower)) {
+      addResult(n, 'city', 5.7);
     }
   }
 

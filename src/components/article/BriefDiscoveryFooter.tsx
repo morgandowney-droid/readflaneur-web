@@ -3,6 +3,13 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
+interface NearbyNeighborhood {
+  neighborhoodName: string;
+  city: string;
+  headline: string;
+  url: string;
+}
+
 interface BriefDiscoveryFooterProps {
   neighborhoodId: string;
   neighborhoodName: string;
@@ -16,10 +23,8 @@ interface BriefDiscoveryFooterProps {
 }
 
 /**
- * Simplified discovery section at the bottom of brief articles.
- * Shows yesterday's brief link and Look Ahead link only.
- * Discovery CTAs (nearby, random, add-to-neighborhoods, email capture)
- * are now handled by ExplorationNextSuggestions component.
+ * Discovery section at the bottom of brief articles.
+ * Shows yesterday's brief, Look Ahead link, and 2 nearest neighborhoods.
  */
 export function BriefDiscoveryFooter({
   neighborhoodId,
@@ -29,6 +34,7 @@ export function BriefDiscoveryFooter({
 }: BriefDiscoveryFooterProps) {
   const [yesterdayUrl, setYesterdayUrl] = useState<string | null>(null);
   const [lookAheadUrl, setLookAheadUrl] = useState<string | null>(null);
+  const [nearbyNeighborhoods, setNearbyNeighborhoods] = useState<NearbyNeighborhood[]>([]);
   const fetched = useRef(false);
 
   useEffect(() => {
@@ -37,8 +43,6 @@ export function BriefDiscoveryFooter({
 
     try {
       // Fetch a related daily brief for this neighborhood
-      // Daily variant: yesterday's brief (before this article's date)
-      // Look Ahead / Sunday variant: today's/most recent daily brief (no beforeDate constraint)
       const briefParams = new URLSearchParams({ neighborhoodId });
       if (variant === 'daily' && publishedAt) {
         briefParams.set('beforeDate', publishedAt);
@@ -53,12 +57,34 @@ export function BriefDiscoveryFooter({
         .then(res => res.json())
         .then(data => { if (data.url) setLookAheadUrl(data.url); })
         .catch(() => {});
+
+      // Fetch nearest neighborhoods with recent briefs
+      fetch(`/api/explore/next?neighborhoodId=${encodeURIComponent(neighborhoodId)}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (!data) return;
+          const nearby: NearbyNeighborhood[] = [];
+          if (data.sameCity) nearby.push({
+            neighborhoodName: data.sameCity.neighborhoodName,
+            city: data.sameCity.city,
+            headline: data.sameCity.headline,
+            url: data.sameCity.url.replace('?explore=true', ''),
+          });
+          if (data.geoHop) nearby.push({
+            neighborhoodName: data.geoHop.neighborhoodName,
+            city: data.geoHop.city,
+            headline: data.geoHop.headline,
+            url: data.geoHop.url.replace('?explore=true', ''),
+          });
+          if (nearby.length > 0) setNearbyNeighborhoods(nearby);
+        })
+        .catch(() => {});
     } catch {
-      // localStorage failure - silently skip
+      // fetch failure - silently skip
     }
   }, [neighborhoodId, publishedAt, variant]);
 
-  const hasAnything = yesterdayUrl || lookAheadUrl;
+  const hasAnything = yesterdayUrl || lookAheadUrl || nearbyNeighborhoods.length > 0;
   if (!hasAnything) return null;
 
   return (
@@ -67,6 +93,16 @@ export function BriefDiscoveryFooter({
       <p className="text-[10px] uppercase tracking-[0.2em] text-fg-subtle mb-4">Keep reading</p>
 
       <div className="space-y-2.5">
+        {/* Look Ahead link (skip if we're already on a Look Ahead article) */}
+        {lookAheadUrl && variant !== 'look_ahead' && (
+          <Link
+            href={lookAheadUrl}
+            className="block text-sm text-fg-muted hover:text-accent transition-colors"
+          >
+            Read the Look Ahead (next 7 days) for <span className="font-semibold text-fg">{neighborhoodName}</span> &rsaquo;
+          </Link>
+        )}
+
         {/* Daily brief link */}
         {yesterdayUrl && (
           <Link
@@ -80,15 +116,16 @@ export function BriefDiscoveryFooter({
           </Link>
         )}
 
-        {/* Look Ahead link (skip if we're already on a Look Ahead article) */}
-        {lookAheadUrl && variant !== 'look_ahead' && (
+        {/* Nearby neighborhoods */}
+        {nearbyNeighborhoods.map((n) => (
           <Link
-            href={lookAheadUrl}
+            key={n.url}
+            href={n.url}
             className="block text-sm text-fg-muted hover:text-accent transition-colors"
           >
-            Read the Look Ahead (next 7 days) for <span className="font-semibold text-fg">{neighborhoodName}</span> &rsaquo;
+            Read today&apos;s <span className="font-semibold text-fg">{n.neighborhoodName}</span> Daily Brief &rsaquo;
           </Link>
-        )}
+        ))}
       </div>
     </div>
   );
