@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { resolveRecipients } from '@/lib/email/scheduler';
 import { assembleDailyBrief } from '@/lib/email/assembler';
-import { sendDailyBrief } from '@/lib/email/sender';
+import { sendDailyBrief, sendBrandedDailyBrief } from '@/lib/email/sender';
+import { resolveBrandedRecipients } from '@/lib/email/partner-scheduler';
 
 /**
  * Daily Brief Email Cron Job
@@ -186,6 +187,42 @@ export async function GET(request: Request) {
       } catch (error) {
         results.emails_failed++;
         results.errors.push(`Error for ${recipient.email}: ${(error as Error).message}`);
+      }
+    }
+
+    // --- Branded partner sends ---
+    // After standard sends, send branded emails for active agent partners
+    if (!dryRun) {
+      try {
+        const brandedGroups = await resolveBrandedRecipients(supabase, 7);
+        let brandedSent = 0;
+        let brandedFailed = 0;
+
+        for (const group of brandedGroups) {
+          for (const recipient of group.recipients) {
+            try {
+              const content = await assembleDailyBrief(supabase, recipient);
+              const sent = await sendBrandedDailyBrief(
+                supabase,
+                content,
+                group.branding,
+                group.partner.neighborhood_slug
+              );
+              if (sent) brandedSent++;
+              else brandedFailed++;
+              await sleep(DELAY_BETWEEN_SENDS_MS);
+            } catch (error) {
+              brandedFailed++;
+              results.errors.push(`Branded error for ${recipient.email}: ${(error as Error).message}`);
+            }
+          }
+        }
+
+        (results as any).branded_sent = brandedSent;
+        (results as any).branded_failed = brandedFailed;
+        (results as any).branded_groups = brandedGroups.length;
+      } catch (error) {
+        results.errors.push(`Branded scheduler error: ${(error as Error).message}`);
       }
     }
 
