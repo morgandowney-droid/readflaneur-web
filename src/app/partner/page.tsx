@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 interface Neighborhood {
@@ -29,6 +29,18 @@ interface PartnerRecord {
 }
 
 export default function PartnerPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-canvas text-fg flex items-center justify-center">
+        <p className="text-fg-muted">Loading...</p>
+      </div>
+    }>
+      <PartnerPageInner />
+    </Suspense>
+  );
+}
+
+function PartnerPageInner() {
   const searchParams = useSearchParams();
   const activated = searchParams.get('activated') === 'true';
 
