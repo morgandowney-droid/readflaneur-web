@@ -445,7 +445,7 @@ function PartnerPageInner() {
                 />
               </div>
               <div>
-                <label className="block text-xs tracking-wide uppercase text-fg-subtle mb-1.5">Photo</label>
+                <label className="block text-xs tracking-wide uppercase text-fg-subtle mb-1.5">Profile Photo</label>
                 {agentPhotoUrl && (
                   <img src={agentPhotoUrl} alt="Agent" className="w-16 h-16 rounded-full object-cover mb-2" />
                 )}
@@ -486,7 +486,7 @@ function PartnerPageInner() {
         {currentStep === 3 && (
           <div>
             <h2 className="font-[family-name:var(--font-cormorant)] text-xl mb-2">Your Listings</h2>
-            <p className="text-fg-muted text-sm mb-4">Optional - add up to 3 featured listings that appear in each email.</p>
+            <p className="text-fg-muted text-sm mb-4">Optional - add up to 3 featured listings that appear in each email. You can change these later.</p>
 
             {listings.map((listing, i) => (
               <div key={i} className="border border-border rounded-lg p-4 mb-3 bg-surface">
