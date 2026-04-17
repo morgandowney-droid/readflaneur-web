@@ -63,7 +63,7 @@ export default function PartnerLandingPage() {
         <div className="max-w-2xl mx-auto">
           <h2 className="font-display text-2xl md:text-3xl font-light text-fg mb-6">The Solution</h2>
           <p className="text-fg-muted text-lg leading-relaxed mb-4">
-            Flaneur produces a daily editorial newsletter for 266 luxury neighborhoods worldwide - from Tribeca to Mayfair to Ostermalm. We write about what&apos;s happening this week: new restaurants, gallery openings, school board decisions, permit filings, upcoming events. The things that matter to people who live there.
+            Flaneur produces a daily editorial newsletter for 266 luxury neighborhoods worldwide - from Tribeca to Mayfair to Östermalm. We write about what&apos;s happening this week: new restaurants, gallery openings, school board decisions, permit filings, upcoming events. The things that matter to people who live there.
           </p>
           <p className="text-fg-muted text-lg leading-relaxed">
             We put your name and brand on it. Your clients receive it every morning at 7 AM local time. They stay connected to their neighborhood, and your name is the first thing they see every day.
@@ -184,7 +184,7 @@ export default function PartnerLandingPage() {
             <a href="/new-york/tribeca" className="block text-accent hover:text-fg transition-colors text-lg">Tribeca Daily Brief &rsaquo;</a>
             <a href="/london/mayfair" className="block text-accent hover:text-fg transition-colors text-lg">Mayfair Daily Brief &rsaquo;</a>
             <a href="/los-angeles/beverly-hills" className="block text-accent hover:text-fg transition-colors text-lg">Beverly Hills Daily Brief &rsaquo;</a>
-            <a href="/stockholm/ostermalm" className="block text-accent hover:text-fg transition-colors text-lg">Ostermalm Daily Brief &rsaquo;</a>
+            <a href="/stockholm/ostermalm" className="block text-accent hover:text-fg transition-colors text-lg">Östermalm Daily Brief &rsaquo;</a>
           </div>
         </div>
       </section>
