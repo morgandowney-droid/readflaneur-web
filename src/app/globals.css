@@ -1,48 +1,47 @@
 @import "tailwindcss";
 
 :root {
-  /* Claude Design System — dark default (warm charcoal "Ink") */
-  --background: #262624;
-  --foreground: #F5F1E8;
+  --background: #050505;
+  --foreground: #e5e5e5;
   --font-cormorant: 'Cormorant Garamond', serif;
-  --theme-canvas: #262624;
-  --theme-surface: #30302E;
-  --theme-elevated: #3A3A37;
-  --theme-fg: #F5F1E8;
-  --theme-fg-muted: #B8B3A5;
-  --theme-fg-subtle: #8A8678;
-  --theme-border: rgba(245, 241, 232, 0.08);
-  --theme-border-strong: rgba(245, 241, 232, 0.18);
-  --theme-hover: rgba(245, 241, 232, 0.05);
-  --theme-overlay: rgba(20, 20, 19, 0.8);
-  --theme-header-bg: rgba(38, 38, 36, 0.85);
-  --theme-modal-bg: rgba(48, 48, 46, 0.92);
-  --theme-selection-bg: #D97757;
-  --theme-selection-fg: #FAF9F5;
-  --theme-accent: #E8886A;
-  --theme-accent-muted: rgba(232, 136, 106, 0.6);
+  /* Theme tokens (dark default) */
+  --theme-canvas: #050505;
+  --theme-surface: #121212;
+  --theme-elevated: #1a1a1a;
+  --theme-fg: #e5e5e5;
+  --theme-fg-muted: #a3a3a3;
+  --theme-fg-subtle: #737373;
+  --theme-border: rgba(255,255,255,0.08);
+  --theme-border-strong: rgba(255,255,255,0.2);
+  --theme-hover: rgba(255,255,255,0.05);
+  --theme-overlay: rgba(0,0,0,0.8);
+  --theme-header-bg: rgba(0,0,0,0.8);
+  --theme-modal-bg: rgba(23,23,23,0.9);
+  --theme-selection-bg: #a89a85;
+  --theme-selection-fg: #ffffff;
+  --theme-accent: #c9b99a;
+  --theme-accent-muted: rgba(201, 185, 154, 0.6);
 }
 
 [data-theme="light"] {
-  /* Claude Design System — light mode (warm paper "Book") */
-  --background: #FAF9F5;
-  --foreground: #141413;
-  --theme-canvas: #FAF9F5;
-  --theme-surface: #F5F1E8;
-  --theme-elevated: #EFE9DC;
-  --theme-fg: #141413;
-  --theme-fg-muted: #5C5B57;
-  --theme-fg-subtle: #87857E;
-  --theme-border: rgba(20, 20, 19, 0.1);
-  --theme-border-strong: rgba(20, 20, 19, 0.18);
-  --theme-hover: rgba(20, 20, 19, 0.04);
-  --theme-overlay: rgba(20, 20, 19, 0.5);
-  --theme-header-bg: rgba(250, 249, 245, 0.85);
-  --theme-modal-bg: rgba(250, 249, 245, 0.94);
-  --theme-selection-bg: #D97757;
-  --theme-selection-fg: #FAF9F5;
-  --theme-accent: #CC785C;
-  --theme-accent-muted: rgba(204, 120, 92, 0.55);
+  --background: #fafaf9;
+  --foreground: #1c1917;
+  --theme-canvas: #fafaf9;
+  --theme-surface: #ffffff;
+  --theme-elevated: #f5f5f4;
+  --theme-fg: #1c1917;
+  --theme-fg-muted: #57534e;
+  --theme-fg-subtle: #78716c;
+  --theme-border: rgba(0,0,0,0.08);
+  --theme-border-strong: rgba(0,0,0,0.15);
+  --theme-hover: rgba(0,0,0,0.04);
+  --theme-overlay: rgba(0,0,0,0.5);
+  --theme-header-bg: rgba(255,255,255,0.85);
+  --theme-modal-bg: rgba(255,255,255,0.92);
+  --theme-selection-bg: #8a7a68;
+  --theme-selection-fg: #ffffff;
+  --theme-accent: #8a7a68;
+  --theme-accent-muted: rgba(138, 122, 104, 0.5);
 }
 
 @theme inline {
@@ -67,20 +66,6 @@
   --font-body-serif: var(--font-merriweather), Georgia, 'Times New Roman', serif;
   --font-mono: var(--font-geist-mono);
   --animate-fade-in: fadeIn 0.2s ease-out;
-
-  /* Remap Tailwind amber palette to Claude's clay/terracotta so legacy
-     amber-* utility classes inherit the Claude brand aesthetic. */
-  --color-amber-50:  #FBF3EE;
-  --color-amber-100: #F7E4D8;
-  --color-amber-200: #F1CBB5;
-  --color-amber-300: #EAAF8E;
-  --color-amber-400: #E09472;
-  --color-amber-500: #D97757;
-  --color-amber-600: #CC785C;
-  --color-amber-700: #A85E43;
-  --color-amber-800: #854932;
-  --color-amber-900: #623526;
-  --color-amber-950: #3B1F16;
 }
 
 body {
