@@ -225,9 +225,9 @@ function editDistance(a: string, b: string): number {
   return dp[m][n];
 }
 
-/** Check if query fuzzy-matches target (allows 1 edit for 4-5 char queries, 2 for 6+) */
+/** Check if query fuzzy-matches target (allows 1 edit for 3-5 char queries, 2 for 6+) */
 function fuzzyMatch(query: string, target: string): boolean {
-  if (query.length < 4) return false;
+  if (query.length < 3) return false;
   const maxDist = query.length >= 6 ? 2 : 1;
   // Check if any substring of target of similar length fuzzy-matches the query
   if (target.length < query.length) {
