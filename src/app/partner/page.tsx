@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { resolveSearchQuery } from '@/lib/search-aliases';
 
 interface Neighborhood {
   id: string;
@@ -118,15 +119,13 @@ function PartnerPageInner() {
     checkNeighborhood(n.id);
   };
 
-  // Filter neighborhoods
-  const filtered = search.trim()
-    ? neighborhoods.filter(
-        (n) =>
-          n.name.toLowerCase().includes(search.toLowerCase()) ||
-          n.city.toLowerCase().includes(search.toLowerCase()) ||
-          n.country.toLowerCase().includes(search.toLowerCase())
-      )
-    : neighborhoods;
+  // Filter neighborhoods with fuzzy matching
+  const filtered = useMemo(() => {
+    const q = search.trim();
+    if (!q || q.length < 2) return neighborhoods;
+    const results = resolveSearchQuery(q, neighborhoods);
+    return results.map(r => r.item);
+  }, [search, neighborhoods]);
 
   // Photo upload handler
   const handlePhotoUpload = async (file: File, callback: (url: string) => void) => {
