@@ -8,6 +8,7 @@ import { render } from '@react-email/components';
 import { sendEmail } from '@/lib/email';
 import { DailyBriefContent } from './types';
 import { DailyBriefTemplate } from './templates/DailyBriefTemplate';
+import { BrandedDailyBriefTemplate, AgentBranding } from './templates/BrandedDailyBriefTemplate';
 import { checkDailyEmailLimit } from './daily-email-limit';
 
 /**
@@ -148,6 +149,61 @@ export async function sendDailyBrief(
     return success;
   } catch (error) {
     console.error(`Failed to send daily brief to ${content.recipient.email}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Send a branded daily brief email to one agent partner's client.
+ * Uses BrandedDailyBriefTemplate with agent header, listing cards, branded footer.
+ * Does NOT modify the standard sendDailyBrief flow.
+ */
+export async function sendBrandedDailyBrief(
+  supabase: SupabaseClient,
+  content: DailyBriefContent,
+  agentBranding: AgentBranding,
+  neighborhoodSlug: string
+): Promise<boolean> {
+  try {
+    const limit = await checkDailyEmailLimit(supabase, content.recipient.id);
+    if (!limit.allowed) {
+      console.log(`Daily email limit reached for ${content.recipient.email} (${limit.count} sent today)`);
+      return false;
+    }
+
+    const html = await render(BrandedDailyBriefTemplate({ ...content, agentBranding }));
+    const subject = buildSubject(content);
+
+    // From: "[Agent Name]: [Neighborhood] Daily" <[neighborhood-slug]@readflaneur.com>
+    const neighborhoodName = content.primarySection?.neighborhoodName || '';
+    const fromAddress = `${agentBranding.agentName}: ${neighborhoodName} Daily <${neighborhoodSlug}@readflaneur.com>`;
+
+    const success = await sendEmail({
+      to: content.recipient.email,
+      subject,
+      html,
+      from: fromAddress,
+    });
+
+    if (success) {
+      const today = new Date().toISOString().split('T')[0];
+      await supabase.from('daily_brief_sends').insert({
+        recipient_id: content.recipient.id,
+        recipient_source: content.recipient.source,
+        email: content.recipient.email,
+        timezone: content.recipient.timezone,
+        primary_neighborhood_id: content.primarySection?.neighborhoodId || null,
+        neighborhood_count: 1,
+        story_count: content.primarySection?.stories.length || 0,
+        had_header_ad: false,
+        had_native_ad: false,
+        send_date: today,
+      });
+    }
+
+    return success;
+  } catch (error) {
+    console.error(`Failed to send branded brief to ${content.recipient.email}:`, error);
     return false;
   }
 }
