@@ -81,6 +81,57 @@ export async function POST(request: NextRequest) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
 
+      // ─── Partner subscription flow ───
+      if (session.metadata?.type === 'partner' && session.metadata?.agent_partner_id) {
+        const partnerId = session.metadata.agent_partner_id;
+        const subscriptionId = typeof session.subscription === 'string'
+          ? session.subscription
+          : (session.subscription as Stripe.Subscription)?.id;
+
+        const { error: partnerError } = await supabaseAdmin
+          .from('agent_partners')
+          .update({
+            status: 'active',
+            activated_at: new Date().toISOString(),
+            stripe_customer_id: typeof session.customer === 'string' ? session.customer : null,
+            stripe_subscription_id: subscriptionId || null,
+          })
+          .eq('id', partnerId);
+
+        if (partnerError) {
+          console.error(`Partner webhook: failed to activate ${partnerId}:`, partnerError);
+        } else {
+          console.log(`Partner ${partnerId} activated via Stripe subscription ${subscriptionId}`);
+
+          // Notify admin
+          const adminEmail = process.env.ADMIN_EMAIL;
+          if (adminEmail) {
+            const { data: partnerData } = await supabaseAdmin
+              .from('agent_partners')
+              .select('agent_name, agent_email, neighborhood_id')
+              .eq('id', partnerId)
+              .single();
+
+            if (partnerData) {
+              await sendEmail({
+                to: adminEmail,
+                subject: `New Agent Partner: ${partnerData.agent_name} - ${partnerData.neighborhood_id}`,
+                html: `
+                  <div style="font-family: system-ui, sans-serif; max-width: 600px;">
+                    <h2>New Agent Partner Activated</h2>
+                    <p><strong>Agent:</strong> ${partnerData.agent_name}</p>
+                    <p><strong>Email:</strong> ${partnerData.agent_email}</p>
+                    <p><strong>Neighborhood:</strong> ${partnerData.neighborhood_id}</p>
+                    <p><strong>Revenue:</strong> $999/month</p>
+                  </div>
+                `,
+              });
+            }
+          }
+        }
+        break;
+      }
+
       // ─── New booking flow (ad_ids or ad_id in metadata, no order_id) ───
       if ((session.metadata?.ad_ids || session.metadata?.ad_id) && !session.metadata?.order_id) {
         // Support multi-neighborhood: ad_ids is comma-separated, fall back to single ad_id
@@ -290,6 +341,61 @@ export async function POST(request: NextRequest) {
       }
 
       console.log(`Payment failed for intent ${paymentIntent.id}`);
+      break;
+    }
+
+    case 'customer.subscription.deleted': {
+      const subscription = event.data.object as Stripe.Subscription;
+
+      // Check if this is a partner subscription
+      const { data: partnerBySub } = await supabaseAdmin
+        .from('agent_partners')
+        .select('id')
+        .eq('stripe_subscription_id', subscription.id)
+        .single();
+
+      if (partnerBySub) {
+        await supabaseAdmin
+          .from('agent_partners')
+          .update({
+            status: 'cancelled',
+            cancelled_at: new Date().toISOString(),
+          })
+          .eq('id', partnerBySub.id);
+
+        console.log(`Partner ${partnerBySub.id} subscription cancelled`);
+      }
+      break;
+    }
+
+    case 'customer.subscription.updated': {
+      const updatedSub = event.data.object as Stripe.Subscription;
+
+      // Check if this is a partner subscription with payment failure
+      const { data: partnerByUpdatedSub } = await supabaseAdmin
+        .from('agent_partners')
+        .select('id')
+        .eq('stripe_subscription_id', updatedSub.id)
+        .single();
+
+      if (partnerByUpdatedSub) {
+        if (updatedSub.status === 'past_due' || updatedSub.status === 'unpaid') {
+          await supabaseAdmin
+            .from('agent_partners')
+            .update({ status: 'paused' })
+            .eq('id', partnerByUpdatedSub.id);
+
+          console.log(`Partner ${partnerByUpdatedSub.id} paused due to payment failure`);
+        } else if (updatedSub.status === 'active') {
+          // Payment recovered
+          await supabaseAdmin
+            .from('agent_partners')
+            .update({ status: 'active' })
+            .eq('id', partnerByUpdatedSub.id);
+
+          console.log(`Partner ${partnerByUpdatedSub.id} reactivated`);
+        }
+      }
       break;
     }
 
