@@ -33,7 +33,7 @@ export function WishlistDropdown({ className }: { className?: string }) {
         if (!Array.isArray(ids) || ids.length === 0) return;
 
         // Use public API (no auth required) to fetch neighborhood names
-        const res = await fetch(`/api/lists/details?ids=${ids.join(',')}`);
+        const res = await fetch(`/api/neighborhoods/details?ids=${ids.join(',')}`);
         if (res.ok) {
           const { items } = await res.json();
           if (items) {
