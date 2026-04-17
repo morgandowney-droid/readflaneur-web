@@ -148,8 +148,11 @@ function PartnerPageInner() {
     setShowListingForm(false);
   };
 
+  const MAX_CLIENT_EMAILS = 500;
+
   // Add single email
   const addEmail = () => {
+    if (clientEmails.length >= MAX_CLIENT_EMAILS) return;
     const trimmed = emailInput.trim().toLowerCase();
     if (trimmed && trimmed.includes('@') && !clientEmails.includes(trimmed)) {
       setClientEmails([...clientEmails, trimmed]);
@@ -163,7 +166,8 @@ function PartnerPageInner() {
       .split(/[\n,;]+/)
       .map((e) => e.trim().toLowerCase())
       .filter((e) => e.includes('@') && !clientEmails.includes(e));
-    setClientEmails([...clientEmails, ...newEmails]);
+    const remaining = MAX_CLIENT_EMAILS - clientEmails.length;
+    setClientEmails([...clientEmails, ...newEmails.slice(0, remaining)]);
     setBulkInput('');
     setBulkMode(false);
   };
@@ -601,7 +605,10 @@ function PartnerPageInner() {
         {currentStep === 4 && (
           <div>
             <h2 className="font-[family-name:var(--font-cormorant)] text-xl mb-2">Client Emails</h2>
-            <p className="text-fg-muted text-sm mb-4">Add the email addresses of clients who should receive your branded newsletter.</p>
+            <p className="text-fg-muted text-sm mb-4">Add the email addresses of clients who should receive your branded newsletter. You can add or remove emails anytime after setup.</p>
+            {clientEmails.length >= MAX_CLIENT_EMAILS && (
+              <p className="text-amber-400 text-sm mb-4">Maximum of {MAX_CLIENT_EMAILS} client emails reached. Contact us if you need more.</p>
+            )}
 
             {!bulkMode ? (
               <div className="flex gap-2 mb-4">

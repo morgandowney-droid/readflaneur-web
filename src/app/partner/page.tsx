@@ -101,7 +101,7 @@ export default function PartnerLandingPage() {
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-surface flex items-center justify-center text-fg-subtle font-semibold">4</div>
               <div>
                 <h3 className="text-fg font-semibold text-lg mb-1">We handle the rest</h3>
-                <p className="text-fg-muted leading-relaxed">Every morning at 7 AM, your clients receive a beautifully written daily brief about their neighborhood with your name, photo, and listings.</p>
+                <p className="text-fg-muted leading-relaxed">Every morning at 7 AM, your clients receive a beautifully written daily brief about their neighborhood with your name, photo, and listings. You can add or remove client emails, update your listings, and change your details anytime.</p>
               </div>
             </div>
           </div>
