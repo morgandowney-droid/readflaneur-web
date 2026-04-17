@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { resolveSearchQuery } from '@/lib/search-aliases';
 
 /**
  * @swagger
@@ -82,15 +83,13 @@ export async function GET(request: NextRequest) {
       .order('published_at', { ascending: false, nullsFirst: false })
       .limit(limit),
 
-    // Neighborhood search - match name or city
+    // Neighborhood search - fetch all active for fuzzy matching
     supabase
       .from('neighborhoods')
       .select('id, name, city, country, region, is_combo, is_community')
       .eq('is_active', true)
       .neq('region', 'test')
-      .or(`name.ilike.%${query}%,city.ilike.%${query}%`)
-      .order('name')
-      .limit(10),
+      .order('name'),
   ]);
 
   if (articlesResult.error) {
@@ -128,8 +127,11 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  // Transform neighborhood results
-  const neighborhoods = (neighborhoodsResult.data || []).map((n: any) => {
+  // Fuzzy neighborhood search using resolveSearchQuery (handles typos like "auk" -> "Auckland")
+  const allNeighborhoods = neighborhoodsResult.data || [];
+  const searchResults = resolveSearchQuery(query, allNeighborhoods);
+  const neighborhoods = searchResults.slice(0, 10).map((r) => {
+    const n = r.item;
     const citySlug = n.city.toLowerCase().replace(/\s+/g, '-');
     const neighborhoodSlug = n.id.split('-').slice(1).join('-');
     return {
