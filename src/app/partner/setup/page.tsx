@@ -290,10 +290,16 @@ function PartnerPageInner() {
           <p className="text-fg-muted mb-6">
             Your branded newsletter is now active. Your clients will receive their first edition tomorrow morning at 7 AM.
           </p>
-          <p className="text-fg-subtle text-sm">
+          <p className="text-fg-subtle text-sm mb-6">
             Share your subscribe link:{' '}
             <span className="text-accent font-medium">readflaneur.com/r/{partnerSlug || '...'}</span>
           </p>
+          <a
+            href="/partner/dashboard"
+            className="text-accent text-sm hover:underline"
+          >
+            Go to your dashboard
+          </a>
         </div>
       </div>
     );

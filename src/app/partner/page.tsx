@@ -24,6 +24,11 @@ export default function PartnerLandingPage() {
         >
           Get Started
         </Link>
+        <p className="text-fg-subtle text-sm mt-4">
+          <Link href="/partner/dashboard" className="text-accent hover:text-fg transition-colors">
+            Already a partner? Sign in
+          </Link>
+        </p>
       </section>
 
       {/* Stats */}
@@ -232,7 +237,12 @@ export default function PartnerLandingPage() {
         >
           Get Started
         </Link>
-        <p className="text-fg-subtle text-sm mt-6">
+        <p className="text-fg-subtle text-sm mt-4">
+          <Link href="/partner/dashboard" className="text-accent hover:text-fg transition-colors">
+            Already a partner? Sign in
+          </Link>
+        </p>
+        <p className="text-fg-subtle text-sm mt-4">
           Questions? <a href="mailto:morgan@readflaneur.com" className="text-accent hover:text-fg transition-colors">morgan@readflaneur.com</a>
         </p>
       </section>
