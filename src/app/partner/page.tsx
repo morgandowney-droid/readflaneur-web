@@ -189,6 +189,39 @@ export default function PartnerLandingPage() {
         </div>
       </section>
 
+      {/* Questions */}
+      <section className="border-t border-border py-16 md:py-20 px-6">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="font-display text-2xl md:text-3xl font-light text-fg mb-8">Questions You&apos;ll Ask</h2>
+
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-fg font-semibold text-lg mb-2">Can anyone read this content on your website?</h3>
+              <p className="text-fg-muted leading-relaxed">
+                Yes, the neighborhood content is publicly available on readflaneur.com. But that&apos;s not what you&apos;re paying for. Nobody bookmarks a website and checks it every morning. They do open an email from &ldquo;James Chen: Tribeca Daily&rdquo; at 7 AM over coffee. You&apos;re paying for daily delivery to your clients&apos; inboxes with your name, your photo, and your listings - 365 touchpoints a year that your competitor doesn&apos;t have.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-fg font-semibold text-lg mb-2">How large is the Flaneur team?</h3>
+              <p className="text-fg-muted leading-relaxed">
+                Flaneur is a technology company, not a newsroom. The platform generates editorial content for 266 neighborhoods in 42 countries simultaneously, every day, at 7 AM local time in each market. You&apos;re not licensing a team of writers. You&apos;re licensing a system that&apos;s already running, that doesn&apos;t miss a morning, and that scales to any neighborhood on earth within 24 hours.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-fg font-semibold text-lg mb-2">Could we build this ourselves?</h3>
+              <p className="text-fg-muted leading-relaxed">
+                You could. It involves sourcing local news from RSS feeds, social media, government databases, and event calendars for hundreds of neighborhoods daily. Enriching raw facts into editorial prose. Generating event listings with venue deduplication. Managing image libraries. Handling timezone-aware email delivery across 42 countries. Translation into 9 languages. Health monitoring and self-healing infrastructure. We&apos;ve been building this for over a year. You could start today and be operational in 12-18 months - or you could have it tomorrow.
+              </p>
+              <p className="text-fg-muted leading-relaxed mt-3">
+                Your business is selling real estate. Ours is producing neighborhood content.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="border-t border-border py-20 md:py-28 px-6 text-center">
         <h2 className="font-display text-2xl md:text-3xl font-light text-fg mb-4">Ready to get started?</h2>
