@@ -77,6 +77,9 @@ export async function POST(request: NextRequest) {
       agentPhotoUrl: undefined,
       listings: [],
       subscribeUrl: subscribeUrl || `${appUrl}/partner`,
+      // Signal to the template to render placeholder listing cards + photo/contact stubs
+      // so the prospective broker sees the full product surface before uploading assets.
+      isPitchPreview: true,
     };
 
     const html = await render(BrandedDailyBriefTemplate({ ...content, agentBranding }));

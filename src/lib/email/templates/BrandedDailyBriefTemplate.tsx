@@ -32,6 +32,10 @@ export interface AgentBranding {
     link_url?: string;
   }>;
   subscribeUrl: string;
+  // Pitch-preview mode: renders 3 placeholder listing cards and a placeholder
+  // photo/contact row so prospective brokers see the full product surface
+  // even before they've uploaded their own assets. NEVER true in production sends.
+  isPitchPreview?: boolean;
 }
 
 interface BrandedDailyBriefProps extends DailyBriefContent {
@@ -135,6 +139,41 @@ export function BrandedDailyBriefTemplate(content: BrandedDailyBriefProps) {
               ) : primary.stories.length > 0 ? (
                 <StoryList stories={primary.stories} variant="primary" />
               ) : null}
+
+              {/* Pitch-preview placeholder listings (shown only when isPitchPreview and no real listings) */}
+              {agentBranding.isPitchPreview && (!agentBranding.listings || agentBranding.listings.length === 0) && (
+                <Section>
+                  <Text style={placeholderHeader}>Your listings appear here</Text>
+                  {[0, 1, 2].map((i) => (
+                    <Section key={`ph-${i}`} style={placeholderCard}>
+                      <div style={placeholderImage}>
+                        <Text style={placeholderImageLabel}>Your listing photo</Text>
+                      </div>
+                      <Section style={listingBody}>
+                        {agentBranding.brokerageName && (
+                          <Text style={listingBrokerage}>{agentBranding.brokerageName}</Text>
+                        )}
+                        <Text style={placeholderAddress}>Your Östermalm listing address</Text>
+                        <Text style={placeholderPrice}>Your listing price</Text>
+                        <Text style={placeholderDetails}>X BD · X BA · X sqm</Text>
+                        <Text style={placeholderDescription}>A short description of the property appears here.</Text>
+                        <Section style={listingAgentRow}>
+                          <div style={placeholderPhoto}>
+                            <Text style={placeholderPhotoLabel}>Your photo</Text>
+                          </div>
+                          <div>
+                            <Text style={listingAgentName}>{agentBranding.agentName}</Text>
+                            <Text style={listingAgentMeta}>
+                              {[agentBranding.agentTitle || 'Your title', agentBranding.agentPhone || 'Your phone'].join(' · ')}
+                            </Text>
+                          </div>
+                        </Section>
+                      </Section>
+                    </Section>
+                  ))}
+                  <Text style={placeholderFootnote}>You can upload up to 3 listings during setup. They appear here, inline, like a section of the newsletter - never as a banner ad.</Text>
+                </Section>
+              )}
 
               {/* Agent Listing Cards (replaces NativeAd) */}
               {agentBranding.listings && agentBranding.listings.length > 0 && (
@@ -519,6 +558,108 @@ const listingAgentMeta = {
   color: '#999999',
   margin: '0',
   fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+// Pitch-preview placeholder styles (dashed borders, gray)
+const placeholderHeader = {
+  fontSize: '11px',
+  fontWeight: '600' as const,
+  letterSpacing: '0.15em',
+  textTransform: 'uppercase' as const,
+  color: '#b45309',
+  margin: '24px 0 12px',
+  textAlign: 'center' as const,
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const placeholderCard = {
+  border: '1.5px dashed #d4d4d4',
+  borderRadius: '4px',
+  marginBottom: '16px',
+  backgroundColor: '#fafafa',
+  overflow: 'hidden' as const,
+};
+
+const placeholderImage = {
+  width: '100%',
+  height: '180px',
+  backgroundColor: '#efefed',
+  display: 'flex',
+  alignItems: 'center' as const,
+  justifyContent: 'center' as const,
+  textAlign: 'center' as const,
+};
+
+const placeholderImageLabel = {
+  fontSize: '12px',
+  color: '#a3a3a3',
+  fontWeight: '500' as const,
+  letterSpacing: '0.05em',
+  textTransform: 'uppercase' as const,
+  margin: '70px 0',
+  textAlign: 'center' as const,
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const placeholderAddress = {
+  fontSize: '18px',
+  fontWeight: '600' as const,
+  color: '#a3a3a3',
+  margin: '8px 0 4px',
+  fontFamily: "'Playfair Display', Georgia, serif",
+};
+
+const placeholderPrice = {
+  fontSize: '16px',
+  fontWeight: '600' as const,
+  color: '#a3a3a3',
+  margin: '0 0 4px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const placeholderDetails = {
+  fontSize: '13px',
+  color: '#a3a3a3',
+  margin: '0 0 8px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const placeholderDescription = {
+  fontSize: '13px',
+  color: '#a3a3a3',
+  fontStyle: 'italic' as const,
+  margin: '0 0 12px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const placeholderPhoto = {
+  width: '44px',
+  height: '44px',
+  borderRadius: '50%',
+  backgroundColor: '#efefed',
+  border: '1.5px dashed #d4d4d4',
+  float: 'left' as const,
+  marginRight: '12px',
+  textAlign: 'center' as const,
+};
+
+const placeholderPhotoLabel = {
+  fontSize: '9px',
+  color: '#a3a3a3',
+  margin: '14px 0 0',
+  textAlign: 'center' as const,
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+};
+
+const placeholderFootnote = {
+  fontSize: '12px',
+  color: '#78716c',
+  fontStyle: 'italic' as const,
+  textAlign: 'center' as const,
+  margin: '8px 0 24px',
+  padding: '0 16px',
+  lineHeight: '1.5',
+  fontFamily: 'Georgia, serif',
 };
 
 // Footer styles
