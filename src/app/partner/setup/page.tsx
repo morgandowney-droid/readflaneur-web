@@ -114,18 +114,6 @@ function PartnerPageInner() {
     if (phone) setAgentPhone(phone);
   }, [searchParams]);
 
-  // Pre-select neighborhood from URL param once the list loads
-  useEffect(() => {
-    if (neighborhoods.length === 0 || selectedNeighborhood) return;
-    const neighborhoodParam = searchParams.get('neighborhood');
-    if (!neighborhoodParam) return;
-    const match = neighborhoods.find(n => n.id === neighborhoodParam);
-    if (match) {
-      setSelectedNeighborhood(match);
-      checkNeighborhood(match.id);
-    }
-  }, [neighborhoods, searchParams, selectedNeighborhood, checkNeighborhood]);
-
   // Check neighborhood availability
   const checkNeighborhood = useCallback(async (id: string) => {
     setCheckingNeighborhood(true);
@@ -138,6 +126,18 @@ function PartnerPageInner() {
     }
     setCheckingNeighborhood(false);
   }, []);
+
+  // Pre-select neighborhood from URL param once the list loads
+  useEffect(() => {
+    if (neighborhoods.length === 0 || selectedNeighborhood) return;
+    const neighborhoodParam = searchParams.get('neighborhood');
+    if (!neighborhoodParam) return;
+    const match = neighborhoods.find(n => n.id === neighborhoodParam);
+    if (match) {
+      setSelectedNeighborhood(match);
+      checkNeighborhood(match.id);
+    }
+  }, [neighborhoods, searchParams, selectedNeighborhood, checkNeighborhood]);
 
   const handleSelectNeighborhood = (n: Neighborhood) => {
     setSelectedNeighborhood(n);
