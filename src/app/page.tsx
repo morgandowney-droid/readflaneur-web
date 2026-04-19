@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { HeroStats } from '@/components/home/HeroStats';
 import { HomepageEnterButton } from '@/components/home/HomepageEnterButton';
@@ -53,6 +54,16 @@ export default async function HomePage() {
           {/* Enter button */}
           <div className="hero-fade-in-delay-4">
             <HomepageEnterButton />
+          </div>
+
+          {/* Broker/agent entry point */}
+          <div className="hero-fade-in-delay-4 mt-10">
+            <Link
+              href="/partner"
+              className="text-xs tracking-[0.25em] uppercase text-fg-subtle hover:text-fg transition-colors"
+            >
+              Real estate agents: partner with us →
+            </Link>
           </div>
         </div>
       </section>

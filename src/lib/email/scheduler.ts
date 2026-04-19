@@ -119,6 +119,8 @@ export async function resolveRecipients(
   }
 
   // 2. Fetch anonymous newsletter subscribers
+  // Exclude partner clients — they receive the branded Daily Brief via
+  // partner-scheduler and must not get the standard Daily Brief or Sunday Edition.
   const { data: subscriberRows } = await supabase
     .from('newsletter_subscribers')
     .select(`
@@ -134,7 +136,8 @@ export async function resolveRecipients(
     `)
     .eq('daily_email_enabled', true)
     .eq('email_verified', true)
-    .not('timezone', 'is', null);
+    .not('timezone', 'is', null)
+    .is('partner_agent_id', null);
 
   if (subscriberRows) {
     for (const sub of subscriberRows) {

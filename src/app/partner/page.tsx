@@ -117,15 +117,11 @@ export default function PartnerLandingPage() {
       <section className="border-t border-border py-16 md:py-20 px-6">
         <div className="max-w-2xl mx-auto">
           <h2 className="font-display text-2xl md:text-3xl font-light text-fg mb-3">What Your Clients Receive</h2>
-          <p className="text-fg-muted mb-8">7 emails per week, delivered at 7 AM in the neighborhood&apos;s local timezone.</p>
+          <p className="text-fg-muted mb-8">One email every day, delivered at 7 AM in the neighborhood&apos;s local timezone - 365 mornings a year.</p>
           <div className="space-y-6">
             <div>
-              <h3 className="text-fg font-semibold mb-1">Daily Brief <span className="text-fg-subtle font-normal text-sm">- Monday through Saturday, 7 AM</span></h3>
-              <p className="text-fg-muted leading-relaxed">A morning newsletter covering local news, restaurant openings and closings, market activity, and neighborhood developments. Includes a Look Ahead section with events, exhibitions, and happenings in the next seven days.</p>
-            </div>
-            <div>
-              <h3 className="text-fg font-semibold mb-1">Sunday Edition <span className="text-fg-subtle font-normal text-sm">- Every Sunday, 7 AM</span></h3>
-              <p className="text-fg-muted leading-relaxed">A weekend magazine-style email with long-form neighborhood commentary, a data point, cultural observations, and the week ahead.</p>
+              <h3 className="text-fg font-semibold mb-1">Daily Brief <span className="text-fg-subtle font-normal text-sm">- Every day, 7 AM local time</span></h3>
+              <p className="text-fg-muted leading-relaxed">A morning newsletter covering local news, restaurant openings and closings, market activity, and neighborhood developments. Includes a Look Ahead section with events, exhibitions, and happenings in the next seven days. Sent every day of the week, weekends included.</p>
             </div>
             <div>
               <h3 className="text-fg font-semibold mb-1">Your Property Listings <span className="text-fg-subtle font-normal text-sm">- in every email</span></h3>

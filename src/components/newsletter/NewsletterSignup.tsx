@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { track } from '@/lib/analytics';
 
 interface NewsletterSignupProps {
   variant?: 'hero' | 'inline' | 'inline-minimal' | 'sidebar' | 'footer';
@@ -23,14 +24,14 @@ export function NewsletterSignup({
   // Check if user has already subscribed or came from email
   useEffect(() => {
     const subscribed = localStorage.getItem(SUBSCRIBED_KEY);
-    if (subscribed === 'true') {
+    const fromEmail = searchParams.get('ref') === 'email';
+    if (subscribed === 'true' || fromEmail) {
       setIsSubscribed(true);
+      return;
     }
-    // Hide for visitors arriving from daily brief email
-    if (searchParams.get('ref') === 'email') {
-      setIsSubscribed(true);
-    }
-  }, [searchParams]);
+    // Fire view event only for users who will actually see the form.
+    track('newsletter_signup.view', { variant, neighborhoodName });
+  }, [searchParams, variant, neighborhoodName]);
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,6 +45,7 @@ export function NewsletterSignup({
 
     setStatus('loading');
     setErrorMessage('');
+    track('newsletter_signup.submit', { variant, neighborhoodName });
 
     try {
       // Get browser timezone for newsletter send time optimization
@@ -68,13 +70,25 @@ export function NewsletterSignup({
         setIsSubscribed(true);
         // Track whether magic link was sent for success message
         setMagicLinkSent(data.accountCreated === true);
+        track('newsletter_signup.success', {
+          variant,
+          neighborhoodName,
+          accountCreated: data.accountCreated === true,
+        });
       } else {
         setErrorMessage(data.error || 'Failed to subscribe');
         setStatus('error');
+        track('newsletter_signup.error', {
+          variant,
+          neighborhoodName,
+          reason: data.error || 'unknown',
+          status: response.status,
+        });
       }
     } catch {
       setErrorMessage('Something went wrong. Please try again.');
       setStatus('error');
+      track('newsletter_signup.error', { variant, neighborhoodName, reason: 'network' });
     }
   };
 

@@ -3,9 +3,13 @@
  * Resolves branded email recipients for active agent partners.
  * Runs alongside (not replacing) the standard scheduler.
  *
+ * Partner clients receive exactly ONE email: the branded Daily Brief, every day
+ * at 7 AM local including Sundays. They never receive the Sunday Edition.
+ * `resolveRecipients()` in scheduler.ts excludes subscribers with
+ * `partner_agent_id IS NOT NULL` so partner clients don't double up on the
+ * standard Daily Brief or Sunday Edition.
+ *
  * Standard Flaneur subscribers NEVER receive branded emails.
- * Only clients who subscribed through /r/[slug] or were added via client_emails get branded.
- * A client who is both a Flaneur subscriber AND an agent's client gets TWO emails (by design).
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';

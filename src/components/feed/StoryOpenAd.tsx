@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Ad } from '@/types';
+import { track } from '@/lib/analytics';
 
 interface StoryOpenAdProps {
   ad: Ad;
@@ -11,6 +12,7 @@ interface StoryOpenAdProps {
 
 export function StoryOpenAd({ ad, position }: StoryOpenAdProps) {
   const hasTrackedImpression = useRef(false);
+  const surface = `story_open_${position}`;
 
   useEffect(() => {
     // Track impression once when ad is viewed
@@ -19,10 +21,22 @@ export function StoryOpenAd({ ad, position }: StoryOpenAdProps) {
       fetch(`/api/ads/${ad.id}/impression`, { method: 'POST' }).catch(() => {
         // Ignore tracking errors
       });
+      track('ad.impression', {
+        ad_type: 'paid',
+        ad_id: ad.id,
+        surface,
+        placement: 'story_open',
+      });
     }
-  }, [ad.id]);
+  }, [ad.id, surface]);
 
   const handleClick = async () => {
+    track('ad.click', {
+      ad_type: 'paid',
+      ad_id: ad.id,
+      surface,
+      placement: 'story_open',
+    });
     // Track click
     try {
       await fetch(`/api/ads/${ad.id}/click`, { method: 'POST' });

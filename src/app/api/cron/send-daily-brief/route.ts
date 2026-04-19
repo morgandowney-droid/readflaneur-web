@@ -35,7 +35,7 @@ function sleep(ms: number) {
  * @swagger
  * /api/cron/send-daily-brief:
  *   get:
- *     summary: Send Daily Brief emails at 7 AM local per recipient (skips Sundays)
+ *     summary: Send Daily Brief emails at 7 AM local per recipient. Standard sends skip Sundays (Sunday Edition replaces them); branded partner sends run all 7 days.
  *     tags: [Cron]
  *     security:
  *       - cronSecret: []
@@ -95,17 +95,13 @@ export async function GET(request: Request) {
     preview: null as any,
   };
 
-  try {
-    // Skip Sundays - the Sunday Edition replaces the Daily Brief
-    // (unless test/force mode)
-    if (!testEmail && !forceRun && new Date().getUTCDay() === 0) {
-      await logCronExecution(supabase, { ...results, emails_skipped: 0 });
-      return NextResponse.json({
-        ...results,
-        message: 'Sunday - skipping Daily Brief (Sunday Edition sends instead)',
-      });
-    }
+  // On Sundays the Sunday Edition replaces the standard Daily Brief,
+  // but branded partner sends run 7 days a week — partner clients only ever
+  // receive the branded Daily Brief, never the Sunday Edition.
+  const isSunday = new Date().getUTCDay() === 0;
+  const skipStandard = isSunday && !testEmail && !forceRun;
 
+  try {
     // Test mode: send to a specific email address
     if (testEmail) {
       const recipient = await buildTestRecipient(supabase, testEmail, forceRun);
@@ -149,44 +145,41 @@ export async function GET(request: Request) {
       return NextResponse.json(results);
     }
 
-    // Normal mode: resolve recipients by timezone
-    const recipients = await resolveRecipients(supabase, 7);
-    results.recipients_found = recipients.length;
+    // Normal mode: resolve standard recipients by timezone.
+    // On Sundays we skip standard sends (Sunday Edition replaces them) but
+    // still fall through to the branded partner block below.
+    if (!skipStandard) {
+      const recipients = await resolveRecipients(supabase, 7);
+      results.recipients_found = recipients.length;
 
-    if (recipients.length === 0) {
-      // Log cron execution even when no recipients
-      await logCronExecution(supabase, results);
-      return NextResponse.json(results);
-    }
+      const batch = recipients.slice(0, MAX_EMAILS_PER_RUN);
+      if (recipients.length > MAX_EMAILS_PER_RUN) {
+        results.emails_skipped = recipients.length - MAX_EMAILS_PER_RUN;
+      }
 
-    // Process recipients sequentially with rate limiting
-    const batch = recipients.slice(0, MAX_EMAILS_PER_RUN);
-    if (recipients.length > MAX_EMAILS_PER_RUN) {
-      results.emails_skipped = recipients.length - MAX_EMAILS_PER_RUN;
-    }
+      for (const recipient of batch) {
+        try {
+          const content = await assembleDailyBrief(supabase, recipient);
 
-    for (const recipient of batch) {
-      try {
-        const content = await assembleDailyBrief(supabase, recipient);
+          if (dryRun) {
+            results.emails_sent++;
+            continue;
+          }
 
-        if (dryRun) {
-          results.emails_sent++;
-          continue;
-        }
+          const sent = await sendDailyBrief(supabase, content);
+          if (sent) {
+            results.emails_sent++;
+          } else {
+            results.emails_failed++;
+            results.errors.push(`Failed: ${recipient.email}`);
+          }
 
-        const sent = await sendDailyBrief(supabase, content);
-        if (sent) {
-          results.emails_sent++;
-        } else {
+          // Rate limit delay
+          await sleep(DELAY_BETWEEN_SENDS_MS);
+        } catch (error) {
           results.emails_failed++;
-          results.errors.push(`Failed: ${recipient.email}`);
+          results.errors.push(`Error for ${recipient.email}: ${(error as Error).message}`);
         }
-
-        // Rate limit delay
-        await sleep(DELAY_BETWEEN_SENDS_MS);
-      } catch (error) {
-        results.emails_failed++;
-        results.errors.push(`Error for ${recipient.email}: ${(error as Error).message}`);
       }
     }
 

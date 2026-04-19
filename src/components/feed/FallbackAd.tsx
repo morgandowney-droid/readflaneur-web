@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { NeighborhoodSuggestionForm } from '@/components/NeighborhoodSuggestionForm';
 import { useNeighborhoodModal } from '@/components/neighborhoods/NeighborhoodSelectorModal';
 import { useTranslation } from '@/hooks/useTranslation';
+import { track } from '@/lib/analytics';
 
 // Serializable fallback data passed from server components
 export interface FallbackData {
@@ -64,7 +65,28 @@ function DefaultFallback({ variant }: { variant: 'card' | 'story_open' }) {
 // ─── Bonus Ad Display (mirrors StoryOpenAd visual style) ───
 
 function BonusAdDisplay({ ad, variant }: { ad: NonNullable<FallbackData['bonusAd']>; variant: 'card' | 'story_open' }) {
+  const hasTrackedImpression = useRef(false);
+  const surface = variant === 'story_open' ? 'story_open_bottom' : 'feed_inline';
+
+  useEffect(() => {
+    if (!hasTrackedImpression.current) {
+      hasTrackedImpression.current = true;
+      track('ad.impression', {
+        ad_type: 'bonus',
+        ad_id: ad.id,
+        surface,
+        variant,
+      });
+    }
+  }, [ad.id, surface, variant]);
+
   const handleClick = () => {
+    track('ad.click', {
+      ad_type: 'bonus',
+      ad_id: ad.id,
+      surface,
+      variant,
+    });
     window.open(ad.click_url, '_blank', 'noopener,noreferrer');
   };
 
@@ -136,6 +158,18 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
   const [showSuggestionForm, setShowSuggestionForm] = useState(false);
   const { openModal } = useNeighborhoodModal();
   const { t } = useTranslation();
+  const hasTrackedImpression = useRef(false);
+  const surface = variant === 'story_open' ? 'story_open_bottom' : 'feed_inline';
+
+  const trackAdClick = () => {
+    track('ad.click', {
+      ad_type: 'house',
+      ad_id: houseAd.id,
+      house_ad_type: houseAd.type,
+      surface,
+      variant,
+    });
+  };
   const [hasCommunityNeighborhood] = useState(() => {
     if (typeof window === 'undefined') return false;
     try {
@@ -165,6 +199,20 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
   const headline = t(headlineKey) !== headlineKey ? t(headlineKey) : houseAd.headline;
   const body = t(bodyKey) !== bodyKey ? t(bodyKey) : houseAd.body;
   const cta = t(ctaKey) !== ctaKey ? t(ctaKey) : 'Learn More';
+
+  // Track impression once on mount (runs before any branch early-return so dismissed/hidden ads still count as rendered if they reach this point).
+  useEffect(() => {
+    if (!hasTrackedImpression.current) {
+      hasTrackedImpression.current = true;
+      track('ad.impression', {
+        ad_type: 'house',
+        ad_id: houseAd.id,
+        house_ad_type: houseAd.type,
+        surface,
+        variant,
+      });
+    }
+  }, [houseAd.id, houseAd.type, surface, variant]);
 
   // For app_download house ads, resolve a dynamic discovery URL
   useEffect(() => {
@@ -210,7 +258,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
             </div>
             {!showSuggestionForm && (
               <button
-                onClick={() => setShowSuggestionForm(true)}
+                onClick={() => { trackAdClick(); setShowSuggestionForm(true); }}
                 className="inline-block bg-fg text-canvas px-6 py-2 text-sm tracking-widest uppercase hover:opacity-80 transition-colors whitespace-nowrap rounded-lg"
               >
                 {cta}
@@ -238,7 +286,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
             <NeighborhoodSuggestionForm variant="compact" />
           ) : (
             <button
-              onClick={() => setShowSuggestionForm(true)}
+              onClick={() => { trackAdClick(); setShowSuggestionForm(true); }}
               className="inline-block bg-fg text-canvas px-4 py-2 text-xs tracking-widest uppercase hover:opacity-80 transition-colors rounded-lg"
             >
               {cta}
@@ -268,7 +316,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
               )}
             </div>
             <button
-              onClick={() => openModal('community')}
+              onClick={() => { trackAdClick(); openModal('community'); }}
               className="inline-block bg-fg text-canvas px-6 py-2 text-sm tracking-widest uppercase hover:opacity-80 transition-colors whitespace-nowrap rounded-lg"
             >
               {cta}
@@ -292,7 +340,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
             <p className="text-xs text-fg-muted mb-3">{body}</p>
           )}
           <button
-            onClick={() => openModal('community')}
+            onClick={() => { trackAdClick(); openModal('community'); }}
             className="inline-block bg-fg text-canvas px-4 py-2 text-xs tracking-widest uppercase hover:opacity-80 transition-colors rounded-lg"
           >
             {cta}
@@ -332,6 +380,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
             </div>
             <a
               href="/account"
+              onClick={trackAdClick}
               className="inline-block bg-fg text-canvas px-6 py-2 text-sm tracking-widest uppercase hover:opacity-80 transition-colors whitespace-nowrap text-center rounded-lg"
             >
               {cta}
@@ -359,6 +408,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
           {body && <p className="text-xs text-fg-muted mb-3">{body}</p>}
           <a
             href="/account"
+            onClick={trackAdClick}
             className="inline-block bg-fg text-canvas px-4 py-2 text-xs tracking-widest uppercase hover:opacity-80 transition-colors rounded-lg"
           >
             {cta}
@@ -375,6 +425,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
     return (
       <a
         href={clickUrl}
+        onClick={trackAdClick}
         className="block border border-border bg-surface p-6 hover:border-border-strong transition-colors rounded-sm"
       >
         <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -399,6 +450,7 @@ function HouseAdDisplay({ houseAd, variant }: { houseAd: NonNullable<FallbackDat
   return (
     <a
       href={clickUrl}
+      onClick={trackAdClick}
       className="block border border-border bg-surface hover:border-border-strong transition-colors rounded-sm"
     >
       <div className="px-3 py-2 border-b border-border">
@@ -564,10 +616,37 @@ function NewsletterSignup({ variant }: { variant: 'card' | 'story_open' }) {
 // ─── Static House Ad (existing, for default fallback) ───
 
 function StaticHouseAd({ variant }: { variant: 'card' | 'story_open' }) {
+  const hasTrackedImpression = useRef(false);
+  const surface = variant === 'story_open' ? 'story_open_bottom' : 'feed_inline';
+
+  useEffect(() => {
+    if (!hasTrackedImpression.current) {
+      hasTrackedImpression.current = true;
+      track('ad.impression', {
+        ad_type: 'house',
+        ad_id: 'static_advertise',
+        house_ad_type: 'advertise_static',
+        surface,
+        variant,
+      });
+    }
+  }, [surface, variant]);
+
+  const onAdvertiseClick = () => {
+    track('ad.click', {
+      ad_type: 'house',
+      ad_id: 'static_advertise',
+      house_ad_type: 'advertise_static',
+      surface,
+      variant,
+    });
+  };
+
   if (variant === 'story_open') {
     return (
       <a
         href="/advertise"
+        onClick={onAdvertiseClick}
         className="block border border-border bg-surface p-6 hover:border-border-strong transition-colors rounded-sm"
       >
         <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -594,6 +673,7 @@ function StaticHouseAd({ variant }: { variant: 'card' | 'story_open' }) {
   return (
     <a
       href="/advertise"
+      onClick={onAdvertiseClick}
       className="block border border-border bg-surface hover:border-border-strong transition-colors rounded-sm"
     >
       <div className="px-3 py-2 border-b border-border">

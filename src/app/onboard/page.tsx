@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { syncNeighborhoodCookie } from '@/lib/neighborhood-cookie';
 import { createClient } from '@/lib/supabase/client';
+import { track } from '@/lib/analytics';
 
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
 
@@ -38,6 +39,7 @@ export default function OnboardPage() {
         return;
       }
     } catch { /* ignore */ }
+    track('onboard.step1.view');
   }, [router]);
 
   // Fetch neighborhoods
@@ -84,13 +86,16 @@ export default function OnboardPage() {
 
   const handleContinueToEmail = () => {
     if (selected.size === 0) return;
+    track('onboard.step1.continue', { neighborhoodCount: selected.size });
     setStep(2);
+    track('onboard.step2.view', { neighborhoodCount: selected.size });
     setTimeout(() => emailRef.current?.focus(), 100);
   };
 
   const handleSubmit = async () => {
     if (!email.includes('@') || selected.size === 0) return;
     setSubmitting(true);
+    track('onboard.step2.submit', { neighborhoodCount: selected.size });
 
     const ids = Array.from(selected);
 
@@ -101,12 +106,20 @@ export default function OnboardPage() {
     // Subscribe to newsletter (fire-and-forget validation)
     try {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      await fetch('/api/newsletter/subscribe', {
+      const res = await fetch('/api/newsletter/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, neighborhoodIds: ids, timezone: tz }),
       });
-    } catch { /* continue anyway */ }
+      if (res.ok) {
+        track('onboard.step2.success', { neighborhoodCount: ids.length });
+      } else {
+        track('onboard.step2.error', { neighborhoodCount: ids.length, status: res.status });
+      }
+    } catch {
+      track('onboard.step2.error', { neighborhoodCount: ids.length, reason: 'network' });
+      /* continue anyway */
+    }
 
     // Mark as subscribed
     localStorage.setItem('flaneur-newsletter-subscribed', 'true');
@@ -292,6 +305,7 @@ export default function OnboardPage() {
                   onClick={async () => {
                     // Save neighborhoods before OAuth redirect
                     const ids = Array.from(selected);
+                    track('onboard.step2.google_click', { neighborhoodCount: ids.length });
                     localStorage.setItem(PREFS_KEY, JSON.stringify(ids));
                     syncNeighborhoodCookie();
                     localStorage.setItem('flaneur-onboarded', 'true');

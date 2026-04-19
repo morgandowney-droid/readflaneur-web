@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { track } from '@/lib/analytics';
 
 const READS_KEY = 'flaneur-article-reads';
 const SUBSCRIBED_KEY = 'flaneur-newsletter-subscribed';
@@ -28,14 +29,16 @@ export function EmailCaptureCard({ neighborhoodName }: EmailCaptureCardProps) {
       const reads = parseInt(localStorage.getItem(READS_KEY) || '0', 10);
       if (!subscribed && !dismissed && !loggedIn && reads >= READ_THRESHOLD) {
         setVisible(true);
+        track('email_capture.view', { neighborhoodName, reads });
       }
     } catch {
       // localStorage not available
     }
-  }, []);
+  }, [neighborhoodName]);
 
   const handleDismiss = () => {
     setVisible(false);
+    track('email_capture.dismiss', { neighborhoodName });
     try {
       localStorage.setItem(DISMISSED_KEY, 'true');
     } catch {
@@ -53,6 +56,7 @@ export function EmailCaptureCard({ neighborhoodName }: EmailCaptureCardProps) {
 
     setStatus('loading');
     setErrorMessage('');
+    track('email_capture.submit', { neighborhoodName });
 
     try {
       let timezone: string | undefined;
@@ -84,13 +88,24 @@ export function EmailCaptureCard({ neighborhoodName }: EmailCaptureCardProps) {
         } catch {
           // ignore
         }
+        track('email_capture.success', {
+          neighborhoodName,
+          neighborhoodCount: neighborhoodIds.length,
+          accountCreated: data.accountCreated === true,
+        });
       } else {
         setErrorMessage(data.error || 'Failed to subscribe');
         setStatus('error');
+        track('email_capture.error', {
+          neighborhoodName,
+          reason: data.error || 'unknown',
+          status: response.status,
+        });
       }
     } catch {
       setErrorMessage('Something went wrong. Please try again.');
       setStatus('error');
+      track('email_capture.error', { neighborhoodName, reason: 'network' });
     }
   };
 

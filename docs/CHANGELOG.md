@@ -3,6 +3,27 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-04-19
+
+**Simplify partner client offering - branded Daily Brief only, 7 days a week, no Sunday Edition:**
+- Partner clients (added via `/r/[slug]` or agent's `client_emails`) now receive exactly one email: the branded Daily Brief, every day at 7 AM local time, including Sundays. They no longer receive the Sunday Edition.
+- `resolveRecipients()` in `src/lib/email/scheduler.ts` added `.is('partner_agent_id', null)` filter on the `newsletter_subscribers` query. Since both the standard Daily Brief and Sunday Edition use this function, one change prevents partner clients from receiving either.
+- `src/app/api/cron/send-daily-brief/route.ts` replaced the blanket Sunday early-return with a `skipStandard` flag. Standard sends still skip Sundays (Sunday Edition replaces them for non-partner subscribers), but the branded partner block now runs every day of the week.
+- Updated `partner-scheduler.ts` header comment: removed the old "client who is both gets TWO emails (by design)" note - partner clients are now fully isolated from the standard email pipeline.
+- Updated `/partner` landing page "What Your Clients Receive" section: intro line changed from "7 emails per week" to "One email every day, delivered at 7 AM in the neighborhood's local timezone - 365 mornings a year"; Daily Brief cadence label changed from "Monday through Saturday, 7 AM" to "Every day, 7 AM local time"; removed the Sunday Edition block entirely.
+- Updated CLAUDE.md Agent Partner System section with new cadence + isolation rules.
+
+**Add broker discovery link to homepage hero:**
+- Small uppercase muted "Real estate agents: partner with us →" link below the "Read Stories" button on `readflaneur.com`. Uses `text-fg-subtle` so it doesn't compete with the consumer CTA, fades in with `hero-fade-in-delay-4`. Routes to `/partner`.
+- Brokers now have three discovery paths: this hero link, the existing footer "Partner" link, and direct URL.
+
+**Analytics instrumentation for email capture, onboarding, and ad surfaces:**
+- Added `src/lib/analytics.ts` - lightweight client-side `track(event, properties)` that POSTs to `/api/analytics/track` with `keepalive: true`. Writes to `analytics_events` table (migration `20260411_analytics_events.sql`) with `anonymous_id` from localStorage, `path`, referrer, and user agent captured server-side.
+- `/api/analytics/track` validates event names against a hardcoded `ALLOWED_EVENTS` allowlist and uses `supabaseAdmin` for insert (table is RLS service-role-only).
+- Instrumented surfaces: `NewsletterSignup` (view/submit/success/error), `EmailCaptureCard` (view/dismiss/submit/success/error), `/onboard` page (step1.view, step1.continue, step2.view, step2.google_click, step2.submit, step2.success, step2.error), `AdCard` (ad.impression/click for paid ads), `StoryOpenAd` (ad.impression/click for paid story-open ads), `FallbackAd` BonusAdDisplay/HouseAdDisplay/StaticHouseAd (ad.impression/click with `ad_type: paid|house|bonus` discriminator, `surface`, `variant`, `house_ad_type` props).
+- Events carry normalized property shapes: ad events include `{ ad_type, ad_id, surface, variant, house_ad_type? }`; funnel events include variant/neighborhood context.
+- Queryable via SQL: `SELECT event, COUNT(*) FROM analytics_events WHERE created_at > NOW() - INTERVAL '7 days' GROUP BY event ORDER BY 2 DESC;`
+
 ## 2026-04-03
 
 **Rename "Destinations" to "Neighborhoods" across all UI:**

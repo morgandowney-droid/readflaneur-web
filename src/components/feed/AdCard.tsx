@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Ad } from '@/types';
 import { cn } from '@/lib/utils';
+import { track } from '@/lib/analytics';
 
 interface AdCardProps {
   ad: Ad;
@@ -20,10 +21,22 @@ export function AdCard({ ad, variant = 'gallery' }: AdCardProps) {
       fetch(`/api/ads/${ad.id}/impression`, { method: 'POST' }).catch(() => {
         // Ignore tracking errors
       });
+      track('ad.impression', {
+        ad_type: 'paid',
+        ad_id: ad.id,
+        surface: 'feed_inline',
+        variant,
+      });
     }
-  }, [ad.id]);
+  }, [ad.id, variant]);
 
   const handleClick = async () => {
+    track('ad.click', {
+      ad_type: 'paid',
+      ad_id: ad.id,
+      surface: 'feed_inline',
+      variant,
+    });
     // Track click
     try {
       await fetch(`/api/ads/${ad.id}/click`, { method: 'POST' });
