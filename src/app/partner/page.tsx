@@ -169,12 +169,12 @@ export default function PartnerLandingPage() {
           </div>
 
           <div className="mt-8 border border-border rounded-lg p-8 bg-surface">
-            <h3 className="text-fg font-semibold mb-3">For context: a top agent in Tribeca</h3>
+            <h3 className="text-fg font-semibold mb-3">For context</h3>
             <p className="text-fg-muted leading-relaxed">
-              Average sale: $3-5M. Commission on one deal: $90-150K. Marketing budget: $100-300K/year. A single magazine ad costs $5-20K and runs once.
+              A single print ad in a luxury magazine costs $5-20K and runs once. A social media agency retainer runs $2-5K per month. A direct mail campaign costs $1-3K per drop.
             </p>
             <p className="text-fg-muted leading-relaxed mt-3">
-              <strong className="text-fg">$15,000/year gets you:</strong> 365 daily touchpoints with every past client. Less than one magazine ad. Less than two months of a social media agency. And your competitor can&apos;t have it.
+              <strong className="text-fg">This gets you:</strong> 365 daily touchpoints with every past client - for less than a single print ad. And your competitor can&apos;t have it.
             </p>
           </div>
         </div>
