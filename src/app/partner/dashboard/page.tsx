@@ -30,6 +30,7 @@ interface PartnerData {
   status: string;
   activated_at: string | null;
   created_at: string;
+  stripe_customer_id: string | null;
   neighborhood: {
     id: string;
     name: string;
@@ -346,7 +347,56 @@ function OverviewSection({
           <p className="text-xs tracking-wide uppercase text-fg-subtle mt-1">Days Active</p>
         </div>
       </div>
+
+      {/* Manage billing */}
+      {partner.stripe_customer_id && (
+        <ManageBillingButton />
+      )}
     </section>
+  );
+}
+
+// ─── Manage billing button ─────────────────────────────────────────────────
+
+function ManageBillingButton() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const openPortal = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/partner/billing-portal', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(data.error || 'Could not open billing portal');
+        setLoading(false);
+      }
+    } catch {
+      setError('Network error');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-5 pt-5 border-t border-border">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-fg">Billing &amp; subscription</p>
+          <p className="text-xs text-fg-subtle mt-0.5">Update payment method, view invoices, or cancel anytime.</p>
+        </div>
+        <button
+          onClick={openPortal}
+          disabled={loading}
+          className="text-sm px-4 py-2 border border-border rounded-lg text-fg hover:bg-canvas transition-colors disabled:opacity-50"
+        >
+          {loading ? 'Opening...' : 'Manage Billing'}
+        </button>
+      </div>
+      {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
+    </div>
   );
 }
 
