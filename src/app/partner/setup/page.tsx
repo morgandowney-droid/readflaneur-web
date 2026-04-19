@@ -114,18 +114,27 @@ function PartnerPageInner() {
     if (phone) setAgentPhone(phone);
   }, [searchParams]);
 
-  // Check neighborhood availability
+  // Check neighborhood availability. Pass the viewer's email (from current
+  // form state OR localStorage from a previous session) so they can resume
+  // their own abandoned setup without seeing "This neighborhood is taken".
   const checkNeighborhood = useCallback(async (id: string) => {
     setCheckingNeighborhood(true);
     try {
-      const res = await fetch(`/api/partner/check-neighborhood?id=${id}`);
+      let rememberedEmail = '';
+      try {
+        rememberedEmail = localStorage.getItem('flaneur-partner-email') || '';
+      } catch { /* ignore */ }
+      const emailToSend = agentEmail || rememberedEmail;
+      const qs = new URLSearchParams({ id });
+      if (emailToSend) qs.set('email', emailToSend);
+      const res = await fetch(`/api/partner/check-neighborhood?${qs.toString()}`);
       const data = await res.json();
       setNeighborhoodAvailable(data.available);
     } catch {
       setNeighborhoodAvailable(null);
     }
     setCheckingNeighborhood(false);
-  }, []);
+  }, [agentEmail]);
 
   // Pre-select neighborhood from URL param once the list loads
   useEffect(() => {
@@ -144,6 +153,18 @@ function PartnerPageInner() {
     setNeighborhoodAvailable(null);
     checkNeighborhood(n.id);
   };
+
+  // Re-check availability whenever the broker's email changes and a neighborhood
+  // is already selected but flagged taken. The server uses the email to treat
+  // the viewer as the row's owner, so typing in the email can unlock a "taken"
+  // state that was actually THIS broker's own abandoned setup.
+  useEffect(() => {
+    if (!selectedNeighborhood) return;
+    if (!agentEmail || !agentEmail.includes('@')) return;
+    if (neighborhoodAvailable === true) return;
+    checkNeighborhood(selectedNeighborhood.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agentEmail, selectedNeighborhood]);
 
   // Filter neighborhoods with fuzzy matching
   const filtered = useMemo(() => {
@@ -228,6 +249,13 @@ function PartnerPageInner() {
       const p = data.partner as PartnerRecord;
       setPartnerId(p.id);
       setPartnerSlug(p.agent_slug);
+      // Remember who this broker is so a future visit (or a back-click mid-checkout)
+      // recognises them as the owner of the pending setup, not a new broker hitting
+      // a "This neighborhood is taken" wall.
+      try {
+        localStorage.setItem('flaneur-partner-email', agentEmail.toLowerCase().trim());
+        localStorage.setItem('flaneur-partner-id', p.id);
+      } catch { /* ignore */ }
       setSaving(false);
       return p;
     } catch {
