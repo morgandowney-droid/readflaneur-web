@@ -47,8 +47,8 @@ export default function PartnerLandingPage() {
             <p className="text-xs tracking-[0.12em] uppercase text-fg-subtle mt-2">Countries</p>
           </div>
           <div>
-            <p className="font-display text-4xl md:text-5xl font-bold text-fg">24h</p>
-            <p className="text-xs tracking-[0.12em] uppercase text-fg-subtle mt-2">To Add Any Market</p>
+            <p className="font-display text-4xl md:text-5xl font-bold text-fg">Local</p>
+            <p className="text-xs tracking-[0.12em] uppercase text-fg-subtle mt-2">Your Neighborhood Daily</p>
           </div>
         </div>
       </section>
@@ -85,7 +85,7 @@ export default function PartnerLandingPage() {
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-surface flex items-center justify-center text-fg-subtle font-semibold">1</div>
               <div>
                 <h3 className="text-fg font-semibold text-lg mb-1">Choose your neighborhood</h3>
-                <p className="text-fg-muted leading-relaxed">Pick the neighborhood you work in. It becomes exclusively yours - no other agent from any brokerage can brand it.</p>
+                <p className="text-fg-muted leading-relaxed">Pick the neighborhood you work in. It becomes exclusively yours - no other agent from any brokerage can brand it. If your neighborhood isn&apos;t listed, we can add it within 24 hours.</p>
               </div>
             </div>
             <div className="flex gap-5">
@@ -98,8 +98,8 @@ export default function PartnerLandingPage() {
             <div className="flex gap-5">
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-surface flex items-center justify-center text-fg-subtle font-semibold">3</div>
               <div>
-                <h3 className="text-fg font-semibold text-lg mb-1">Share your subscribe link</h3>
-                <p className="text-fg-muted leading-relaxed">You get a unique link to share with clients. They enter their email and start receiving your branded daily newsletter the next morning.</p>
+                <h3 className="text-fg font-semibold text-lg mb-1">Add your clients</h3>
+                <p className="text-fg-muted leading-relaxed">Enter client email addresses directly, or share your unique subscribe link and let them sign up themselves. Either way, they start receiving your branded newsletter the next morning.</p>
               </div>
             </div>
             <div className="flex gap-5">
@@ -116,23 +116,20 @@ export default function PartnerLandingPage() {
       {/* What Clients Receive */}
       <section className="border-t border-border py-16 md:py-20 px-6">
         <div className="max-w-2xl mx-auto">
-          <h2 className="font-display text-2xl md:text-3xl font-light text-fg mb-8">What Your Clients Receive</h2>
+          <h2 className="font-display text-2xl md:text-3xl font-light text-fg mb-3">What Your Clients Receive</h2>
+          <p className="text-fg-muted mb-8">7 emails per week, delivered at 7 AM in the neighborhood&apos;s local timezone.</p>
           <div className="space-y-6">
             <div>
-              <h3 className="text-fg font-semibold mb-1">Daily Brief</h3>
-              <p className="text-fg-muted leading-relaxed">A morning newsletter covering local news, openings, closings, market activity, and neighborhood developments.</p>
+              <h3 className="text-fg font-semibold mb-1">Daily Brief <span className="text-fg-subtle font-normal text-sm">- Monday through Saturday, 7 AM</span></h3>
+              <p className="text-fg-muted leading-relaxed">A morning newsletter covering local news, restaurant openings and closings, market activity, and neighborhood developments. Includes a Look Ahead section with events, exhibitions, and happenings in the next seven days.</p>
             </div>
             <div>
-              <h3 className="text-fg font-semibold mb-1">Look Ahead</h3>
-              <p className="text-fg-muted leading-relaxed">A forward-looking guide to events, exhibitions, performances, and happenings in the next seven days.</p>
+              <h3 className="text-fg font-semibold mb-1">Sunday Edition <span className="text-fg-subtle font-normal text-sm">- Every Sunday, 7 AM</span></h3>
+              <p className="text-fg-muted leading-relaxed">A weekend magazine-style email with long-form neighborhood commentary, a data point, cultural observations, and the week ahead.</p>
             </div>
             <div>
-              <h3 className="text-fg font-semibold mb-1">Sunday Edition</h3>
-              <p className="text-fg-muted leading-relaxed">A weekend magazine-style email with long-form neighborhood commentary, data points, and cultural observations.</p>
-            </div>
-            <div>
-              <h3 className="text-fg font-semibold mb-1">Your Property Listings</h3>
-              <p className="text-fg-muted leading-relaxed">Native placement for your active listings, shown as a natural part of the newsletter - not a banner ad.</p>
+              <h3 className="text-fg font-semibold mb-1">Your Property Listings <span className="text-fg-subtle font-normal text-sm">- in every email</span></h3>
+              <p className="text-fg-muted leading-relaxed">Native placement for your active listings, shown as a natural part of the newsletter - not a banner ad. Your photo and contact details appear in every email.</p>
             </div>
           </div>
         </div>
