@@ -109,8 +109,8 @@ export function Footer() {
           <Link href="/about" className="text-sm text-fg-muted hover:text-fg transition-colors">
             {t('footer.about')}
           </Link>
-          <Link href="/advertise" className="text-sm text-fg-muted hover:text-fg transition-colors">
-            {t('footer.advertise')}
+          <Link href="/partner" className="text-sm text-fg-muted hover:text-fg transition-colors">
+            Partner
           </Link>
           <Link href="/careers" className="text-sm text-fg-muted hover:text-fg transition-colors">
             {t('footer.careers')}
