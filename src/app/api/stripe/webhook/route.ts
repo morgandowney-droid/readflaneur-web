@@ -4,6 +4,18 @@ import { createClient } from '@supabase/supabase-js';
 import { sendEmail } from '@/lib/email';
 import Stripe from 'stripe';
 
+// Stripe API 2025+ moved invoice.subscription into invoice.parent.subscription_details.subscription.
+// Keep a legacy fallback in case older webhook payloads still include the top-level field.
+function extractInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  const parentSub = invoice.parent?.subscription_details?.subscription;
+  if (parentSub) {
+    return typeof parentSub === 'string' ? parentSub : parentSub.id;
+  }
+  const legacy = (invoice as unknown as { subscription?: string | { id?: string } }).subscription;
+  if (!legacy) return null;
+  return typeof legacy === 'string' ? legacy : legacy.id || null;
+}
+
 /**
  * @swagger
  * /api/stripe/webhook:
@@ -464,9 +476,7 @@ export async function POST(request: NextRequest) {
 
     case 'invoice.upcoming': {
       const invoice = event.data.object as Stripe.Invoice;
-      const subscriptionId = typeof invoice.subscription === 'string'
-        ? invoice.subscription
-        : (invoice.subscription as Stripe.Subscription | null)?.id;
+      const subscriptionId = extractInvoiceSubscriptionId(invoice);
       if (!subscriptionId) break;
 
       const { data: partner } = await supabaseAdmin
@@ -505,9 +515,7 @@ export async function POST(request: NextRequest) {
 
     case 'invoice.payment_failed': {
       const invoice = event.data.object as Stripe.Invoice;
-      const subscriptionId = typeof invoice.subscription === 'string'
-        ? invoice.subscription
-        : (invoice.subscription as Stripe.Subscription | null)?.id;
+      const subscriptionId = extractInvoiceSubscriptionId(invoice);
       if (!subscriptionId) break;
 
       const { data: partner } = await supabaseAdmin
