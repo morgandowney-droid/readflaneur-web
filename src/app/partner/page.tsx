@@ -243,7 +243,7 @@ export default function PartnerLandingPage() {
           </Link>
         </p>
         <p className="text-fg-subtle text-sm mt-4">
-          Questions? <a href="mailto:morgan@readflaneur.com" className="text-accent hover:text-fg transition-colors">morgan@readflaneur.com</a>
+          Questions? <a href="mailto:md@readflaneur.com" className="text-accent hover:text-fg transition-colors">md@readflaneur.com</a>
         </p>
       </section>
     </div>
