@@ -103,30 +103,93 @@ export async function POST(request: NextRequest) {
         } else {
           console.log(`Partner ${partnerId} activated via Stripe subscription ${subscriptionId}`);
 
+          // Fetch full partner record for both admin notification and broker welcome
+          const { data: partnerData } = await supabaseAdmin
+            .from('agent_partners')
+            .select('agent_name, agent_email, agent_slug, neighborhood_id')
+            .eq('id', partnerId)
+            .single();
+
+          // Look up neighborhood display name + timezone for welcome email
+          const { data: neighborhoodData } = partnerData
+            ? await supabaseAdmin
+                .from('neighborhoods')
+                .select('name, city, timezone')
+                .eq('id', partnerData.neighborhood_id)
+                .single()
+            : { data: null };
+
           // Notify admin
           const adminEmail = process.env.ADMIN_EMAIL;
-          if (adminEmail) {
-            const { data: partnerData } = await supabaseAdmin
-              .from('agent_partners')
-              .select('agent_name, agent_email, neighborhood_id')
-              .eq('id', partnerId)
-              .single();
+          if (adminEmail && partnerData) {
+            await sendEmail({
+              to: adminEmail,
+              subject: `New Agent Partner: ${partnerData.agent_name} - ${partnerData.neighborhood_id}`,
+              html: `
+                <div style="font-family: system-ui, sans-serif; max-width: 600px;">
+                  <h2>New Agent Partner Activated</h2>
+                  <p><strong>Agent:</strong> ${partnerData.agent_name}</p>
+                  <p><strong>Email:</strong> ${partnerData.agent_email}</p>
+                  <p><strong>Neighborhood:</strong> ${partnerData.neighborhood_id}</p>
+                  <p><strong>Revenue:</strong> $999/month (14-day trial first)</p>
+                </div>
+              `,
+            });
+          }
 
-            if (partnerData) {
-              await sendEmail({
-                to: adminEmail,
-                subject: `New Agent Partner: ${partnerData.agent_name} - ${partnerData.neighborhood_id}`,
-                html: `
-                  <div style="font-family: system-ui, sans-serif; max-width: 600px;">
-                    <h2>New Agent Partner Activated</h2>
-                    <p><strong>Agent:</strong> ${partnerData.agent_name}</p>
-                    <p><strong>Email:</strong> ${partnerData.agent_email}</p>
-                    <p><strong>Neighborhood:</strong> ${partnerData.neighborhood_id}</p>
-                    <p><strong>Revenue:</strong> $999/month</p>
+          // Welcome email to the broker
+          if (partnerData) {
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/[\n\r]+$/, '').replace(/\/$/, '')
+              || 'https://readflaneur.com';
+            const neighborhoodLabel = neighborhoodData
+              ? `${neighborhoodData.name}, ${neighborhoodData.city}`
+              : partnerData.neighborhood_id;
+            const subscribeUrl = `${appUrl}/r/${partnerData.agent_slug}`;
+            const dashboardUrl = `${appUrl}/partner/dashboard`;
+
+            // Trial end: 14 days from now
+            const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+            const trialEndLabel = trialEnd.toLocaleDateString('en-US', {
+              weekday: 'long', month: 'long', day: 'numeric',
+            });
+
+            await sendEmail({
+              to: partnerData.agent_email,
+              subject: `Welcome to Flaneur - your ${neighborhoodLabel} newsletter starts tomorrow`,
+              html: `
+                <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 24px; color: #1c1917; line-height: 1.6;">
+                  <p style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #78716c; margin: 0 0 24px;">Welcome to Flaneur</p>
+
+                  <h1 style="font-size: 28px; font-weight: 300; margin: 0 0 16px;">Your ${neighborhoodLabel} newsletter is live</h1>
+
+                  <p>${partnerData.agent_name},</p>
+
+                  <p>You're now the exclusive Flaneur partner for <strong>${neighborhoodLabel}</strong>. Here's what happens next:</p>
+
+                  <div style="margin: 32px 0; padding: 24px; background: #fafaf9; border-left: 3px solid #b45309;">
+                    <p style="margin: 0 0 8px; font-weight: 600;">Your first branded Daily Brief goes out tomorrow at 7 AM local time.</p>
+                    <p style="margin: 0; color: #57534e; font-size: 15px;">Every client you've added (and any you add later) will receive it. You'll receive a copy too - so you see exactly what they see.</p>
                   </div>
-                `,
-              });
-            }
+
+                  <h3 style="font-size: 18px; margin: 32px 0 12px;">What you'll get</h3>
+                  <ul style="padding-left: 20px; color: #44403c;">
+                    <li style="margin-bottom: 8px;"><strong>A daily copy of your own newsletter</strong>, delivered to ${partnerData.agent_email} every morning. This is the same email your clients receive.</li>
+                    <li style="margin-bottom: 8px;"><strong>Weekly performance report</strong>, delivered every Monday: subscribers added, opens, clicks, and listing impressions from the week.</li>
+                    <li style="margin-bottom: 8px;"><strong>14-day free trial.</strong> Your card isn't charged until ${trialEndLabel}. Cancel anytime before then at no cost.</li>
+                  </ul>
+
+                  <h3 style="font-size: 18px; margin: 32px 0 12px;">Share your newsletter</h3>
+                  <p>Send this link to past clients, prospects, and sphere-of-influence to add them to your list:</p>
+                  <p style="word-break: break-all; font-family: monospace; background: #fafaf9; padding: 12px; border-radius: 4px; font-size: 14px;"><a href="${subscribeUrl}" style="color: #b45309;">${subscribeUrl}</a></p>
+
+                  <h3 style="font-size: 18px; margin: 32px 0 12px;">Manage your account</h3>
+                  <p>Add clients, update your listings, change your photo, or pause sends from your dashboard:</p>
+                  <p><a href="${dashboardUrl}" style="display: inline-block; padding: 12px 24px; background: #1c1917; color: #fafaf9; text-decoration: none; border-radius: 4px; font-size: 14px; letter-spacing: 0.05em; text-transform: uppercase;">Open Dashboard</a></p>
+
+                  <p style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e7e5e4; color: #78716c; font-size: 14px;">Questions? Just reply to this email - it reaches Morgan Downey, who built Flaneur.</p>
+                </div>
+              `,
+            });
           }
         }
         break;
@@ -396,6 +459,81 @@ export async function POST(request: NextRequest) {
           console.log(`Partner ${partnerByUpdatedSub.id} reactivated`);
         }
       }
+      break;
+    }
+
+    case 'invoice.upcoming': {
+      const invoice = event.data.object as Stripe.Invoice;
+      const subscriptionId = typeof invoice.subscription === 'string'
+        ? invoice.subscription
+        : (invoice.subscription as Stripe.Subscription | null)?.id;
+      if (!subscriptionId) break;
+
+      const { data: partner } = await supabaseAdmin
+        .from('agent_partners')
+        .select('id, agent_name, agent_email, neighborhood_id')
+        .eq('stripe_subscription_id', subscriptionId)
+        .single();
+      if (!partner) break;
+
+      const adminEmail = process.env.ADMIN_EMAIL;
+      if (adminEmail) {
+        const dueDate = invoice.next_payment_attempt
+          ? new Date(invoice.next_payment_attempt * 1000).toLocaleDateString('en-US', {
+              weekday: 'long', month: 'long', day: 'numeric',
+            })
+          : 'soon';
+        const amount = invoice.amount_due ? `$${(invoice.amount_due / 100).toFixed(2)}` : '$999.00';
+        await sendEmail({
+          to: adminEmail,
+          subject: `Upcoming renewal: ${partner.agent_name} (${partner.neighborhood_id}) - ${dueDate}`,
+          html: `
+            <div style="font-family: system-ui, sans-serif; max-width: 600px;">
+              <h2>Partner renewal upcoming</h2>
+              <p><strong>Agent:</strong> ${partner.agent_name} (${partner.agent_email})</p>
+              <p><strong>Neighborhood:</strong> ${partner.neighborhood_id}</p>
+              <p><strong>Amount:</strong> ${amount}</p>
+              <p><strong>Attempt date:</strong> ${dueDate}</p>
+              <p>Stripe will attempt the charge on the date above. If payment fails, Smart Retries runs for ~3 weeks before cancellation. Use this window to confirm retention or queue a replacement broker.</p>
+            </div>
+          `,
+        });
+      }
+      console.log(`Upcoming renewal notified for partner ${partner.id}`);
+      break;
+    }
+
+    case 'invoice.payment_failed': {
+      const invoice = event.data.object as Stripe.Invoice;
+      const subscriptionId = typeof invoice.subscription === 'string'
+        ? invoice.subscription
+        : (invoice.subscription as Stripe.Subscription | null)?.id;
+      if (!subscriptionId) break;
+
+      const { data: partner } = await supabaseAdmin
+        .from('agent_partners')
+        .select('id, agent_name, agent_email, neighborhood_id')
+        .eq('stripe_subscription_id', subscriptionId)
+        .single();
+      if (!partner) break;
+
+      const adminEmail = process.env.ADMIN_EMAIL;
+      if (adminEmail) {
+        await sendEmail({
+          to: adminEmail,
+          subject: `ACTION NEEDED: payment failed - ${partner.agent_name} (${partner.neighborhood_id})`,
+          html: `
+            <div style="font-family: system-ui, sans-serif; max-width: 600px;">
+              <h2 style="color: #b91c1c;">Partner payment failed</h2>
+              <p><strong>Agent:</strong> ${partner.agent_name} (${partner.agent_email})</p>
+              <p><strong>Neighborhood:</strong> ${partner.neighborhood_id}</p>
+              <p><strong>Status:</strong> sends have been auto-paused. Stripe Smart Retries runs for ~3 weeks before cancellation.</p>
+              <p>Reach out to the broker if this is a high-value account, or start outreach to a replacement agent for this neighborhood.</p>
+            </div>
+          `,
+        });
+      }
+      console.log(`Payment failed logged for partner ${partner.id}`);
       break;
     }
 

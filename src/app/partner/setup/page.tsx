@@ -100,6 +100,32 @@ function PartnerPageInner() {
       .catch(() => {});
   }, []);
 
+  // Pre-fill agent details from URL params (broker cold-pitch links)
+  useEffect(() => {
+    const name = searchParams.get('name');
+    const email = searchParams.get('email');
+    const brokerage = searchParams.get('brokerage');
+    const title = searchParams.get('title');
+    const phone = searchParams.get('phone');
+    if (name) setAgentName(name);
+    if (email) setAgentEmail(email);
+    if (brokerage) setBrokerageName(brokerage);
+    if (title) setAgentTitle(title);
+    if (phone) setAgentPhone(phone);
+  }, [searchParams]);
+
+  // Pre-select neighborhood from URL param once the list loads
+  useEffect(() => {
+    if (neighborhoods.length === 0 || selectedNeighborhood) return;
+    const neighborhoodParam = searchParams.get('neighborhood');
+    if (!neighborhoodParam) return;
+    const match = neighborhoods.find(n => n.id === neighborhoodParam);
+    if (match) {
+      setSelectedNeighborhood(match);
+      checkNeighborhood(match.id);
+    }
+  }, [neighborhoods, searchParams, selectedNeighborhood, checkNeighborhood]);
+
   // Check neighborhood availability
   const checkNeighborhood = useCallback(async (id: string) => {
     setCheckingNeighborhood(true);

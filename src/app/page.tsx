@@ -32,6 +32,16 @@ export default async function HomePage() {
           style={{ background: 'radial-gradient(ellipse at top, rgba(30,30,30,1), rgba(0,0,0,1) 70%)' }}
         />
 
+        {/* Broker Dashboard link, top-right */}
+        <div className="absolute top-5 right-6 z-10">
+          <Link
+            href="/partner/dashboard"
+            className="text-xs tracking-[0.2em] uppercase text-white/60 hover:text-white transition-colors"
+          >
+            Broker Dashboard →
+          </Link>
+        </div>
+
         <div className="relative mx-auto max-w-3xl text-center">
           {/* Logo */}
           <h1 className="hero-fade-in font-display text-6xl md:text-7xl lg:text-8xl font-light tracking-[0.3em] mb-6">

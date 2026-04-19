@@ -59,12 +59,19 @@ export async function POST(request: NextRequest) {
             unit_amount: PARTNER_PRICE_CENTS,
             product_data: {
               name: `Flaneur Partner - ${neighborhoodLabel}`,
-              description: `Branded daily newsletter for ${neighborhoodLabel}. Cancel anytime.`,
+              description: `Branded daily newsletter for ${neighborhoodLabel}. 14-day free trial, then $999/month. Cancel anytime.`,
             },
           },
           quantity: 1,
         },
       ],
+      subscription_data: {
+        trial_period_days: 14,
+        trial_settings: {
+          end_behavior: { missing_payment_method: 'cancel' },
+        },
+      },
+      payment_method_collection: 'always',
       metadata: {
         type: 'partner',
         agent_partner_id: partner.id,

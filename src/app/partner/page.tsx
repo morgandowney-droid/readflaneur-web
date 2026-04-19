@@ -135,30 +135,20 @@ export default function PartnerLandingPage() {
       <section className="border-t border-border py-16 md:py-20 px-6">
         <div className="max-w-3xl mx-auto">
           <h2 className="font-display text-2xl md:text-3xl font-light text-fg mb-3 text-center">Pricing</h2>
-          <p className="text-fg-muted text-center mb-10">Exclusive to one agent per neighborhood. Cancel anytime.</p>
+          <p className="text-fg-muted text-center mb-10">Exclusive to one agent per neighborhood. 14-day free trial. Cancel anytime.</p>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="border border-border rounded-lg p-8 text-center">
-              <p className="text-xs tracking-[0.12em] uppercase text-fg-subtle mb-2">Global Cities</p>
-              <p className="font-display text-4xl font-bold text-fg mb-1">$1,500</p>
-              <p className="text-fg-subtle text-sm mb-1">per neighborhood / month</p>
-              <p className="text-accent text-sm font-medium mb-4">$15,000 / year</p>
-              <p className="text-fg-subtle text-sm leading-relaxed">New York, London, Paris, Hong Kong, Los Angeles, Tokyo, Singapore, Miami, San Francisco</p>
-            </div>
-            <div className="border border-accent/30 rounded-lg p-8 text-center bg-surface">
-              <p className="text-xs tracking-[0.12em] uppercase text-fg-subtle mb-2">Major Markets</p>
-              <p className="font-display text-4xl font-bold text-fg mb-1">$1,000</p>
-              <p className="text-fg-subtle text-sm mb-1">per neighborhood / month</p>
-              <p className="text-accent text-sm font-medium mb-4">$10,000 / year</p>
-              <p className="text-fg-subtle text-sm leading-relaxed">Chicago, Berlin, Sydney, Toronto, Barcelona, Amsterdam, Dubai, Stockholm, Rome, Washington DC</p>
-            </div>
-            <div className="border border-border rounded-lg p-8 text-center">
-              <p className="text-xs tracking-[0.12em] uppercase text-fg-subtle mb-2">Resort & Enclave</p>
-              <p className="font-display text-4xl font-bold text-fg mb-1">$750</p>
-              <p className="text-fg-subtle text-sm mb-1">per neighborhood / month</p>
-              <p className="text-accent text-sm font-medium mb-4">$7,500 / year</p>
-              <p className="text-fg-subtle text-sm leading-relaxed">Aspen, The Hamptons, St. Barts, Marbella, Palm Beach, Courchevel, Nantucket, Gstaad</p>
-            </div>
+          <div className="max-w-md mx-auto border border-accent/30 rounded-lg p-10 text-center bg-surface">
+            <p className="text-xs tracking-[0.12em] uppercase text-fg-subtle mb-2">One neighborhood, one agent</p>
+            <p className="font-display text-5xl font-bold text-fg mb-2">$999</p>
+            <p className="text-fg-subtle text-sm mb-6">per month</p>
+            <ul className="text-left text-fg-muted text-sm leading-relaxed space-y-2 mb-6">
+              <li>&middot; Branded Daily Brief to your clients, every day at 7 AM local</li>
+              <li>&middot; Your photo, listings, and contact details in every email</li>
+              <li>&middot; You receive a copy of every send, so you see exactly what they see</li>
+              <li>&middot; Weekly performance report (opens, clicks, listing impressions)</li>
+              <li>&middot; Exclusive to one agent per neighborhood</li>
+            </ul>
+            <p className="text-accent text-sm font-medium">14-day free trial. No charge today.</p>
           </div>
 
           <div className="mt-8 border border-border rounded-lg p-8 bg-surface">

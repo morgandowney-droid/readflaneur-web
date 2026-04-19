@@ -81,13 +81,30 @@ export async function resolveBrandedRecipients(
       subscribeUrl: `${appUrl}/r/${partner.agent_slug}`,
     };
 
-    // 3. Collect all client emails from two sources:
-    //    a) client_emails array on agent_partners (manually added by agent)
-    //    b) newsletter_subscribers with partner_agent_id matching this agent
+    // 3. Collect all recipient emails from three sources:
+    //    a) the broker themselves (so they see what their clients see)
+    //    b) client_emails array on agent_partners (manually added by agent)
+    //    c) newsletter_subscribers with partner_agent_id matching this agent
     const emailSet = new Set<string>();
     const recipients: EmailRecipient[] = [];
 
-    // Source A: client_emails from agent record
+    // Source A: the broker's own email - every partner receives a daily copy
+    if (partner.agent_email && partner.agent_email.includes('@')) {
+      const agentEmailNormalized = partner.agent_email.toLowerCase().trim();
+      emailSet.add(agentEmailNormalized);
+      recipients.push({
+        id: `agent-${partner.id}`,
+        email: agentEmailNormalized,
+        source: 'newsletter',
+        timezone: tz,
+        primaryNeighborhoodId: partner.neighborhood_id,
+        subscribedNeighborhoodIds: [partner.neighborhood_id],
+        unsubscribeToken: 'agent-self-copy',
+        pausedTopics: [],
+      });
+    }
+
+    // Source B: client_emails from agent record
     const manualEmails: string[] = partner.client_emails || [];
     for (const email of manualEmails) {
       const normalized = email.toLowerCase().trim();
@@ -114,7 +131,7 @@ export async function resolveBrandedRecipients(
       });
     }
 
-    // Source B: subscribers who signed up via /r/[slug]
+    // Source C: subscribers who signed up via /r/[slug]
     const { data: agentSubs } = await supabase
       .from('newsletter_subscribers')
       .select('id, email, unsubscribe_token, daily_email_enabled')
@@ -144,7 +161,9 @@ export async function resolveBrandedRecipients(
     if (recipients.length === 0) continue;
 
     // 4. Exclude already-sent today (branded sends tracked in daily_brief_sends)
-    const recipientIds = recipients.map(r => r.id).filter(id => !id.startsWith('manual-'));
+    const recipientIds = recipients
+      .map(r => r.id)
+      .filter(id => !id.startsWith('manual-') && !id.startsWith('agent-'));
     if (recipientIds.length > 0) {
       const { data: alreadySent } = await supabase
         .from('daily_brief_sends')
