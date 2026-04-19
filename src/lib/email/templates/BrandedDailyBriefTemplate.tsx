@@ -13,6 +13,7 @@ import { DailyBriefContent } from '../types';
 import { WeatherStoryCard } from './components/WeatherStoryCard';
 import { StoryList } from './components/StoryList';
 import { SatelliteSection } from './components/SatelliteSection';
+import { EnrichedBriefBody } from './components/EnrichedBriefBody';
 
 export interface AgentBranding {
   agentName: string;
@@ -123,10 +124,17 @@ export function BrandedDailyBriefTemplate(content: BrandedDailyBriefProps) {
                 <WeatherStoryCard story={primary.weatherStory} />
               )}
 
-              {/* Primary stories */}
-              {primary.stories.length > 0 && (
+              {/* Full enriched brief body — renders the complete content (greeting, sections, prose, links) */}
+              {primary.briefBody ? (
+                <EnrichedBriefBody
+                  body={primary.briefBody}
+                  sources={primary.briefSources}
+                  articleUrl={primary.briefArticleUrl}
+                  neighborhoodName={primary.neighborhoodName}
+                />
+              ) : primary.stories.length > 0 ? (
                 <StoryList stories={primary.stories} variant="primary" />
-              )}
+              ) : null}
 
               {/* Agent Listing Cards (replaces NativeAd) */}
               {agentBranding.listings && agentBranding.listings.length > 0 && (
@@ -193,8 +201,8 @@ export function BrandedDailyBriefTemplate(content: BrandedDailyBriefProps) {
             </Section>
           )}
 
-          {/* Look Ahead link */}
-          {content.lookAheadUrl && primary && !primary.stories.some(s => s.categoryLabel?.includes('Look Ahead')) && (
+          {/* Look Ahead link - always show when briefBody is rendered (no Look Ahead story card to duplicate) */}
+          {content.lookAheadUrl && primary && (primary.briefBody || !primary.stories.some(s => s.categoryLabel?.includes('Look Ahead'))) && (
             <Section style={{ paddingTop: '8px', paddingBottom: '16px', textAlign: 'center' as const }}>
               <a href={content.lookAheadUrl} style={{ color: '#C9A96E', textDecoration: 'none', fontWeight: '600', fontSize: '14px', fontFamily: "'Playfair Display', Georgia, serif" }}>
                 Read the Look Ahead (next 7 days) for {primary.neighborhoodName} &rsaquo;

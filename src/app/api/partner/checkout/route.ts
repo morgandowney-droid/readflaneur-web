@@ -67,8 +67,11 @@ export async function POST(request: NextRequest) {
       ],
       subscription_data: {
         trial_period_days: 14,
+        // Never auto-cancel. If the card is somehow missing at trial end, pause
+        // the subscription — the agent_partners row, setup data, and neighborhood
+        // lock are preserved so the broker can reactivate by updating their card.
         trial_settings: {
-          end_behavior: { missing_payment_method: 'cancel' },
+          end_behavior: { missing_payment_method: 'pause' },
         },
       },
       payment_method_collection: 'always',

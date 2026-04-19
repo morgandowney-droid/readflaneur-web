@@ -188,6 +188,7 @@ export async function POST(request: NextRequest) {
                     <li style="margin-bottom: 8px;"><strong>A daily copy of your own newsletter</strong>, delivered to ${partnerData.agent_email} every morning. This is the same email your clients receive.</li>
                     <li style="margin-bottom: 8px;"><strong>Weekly performance report</strong>, delivered every Monday: subscribers added, opens, clicks, and listing impressions from the week.</li>
                     <li style="margin-bottom: 8px;"><strong>14-day free trial.</strong> Your card isn't charged until ${trialEndLabel}. Cancel anytime before then at no cost.</li>
+                    <li style="margin-bottom: 8px;"><strong>No deletion ever.</strong> If a payment issue comes up, your neighborhood, your listings, your client list, and your setup all stay intact. Sends simply pause until the card is updated - nothing is lost.</li>
                   </ul>
 
                   <h3 style="font-size: 18px; margin: 32px 0 12px;">Share your newsletter</h3>
@@ -470,6 +471,63 @@ export async function POST(request: NextRequest) {
 
           console.log(`Partner ${partnerByUpdatedSub.id} reactivated`);
         }
+      }
+      break;
+    }
+
+    case 'customer.subscription.trial_will_end': {
+      // Fires ~3 days before trial ends. Notify the broker with a friendly
+      // reminder + dashboard link so they can confirm/update their card.
+      const sub = event.data.object as Stripe.Subscription;
+      const { data: partner } = await supabaseAdmin
+        .from('agent_partners')
+        .select('id, agent_name, agent_email, agent_slug, neighborhood_id')
+        .eq('stripe_subscription_id', sub.id)
+        .single();
+      if (!partner) break;
+
+      const { data: neighborhood } = await supabaseAdmin
+        .from('neighborhoods')
+        .select('name, city')
+        .eq('id', partner.neighborhood_id)
+        .single();
+
+      const neighborhoodLabel = neighborhood
+        ? `${neighborhood.name}, ${neighborhood.city}`
+        : partner.neighborhood_id;
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/[\n\r]+$/, '').replace(/\/$/, '')
+        || 'https://readflaneur.com';
+      const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000) : null;
+      const chargeDate = trialEnd
+        ? trialEnd.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+        : 'in 3 days';
+
+      await sendEmail({
+        to: partner.agent_email,
+        subject: `Your Flaneur trial ends ${chargeDate} - heads up`,
+        html: `
+          <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 24px; color: #1c1917; line-height: 1.6;">
+            <p style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #78716c; margin: 0 0 24px;">Trial ending soon</p>
+            <h1 style="font-size: 26px; font-weight: 300; margin: 0 0 16px;">Your ${neighborhoodLabel} trial ends ${chargeDate}</h1>
+            <p>${partner.agent_name},</p>
+            <p>Your 14-day free trial of Flaneur wraps up on <strong>${chargeDate}</strong>. On that day, we'll charge the card on file $999 and your branded ${neighborhoodLabel} Daily continues uninterrupted.</p>
+            <p><strong>Nothing to do if you want to keep going.</strong> If you want to update your card or cancel, you can do either from your dashboard:</p>
+            <p><a href="${appUrl}/partner/dashboard" style="display: inline-block; padding: 12px 24px; background: #1c1917; color: #fafaf9; text-decoration: none; border-radius: 4px; font-size: 14px; letter-spacing: 0.05em; text-transform: uppercase;">Open Dashboard</a></p>
+            <p style="margin-top: 32px; padding: 16px 20px; background: #fafaf9; border-left: 3px solid #b45309; color: #44403c; font-size: 14px;">Even if a payment issue comes up, we don't delete your setup. Your neighborhood, your name, your listings, your client list all stay put. Sends simply pause until the card is updated.</p>
+            <p style="margin-top: 32px; color: #78716c; font-size: 14px;">Questions? Just reply - it reaches Morgan Downey directly.</p>
+          </div>
+        `,
+      });
+
+      // Admin CC
+      const adminEmail = process.env.ADMIN_EMAIL;
+      if (adminEmail) {
+        await sendEmail({
+          to: adminEmail,
+          subject: `Trial ending: ${partner.agent_name} (${partner.neighborhood_id}) - ${chargeDate}`,
+          html: `<p>Broker ${partner.agent_name} (${partner.agent_email}) trial ends ${chargeDate}. Card will be charged $999.</p>`,
+        });
       }
       break;
     }

@@ -35,6 +35,12 @@ export interface PrimaryNeighborhoodSection {
   weatherStory: WeatherStory | null;
   stories: EmailStory[];
   subjectTeaser?: string | null;
+  // Full enriched brief body (markdown-ish: [[Section Headers]], **bold**, [text](url), paragraphs).
+  // Rendered inline in the email instead of a story-card summary so partner clients see
+  // the complete brief exactly as it appears on the website.
+  briefBody?: string | null;
+  briefArticleUrl?: string | null;
+  briefSources?: Array<{ name: string; url?: string }>;
 }
 
 export interface SatelliteNeighborhoodSection {

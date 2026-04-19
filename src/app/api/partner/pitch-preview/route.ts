@@ -4,6 +4,7 @@ import { render } from '@react-email/components';
 import { sendEmail } from '@/lib/email';
 import { BrandedDailyBriefTemplate } from '@/lib/email/templates/BrandedDailyBriefTemplate';
 import { assembleDailyBrief } from '@/lib/email/assembler';
+import { buildSubject } from '@/lib/email/sender';
 import { EmailRecipient } from '@/lib/email/types';
 
 export const maxDuration = 30;
@@ -81,7 +82,9 @@ export async function POST(request: NextRequest) {
     const html = await render(BrandedDailyBriefTemplate({ ...content, agentBranding }));
 
     const neighborhoodName = neighborhood.name || neighborhoodId;
-    const subject = `${neighborhoodName.toLowerCase()} daily - preview with your name`;
+    // Use the real product subject format so the preview looks identical to what
+    // clients would receive — "juliet's new ending, östermalm" style, not a labeled demo.
+    const subject = buildSubject(content);
     const fromAddress = `${agentName}: ${neighborhoodName} Daily <${neighborhood.id}@readflaneur.com>`;
 
     const success = await sendEmail({

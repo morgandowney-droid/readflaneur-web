@@ -18,7 +18,7 @@ import { checkDailyEmailLimit } from './daily-email-limit';
  * Prefers Gemini-generated "information gap" teaser (Morning Brew style),
  * falls back to headline-based teaser.
  */
-function buildSubject(content: DailyBriefContent): string {
+export function buildSubject(content: DailyBriefContent): string {
   const primary = content.primarySection?.neighborhoodName;
 
   if (!primary) {

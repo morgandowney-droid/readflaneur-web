@@ -500,23 +500,39 @@ export async function assembleDailyBrief(
       console.warn(`[assembler] Missing ${briefStory ? 'look ahead' : 'daily brief'} for primary ${primaryNeighborhood.id}`);
     }
 
-    // Fetch subject teaser from the most recent enriched brief
-    // Must use same sort order (created_at) and enriched_content gate as fetchBriefAsStory
-    // to ensure subject line teaser comes from the same brief used in the body
+    // Fetch subject teaser + full enriched body from the most recent enriched brief.
+    // Same sort order (created_at) and enriched_content gate as fetchBriefAsStory so
+    // the subject line and body come from the same brief.
     let subjectTeaser: string | null = null;
+    let briefBody: string | null = null;
+    let briefSources: Array<{ name: string; url?: string }> = [];
     const primaryIds = await expandNeighborhoodIds(supabase, primaryNeighborhood.id, primaryNeighborhood.is_combo);
-    const { data: briefTeaser } = await supabase
+    const { data: briefRow } = await supabase
       .from('neighborhood_briefs')
-      .select('subject_teaser')
+      .select('subject_teaser, enriched_content, enriched_categories')
       .in('neighborhood_id', primaryIds)
-      .not('subject_teaser', 'is', null)
       .not('enriched_content', 'is', null)
       .gte('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
-    if (briefTeaser?.subject_teaser) {
-      subjectTeaser = briefTeaser.subject_teaser;
+    if (briefRow) {
+      subjectTeaser = briefRow.subject_teaser || null;
+      briefBody = briefRow.enriched_content || null;
+      // Extract source attribution from enriched_categories if present
+      if (Array.isArray(briefRow.enriched_categories)) {
+        const sources = new Map<string, string | undefined>();
+        for (const cat of briefRow.enriched_categories as Array<{ sources?: Array<{ name?: string; url?: string }> }>) {
+          if (Array.isArray(cat?.sources)) {
+            for (const s of cat.sources) {
+              if (s?.name && !sources.has(s.name)) {
+                sources.set(s.name, s.url);
+              }
+            }
+          }
+        }
+        briefSources = Array.from(sources.entries()).slice(0, 5).map(([name, url]) => ({ name, url }));
+      }
     }
 
     primarySection = {
@@ -527,6 +543,9 @@ export async function assembleDailyBrief(
       weatherStory,
       stories: emailStories,
       subjectTeaser,
+      briefBody,
+      briefArticleUrl: briefStory?.articleUrl || null,
+      briefSources,
     };
   }
 

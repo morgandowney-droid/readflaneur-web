@@ -11,6 +11,7 @@ import { DailyBriefContent } from '../types';
 import { Header } from './components/Header';
 import { WeatherStoryCard } from './components/WeatherStoryCard';
 import { StoryList } from './components/StoryList';
+import { EnrichedBriefBody } from './components/EnrichedBriefBody';
 import { NativeAd } from './components/NativeAd';
 import { SatelliteSection } from './components/SatelliteSection';
 import { FamilyCornerSection } from './components/FamilyCornerSection';
@@ -99,10 +100,17 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
                 <WeatherStoryCard story={primary.weatherStory} />
               )}
 
-              {/* Primary stories */}
-              {primary.stories.length > 0 && (
+              {/* Full enriched brief body — complete content from the website */}
+              {primary.briefBody ? (
+                <EnrichedBriefBody
+                  body={primary.briefBody}
+                  sources={primary.briefSources}
+                  articleUrl={primary.briefArticleUrl}
+                  neighborhoodName={primary.neighborhoodName}
+                />
+              ) : primary.stories.length > 0 ? (
                 <StoryList stories={primary.stories} variant="primary" />
-              )}
+              ) : null}
 
               {/* Native ad after all primary stories */}
               {content.nativeAd && <NativeAd ad={content.nativeAd} />}
@@ -131,7 +139,7 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
           )}
 
           {/* Look Ahead link (only if Look Ahead not already shown as a story) */}
-          {content.lookAheadUrl && primary && !primary.stories.some(s => s.categoryLabel?.includes('Look Ahead')) && (
+          {content.lookAheadUrl && primary && (primary.briefBody || !primary.stories.some(s => s.categoryLabel?.includes('Look Ahead'))) && (
             <Section style={{ paddingTop: '8px', paddingBottom: '16px', textAlign: 'center' as const }}>
               <a
                 href={content.lookAheadUrl}
