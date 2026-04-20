@@ -25,6 +25,150 @@ config({ path: '.env.local' });
 
 const APP_URL = 'https://readflaneur.com';
 
+// ─── Local-paper references per region ────────────────────────────────────
+// Used in the cold pitch copy to anchor Flaneur to publications the broker's
+// clients already read. Prefix-matched against neighborhood_id (longest match
+// wins). Fallback is generic "neighborhood intelligence" phrasing.
+const LOCAL_PAPERS = {
+  // US
+  'nyc-':            'the Wall Street Journal and Mansion Global',
+  'la-':             'the Wall Street Journal and Mansion Global',
+  'sf-':             'the Wall Street Journal and Mansion Global',
+  'miami-':          'the Wall Street Journal and Mansion Global',
+  'chicago-':        'the Wall Street Journal and Crain\u2019s Chicago Business',
+  'boston-':         'the Wall Street Journal and The Boston Globe',
+  'dc-':             'The Washington Post and the Wall Street Journal',
+  'greenwich-':      'the Wall Street Journal and Mansion Global',
+  'hamptons-':       'the Wall Street Journal and Hamptons Magazine',
+  'aspen-':          'the Aspen Daily News and the Wall Street Journal',
+  'palm-beach-':     'the Palm Beach Daily News and the Wall Street Journal',
+  'naples-':         'the Naples Daily News and the Wall Street Journal',
+  'us-':             'the Wall Street Journal and Mansion Global',
+  // Canada
+  'toronto-':        'The Globe and Mail',
+  'vancouver-':      'The Globe and Mail',
+  'montreal-':       'La Presse and The Globe and Mail',
+  'ca-':             'The Globe and Mail',
+  // UK
+  'london-':         'the FT\u2019s How To Spend It and Country Life',
+  'cotswolds-':      'Country Life and the FT\u2019s How To Spend It',
+  'edinburgh-':      'The Scotsman and the FT\u2019s How To Spend It',
+  'uk-':             'the FT\u2019s How To Spend It and Country Life',
+  // Ireland
+  'dublin-':         'The Irish Times',
+  'ie-':             'The Irish Times',
+  // France
+  'paris-':          'Le Figaro and Les Echos',
+  'cap-ferrat':      'Nice-Matin and Le Figaro',
+  'saint-tropez':    'Nice-Matin and Le Figaro',
+  'courchevel-':     'Le Dauphin\u00e9 Lib\u00e9r\u00e9 and Le Figaro',
+  'fr-':             'Le Figaro and Les Echos',
+  // Monaco
+  'monaco-':         'Monaco-Matin and Le Figaro',
+  // Switzerland
+  'zurich-':         'Neue Z\u00fcrcher Zeitung and Bilanz',
+  'geneva-':         'Le Temps and Bilan',
+  'ch-':             'Neue Z\u00fcrcher Zeitung and Le Temps',
+  // Italy
+  'milan-':          'Corriere della Sera and Il Sole 24 Ore',
+  'como-':           'Corriere della Sera and Il Sole 24 Ore',
+  'rome-':           'Corriere della Sera and La Repubblica',
+  'it-':             'Corriere della Sera and Il Sole 24 Ore',
+  // Spain
+  'madrid-':         'El Pa\u00eds and Expansi\u00f3n',
+  'barcelona-':      'La Vanguardia and Expansi\u00f3n',
+  'marbella-':       'Sur and El Pa\u00eds',
+  'ibiza-':          'El Peri\u00f3dico de Ibiza and El Pa\u00eds',
+  'mallorca-':       'Diario de Mallorca and El Pa\u00eds',
+  'es-':             'El Pa\u00eds and Expansi\u00f3n',
+  // Portugal
+  'lisbon-':         'P\u00fablico and Jornal de Neg\u00f3cios',
+  'pt-':             'P\u00fablico and Jornal de Neg\u00f3cios',
+  // Germany / Austria
+  'berlin-':         'Frankfurter Allgemeine Zeitung and Handelsblatt',
+  'munich-':         'S\u00fcddeutsche Zeitung and Handelsblatt',
+  'hamburg-':        'Die Zeit and Handelsblatt',
+  'frankfurt-':      'Frankfurter Allgemeine Zeitung and Handelsblatt',
+  'de-':             'Frankfurter Allgemeine Zeitung and Handelsblatt',
+  'vienna-':         'Die Presse and Der Standard',
+  'at-':             'Die Presse and Der Standard',
+  // Netherlands / Belgium
+  'amsterdam-':      'NRC Handelsblad and Het Financieele Dagblad',
+  'nl-':             'NRC Handelsblad and Het Financieele Dagblad',
+  'brussels-':       'De Standaard and Le Soir',
+  'be-':             'De Standaard and Le Soir',
+  // Scandinavia
+  'stockholm-':      'Dagens Nyheter and Svenska Dagbladet',
+  'gothenburg-':     'G\u00f6teborgs-Posten and Dagens Industri',
+  'se-':             'Dagens Nyheter and Svenska Dagbladet',
+  'copenhagen-':     'Berlingske and Politiken',
+  'dk-':             'Berlingske and Politiken',
+  'oslo-':           'Aftenposten and Dagens N\u00e6ringsliv',
+  'no-':             'Aftenposten and Dagens N\u00e6ringsliv',
+  // Greece
+  'athens-':         'Kathimerini',
+  'mykonos-':        'Kathimerini',
+  'gr-':             'Kathimerini',
+  // Middle East
+  'dubai-':          'The National and Gulf News',
+  'abu-dhabi-':      'The National and Gulf News',
+  'ae-':             'The National and Gulf News',
+  'tel-aviv-':       'Haaretz and Calcalist',
+  'il-':             'Haaretz and Calcalist',
+  'riyadh-':         'Arab News and Asharq Al-Awsat',
+  'sa-':             'Arab News and Asharq Al-Awsat',
+  'cairo-':          'Al-Ahram and Daily News Egypt',
+  // Africa
+  'cape-town-':      'Business Day and the Cape Times',
+  'johannesburg-':   'Business Day and the Financial Mail',
+  'za-':             'Business Day and the Financial Mail',
+  // APAC
+  'hong-kong-':      'the South China Morning Post',
+  'hk-':             'the South China Morning Post',
+  'singapore-':      'The Straits Times and The Business Times',
+  'sg-':             'The Straits Times and The Business Times',
+  'tokyo-':          'the Nikkei and Asahi Shimbun',
+  'jp-':             'the Nikkei and Asahi Shimbun',
+  'seoul-':          'the Chosun Ilbo and the Korea Herald',
+  'kr-':             'the Chosun Ilbo and the Korea Herald',
+  'shanghai-':       'the South China Morning Post and Caixin',
+  'beijing-':        'the South China Morning Post and Caixin',
+  'cn-':             'the South China Morning Post and Caixin',
+  'bangkok-':        'the Bangkok Post',
+  'th-':             'the Bangkok Post',
+  'bali-':           'The Jakarta Post',
+  'jakarta-':        'The Jakarta Post',
+  'id-':             'The Jakarta Post',
+  'sydney-':         'the Australian Financial Review and The Sydney Morning Herald',
+  'melbourne-':      'the Australian Financial Review and The Age',
+  'au-':             'the Australian Financial Review',
+  'auckland-':       'the New Zealand Herald',
+  'nz-':             'the New Zealand Herald',
+  // Latin America
+  'mexico-city-':    'Reforma and El Financiero',
+  'mx-':             'Reforma and El Financiero',
+  'sao-paulo-':      'Folha de S.Paulo and Valor Econ\u00f4mico',
+  'rio-':            'O Globo and Valor Econ\u00f4mico',
+  'br-':             'Folha de S.Paulo and Valor Econ\u00f4mico',
+  'buenos-aires-':   'La Naci\u00f3n and Clar\u00edn',
+  'ar-':             'La Naci\u00f3n and Clar\u00edn',
+  'santiago-':       'El Mercurio and La Tercera',
+  'cl-':             'El Mercurio and La Tercera',
+  'bogota-':         'El Tiempo and Portafolio',
+  'co-':             'El Tiempo and Portafolio',
+};
+
+function resolveLocalPapers(neighborhoodId) {
+  if (!neighborhoodId) return null;
+  const id = neighborhoodId.toLowerCase();
+  // Longest prefix first so e.g. 'hong-kong-' beats 'hk-' when both would match
+  const keys = Object.keys(LOCAL_PAPERS).sort((a, b) => b.length - a.length);
+  for (const prefix of keys) {
+    if (id.startsWith(prefix) || id === prefix.replace(/-$/, '')) return LOCAL_PAPERS[prefix];
+  }
+  return null;
+}
+
 // ─── Minimal CSV parse/stringify (comma separator, double-quoted fields) ────
 
 function parseCsv(text) {
@@ -115,13 +259,20 @@ function buildColdPitchHtml(r, setupUrl) {
   const resampleSubject = `Send me another ${neighborhood} sample`;
   const resampleBody = `Hi Morgan,\n\nPlease send me another live ${neighborhood} Daily sample.\n\nThanks,\n${r.agent_name}`;
 
+  // Local-paper anchor line. Falls back to generic copy for markets we haven't
+  // mapped yet so the email still reads cleanly.
+  const papers = resolveLocalPapers(r.neighborhood_id);
+  const intelLine = papers
+    ? `the kind of local intelligence your clients already track in ${papers}`
+    : 'the kind of neighborhood intelligence your clients already track';
+
   return `
 <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 24px; color: #1c1917; line-height: 1.7; font-size: 16px;">
   <p>Hi ${firstName},</p>
 
   <p>${firm} is one of the top brokerages covering ${neighborhood}, so I'm reaching out directly before the slot is taken.</p>
 
-  <p>I built Flaneur - a morning brief about ${neighborhood}. Restaurant openings, cultural events, market moves, the kind of neighborhood intelligence your clients already track, pulled into a single three-minute read they open with their coffee.</p>
+  <p>I built Flaneur - a morning brief about ${neighborhood}. Restaurant openings, cultural events, market moves, ${intelLine}, pulled into a single three-minute read they open with their coffee.</p>
 
   <p>Here's what the broker version looks like:</p>
 
@@ -232,21 +383,25 @@ async function main() {
 
   const rows = parseCsv(fs.readFileSync(csvPath, 'utf8'));
   const queued = rows.filter((r) => !r.status || r.status === 'queued');
-  const batch = queued.slice(0, Number.isFinite(limit) ? limit : queued.length);
+
+  // Separate invalid (missing required fields) from valid BEFORE applying limit
+  // so that --limit=N counts actual sends, not queued rows that will be skipped.
+  const queuedInvalid = queued.filter((r) => validateRow(r).length > 0);
+  const queuedValid = queued.filter((r) => validateRow(r).length === 0);
+  const valid = queuedValid.slice(0, Number.isFinite(limit) ? limit : queuedValid.length);
 
   console.log(`CSV: ${csvPath}`);
-  console.log(`Total rows: ${rows.length}  |  Queued: ${queued.length}  |  This batch: ${batch.length}`);
+  console.log(`Total rows: ${rows.length}  |  Queued: ${queued.length} (valid: ${queuedValid.length}, invalid: ${queuedInvalid.length})  |  This batch: ${valid.length}`);
   if (dryRun) console.log('DRY RUN - no emails will be sent.');
 
-  // Pre-flight: invalid rows
-  const invalid = batch.map((r, i) => ({ i, r, errs: validateRow(r) })).filter((x) => x.errs.length);
-  if (invalid.length) {
-    console.log(`\n${invalid.length} row(s) invalid:`);
-    for (const { i, r, errs } of invalid) {
-      console.log(`  row ${i + 1} (${r.agent_email || 'no email'}): ${errs.join(', ')}`);
+  if (queuedInvalid.length) {
+    console.log(`\n${queuedInvalid.length} queued row(s) skipped (invalid):`);
+    for (const r of queuedInvalid.slice(0, 5)) {
+      const errs = validateRow(r);
+      console.log(`  ${r.agent_name || '?'} (${r.neighborhood_id}): ${errs.join(', ')}`);
     }
+    if (queuedInvalid.length > 5) console.log(`  ... and ${queuedInvalid.length - 5} more`);
   }
-  const valid = batch.filter((r) => validateRow(r).length === 0);
 
   if (dryRun) {
     console.log(`\nWould send to ${valid.length} broker(s):`);

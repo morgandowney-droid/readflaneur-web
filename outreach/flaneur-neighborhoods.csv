@@ -1,0 +1,252 @@
+neighborhood_id,neighborhood_display,country
+buenosaires-palermo-soho,"Palermo Soho, Buenos Aires",Argentina
+buenosaires-puerto-madero,"Puerto Madero, Buenos Aires",Argentina
+buenosaires-recoleta,"Recoleta, Buenos Aires",Argentina
+melbourne-fitzroy,"Fitzroy, Melbourne",Australia
+melbourne-south-yarra,"South Yarra, Melbourne",Australia
+melbourne-st-kilda,"St Kilda, Melbourne",Australia
+melbourne-toorak,"Toorak, Melbourne",Australia
+sydney-bondi-beach,"Bondi Beach, Sydney",Australia
+sydney-double-bay,"Double Bay, Sydney",Australia
+sydney-mosman,"Mosman, Sydney",Australia
+sydney-paddington,"Paddington, Sydney",Australia
+sydney-point-piper,"Point Piper, Sydney",Australia
+sydney-surry-hills,"Surry Hills, Sydney",Australia
+sydney-vaucluse,"Vaucluse, Sydney",Australia
+sydney-woollahra,"Woollahra, Sydney",Australia
+brussels-ixelles,"Ixelles, Brussels",Belgium
+rio-ipanema,"Ipanema, Rio de Janeiro",Brazil
+rio-leblon,"Leblon, Rio de Janeiro",Brazil
+saopaulo-itaim-bibi,"Itaim Bibi, São Paulo",Brazil
+saopaulo-jardim-europa,"Jardim Europa, São Paulo",Brazil
+saopaulo-vila-madalena,"Vila Madalena, São Paulo",Brazil
+montreal-westmount,"Westmount, Montreal",Canada
+toronto-distillery,"Distillery District, Toronto",Canada
+toronto-queen-west,"Queen West, Toronto",Canada
+toronto-rosedale,"Rosedale, Toronto",Canada
+toronto-yorkville,"Yorkville, Toronto",Canada
+vancouver-kitsilano,"Kitsilano, Vancouver",Canada
+vancouver-point-grey,"Point Grey, Vancouver",Canada
+vancouver-west-vancouver,"West Vancouver, Vancouver",Canada
+santiago-vitacura,"Vitacura, Santiago",Chile
+beijing-sanlitun,"Sanlitun, Beijing",China
+shanghai-french-concession,"French Concession, Shanghai",China
+shanghai-jingan,"Jing'an, Shanghai",China
+shanghai-xintiandi,"Xintiandi, Shanghai",China
+medellin-el-poblado,"El Poblado, Medellín",Colombia
+copenhagen-christianshavn,"Christianshavn, Copenhagen",Denmark
+copenhagen-frederiksberg,"Frederiksberg, Copenhagen",Denmark
+copenhagen-norrebro,"Nørrebro, Copenhagen",Denmark
+copenhagen-nyhavn,"Nyhavn, Copenhagen",Denmark
+copenhagen-vesterbro,"Vesterbro, Copenhagen",Denmark
+cairo-zamalek,"Zamalek, Cairo",Egypt
+alps-courchevel,"Courchevel 1850 French Alps, Alps",France
+riviera-antibes,"Antibes, French Riviera",France
+riviera-cannes,"Cannes, French Riviera",France
+europe-saint-tropez,"Saint-Tropez, French Riviera",France
+nice-cap-ferrat,"Cap Ferrat, Nice",France
+paris-16th,"16th Arrondissement, Paris",France
+paris-1st,"1st Arrondissement, Paris",France
+paris-7th,"7th Arrondissement, Paris",France
+paris-8th,"8th Arrondissement, Paris",France
+paris-canal-st-martin,"Canal Saint-Martin, Paris",France
+paris-le-marais,"Le Marais, Paris",France
+paris-montmartre,"Montmartre, Paris",France
+paris-saint-germain,"Saint-Germain-des-Prés, Paris",France
+caribbean-st-barts,"St. Barts, St. Barts",France
+berlin-charlottenburg,"Charlottenburg, Berlin",Germany
+berlin-dahlem,"Dahlem, Berlin",Germany
+berlin-grunewald,"Grunewald, Berlin",Germany
+berlin-kreuzberg,"Kreuzberg, Berlin",Germany
+berlin-mitte,"Mitte, Berlin",Germany
+berlin-prenzlauer-berg,"Prenzlauer Berg, Berlin",Germany
+berlin-zehlendorf,"Zehlendorf, Berlin",Germany
+hamburg-harvestehude,"Harvestehude, Hamburg",Germany
+munich-bogenhausen,"Bogenhausen, Munich",Germany
+munich-schwabing,"Schwabing, Munich",Germany
+europe-sylt,"Sylt, Sylt",Germany
+athens-kolonaki,"Kolonaki, Athens",Greece
+athens-vouliagmeni,"Vouliagmeni, Athens",Greece
+mykonos-town,"Mykonos Town, Mykonos",Greece
+hk-central,"Central, Hong Kong",Hong Kong
+hk-mid-levels,"Mid-Levels, Hong Kong",Hong Kong
+hk-repulse-bay,"Repulse Bay, Hong Kong",Hong Kong
+hk-soho,"SoHo, Hong Kong",Hong Kong
+hk-the-peak,"The Peak, Hong Kong",Hong Kong
+bali-canggu,"Canggu, Bali",Indonesia
+bali-uluwatu,"Uluwatu, Bali",Indonesia
+jakarta-menteng,"Menteng, Jakarta",Indonesia
+dublin-ballsbridge,"Ballsbridge, Dublin",Ireland
+dublin-dalkey,"Dalkey, Dublin",Ireland
+dublin-ranelagh,"Ranelagh, Dublin",Ireland
+dublin-temple-bar,"Temple Bar, Dublin",Ireland
+telaviv-neve-tzedek,"Neve Tzedek, Tel Aviv",Israel
+telaviv-rothschild,"Rothschild Boulevard, Tel Aviv",Israel
+campania-capri,"Capri, Campania",Italy
+liguria-portofino,"Portofino, Liguria",Italy
+lombardy-lake-como,"Lake Como, Lombardy",Italy
+milan-brera,"Brera, Milan",Italy
+milan-navigli,"Navigli, Milan",Italy
+milan-porta-nuova,"Porta Nuova, Milan",Italy
+milan-quadrilatero,"Quadrilatero della Moda, Milan",Italy
+rome-centro-storico,"Centro Storico, Rome",Italy
+rome-parioli,"Parioli, Rome",Italy
+rome-trastevere,"Trastevere, Rome",Italy
+hokkaido-niseko,"Niseko, Hokkaido",Japan
+tokyo-aoyama,"Aoyama, Tokyo",Japan
+tokyo-daikanyama,"Daikanyama, Tokyo",Japan
+tokyo-ginza,"Ginza, Tokyo",Japan
+tokyo-minato,"Minato-ku, Tokyo",Japan
+tokyo-roppongi,"Roppongi, Tokyo",Japan
+tokyo-shibuya,"Shibuya, Tokyo",Japan
+cdmx-condesa,"Condesa, Mexico City",Mexico
+cdmx-lomas,"Lomas de Chapultepec, Mexico City",Mexico
+cdmx-polanco,"Polanco, Mexico City",Mexico
+cdmx-roma-norte,"Roma Norte, Mexico City",Mexico
+monaco-monaco,"Monaco, Monaco",Monaco
+amsterdam-de-pijp,"De Pijp, Amsterdam",Netherlands
+amsterdam-grachtengordel,"Grachtengordel, Amsterdam",Netherlands
+amsterdam-jordaan,"Jordaan, Amsterdam",Netherlands
+amsterdam-oud-zuid,"Oud-Zuid, Amsterdam",Netherlands
+auckland-herne-bay,"Herne Bay, Auckland",New Zealand
+auckland-remuera,"Remuera, Auckland",New Zealand
+auckland-waiheke,"Waiheke Island, Auckland",New Zealand
+queenstown-dalefield,"Dalefield, Queenstown",New Zealand
+queenstown-kelvin-heights,"Kelvin Heights, Queenstown",New Zealand
+oslo-frogner,"Frogner, Oslo",Norway
+oslo-grunerløkka,"Grünerløkka, Oslo",Norway
+alentejo-comporta,"Comporta, Alentejo",Portugal
+lisbon-alfama,"Alfama, Lisbon",Portugal
+lisbon-cascais,"Cascais, Lisbon",Portugal
+lisbon-chiado,"Chiado, Lisbon",Portugal
+lisbon-principe-real,"Príncipe Real, Lisbon",Portugal
+riyadh-al-olaya,"Al Olaya, Riyadh",Saudi Arabia
+singapore-marina-bay,"Marina Bay, Singapore",Singapore
+singapore-nassim,"Nassim Hill, Singapore",Singapore
+singapore-orchard,"Orchard Road, Singapore",Singapore
+singapore-sentosa,"Sentosa Cove, Singapore",Singapore
+singapore-tanglin,"Tanglin, Singapore",Singapore
+singapore-tiong-bahru,"Tiong Bahru, Singapore",Singapore
+capetown-camps-bay,"Camps Bay, Cape Town",South Africa
+capetown-clifton,"Clifton, Cape Town",South Africa
+capetown-atlantic-seaboard,"Clifton / Camps Bay, Cape Town",South Africa
+capetown-constantia,"Constantia, Cape Town",South Africa
+capetown-waterfront,"V&A Waterfront, Cape Town",South Africa
+joburg-sandton,"Sandton, Johannesburg",South Africa
+seoul-gangnam,"Gangnam, Seoul",South Korea
+seoul-hannam-dong,"Hannam-dong, Seoul",South Korea
+seoul-seongsu-dong,"Seongsu-dong, Seoul",South Korea
+andalusia-sotogrande,"Sotogrande, Andalusia",Spain
+barcelona-barceloneta,"Barceloneta, Barcelona",Spain
+barcelona-eixample,"Eixample, Barcelona",Spain
+barcelona-el-born,"El Born, Barcelona",Spain
+barcelona-gracia,"Gràcia, Barcelona",Spain
+barcelona-pedralbes,"Pedralbes, Barcelona",Spain
+marbella-golden-mile,"Marbella (Golden Mile), Costa del Sol",Spain
+europe-marbella,"Marbella Municipality, Costa del Sol",Spain
+ibiza-town,"Ibiza Town, Ibiza",Spain
+madrid-chamberi,"Chamberí, Madrid",Spain
+madrid-justicia,"Justicia, Madrid",Spain
+madrid-salamanca,"Salamanca, Madrid",Spain
+utrera-utrera,"Utrera, Seville",Spain
+stockholm-kungsholmen,"Kungsholmen, Stockholm",Sweden
+stockholm-sodermalm,"Södermalm, Stockholm",Sweden
+stockholm-vasastan,"Vasastan, Stockholm",Sweden
+swissalps-gstaad,"Gstaad Swiss Alps, Alps",Switzerland
+swissalps-st-moritz,"St. Moritz Swiss Alps, Alps",Switzerland
+alps-zermatt,"Zermatt Swiss Alps, Alps",Switzerland
+geneva-cologny,"Cologny, Geneva",Switzerland
+geneva-eaux-vives,"Eaux-Vives, Geneva",Switzerland
+zurich-seefeld,"Seefeld, Zurich",Switzerland
+zurich-zurichberg,"Zürichberg, Zurich",Switzerland
+bangkok-sathorn,"Sathorn, Bangkok",Thailand
+bangkok-thong-lo,"Thong Lo, Bangkok",Thailand
+dubai-al-barari,"Al Barari, Dubai",UAE
+dubai-difc,"DIFC, Dubai",UAE
+dubai-downtown,"Downtown Dubai, Dubai",UAE
+dubai-marina,"Dubai Marina, Dubai",UAE
+dubai-jumeirah,"Jumeirah, Dubai",UAE
+dubai-palm-jumeirah,"Palm Jumeirah, Dubai",UAE
+london-belgravia,"Belgravia, London",UK
+london-chelsea,"Chelsea, London",UK
+london-clerkenwell,"Clerkenwell, London",UK
+london-hampstead,"Hampstead, London",UK
+london-holland-park,"Holland Park, London",UK
+london-kensington,"Kensington, London",UK
+london-knightsbridge,"Knightsbridge, London",UK
+london-marylebone,"Marylebone, London",UK
+london-mayfair,"Mayfair, London",UK
+london-notting-hill,"Notting Hill, London",UK
+london-primrose-hill,"Primrose Hill, London",UK
+london-shoreditch,"Shoreditch, London",UK
+london-soho,"Soho, London",UK
+london-st-johns-wood,"St John's Wood, London",UK
+boston-charlestown,"Charlestown, Boston",United States
+new-york-city-east-village,"East Village, New York City",United States
+atlanta-buckhead,"Buckhead, Atlanta",USA
+austin-downtown,"Downtown Austin, Austin",USA
+austin-south-congress,"South Congress, Austin",USA
+boston-back-bay,"Back Bay, Boston",USA
+boston-beacon-hill,"Beacon Hill, Boston",USA
+boston-seaport,"Seaport, Boston",USA
+ca-atherton,"Atherton, California",USA
+ca-palo-alto,"Palo Alto, California",USA
+chicago-fulton-market,"Fulton Market, Chicago",USA
+chicago-gold-coast,"Gold Coast, Chicago",USA
+chicago-lincoln-park,"Lincoln Park, Chicago",USA
+chicago-river-north,"River North, Chicago",USA
+chicago-wicker-park,"Wicker Park, Chicago",USA
+co-aspen,"Aspen, Colorado",USA
+co-vail,"Vail, Colorado",USA
+ct-greenwich,"Greenwich, Connecticut",USA
+dallas-highland-park,"Highland Park, Dallas",USA
+denver-cherry-creek,"Cherry Creek, Denver",USA
+palm-beach-island,"Palm Beach, Florida",USA
+houston-river-oaks,"River Oaks, Houston",USA
+la-bel-air,"Bel Air, Los Angeles",USA
+la-beverly-hills,"Beverly Hills, Los Angeles",USA
+la-malibu,"Malibu, Los Angeles",USA
+la-santa-monica,"Santa Monica, Los Angeles",USA
+la-silver-lake,"Silver Lake, Los Angeles",USA
+la-venice,"Venice Beach, Los Angeles",USA
+la-west-hollywood,"West Hollywood, Los Angeles",USA
+us-marthas-vineyard,"Martha's Vineyard, Martha's Vineyard",USA
+miami-brickell,"Brickell, Miami",USA
+miami-coconut-grove,"Coconut Grove, Miami",USA
+miami-coral-gables,"Coral Gables, Miami",USA
+miami-design-district,"Design District, Miami",USA
+miami-south-beach,"South Beach, Miami",USA
+miami-wynwood,"Wynwood, Miami",USA
+us-nantucket,"Nantucket, Nantucket",USA
+nyc-brooklyn-heights,"Brooklyn Heights, New York",USA
+nyc-chelsea,"Chelsea, New York",USA
+nyc-greenwich-village,"Greenwich Village, New York",USA
+nyc-hudson-yards,"Hudson Yards, New York",USA
+nyc-meatpacking,"Meatpacking District, New York",USA
+nyc-upper-east-side,"Upper East Side, New York",USA
+nyc-upper-west-side,"Upper West Side, New York",USA
+nyc-west-village,"West Village, New York",USA
+nyc-williamsburg,"Williamsburg, New York",USA
+greenwich-backcountry,"Greenwich Backcountry, New York Surroundings",USA
+philly-rittenhouse,"Rittenhouse Square, Philadelphia",USA
+sf-hayes-valley,"Hayes Valley, San Francisco",USA
+sf-marina,"Marina District, San Francisco",USA
+sf-noe-valley,"Noe Valley, San Francisco",USA
+sf-pacific-heights,"Pacific Heights, San Francisco",USA
+sf-russian-hill,"Russian Hill, San Francisco",USA
+sf-mission,"The Mission, San Francisco",USA
+santabarbara-montecito,"Montecito, Santa Barbara",USA
+seattle-south-lake-union,"South Lake Union, Seattle",USA
+hamptons-amagansett,"Amagansett, The Hamptons",USA
+hamptons-bridgehampton,"Bridgehampton, The Hamptons",USA
+hamptons-east-hampton,"East Hampton, The Hamptons",USA
+hamptons-montauk,"Montauk, The Hamptons",USA
+hamptons-sagaponack,"Sagaponack, The Hamptons",USA
+hamptons-southampton,"Southampton, The Hamptons",USA
+dc-adams-morgan,"Adams Morgan, Washington DC",USA
+dc-capitol-hill,"Capitol Hill, Washington DC",USA
+dc-cleveland-park,"Cleveland Park, Washington DC",USA
+dc-dupont-circle,"Dupont Circle, Washington DC",USA
+dc-georgetown,"Georgetown, Washington DC",USA
+dc-kalorama,"Kalorama, Washington DC",USA
+wy-jackson-hole,"Jackson Hole, Wyoming",USA

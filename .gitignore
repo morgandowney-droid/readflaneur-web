@@ -1,10 +1,13 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # Broker outreach lists contain PII (broker names, emails, phone numbers) and
-# should never be committed. Sample schema file is checked in at targets.sample.csv.
+# should never be committed. Sample schema + research prompt + neighborhood
+# list (public data) are checked in.
 /outreach/*
 !/outreach/targets.sample.csv
 !/outreach/.gitkeep
+!/outreach/broker-research-prompt.md
+!/outreach/flaneur-neighborhoods.csv
 
 # dependencies
 /node_modules
