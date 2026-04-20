@@ -266,9 +266,13 @@ const tempDesc = {
 const tomorrowBox = {
   border: '1px solid #e5e5e5',
   borderRadius: '12px',
-  padding: '8px 16px',
+  padding: '8px 20px',
   margin: '10px auto 0',
-  maxWidth: '280px',
+  // Width is driven by content — prevents sentences like
+  // "Unseasonably Warm Tomorrow (Tue): 16°C." from word-wrapping mid-phrase on
+  // mobile. Each <Text> inside is its own paragraph, so sentences still stack
+  // one per line naturally.
+  maxWidth: '520px',
   backgroundColor: '#fafafa',
 };
 
