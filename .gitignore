@@ -1,5 +1,11 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Broker outreach lists contain PII (broker names, emails, phone numbers) and
+# should never be committed. Sample schema file is checked in at targets.sample.csv.
+/outreach/*
+!/outreach/targets.sample.csv
+!/outreach/.gitkeep
+
 # dependencies
 /node_modules
 /.pnp
@@ -48,3 +54,6 @@ next-env.d.ts
 
 # Manual image uploads (processed and uploaded to Supabase, not needed in git)
 /manual-images/
+
+# Personal correspondence drafts
+will-lewis-email.txt

@@ -1,0 +1,2 @@
+neighborhood_id,neighborhood_display,agent_name,agent_email,agent_title,agent_phone,brokerage_name,brokerage_url,photo_url,sample_listing_url,sample_listing_address,sample_listing_price,priority,status,sent_at,notes
+stockholm-ostermalm,"Östermalm, Stockholm","Morgan Downey",morgan.downey@gmail.com,"Senior Broker",,"Eklund",https://eklundstockholmnewyork.com,,,,,"1",queued,,"self-test row - sends both emails to Morgan's personal inbox"
