@@ -426,7 +426,7 @@ export async function POST(request: NextRequest) {
       // Check if this is a partner subscription
       const { data: partnerBySub } = await supabaseAdmin
         .from('agent_partners')
-        .select('id')
+        .select('id, neighborhood_id')
         .eq('stripe_subscription_id', subscription.id)
         .single();
 
@@ -440,6 +440,71 @@ export async function POST(request: NextRequest) {
           .eq('id', partnerBySub.id);
 
         console.log(`Partner ${partnerBySub.id} subscription cancelled`);
+
+        // Notify everyone on the waitlist for this neighborhood — both brokers
+        // who hit "taken" during setup and brokers we cold-pitched this slot
+        // to. First one to sign up gets it.
+        try {
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/[\n\r]+$/, '').replace(/\/$/, '')
+            || 'https://readflaneur.com';
+
+          const { data: neighborhoodRow } = await supabaseAdmin
+            .from('neighborhoods')
+            .select('id, name, city')
+            .eq('id', partnerBySub.neighborhood_id)
+            .single();
+
+          const neighborhoodLabel = neighborhoodRow
+            ? `${neighborhoodRow.name}${neighborhoodRow.city ? `, ${neighborhoodRow.city}` : ''}`
+            : partnerBySub.neighborhood_id;
+
+          const { data: waitlist } = await supabaseAdmin
+            .from('partner_waitlist')
+            .select('id, broker_email, broker_name, source')
+            .eq('neighborhood_id', partnerBySub.neighborhood_id)
+            .is('notified_at', null);
+
+          if (waitlist && waitlist.length > 0) {
+            console.log(`Notifying ${waitlist.length} waitlisted broker(s) for ${partnerBySub.neighborhood_id}`);
+
+            for (const entry of waitlist) {
+              const firstName = (entry.broker_name || '').split(' ')[0] || 'there';
+              const setupUrl = `${appUrl}/partner/setup`
+                + `?neighborhood=${encodeURIComponent(partnerBySub.neighborhood_id)}`
+                + `&email=${encodeURIComponent(entry.broker_email)}`
+                + (entry.broker_name ? `&name=${encodeURIComponent(entry.broker_name)}` : '');
+
+              try {
+                await sendEmail({
+                  to: entry.broker_email,
+                  subject: `${neighborhoodLabel} is available again - act fast`,
+                  html: `
+                    <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 24px; color: #1c1917; line-height: 1.6;">
+                      <p style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #78716c; margin: 0 0 24px;">The slot reopened</p>
+                      <h1 style="font-size: 26px; font-weight: 300; margin: 0 0 16px;">${neighborhoodLabel} is available again</h1>
+                      <p>Hi ${firstName},</p>
+                      <p>The Flaneur partner slot for <strong>${neighborhoodLabel}</strong> just reopened. You&apos;d previously shown interest${entry.source === 'cold_pitch' ? ' when I reached out about it' : ''}, so I wanted you to have first look before I open it up more broadly.</p>
+                      <p>It&apos;s first-come-first-served. The setup takes about five minutes and includes a 14-day free trial — no charge until day 14, cancel anytime.</p>
+                      <p style="margin: 32px 0;"><a href="${setupUrl}" style="display: inline-block; padding: 14px 28px; background: #1c1917; color: #fafaf9; text-decoration: none; border-radius: 4px; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase;">Claim ${neighborhoodLabel}</a></p>
+                      <p style="color: #57534e; font-size: 14px;">If someone else claims it first, no harm done — you can still pick any other available neighborhood.</p>
+                      <p style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e7e5e4; color: #78716c; font-size: 14px;">Morgan Downey &middot; Flaneur &middot; <a href="mailto:md@readflaneur.com" style="color: #b45309;">md@readflaneur.com</a></p>
+                    </div>
+                  `,
+                });
+
+                await supabaseAdmin
+                  .from('partner_waitlist')
+                  .update({ notified_at: new Date().toISOString() })
+                  .eq('id', entry.id);
+              } catch (emailErr) {
+                console.error(`Failed to notify waitlist entry ${entry.id}:`, emailErr);
+              }
+            }
+          }
+        } catch (waitErr) {
+          console.error('Waitlist notification block failed:', waitErr);
+          // Don't break the webhook — cancellation itself succeeded
+        }
       }
       break;
     }

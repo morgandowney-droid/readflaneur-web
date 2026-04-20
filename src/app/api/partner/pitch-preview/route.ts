@@ -101,6 +101,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to send preview email' }, { status: 500 });
     }
 
+    // Add to waitlist so that if this neighborhood later gets taken and then
+    // cancels, we can automatically re-notify everyone we originally pitched.
+    const normalizedEmail = String(agentEmail).toLowerCase().trim();
+    supabaseAdmin
+      .from('partner_waitlist')
+      .upsert(
+        {
+          neighborhood_id: neighborhoodId,
+          broker_email: normalizedEmail,
+          broker_name: agentName || null,
+          brokerage_name: brokerageName || null,
+          source: 'cold_pitch',
+        },
+        { onConflict: 'neighborhood_id,broker_email', ignoreDuplicates: true }
+      )
+      .then((res) => {
+        if (res.error) console.error('pitch-preview waitlist upsert failed:', res.error);
+      }, (err) => console.error('pitch-preview waitlist upsert rejected:', err));
+
     return NextResponse.json({ success: true, sentTo: agentEmail });
   } catch (err) {
     console.error('Pitch preview error:', err);

@@ -54,6 +54,10 @@ function PartnerPageInner() {
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<Neighborhood | null>(null);
   const [neighborhoodAvailable, setNeighborhoodAvailable] = useState<boolean | null>(null);
   const [checkingNeighborhood, setCheckingNeighborhood] = useState(false);
+  const [waitlisted, setWaitlisted] = useState(false);
+  const [nearbyAvailable, setNearbyAvailable] = useState<Array<{ id: string; name: string; city: string | null; distanceKm: number }>>([]);
+  const [waitlistEmailInput, setWaitlistEmailInput] = useState('');
+  const [savingWaitlist, setSavingWaitlist] = useState(false);
 
   // Step 2 - Agent details
   const [agentName, setAgentName] = useState('');
@@ -132,24 +136,53 @@ function PartnerPageInner() {
   // Check neighborhood availability. Pass the viewer's email (from current
   // form state OR localStorage from a previous session) so they can resume
   // their own abandoned setup without seeing "This neighborhood is taken".
-  const checkNeighborhood = useCallback(async (id: string) => {
+  // If taken, the API also saves the broker to the waitlist (if email provided)
+  // and returns up to 5 nearby neighborhoods that are still available.
+  const checkNeighborhood = useCallback(async (id: string, explicitEmail?: string) => {
     setCheckingNeighborhood(true);
+    setWaitlisted(false);
+    setNearbyAvailable([]);
     try {
       let rememberedEmail = '';
       try {
         rememberedEmail = localStorage.getItem('flaneur-partner-email') || '';
       } catch { /* ignore */ }
-      const emailToSend = agentEmail || rememberedEmail;
+      const emailToSend = explicitEmail || agentEmail || rememberedEmail;
       const qs = new URLSearchParams({ id });
       if (emailToSend) qs.set('email', emailToSend);
+      if (agentName) qs.set('name', agentName);
+      if (brokerageName) qs.set('brokerage', brokerageName);
       const res = await fetch(`/api/partner/check-neighborhood?${qs.toString()}`);
       const data = await res.json();
       setNeighborhoodAvailable(data.available);
+      if (data.available === false) {
+        setWaitlisted(Boolean(data.waitlisted));
+        setNearbyAvailable(Array.isArray(data.nearbyAvailable) ? data.nearbyAvailable : []);
+      }
     } catch {
       setNeighborhoodAvailable(null);
     }
     setCheckingNeighborhood(false);
-  }, [agentEmail]);
+  }, [agentEmail, agentName, brokerageName]);
+
+  // Explicit "join waitlist" action for brokers who landed on a taken
+  // neighborhood without having filled in their email yet.
+  const joinWaitlistFromTakenScreen = async () => {
+    if (!selectedNeighborhood) return;
+    const email = waitlistEmailInput.trim().toLowerCase();
+    if (!email.includes('@')) return;
+    setSavingWaitlist(true);
+    try {
+      await checkNeighborhood(selectedNeighborhood.id, email);
+      // Remember email locally so next navigation the modal pre-fills
+      try {
+        localStorage.setItem('flaneur-partner-email', email);
+      } catch { /* ignore */ }
+      setAgentEmail(email);
+    } finally {
+      setSavingWaitlist(false);
+    }
+  };
 
   // Pre-select neighborhood from URL param once the list loads
   useEffect(() => {
@@ -479,7 +512,74 @@ function PartnerPageInner() {
                 {checkingNeighborhood ? (
                   <p className="text-fg-muted text-sm">Checking availability...</p>
                 ) : neighborhoodAvailable === false ? (
-                  <p className="text-red-400 text-sm">This neighborhood is taken. Choose another.</p>
+                  <div className="space-y-4">
+                    <p className="text-red-400 text-sm font-medium">
+                      {selectedNeighborhood.name} is taken.
+                    </p>
+
+                    {/* Waitlist capture - shows confirmation if we auto-saved,
+                        or an email input if we didn't have their email yet. */}
+                    {waitlisted ? (
+                      <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
+                        <p className="text-xs text-accent font-medium uppercase tracking-wide mb-1">You&apos;re on the waitlist</p>
+                        <p className="text-sm text-fg-muted">
+                          We&apos;ll email you the moment this slot reopens. First to claim wins.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-surface border border-border rounded-lg">
+                        <p className="text-xs text-fg-subtle uppercase tracking-wide mb-2">Get notified if this opens up</p>
+                        <div className="flex gap-2">
+                          <input
+                            type="email"
+                            placeholder="your@email.com"
+                            value={waitlistEmailInput}
+                            onChange={(e) => setWaitlistEmailInput(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && joinWaitlistFromTakenScreen()}
+                            className="flex-1 min-w-0 bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent"
+                          />
+                          <button
+                            onClick={joinWaitlistFromTakenScreen}
+                            disabled={savingWaitlist || !waitlistEmailInput.includes('@')}
+                            className="shrink-0 bg-fg text-canvas px-3 py-2 text-xs font-medium tracking-wide uppercase rounded-lg disabled:opacity-40"
+                          >
+                            {savingWaitlist ? 'Saving...' : 'Notify me'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Nearby available neighborhoods - click to switch selection. */}
+                    {nearbyAvailable.length > 0 && (
+                      <div>
+                        <p className="text-xs text-fg-subtle uppercase tracking-wide mb-2">
+                          These nearby neighborhoods are still available - act fast
+                        </p>
+                        <div className="border border-border rounded-lg divide-y divide-border overflow-hidden">
+                          {nearbyAvailable.map((n) => (
+                            <button
+                              key={n.id}
+                              onClick={() => {
+                                const full = neighborhoods.find((x) => x.id === n.id);
+                                if (full) handleSelectNeighborhood(full);
+                              }}
+                              className="w-full text-left px-4 py-3 hover:bg-hover transition-colors flex items-center justify-between gap-3"
+                            >
+                              <div className="min-w-0">
+                                <span className="font-medium text-fg">{n.name}</span>
+                                {n.city && (
+                                  <span className="text-fg-muted text-sm ml-2">{n.city}</span>
+                                )}
+                              </div>
+                              <span className="shrink-0 text-xs text-fg-subtle">
+                                {n.distanceKm < 1 ? '<1 km' : `${n.distanceKm.toFixed(1)} km`}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ) : neighborhoodAvailable === true ? (
                   <div>
                     <p className="text-sm text-fg-muted">

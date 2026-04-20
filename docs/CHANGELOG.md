@@ -5,6 +5,18 @@
 
 ## 2026-04-20
 
+**Broker waitlist + nearby suggestions on "taken" screen:**
+
+- New `partner_waitlist` table (migration `20260420_partner_waitlist.sql`) — columns: `id`, `neighborhood_id`, `broker_email`, `broker_name`, `brokerage_name`, `source` (`setup_blocked` or `cold_pitch`), `notified_at`, `created_at`; unique on `(neighborhood_id, broker_email)`; RLS service-role-only; partial index `WHERE notified_at IS NULL` for fast cancellation-notification queries.
+- `GET /api/partner/check-neighborhood` now accepts `email`, `name`, `brokerage` query params. When a neighborhood is taken and an email is passed, upserts into `partner_waitlist` (source=`setup_blocked`). Also Haversine-sorts all `is_active=true` non-combo neighborhoods within 15km, excludes any that already have a setup/active partner, and returns the top 5 as `nearbyAvailable`. Response shape: `{ available: false, takenBy, waitlisted: boolean, nearbyAvailable: [{ id, name, city, distanceKm }] }`.
+- `POST /api/partner/pitch-preview` now also upserts the recipient into `partner_waitlist` with `source='cold_pitch'` (fire-and-forget), so every cold-pitch target is automatically re-notified if the neighborhood later cancels.
+- **`customer.subscription.deleted` webhook** now queries `partner_waitlist WHERE neighborhood_id = X AND notified_at IS NULL` after flipping the partner to `cancelled`, emails each waitlisted broker a "{neighborhood} is available again - act fast" notification with a pre-filled setup URL (`?neighborhood=<id>&email=<email>&name=<name>`), and stamps `notified_at` so re-cancellations don't double-email. First broker to re-sign up wins.
+- **Setup page UI changes** (`/partner/setup` step 1): when a picked neighborhood is taken, the status card now shows three things: (1) a waitlist confirmation card OR an inline email capture ("Get notified if this opens up") if we don't have the broker's email yet, (2) a list of the nearest available neighborhoods with distance in km — clicking one swaps the selection and re-checks. Copy: "These nearby neighborhoods are still available - act fast".
+- Added state: `waitlisted`, `nearbyAvailable`, `waitlistEmailInput`, `savingWaitlist`. `checkNeighborhood` accepts optional `explicitEmail` arg so the inline waitlist form can immediately re-check with just the new email without touching `agentEmail` state.
+
+**Email: stop weather hint from word-wrapping mid-sentence:**
+- `tomorrowBox` in both `DailyBriefTemplate.tsx` and `BrandedDailyBriefTemplate.tsx` changed from `maxWidth: 280px` → `520px`. Weather story headlines like "Unseasonably Warm Tomorrow (Tue): 16°C." were wrapping across two lines on mobile mail clients. Box is still centered with margin auto so it doesn't bloat the email width; just wide enough for a typical weather hint to stay on one line.
+
 **Broker signup flow polish + billing clarity (8 mobile bugs from end-to-end test):**
 
 - **Scroll-to-top on step advance:** `useEffect` on `currentStep` now runs `window.scrollTo(0, 0)` + `setError('')` every step change. Was leaving brokers halfway down the next step after tapping Continue on mobile, and stale errors (e.g. "Failed to upload photo" from step 3) were leaking into step 4.
