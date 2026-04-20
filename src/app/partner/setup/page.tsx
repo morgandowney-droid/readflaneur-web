@@ -86,6 +86,21 @@ function PartnerPageInner() {
   const [previewSent, setPreviewSent] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  // Scroll to top on every step advance so brokers don't land halfway down the
+  // next page after tapping Continue on mobile.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    setError('');
+  }, [currentStep]);
+
+  // Treat US as imperial (Sqft), everywhere else metric (m²). Brokers in
+  // AU/CA/SG/HK also use "$" but measure property area in m².
+  const isUS = selectedNeighborhood?.country === 'United States'
+    || selectedNeighborhood?.country === 'USA'
+    || selectedNeighborhood?.country === 'US';
+  const areaUnit = isUS ? 'Sqft' : 'm²';
 
   // Load neighborhoods
   useEffect(() => {
@@ -174,16 +189,46 @@ function PartnerPageInner() {
     return results.map(r => r.item);
   }, [search, neighborhoods]);
 
-  // Photo upload handler
-  const handlePhotoUpload = async (file: File, callback: (url: string) => void) => {
+  // Photo upload handler. Returns a success boolean so callers can clear their
+  // "Uploading..." UI correctly and show an actionable error instead of hanging
+  // on a silently-failed fetch.
+  const handlePhotoUpload = async (file: File, callback: (url: string) => void): Promise<boolean> => {
+    const maxSizeMb = 5;
+    if (file.size > maxSizeMb * 1024 * 1024) {
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+      setError(`Photo is ${sizeMb}MB - max ${maxSizeMb}MB. iPhone photos are often 10MB+; try a smaller one or crop it first.`);
+      return false;
+    }
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError(`File type "${file.type || 'unknown'}" not supported. Use JPEG, PNG, or WebP.`);
+      return false;
+    }
     const formData = new FormData();
     formData.append('file', file);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     try {
-      const res = await fetch('/api/partner/upload', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (data.url) callback(data.url);
-    } catch {
-      setError('Failed to upload photo');
+      const res = await fetch('/api/partner/upload', {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) {
+        setError(data.error || `Upload failed (${res.status}). Try again or use a different photo.`);
+        return false;
+      }
+      callback(data.url);
+      setError('');
+      return true;
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      const isAbort = err instanceof Error && err.name === 'AbortError';
+      setError(isAbort
+        ? 'Upload timed out after 30s. Check your connection and try a smaller photo.'
+        : 'Upload failed. Check your connection and try again.');
+      return false;
     }
   };
 
@@ -522,6 +567,7 @@ function PartnerPageInner() {
                     setUploadingPhoto(true);
                     await handlePhotoUpload(file, setAgentPhotoUrl);
                     setUploadingPhoto(false);
+                    e.target.value = '';
                   }}
                   className="text-sm text-fg-muted"
                 />
@@ -561,7 +607,7 @@ function PartnerPageInner() {
                 <p className="text-accent font-semibold">{listing.price}</p>
                 {(listing.beds || listing.baths || listing.sqft) && (
                   <p className="text-fg-muted text-sm">
-                    {[listing.beds && `${listing.beds} BD`, listing.baths && `${listing.baths} BA`, listing.sqft && `${listing.sqft} SF`]
+                    {[listing.beds && `${listing.beds} BD`, listing.baths && `${listing.baths} BA`, listing.sqft && `${listing.sqft} ${areaUnit}`]
                       .filter(Boolean)
                       .join(' · ')}
                   </p>
@@ -585,17 +631,20 @@ function PartnerPageInner() {
                   onChange={(e) => setEditingListing({ ...editingListing, address: e.target.value })}
                   className="w-full bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent"
                 />
-                <input
-                  type="text"
-                  placeholder="Price *"
-                  value={editingListing.price}
-                  onChange={(e) => setEditingListing({ ...editingListing, price: e.target.value })}
-                  className="w-full bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent"
-                />
+                <div>
+                  <input
+                    type="text"
+                    placeholder={isUS ? 'Price * (e.g., US$3,500,000)' : 'Price * (include currency)'}
+                    value={editingListing.price}
+                    onChange={(e) => setEditingListing({ ...editingListing, price: e.target.value })}
+                    className="w-full bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent"
+                  />
+                  <p className="text-xs text-fg-subtle mt-1">Include currency symbol so clients don&apos;t confuse US$, A$, C$, S$, HK$.</p>
+                </div>
                 <div className="grid grid-cols-3 gap-2">
                   <input type="text" placeholder="Beds" value={editingListing.beds || ''} onChange={(e) => setEditingListing({ ...editingListing, beds: e.target.value })} className="bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent" />
                   <input type="text" placeholder="Baths" value={editingListing.baths || ''} onChange={(e) => setEditingListing({ ...editingListing, baths: e.target.value })} className="bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent" />
-                  <input type="text" placeholder="Sqft" value={editingListing.sqft || ''} onChange={(e) => setEditingListing({ ...editingListing, sqft: e.target.value })} className="bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent" />
+                  <input type="text" placeholder={areaUnit} value={editingListing.sqft || ''} onChange={(e) => setEditingListing({ ...editingListing, sqft: e.target.value })} className="bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent" />
                 </div>
                 <textarea
                   placeholder="Description (max 200 chars)"
@@ -623,8 +672,10 @@ function PartnerPageInner() {
                       const file = e.target.files?.[0];
                       if (!file) return;
                       setUploadingListingPhoto(true);
-                      await handlePhotoUpload(file, (url) => setEditingListing({ ...editingListing, photo_url: url }));
+                      await handlePhotoUpload(file, (url) => setEditingListing((prev) => ({ ...prev, photo_url: url })));
                       setUploadingListingPhoto(false);
+                      // Reset the input so re-selecting the same file re-triggers onChange
+                      e.target.value = '';
                     }}
                     className="text-sm text-fg-muted"
                   />
@@ -731,18 +782,31 @@ function PartnerPageInner() {
 
             {slugPreview && (
               <div className="p-3 bg-surface border border-border rounded-lg mb-4">
-                <p className="text-xs text-fg-subtle mb-1">Your subscribe link</p>
+                <p className="text-xs text-fg-subtle mb-1">
+                  Your subscribe link. You will receive this by email separately also. You can use this on your website or emails.
+                </p>
                 <div className="flex items-center gap-2">
                   <input
                     readOnly
                     value={`readflaneur.com/r/${slugPreview}`}
-                    className="flex-1 bg-canvas border border-border rounded px-3 py-1.5 text-sm text-fg font-mono"
+                    onFocus={(e) => e.target.select()}
+                    className="flex-1 min-w-0 bg-canvas border border-border rounded px-3 py-1.5 text-xs text-fg font-mono"
                   />
                   <button
-                    onClick={() => navigator.clipboard.writeText(`https://readflaneur.com/r/${slugPreview}`)}
-                    className="text-accent text-xs hover:underline shrink-0"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(`https://readflaneur.com/r/${slugPreview}`);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      } catch { /* clipboard blocked */ }
+                    }}
+                    className={`text-xs shrink-0 px-2 py-1 rounded border transition-colors ${
+                      copied
+                        ? 'border-accent/40 bg-accent/10 text-accent'
+                        : 'border-border text-accent hover:bg-hover'
+                    }`}
                   >
-                    Copy
+                    {copied ? 'Copied!' : 'Copy'}
                   </button>
                 </div>
                 <p className="text-xs text-fg-subtle mt-1">Clients can also subscribe via this link.</p>
@@ -805,8 +869,14 @@ function PartnerPageInner() {
           <div className="text-center">
             <h2 className="font-[family-name:var(--font-cormorant)] text-2xl mb-4">Activate Your Newsletter</h2>
             <div className="p-6 bg-surface border border-border rounded-lg mb-6 max-w-sm mx-auto">
-              <p className="text-3xl font-light mb-1">$999</p>
-              <p className="text-fg-muted text-sm">per month - cancel anytime</p>
+              <p className="text-3xl font-light mb-1">
+                US$999
+                <span className="text-sm text-fg-subtle ml-1 align-middle">/ month</span>
+              </p>
+              <p className="text-fg-muted text-sm mb-3">Billed in USD. Cancel anytime.</p>
+              <p className="text-fg-subtle text-xs leading-relaxed text-left">
+                First billing starts 14 days after activation, then monthly on the 15th day after activation. You can cancel anytime before or after the free trial. If you cancel before the end of the free trial, no billing occurs.
+              </p>
             </div>
             <ul className="text-sm text-fg-muted space-y-2 mb-8 max-w-sm mx-auto text-left">
               <li>- Your name and branding on every email</li>

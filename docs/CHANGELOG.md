@@ -3,6 +3,22 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-04-20
+
+**Broker signup flow polish + billing clarity (8 mobile bugs from end-to-end test):**
+
+- **Scroll-to-top on step advance:** `useEffect` on `currentStep` now runs `window.scrollTo(0, 0)` + `setError('')` every step change. Was leaving brokers halfway down the next step after tapping Continue on mobile, and stale errors (e.g. "Failed to upload photo" from step 3) were leaking into step 4.
+- **Copy-to-clipboard feedback:** Subscribe-link Copy button now toggles to "Copied!" for 2s via new `copied` state + `setTimeout`. Prior version silently wrote to clipboard with no UI acknowledgement.
+- **Subscribe-link label clarity:** Changed from "Your subscribe link" to "Your subscribe link. You will receive this by email separately also. You can use this on your website or emails." Sets expectation that the link is also emailed (below).
+- **Email broker the subscribe link:** New `sendSubscribeLinkEmail()` in `src/app/api/partner/setup/route.ts` fires fire-and-forget on new partner creation (insert path + slug-collision retry path). Broker gets the `/r/{slug}` link in their inbox before activation so they can paste it into their website, email signature, or prospect lists without needing to keep the setup tab open.
+- **Listing photo upload - timeout + size check + functional setState:** `handlePhotoUpload` rewritten to return `Promise<boolean>`, enforce client-side 5MB + MIME check before fetch (iPhone photos are routinely 10-20MB and were stalling silently on cellular), wrap the fetch in a 30s `AbortController` timeout, and surface actionable error messages ("Photo is 12.3MB - max 5MB. iPhone photos are often 10MB+; try a smaller one or crop it first."). Listing `onChange` now uses functional `setEditingListing(prev => ({ ...prev, photo_url: url }))` to avoid stale-closure data loss if the broker types while upload is in flight. Both photo inputs reset `e.target.value = ''` after attempt so re-picking the same file works.
+- **Currency clarity - US$999 everywhere:** `/partner` landing pricing card and setup step 6 both show "US$999 / month - Billed in USD". Clarifies for brokers in AU/CA/SG/HK (who also use "$") that pricing is USD. Listing price placeholder adds a hint line about including currency symbol.
+- **Area unit auto-detect (Sqft vs m²):** Setup page derives `isUS` from `selectedNeighborhood.country === 'United States'|'USA'|'US'` and uses it to label the listing area input as `Sqft` for US or `m²` everywhere else. Applied to both input placeholder and the saved-listing display (was hardcoded "Sqft" / "SF" before).
+- **Subscribe-link input overflow fix:** Input gets `min-w-0 text-xs` instead of `flex-1 text-sm` so long slugs like `morgan-downey-stockholm-ostermalm` don't bleed past the mobile viewport.
+
+**14-day trial billing terms spelled out on both surfaces:**
+- Setup page step 6 and `/partner` landing page pricing card both now carry the literal clarification: "First billing starts 14 days after activation, then monthly on the 15th day after activation. You can cancel anytime before or after the free trial. If you cancel before the end of the free trial, no billing occurs." Trial was always 14 days via `trial_period_days` in Stripe, but the UI never said when the first charge hits.
+
 ## 2026-04-19
 
 **Broker end-to-end experience overhaul:** Full production build of trial, broker self-copy, welcome email, weekly report, billing-failure handling, cold-pitch deep links, pricing simplification, and homepage broker dashboard entry point.

@@ -139,8 +139,8 @@ export default function PartnerLandingPage() {
 
           <div className="max-w-md mx-auto border border-accent/30 rounded-lg p-10 text-center bg-surface">
             <p className="text-xs tracking-[0.12em] uppercase text-fg-subtle mb-2">One neighborhood, one agent</p>
-            <p className="font-display text-5xl font-bold text-fg mb-2">$999</p>
-            <p className="text-fg-subtle text-sm mb-6">per month</p>
+            <p className="font-display text-5xl font-bold text-fg mb-2">US$999</p>
+            <p className="text-fg-subtle text-sm mb-6">per month - billed in USD</p>
             <ul className="text-left text-fg-muted text-sm leading-relaxed space-y-2 mb-6">
               <li>&middot; Branded Daily Brief to your clients, every day at 7 AM local</li>
               <li>&middot; Your photo, listings, and contact details in every email</li>
@@ -148,7 +148,10 @@ export default function PartnerLandingPage() {
               <li>&middot; Weekly performance report (opens, clicks, listing impressions)</li>
               <li>&middot; Exclusive to one agent per neighborhood</li>
             </ul>
-            <p className="text-accent text-sm font-medium">14-day free trial. No charge today.</p>
+            <p className="text-accent text-sm font-medium mb-3">14-day free trial. No charge today.</p>
+            <p className="text-fg-subtle text-xs leading-relaxed text-left">
+              First billing starts 14 days after activation, then monthly on the 15th day after activation. You can cancel anytime before or after the free trial. If you cancel before the end of the free trial, no billing occurs.
+            </p>
           </div>
 
           <div className="mt-8 border border-border rounded-lg p-8 bg-surface">
