@@ -67,6 +67,10 @@ function buildTouch2Html({ firstName, neighborhoodDisplay, subscribeUrl, unsubUr
 
   <p>Read it for a couple of weeks. Judge the quality on real mornings. If you end up thinking your clients should see it, the branded-for-you version makes sense. Until then, just read it.</p>
 
+  <p style="margin-top: 24px; padding: 14px 18px; background: #fafaf9; border-left: 3px solid #b45309; font-size: 14px;">
+    Quick note on the model: you bring your client list. Flaneur does not have a pre-built audience we route to you. We provide the editorial, branding, and delivery. Your clients stay yours.
+  </p>
+
   <p style="margin-top: 32px;">Best,<br>Morgan Downey<br>Founder, Flaneur</p>
 
   <p style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e7e5e4; color: #78716c; font-size: 13px;">

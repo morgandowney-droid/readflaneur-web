@@ -306,6 +306,10 @@ function buildTouch2Html(p: {
 
   <p>Read it for a couple of weeks. Judge the quality on real mornings. If you end up thinking your clients should see it, the branded-for-you version makes sense. Until then, just read it.</p>
 
+  <p style="margin-top: 24px; padding: 14px 18px; background: #fafaf9; border-left: 3px solid #b45309; font-size: 14px;">
+    Quick note on the model: you bring your client list. Flaneur does not have a pre-built audience we route to you. We provide the editorial, branding, and delivery. Your clients stay yours.
+  </p>
+
   <p style="margin-top: 32px;">Best,<br>Morgan Downey<br>Founder, Flaneur</p>
 
   <p style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e7e5e4; color: #78716c; font-size: 13px;">
@@ -328,6 +332,8 @@ function buildTouch3Html(p: {
   <p>Glad you have been reading the ${p.neighborhoodDisplay} Daily. You have seen the product for a few weeks now.</p>
 
   <p>Quick FYI: we offer a branded version where your name sits on top of the same editorial, sent to your client list every morning. Exclusive to one broker per neighborhood.</p>
+
+  <p>How it works: you bring your client list at setup (paste in 10, 100, or 1,000 emails - whatever you have). We deliver the editorial branded to you at 7 AM every morning. Your clients stay yours; no shared audience.</p>
 
   <p>Want to see what it would look like? Reply with your best email and I will send tomorrow's ${p.neighborhoodDisplay} Daily with your name on it - the actual product, not a mockup.</p>
 

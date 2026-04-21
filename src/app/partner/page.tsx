@@ -187,6 +187,16 @@ export default function PartnerLandingPage() {
 
           <div className="space-y-8">
             <div>
+              <h3 className="text-fg font-semibold text-lg mb-2">Do you provide the email list?</h3>
+              <p className="text-fg-muted leading-relaxed">
+                No. You bring your list. Flaneur does not have a pre-built audience of readers we route to you. At setup you paste in your own client emails - past buyers, sellers, prospects, sphere of influence. No minimum, no maximum. You also get a personal subscribe link (yours alone) to grow the list over time via your website, email signature, or social.
+              </p>
+              <p className="text-fg-muted leading-relaxed mt-3">
+                What we provide is the editorial content, your branding on top, and the tech to deliver it every morning. Your clients stay your clients. If you cancel, you keep every contact you added.
+              </p>
+            </div>
+
+            <div>
               <h3 className="text-fg font-semibold text-lg mb-2">Can anyone read this content on your website?</h3>
               <p className="text-fg-muted leading-relaxed">
                 Yes, the neighborhood content is publicly available on readflaneur.com. But that&apos;s not what you&apos;re paying for. Nobody bookmarks a website and checks it every morning. They do open an email from &ldquo;James Chen: Tribeca Daily&rdquo; at 7 AM over coffee. You&apos;re paying for daily delivery to your clients&apos; inboxes with your name, your photo, and your listings - 365 touchpoints a year that your competitor doesn&apos;t have.
