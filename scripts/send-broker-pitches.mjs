@@ -8,7 +8,7 @@
 //
 // Rows where `status` is empty or `queued` are sent. Rows where status is
 // anything else (sent, failed, skip) are left alone. Results are written to a
-// timestamped sent-log CSV next to the input — the input is never mutated.
+// timestamped sent-log CSV next to the input - the input is never mutated.
 //
 // Usage:
 //   node scripts/send-broker-pitches.mjs outreach/targets.csv
@@ -252,6 +252,15 @@ function buildSetupUrl(r) {
   return `${APP_URL}/partner/setup?${params.toString()}`;
 }
 
+function isOfficeInbox(email) {
+  const e = (email || '').toLowerCase();
+  // Generic office aliases that can't be addressed by first name
+  if (/^(info|contact|hello|office|team|reception|enquiries|sales|kontakt|consultoria|inboundteam|front|admin)@/.test(e)) return true;
+  // City/location-prefixed inboxes (sainttropez@..., stockholm@..., mayfair@...)
+  if (/^(paris|london|mayfair|stockholm|lisboa|lisbon|madrid|milano|milan|ibiza|athens|alpes|geneve|monaco|sthlm|sainttropez|courchevel|nyc|la|sf|miami|zurich|geneva|amsterdam|tokyo|hongkong|singapore|sydney|melbourne|rome|roma|como|porto|berlin|hamburg|munich|frankfurt|vienna|oslo|helsinki|brussels|mumbai|dubai|capetown|johannesburg|sydney|auckland)\d*@/.test(e)) return true;
+  return false;
+}
+
 function buildColdPitchHtml(r, setupUrl) {
   const firstName = (r.agent_name || '').split(' ')[0] || 'there';
   const neighborhood = r.neighborhood_display || r.neighborhood_id;
@@ -266,9 +275,17 @@ function buildColdPitchHtml(r, setupUrl) {
     ? `the kind of local intelligence your clients already track in ${papers}`
     : 'the kind of neighborhood intelligence your clients already track';
 
+  // For office-level inboxes ("info@", "sainttropez@", etc.) the recipient
+  // isn't a named person - the message will be routed internally. Skip the
+  // "Hi {firstName}" greeting and open direct so the reader doesn't trip on
+  // "Hi Info".
+  const opening = isOfficeInbox(r.agent_email)
+    ? `<p><strong>Let me get right to the point.</strong></p>`
+    : `<p>Hi ${firstName},</p>`;
+
   return `
 <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 24px; color: #1c1917; line-height: 1.7; font-size: 16px;">
-  <p>Hi ${firstName},</p>
+  ${opening}
 
   <p>${firm} is one of the top brokerages covering ${neighborhood}, so I'm reaching out directly before the slot is taken.</p>
 
@@ -313,8 +330,12 @@ async function sendOne(r, resend) {
   const neighborhood = r.neighborhood_display || r.neighborhood_id;
 
   // Email 1: founder cold pitch
+  // Sent from outreach.readflaneur.com (dedicated outreach subdomain) so cold
+  // outreach never touches the main readflaneur.com reputation used by the
+  // Daily Brief product mail. Replies route back to md@readflaneur.com so
+  // Morgan reads them in his normal inbox.
   const coldRes = await resend.emails.send({
-    from: 'Morgan Downey <md@readflaneur.com>',
+    from: 'Morgan Downey <md@outreach.readflaneur.com>',
     to: r.agent_email,
     subject: `Securing the ${neighborhood} morning brief for your brokerage`,
     html: buildColdPitchHtml(r, setupUrl),
