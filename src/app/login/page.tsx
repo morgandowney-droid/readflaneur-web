@@ -38,6 +38,7 @@ function LoginForm() {
   const [sent, setSent] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [supportsPasskey, setSupportsPasskey] = useState(false);
+  const [showOtherMethods, setShowOtherMethods] = useState(false);
 
   // Redirect already-authenticated users
   useEffect(() => {
@@ -197,47 +198,7 @@ function LoginForm() {
     <div className="w-full max-w-sm">
       <h1 className="text-2xl font-light text-center text-fg mb-10">Sign In</h1>
 
-      {/* Passkey */}
-      {supportsPasskey && (
-        <>
-          <button
-            onClick={handlePasskeyLogin}
-            disabled={isPasskeyLoading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-fg text-canvas rounded-lg hover:opacity-80 transition-colors disabled:opacity-50"
-          >
-            <PasskeyIcon />
-            <span className="text-sm">
-              {isPasskeyLoading ? 'Verifying...' : 'Sign in with passkey'}
-            </span>
-          </button>
-
-          <div className="flex items-center gap-4 my-6">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-fg-subtle uppercase tracking-widest">or</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
-        </>
-      )}
-
-      {/* Google OAuth */}
-      <button
-        onClick={handleGoogleLogin}
-        disabled={isOAuthLoading}
-        className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-border-strong rounded-lg hover:bg-hover transition-colors disabled:opacity-50"
-      >
-        <GoogleIcon />
-        <span className="text-sm text-fg">
-          {isOAuthLoading ? 'Redirecting...' : 'Continue with Google'}
-        </span>
-      </button>
-
-      <div className="flex items-center gap-4 my-6">
-        <div className="flex-1 h-px bg-border" />
-        <span className="text-xs text-fg-subtle uppercase tracking-widest">or</span>
-        <div className="flex-1 h-px bg-border" />
-      </div>
-
-      {/* Magic link email */}
+      {/* Primary: magic link email */}
       <form onSubmit={handleEmailSubmit} className="space-y-4">
         {error && (
           <div className="p-3 text-sm text-red-400 bg-red-900/20 border border-red-800/30 rounded-lg">
@@ -267,6 +228,45 @@ function LoginForm() {
       <p className="text-xs text-fg-subtle text-center mt-6">
         No password needed. We'll send you a sign-in link.
       </p>
+
+      {/* Other sign-in methods (collapsed) */}
+      <div className="mt-10 pt-6 border-t border-border">
+        <button
+          type="button"
+          onClick={() => setShowOtherMethods((v) => !v)}
+          className="w-full text-center text-xs uppercase tracking-widest text-fg-subtle hover:text-fg transition-colors"
+        >
+          {showOtherMethods ? 'Hide other sign-in methods' : 'Other sign-in methods'}
+        </button>
+
+        {showOtherMethods && (
+          <div className="mt-6 space-y-3">
+            {supportsPasskey && (
+              <button
+                onClick={handlePasskeyLogin}
+                disabled={isPasskeyLoading}
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-border-strong rounded-lg hover:bg-hover transition-colors disabled:opacity-50"
+              >
+                <PasskeyIcon />
+                <span className="text-sm text-fg">
+                  {isPasskeyLoading ? 'Verifying...' : 'Sign in with passkey'}
+                </span>
+              </button>
+            )}
+
+            <button
+              onClick={handleGoogleLogin}
+              disabled={isOAuthLoading}
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-border-strong rounded-lg hover:bg-hover transition-colors disabled:opacity-50"
+            >
+              <GoogleIcon />
+              <span className="text-sm text-fg">
+                {isOAuthLoading ? 'Redirecting...' : 'Continue with Google'}
+              </span>
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

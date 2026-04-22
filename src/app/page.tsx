@@ -24,6 +24,17 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen">
+      {/*
+        Signed-in auto-redirect. Runs before React hydration via inline script
+        to avoid the flash of homepage for authenticated users. Anyone without
+        flaneur-auth in localStorage still sees the cinematic hero.
+      */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `try { if (localStorage.getItem('flaneur-auth')) { window.location.replace('/feed'); } } catch {}`,
+        }}
+      />
+
       {/* Hero Section */}
       <section data-theme="dark" className="relative overflow-hidden bg-black text-white py-28 md:py-36 lg:py-48 px-6">
         {/* Gradient overlay for tonal depth */}

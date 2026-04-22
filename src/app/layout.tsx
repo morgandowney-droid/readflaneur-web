@@ -10,7 +10,6 @@ import { LocationPrompt } from '@/components/location/LocationPrompt';
 import { PrimaryChangeSuggestion } from '@/components/feed/PrimaryChangeSuggestion';
 import { LanguageProvider } from '@/components/providers/LanguageProvider';
 import { PreferencesSync } from '@/components/providers/PreferencesSync';
-import { IOSInstallPrompt } from '@/components/pwa/IOSInstallPrompt';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -94,7 +93,6 @@ export default function RootLayout({
             {/* ReturnVisitPrompt removed - quiet footer capture handles email subscription */}
             <PrimaryChangeSuggestion />
             <PreferencesSync />
-            <IOSInstallPrompt />
           </NeighborhoodModalProvider>
         </LanguageProvider>
       </body>
