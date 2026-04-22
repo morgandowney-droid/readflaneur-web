@@ -26,13 +26,13 @@ export const metadata: Metadata = {
 export default function PartnerLandingPage() {
   return (
     <div className="min-h-screen bg-canvas">
-      {/* Hero */}
-      <section className="py-20 md:py-32 px-6 text-center max-w-3xl mx-auto">
+      {/* Hero - trimmed on mobile so the stats section peeks above the fold */}
+      <section className="pt-10 pb-8 md:pt-32 md:pb-16 px-6 text-center max-w-3xl mx-auto">
         <p className="text-xs tracking-[0.2em] uppercase text-accent mb-6">Partner with Flaneur</p>
         <h1 className="font-display text-3xl md:text-5xl font-light text-fg leading-tight mb-6">
           A Daily Neighborhood Newsletter for Your Clients
         </h1>
-        <p className="text-lg md:text-xl text-fg-muted font-light leading-relaxed max-w-2xl mx-auto mb-10">
+        <p className="text-base md:text-xl text-fg-muted font-light leading-relaxed max-w-2xl mx-auto mb-8 md:mb-10">
           Your clients read about their neighborhood every morning - restaurant openings, cultural events, market moves - with your name at the top. Exclusive to one agent per neighborhood.
         </p>
         <Link
@@ -46,10 +46,31 @@ export default function PartnerLandingPage() {
             Already a partner? Sign in
           </Link>
         </p>
+
+        {/* Mobile scroll hint - invisible on desktop where the page shape is obvious */}
+        <a
+          href="#partner-stats"
+          aria-label="Scroll to see more"
+          className="md:hidden mt-10 inline-flex flex-col items-center gap-1 text-xs uppercase tracking-[0.2em] text-fg-subtle hover:text-fg transition-colors"
+        >
+          <span>Keep reading</span>
+          <svg
+            className="w-4 h-4 animate-bounce"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </a>
       </section>
 
       {/* Stats */}
-      <section className="border-t border-border py-16 px-6">
+      <section id="partner-stats" className="border-t border-border py-16 px-6">
         <div className="max-w-3xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           <div>
             <p className="font-display text-4xl md:text-5xl font-bold text-fg">266</p>
