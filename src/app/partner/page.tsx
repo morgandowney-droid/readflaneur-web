@@ -1,9 +1,26 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
+const PARTNER_TITLE = 'Your Name on a Daily Neighborhood Newsletter - Flaneur';
+const PARTNER_DESC = 'One luxury real estate broker per neighborhood. 270 neighborhoods across 42 countries. Your name, photo, and listings delivered to your client list every morning at 7 AM. 14-day free trial.';
+
 export const metadata: Metadata = {
-  title: 'Partner with Flaneur | Daily Neighborhood Newsletters for Real Estate',
-  description: 'Put your name on a daily neighborhood newsletter. 266 luxury neighborhoods, 92 cities, 42 countries. Exclusive to one agent per neighborhood.',
+  title: PARTNER_TITLE,
+  description: PARTNER_DESC,
+  openGraph: {
+    title: PARTNER_TITLE,
+    description: PARTNER_DESC,
+    type: 'website',
+    siteName: 'Flaneur',
+    url: 'https://readflaneur.com/partner',
+    // Rendered by src/app/partner/opengraph-image.tsx - a dedicated 1200x630
+    // card for the partner program, distinct from the generic Flaneur OG
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: PARTNER_TITLE,
+    description: PARTNER_DESC,
+  },
 };
 
 export default function PartnerLandingPage() {
