@@ -8,7 +8,13 @@ const READS_KEY = 'flaneur-article-reads';
 const SUBSCRIBED_KEY = 'flaneur-newsletter-subscribed';
 const DISMISSED_KEY = 'flaneur-email-prompt-dismissed';
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
-const READ_THRESHOLD = 3;
+const SESSION_COUNT_KEY = 'flaneur-session-count';
+// Bumped from 3 to 8 so first-visit evaluators (e.g. brokers kicking the tires
+// from a cold pitch link) can explore freely without hitting a capture prompt
+// on their first session. Combined with the session gate below, the capture
+// only shows on a 2nd+ visit after genuinely engaging with content.
+const READ_THRESHOLD = 8;
+const MIN_SESSIONS = 2;
 
 interface EmailCaptureCardProps {
   neighborhoodName?: string;
@@ -27,7 +33,8 @@ export function EmailCaptureCard({ neighborhoodName }: EmailCaptureCardProps) {
       const dismissed = localStorage.getItem(DISMISSED_KEY) === 'true';
       const loggedIn = !!localStorage.getItem('flaneur-auth');
       const reads = parseInt(localStorage.getItem(READS_KEY) || '0', 10);
-      if (!subscribed && !dismissed && !loggedIn && reads >= READ_THRESHOLD) {
+      const sessions = parseInt(localStorage.getItem(SESSION_COUNT_KEY) || '0', 10);
+      if (!subscribed && !dismissed && !loggedIn && reads >= READ_THRESHOLD && sessions >= MIN_SESSIONS) {
         setVisible(true);
         track('email_capture.view', { neighborhoodName, reads });
       }

@@ -6,7 +6,11 @@ const READS_KEY = 'flaneur-article-reads';
 const SUBSCRIBED_KEY = 'flaneur-newsletter-subscribed';
 const DISMISSED_KEY = 'flaneur-email-prompt-dismissed';
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
-const READ_THRESHOLD = 3;
+const SESSION_COUNT_KEY = 'flaneur-session-count';
+// Bumped from 3 to 8 so first-visit evaluators can explore freely. Combined
+// with the session gate, the capture only shows on a 2nd+ visit.
+const READ_THRESHOLD = 8;
+const MIN_SESSIONS = 2;
 
 interface PostReadEmailCaptureProps {
   neighborhoodName: string;
@@ -22,8 +26,10 @@ export function PostReadEmailCapture({ neighborhoodName }: PostReadEmailCaptureP
     try {
       const subscribed = localStorage.getItem(SUBSCRIBED_KEY) === 'true';
       const dismissed = localStorage.getItem(DISMISSED_KEY) === 'true';
+      const loggedIn = !!localStorage.getItem('flaneur-auth');
       const reads = parseInt(localStorage.getItem(READS_KEY) || '0', 10);
-      if (!subscribed && !dismissed && reads >= READ_THRESHOLD) {
+      const sessions = parseInt(localStorage.getItem(SESSION_COUNT_KEY) || '0', 10);
+      if (!subscribed && !dismissed && !loggedIn && reads >= READ_THRESHOLD && sessions >= MIN_SESSIONS) {
         setVisible(true);
       }
     } catch {
