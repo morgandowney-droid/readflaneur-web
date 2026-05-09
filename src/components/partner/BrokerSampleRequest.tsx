@@ -136,7 +136,7 @@ export function BrokerSampleRequest() {
 
   if (status === 'success' && successInfo) {
     return (
-      <section className="border-b border-border py-10 md:py-14 px-6 bg-surface">
+      <section className="border-b border-border pt-24 pb-10 md:pt-28 md:pb-14 px-6 bg-surface">
         <div className="max-w-2xl mx-auto text-center">
           <p className="text-xs tracking-[0.2em] uppercase text-accent mb-3">Sample sent</p>
           <h2 className="font-display text-2xl md:text-3xl font-light text-fg mb-3">
@@ -158,7 +158,7 @@ export function BrokerSampleRequest() {
   }
 
   return (
-    <section className="border-b border-border py-10 md:py-14 px-6 bg-surface">
+    <section className="border-b border-border pt-24 pb-10 md:pt-28 md:pb-14 px-6 bg-surface">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <p className="text-xs tracking-[0.2em] uppercase text-accent mb-3">See it for yourself</p>
