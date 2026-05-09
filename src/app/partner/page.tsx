@@ -208,7 +208,7 @@ export default function PartnerLandingPage() {
       <section className="border-t border-border py-16 md:py-20 px-6">
         <div className="max-w-2xl mx-auto">
           <h2 className="font-display text-2xl md:text-3xl font-light text-fg mb-6">See It Live</h2>
-          <p className="text-fg-muted text-lg leading-relaxed mb-6">The product is running today. Click through to see what your clients would receive:</p>
+          <p className="text-fg-muted text-lg leading-relaxed mb-6">Click through to see what your clients would receive:</p>
           <div className="space-y-3">
             <a href="/new-york/tribeca" className="block text-accent hover:text-fg transition-colors text-lg">Tribeca Daily Brief &rsaquo;</a>
             <a href="/london/mayfair" className="block text-accent hover:text-fg transition-colors text-lg">Mayfair Daily Brief &rsaquo;</a>
