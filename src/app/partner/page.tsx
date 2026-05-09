@@ -179,7 +179,7 @@ export default function PartnerLandingPage() {
           <h2 className="font-display text-2xl md:text-3xl font-light text-fg mb-3 text-center">Pricing</h2>
           <p className="text-fg-muted text-center mb-10">Exclusive to one agent per neighborhood. 14-day free trial. Cancel anytime.</p>
 
-          <div className="max-w-md mx-auto border border-accent/30 rounded-lg p-10 text-center bg-surface">
+          <div className="max-w-2xl mx-auto border border-accent/30 rounded-lg p-10 text-center bg-surface">
             <p className="text-xs tracking-[0.12em] uppercase text-fg-subtle mb-2">One neighborhood, one agent</p>
             <p className="font-display text-5xl font-bold text-fg mb-2">US$299</p>
             <p className="text-fg-subtle text-sm mb-6">per month - billed in USD</p>
