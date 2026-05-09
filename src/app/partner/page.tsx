@@ -177,7 +177,7 @@ export default function PartnerLandingPage() {
 
           <div className="max-w-md mx-auto border border-accent/30 rounded-lg p-10 text-center bg-surface">
             <p className="text-xs tracking-[0.12em] uppercase text-fg-subtle mb-2">One neighborhood, one agent</p>
-            <p className="font-display text-5xl font-bold text-fg mb-2">US$999</p>
+            <p className="font-display text-5xl font-bold text-fg mb-2">US$299</p>
             <p className="text-fg-subtle text-sm mb-6">per month - billed in USD</p>
             <ul className="text-left text-fg-muted text-sm leading-relaxed space-y-2 mb-6">
               <li>&middot; Branded Daily Brief to your clients, every day at 7 AM local</li>

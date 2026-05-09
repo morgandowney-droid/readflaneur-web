@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
                   <p><strong>Agent:</strong> ${partnerData.agent_name}</p>
                   <p><strong>Email:</strong> ${partnerData.agent_email}</p>
                   <p><strong>Neighborhood:</strong> ${partnerData.neighborhood_id}</p>
-                  <p><strong>Revenue:</strong> $999/month (14-day trial first)</p>
+                  <p><strong>Revenue:</strong> $299/month (14-day trial first)</p>
                 </div>
               `,
             });
@@ -576,7 +576,7 @@ export async function POST(request: NextRequest) {
             <p style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #78716c; margin: 0 0 24px;">Trial ending soon</p>
             <h1 style="font-size: 26px; font-weight: 300; margin: 0 0 16px;">Your ${neighborhoodLabel} trial ends ${chargeDate}</h1>
             <p>${partner.agent_name},</p>
-            <p>Your 14-day free trial of Flaneur wraps up on <strong>${chargeDate}</strong>. On that day, we'll charge the card on file $999 and your branded ${neighborhoodLabel} Daily continues uninterrupted.</p>
+            <p>Your 14-day free trial of Flaneur wraps up on <strong>${chargeDate}</strong>. On that day, we'll charge the card on file $299 and your branded ${neighborhoodLabel} Daily continues uninterrupted.</p>
             <p><strong>Nothing to do if you want to keep going.</strong> If you want to update your card or cancel, you can do either from your dashboard:</p>
             <p><a href="${appUrl}/partner/dashboard" style="display: inline-block; padding: 12px 24px; background: #1c1917; color: #fafaf9; text-decoration: none; border-radius: 4px; font-size: 14px; letter-spacing: 0.05em; text-transform: uppercase;">Open Dashboard</a></p>
             <p style="margin-top: 32px; padding: 16px 20px; background: #fafaf9; border-left: 3px solid #b45309; color: #44403c; font-size: 14px;">Even if a payment issue comes up, we don't delete your setup. Your neighborhood, your name, your listings, your client list all stay put. Sends simply pause until the card is updated.</p>
@@ -591,7 +591,7 @@ export async function POST(request: NextRequest) {
         await sendEmail({
           to: adminEmail,
           subject: `Trial ending: ${partner.agent_name} (${partner.neighborhood_id}) - ${chargeDate}`,
-          html: `<p>Broker ${partner.agent_name} (${partner.agent_email}) trial ends ${chargeDate}. Card will be charged $999.</p>`,
+          html: `<p>Broker ${partner.agent_name} (${partner.agent_email}) trial ends ${chargeDate}. Card will be charged $299.</p>`,
         });
       }
       break;
@@ -616,7 +616,7 @@ export async function POST(request: NextRequest) {
               weekday: 'long', month: 'long', day: 'numeric',
             })
           : 'soon';
-        const amount = invoice.amount_due ? `$${(invoice.amount_due / 100).toFixed(2)}` : '$999.00';
+        const amount = invoice.amount_due ? `$${(invoice.amount_due / 100).toFixed(2)}` : '$299.00';
         await sendEmail({
           to: adminEmail,
           subject: `Upcoming renewal: ${partner.agent_name} (${partner.neighborhood_id}) - ${dueDate}`,

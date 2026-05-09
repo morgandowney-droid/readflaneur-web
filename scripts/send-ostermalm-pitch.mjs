@@ -25,9 +25,9 @@ const coldPitchHtml = `
 <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 24px; color: #1c1917; line-height: 1.7; font-size: 16px;">
   <p>Hi Morgan,</p>
 
-  <p>I noticed Eklund is one of the top brokerages covering Östermalm, so I wanted to reach out directly.</p>
+  <p>Eklund is one of the top brokerages covering Östermalm, so I'm reaching out directly before the slot is taken.</p>
 
-  <p>I built Flaneur - a morning newsletter about Östermalm. Restaurant openings, cultural events, market moves, the things your clients already read Dagens Nyheter or Svenska Dagbladet for, but pulled into a single three-minute read they open with their coffee.</p>
+  <p>I built Flaneur - a morning brief about Östermalm. Restaurant openings, cultural events, market moves, the things your clients already read Dagens Nyheter or Svenska Dagbladet for, but pulled into a single three-minute read they open with their coffee.</p>
 
   <p>Here's what the broker version looks like:</p>
 
@@ -42,7 +42,7 @@ const coldPitchHtml = `
     <strong>The next email from me is a live sample</strong> - today's actual Östermalm Daily, with your name on it. So you can judge the product by what your clients would actually receive tomorrow, not a marketing mockup.
   </p>
 
-  <p><strong>14-day free trial. No charge today.</strong> $999/month after that. Cancel anytime.</p>
+  <p><strong>14-day free trial. No charge today.</strong> $299/month after that. Cancel anytime.</p>
 
   <p>Setup takes about 5 minutes and I've pre-filled the form with your details:</p>
 
@@ -66,7 +66,7 @@ async function sendColdPitch() {
   const res = await resend.emails.send({
     from: 'Morgan Downey <md@readflaneur.com>',
     to: TO,
-    subject: `A daily newsletter for your Östermalm clients - 14-day free trial`,
+    subject: `Securing the ${NEIGHBORHOOD_DISPLAY} morning brief for your brokerage`,
     html: coldPitchHtml,
     replyTo: 'md@readflaneur.com',
   });

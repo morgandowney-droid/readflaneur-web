@@ -8,7 +8,7 @@ You will also want to upload or reference the companion file [`flaneur-neighborh
 
 ## Your task
 
-I'm the founder of **Flaneur** (readflaneur.com), an editorial morning newsletter for luxury real estate. We're launching a B2B product where one top-producing broker per neighborhood gets an exclusive branded edition — their name, photo, and listings at the top of a daily neighborhood brief delivered to their client list at 7 AM local time. Pricing is US$999/month with a 14-day free trial.
+I'm the founder of **Flaneur** (readflaneur.com), an editorial morning newsletter for luxury real estate. We're launching a B2B product where one top-producing broker per neighborhood gets an exclusive branded edition — their name, photo, and listings at the top of a daily neighborhood brief delivered to their client list at 7 AM local time. Pricing is US$299/month with a 14-day free trial.
 
 I need you to produce a CSV of **4–5 top-producing brokers per neighborhood, one per competing firm** — people I will cold-pitch over the next 24 hours. There are 251 neighborhoods across 37 countries, so this is a big project — do it in regional passes, region-by-region, and return one CSV at the end (or multiple CSVs, one per region, that I can concatenate).
 

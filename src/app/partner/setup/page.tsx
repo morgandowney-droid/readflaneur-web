@@ -970,7 +970,7 @@ function PartnerPageInner() {
             <h2 className="font-[family-name:var(--font-cormorant)] text-2xl mb-4">Activate Your Newsletter</h2>
             <div className="p-6 bg-surface border border-border rounded-lg mb-6 max-w-sm mx-auto">
               <p className="text-3xl font-light mb-1">
-                US$999
+                US$299
                 <span className="text-sm text-fg-subtle ml-1 align-middle">/ month</span>
               </p>
               <p className="text-fg-muted text-sm mb-3">Billed in USD. Cancel anytime.</p>

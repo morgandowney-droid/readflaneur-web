@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getStripe } from '@/lib/stripe';
 
-const PARTNER_PRICE_CENTS = 99900; // $999.00
+const PARTNER_PRICE_CENTS = 29900; // $299.00
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
             unit_amount: PARTNER_PRICE_CENTS,
             product_data: {
               name: `Flaneur Partner - ${neighborhoodLabel}`,
-              description: `Branded daily newsletter for ${neighborhoodLabel}. 14-day free trial, then $999/month. Cancel anytime.`,
+              description: `Branded daily newsletter for ${neighborhoodLabel}. 14-day free trial, then $299/month. Cancel anytime.`,
             },
           },
           quantity: 1,

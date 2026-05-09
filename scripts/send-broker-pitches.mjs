@@ -304,7 +304,7 @@ function buildColdPitchHtml(r, setupUrl) {
     <strong>The next email from me is a live sample</strong> - today's actual ${neighborhood} Daily, with your name on it. So you can judge the product by what your clients would actually receive tomorrow, not a marketing mockup.
   </p>
 
-  <p><strong>14-day free trial. No charge today.</strong> US$999/month after that, billed in USD. Cancel anytime.</p>
+  <p><strong>14-day free trial. No charge today.</strong> US$299/month after that, billed in USD. Cancel anytime.</p>
 
   <p>Setup takes about 5 minutes and I've pre-filled the form with your details:</p>
 
