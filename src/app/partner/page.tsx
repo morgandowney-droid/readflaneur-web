@@ -27,9 +27,6 @@ export const metadata: Metadata = {
 export default function PartnerLandingPage() {
   return (
     <div className="min-h-screen bg-canvas">
-      {/* Lead-capture form: send the broker a real branded sample */}
-      <BrokerSampleRequest />
-
       {/* Hero - trimmed on mobile so the stats section peeks above the fold */}
       <section className="pt-10 pb-8 md:pt-32 md:pb-16 px-6 text-center max-w-3xl mx-auto">
         <p className="text-xs tracking-[0.2em] uppercase text-accent mb-6">Partner with Flaneur</p>
@@ -72,6 +69,9 @@ export default function PartnerLandingPage() {
           </svg>
         </a>
       </section>
+
+      {/* Lead-capture form: send the broker a real branded sample */}
+      <BrokerSampleRequest />
 
       {/* Stats */}
       <section id="partner-stats" className="border-t border-border py-16 px-6">
