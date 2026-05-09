@@ -239,13 +239,6 @@ export default function PartnerLandingPage() {
             </div>
 
             <div>
-              <h3 className="text-fg font-semibold text-lg mb-2">Can anyone read this content on your website?</h3>
-              <p className="text-fg-muted leading-relaxed">
-                Yes, the neighborhood content is publicly available on readflaneur.com. But that&apos;s not what you&apos;re paying for. Nobody bookmarks a website and checks it every morning. They do open an email from &ldquo;James Chen: Tribeca Daily&rdquo; at 7 AM over coffee. You&apos;re paying for daily delivery to your clients&apos; inboxes with your name, your photo, and your listings - 365 touchpoints a year that your competitor doesn&apos;t have.
-              </p>
-            </div>
-
-            <div>
               <h3 className="text-fg font-semibold text-lg mb-2">How large is the Flaneur team?</h3>
               <p className="text-fg-muted leading-relaxed">
                 Flaneur is a technology company, not a newsroom. The platform generates editorial content for 266 neighborhoods in 42 countries simultaneously, every day, at 7 AM local time in each market. You&apos;re not licensing a team of writers. You&apos;re licensing a system that&apos;s already running, that doesn&apos;t miss a morning, and that scales to any neighborhood on earth within 24 hours.
@@ -259,6 +252,13 @@ export default function PartnerLandingPage() {
               </p>
               <p className="text-fg-muted leading-relaxed mt-3">
                 Your business is selling real estate. Ours is producing neighborhood content.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-fg font-semibold text-lg mb-2">Can anyone read these news stories on the readflaneur website?</h3>
+              <p className="text-fg-muted leading-relaxed">
+                Yes, the neighborhood content is publicly available on readflaneur.com. But that&apos;s not what you&apos;re paying for. Nobody bookmarks a website and checks it every morning. They do open an email from &ldquo;James Chen: Tribeca Daily&rdquo; at 7 AM over coffee. You&apos;re paying for daily delivery to your clients&apos; inboxes with your name, your photo, and your listings - 365 touchpoints a year that your competitor doesn&apos;t have.
               </p>
             </div>
           </div>
