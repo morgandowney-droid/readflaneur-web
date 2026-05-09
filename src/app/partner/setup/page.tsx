@@ -460,7 +460,7 @@ function PartnerPageInner() {
         )}
 
         {/* Step indicators */}
-        <div className="flex items-center justify-center gap-2 mb-10">
+        <div className="flex items-center justify-center gap-2 mb-4">
           {[1, 2, 3, 4, 5, 6].map((s) => (
             <button
               key={s}
@@ -477,6 +477,24 @@ function PartnerPageInner() {
             </button>
           ))}
         </div>
+
+        {/* Setup preview - what each step asks for, collapsible */}
+        <details className="mb-10 max-w-md mx-auto group">
+          <summary className="text-xs tracking-[0.15em] uppercase text-fg-subtle hover:text-fg-muted transition-colors cursor-pointer text-center list-none flex items-center justify-center gap-1.5">
+            <span>What is in this setup?</span>
+            <svg className="w-3 h-3 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </summary>
+          <ol className="mt-4 space-y-2 text-sm text-fg-muted bg-surface border border-border rounded-lg p-5">
+            <li><span className="text-fg font-medium">1. Choose your neighborhood.</span> One per agent. We will tell you if it is taken.</li>
+            <li><span className="text-fg font-medium">2. Your details.</span> Name, brokerage, title, phone, email, headshot.</li>
+            <li><span className="text-fg font-medium">3. Your active listings (optional).</span> Up to 3, with photo, address, price, beds, baths.</li>
+            <li><span className="text-fg font-medium">4. Your client emails.</span> Paste 10, 100, or 1,000. Your list stays yours.</li>
+            <li><span className="text-fg font-medium">5. Send a preview.</span> See exactly what your clients will receive tomorrow.</li>
+            <li><span className="text-fg font-medium">6. Activate.</span> 14-day free trial via Stripe. Card on file, no charge until day 14.</li>
+          </ol>
+        </details>
 
         {/* Step 1 - Choose Neighborhood */}
         {currentStep === 1 && (
