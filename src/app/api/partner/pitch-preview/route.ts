@@ -25,8 +25,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { agentName, agentEmail, neighborhoodId, brokerageName, agentTitle, agentPhone, subscribeUrl } =
-      await request.json();
+    const {
+      agentName,
+      agentEmail,
+      neighborhoodId,
+      brokerageName,
+      agentTitle,
+      agentPhone,
+      subscribeUrl,
+      // Campaign-2 extensions: if isSampleCampaign is true, the email renders
+      // a "SAMPLE EDITION" banner and uses senderDisplayName for the from-line
+      // prefix (instead of the broker's real name) so the send is unambiguously
+      // a demo, not impersonation. Body still shows the broker's real name in
+      // the "Curated by" line so they can picture their own branding.
+      isSampleCampaign,
+      senderDisplayName,
+    } = await request.json();
 
     if (!agentName || !agentEmail || !neighborhoodId) {
       return NextResponse.json(
@@ -80,6 +94,7 @@ export async function POST(request: NextRequest) {
       // Signal to the template to render placeholder listing cards + photo/contact stubs
       // so the prospective broker sees the full product surface before uploading assets.
       isPitchPreview: true,
+      isSampleCampaign: !!isSampleCampaign,
     };
 
     const html = await render(BrandedDailyBriefTemplate({ ...content, agentBranding }));
@@ -88,7 +103,14 @@ export async function POST(request: NextRequest) {
     // Use the real product subject format so the preview looks identical to what
     // clients would receive — "juliet's new ending, östermalm" style, not a labeled demo.
     const subject = buildSubject(content);
-    const fromAddress = `${agentName}: ${neighborhoodName} Daily <${neighborhood.id}@readflaneur.com>`;
+    // From-line uses senderDisplayName (e.g., "Flaneur Sample") for cold sample
+    // sends so the recipient sees a clearly-labeled demo, not an impersonation.
+    // Falls back to agentName for the original cold-pitch use case.
+    const fromPrefix = senderDisplayName || agentName;
+    const fromMailbox = isSampleCampaign
+      ? `sample@outreach.readflaneur.com`
+      : `${neighborhood.id}@readflaneur.com`;
+    const fromAddress = `${fromPrefix}: ${neighborhoodName} Daily <${fromMailbox}>`;
 
     const success = await sendEmail({
       to: agentEmail,

@@ -36,6 +36,11 @@ export interface AgentBranding {
   // photo/contact row so prospective brokers see the full product surface
   // even before they've uploaded their own assets. NEVER true in production sends.
   isPitchPreview?: boolean;
+  // Campaign-2 sample mode: renders a top banner explaining the email is a
+  // sample (not a real send to clients) so cold-outreach recipients understand
+  // they are being shown the product, not impersonated. NEVER true in
+  // production client sends.
+  isSampleCampaign?: boolean;
 }
 
 interface BrandedDailyBriefProps extends DailyBriefContent {
@@ -64,6 +69,15 @@ export function BrandedDailyBriefTemplate(content: BrandedDailyBriefProps) {
         <Container style={container}>
           {/* Tracking pixel */}
           <img src={`${appUrl}/api/email/pixel?token=${content.recipient.unsubscribeToken}`} width="1" height="1" alt="" style={{ display: 'block', width: '1px', height: '1px', overflow: 'hidden' }} />
+
+          {/* Sample-campaign banner: shown only on cold-outreach sample sends */}
+          {agentBranding.isSampleCampaign && (
+            <Section style={sampleBanner}>
+              <Text style={sampleBannerText}>
+                <strong>SAMPLE EDITION</strong> &middot; Your name, photo, and listings would replace the placeholders. This is the actual editorial content your clients would receive at 7 AM tomorrow.
+              </Text>
+            </Section>
+          )}
 
           {/* Branded Header - [NEIGHBORHOOD] DAILY + agent line */}
           <Section>
@@ -729,4 +743,21 @@ const previewHidden = {
   maxWidth: '0',
   opacity: 0,
   overflow: 'hidden',
+};
+
+const sampleBanner = {
+  backgroundColor: '#fef3c7',
+  border: '1px solid #fbbf24',
+  borderRadius: '6px',
+  padding: '12px 16px',
+  margin: '0 0 24px',
+};
+
+const sampleBannerText = {
+  fontSize: '12px',
+  lineHeight: '1.5',
+  color: '#78350f',
+  margin: '0',
+  letterSpacing: '0.02em',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
 };
