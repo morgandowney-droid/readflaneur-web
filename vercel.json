@@ -9,6 +9,10 @@
   },
   "crons": [
     {
+      "path": "/api/cron/campaign-2",
+      "schedule": "0 6 * * *"
+    },
+    {
       "path": "/api/cron/generate-audio-bulletin",
       "schedule": "55 * * * *"
     },

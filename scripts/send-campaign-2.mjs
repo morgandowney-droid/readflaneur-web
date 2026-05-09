@@ -105,7 +105,13 @@ let query = supabase
   .order('created_at', { ascending: true });
 
 if (PREREQ_COL) {
-  query = query.not(PREREQ_COL, 'is', null);
+  // Require the prior touch to have fired AND be at least 20h old, so that
+  // running --touch=1 then --touch=2 the same day does NOT pile two sends on
+  // the same broker within hours of each other (and worse, with the same
+  // day's brief content).
+  const twentyHoursAgo = new Date(Date.now() - 20 * 3600_000).toISOString();
+  query = query.not(PREREQ_COL, 'is', null).lt(PREREQ_COL, twentyHoursAgo);
+  console.log(`Gap guard: ${PREREQ_COL} must be older than ${twentyHoursAgo} (20h)`);
 }
 
 const { data: rows, error: fetchErr } = await query;
