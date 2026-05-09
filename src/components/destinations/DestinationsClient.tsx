@@ -400,7 +400,7 @@ export function DestinationsClient({ destinations, testDestinations = [] }: Prop
 
           {/* Suggest a neighborhood */}
           {showSuggest && (
-            <div className="mt-2 pb-1">
+            <div className="mt-2 pb-1 max-w-xl">
               {suggestStatus === 'success' ? (
                 <p className="text-xs text-accent">Thank you for your suggestion.</p>
               ) : (
