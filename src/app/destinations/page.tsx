@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { createClient as createSSRClient } from '@/lib/supabase/server';
 import { DestinationsClient } from '@/components/destinations/DestinationsClient';
 
 export const metadata = {
@@ -31,7 +32,23 @@ export default async function DestinationsPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Fetch all active neighborhoods + Irish counties + Unsplash photos in parallel
+  // Admin gate: only admins receive test-region neighborhoods (Irish counties etc.).
+  // Non-admins get an empty testDestinations array, which hides the MD toggle entirely.
+  let isAdmin = false;
+  try {
+    const ssr = await createSSRClient();
+    const { data: { session } } = await ssr.auth.getSession();
+    if (session?.user) {
+      const { data: profile } = await ssr
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+      isAdmin = profile?.role === 'admin';
+    }
+  } catch { /* anonymous visitors: not admin */ }
+
+  // Fetch all active neighborhoods + Irish counties (admin only) + Unsplash photos in parallel
   const [neighbRes, irishRes, imageRes] = await Promise.all([
     supabase
       .from('neighborhoods')
@@ -40,12 +57,14 @@ export default async function DestinationsPage() {
       .neq('community_status', 'removed')
       .neq('region', 'test')
       .order('name'),
-    supabase
-      .from('neighborhoods')
-      .select('id, name, city, country, region, latitude, longitude, is_combo, is_community')
-      .eq('region', 'test')
-      .eq('is_active', true)
-      .order('name'),
+    isAdmin
+      ? supabase
+          .from('neighborhoods')
+          .select('id, name, city, country, region, latitude, longitude, is_combo, is_community')
+          .eq('region', 'test')
+          .eq('is_active', true)
+          .order('name')
+      : Promise.resolve({ data: [] as NeighborhoodRow[], error: null }),
     supabase
       .from('image_library_status')
       .select('neighborhood_id, unsplash_photos'),

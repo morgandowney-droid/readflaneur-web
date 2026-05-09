@@ -152,8 +152,10 @@ export function DestinationsClient({ destinations, testDestinations = [] }: Prop
       results = results.filter(d => matchedIds.has(d.id));
     }
 
-    // Map bounds
-    if (mapBounds && showMap) {
+    // Map bounds — only when no active search, so a search like "auk" can jump
+    // to Montauk + Auckland even when the map is currently zoomed to Europe.
+    // The map's fitBoundsKey effect re-fits the map to the search results.
+    if (!search && mapBounds && showMap) {
       results = results.filter(d =>
         d.lat >= mapBounds.south && d.lat <= mapBounds.north &&
         d.lng >= mapBounds.west && d.lng <= mapBounds.east
