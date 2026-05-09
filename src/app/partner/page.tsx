@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { BrokerSampleRequest } from '@/components/partner/BrokerSampleRequest';
 
 const PARTNER_TITLE = 'Your Name on a Daily Neighborhood Newsletter - Flaneur';
 const PARTNER_DESC = 'One luxury real estate broker per neighborhood. 270 neighborhoods across 42 countries. Your name, photo, and listings delivered to your client list every morning at 7 AM. 14-day free trial.';
@@ -26,6 +27,9 @@ export const metadata: Metadata = {
 export default function PartnerLandingPage() {
   return (
     <div className="min-h-screen bg-canvas">
+      {/* Lead-capture form: send the broker a real branded sample */}
+      <BrokerSampleRequest />
+
       {/* Hero - trimmed on mobile so the stats section peeks above the fold */}
       <section className="pt-10 pb-8 md:pt-32 md:pb-16 px-6 text-center max-w-3xl mx-auto">
         <p className="text-xs tracking-[0.2em] uppercase text-accent mb-6">Partner with Flaneur</p>

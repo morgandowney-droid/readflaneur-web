@@ -47,22 +47,37 @@ import { getDistance } from '@/lib/geo-utils';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Get client IP from headers (Vercel sets these)
-    const forwardedFor = request.headers.get('x-forwarded-for');
-    const realIp = request.headers.get('x-real-ip');
+    // Browser-geolocation override: if the caller passes ?lat=&lng= we trust
+    // those over IP detection. Used by the /partner sample-request form so
+    // brokers on a VPN or in a different city than their client base can still
+    // get a useful "near me" suggestion.
+    const url = new URL(request.url);
+    const latParam = parseFloat(url.searchParams.get('lat') || '');
+    const lngParam = parseFloat(url.searchParams.get('lng') || '');
+    const hasCoords = Number.isFinite(latParam) && Number.isFinite(lngParam);
 
-    let clientIp = forwardedFor?.split(',')[0]?.trim() || realIp || undefined;
+    let location: { city?: string; latitude?: number | null; longitude?: number | null };
 
-    // Skip private/local IPs
-    if (clientIp?.startsWith('192.168.') ||
-        clientIp?.startsWith('10.') ||
-        clientIp?.startsWith('172.') ||
-        clientIp === '127.0.0.1' ||
-        clientIp === '::1') {
-      clientIp = undefined;
+    if (hasCoords) {
+      location = { latitude: latParam, longitude: lngParam };
+    } else {
+      // Get client IP from headers (Vercel sets these)
+      const forwardedFor = request.headers.get('x-forwarded-for');
+      const realIp = request.headers.get('x-real-ip');
+
+      let clientIp = forwardedFor?.split(',')[0]?.trim() || realIp || undefined;
+
+      // Skip private/local IPs
+      if (clientIp?.startsWith('192.168.') ||
+          clientIp?.startsWith('10.') ||
+          clientIp?.startsWith('172.') ||
+          clientIp === '127.0.0.1' ||
+          clientIp === '::1') {
+        clientIp = undefined;
+      }
+
+      location = await detectLocationFromIP(clientIp);
     }
-
-    const location = await detectLocationFromIP(clientIp);
 
     if (!location.latitude || !location.longitude) {
       return NextResponse.json(
