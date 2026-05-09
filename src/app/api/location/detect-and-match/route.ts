@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     const lngParam = parseFloat(url.searchParams.get('lng') || '');
     const hasCoords = Number.isFinite(latParam) && Number.isFinite(lngParam);
 
-    let location: { city?: string; latitude?: number | null; longitude?: number | null };
+    let location: { city?: string | null; latitude?: number | null; longitude?: number | null };
 
     if (hasCoords) {
       location = { latitude: latParam, longitude: lngParam };
