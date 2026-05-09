@@ -3,6 +3,34 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-05-09
+
+**Partner pricing dropped $999 -> $299/mo (commit `ff7af5e`):**
+
+- Diagnosis: $999/mo cold blast produced zero partner conversions in the first week. The flipped funnel (touch 2 invites broker to free consumer subscription, touch 3 pitches paid after 14 days as a warm subscriber) hadn't completed a cycle yet, but the price-objection failure mode was stacking on top of brand-unknown. Lowering to $299 removes one variable while keeping exclusive-territory scarcity as the hook. Easy to raise later once there is conversion signal.
+- Edit list: `PARTNER_PRICE_CENTS` 99900 -> 29900 in `src/app/api/partner/checkout/route.ts` plus its product description; 4 spots in `src/app/api/stripe/webhook/route.ts` (admin new-partner notification, broker trial-end body, admin trial-end note, fallback amount); price card in `src/app/partner/page.tsx`; step 6 activation card in `src/app/partner/setup/page.tsx`; cold pitch templates in `scripts/send-broker-pitches.mjs` and `scripts/send-ostermalm-pitch.mjs`; `outreach/broker-research-prompt.md`. Stripe price is set inline via `price_data` in the checkout session, so no Stripe dashboard edit needed - next checkout uses the new `unit_amount`.
+- Not touched (kept as historical record): `docs/CHANGELOG.md` 2026-04-19 entry and the migration SQL header that originally documented `$999`.
+- Drip touches 2 and 3 do not mention price at all, so the next curated batch lands on the new $299 page automatically.
+
+**Stripe webhook misrouting fix (config only, no commit):**
+
+- Stripe disabled `https://readflaneur.com/api/stripe/webhook` on May 1 after 9 consecutive days of failures (~64 events from Apr 22 onward). Root cause: a leftover webhook destination on the personal Morgandowney Stripe account (`acct_1SlWGEEde7NIB89L`, login `morgan.downey@gmail.com`) was pointing at readflaneur. That account hosts Oil101 / NatGas101 / morgandowney.com. Every Oil101 subscription event was being duplicated to readflaneur, where Vercel's `STRIPE_WEBHOOK_SECRET` (set for the Wooden Table Press LLC account `acct_1TNxZbRoWuqglXpr`) rejected it as bad signature -> 400 -> Stripe counted as failure.
+- Resolution: deleted the misrouted `elegant-finesse` destination on the personal account. Oil101 already had its own correctly-routed webhook (`oil101-v2` -> `oil101.morgandowney.com/api/webhook/stripe`), so no Oil101 events were actually missed - they were just being duplicated and rejected on the readflaneur side. The Wooden Table Press webhook (`upbeat-bliss`) was always Active and the secret matches, so no re-enable was needed.
+- All Flaneur revenue (partner subscriptions, ad bookings) flows through the Wooden Table Press LLC Stripe account. Currently $0 because zero conversions, but plumbing is correct.
+
+**Search performance + reliability (commit `561dece`):**
+
+- Two issues were causing intermittent "No results found" on real queries:
+  1. `/api/search` ran `body_text ILIKE '%query%'` over published articles with no index, forcing a sequential scan. Slow runs timed out at the Vercel gateway and the page silently rendered the 504 as zero results.
+  2. Submitting the form double-fired `performSearch` (once from `handleSubmit`, once from the `useEffect` reacting to URL change), and a slower stale response could overwrite a faster newer one.
+- Migration `20260509_articles_trigram_search_index.sql` enables `pg_trgm` and adds partial GIN trigram indexes on `articles.headline`, `articles.body_text`, `articles.preview_text` `WHERE status='published'`. ILIKE substring matches now use the index. Build was non-concurrent (~30-90s with brief write contention); ran during a quiet window.
+- `src/app/search/page.tsx` wraps each fetch in an `AbortController` and aborts any in-flight request before starting a new one. Stale responses no longer overwrite fresh ones.
+
+**Destinations: admin gate for Irish counties + search across map bounds (commit `335619f`):**
+
+- The `/destinations` page had a small "MD" toggle button at the bottom-left that, when clicked, revealed 33 syndication-only entities (`region='test'`: 32 Irish counties + `ie-ireland` national). The toggle was rendered to every visitor because the conditional was just `testDestinations.length > 0` with no admin check. Server now does a `profiles.role === 'admin'` lookup via the SSR Supabase client and only fetches/passes `testDestinations` for admins. Anonymous visitors get an empty array so the toggle self-hides.
+- Searches like `auk` returned 0 results when the map was zoomed to a region that did not contain the matches. `resolveSearchQuery` correctly returned Montauk (USA) and the Auckland-area neighborhoods (Herne Bay, Remuera, Waiheke Island), but the map-bounds filter ran AFTER the search filter in `DestinationsClient.tsx` and culled them. Fix: bounds filter now only applies when the search query is empty. The existing `fitBoundsKey` effect already re-fits the map to the search results, so the user is naturally taken to the matches.
+
 ## 2026-04-20
 
 **Broker waitlist + nearby suggestions on "taken" screen:**
