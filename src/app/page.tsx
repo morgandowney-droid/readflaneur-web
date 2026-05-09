@@ -49,7 +49,7 @@ export default async function HomePage() {
             href="/partner/dashboard"
             className="text-xs tracking-[0.2em] uppercase text-white/60 hover:text-white transition-colors"
           >
-            Broker Dashboard →
+            Real Estate Agent Dashboard →
           </Link>
         </div>
 

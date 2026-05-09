@@ -10,6 +10,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
     // Navigation
     'nav.neighborhoods': 'Neighborhoods',
     'nav.stories': 'Stories',
+    'nav.partners': 'Real Estate Partners',
     'nav.destinations': 'Neighborhoods',
     'nav.admin': 'Admin',
     'nav.dashboard': 'Dashboard',
@@ -389,6 +390,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   sv: {
     'nav.neighborhoods': 'Stadsdelar',
     'nav.stories': 'Artiklar',
+    'nav.partners': 'Maklarpartner',
     'nav.destinations': 'Grannar',
     'nav.admin': 'Admin',
     'nav.dashboard': 'Kontrollpanel',
@@ -755,6 +757,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   fr: {
     'nav.neighborhoods': 'Quartiers',
     'nav.stories': 'Articles',
+    'nav.partners': 'Partenaires Immobiliers',
     'nav.destinations': 'Quartiers',
     'nav.admin': 'Admin',
     'nav.dashboard': 'Tableau de bord',
@@ -1121,6 +1124,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   de: {
     'nav.neighborhoods': 'Viertel',
     'nav.stories': 'Artikel',
+    'nav.partners': 'Immobilienpartner',
     'nav.destinations': 'Viertel',
     'nav.admin': 'Admin',
     'nav.dashboard': 'Dashboard',
@@ -1487,6 +1491,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   es: {
     'nav.neighborhoods': 'Barrios',
     'nav.stories': 'Articulos',
+    'nav.partners': 'Socios Inmobiliarios',
     'nav.destinations': 'Barrios',
     'nav.admin': 'Admin',
     'nav.dashboard': 'Panel',
@@ -1854,6 +1859,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   pt: {
     'nav.neighborhoods': 'Bairros',
     'nav.stories': 'Artigos',
+    'nav.partners': 'Parceiros Imobiliarios',
     'nav.destinations': 'Bairros',
     'nav.admin': 'Admin',
     'nav.dashboard': 'Painel',
@@ -2221,6 +2227,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   it: {
     'nav.neighborhoods': 'Quartieri',
     'nav.stories': 'Articoli',
+    'nav.partners': 'Partner Immobiliari',
     'nav.destinations': 'Quartieri',
     'nav.admin': 'Admin',
     'nav.dashboard': 'Pannello',
@@ -2588,6 +2595,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   zh: {
     'nav.neighborhoods': '街区',
     'nav.stories': '文章',
+    'nav.partners': '房地产合作',
     'nav.destinations': '街区',
     'nav.admin': '管理',
     'nav.dashboard': '控制台',
@@ -2954,6 +2962,7 @@ const strings: Record<LanguageCode, Record<string, string>> = {
   ja: {
     'nav.neighborhoods': 'エリア',
     'nav.stories': '記事',
+    'nav.partners': '不動産パートナー',
     'nav.destinations': 'エリア',
     'nav.admin': '管理',
     'nav.dashboard': 'ダッシュボード',

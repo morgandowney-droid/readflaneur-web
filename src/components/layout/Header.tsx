@@ -276,19 +276,6 @@ export function Header() {
         {/* Center: Navigation links (desktop) */}
         <nav className="hidden md:flex items-center justify-center gap-6 flex-1">
           <Link
-            href="/search"
-            className={cn(
-              'transition-colors hover:text-fg min-w-[44px] min-h-[44px] flex items-center justify-center',
-              pathname === '/search' ? 'text-fg' : 'text-fg-muted'
-            )}
-            title="Search"
-            aria-label="Search articles"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </Link>
-          <Link
             href="/destinations"
             className={cn(
               'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
@@ -332,6 +319,15 @@ export function Header() {
           >
             {t('nav.stories')}
           </Link>
+          <Link
+            href="/partner"
+            className={cn(
+              'text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-fg min-h-[44px] flex items-center border-b-2',
+              pathname.startsWith('/partner') ? 'text-fg font-medium border-accent' : 'text-fg-subtle border-transparent'
+            )}
+          >
+            {t('nav.partners')}
+          </Link>
         </nav>
 
         {/* Right: Icon controls (desktop) */}
@@ -356,6 +352,19 @@ export function Header() {
             </Link>
           )}
           <ThemeToggle />
+          <Link
+            href="/search"
+            className={cn(
+              'transition-colors hover:text-fg min-w-[44px] min-h-[44px] flex items-center justify-center',
+              pathname === '/search' ? 'text-fg' : 'text-fg-muted'
+            )}
+            title="Search"
+            aria-label="Search articles"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </Link>
           <LanguageToggle />
         </div>
 
@@ -481,6 +490,16 @@ export function Header() {
               )}
             >
               {t('nav.stories')}
+            </Link>
+            <Link
+              href="/partner"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                'text-sm tracking-widest uppercase transition-colors hover:text-fg py-3 border-b border-border block text-right',
+                pathname.startsWith('/partner') ? 'text-fg font-medium' : 'text-fg-muted'
+              )}
+            >
+              {t('nav.partners')}
             </Link>
             <Link
               href="/destinations"
