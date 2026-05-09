@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -36,6 +36,7 @@ function SearchContent() {
   const [neighborhoods, setNeighborhoods] = useState<NeighborhoodResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
   const { t } = useTranslation();
 
   const performSearch = useCallback(async (searchQuery: string) => {
@@ -46,11 +47,18 @@ function SearchContent() {
       return;
     }
 
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     setSearched(true);
 
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`, {
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
       const data = await res.json();
 
       if (res.ok) {
@@ -61,11 +69,12 @@ function SearchContent() {
         setNeighborhoods([]);
       }
     } catch (error) {
+      if ((error as Error)?.name === 'AbortError') return;
       console.error('Search failed:', error);
       setResults([]);
       setNeighborhoods([]);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, []);
 
