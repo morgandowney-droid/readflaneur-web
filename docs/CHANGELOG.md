@@ -3,6 +3,57 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-05-13
+
+**Broker campaign 2 launched + first batch sent (commits `7386b9d`, `c9fb290`):**
+
+- Campaign 2 is a re-engagement of the existing ~333-broker `broker_outreach` list framed around the $999 -> $299 price drop and "your neighborhood is still available" scarcity. Each broker gets a 3-touch sequence: Day 1 sample (real branded Daily Brief), Day 2 sample (different day's content), Day 3 marketing pitch referencing the past two mornings + the price drop. Strategy: pre-warm with the actual product before any ask, so by the time the pitch lands the broker has judged editorial quality on two real mornings.
+- New `/api/cron/campaign-2` Vercel cron runs daily at 06:00 UTC (`vercel.json` updated). One run pipelines all three touches with the 20-hour gap guard - touch 1 fires up to 40 fresh sends, touch 2 fires for brokers whose touch 1 is 20+ hours old, touch 3 fires for brokers whose touch 2 is 20+ hours old. Each broker naturally pipelines through day N -> N+1 -> N+2. Excludes brokers in terminal states (unsubscribed/bounced/etc.) and neighborhoods that now have an active partner.
+- Migration `20260510_broker_outreach_campaign_2.sql` added three columns to `broker_outreach`: `c2_sample_1_sent_at`, `c2_sample_2_sent_at`, `c2_pitch_sent_at`, with partial indexes per touch so the cron finds eligible rows in O(log n). Tracked separately from the original `touch_1/2/3` columns so this does not collide with broker-drip cron's flipped-funnel state machine.
+- Sample sends route through the existing `/api/partner/pitch-preview` endpoint extended with two new params: `isSampleCampaign: true` (renders the amber "SAMPLE EDITION" banner above the masthead) and `senderDisplayName: 'Flaneur Sample'` (overrides the from-line prefix so the broker's real name does NOT appear in unsolicited cold-send from-lines - body still shows their real name and brokerage in the "Curated by" line so they can picture their own branding without it reading as impersonation). From-mailbox switches to `sample@outreach.readflaneur.com` instead of the per-neighborhood mailbox so deliverability stays isolated to the cold-email subdomain.
+- Manual `scripts/send-campaign-2.mjs --touch={1|2|3} [--limit=40] [--fire]` for staged dry-runs and one-off batches. Same filtering and gap-guard logic as the cron. Dry-run by default (prints first 3 + count); `--fire` actually sends. Useful for smoke-testing a single send to your own email before the cron picks up.
+- `scripts/recheck-bounced-brokers.mjs` re-verifies the 75 originally-bounced brokers via Hunter.io. Recovered addresses (Hunter says `valid`) flip back to `drip_status='pending'`. First pass recovered 3 of 75: `frogner@krogsveen.no`, `malcolm@malcolmhasman.com`, `shanelliew@propnex.com`. Of the rest: 47 confirmed `invalid` (dead), 13 `accept_all` (domain accepts everything, no SMTP confirmation possible), 8 `unknown` (Hunter couldn't probe - common for enterprise firms that block verification), 4 Compass addresses returned 400 because Compass has asked Hunter not to process their domain.
+- 20-hour gap safeguard on both the cron and the manual script: filter is `PREREQ_COL IS NOT NULL AND PREREQ_COL < NOW() - INTERVAL '20 hours'`. Prevents accidental same-day pile-sends if someone runs `--touch=1` and `--touch=2` back-to-back.
+- First batch sent: 40 NYC/London/Stockholm/SF/LA top brokers got touch 1 on May 9 at ~23:00 UTC (manual run during build verification). Cron has since fired May 10 (40 more T1, 0 T2 - gap not met) and May 11 (40 T1 + 40 T2 for the original batch). As of May 13: T1=121, T2=40, T3=0, 0 failures, 0 new bounces or unsubscribes. Full queue completes ~May 18-20.
+
+**Supabase Data API grants change documented (commit `2f2d1c2`):**
+
+- Supabase announced that starting Oct 30 2026, new tables in `public` schema will not auto-expose to the Data API (supabase-js / PostgREST / GraphQL). Every new-table migration after that date must include explicit `GRANT SELECT, INSERT, UPDATE, DELETE ON public.your_table TO service_role;` (plus anon/authenticated grants if client-side access needed) or the API returns `42501`.
+- Existing tables keep their current grants - no retroactive migration needed. Audited service_role access to all 26 known tables; all clean.
+- Pattern documented in CLAUDE.md "Critical Gotchas" so future new-table migrations follow it. The change applies to all of Morgan's Supabase projects but only affects new tables created after the cutover date.
+
+## 2026-05-10 to 2026-05-12 (partner page funnel build)
+
+**Partner page lead-capture sample-request form (commits `e3c6c2f`, `4b15fc8`, `4fb3917`, `2c0fa87`):**
+
+- New `BrokerSampleRequest` client component on `/partner` lets a broker enter their email + neighborhood and receive a real branded Daily Brief sample in their inbox within ~60s. Same template + assembler as the live product, with the broker's name guessed from their email local part so the from-line reads "Morgan Downey: Tribeca Daily" instead of a generic placeholder.
+- Backing `POST /api/partner/sample-request` endpoint is public and rate-limited: 3/hr per IP (via `partner_sample_requests.ip_hash`) and 1/24h per email (via `partner_sample_requests.broker_email`). Migration `20260509230000_partner_sample_requests.sql` adds the table for rate-limit logging + lead telemetry, indexed on `(broker_email, created_at)` and `(ip_hash, created_at)` partial WHERE ip_hash IS NOT NULL.
+- Three writes per successful send: (1) `partner_sample_requests` for rate limiting, (2) `partner_waitlist` source='sample_request' so the lead gets follow-up if their neighborhood opens up, (3) `newsletter_subscribers` for the flipped-funnel auto-subscribe so the broker also starts receiving the consumer Daily Brief organically for that neighborhood.
+- "Use a neighborhood near me" button uses `navigator.geolocation` to get coords, falls back to IP if denied. The `/api/location/detect-and-match` endpoint was extended to accept optional `?lat=&lng=` query params so browser-geo overrides the IP detection (better for brokers on VPNs or in a different city than their client base).
+- After submit: inline success state shows "Sample sent to {email}. Check your inbox in about a minute" plus a "Continue to setup" CTA that links to `/partner/setup?email={pre-filled}&neighborhood={pre-filled}` so the broker can move into real signup without re-entering anything.
+- **Form placement lesson learned the hard way:** initially placed the form ABOVE the existing hero, which meant cold visitors landed on a generic email + neighborhood form with zero context about what Flaneur is. Saved the principle to memory as `feedback_landing_page_order.md`. Moved below the hero in commit `2c0fa87` so the value-prop ("A Daily Neighborhood Newsletter for Your Clients") loads first and the form sits as the first conversion CTA after context.
+- Build broke initially on a TypeScript narrowing error in the `/api/location/detect-and-match` extension (DetectedLocation.city is `string | null`, I typed it as `string | undefined`). Fixed in `4b15fc8`. Going forward I'll run `npx tsc --noEmit` locally before pushing API edits that touch typed boundaries.
+- Eyebrow padding fix in `4fb3917`: the sticky 64px header was clipping "SEE IT FOR YOURSELF" because the section had `py-10`/`md:py-14` top padding (40/56px), less than the header height. After the form moved below the hero (`2c0fa87`) the padding was simplified to standard `py-12`/`md:py-16` since the hero now sits above.
+
+**Partner setup preview disclosure (commit `1adca2e`):**
+
+- Collapsible `<details>`/`<summary>` element on `/partner/setup` above the step circles. Closed by default; click expands a 6-row list with what each step asks for: "1. Choose your neighborhood... 4. Your client emails (Paste 10, 100, or 1,000. Your list stays yours.)... 6. Activate." Especially helps with step 4 which can spook brokers who don't know it's coming.
+- Native `<details>` was used instead of a custom toggle so no extra state, no extra component, full keyboard accessibility for free. Chevron rotates via `group-open:rotate-180`.
+
+**Top nav reorganization (commit `546584b`):**
+
+- Promoted Partner from footer to top nav. New "REAL ESTATE PARTNERS" link sits between STORIES and the right-side icon cluster, translated in all 9 languages (English/Swedish/French/German/Spanish/Portuguese/Italian/Chinese/Japanese) via new `nav.partners` translation key.
+- Search magnifying glass moved from the center nav (next to NEIGHBORHOOD / STORIES) to the right-side icon cluster (between ThemeToggle and LanguageToggle). Cleaner visual grouping - center nav is now content links only, right cluster is utility icons only.
+- Homepage `/` "Broker Dashboard ->" link renamed "Real Estate Agent Dashboard ->" to match the new nav terminology and read more naturally to brokers who don't think of themselves as "the broker."
+- Footer "Partner" link removed - it lives in the top nav now.
+
+**Partner page polish (commits `7f0e90f`, `2928c87`, `1fd5c67`, `3764d83`):**
+
+- Pricing card widened from `max-w-md` (448px) to `max-w-2xl` (672px) so feature bullets like "You receive a copy of every send, so you see exactly what they see" sit on a single line on desktop. Mobile still wraps naturally since viewport is the constraint.
+- FAQ reorder: "Can anyone read this content on your website?" moved below "Could we build this ourselves?" and renamed "Can anyone read these news stories on the readflaneur website?" - more specific framing, better narrative flow (team size -> build vs buy -> already-public-content addresses the followup objection).
+- Dropped "The product is running today." lead-in sentence above the sample preview tiles - the clickable tiles below already convey freshness.
+- `/destinations` suggest-a-neighborhood form capped at `max-w-xl` so it does not stretch the full header width when toggled open.
+
 ## 2026-05-09
 
 **Partner pricing dropped $999 -> $299/mo (commit `ff7af5e`):**
