@@ -521,6 +521,22 @@ Recent work: Partner pricing dropped $999 -> $299/mo (`PARTNER_PRICE_CENTS` 9990
 
 ## Critical Gotchas
 
+### Supabase Data-API Grants on New Tables (October 30, 2026 cutover)
+After October 30, 2026, new tables in `public` schema do NOT auto-expose to the Data API (supabase-js / PostgREST / GraphQL). Every `CREATE TABLE` migration must include explicit GRANT statements or the API returns `42501`. Pattern for new tables:
+```sql
+CREATE TABLE IF NOT EXISTS public.your_table (...);
+
+-- Grants required for Data API access (post Oct 30, 2026)
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.your_table TO service_role;
+GRANT SELECT ON public.your_table TO anon;                            -- only if anonymous reads needed
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.your_table TO authenticated;  -- only if client-side writes needed
+
+-- RLS + policies as before
+ALTER TABLE public.your_table ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "..." ON public.your_table FOR ALL USING (auth.role() = 'service_role');
+```
+**Existing tables** (everything created before October 30) keep their current grants. Only NEW tables created after the cutover need this. To audit: Supabase Dashboard → Database → Advisors → Security.
+
 ### VERCEL_URL vs NEXT_PUBLIC_APP_URL
 `VERCEL_URL` points to preview deployments, NOT production. Always use:
 ```typescript
