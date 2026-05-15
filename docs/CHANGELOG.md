@@ -3,6 +3,18 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-05-15
+
+**Sunday Edition Gemini cost optimization - per-call model split:**
+
+- Post-migration BigQuery billing analysis (now that the cost-attribution API keys had been live over a day) showed the Sunday Edition was the single biggest driver of readflaneur's Gemini Pro spend: a recurring weekend spike of ~$27-30/day of Pro output tokens vs ~$4-7 on weekdays, roughly $245/mo. readflaneur's overall Gemini run-rate held ~$1,230/mo (unchanged by the rotation, as expected - the rotation was for attribution, not reduction). yous-news cleanly separated at ~$230/mo with no cross-project bleed.
+- Root cause: `generateWeeklyBrief()` makes 6 Gemini calls per neighborhood and `sync-weekly-brief` picked ONE model for all of them - Pro until the shared 1K RPD budget exhausted, then Flash. Only one of the six calls actually benefits from Pro.
+- Fix (`weekly-brief-service.ts`): per-call model split. `editorialSynthesis` ("The Letter" - the 200-word showcase narrative) keeps the passed-in `model` (Pro by default). The other 5 calls - `significanceFilter`, `huntEventsWithGemini`, `curateEvents`, `generateDataPoint`, and the holiday curation path - are hardcoded to Flash via a new `flashModel` constant. They are classification, curation, or Google-Search-grounded extraction, which Flash handles equally well at ~1/4 the price (the daily brief pipeline already uses Flash for the same kind of search-grounded fact-gathering).
+- Added `thinkingConfig: { thinkingBudget: 0 }` to all 5 now-permanent-Flash call config objects. They previously had no thinking guard, so whenever the cron fell back to Flash it was silently billing thinking tokens at $2.50/M (the documented hidden-cost gotcha). `editorialSynthesis` keeps thinking enabled - it is Pro.
+- `sync-weekly-brief/route.ts`: `GEMINI_CALLS_PER_NEIGHBORHOOD` changed `5 -> 1` so the Pro-budget rationing reflects one Pro call per neighborhood.
+- Two wins at once: (1) cost - Pro calls drop from 6/neighborhood to 1, expected to cut Sunday Edition Pro spend from ~$245/mo toward ~$80-110/mo; (2) coverage - the Pro budget (1K RPD, shared with `enrich-briefs`) now stretches ~6x further, so every neighborhood's Letter gets Pro quality instead of only the first ~20-160 before falling back to Flash. Cost down, quality up on the one section readers notice.
+- No template, schema, or schedule changes - risk contained to the generator. Verified with `npx tsc --noEmit`.
+
 ## 2026-05-13
 
 **Broker campaign 2 launched + first batch sent (commits `7386b9d`, `c9fb290`):**

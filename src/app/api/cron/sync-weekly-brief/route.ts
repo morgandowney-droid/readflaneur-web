@@ -20,8 +20,9 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const TIME_BUDGET_MS = 280_000;
-// Each generateWeeklyBrief makes ~5 Gemini calls (significance, editorial, horizon, data point, holiday)
-const GEMINI_CALLS_PER_NEIGHBORHOOD = 5;
+// generateWeeklyBrief makes 6 Gemini calls, but only editorialSynthesis ("The Letter")
+// uses Pro - the other 5 always use Flash. So each neighborhood consumes 1 Pro call.
+const GEMINI_CALLS_PER_NEIGHBORHOOD = 1;
 const MODEL_PRO = AI_MODELS.GEMINI_PRO;
 const MODEL_FLASH = AI_MODELS.GEMINI_FLASH;
 // Pro RPD limit is 1K. enrich-briefs uses up to 900. We get the remainder.

@@ -97,6 +97,9 @@ const DATA_POINT_ROTATION: DataPointType[] = [
 
 /**
  * Generate a complete Sunday Edition for one neighborhood.
+ *
+ * @param model - Model used ONLY for editorialSynthesis ("The Letter"). The other
+ *   5 Gemini calls always use Flash. Defaults to Pro.
  */
 export async function generateWeeklyBrief(
   supabase: SupabaseClient,
@@ -113,6 +116,12 @@ export async function generateWeeklyBrief(
   if (!geminiKey) throw new Error('GEMINI_API_KEY not configured');
 
   const genAI = new GoogleGenAI({ apiKey: geminiKey });
+
+  // Model routing: `model` (Pro by default) is reserved for editorialSynthesis
+  // ("The Letter") - the only section where Pro's prose quality is worth the cost.
+  // The other 5 Gemini calls are classification, curation, or search-grounded
+  // extraction, which Flash handles equally well at ~1/4 the price.
+  const flashModel = AI_MODELS.GEMINI_FLASH;
 
   // ─── Section 1: The Rearview ───
   console.log(`[SundayEdition] ${neighborhoodName}: fetching past week's stories...`);
@@ -145,10 +154,10 @@ export async function generateWeeklyBrief(
   let subjectTeaser: string | null = null;
 
   if (articles.length > 0) {
-    const filterResult = await significanceFilter(genAI, headlineList, neighborhoodName, city, model);
+    const filterResult = await significanceFilter(genAI, headlineList, neighborhoodName, city, flashModel);
     topStories = filterResult.stories;
 
-    // Step C: Editorial Synthesis via Gemini
+    // Step C: Editorial Synthesis via Gemini (Pro - this is "The Letter")
     const synthesis = await editorialSynthesis(
       genAI,
       topStories,
@@ -184,7 +193,7 @@ export async function generateWeeklyBrief(
   try {
     const [grokEventsResult, geminiEventsResult] = await Promise.allSettled([
       grokKey ? huntUpcomingEvents(grokKey, neighborhoodName, city, country) : Promise.resolve(null),
-      huntEventsWithGemini(genAI, neighborhoodName, city, timeFormat, model),
+      huntEventsWithGemini(genAI, neighborhoodName, city, timeFormat, flashModel),
     ]);
 
     const rawGrokEvents = grokEventsResult.status === 'fulfilled' ? grokEventsResult.value : null;
@@ -193,7 +202,7 @@ export async function generateWeeklyBrief(
     // Curate Grok events if present, then merge with Gemini's
     let curatedGrokEvents: HorizonEvent[] = [];
     if (rawGrokEvents) {
-      curatedGrokEvents = await curateEvents(genAI, rawGrokEvents, neighborhoodName, city, timeFormat, model);
+      curatedGrokEvents = await curateEvents(genAI, rawGrokEvents, neighborhoodName, city, timeFormat, flashModel);
     }
 
     // Combine and deduplicate by event name similarity, keep up to 5
@@ -206,7 +215,7 @@ export async function generateWeeklyBrief(
   // Section 3: The Weekly Data Point
   let dataPoint: WeeklyDataPoint;
   try {
-    dataPoint = await generateDataPoint(genAI, dataPointType, neighborhoodName, city, country, model);
+    dataPoint = await generateDataPoint(genAI, dataPointType, neighborhoodName, city, country, flashModel);
   } catch (err) {
     console.error(`[SundayEdition] ${neighborhoodName}: data point failed:`, err);
     dataPoint = { type: dataPointType, label: 'Data Unavailable', value: 'N/A', context: '' };
@@ -218,7 +227,7 @@ export async function generateWeeklyBrief(
     console.log(`[SundayEdition] ${neighborhoodName}: detected holiday "${upcomingHoliday.name}"`);
     try {
       const section = await generateHolidaySection(
-        genAI, grokKey, upcomingHoliday, neighborhoodName, city, country, timeFormat, model,
+        genAI, grokKey, upcomingHoliday, neighborhoodName, city, country, timeFormat, flashModel,
       );
       holidaySection = section.events.length > 0 ? section : null;
     } catch (err) {
@@ -291,7 +300,8 @@ Respond with ONLY this JSON (no other text):
     const response = await genAI.models.generateContent({
       model,
       contents: prompt,
-      config: { temperature: 0.3 },
+      // Always Flash here - disable thinking tokens (billed at $2.50/M).
+      config: { temperature: 0.3, thinkingConfig: { thinkingBudget: 0 } },
     });
 
     const text = response.text || '';
@@ -513,7 +523,8 @@ Respond with ONLY this JSON:
     const response = await genAI.models.generateContent({
       model,
       contents: prompt,
-      config: { temperature: 0.4 },
+      // Always Flash here - disable thinking tokens (billed at $2.50/M).
+      config: { temperature: 0.4, thinkingConfig: { thinkingBudget: 0 } },
     });
 
     const text = response.text || '';
@@ -610,6 +621,8 @@ Respond with ONLY this JSON:
       config: {
         tools: [{ googleSearch: {} }],
         temperature: 0.5,
+        // Always Flash here - disable thinking tokens (billed at $2.50/M).
+        thinkingConfig: { thinkingBudget: 0 },
       },
     });
 
@@ -683,6 +696,8 @@ Respond with ONLY this JSON:
       config: {
         tools: [{ googleSearch: {} }],
         temperature: 0.3,
+        // Always Flash here - disable thinking tokens (billed at $2.50/M).
+        thinkingConfig: { thinkingBudget: 0 },
       },
     });
 
@@ -1028,6 +1043,8 @@ Respond with ONLY this JSON:
       config: {
         ...(useSearch ? { tools: [{ googleSearch: {} }] } : {}),
         temperature: 0.5,
+        // Always Flash here - disable thinking tokens (billed at $2.50/M).
+        thinkingConfig: { thinkingBudget: 0 },
       },
     });
 
