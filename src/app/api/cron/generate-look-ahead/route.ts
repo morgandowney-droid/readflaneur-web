@@ -8,12 +8,15 @@ import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/
 import { formatEventListing } from '@/lib/look-ahead-events';
 import { searchUpcomingEvents, mergeContent, mergeStructuredEvents } from '@/lib/gemini-search';
 import { toHeadlineCase } from '@/lib/utils';
+import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
+import { shouldGenerateToday } from '@/lib/generation-cadence';
 
 /**
  * Generate Look Ahead Articles
  *
  * Single-pass cron: Grok search -> Gemini Flash enrichment -> article creation.
- * Only processes neighborhoods with active subscribers.
+ * Subscribed + Irish (ie-*) neighborhoods generate daily; cold neighborhoods
+ * generate once every 4 days (see src/lib/generation-cadence.ts).
  * Runs midnight-7 AM UTC so articles are generated and published on the SAME
  * local day they refer to as "today". Each neighborhood gets its local date
  * computed via IANA timezone, and published_at is set to 7 AM local time.
@@ -270,6 +273,9 @@ export async function GET(request: Request) {
   };
 
   try {
+    // Subscriber set for the generation-cadence gate (cost control).
+    const subscribedIds = await getActiveNeighborhoodIds(supabase);
+
     // Determine which neighborhoods to process
     // Use is_active=true (same as Daily Brief cron): combos are is_active=true,
     // their components are is_active=false. This naturally generates one Look Ahead
@@ -307,9 +313,15 @@ export async function GET(request: Request) {
         .select('component_id');
       const componentIds = new Set((comboComponents || []).map(c => c.component_id));
 
-      // Generate Look Aheads for ALL active neighborhoods so every neighborhood
-      // page has fresh content regardless of subscriber count.
-      neighborhoods = data.filter(n => !componentIds.has(n.id));
+      // Cost control: subscribed neighborhoods and the 33 Irish syndication
+      // entities generate a Look Ahead daily; cold neighborhoods every 4 days.
+      neighborhoods = data
+        .filter(n => !componentIds.has(n.id))
+        .filter(n => shouldGenerateToday(
+          n.id,
+          getLocalPublishDate(n.timezone || 'America/New_York').localDate,
+          subscribedIds.has(n.id),
+        ));
     }
 
     if (neighborhoods.length === 0) {

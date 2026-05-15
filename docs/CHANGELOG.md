@@ -5,6 +5,21 @@
 
 ## 2026-05-15
 
+**Generation cadence gate - cold neighborhoods drop to every 4 days:**
+
+- A live query exposed the core cost problem: of 301 active neighborhoods, only 12 have any subscriber and 33 are Irish syndication entities. The other 256 (85%) were generating a daily brief AND a daily Look Ahead that nobody reads and that does not feed yous.news - i.e. ~85% of brief/Look-Ahead AI spend had no reader.
+- Both `sync-neighborhood-briefs` and `generate-look-ahead` ran wide open on `is_active=true` (~301 neighborhoods x 2 crons = ~602 generations/day, each = 1 Grok call + Gemini search + Gemini enrichment).
+- New `src/lib/generation-cadence.ts` `shouldGenerateToday(id, localDate, subscribed)`: subscribed neighborhoods and Irish entities (`ie-*`, 33 of them, feeding yous.news) generate daily; "cold" neighborhoods (no subscriber, non-Irish) generate once every 4 days via a deterministic per-neighborhood bucket (`djb2(id) % 4 === localDayNumber % 4`) so the 256 cold ones spread evenly (~64/day) instead of all regenerating on the same day. No DB query - avoids the 1000-row cap that a 4-day brief-date lookup would have hit.
+- Gate wired into both crons via `getActiveNeighborhoodIds()` (live subscriber set, so a cold neighborhood returns to daily automatically the moment it gains its first subscriber) + `shouldGenerateToday()`. Single-neighborhood `?test=` runs bypass the gate.
+- Effect: ~602 -> ~218 generations/day (64% cut). Estimated saving ~$700-1,000/mo across Grok + Gemini - roughly halves readflaneur's AI cost. Bigger than the open-model migration and the Sunday Edition split combined.
+
+**Per-call AI cost instrumentation (`ai_usage_events`):**
+
+- New `ai_usage_events` table + `src/lib/ai-cost.ts` `recordAiUsage()`, a fire-and-forget logger (never throws, never blocks a cron) that writes one row per external AI API call: provider, model, operation, kind (`search` vs `generation`), token counts, source count, estimated cost.
+- Instruments the central call sites: `grok.ts` (5 functions), `gemini-search` and `translation-service` `callGeminiWithRetry`, `brief-enricher-gemini` enrichment, and `weekly-brief-service` (6 Gemini calls).
+- Cost notes baked into `ai-cost.ts`: Gemini/Claude are token-billed so estimates are accurate; Grok is ~97% live-search fees, so its estimate is token cost + an empirical $0.05/call search surcharge - the reliable Grok signal is the call count per operation, recalibrated by dividing the xAI console total by logged call count.
+- Purpose: measure the real search-vs-generation cost split per pipeline before deciding which workloads to move to cheaper open-weight models.
+
 **Sunday Edition Gemini cost optimization - per-call model split:**
 
 - Post-migration BigQuery billing analysis (now that the cost-attribution API keys had been live over a day) showed the Sunday Edition was the single biggest driver of readflaneur's Gemini Pro spend: a recurring weekend spike of ~$27-30/day of Pro output tokens vs ~$4-7 on weekdays, roughly $245/mo. readflaneur's overall Gemini run-rate held ~$1,230/mo (unchanged by the rotation, as expected - the rotation was for attribution, not reduction). yous-news cleanly separated at ~$230/mo with no cross-project bleed.

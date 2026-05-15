@@ -6,6 +6,8 @@ import { generateBriefContextSnippet } from '@/lib/nyc-content-generator';
 import { NYCPermit } from '@/lib/nyc-permits';
 import { LiquorLicense } from '@/lib/nyc-liquor';
 import { searchNeighborhoodFacts, mergeContent } from '@/lib/gemini-search';
+import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
+import { shouldGenerateToday } from '@/lib/generation-cadence';
 
 /**
  * Neighborhood Briefs Sync Cron Job
@@ -178,6 +180,9 @@ export async function GET(request: Request) {
     .order('created_at', { ascending: false })
     .limit(1000);
 
+  // Subscriber set for the generation-cadence gate (cost control).
+  const subscribedIds = await getActiveNeighborhoodIds(supabase);
+
   // Fetch active neighborhoods WITH timezone (includes combo neighborhoods)
   let query = supabase
     .from('neighborhoods')
@@ -211,6 +216,12 @@ export async function GET(request: Request) {
 
     // Skip if already has a brief for this neighborhood's local "today"
     if (hasBriefForLocalToday(n.id, n.timezone)) {
+      return false;
+    }
+
+    // Cost control: cold (unsubscribed, non-Irish) neighborhoods generate
+    // once every 4 days; subscribed + Irish neighborhoods stay daily.
+    if (!shouldGenerateToday(n.id, getLocalDate(n.timezone), subscribedIds.has(n.id))) {
       return false;
     }
 
