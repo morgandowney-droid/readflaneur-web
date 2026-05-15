@@ -8,7 +8,7 @@ const READS_KEY = 'flaneur-article-reads';
 const SUBSCRIBED_KEY = 'flaneur-newsletter-subscribed';
 const DISMISSED_KEY = 'flaneur-email-prompt-dismissed';
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
-const READ_THRESHOLD = 3;
+const READ_THRESHOLD = 1;
 const SESSION_THRESHOLD = 2;
 const AUTO_DISMISS_MS = 10000;
 

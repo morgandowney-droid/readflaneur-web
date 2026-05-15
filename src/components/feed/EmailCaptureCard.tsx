@@ -9,12 +9,10 @@ const SUBSCRIBED_KEY = 'flaneur-newsletter-subscribed';
 const DISMISSED_KEY = 'flaneur-email-prompt-dismissed';
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
 const SESSION_COUNT_KEY = 'flaneur-session-count';
-// Bumped from 3 to 8 so first-visit evaluators (e.g. brokers kicking the tires
-// from a cold pitch link) can explore freely without hitting a capture prompt
-// on their first session. Combined with the session gate below, the capture
-// only shows on a 2nd+ visit after genuinely engaging with content.
-const READ_THRESHOLD = 8;
-const MIN_SESSIONS = 2;
+// Low thresholds to maximize signups: prompt after 2 article reads in the
+// first session. (Was 8 reads / 2 sessions - too conservative for growth.)
+const READ_THRESHOLD = 2;
+const MIN_SESSIONS = 1;
 
 interface EmailCaptureCardProps {
   neighborhoodName?: string;

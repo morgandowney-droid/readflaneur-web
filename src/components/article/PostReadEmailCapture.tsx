@@ -7,10 +7,9 @@ const SUBSCRIBED_KEY = 'flaneur-newsletter-subscribed';
 const DISMISSED_KEY = 'flaneur-email-prompt-dismissed';
 const PREFS_KEY = 'flaneur-neighborhood-preferences';
 const SESSION_COUNT_KEY = 'flaneur-session-count';
-// Bumped from 3 to 8 so first-visit evaluators can explore freely. Combined
-// with the session gate, the capture only shows on a 2nd+ visit.
-const READ_THRESHOLD = 8;
-const MIN_SESSIONS = 2;
+// Low thresholds to maximize signups: prompt after 2 article reads.
+const READ_THRESHOLD = 2;
+const MIN_SESSIONS = 1;
 
 interface PostReadEmailCaptureProps {
   neighborhoodName: string;

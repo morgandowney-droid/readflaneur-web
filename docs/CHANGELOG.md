@@ -5,6 +5,15 @@
 
 ## 2026-05-15
 
+**Signup funnel opened up + SEO sitemap:**
+
+- Diagnosis: a live query showed ~2 real external users. The newsletter signup was hard double opt-in - `/api/newsletter/subscribe` never created a subscriber, it only sent a "Verify Email" magic link; the `newsletter_subscribers` row was created solely when the user clicked that link (at `/auth/callback`). Anyone who did not click vanished.
+- Single opt-in: `/api/newsletter/subscribe` rewritten to INSERT the subscriber row immediately (`email_verified=true`, `daily_email_enabled=true`, neighborhoods, timezone) and send a welcome email ("first Daily Brief tomorrow at 7 AM") instead of a verification gate. Handles `23505` unique-violation races gracefully; welcome email is fire-and-forget so a Resend hiccup cannot fail the signup.
+- Bounce safety: new `/api/webhooks/resend` webhook (Svix-verified, mirrors `resend-inbound`) handles `email.bounced` + `email.complained` -> sets `daily_email_enabled=false` on `newsletter_subscribers` + `profiles`. Protects sender reputation now that a typo'd address gets a real send. REQUIRES the endpoint registered in the Resend dashboard for those two event types.
+- Soft gates lowered: `EmailCaptureCard` / `PostReadEmailCapture` thresholds 8 reads + 2 sessions -> 2 reads + 1 session; `ReturnVisitPrompt` 3 reads -> 1. `FeedList` grace period now suppresses only paid ads, not email prompts. The feed-inline `EmailCaptureCard` was also dead code (`email-prompt` items returned `null`) - now rendered.
+- SEO: new `src/app/sitemap.ts` (Next App Router dynamic sitemap, daily revalidate) - static pages + every active neighborhood page + 1000 most-recent published articles. `robots.ts` already pointed at `/sitemap.xml`, which previously 404'd. Still TODO: submit it in Google Search Console + Bing Webmaster Tools.
+- Fixed the one real subscriber's `daily_email_enabled` (was `false`, silently blocking her Daily Brief).
+
 **Generation cadence gate - cold neighborhoods drop to every 4 days:**
 
 - A live query exposed the core cost problem: of 301 active neighborhoods, only 12 have any subscriber and 33 are Irish syndication entities. The other 256 (85%) were generating a daily brief AND a daily Look Ahead that nobody reads and that does not feed yous.news - i.e. ~85% of brief/Look-Ahead AI spend had no reader.

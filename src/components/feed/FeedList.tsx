@@ -19,9 +19,10 @@ export function FeedList({ items, view = 'gallery' }: FeedListProps) {
   const isGracePeriod = useNewUserGracePeriod();
   const { t } = useTranslation();
 
-  // Filter out ads and email prompts during new user grace period
+  // Suppress paid ads during the new-user grace period, but keep email
+  // capture prompts - we want to ask for the subscription early.
   const displayItems = isGracePeriod
-    ? items.filter(item => item.type === 'article')
+    ? items.filter(item => item.type !== 'ad')
     : items;
 
   if (displayItems.length === 0) {
@@ -49,7 +50,11 @@ export function FeedList({ items, view = 'gallery' }: FeedListProps) {
     <div className={view === 'compact' ? 'space-y-1' : 'space-y-16 md:space-y-8'}>
       {displayItems.map((item, index) => {
         if (item.type === 'email-prompt') {
-          return null;
+          return (
+            <div key={`email-prompt-${index}`}>
+              <EmailCaptureCard />
+            </div>
+          );
         }
         if (item.type === 'article') {
           return view === 'compact' ? (

@@ -8,7 +8,7 @@ import { sendEmail } from '@/lib/email';
  *   post:
  *     tags: [Newsletter]
  *     summary: Subscribe to the daily newsletter
- *     description: Subscribe an email to receive Daily Brief emails. If already verified, updates preferences. If new, sends a magic link verification email via Resend.
+ *     description: Single opt-in. Creates the subscriber immediately (verified, daily email enabled) and sends a welcome email. If already subscribed, updates preferences and re-enables delivery.
  *     requestBody:
  *       required: true
  *       content:
@@ -57,79 +57,76 @@ export async function POST(request: NextRequest) {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Admin client for bypassing RLS and CAPTCHA
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Check if already subscribed (and verified) to newsletter
-    const { data: existingSubscriber } = await supabaseAdmin
+    // Already subscribed? Update preferences and re-enable delivery.
+    const { data: existing } = await supabaseAdmin
       .from('newsletter_subscribers')
-      .select('id, email_verified')
+      .select('id')
       .eq('email', normalizedEmail)
-      .single();
+      .maybeSingle();
 
-    // If already verified, just update preferences
-    if (existingSubscriber?.email_verified) {
-      const updateData: { neighborhood_ids: string[]; timezone?: string } = {
-        neighborhood_ids: neighborhoodIds
+    if (existing) {
+      const update: {
+        neighborhood_ids: string[];
+        email_verified: boolean;
+        daily_email_enabled: boolean;
+        timezone?: string;
+      } = {
+        neighborhood_ids: neighborhoodIds,
+        email_verified: true,
+        daily_email_enabled: true,
       };
-      if (timezone) {
-        updateData.timezone = timezone;
-      }
+      if (timezone) update.timezone = timezone;
+
       await supabaseAdmin
         .from('newsletter_subscribers')
-        .update(updateData)
-        .eq('id', existingSubscriber.id);
+        .update(update)
+        .eq('id', existing.id);
 
       return NextResponse.json({
         success: true,
-        message: 'Preferences updated!'
+        message: 'Your preferences have been updated.',
       });
     }
 
-    // Build callback URL with newsletter flag and neighborhood IDs
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\n$/, '').replace(/\/$/, '')
-      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-    const callbackUrl = `${baseUrl}/auth/callback?newsletter=true&neighborhoods=${encodeURIComponent(JSON.stringify(neighborhoodIds))}`;
+    // New subscriber - single opt-in: create the row immediately so delivery
+    // starts with the next morning's Daily Brief. No verification click gate.
+    const { error: insertError } = await supabaseAdmin
+      .from('newsletter_subscribers')
+      .insert({
+        email: normalizedEmail,
+        neighborhood_ids: neighborhoodIds,
+        timezone: timezone || null,
+        email_verified: true,
+        verified_at: new Date().toISOString(),
+        daily_email_enabled: true,
+      });
 
-    // Use admin generateLink to bypass CAPTCHA requirement
-    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
-      email: normalizedEmail,
-      options: {
-        redirectTo: callbackUrl,
-      },
-    });
-
-    if (linkError || !linkData?.properties?.action_link) {
-      console.error('Generate link error:', linkError);
+    // 23505 = unique violation: a concurrent request already created the row.
+    // Treat as success rather than erroring.
+    if (insertError && insertError.code !== '23505') {
+      console.error('Newsletter subscribe insert error:', insertError);
       return NextResponse.json({
         success: false,
-        error: 'Failed to send verification email. Please try again.'
+        error: 'Could not complete signup. Please try again.',
       }, { status: 500 });
     }
 
-    // Send the magic link via Resend
-    const actionLink = linkData.properties.action_link;
-    const emailSent = await sendEmail({
+    // Welcome email is best-effort - the subscription is already saved, so a
+    // Resend hiccup must not fail the signup.
+    sendEmail({
       to: normalizedEmail,
       subject: 'Welcome to Flaneur',
-      html: buildMagicLinkEmail(actionLink),
-    });
-
-    if (!emailSent) {
-      console.error('Resend email send failed for:', normalizedEmail);
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to send verification email. Please try again.'
-      }, { status: 500 });
-    }
+      html: buildWelcomeEmail(),
+    }).then(null, (err) => console.error('Welcome email failed:', err));
 
     return NextResponse.json({
       success: true,
-      message: 'Check your email for a verification link!'
+      message: "You're subscribed. Your first Daily Brief arrives tomorrow at 7 AM.",
     });
   } catch (err) {
     console.error('Newsletter API error:', err);
@@ -137,7 +134,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function buildMagicLinkEmail(actionLink: string): string {
+function buildWelcomeEmail(): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -170,14 +167,14 @@ function buildMagicLinkEmail(actionLink: string): string {
           <!-- Body -->
           <tr>
             <td style="padding-bottom:32px; color:#a3a3a3; font-size:16px; line-height:1.7; text-align:center;">
-              Click below to verify your email and start receiving daily neighborhood stories.
+              You're subscribed. Your first Daily Brief lands in your inbox tomorrow morning at 7 AM, local time.
             </td>
           </tr>
           <!-- CTA Button -->
           <tr>
             <td align="center" style="padding-bottom:48px;">
-              <a href="${actionLink}" style="display:inline-block; background-color:#ffffff; color:#171717; padding:14px 32px; font-size:14px; font-weight:600; text-decoration:none; border-radius:6px; letter-spacing:0.05em;">
-                Verify Email
+              <a href="https://readflaneur.com/feed" style="display:inline-block; background-color:#ffffff; color:#171717; padding:14px 32px; font-size:14px; font-weight:600; text-decoration:none; border-radius:6px; letter-spacing:0.05em;">
+                Start Reading
               </a>
             </td>
           </tr>
@@ -261,7 +258,7 @@ function buildMagicLinkEmail(actionLink: string): string {
           <!-- Footer -->
           <tr>
             <td align="center" style="color:#525252; font-size:12px; line-height:1.6;">
-              If you did not request this email, you can safely ignore it.
+              You&rsquo;re receiving this because you subscribed at readflaneur.com.
             </td>
           </tr>
         </table>
