@@ -15,6 +15,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { getNeighborhoodIdsForQuery } from './combo-utils';
 import { getSearchLocation } from './neighborhood-utils';
 import { AI_MODELS } from '@/config/ai-models';
+import { recordGeminiCall } from '@/lib/ai-cost';
 
 /**
  * Replace em dashes and en dashes with regular hyphens.
@@ -303,6 +304,7 @@ Respond with ONLY this JSON (no other text):
       // Always Flash here - disable thinking tokens (billed at $2.50/M).
       config: { temperature: 0.3, thinkingConfig: { thinkingBudget: 0 } },
     });
+    recordGeminiCall(response, { operation: 'sunday_significance', kind: 'generation', model, label: neighborhoodName });
 
     const text = response.text || '';
     const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/\{[\s\S]*"stories"[\s\S]*\}/);
@@ -376,6 +378,7 @@ The teaser is for the email subject line. It should create an "information gap" 
       contents: prompt,
       config: { temperature: 0.7 },
     });
+    recordGeminiCall(response, { operation: 'sunday_letter', kind: 'generation', model, label: neighborhoodName });
 
     const text = (response.text || '').trim();
 
@@ -526,6 +529,7 @@ Respond with ONLY this JSON:
       // Always Flash here - disable thinking tokens (billed at $2.50/M).
       config: { temperature: 0.4, thinkingConfig: { thinkingBudget: 0 } },
     });
+    recordGeminiCall(response, { operation: 'sunday_curate', kind: 'generation', model, label: neighborhoodName });
 
     const text = response.text || '';
     const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/\{[\s\S]*"events"[\s\S]*\}/);
@@ -625,6 +629,7 @@ Respond with ONLY this JSON:
         thinkingConfig: { thinkingBudget: 0 },
       },
     });
+    recordGeminiCall(response, { operation: 'sunday_events_search', kind: 'search', model, label: neighborhoodName });
 
     const text = response.text || '';
     const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/\{[\s\S]*"events"[\s\S]*\}/);
@@ -700,6 +705,7 @@ Respond with ONLY this JSON:
         thinkingConfig: { thinkingBudget: 0 },
       },
     });
+    recordGeminiCall(response, { operation: 'sunday_datapoint', kind: 'search', model, label: neighborhoodName });
 
     const text = response.text || '';
     const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/\{[\s\S]*"value"[\s\S]*\}/);
@@ -1047,6 +1053,7 @@ Respond with ONLY this JSON:
         thinkingConfig: { thinkingBudget: 0 },
       },
     });
+    recordGeminiCall(response, { operation: 'sunday_holiday', kind: 'generation', model, label: neighborhoodName });
 
     const text = response.text || '';
     const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/\{[\s\S]*"events"[\s\S]*\}/);

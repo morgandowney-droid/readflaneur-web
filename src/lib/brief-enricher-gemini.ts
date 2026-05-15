@@ -12,6 +12,7 @@ import {
   sanitizeMarkdownLinks,
   validateLinkCandidates,
 } from './hyperlink-injector';
+import { recordGeminiCall } from '@/lib/ai-cost';
 
 export interface EnrichedStoryItem {
   entity: string;
@@ -538,6 +539,13 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     if (!response) {
       throw lastError || new Error('Gemini enrichment failed after retries');
     }
+
+    recordGeminiCall(response, {
+      operation: `enrich_${options?.articleType || 'daily_brief'}`,
+      kind: 'generation',
+      model: modelId,
+      label: neighborhoodName,
+    });
 
     const rawText = response.text || '';
 

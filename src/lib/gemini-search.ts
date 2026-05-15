@@ -10,6 +10,7 @@
 
 import { GoogleGenAI } from '@google/genai';
 import { AI_MODELS } from '@/config/ai-models';
+import { recordGeminiCall } from '@/lib/ai-cost';
 import type { StructuredEvent } from './look-ahead-events';
 
 const RETRY_DELAYS = [2000, 5000, 15000]; // 2s, 5s, 15s exponential backoff
@@ -73,7 +74,7 @@ Format each bullet as:
 ${avoidBlock}`;
 
   try {
-    const response = await callGeminiWithRetry(genAI, prompt, `You are a local news researcher for ${location}. Search Google for recent news, events, and developments. Today is ${localDateStr}.`);
+    const response = await callGeminiWithRetry(genAI, prompt, `You are a local news researcher for ${location}. Search Google for recent news, events, and developments. Today is ${localDateStr}.`, 'search_facts', neighborhoodName);
 
     const text = response?.text?.trim();
     if (!text || text.length < 50) return null;
@@ -160,7 +161,7 @@ EVENTS_JSON:
 List the events in prose first, then the JSON array.`;
 
   try {
-    const response = await callGeminiWithRetry(genAI, prompt, `You are an events researcher for ${location}. Search Google for upcoming events, exhibitions, performances, and happenings. Focus on official event calendars and listing sites.`);
+    const response = await callGeminiWithRetry(genAI, prompt, `You are an events researcher for ${location}. Search Google for upcoming events, exhibitions, performances, and happenings. Focus on official event calendars and listing sites.`, 'search_events', neighborhoodName);
 
     const text = response?.text?.trim();
     if (!text || text.length < 50) return null;
@@ -284,7 +285,9 @@ function nameSimilarity(a: string, b: string): number {
 async function callGeminiWithRetry(
   genAI: GoogleGenAI,
   prompt: string,
-  systemInstruction: string
+  systemInstruction: string,
+  operation: string,
+  label?: string,
 ): Promise<{ text: string } | null> {
   let lastError: unknown;
 
@@ -299,6 +302,7 @@ async function callGeminiWithRetry(
           thinkingConfig: { thinkingBudget: 0 },
         },
       });
+      recordGeminiCall(response, { operation, kind: 'search', model: AI_MODELS.GEMINI_FLASH, label });
       return { text: response.text || '' };
     } catch (err: unknown) {
       lastError = err;

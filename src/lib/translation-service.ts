@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { AI_MODELS } from '@/config/ai-models';
+import { recordGeminiCall } from '@/lib/ai-cost';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export type LanguageCode = 'sv' | 'fr' | 'de' | 'es' | 'pt' | 'it' | 'zh' | 'ja';
@@ -66,7 +67,7 @@ BODY:
 ${bodyToTranslate}
 ${previewText ? `\nPREVIEW TEXT:\n${previewText}` : ''}`;
 
-  const result = await callGeminiWithRetry<ArticleTranslation>(apiKey, prompt);
+  const result = await callGeminiWithRetry<ArticleTranslation>(apiKey, prompt, 'translate_article', targetLang);
 
   // Recombine: prepend the original English event listing to the translated body
   if (result && eventListingBlock) {
@@ -102,10 +103,10 @@ CONTENT:
 ${content}
 ${enrichedContent ? `\nENRICHED CONTENT:\n${enrichedContent}` : ''}`;
 
-  return callGeminiWithRetry<BriefTranslation>(apiKey, prompt);
+  return callGeminiWithRetry<BriefTranslation>(apiKey, prompt, 'translate_brief', targetLang);
 }
 
-async function callGeminiWithRetry<T>(apiKey: string, prompt: string): Promise<T | null> {
+async function callGeminiWithRetry<T>(apiKey: string, prompt: string, operation: string, label?: string): Promise<T | null> {
   const ai = new GoogleGenAI({ apiKey });
 
   for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
@@ -117,6 +118,7 @@ async function callGeminiWithRetry<T>(apiKey: string, prompt: string): Promise<T
           thinkingConfig: { thinkingBudget: 0 },
         },
       });
+      recordGeminiCall(result, { operation, kind: 'generation', model: AI_MODELS.GEMINI_FLASH, label });
 
       const text = result.text?.trim() || '';
       const cleaned = text.replace(/^```json\s*/i, '').replace(/\s*```$/, '');

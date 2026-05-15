@@ -10,6 +10,7 @@
 
 import { getSearchLocation } from '@/lib/neighborhood-utils';
 import { AI_MODELS } from '@/config/ai-models';
+import { recordGrokCall } from '@/lib/ai-cost';
 
 const GROK_API_URL = 'https://api.x.ai/v1';
 const GROK_MODEL = AI_MODELS.GROK_FAST;
@@ -167,6 +168,7 @@ DO NOT lead with or dedicate a paragraph to these topics UNLESS you find genuine
     }
 
     const data = await response.json();
+    recordGrokCall(data, { operation: 'neighborhood_brief', label: `${neighborhoodName}, ${city}` });
 
     // Debug: Log the response structure
     console.log('Grok response structure:', JSON.stringify(data, null, 2).slice(0, 500));
@@ -322,6 +324,7 @@ Format each story clearly separated by "---"`
     }
 
     const data: GrokResponsesResponse = await response.json();
+    recordGrokCall(data, { operation: 'grok_news', label: `${neighborhoodName}, ${city}` });
 
     const assistantOutput = data.output?.find(o => o.type === 'message' && o.role === 'assistant');
     const content = assistantOutput?.content || '';
@@ -494,6 +497,7 @@ Rules:
     }
 
     const data = await response.json();
+    recordGrokCall(data, { operation: 'look_ahead', label: `${neighborhoodName}, ${city}` });
 
     // Extract the assistant's response
     let responseText = '';
@@ -634,6 +638,7 @@ export async function grokEventSearch(
     }
 
     const data = await response.json();
+    recordGrokCall(data, { operation: 'event_search' });
 
     // Extract response text from Responses API format
     let responseText = '';
@@ -717,6 +722,7 @@ export async function generateWithGrok(
     }
 
     const data = await response.json();
+    recordGrokCall(data, { operation: 'grok_generate' });
 
     // Extract response text
     let responseText = '';
