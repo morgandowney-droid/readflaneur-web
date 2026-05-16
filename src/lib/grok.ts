@@ -153,9 +153,10 @@ DO NOT lead with or dedicate a paragraph to these topics UNLESS you find genuine
             content: searchQuery
           }
         ],
+        // X search only - Grok's web_search overlaps Gemini's Google Search
+        // grounding, which runs in parallel for briefs and Look Ahead.
         tools: [
-          { type: 'x_search' },
-          { type: 'web_search' }
+          { type: 'x_search' }
         ],
         temperature: 0.7,
       }),
@@ -309,9 +310,10 @@ For each story, provide:
 Format each story clearly separated by "---"`
           }
         ],
+        // X search only - Grok's web_search overlaps Gemini's Google Search
+        // grounding, which runs in parallel for briefs and Look Ahead.
         tools: [
-          { type: 'x_search' },
-          { type: 'web_search' }
+          { type: 'x_search' }
         ],
         temperature: 0.7,
       }),
@@ -482,9 +484,10 @@ Rules:
             content: searchQuery
           }
         ],
+        // X search only - Grok's web_search overlaps Gemini's Google Search
+        // grounding, which runs in parallel for briefs and Look Ahead.
         tools: [
-          { type: 'x_search' },
-          { type: 'web_search' }
+          { type: 'x_search' }
         ],
         temperature: 0.7,
       }),

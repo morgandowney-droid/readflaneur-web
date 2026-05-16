@@ -5,6 +5,12 @@
 
 ## 2026-05-16
 
+**Grok web_search dropped from brief / Look Ahead / news calls:**
+
+- `generateNeighborhoodBrief`, `generateLookAhead`, and `generateGrokNewsStories` previously passed both `x_search` and `web_search` tools. But `sync-neighborhood-briefs` and `generate-look-ahead` run Gemini with Google Search grounding in parallel, so Grok's `web_search` was redundant with Gemini's web coverage.
+- Dropped `web_search` from those 3 calls - Grok now does `x_search` only (its unique X/social signal); Gemini owns the web. Fewer search-tool invocations per Grok call means lower Grok live-search fees, which are ~97% of Grok's cost.
+- `grokEventSearch` (the 9 event crons) and `generateWithGrok` keep both tools - they have no Gemini search running in parallel.
+
 **Translation moved to Qwen (open-weight) - cost cut:**
 
 - The `ai_usage_events` instrumentation revealed that once the cadence gate throttled brief generation, translation (`translate_article` + `translate_brief`, ~3,000 calls/day) became the single biggest Gemini line item - roughly $10/day.
