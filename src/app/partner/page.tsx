@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { BrokerSampleRequest } from '@/components/partner/BrokerSampleRequest';
 
 const PARTNER_TITLE = 'Your Name on a Daily Neighborhood Newsletter - Flaneur';
-const PARTNER_DESC = 'One luxury real estate broker per neighborhood. 270 neighborhoods across 42 countries. Your name, photo, and listings delivered to your client list every morning at 7 AM. 14-day free trial.';
+const PARTNER_DESC = 'One luxury real estate broker per neighborhood. 270 neighborhoods across 42 countries. Your name, photo, and listings delivered to your client list every morning at 7 AM. Free for founding partners during the beta.';
 
 export const metadata: Metadata = {
   title: PARTNER_TITLE,
@@ -177,12 +177,12 @@ export default function PartnerLandingPage() {
       <section className="border-t border-border py-16 md:py-20 px-6">
         <div className="max-w-3xl mx-auto">
           <h2 className="font-display text-2xl md:text-3xl font-light text-fg mb-3 text-center">Pricing</h2>
-          <p className="text-fg-muted text-center mb-10">Exclusive to one agent per neighborhood. 14-day free trial. Cancel anytime.</p>
+          <p className="text-fg-muted text-center mb-10">Exclusive to one agent per neighborhood. Free for founding partners during the beta.</p>
 
           <div className="max-w-2xl mx-auto border border-accent/30 rounded-lg p-10 text-center bg-surface">
-            <p className="text-xs tracking-[0.12em] uppercase text-fg-subtle mb-2">One neighborhood, one agent</p>
-            <p className="font-display text-5xl font-bold text-fg mb-2">US$299</p>
-            <p className="text-fg-subtle text-sm mb-6">per month - billed in USD</p>
+            <p className="text-xs tracking-[0.12em] uppercase text-fg-subtle mb-2">Founding Partner</p>
+            <p className="font-display text-5xl font-bold text-fg mb-2">Free</p>
+            <p className="text-fg-subtle text-sm mb-6">during the beta - no card required</p>
             <ul className="text-left text-fg-muted text-sm leading-relaxed space-y-2 mb-6">
               <li>&middot; Branded Daily Brief to your clients, every day at 7 AM local</li>
               <li>&middot; Your photo, listings, and contact details in every email</li>
@@ -190,9 +190,9 @@ export default function PartnerLandingPage() {
               <li>&middot; Weekly performance report (opens, clicks, listing impressions)</li>
               <li>&middot; Exclusive to one agent per neighborhood</li>
             </ul>
-            <p className="text-accent text-sm font-medium mb-3">14-day free trial. No charge today.</p>
+            <p className="text-accent text-sm font-medium mb-3">Free while Flaneur is in beta. No charge to activate.</p>
             <p className="text-fg-subtle text-xs leading-relaxed text-left">
-              First billing starts 14 days after activation, then monthly on the 15th day after activation. You can cancel anytime before or after the free trial. If you cancel before the end of the free trial, no billing occurs.
+              Flaneur will introduce partner pricing once the beta ends. Founding partners who join now keep their founding-partner rate when pricing launches. No card is required to activate today.
             </p>
           </div>
 
@@ -202,7 +202,7 @@ export default function PartnerLandingPage() {
               A single print ad in a luxury magazine costs $5-20K and runs once. A social media agency retainer runs $2-5K per month. A direct mail campaign costs $1-3K per drop.
             </p>
             <p className="text-fg-muted leading-relaxed mt-3">
-              <strong className="text-fg">This gets you:</strong> 365 daily touchpoints with every past client - for less than a single print ad. And your competitor can&apos;t have it.
+              <strong className="text-fg">This gets you:</strong> 365 daily touchpoints with every past client - free while Flaneur is in beta. And your competitor can&apos;t have it.
             </p>
           </div>
         </div>

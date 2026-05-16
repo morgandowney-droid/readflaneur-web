@@ -380,8 +380,8 @@ function PartnerPageInner() {
     setSendingPreview(false);
   };
 
-  // Checkout
-  const handleCheckout = async () => {
+  // Free Founding Partner activation
+  const handleActivate = async () => {
     let pid = partnerId;
     if (!pid) {
       const p = await savePartner();
@@ -390,20 +390,20 @@ function PartnerPageInner() {
     }
     setCheckingOut(true);
     try {
-      const res = await fetch('/api/partner/checkout', {
+      const res = await fetch('/api/partner/activate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ agentPartnerId: pid }),
       });
       const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
+      if (data.success) {
+        window.location.href = '/partner?activated=true';
       } else {
-        setError(data.error || 'Failed to create checkout session');
+        setError(data.error || 'Activation failed. Please try again.');
         setCheckingOut(false);
       }
     } catch {
-      setError('Failed to start checkout');
+      setError('Activation failed. Please try again.');
       setCheckingOut(false);
     }
   };
@@ -492,7 +492,7 @@ function PartnerPageInner() {
             <li><span className="text-fg font-medium">3. Your active listings (optional).</span> Up to 3, with photo, address, price, beds, baths.</li>
             <li><span className="text-fg font-medium">4. Your client emails.</span> Paste 10, 100, or 1,000. Your list stays yours.</li>
             <li><span className="text-fg font-medium">5. Send a preview.</span> See exactly what your clients will receive tomorrow.</li>
-            <li><span className="text-fg font-medium">6. Activate.</span> 14-day free trial via Stripe. Card on file, no charge until day 14.</li>
+            <li><span className="text-fg font-medium">6. Activate.</span> Free during the beta. No card required.</li>
           </ol>
         </details>
 
@@ -987,13 +987,14 @@ function PartnerPageInner() {
           <div className="text-center">
             <h2 className="font-[family-name:var(--font-cormorant)] text-2xl mb-4">Activate Your Newsletter</h2>
             <div className="p-6 bg-surface border border-border rounded-lg mb-6 max-w-sm mx-auto">
+              <p className="text-xs tracking-[0.12em] uppercase text-fg-subtle mb-2">Founding Partner</p>
               <p className="text-3xl font-light mb-1">
-                US$299
-                <span className="text-sm text-fg-subtle ml-1 align-middle">/ month</span>
+                Free
+                <span className="text-sm text-fg-subtle ml-1 align-middle">during beta</span>
               </p>
-              <p className="text-fg-muted text-sm mb-3">Billed in USD. Cancel anytime.</p>
+              <p className="text-fg-muted text-sm mb-3">No card required.</p>
               <p className="text-fg-subtle text-xs leading-relaxed text-left">
-                First billing starts 14 days after activation, then monthly on the 15th day after activation. You can cancel anytime before or after the free trial. If you cancel before the end of the free trial, no billing occurs.
+                Flaneur is in beta, so your partnership is free. When partner pricing launches later, your founding-partner rate is locked in. No charge now or at activation.
               </p>
             </div>
             <ul className="text-sm text-fg-muted space-y-2 mb-8 max-w-sm mx-auto text-left">
@@ -1004,11 +1005,11 @@ function PartnerPageInner() {
               <li>- Content generated daily by Flaneur</li>
             </ul>
             <button
-              onClick={handleCheckout}
+              onClick={handleActivate}
               disabled={checkingOut}
               className="bg-fg text-canvas px-8 py-3 text-sm font-medium tracking-wider uppercase hover:opacity-90 transition-opacity rounded-lg disabled:opacity-40"
             >
-              {checkingOut ? 'Redirecting to Stripe...' : 'Activate'}
+              {checkingOut ? 'Activating...' : 'Activate'}
             </button>
             <div className="mt-4">
               <button onClick={() => setCurrentStep(5)} className="text-fg-muted text-sm hover:text-fg">

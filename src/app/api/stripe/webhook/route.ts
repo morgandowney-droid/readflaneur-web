@@ -105,6 +105,7 @@ export async function POST(request: NextRequest) {
           .update({
             status: 'active',
             activated_at: new Date().toISOString(),
+            plan: 'paid',
             stripe_customer_id: typeof session.customer === 'string' ? session.customer : null,
             stripe_subscription_id: subscriptionId || null,
           })

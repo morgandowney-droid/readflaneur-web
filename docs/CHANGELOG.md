@@ -3,6 +3,18 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-05-16
+
+**Free "Founding Partner" broker mode:**
+
+- The broker outreach campaign (~950 cold emails across touch 1 + Campaign 2) produced 0 responses and 0 conversions. Diagnosis: cold-emailing a $299/mo product from an unknown brand is one of the hardest go-to-market motions, and the price gate compounds it. Decision: make the partner product free during the beta, monetize later.
+- `agent_partners.plan` column added (`'free' | 'paid'`, default `'free'`) so free vs paid brokers are distinguishable when pricing launches.
+- New `activatePartner()` helper (`src/lib/partner-activation.ts`): flips a partner from `setup` to `active` with `plan='free'`, sends the admin notification + broker welcome email (welcome copy reframed to Founding Partner - no trial/billing language).
+- New `POST /api/partner/activate`: the no-payment activation path. The `/partner` setup step 6 "Activate" button now calls it instead of `/api/partner/checkout` (Stripe), and redirects to the existing `/partner?activated=true` success screen.
+- The Stripe webhook `checkout.session.completed` still handles paid activation and now stamps `plan='paid'`. `/api/partner/checkout` stays dormant but intact - "charge later" is just re-pointing the setup button back at it.
+- `/partner` landing page + setup copy swept from "US$299/month, 14-day trial" to "Founding Partner, free during the beta, pricing locked in later." The dashboard "Manage Billing" button was already guarded by `stripe_customer_id`, so it auto-hides for free brokers.
+- Cost note (accepted trade-off): a free broker who activates in a not-yet-covered neighborhood flips it to "subscribed", re-enabling daily generation for it.
+
 ## 2026-05-15
 
 **Signup funnel opened up + SEO sitemap:**
