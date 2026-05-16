@@ -15,7 +15,7 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-export type AiProvider = 'gemini' | 'grok' | 'claude' | 'openai';
+export type AiProvider = 'gemini' | 'grok' | 'claude' | 'openai' | 'qwen';
 export type AiKind = 'search' | 'generation';
 
 interface ModelPrice {
@@ -32,6 +32,8 @@ const MODEL_PRICING: Record<string, ModelPrice> = {
   'gemini-2.0-flash': { inputPerM: 0.1, outputPerM: 0.4, cachedInputPerM: 0.025 },
   'grok-4-1-fast': { inputPerM: 0.2, outputPerM: 0.5, cachedInputPerM: 0.05 },
   'claude-sonnet-4-5': { inputPerM: 3.0, outputPerM: 15.0, cachedInputPerM: 0.3 },
+  // Qwen via OpenRouter (translation). Approximate - matches any 'qwen/...' model.
+  qwen: { inputPerM: 0.4, outputPerM: 0.4, cachedInputPerM: 0.4 },
 };
 
 // Empirical per-call live-search fee for Grok (xAI console total / call count).

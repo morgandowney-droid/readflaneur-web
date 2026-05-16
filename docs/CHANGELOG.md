@@ -5,6 +5,14 @@
 
 ## 2026-05-16
 
+**Translation moved to Qwen (open-weight) - cost cut:**
+
+- The `ai_usage_events` instrumentation revealed that once the cadence gate throttled brief generation, translation (`translate_article` + `translate_brief`, ~3,000 calls/day) became the single biggest Gemini line item - roughly $10/day.
+- `translation-service.ts` now routes translation through Qwen via OpenRouter's OpenAI-compatible chat API (`qwen/qwen-2.5-72b-instruct` by default; override with the `QWEN_MODEL` env var). Qwen is ~6x cheaper than Gemini Flash on output tokens and is strong at multilingual work.
+- Automatic fallback: if `OPENROUTER_API_KEY` is unset, or a Qwen call fails for any reason, translation falls straight back to Gemini Flash via the existing `callGeminiWithRetry`. Translation never goes dark. Safe to deploy before the key exists - it flips to Qwen the moment the key is added in Vercel.
+- Qwen calls are recorded to `ai_usage_events` with provider `'qwen'`. Expected: translation ~$10/day -> ~$2/day.
+- REQUIRES `OPENROUTER_API_KEY` in Vercel env to activate; until then translation stays on Gemini Flash (current behavior).
+
 **Free "Founding Partner" broker mode:**
 
 - The broker outreach campaign (~950 cold emails across touch 1 + Campaign 2) produced 0 responses and 0 conversions. Diagnosis: cold-emailing a $299/mo product from an unknown brand is one of the hardest go-to-market motions, and the price gate compounds it. Decision: make the partner product free during the beta, monetize later.
