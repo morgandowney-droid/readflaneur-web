@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import { AI_MODELS } from '@/config/ai-models';
+import { recordClaudeCall } from '@/lib/ai-cost';
 
 /**
  * Property Watch Processing Cron Job
@@ -143,6 +144,12 @@ export async function GET(request: Request) {
         messages: [{ role: 'user', content: prompt }],
       });
 
+      recordClaudeCall(message, {
+        operation: 'property_watch_sighting',
+        kind: 'generation',
+        model: AI_MODELS.CLAUDE_SONNET,
+      });
+
       const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
       const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, responseText];
       const result = JSON.parse(jsonMatch[1]?.trim() || responseText);
@@ -196,6 +203,12 @@ export async function GET(request: Request) {
           messages: [{ role: 'user', content: prompt }],
         });
 
+        recordClaudeCall(message, {
+          operation: 'property_watch_storefront',
+          kind: 'generation',
+          model: AI_MODELS.CLAUDE_SONNET,
+        });
+
         const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
         const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, responseText];
         const result = JSON.parse(jsonMatch[1]?.trim() || responseText);
@@ -246,6 +259,12 @@ export async function GET(request: Request) {
           max_tokens: 200,
           system: PROPERTY_WATCH_SYSTEM_PROMPT,
           messages: [{ role: 'user', content: prompt }],
+        });
+
+        recordClaudeCall(message, {
+          operation: 'property_watch_project',
+          kind: 'generation',
+          model: AI_MODELS.CLAUDE_SONNET,
         });
 
         const responseText = message.content[0].type === 'text' ? message.content[0].text : '';

@@ -38,7 +38,10 @@ const MODEL_PRICING: Record<string, ModelPrice> = {
 
 // Empirical per-call live-search fee for Grok (xAI console total / call count).
 // Token cost alone undercounts a Grok call by ~40x; this is the dominant term.
-const GROK_SEARCH_SURCHARGE_USD = 0.05;
+// Recalibrated 2026-05-22 after dropping web_search from brief/Look Ahead/news
+// (commit c85fbd5): actuals from xAI console showed ~$9/day ÷ ~300 calls/day
+// = $0.03/call. Previous value $0.05 was the pre-removal calibration.
+const GROK_SEARCH_SURCHARGE_USD = 0.03;
 
 function priceFor(model: string): ModelPrice {
   const key = Object.keys(MODEL_PRICING).find((k) => model.startsWith(k));
@@ -159,6 +162,37 @@ export function recordGeminiCall(
     outputTokens: (u.candidatesTokenCount || 0) + thoughts,
     cachedTokens: u.cachedContentTokenCount || 0,
     metadata: thoughts > 0 ? { thoughtsTokens: thoughts } : null,
+  });
+}
+
+interface ClaudeUsage {
+  input_tokens?: number | null;
+  output_tokens?: number | null;
+  cache_creation_input_tokens?: number | null;
+  cache_read_input_tokens?: number | null;
+}
+
+/**
+ * Record an Anthropic `messages.create` call from its response's `usage`.
+ * Cached reads are billed at the cached rate; cache_creation_input_tokens
+ * count as regular input. Parameter typed permissively so it accepts the
+ * Anthropic SDK `Message` type without explicit casts at call sites.
+ */
+export function recordClaudeCall(
+  response: { usage?: ClaudeUsage | null } | null | undefined,
+  opts: { operation: string; kind: AiKind; model: string; label?: string | null },
+): void {
+  const u = response?.usage;
+  if (!u) return;
+  recordAiUsage({
+    provider: 'claude',
+    model: opts.model,
+    operation: opts.operation,
+    kind: opts.kind,
+    label: opts.label,
+    inputTokens: (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0),
+    outputTokens: u.output_tokens || 0,
+    cachedTokens: u.cache_read_input_tokens || 0,
   });
 }
 

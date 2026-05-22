@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
 import { fetchCityFeeds, RSSItem } from '@/lib/rss-sources';
 import { generateGrokNewsStories, isGrokConfigured } from '@/lib/grok';
 import { AI_MODELS } from '@/config/ai-models';
+import { recordGeminiCall } from '@/lib/ai-cost';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 
 /**
@@ -111,8 +112,8 @@ export async function GET(request: Request) {
   await preloadUnsplashCache(supabase);
   const startedAt = new Date().toISOString();
 
-  const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
-  if (!anthropicApiKey) {
+  const geminiApiKey = process.env.GEMINI_API_KEY;
+  if (!geminiApiKey) {
     // Log to cron_executions so monitoring can see the failure
     await supabase.from('cron_executions').insert({
       job_name: 'sync-news',
@@ -120,18 +121,18 @@ export async function GET(request: Request) {
       completed_at: new Date().toISOString(),
       success: false,
       articles_created: 0,
-      errors: ['ANTHROPIC_API_KEY not configured'],
+      errors: ['GEMINI_API_KEY not configured'],
       response_data: { dry_run: true },
     }).then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
 
     return NextResponse.json({
       success: false,
-      error: 'ANTHROPIC_API_KEY not configured',
+      error: 'GEMINI_API_KEY not configured',
       dry_run: true,
     });
   }
 
-  const anthropic = new Anthropic({ apiKey: anthropicApiKey });
+  const genAI = new GoogleGenAI({ apiKey: geminiApiKey });
   const results = {
     cities_processed: 0,
     articles_fetched: 0,
@@ -223,17 +224,41 @@ export async function GET(request: Request) {
           }
 
           // Use AI to determine relevance and rewrite
-          const message = await anthropic.messages.create({
-            model: AI_MODELS.CLAUDE_SONNET,
-            max_tokens: 800,
-            system: NEWS_SYSTEM_PROMPT,
-            messages: [{
-              role: 'user',
-              content: FILTER_NEWS_PROMPT(item, cityNeighborhoods),
-            }],
+          // Retry with exponential backoff on quota errors (429 RESOURCE_EXHAUSTED)
+          const RETRY_DELAYS = [2000, 5000, 15000];
+          let response;
+          let lastError: unknown;
+          for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
+            try {
+              response = await genAI.models.generateContent({
+                model: AI_MODELS.GEMINI_FLASH,
+                contents: `${NEWS_SYSTEM_PROMPT}\n\n${FILTER_NEWS_PROMPT(item, cityNeighborhoods)}`,
+                config: {
+                  temperature: 0.5,
+                  maxOutputTokens: 800,
+                  thinkingConfig: { thinkingBudget: 0 },
+                  responseMimeType: 'application/json',
+                },
+              });
+              break;
+            } catch (err: unknown) {
+              lastError = err;
+              const errMsg = err instanceof Error ? err.message : String(err);
+              const isQuotaError = errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('429');
+              if (!isQuotaError || attempt >= RETRY_DELAYS.length) throw err;
+              await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt]));
+            }
+          }
+          if (!response) throw lastError || new Error('Gemini sync-news failed after retries');
+
+          recordGeminiCall(response, {
+            operation: 'sync_news_filter',
+            kind: 'generation',
+            model: AI_MODELS.GEMINI_FLASH,
+            label: item.city,
           });
 
-          const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+          const responseText = response.text || '';
 
           let result;
           try {
@@ -271,11 +296,11 @@ export async function GET(request: Request) {
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
               author_type: 'ai',
-              ai_model: 'claude-sonnet-4-5',
+              ai_model: 'gemini-2.5-flash',
               category_label: 'News Brief',
               editor_notes: `Source: ${item.source} - ${item.link}`,
               enriched_at: new Date().toISOString(),
-              enrichment_model: 'claude-sonnet-4-5',
+              enrichment_model: 'gemini-2.5-flash',
             })
             .select('id')
             .single();

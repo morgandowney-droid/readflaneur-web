@@ -14,6 +14,7 @@ import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
 import Anthropic from '@anthropic-ai/sdk';
 import { AI_MODELS } from '@/config/ai-models';
+import { recordClaudeCall } from '@/lib/ai-cost';
 import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
 import { sendEmail } from '@/lib/email';
 
@@ -103,6 +104,12 @@ async function callClaude(prompt: string): Promise<string> {
     model: AI_MODELS.CLAUDE_SONNET,
     max_tokens: 4096,
     messages: [{ role: 'user', content: prompt }],
+  });
+
+  recordClaudeCall(response, {
+    operation: 'review_writing_quality',
+    kind: 'generation',
+    model: AI_MODELS.CLAUDE_SONNET,
   });
 
   const block = response.content[0];

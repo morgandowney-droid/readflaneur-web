@@ -9,6 +9,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { AI_MODELS } from '@/config/ai-models';
+import { recordClaudeCall } from '@/lib/ai-cost';
 
 export interface StorySource {
   title: string;
@@ -262,6 +263,13 @@ Return [] if nothing relevant found.`,
           max_uses: 5,
         },
       ],
+    });
+
+    recordClaudeCall(response, {
+      operation: 'find_story_sources',
+      kind: 'search',
+      model: AI_MODELS.CLAUDE_SONNET,
+      label: neighborhoodName,
     });
 
     // Extract sources from response

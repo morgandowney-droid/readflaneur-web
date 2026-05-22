@@ -3,6 +3,32 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-05-22
+
+**`sync-news` swapped from Claude Sonnet to Gemini Flash:**
+
+- Diagnosis: daily Anthropic auto-recharge invoices of $10/day were landing at `morgandowney@gmail.com` ("Morgan's Individual Org"), but `ai_usage_events` reported zero Claude spend. Two problems compounded: (1) all 10 `anthropic.messages.create` call sites were uninstrumented so Claude cost was invisible; (2) the `sync-news` cron was the dominant driver - it ran every 6h and used Claude Sonnet to filter+rewrite EVERY new RSS item across ~200 feeds (a classification/rewrite task where Sonnet adds nothing over Flash).
+- `src/app/api/cron/sync-news/route.ts` now uses `@google/genai` -> `gemini-2.5-flash` with `thinkingConfig: { thinkingBudget: 0 }` and `responseMimeType: 'application/json'`. Added 2s/5s/15s exponential retry on `RESOURCE_EXHAUSTED` (same pattern as `brief-enricher-gemini.ts`). Env-var gate flipped `ANTHROPIC_API_KEY` -> `GEMINI_API_KEY`. `articles.ai_model`/`enrichment_model` now stamp `'gemini-2.5-flash'`.
+- Expected: Anthropic auto-recharge drops from ~$10/day to ~$2-3/day (~$300/mo -> ~$60/mo). Output quality should be equivalent or better - Flash with no thinking budget handles JSON classification tasks well.
+
+**Anthropic instrumentation gap closed:**
+
+- New `recordClaudeCall(response, opts)` helper in `src/lib/ai-cost.ts` mirrors the `recordGeminiCall`/`recordGrokCall` pattern. Reads `usage.input_tokens` / `output_tokens` / `cache_*` directly off the Anthropic `Message` shape so call sites stay one line.
+- Wired into all 10 remaining call sites: `brief-sources.ts` (`find_story_sources`, kind `search`), `brief-enricher.ts` (`enrich_brief`, kind `search`), `review-writing-quality` (`review_writing_quality`), `process-property-watch` x3 (`property_watch_sighting`/`storefront`/`project`), `generate-digests` (`property_watch_digest`), `generate-guide-digests` (`guide_digest`), `sync-tonight` (`sync_tonight_curate`), `sync-spotted` (`sync_spotted_rewrite`).
+- Provider enum value is `'claude'` not `'anthropic'`. To audit Claude cost split after this lands:
+  ```sql
+  SELECT operation, COUNT(*), ROUND(SUM(estimated_cost_usd)::numeric, 2) AS cost
+  FROM ai_usage_events WHERE provider = 'claude' AND created_at >= NOW() - INTERVAL '24 hours'
+  GROUP BY operation ORDER BY cost DESC NULLS LAST;
+  ```
+
+**Grok per-call surcharge recalibrated $0.05 -> $0.03:**
+
+- xAI console actuals for `flaneur-xai` showed post-web_search-removal spend running ~$9/day across ~300 calls/day = ~$0.03/call. The previous $0.05/call surcharge (calibrated when calls passed both `web_search` and `x_search`) was overstating internal cost by ~80%. `GROK_SEARCH_SURCHARGE_USD` in `ai-cost.ts:41` now $0.03 with a comment explaining the math.
+- Side findings while validating from the xAI console: the May 14-16 console "spikes" ($35/$23/$34 days) were NOT a spike - same call volume as today at the higher pre-removal per-call cost. The Default key (`xai-...fTxr`) dropped to $0 on May 14 and stayed there, confirming the key rotation moved Flaneur cleanly off Default - Default was yous-news's pre-rotation key, not a Flaneur leak.
+
+**Net effect:** AI run-rate falls from the prior ~$910/mo estimate to ~$675/mo after deploy (Gemini $300 + Grok $270 + Anthropic $60 + Qwen $42 + residual Claude $3). Down ~71% from the $2,335/mo baseline before the multi-round optimization push began.
+
 ## 2026-05-16
 
 **Grok web_search dropped from brief / Look Ahead / news calls:**

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import { AI_MODELS } from '@/config/ai-models';
+import { recordClaudeCall } from '@/lib/ai-cost';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 
 /**
@@ -204,6 +205,13 @@ export async function GET(request: Request) {
             formattedClosed
           ),
         }],
+      });
+
+      recordClaudeCall(message, {
+        operation: 'guide_digest',
+        kind: 'generation',
+        model: AI_MODELS.CLAUDE_SONNET,
+        label: neighborhood.id,
       });
 
       const responseText = message.content[0].type === 'text' ? message.content[0].text : '';

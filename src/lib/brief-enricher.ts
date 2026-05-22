@@ -12,6 +12,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { AI_MODELS } from '@/config/ai-models';
+import { recordClaudeCall } from '@/lib/ai-cost';
 
 export interface EnrichedStoryItem {
   entity: string;           // "PopUp Bagels (Opens Feb 6)"
@@ -131,6 +132,13 @@ Set "source": null if no source found. Now search and output JSON:`,
         max_uses: 8,
       },
     ],
+  });
+
+  recordClaudeCall(response, {
+    operation: 'enrich_brief',
+    kind: 'search',
+    model: AI_MODELS.CLAUDE_SONNET,
+    label: neighborhoodName,
   });
 
   // Extract JSON from response - collect all text blocks first

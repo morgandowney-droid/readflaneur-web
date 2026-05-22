@@ -8,6 +8,7 @@ import {
   RawSocialPost,
 } from '@/lib/social-sources';
 import { AI_MODELS } from '@/config/ai-models';
+import { recordClaudeCall } from '@/lib/ai-cost';
 
 /**
  * Spotted Items Sync Cron Job
@@ -158,6 +159,13 @@ export async function GET(request: Request) {
             max_tokens: 300,
             system: SPOTTED_SYSTEM_PROMPT,
             messages: [{ role: 'user', content: REWRITE_SPOTTED_PROMPT(post, neighborhoodName) }],
+          });
+
+          recordClaudeCall(message, {
+            operation: 'sync_spotted_rewrite',
+            kind: 'generation',
+            model: AI_MODELS.CLAUDE_SONNET,
+            label: neighborhoodName,
           });
 
           const responseText = message.content[0].type === 'text' ? message.content[0].text : '';

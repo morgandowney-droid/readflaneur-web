@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import { fetchAllEvents, getActiveNeighborhoods, RawEvent } from '@/lib/event-sources';
 import { AI_MODELS } from '@/config/ai-models';
+import { recordClaudeCall } from '@/lib/ai-cost';
 
 /**
  * Tonight Picks Sync Cron Job
@@ -145,6 +146,13 @@ export async function GET(request: Request) {
             max_tokens: 300,
             system: TONIGHT_SYSTEM_PROMPT,
             messages: [{ role: 'user', content: CURATE_EVENT_PROMPT(event, neighborhoodName) }],
+          });
+
+          recordClaudeCall(message, {
+            operation: 'sync_tonight_curate',
+            kind: 'generation',
+            model: AI_MODELS.CLAUDE_SONNET,
+            label: neighborhoodName,
           });
 
           const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
