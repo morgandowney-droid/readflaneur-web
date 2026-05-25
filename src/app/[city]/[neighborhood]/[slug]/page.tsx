@@ -13,7 +13,7 @@ import { AIImageDisclaimer, AIImageBadge } from '@/components/article/AIImageDis
 import { ImageFeedback } from '@/components/article/ImageFeedback';
 import { SourceAttribution } from '@/components/article/SourceAttribution';
 import { Ad } from '@/types';
-import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
+import { buildNeighborhoodId, getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { getComboForComponent } from '@/lib/combo-utils';
 import { getFallback } from '@/lib/FallbackService';
 import type { FallbackData } from '@/components/feed/FallbackAd';
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: ArticlePageProps) {
 
   let query = supabase
     .from('articles')
-    .select('headline, body_text, image_url, preview_text, neighborhood:neighborhoods(name, city)');
+    .select('id, slug, headline, body_text, image_url, preview_text, neighborhood_id, neighborhood:neighborhoods(name, city, region)');
 
   if (isUUID) {
     query = query.or(`slug.eq.${slug},id.eq.${slug}`);
@@ -55,19 +55,33 @@ export async function generateMetadata({ params }: ArticlePageProps) {
     return { title: 'Article | Flaneur' };
   }
 
-  const neighborhoodName = (article.neighborhood as { name?: string; city?: string } | null)?.name || '';
-  const cityName = (article.neighborhood as { name?: string; city?: string } | null)?.city || '';
+  const neighborhoodMeta = article.neighborhood as { name?: string; city?: string; region?: string } | null;
+  const neighborhoodName = neighborhoodMeta?.name || '';
+  const cityName = neighborhoodMeta?.city || '';
   const description = article.preview_text || article.body_text?.substring(0, 160) || '';
   const title = article.headline;
-  const url = `https://readflaneur.com/${city}/${neighborhood}/${slug}`;
+
+  // Canonical URL is built from the article's actual neighborhood_id so that
+  // every URL variant (vacation-prefix collisions, enclave aliases, UUID vs
+  // slug forms) collapses to the same canonical for Google.
+  const canonicalCity = article.neighborhood_id ? getCitySlugFromId(article.neighborhood_id) : city;
+  const canonicalHood = article.neighborhood_id ? getNeighborhoodSlugFromId(article.neighborhood_id) : neighborhood;
+  const canonicalSlug = article.slug || article.id;
+  const canonicalUrl = `https://readflaneur.com/${canonicalCity}/${canonicalHood}/${canonicalSlug}`;
+
+  // region='test' = admin-only Irish syndication content. Block indexing so
+  // these never appear in search even if a URL leaks.
+  const isSyndicationOnly = neighborhoodMeta?.region === 'test';
 
   return {
     title: `${title} | Flaneur`,
     description,
+    alternates: { canonical: canonicalUrl },
+    ...(isSyndicationOnly ? { robots: { index: false, follow: false } } : {}),
     openGraph: {
       title,
       description,
-      url,
+      url: canonicalUrl,
       siteName: 'Flaneur',
       type: 'article',
       ...(article.image_url ? { images: [{ url: article.image_url, width: 1200, height: 630, alt: article.headline }] } : {}),

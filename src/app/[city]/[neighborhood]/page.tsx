@@ -7,7 +7,7 @@ import { NeighborhoodDiscovery } from '@/components/feed/NeighborhoodDiscovery';
 import { LoadMoreButton } from '@/components/feed/LoadMoreButton';
 import { injectAds } from '@/lib/ad-engine';
 import { Article, Ad } from '@/types';
-import { buildNeighborhoodId } from '@/lib/neighborhood-utils';
+import { buildNeighborhoodId, getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { toHeadlineCase } from '@/lib/utils';
 import { getNeighborhoodIdsForQuery, getComboInfo, getComboForComponent } from '@/lib/combo-utils';
 import { fetchCurrentWeather } from '@/lib/weather';
@@ -65,15 +65,26 @@ export async function generateMetadata({ params }: NeighborhoodPageProps) {
 
   const title = `${data.name}, ${data.city} - Local News and Events`;
   const description = `Daily local stories, events, and insider news from ${data.name} in ${data.city}. Delivered fresh every morning.`;
-  const url = `https://readflaneur.com/${city}/${neighborhood}`;
+
+  // Canonical URL is built from the actual neighborhood_id so vacation-prefix
+  // collisions (us-* mapping to multiple city slugs) and enclave aliases
+  // (nyc-rye reachable via /new-york/ and /new-york-enclaves/) all declare the
+  // same canonical.
+  const canonicalCity = data.id ? getCitySlugFromId(data.id) : city;
+  const canonicalHood = data.id ? getNeighborhoodSlugFromId(data.id) : neighborhood;
+  const canonicalUrl = `https://readflaneur.com/${canonicalCity}/${canonicalHood}`;
+
+  const isSyndicationOnly = data.region === 'test';
 
   return {
     title: `${data.name}, ${data.city} | Flaneur`,
     description,
+    alternates: { canonical: canonicalUrl },
+    ...(isSyndicationOnly ? { robots: { index: false, follow: false } } : {}),
     openGraph: {
       title,
       description,
-      url,
+      url: canonicalUrl,
       siteName: 'Flaneur',
       type: 'website',
       ...(imageUrl ? { images: [{ url: imageUrl, width: 1200, height: 630, alt: `${data.name}, ${data.city}` }] } : {}),

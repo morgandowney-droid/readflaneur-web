@@ -3,6 +3,20 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-05-25
+
+**SEO fixes - Google Search Console "Duplicate without canonical" + "Not found (404)":**
+
+- Diagnosis: ten days after the sitemap shipped (2026-05-15), Google Search Console emailed twice flagging both indexing issues. Three independent root causes.
+- **Sitemap leaking syndication URLs:** `src/app/sitemap.ts` filtered the neighborhood-page query for `region != 'test'` but the article query had no equivalent filter, so 200 of the 1000 article URLs (20% of the cap) pointed to `region='test'` Irish-county syndication content that's admin-only. Built a `Set` of public neighborhood IDs from the already-fetched neighborhood list and post-filtered articles against it. Removes the polluting URLs and frees those ~200 slots for real public content.
+- **No canonical tags anywhere:** `grep "canonical|alternates"` against `src/app` returned zero hits before this commit. The article fetch in `[slug]/page.tsx` is `.eq('slug', slug)` only (no neighborhood_id check), and `getCitySlugFromId` collisions in `neighborhood-utils.ts` mean every article has multiple working URLs:
+  - Vacation prefix collisions: `us-nantucket` resolves under `/the-hamptons/`, `/nantucket/`, and `/marthas-vineyard/` because the prefix `us` maps to whichever city slug got iterated first in `PREFIX_TO_CITY_SLUG`
+  - Enclave aliases: `nyc-rye` works under `/new-york/rye/` and `/new-york-enclaves/rye/`
+  - Query-string variants: `?explore=true`, `?welcome=true`, `?created=true` are all dupes of the canonical
+- Both `[slug]/page.tsx` and `[neighborhood]/page.tsx` `generateMetadata` now compute `canonicalUrl` from the article's actual `neighborhood_id` (not URL params) via `getCitySlugFromId`/`getNeighborhoodSlugFromId`, prefer `article.slug` over the URL slug (which can be a UUID for old links), and set `alternates: { canonical: canonicalUrl }`. `openGraph.url` is repointed at the same canonical. Every URL variant of an article now declares one consistent canonical, collapsing the duplicate cluster for Google.
+- **Defense-in-depth `noindex` for `region='test'`:** if any syndication URL escapes the sitemap filter and gets crawled anyway, both pages return `robots: { index: false, follow: false }` when `neighborhoods.region === 'test'`. The article-page metadata `select` was extended to include `id, slug, neighborhood_id, region`; the neighborhood-page already selected `*`.
+- Watch Google Search Console "Page indexing" report over the next 1-2 weeks - the duplicate count should fall to zero and the 404 count should drop by ~200 as Google re-crawls.
+
 ## 2026-05-22
 
 **`sync-news` swapped from Claude Sonnet to Gemini Flash:**
