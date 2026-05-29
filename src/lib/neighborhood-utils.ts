@@ -69,12 +69,33 @@ for (const [slug, prefix] of Object.entries(CITY_PREFIX_MAP)) {
 }
 
 /**
- * Get URL city slug from a neighborhood ID
- * @param neighborhoodId - e.g. 'nyc-west-village'
- * @returns City slug e.g. 'new-york'
+ * Get URL city slug from a neighborhood ID. Used by sitemap.ts and the
+ * canonical URLs in page metadata, so the output here directly drives what
+ * Google indexes.
+ *
+ * For shared prefixes (vacation/enclaves where N city slugs map to one
+ * prefix), prefer the city slug that matches the neighborhood-slug part
+ * itself. Example: `us-nantucket` returns `'nantucket'`, not `'the-hamptons'`
+ * - the latter is what `PREFIX_TO_CITY_SLUG['us']` resolves to (iteration
+ * order picks 'the-hamptons' first) and produced "Duplicate, Google chose
+ * different canonical than user" warnings in Search Console.
+ *
+ * Fall back to the first city slug iterated for the prefix when no specific
+ * match exists (e.g., `us-hamptons-core` → `'the-hamptons'` because
+ * 'hamptons-core' is not itself a registered city slug).
+ *
+ * @param neighborhoodId - e.g. 'nyc-west-village', 'us-nantucket'
+ * @returns City slug e.g. 'new-york', 'nantucket'
  */
 export function getCitySlugFromId(neighborhoodId: string): string {
-  const prefix = neighborhoodId.split('-')[0];
+  const parts = neighborhoodId.split('-');
+  const prefix = parts[0];
+  const neighborhoodSlug = parts.slice(1).join('-');
+
+  if (CITY_PREFIX_MAP[neighborhoodSlug] === prefix) {
+    return neighborhoodSlug;
+  }
+
   return PREFIX_TO_CITY_SLUG[prefix] || prefix;
 }
 

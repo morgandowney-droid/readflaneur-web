@@ -3,6 +3,22 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-05-29
+
+**SEO follow-up - "Duplicate, Google chose different canonical than user":**
+
+- Diagnosis: four days after shipping canonical URLs (2026-05-25), Google Search Console emailed flagging that it was overriding the canonicals on ~5+ vacation neighborhoods. Root cause: the canonical was built via `getCitySlugFromId` which uses `PREFIX_TO_CITY_SLUG[prefix]` - that map picks the FIRST city slug iterated for each prefix. For shared prefixes that's wrong:
+  - `us-*` resolves to `the-hamptons` (first iterated), so `us-nantucket` declared canonical `/the-hamptons/nantucket/X` when Google would expect `/nantucket/nantucket/X`
+  - `europe-*` resolves to `saint-tropez`, so `europe-marbella` declared `/saint-tropez/marbella/X` instead of `/marbella/marbella/X`
+- Fix: when the neighborhood-slug part is itself a registered key in `CITY_PREFIX_MAP` AND its value matches the prefix, return that slug. Trace:
+  - `us-nantucket` → check `CITY_PREFIX_MAP['nantucket']` === `'us'` → return `'nantucket'` ✓
+  - `us-marthas-vineyard` → `CITY_PREFIX_MAP['marthas-vineyard']` === `'us'` → return `'marthas-vineyard'` ✓
+  - `us-aspen` → `CITY_PREFIX_MAP['aspen']` === `'us'` → return `'aspen'` ✓
+  - `us-hamptons-core` → `'hamptons-core'` not in map → fall back to `'the-hamptons'` ✓ (unchanged)
+  - `nyc-tribeca` → `'tribeca'` not in map → fall back to `'new-york'` ✓ (unchanged)
+- Single 5-line change to `getCitySlugFromId` in `src/lib/neighborhood-utils.ts`. Sitemap entries and canonical tags both update simultaneously since both use this helper. Old URLs keep working because `buildNeighborhoodId` round-trips both forms.
+- Also covers the "Excluded by 'noindex' tag" Search Console alert that arrived in the same batch - that one is expected behavior (the May 25 fix added noindex to ~233 region='test' Irish syndication URLs), no action needed.
+
 ## 2026-05-25
 
 **SEO fixes - Google Search Console "Duplicate without canonical" + "Not found (404)":**
