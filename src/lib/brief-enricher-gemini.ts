@@ -174,6 +174,83 @@ function extractFallbackLinkCandidates(text: string): LinkCandidate[] {
   return candidates;
 }
 
+/**
+ * Strip a leaked reasoning/planning preamble from Gemini output.
+ *
+ * Gemini 2.5 Pro (thinking enabled) occasionally emits its planning prose
+ * ("Okay, I have a good set of verified information now. Reviewing the plan...
+ *  Structuring the Newsletter... Generating Teasers... I'm ready to write.")
+ * directly into response.text, ahead of the actual newsletter. The real
+ * content always begins at a STANDALONE [[Section Header]] line - the planning
+ * section only ever references headers inline (e.g. "Header 1: [[...]] - desc").
+ *
+ * Only runs when a leak is confidently detected (text opens with a reasoning
+ * marker, or >=2 distinct markers are present) so clean briefs are never
+ * touched. Returns the input unchanged if no leak is detected or no boundary
+ * can be located.
+ */
+function stripThinkingPreamble(
+  text: string,
+  articleType: 'daily_brief' | 'weekly_recap' | 'look_ahead'
+): string {
+  if (!text) return text;
+
+  const markers = [
+    /reviewing the plan/i,
+    /structuring the (?:newsletter|brief|article|edition|update)/i,
+    /generating teasers?/i,
+    /final polish/i,
+    /final check of the rules/i,
+    /the plan is solid/i,
+    /i'?m ready to write/i,
+    /i am ready to write/i,
+    /here'?s (?:my|the) plan/i,
+    /here is (?:my|the) plan/i,
+  ];
+
+  // Find the last position any marker matches, and count distinct markers.
+  let lastMarkerEnd = -1;
+  let distinctMarkers = 0;
+  for (const re of markers) {
+    const m = text.match(re);
+    if (m && m.index !== undefined) {
+      distinctMarkers++;
+      lastMarkerEnd = Math.max(lastMarkerEnd, m.index + m[0].length);
+    }
+  }
+
+  // Gate: only act on a confident leak to avoid mangling legitimate prose.
+  const opensWithReasoning =
+    /^\s*okay,?\s+i\s+(?:have|now|think|'?ll|will)\b/i.test(text) ||
+    /^\s*(?:reviewing the plan|here'?s (?:my|the) plan|let me\b)/i.test(text);
+  const confident = opensWithReasoning || distinctMarkers >= 2;
+  if (lastMarkerEnd === -1 || !confident) return text;
+
+  // The real newsletter starts at the first STANDALONE [[header]] line after
+  // the last reasoning marker (whole trimmed line is just [[...]]).
+  const rest = text.slice(lastMarkerEnd);
+  const headerLine = /^[ \t]*\[\[[^\]\n]+\]\][ \t]*$/m;
+  const hm = rest.match(headerLine);
+  if (!hm || hm.index === undefined) return text; // boundary not found - leave as-is
+
+  const contentStart = lastMarkerEnd + hm.index;
+
+  // For daily briefs, preserve the local-language greeting that precedes the
+  // first header (the model restates it right before the real content begins).
+  if (articleType === 'daily_brief') {
+    const gap = text.slice(lastMarkerEnd, contentStart);
+    const greetingRe = /(?:^|[.!?\n])\s*((?:good\s+morning|morning|god\s+morgon|bonjour|buongiorno|guten\s+morgen|buenos\s+d[ií]as|bom\s+dia|goedemorgen|maidin\s+mhaith|dia\s+(?:duit|dhaoibh)|hej|hola|ol[áa]|ciao|salut|moin)\b[^\n]*?[.!?])/gi;
+    let gm: RegExpExecArray | null;
+    let lastGreeting: string | null = null;
+    while ((gm = greetingRe.exec(gap)) !== null) lastGreeting = gm[1].trim();
+    if (lastGreeting) {
+      return (lastGreeting + '\n\n' + text.slice(contentStart)).trim();
+    }
+  }
+
+  return text.slice(contentStart).trim();
+}
+
 // Blocked domains per neighborhood
 const BLOCKED_DOMAINS: Record<string, string[]> = {
   'tribeca': ['tribecacitizen.com'],
@@ -431,6 +508,7 @@ IMPORTANT RULES:
    - Any backstory or context
 
 FORMATTING RULES:
+- CRITICAL: Output ONLY the finished newsletter. Do NOT include any planning, reasoning, process notes, or meta-commentary before, after, or anywhere in your response. Never write things like "Reviewing the plan", "Structuring the Newsletter", "Generating Teasers", "Final Polish", "I'm ready to write", source-number tallies (e.g. "Sources (16, 23) confirm"), or any narration of your thought process. Begin immediately with the actual content.
 ${articleType === 'look_ahead' || articleType === 'weekly_recap' ? '- CRITICAL: Do NOT include any greeting or intro line. Jump DIRECTLY into the first section header or event.' : `- CRITICAL: Your very first line MUST be a morning greeting to the neighborhood in the LOCAL LANGUAGE (e.g., "God morgon, grannar." for Stockholm, "Bonjour, ${neighborhoodName}." for Paris, "Good morning, ${neighborhoodName}." for English-speaking cities). This greeting is non-negotiable - every Daily Brief opens with it. Do NOT skip it, do NOT jump straight into section headers.`}
 - DATE REFERENCES: When using relative time words (yesterday, today, tomorrow, Thursday, last week, this morning, etc.), ALWAYS include the explicit calendar date - e.g., "yesterday (February 19)", "this Thursday, February 20", "last week (February 10-14)". Readers may see this days later, so relative references alone are confusing.
 - Organize your update into sections with creative, punchy section headers
@@ -575,6 +653,15 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
       .replace(/\u2013/g, '-')             // – (en dash) -> hyphen
       .replace(/\n{3,}/g, '\n\n')          // Collapse multiple newlines
       .trim();
+
+    // Strip leaked reasoning/planning preamble (Gemini Pro occasionally emits
+    // its thinking - "Reviewing the plan... I'm ready to write." - into the
+    // output ahead of the real newsletter). No-op for clean responses.
+    const beforeStrip = text;
+    text = stripThinkingPreamble(text, articleType);
+    if (text !== beforeStrip) {
+      console.warn(`Stripped leaked reasoning preamble for ${neighborhoodName} (${beforeStrip.length} -> ${text.length} chars)`);
+    }
 
     console.log('Gemini response length:', text.length);
 

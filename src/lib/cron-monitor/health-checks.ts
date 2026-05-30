@@ -337,15 +337,38 @@ export async function checkHtmlArtifacts(
   const htmlTagRegex = /<(div|span|p|br|a|h[1-6]|img|ul|ol|li|table|tr|td|strong|em|b|i)\b[^>]*>/i;
   const grokLeakRegex = /\{['"](?:title|url|snippet)['"]:/;
 
+  // Reasoning-preamble leak: Gemini Pro occasionally emits its planning prose
+  // ("Reviewing the plan... I'm ready to write.") into the article body. These
+  // phrases never appear in legitimate published content. Conservative gate to
+  // avoid false positives: opens with reasoning, or >=2 distinct markers.
+  const reasoningMarkers = [
+    /reviewing the plan/i,
+    /structuring the (?:newsletter|brief|article|edition|update)/i,
+    /generating teasers?/i,
+    /final polish/i,
+    /final check of the rules/i,
+    /the plan is solid/i,
+    /i'?m ready to write/i,
+    /here'?s (?:my|the) plan/i,
+  ];
+  const detectReasoningLeak = (body: string): boolean => {
+    const distinct = reasoningMarkers.filter(re => re.test(body)).length;
+    const opensWithReasoning =
+      /^\s*okay,?\s+i\s+(?:have|now|think|'?ll|will)\b/i.test(body) ||
+      /^\s*(?:reviewing the plan|here'?s (?:my|the) plan|let me\b)/i.test(body);
+    return opensWithReasoning || distinct >= 2;
+  };
+
   for (const article of articles) {
     const body = article.body_text || '';
     const hasHtml = htmlTagRegex.test(body);
     const hasGrokLeak = grokLeakRegex.test(body);
+    const hasReasoningLeak = detectReasoningLeak(body);
 
-    if (hasHtml || hasGrokLeak) {
+    if (hasHtml || hasGrokLeak || hasReasoningLeak) {
       result.failing++;
       const headline = (article.headline || '').substring(0, 50);
-      const issue = hasHtml ? 'HTML tags' : 'Grok data leak';
+      const issue = hasHtml ? 'HTML tags' : hasGrokLeak ? 'Grok data leak' : 'reasoning-preamble leak';
 
       if (result.details.length < 10) {
         result.details.push(`${issue} in: "${headline}..."`);
