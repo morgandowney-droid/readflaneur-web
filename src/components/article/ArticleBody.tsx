@@ -119,9 +119,23 @@ export function ArticleBody({ content, neighborhoodName, city, articleType, coun
     }
   }
 
-  // When Look Ahead has a structured event listing, the prose restates the same
-  // events in paragraph form - skip it entirely.
-  const skipProse = articleType === 'look_ahead' && eventListingBlock;
+  // When a Look Ahead has a structured event listing, the prose USUALLY restates
+  // the same events in paragraph form, so we skip it to avoid redundancy. But
+  // that only holds when the structured extraction (EVENTS_JSON) captured the
+  // events comprehensively. When extraction was incomplete - a sparse listing
+  // rendered alongside rich prose the listing never captured - suppressing the
+  // prose leaves a near-empty page that Google flags as a Soft 404 (and hides
+  // the best content from readers). Example: nyc-west-village 2026-05-25 had ONE
+  // degenerate listing line (Manhattanhenge, which isn't even a renderable
+  // event - see isEventLine) but five detailed prose sections (Love Thy
+  // Neighbor, The Joyce, Carnegie Hall...), so the page rendered as a single
+  // line. Count the events the EventListingBlock will actually render (isEventLine
+  // = 2+ semicolons) and only skip the prose when the block can stand on its own.
+  const listingEventCount = eventListingBlock
+    ? eventListingBlock.split('\n').filter(l => (l.match(/;/g) || []).length >= 2).length
+    : 0;
+  const skipProse =
+    articleType === 'look_ahead' && !!eventListingBlock && listingEventCount >= 3;
 
   const pClass = 'text-fg text-[1.1rem] md:text-[1.2rem] leading-relaxed mb-6';
 
