@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode, useState, useMemo } from 'react';
-import { isEventLine, isPlaceholder } from '@/lib/look-ahead-events';
+import { isPlaceholder } from '@/lib/look-ahead-events';
 
 interface ArticleBodyProps {
   content: string;
@@ -296,7 +296,12 @@ function parseEventListing(content: string, country?: string): { days: string[];
       continue;
     }
 
-    if (!isEventLine(line)) continue;
+    // Render any event line carrying at least one detail beyond the name.
+    // formatEventLine joins "Name; detail[; detail]", so a venue-less event
+    // (e.g. "Manhattanhenge; Seasonal Happening, 20:14") has a SINGLE semicolon.
+    // The old isEventLine (2+ semicolons) silently dropped these, emptying the
+    // listing for events without a venue/address (park happenings, fairs, etc.).
+    if ((line.match(/;/g) || []).length < 1) continue;
 
     // Strip trailing period and "(also on ...)" suffix
     let cleanLine = line.replace(/\.$/, '');
@@ -420,6 +425,12 @@ function EventListingBlock({ content, city, country, t }: { content: string; cit
     }
     return map;
   }, [filteredEvents]);
+
+  // If nothing parsed into renderable events, render nothing rather than an
+  // empty filter widget (which reads as a near-empty page / Soft 404). The
+  // prose body still renders below since skipProse only triggers for a
+  // substantial listing. (After all hooks above - safe for rules-of-hooks.)
+  if (events.length === 0) return null;
 
   const activeFilterCount = (activeDay ? 1 : 0) + activeTimeOfDay.size + activeCategories.size;
   const hasFilters = activeFilterCount > 0;

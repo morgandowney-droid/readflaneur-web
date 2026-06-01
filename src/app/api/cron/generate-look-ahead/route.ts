@@ -485,9 +485,17 @@ export async function GET(request: Request) {
             return null;
           }
 
-          // Prepend structured event listing to enriched prose body
+          // Prepend structured event listing to enriched prose body.
+          // Prefer the enrichment's OWN events (it wrote the prose, so they
+          // match it) over the lossier upstream Grok/Gemini-search extraction,
+          // and merge in any upstream events the enrichment missed.
+          // mergeStructuredEvents dedups by name.
+          const listingEvents = mergeStructuredEvents(
+            enriched.structuredEvents || [],
+            lookAheadBrief.structuredEvents || []
+          );
           const eventListing = formatEventListing(
-            lookAheadBrief.structuredEvents || [],
+            listingEvents,
             localDate,
             city
           );

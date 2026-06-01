@@ -13,6 +13,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { recordGeminiCall } from '@/lib/ai-cost';
+import type { StructuredEvent } from '@/lib/look-ahead-events';
 
 export interface EnrichedStoryItem {
   entity: string;
@@ -45,6 +46,10 @@ export interface EnrichedBriefOutput {
   linkCandidates?: LinkCandidate[];
   subjectTeaser?: string | null;
   emailTeaser?: string | null;
+  /** Structured events parsed from the enrichment JSON (Look Ahead only). The
+   *  enrichment model writes the prose, so these match it - unlike the lossier
+   *  upstream Grok/Gemini-search extraction. */
+  structuredEvents?: StructuredEvent[];
 }
 
 export interface ContinuityItem {
@@ -490,6 +495,28 @@ EVENT ORDER: Within each day section, lead with the most noteworthy event first 
 
   console.log(`Enriching brief for ${neighborhoodName} using Gemini...`);
 
+  // Look Ahead only: have the model that writes the prose ALSO enumerate every
+  // event as structured data, so the at-a-glance listing matches the prose
+  // exactly. Upstream Grok EVENTS_JSON / Gemini-search extraction is lossy
+  // (e.g. nyc-west-village 2026-05-25: prose had 5 events, structured array 1).
+  const eventsJsonExample = articleType === 'look_ahead'
+    ? `,
+  "events": [
+    {"date": "2026-05-28", "day_label": "Thursday", "name": "Manhattanhenge", "time": "20:14", "category": "Seasonal Happening", "location": null, "address": null, "price": "Free"},
+    {"date": "2026-05-29", "day_label": "Friday", "name": "Doug Varone and Dancers", "time": "19:30", "category": "Dance", "location": "The Joyce Theater", "address": "175 Eighth Ave", "price": "$45"}
+  ]`
+    : '';
+  const eventsRules = articleType === 'look_ahead'
+    ? `
+
+EVENTS ARRAY (MANDATORY for Look Ahead - you MUST include this):
+- Add an "events" object for EVERY distinct event you describe in the prose. Do NOT omit any - the count of events must match the events in your prose.
+- "date" (YYYY-MM-DD, required): convert relative references ("Thursday", "tomorrow", "this weekend") to the actual calendar date using the CURRENT TIME context above.
+- "day_label" (weekday name, required), "name" (required).
+- "time" ("20:14", "18:00-20:00", or null), "category" ("Concert", "Exhibition Opening", "Restaurant Opening", etc., or null), "location" (venue name or null), "address" (street address or null), "price" ("Free", "$45", or null).
+- Include events even when the venue/address is unknown (set them null) - e.g. a citywide seasonal happening still gets an entry.`
+    : '';
+
   const prompt = `Here are some tips about what might be happening in ${neighborhoodName}, ${city}. Research each one and write a neighborhood update for our readers.
 
 ${briefContent}
@@ -565,9 +592,10 @@ After your prose, include this JSON with ONLY the verified stories:
     {"text": "Exact phrase from your prose"}
   ],
   "subject_teaser": "rent freeze showdown",
-  "email_teaser": "Shin Takumi finally opens on Spring St. DEJAVU pop-up extended again. Golden Steer reservations live."
+  "email_teaser": "Shin Takumi finally opens on Spring St. DEJAVU pop-up extended again. Golden Steer reservations live."${eventsJsonExample}
 }
 \`\`\`
+${eventsRules}
 
 LINK CANDIDATES RULES (MANDATORY - you MUST include these):
 - Include 3-6 key entities worth hyperlinking from your prose
@@ -670,6 +698,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     let linkCandidates: LinkCandidate[] = [];
     let subjectTeaser: string | null = null;
     let emailTeaser: string | null = null;
+    let structuredEvents: StructuredEvent[] = [];
 
     const jsonMatch = rawText.match(/```json\s*([\s\S]*?)```/);
     if (jsonMatch) {
@@ -707,6 +736,26 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
             console.warn(`Email teaser rejected (${et.length} chars, hasEnding=${hasEnding}, isGreeting=${isGreeting}): "${et}"`);
           }
         }
+        // Extract structured events (Look Ahead). Requires date (YYYY-MM-DD) + name.
+        if (articleType === 'look_ahead' && Array.isArray(parsed.events)) {
+          const str = (v: unknown): string | null =>
+            typeof v === 'string' && v.trim() ? v.trim() : null;
+          structuredEvents = parsed.events
+            .filter((e: Record<string, unknown>) =>
+              e && typeof e.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(e.date) &&
+              typeof e.name === 'string' && e.name.trim().length > 0)
+            .map((e: Record<string, unknown>) => ({
+              date: (e.date as string).trim(),
+              day_label: str(e.day_label) || '',
+              name: (e.name as string).trim(),
+              time: str(e.time),
+              category: str(e.category),
+              location: str(e.location),
+              address: str(e.address),
+              price: str(e.price),
+            }));
+          console.log(`Parsed ${structuredEvents.length} structured events from enrichment`);
+        }
       } catch (e) {
         console.error('Failed to parse Gemini JSON:', e);
       }
@@ -739,6 +788,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
         linkCandidates,
         subjectTeaser,
         emailTeaser,
+        structuredEvents,
       };
     }
 
@@ -775,6 +825,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
       linkCandidates,
       subjectTeaser,
       emailTeaser,
+      structuredEvents,
     };
 
   } catch (error) {
