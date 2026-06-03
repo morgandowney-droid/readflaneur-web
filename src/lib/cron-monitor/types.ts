@@ -18,7 +18,8 @@ export type IssueType =
   | 'missing_hyperlinks'
   | 'html_artifact'
   | 'missing_sources'
-  | 'url_encoded_text';
+  | 'url_encoded_text'
+  | 'translation_fallback';
 
 export type EmailFailureCause =
   | 'missing_timezone'

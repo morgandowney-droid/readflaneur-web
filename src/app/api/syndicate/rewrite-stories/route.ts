@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { AI_MODELS } from '@/config/ai-models';
 import { insiderPersona } from '@/lib/ai-persona';
+import { recordGeminiCall } from '@/lib/ai-cost';
 
 const RETRY_DELAYS = [2000, 5000, 15000];
 
@@ -191,6 +192,7 @@ Return ONLY a JSON object (no markdown, no code fences):
           thinkingConfig: { thinkingBudget: 0 },
         },
       });
+      recordGeminiCall(response, { operation: 'syndicate_rewrite_story', kind: 'generation', model: AI_MODELS.GEMINI_FLASH, label: 'yous.news' });
 
       const text = response.text?.trim();
       if (!text) continue;

@@ -783,7 +783,78 @@ export async function checkUrlEncodedText(
 }
 
 /**
- * Run all 9 health checks and return results
+ * Check 10: Translation provider fallback.
+ *
+ * Translation should run on Qwen (OpenRouter, ~6x cheaper). It silently falls
+ * back to Gemini Flash whenever a Qwen call fails - the most common cause being
+ * an exhausted OpenRouter credit balance. That fallback is invisible by design
+ * (translation never goes dark), which once let a dry balance quietly bill ~$300/mo
+ * of Gemini for two weeks. This surfaces it: if a meaningful share of the last
+ * 24h of translation ran on Gemini instead of Qwen, flag it so someone tops up
+ * (or fixes) OpenRouter.
+ */
+export async function checkTranslationFallback(
+  supabase: SupabaseClient
+): Promise<HealthCheckResult> {
+  const result: HealthCheckResult = {
+    name: 'Translation Provider',
+    status: 'pass',
+    total: 0,
+    passing: 0,
+    failing: 0,
+    details: [],
+    issues: [],
+  };
+
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from('ai_usage_events')
+    .select('provider')
+    .in('operation', ['translate_article', 'translate_brief'])
+    .gte('created_at', since);
+
+  if (error) {
+    result.status = 'warn';
+    result.details.push(`Could not read ai_usage_events: ${error.message}`);
+    return result;
+  }
+
+  const rows = data || [];
+  const gemini = rows.filter(r => r.provider === 'gemini').length;
+  const qwen = rows.filter(r => r.provider === 'qwen').length;
+  const total = gemini + qwen;
+  result.total = total;
+
+  // Need a meaningful sample before drawing a conclusion (lazy translation can
+  // make some 24h windows very quiet).
+  if (total < 20) {
+    result.passing = total;
+    result.details.push(`Only ${total} translation calls in 24h - too few to assess (qwen ${qwen}, gemini ${gemini}).`);
+    return result;
+  }
+
+  const geminiFrac = gemini / total;
+  if (geminiFrac > 0.5) {
+    result.failing = gemini;
+    result.passing = qwen;
+    result.status = 'fail';
+    result.details.push(`${(geminiFrac * 100).toFixed(0)}% of translation fell back to Gemini (qwen ${qwen}, gemini ${gemini}). Likely OpenRouter credit exhausted.`);
+    result.issues.push({
+      issue_type: 'translation_fallback',
+      job_name: 'translate-on-demand',
+      description: `Translation is running ${(geminiFrac * 100).toFixed(0)}% on Gemini instead of Qwen (${qwen}/${total} on Qwen, last 24h). Check OpenRouter credit balance/key.`,
+      auto_fixable: false,
+    });
+  } else {
+    result.passing = qwen;
+    result.details.push(`Qwen healthy: ${qwen}/${total} (${(100 - geminiFrac * 100).toFixed(0)}%) of translation on Qwen.`);
+  }
+
+  return result;
+}
+
+/**
+ * Run all health checks and return results
  */
 export async function runAllHealthChecks(
   supabase: SupabaseClient
@@ -800,6 +871,7 @@ export async function runAllHealthChecks(
     checkStoryImages,
     checkEditorialSources,
     checkUrlEncodedText,
+    checkTranslationFallback,
   ];
 
   for (const check of checks) {

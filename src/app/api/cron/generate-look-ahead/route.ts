@@ -27,8 +27,14 @@ import { isPriorityNeighborhood } from '@/lib/generation-cadence';
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
-const TIME_BUDGET_MS = 270_000; // 270s budget (leave 30s for logging)
-const CONCURRENCY = 5;
+// Budget leaves ~100s of the 300s maxDuration as headroom so an in-flight batch
+// (a Grok look_ahead can take ~120s) always finishes before Vercel kills the
+// function. Starting a batch too late billed Grok for live searches whose
+// articles were then discarded by the kill (observed May 30). With Look Ahead
+// now scoped to priority neighborhoods only (~45), concurrency 6 over the 4
+// daily runs still covers the full set.
+const TIME_BUDGET_MS = 200_000;
+const CONCURRENCY = 6;
 
 interface ArticleSourceInput {
   source_name: string;

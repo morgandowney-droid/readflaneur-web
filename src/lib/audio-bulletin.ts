@@ -13,6 +13,7 @@
 
 import { GoogleGenAI } from '@google/genai';
 import { AI_MODELS } from '@/config/ai-models';
+import { recordGeminiCall } from '@/lib/ai-cost';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -382,6 +383,7 @@ Example format:
           thinkingConfig: { thinkingBudget: 0 },
         },
       });
+      recordGeminiCall(response, { operation: 'syndicate_audio_bulletin', kind: 'generation', model: AI_MODELS.GEMINI_FLASH, label: 'yous.news' });
 
       const text = response.text?.trim();
       if (!text) continue;

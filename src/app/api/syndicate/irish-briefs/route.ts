@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
 import { AI_MODELS } from '@/config/ai-models';
 import { insiderPersona } from '@/lib/ai-persona';
+import { recordGeminiCall } from '@/lib/ai-cost';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -376,6 +377,7 @@ Return ONLY valid JSON (no markdown fences):
           thinkingConfig: { thinkingBudget: 0 },
         },
       });
+      recordGeminiCall(response, { operation: 'syndicate_ireland_national', kind: 'generation', model: AI_MODELS.GEMINI_FLASH, label: 'ie-ireland' });
 
       const text = response.text?.trim();
       if (!text) continue;
