@@ -6,6 +6,8 @@ import {
 } from '@/lib/weekly-brief-service';
 import { AI_MODELS } from '@/config/ai-models';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
+import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
+import { isPriorityNeighborhood } from '@/lib/generation-cadence';
 
 /**
  * Generate "The Sunday Edition" weekly briefs for all active neighborhoods.
@@ -176,9 +178,18 @@ export async function GET(request: Request) {
 
     const existingSet = new Set((existingBriefs || []).map(b => b.neighborhood_id));
 
+    // Cost control: the Sunday Edition is generated ONLY for priority
+    // neighborhoods - those with a subscriber, plus the Irish syndication
+    // entities. Cold (unsubscribed, non-Irish) neighborhoods, which have no
+    // reader, no longer get a Sunday Edition (Pro-tier "The Letter" + 5 Flash
+    // calls each). Subscriber state is read live.
+    const subscribedIds = await getActiveNeighborhoodIds(supabase);
+
     const toProcess = testNeighborhoodId
       ? neighborhoods
-      : neighborhoods.filter(n => !existingSet.has(n.id));
+      : neighborhoods.filter(n =>
+          !existingSet.has(n.id) &&
+          isPriorityNeighborhood(n.id, subscribedIds.has(n.id)));
 
     console.log(`[SundayEdition] Processing ${toProcess.length} neighborhoods (${existingSet.size} already done)`);
 

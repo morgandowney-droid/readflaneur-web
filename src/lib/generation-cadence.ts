@@ -16,7 +16,7 @@
  * automatically - the gate reads live subscriber state every run.
  */
 
-export const COLD_INTERVAL_DAYS = 4;
+export const COLD_INTERVAL_DAYS = 7;
 
 /** djb2 string hash - deterministic, stable across runs. */
 function djb2(s: string): number {
@@ -35,6 +35,22 @@ function dayNumber(localDate: string): number {
 /** Irish counties + national Ireland (ie-*) are syndicated to yous.news. */
 export function isIrishEntity(neighborhoodId: string): boolean {
   return neighborhoodId.startsWith('ie-');
+}
+
+/**
+ * A "priority" neighborhood has a real audience: it either has a subscriber or
+ * is an Irish syndication entity (feeding yous.news). Priority neighborhoods get
+ * the full treatment - daily generation, Grok+Gemini dual-source search, Pro
+ * enrichment, Look Ahead, and the Sunday Edition. Cold (non-priority)
+ * neighborhoods get a lean Gemini-only Daily Brief every COLD_INTERVAL_DAYS,
+ * Flash-enriched, with no Look Ahead or Sunday Edition. Used across the
+ * generation crons to match AI spend to actual demand.
+ */
+export function isPriorityNeighborhood(
+  neighborhoodId: string,
+  subscribed: boolean,
+): boolean {
+  return subscribed || isIrishEntity(neighborhoodId);
 }
 
 /**

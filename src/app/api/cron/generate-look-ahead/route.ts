@@ -9,7 +9,7 @@ import { formatEventListing } from '@/lib/look-ahead-events';
 import { searchUpcomingEvents, mergeContent, mergeStructuredEvents } from '@/lib/gemini-search';
 import { toHeadlineCase } from '@/lib/utils';
 import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
-import { shouldGenerateToday } from '@/lib/generation-cadence';
+import { isPriorityNeighborhood } from '@/lib/generation-cadence';
 
 /**
  * Generate Look Ahead Articles
@@ -313,15 +313,15 @@ export async function GET(request: Request) {
         .select('component_id');
       const componentIds = new Set((comboComponents || []).map(c => c.component_id));
 
-      // Cost control: subscribed neighborhoods and the 33 Irish syndication
-      // entities generate a Look Ahead daily; cold neighborhoods every 4 days.
+      // Cost control: Look Ahead is now generated ONLY for priority
+      // neighborhoods - those with a subscriber, plus the 33 Irish syndication
+      // entities (feeding yous.news). Cold (unsubscribed, non-Irish)
+      // neighborhoods no longer get a Look Ahead at all; they keep only a lean
+      // Daily Brief. This drops the dominant Grok live-search cost for the
+      // ~96% of neighborhoods with no reader.
       neighborhoods = data
         .filter(n => !componentIds.has(n.id))
-        .filter(n => shouldGenerateToday(
-          n.id,
-          getLocalPublishDate(n.timezone || 'America/New_York').localDate,
-          subscribedIds.has(n.id),
-        ));
+        .filter(n => isPriorityNeighborhood(n.id, subscribedIds.has(n.id)));
     }
 
     if (neighborhoods.length === 0) {

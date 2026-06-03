@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { enrichBriefWithGemini, ContinuityItem } from '@/lib/brief-enricher-gemini';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 import { toHeadlineCase } from '@/lib/utils';
+import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
+import { isPriorityNeighborhood } from '@/lib/generation-cadence';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -399,6 +401,12 @@ export async function GET(request: Request) {
         }, { status: 500 });
       }
 
+      // Cost control: daily-brief enrichment uses Gemini Pro only for priority
+      // neighborhoods (a subscriber, or an Irish syndication entity). Cold
+      // (unsubscribed, non-Irish) neighborhoods - ~96% of the set, with no
+      // reader - enrich on Flash (~15x cheaper). Subscriber state is read live.
+      const subscribedIds = await getActiveNeighborhoodIds(supabase);
+
       // Process briefs in parallel batches (with time budget check)
       const briefQueue = [...(briefs || [])];
 
@@ -431,7 +439,10 @@ export async function GET(request: Request) {
               console.log(`[enrich-briefs] ${hood.name}: ${continuityItems.length} continuity items (${continuityItems.filter(i => i.type === 'brief').length} briefs, ${continuityItems.filter(i => i.type === 'article').length} articles)`);
             }
 
-            console.log(`Enriching brief for ${hood.name} [${MODEL_PRO}]...`);
+            const useModel = isPriorityNeighborhood(brief.neighborhood_id, subscribedIds.has(brief.neighborhood_id))
+              ? MODEL_PRO
+              : MODEL_FLASH;
+            console.log(`Enriching brief for ${hood.name} [${useModel}]...`);
 
             const result = await enrichBriefWithGemini(
               brief.content,
@@ -442,12 +453,13 @@ export async function GET(request: Request) {
               {
                 briefGeneratedAt: brief.generated_at,
                 timezone: hood.timezone,
-                modelOverride: MODEL_PRO,
+                modelOverride: useModel,
                 continuityContext: continuityItems.length > 0 ? continuityItems : undefined,
               }
             );
 
-            results.model_pro_used++;
+            if (useModel === MODEL_PRO) results.model_pro_used++;
+            else results.model_flash_used++;
 
             const { error: updateError } = await supabase
               .from('neighborhood_briefs')

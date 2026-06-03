@@ -7,7 +7,7 @@ import { NYCPermit } from '@/lib/nyc-permits';
 import { LiquorLicense } from '@/lib/nyc-liquor';
 import { searchNeighborhoodFacts, mergeContent } from '@/lib/gemini-search';
 import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
-import { shouldGenerateToday } from '@/lib/generation-cadence';
+import { shouldGenerateToday, isPriorityNeighborhood } from '@/lib/generation-cadence';
 
 /**
  * Neighborhood Briefs Sync Cron Job
@@ -220,7 +220,7 @@ export async function GET(request: Request) {
     }
 
     // Cost control: cold (unsubscribed, non-Irish) neighborhoods generate
-    // once every 4 days; subscribed + Irish neighborhoods stay daily.
+    // once every COLD_INTERVAL_DAYS (7); subscribed + Irish neighborhoods stay daily.
     if (!shouldGenerateToday(n.id, getLocalDate(n.timezone), subscribedIds.has(n.id))) {
       return false;
     }
@@ -359,9 +359,15 @@ export async function GET(request: Request) {
         .slice(0, 10)
         .map(b => b.headline as string);
 
-      // Run Grok + Gemini in parallel (Gemini ~5-10s finishes before Grok ~25-30s)
+      // Cost control: cold (unsubscribed, non-Irish) neighborhoods use a single
+      // search source - Gemini's Google-grounded facts only - skipping Grok's
+      // live X-search (the dominant per-call cost). Priority neighborhoods
+      // (subscribed + Irish) keep the full Grok+Gemini dual-source pipeline.
+      const isPriority = isPriorityNeighborhood(hood.id, subscribedIds.has(hood.id));
       const [grokResult, geminiResult] = await Promise.allSettled([
-        generateNeighborhoodBrief(searchName, hood.city, hood.country, nycDataContext, hood.timezone, recentTopics),
+        isPriority
+          ? generateNeighborhoodBrief(searchName, hood.city, hood.country, nycDataContext, hood.timezone, recentTopics)
+          : Promise.resolve(null),
         searchNeighborhoodFacts(searchName, hood.city, hood.country, hood.timezone, recentTopics),
       ]);
 
