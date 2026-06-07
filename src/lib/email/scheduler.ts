@@ -174,17 +174,22 @@ export async function resolveRecipients(
     }
   }
 
-  // 3. Exclude already-sent today
+  // 3. Exclude anyone who already received a Daily Brief today, keyed by EMAIL
+  // (not recipient_id). Every logged-in user also has a newsletter_subscribers
+  // row auto-created at login, so the same person can appear as a profile id
+  // AND a subscriber id - an id-keyed check would let the two identities each
+  // get a brief. We already dedup the in-memory list by email above; this
+  // closes the cross-run/cross-identity gap against what was actually sent.
   if (recipients.length > 0) {
-    const recipientIds = recipients.map(r => r.id);
     const { data: alreadySent } = await supabase
       .from('daily_brief_sends')
-      .select('recipient_id')
-      .eq('send_date', today)
-      .in('recipient_id', recipientIds);
+      .select('email')
+      .eq('send_date', today);
 
-    const sentIds = new Set(alreadySent?.map(s => s.recipient_id) || []);
-    return recipients.filter(r => !sentIds.has(r.id));
+    const sentEmails = new Set(
+      (alreadySent || []).map(s => (s.email || '').toLowerCase()).filter(Boolean)
+    );
+    return recipients.filter(r => !sentEmails.has(r.email.toLowerCase()));
   }
 
   return recipients;

@@ -414,7 +414,7 @@ export async function GET(request: Request) {
 
       try {
         // Check global daily email limit (5/day across all email types)
-        const limit = await checkDailyEmailLimit(supabase, recipient.id);
+        const limit = await checkDailyEmailLimit(supabase, recipient.email);
         if (!limit.allowed) {
           console.log(`Daily email limit reached for ${recipient.email} (${limit.count} sent today), skipping Sunday Edition`);
           continue;

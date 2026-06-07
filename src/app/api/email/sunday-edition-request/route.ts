@@ -339,7 +339,7 @@ export async function GET(request: Request) {
   };
 
   // Check global daily email limit (5/day across all email types)
-  const dailyLimit = await checkDailyEmailLimit(supabase, recipientId);
+  const dailyLimit = await checkDailyEmailLimit(supabase, recipientEmail);
   if (!dailyLimit.allowed) {
     return new NextResponse(
       renderPage('Limit Reached', 'error', `You've reached the maximum of 5 emails per day. Your Sunday Edition will be available tomorrow.`),

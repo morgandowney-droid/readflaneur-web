@@ -86,7 +86,7 @@ export async function sendDailyBrief(
 ): Promise<boolean> {
   try {
     // Check global daily email limit (5/day across all email types)
-    const limit = await checkDailyEmailLimit(supabase, content.recipient.id);
+    const limit = await checkDailyEmailLimit(supabase, content.recipient.email);
     if (!limit.allowed) {
       console.log(`Daily email limit reached for ${content.recipient.email} (${limit.count} sent today)`);
       return false;
@@ -165,7 +165,7 @@ export async function sendBrandedDailyBrief(
   neighborhoodSlug: string
 ): Promise<boolean> {
   try {
-    const limit = await checkDailyEmailLimit(supabase, content.recipient.id);
+    const limit = await checkDailyEmailLimit(supabase, content.recipient.email);
     if (!limit.allowed) {
       console.log(`Daily email limit reached for ${content.recipient.email} (${limit.count} sent today)`);
       return false;

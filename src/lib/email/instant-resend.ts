@@ -184,7 +184,7 @@ export async function performInstantResend(
     }
 
     // 2b. Check global daily email limit (5/day across all email types)
-    const globalLimit = await checkDailyEmailLimit(supabase, recipient.id);
+    const globalLimit = await checkDailyEmailLimit(supabase, recipient.email);
     if (!globalLimit.allowed) {
       await sendRateLimitNotice(recipient.email);
       return { success: false, reason: 'rate_limited' };
