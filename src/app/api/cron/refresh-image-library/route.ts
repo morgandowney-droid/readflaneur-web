@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateNeighborhoodLibrary } from '@/lib/image-library-generator';
-import { sendEmail } from '@/lib/email';
 
 /**
  * Image Library Refresh — Unsplash Photos
@@ -145,21 +144,8 @@ export async function GET(request: Request) {
       }
     }
 
-    // Email admin on completion
-    if (results.remaining === 0) {
-      try {
-        await sendEmail({
-          to: 'morgan.downey@gmail.com',
-          subject: `Image Library Refresh Complete - ${currentSeason} (Unsplash)`,
-          html: `<p>Season: ${currentSeason}</p>
-<p>Processed: ${results.processed}</p>
-<p>Photos found: ${results.photos_found}</p>
-${results.errors.length > 0 ? `<p>Errors: ${results.errors.slice(0, 10).join(', ')}</p>` : ''}`,
-        });
-      } catch {
-        // Email notification is best-effort
-      }
-    }
+    // Completion email intentionally disabled (per owner request, 2026-06-07).
+    // Results are still recorded in cron_executions below.
 
   } catch (err) {
     results.errors.push(err instanceof Error ? err.message : String(err));

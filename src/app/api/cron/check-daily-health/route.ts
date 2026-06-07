@@ -11,9 +11,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { runAllHealthChecks } from '@/lib/cron-monitor/health-checks';
-import { buildHealthReportEmail, getHealthReportSubject } from '@/lib/cron-monitor/health-report-email';
 import { createIssues } from '@/lib/cron-monitor/issue-detector';
-import { sendEmail } from '@/lib/email';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -70,16 +68,9 @@ export async function GET(request: Request) {
       issuesCreated = await createIssues(supabase, allIssues);
     }
 
-    // Build and send the health report email
-    const completedAt = new Date();
-    const durationMs = completedAt.getTime() - startTime.getTime();
-
-    const adminEmail = process.env.ADMIN_EMAIL;
-    if (adminEmail) {
-      const html = buildHealthReportEmail(results, startTime, durationMs);
-      const subject = getHealthReportSubject(results, startTime);
-      emailSent = await sendEmail({ to: adminEmail, subject, html });
-    }
+    // Health report email intentionally disabled (per owner request, 2026-06-07).
+    // The checks still run and auto-fixable issues are still created above for
+    // monitor-and-fix; status remains visible on the admin dashboard.
 
     // Log to cron_executions
     const completedTime = new Date();
