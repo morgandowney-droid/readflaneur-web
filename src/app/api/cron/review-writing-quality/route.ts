@@ -200,8 +200,26 @@ function buildReportEmail(
  *                 success:
  *                   type: boolean
  */
+// DISABLED (owner request, 2026-06-07): this review made daily Gemini Pro +
+// Claude Sonnet calls (~$8/mo) purely to email recommendations nobody reads.
+// Removed from vercel.json, but this hard guard makes the route inert as soon
+// as it deploys - so it can't run even if the schedule lingers in production
+// until the deployment is promoted, or if triggered manually. Flip to false to
+// re-enable.
+const REVIEW_DISABLED = true;
+
 export async function GET(request: Request) {
   const startTime = new Date();
+
+  if (REVIEW_DISABLED) {
+    return NextResponse.json({
+      success: true,
+      disabled: true,
+      message: 'review-writing-quality is disabled (no AI calls, no email).',
+      timestamp: startTime.toISOString(),
+    });
+  }
+
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get('authorization');
 
