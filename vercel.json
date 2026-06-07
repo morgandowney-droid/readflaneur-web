@@ -205,10 +205,6 @@
       "schedule": "0 4 * * *"
     },
     {
-      "path": "/api/cron/review-writing-quality",
-      "schedule": "0 11 * * *"
-    },
-    {
       "path": "/api/cron/send-community-reminder",
       "schedule": "0 9 * * *"
     },
