@@ -67,6 +67,15 @@ export async function detectMissedEmails(
   const issues: DetectedIssue[] = [];
   const today = new Date().toISOString().split('T')[0];
 
+  // The standard Daily Brief is intentionally NOT sent on Sundays — the Sunday
+  // Edition replaces it (see the isSunday skip in send-daily-brief/route.ts and
+  // instant-resend.ts). So on Sundays there is no "missed" daily brief to detect;
+  // flagging here produced false positives that the auto-fixer force-resent every
+  // 30 minutes, spamming recipients (one user got ~20 identical emails on a Sunday).
+  if (new Date().getUTCDay() === 0) {
+    return issues;
+  }
+
   // 1. Get all profile recipients with daily email enabled
   const { data: profiles } = await supabase
     .from('profiles')
@@ -82,19 +91,27 @@ export async function detectMissedEmails(
     .eq('email_verified', true)
     .not('email', 'is', null);
 
-  // 3. Get today's sends for dedup
+  // 3. Get today's sends for dedup — keyed on EMAIL, not recipient_id.
+  // Every logged-in user has BOTH a profiles row and a newsletter_subscribers row
+  // (different ids, same email). Dedup by recipient_id would skip the identity that
+  // received the send but re-flag the other one forever, and the resend records under
+  // whichever identity test-mode resolves first — so the un-recorded identity loops.
+  // Counting by email collapses both identities. (Same rule as checkDailyEmailLimit.)
   const { data: todaysSends } = await supabase
     .from('daily_brief_sends')
-    .select('recipient_id')
-    .eq('send_date', today);
+    .select('email')
+    .eq('send_date', today)
+    .not('email', 'is', null);
 
-  const sentIds = new Set((todaysSends || []).map(s => s.recipient_id));
+  const sentEmails = new Set(
+    (todaysSends || []).map(s => (s.email || '').toLowerCase()).filter(Boolean)
+  );
 
   // 4. Check profiles
   if (profiles) {
     for (const profile of profiles) {
       if (!profile.email) continue;
-      if (sentIds.has(profile.id)) continue; // Already sent today
+      if (sentEmails.has(profile.email.toLowerCase())) continue; // Already sent today (by email)
 
       const tz = profile.primary_timezone;
       // If no timezone, they'd always be skipped — but only flag after noon UTC
@@ -138,7 +155,7 @@ export async function detectMissedEmails(
   if (subscribers) {
     for (const sub of subscribers) {
       if (!sub.email) continue;
-      if (sentIds.has(sub.id)) continue;
+      if (sentEmails.has(sub.email.toLowerCase())) continue; // Already sent today (by email)
 
       const tz = sub.timezone;
       if (!tz) {
