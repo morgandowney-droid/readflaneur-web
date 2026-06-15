@@ -12,7 +12,7 @@
 - **Sentry:** https://sentry.io/organizations/flaneur-vk/issues/
 - **270 neighborhoods** across 91 cities, 42 countries
 
-## Last Updated: 2026-06-14
+## Last Updated: 2026-06-15
 
 
 Recent work (2026-06-14 session): Stopped a Sunday-only email spam loop. Subscriber Lucia got ~20 copies of the same Daily Brief on Sunday 2026-06-14 (one every ~30 min) plus one legit Sunday Edition. NOT the 2026-06-07 send-dedup fix (that works) - the culprit was the self-healing monitor `detectMissedEmails` (`src/lib/cron-monitor/email-monitor.ts`). The standard Daily Brief is intentionally skipped on Sundays (Sunday Edition replaces it; `isSunday` skip lives in `send-daily-brief/route.ts` + `instant-resend.ts`), but the monitor didn't know that, so every `monitor-and-fix` run (every 30 min) flagged a `missed_email` (cause `cron_not_run`) and the auto-fixer force-resent via `send-daily-brief?test=&force=true` (which bypasses the Sunday skip). She alone looped ~20x (others stopped at ~2) because of her dual identity (profiles row + newsletter_subscribers row, same email, different ids): the monitor deduped by `recipient_id`, the test-mode resend records under the profile id (profiles checked first), so her subscriber id was never marked sent and got re-flagged forever; the `(recipient_id, send_date)` unique constraint on `daily_brief_sends` meant only the first resend persisted so the 5/day cap never climbed past 2. Fixes: (1) `detectMissedEmails` returns early on `getUTCDay()===0`; (2) its sent-set is now built from `daily_brief_sends.email` (lowercased) not `recipient_id`. Immediate pre-deploy mitigation: inserted a `daily_brief_sends` row for her subscriber id for the day so detection deduped her. Full detail in `docs/CHANGELOG.md` (2026-06-14).
