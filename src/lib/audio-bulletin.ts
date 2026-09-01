@@ -3,10 +3,15 @@
  *
  * Generates 2-minute news bulletin scripts for yous.news with phonetic
  * pronunciation guides. Content sourced from yous.news homepage (which
- * Flaneur writes). Structure mirrors real Irish radio bulletins:
- *   1. Lead story (~40s) - Ireland or world
+ * Flaneur writes) — the supplied pool is the ONLY story source; Google
+ * Search grounding verifies facts, it does not add stories. Every story
+ * needs an Ireland connection (yous.news gates the script and rejects it
+ * outright if any story has no Irish angle — Sept 1 2026: an Israeli
+ * back-to-school closer got a bulletin bounced to local fallback).
+ * Structure mirrors real Irish radio bulletins:
+ *   1. Lead story (~40s) - biggest pool story (world only with an Irish angle)
  *   2. Three Ireland-linked stories (~20s each)
- *   3. Human interest/light closer (~20s) - "and finally..."
+ *   3. Human interest/light closer (~20s) - "and finally..." (Irish, from pool)
  *
  * Weather + market update appended by yous.news (not generated here).
  */
@@ -204,7 +209,8 @@ const RETRY_DELAYS = [2000, 5000, 15000];
  * Fetch the current yous.news homepage stories via their internal API.
  * Stories come grouped by section (hero, world, foreign-take, top-headlines, category).
  * We flatten them into a ranked list for the bulletin prompt.
- * Falls back to empty array on failure (Gemini Search fills the gap).
+ * Falls back to empty array on failure (Gemini Search fills the gap —
+ * scoped to Irish stories only by the prompt's empty-pool branch).
  */
 export async function fetchYousNewsStories(): Promise<BulletinStory[]> {
   try {
@@ -318,10 +324,10 @@ export async function generateBulletinScript(
   });
 
   const storiesContext = stories.length > 0
-    ? `\n\nCURRENT YOUS.NEWS HOMEPAGE STORIES (use these as your primary source):\n${stories.map((s, i) =>
+    ? `\n\nCURRENT YOUS.NEWS HOMEPAGE STORIES (your story pool — every story in the bulletin comes from this list):\n${stories.map((s, i) =>
         `${i + 1}. [${s.category}] ${s.headline}: ${s.blurb} (Source: ${s.source})`
       ).join('\n')}`
-    : '';
+    : '\n\n(No homepage stories were available this hour. Use Google Search to find the top Irish news stories right now — Ireland and Northern Ireland stories only.)';
 
   const bulletinContext = recentBulletins.length > 0
     ? `\n\nLAST ${recentBulletins.length} BULLETIN SCRIPTS (avoid repeating the same lead or transitions):\n${recentBulletins.map((b, i) =>
@@ -335,16 +341,17 @@ TIME NOW: ${irishTime} (Irish time, ${currentHour}:00)
 ${storiesContext}
 ${bulletinContext}
 
-TASK: Write a 2-minute news bulletin script (approximately 300 words spoken at broadcast pace). Use Google Search to verify and enrich the stories with the very latest facts.
+TASK: Write a 2-minute news bulletin script (approximately 300 words spoken at broadcast pace). Use Google Search to verify the pool stories and enrich them with the very latest facts — not to add stories that are not in the pool.
 
 BULLETIN STRUCTURE (strict order):
 1. OPENER (5 seconds): "From yous.news, here is the news at ${currentHour} o'clock." Then the date.
-2. LEAD STORY (40 seconds, ~65 words): The single biggest story right now - could be Irish or world news. Lead with the hardest news fact. Include specific names, numbers, places.
-3. THREE IRELAND-LINKED STORIES (20 seconds each, ~35 words each): Different categories. Each starts with a category anchor ("In politics...", "On the business front...", "In sport..."). Tight, punchy, one key fact per story.
-4. LIGHT CLOSER (20 seconds, ~35 words): Human interest, quirky, or heartwarming Irish story. The "and finally..." segment. Should make the listener smile.
+2. LEAD STORY (40 seconds, ~65 words): The single biggest story in the pool right now. A world story can lead only when it has a clear Ireland connection. Lead with the hardest news fact. Include specific names, numbers, places.
+3. THREE IRELAND-LINKED STORIES (20 seconds each, ~35 words each): Different categories. Each starts with a category anchor ("In politics...", "On the business front...", "In sport..."). The anchor has to match the story — a band's festival set is culture, not "In sport...". Tight, punchy, one key fact per story.
+4. LIGHT CLOSER (20 seconds, ~35 words): Human interest, quirky, or heartwarming IRISH story from the pool. The "and finally..." segment. Should make the listener smile. If the pool has no light story, close with the most upbeat Irish story available instead — never reach outside Ireland for a feel-good story.
 5. SIGN-OFF (5 seconds): "That is the news from yous.news. Updates on the hour, every hour."
 
 WRITING RULES:
+- Every story needs a clear Ireland or Northern Ireland connection: Irish people or organisations at home or abroad, events in Ireland, or foreign reaction to Irish affairs. yous.news rejects any bulletin carrying a story with no Irish angle (for example, back-to-school day in another country), so such a story must never appear — not even as the closer.
 - Write for the EAR, not the eye. Short sentences. Active voice. Present tense.
 - Use contractions naturally: "Ireland's", "there's", "it's".
 - NO em dashes. Use full stops or commas.
