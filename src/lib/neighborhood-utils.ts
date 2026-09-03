@@ -55,8 +55,24 @@ export const CITY_PREFIX_MAP: Record<string, string> = {
  */
 export function buildNeighborhoodId(city: string, neighborhood: string): string {
   const prefix = CITY_PREFIX_MAP[city] || city;
-  return `${prefix}-${neighborhood}`;
+  const id = `${prefix}-${neighborhood}`;
+  return NEIGHBORHOOD_ID_ALIASES[id] || id;
 }
+
+/**
+ * URL aliases for neighborhoods whose stored ID does not follow the
+ * `{city}-{neighborhood}` shape a visitor would type. Palm Beach is stored as
+ * `palm-beach-island` (canonical URL /palm-beach/island), so the two natural
+ * guesses, /florida/palm-beach and /palm-beach/palm-beach, 404'd - Jon
+ * Steinberg hit exactly that during a demo on 3 Sep 2026. Aliased pages still
+ * declare the canonical URL via getCitySlugFromId(), so there is no duplicate
+ * for search engines. Add entries here rather than renaming IDs (articles,
+ * subscriptions and image libraries all key on the stored ID).
+ */
+const NEIGHBORHOOD_ID_ALIASES: Record<string, string> = {
+  'florida-palm-beach': 'palm-beach-island',
+  'palm-beach-palm-beach': 'palm-beach-island',
+};
 
 // Reverse map: prefix → city slug (built from CITY_PREFIX_MAP)
 // Keep the first (primary) slug for each prefix — later entries like 'new-york-enclaves'
