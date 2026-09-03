@@ -179,7 +179,8 @@ export async function fetchLoadSheddingStatus(): Promise<LoadSheddingStatus | nu
   const apiKey = process.env.ESKOMSEPUSH_API_KEY;
 
   if (!apiKey) {
-    console.log('ESKOMSEPUSH_API_KEY not configured, using mock data');
+    if (process.env.ALLOW_MOCK_FEATURES !== 'true') return null;
+    console.log('ESKOMSEPUSH_API_KEY not configured, using mock data (ALLOW_MOCK_FEATURES)');
     // Return mock data for development
     return {
       stage: 0,

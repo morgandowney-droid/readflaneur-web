@@ -11,7 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { processViewConePermits, ViewConeStory } from '@/lib/vancouver-views';
 import { getCapeTownConditions, ConditionAlert } from '@/lib/capetown-conditions';
 import { getSingaporeMarketAlerts, SingaporeMarketAlert } from '@/lib/singapore-market';
@@ -42,14 +42,54 @@ interface ArticleInsert {
 /**
  * Generate unique slug
  */
+function djb2(str: string): string {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+/**
+ * Deterministic slug: same headline + neighborhood + UTC day always produces
+ * the same slug, so a re-run cannot mint a second copy of the same story.
+ * (The old `Date.now()` suffix let every daily run publish a fresh duplicate;
+ * Palm Beach carried the same three ARCOM stories 137 days in a row.)
+ */
 function generateSlug(headline: string, neighborhoodId: string): string {
   const base = headline
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
     .substring(0, 50);
-  const timestamp = Date.now().toString(36);
-  return `${base}-${neighborhoodId}-${timestamp}`;
+  const day = new Date().toISOString().slice(0, 10);
+  return `${base}-${neighborhoodId}-${djb2(`${headline}|${neighborhoodId}|${day}`)}`;
+}
+
+/** Days within which the same headline for the same neighborhood is a repeat, not news. */
+const DEDUP_WINDOW_DAYS = 14;
+
+/**
+ * True when an article with this headline already exists for the
+ * neighborhood inside the dedup window. Recurring conditions (a calm day in
+ * Cape Town, an unchanged COE premium) must not republish every morning.
+ */
+async function isRecentDuplicate(
+  supabase: SupabaseClient,
+  neighborhoodId: string,
+  headline: string
+): Promise<boolean> {
+  const since = new Date(Date.now() - DEDUP_WINDOW_DAYS * 86400000).toISOString();
+  const { data, error } = await supabase
+    .from('articles')
+    .select('id')
+    .eq('neighborhood_id', neighborhoodId)
+    .eq('headline', headline)
+    .gte('published_at', since)
+    .limit(1);
+  if (error) {
+    console.error('Dedup check failed, skipping insert to be safe:', error.message);
+    return true;
+  }
+  return (data?.length ?? 0) > 0;
 }
 
 /**
@@ -182,6 +222,7 @@ export async function GET(request: NextRequest) {
     singapore: { alerts: 0, errors: [] as string[] },
     palmBeach: { alerts: 0, errors: [] as string[] },
     articlesCreated: 0,
+    skippedDuplicates: 0,
     totalErrors: [] as string[],
   };
 
@@ -202,6 +243,10 @@ export async function GET(request: NextRequest) {
           viewImage || '/images/placeholder-neighborhood.jpg'
         );
 
+        if (await isRecentDuplicate(supabase, article.neighborhood_id, article.headline)) {
+          results.skippedDuplicates++;
+          continue;
+        }
         const { error } = await supabase.from('articles').insert(article);
         if (error) {
           results.totalErrors.push(`Vancouver insert: ${error.message}`);
@@ -229,6 +274,10 @@ export async function GET(request: NextRequest) {
 
         const article = await conditionAlertToArticle(alert, imageUrl);
 
+        if (await isRecentDuplicate(supabase, article.neighborhood_id, article.headline)) {
+          results.skippedDuplicates++;
+          continue;
+        }
         const { error } = await supabase.from('articles').insert(article);
         if (error) {
           results.totalErrors.push(`Cape Town insert: ${error.message}`);
@@ -257,6 +306,10 @@ export async function GET(request: NextRequest) {
           marketImage
         );
 
+        if (await isRecentDuplicate(supabase, article.neighborhood_id, article.headline)) {
+          results.skippedDuplicates++;
+          continue;
+        }
         const { error } = await supabase.from('articles').insert(article);
         if (error) {
           results.totalErrors.push(`Singapore insert: ${error.message}`);
@@ -286,6 +339,10 @@ export async function GET(request: NextRequest) {
           designImage
         );
 
+        if (await isRecentDuplicate(supabase, article.neighborhood_id, article.headline)) {
+          results.skippedDuplicates++;
+          continue;
+        }
         const { error } = await supabase.from('articles').insert(article);
         if (error) {
           results.totalErrors.push(`Palm Beach insert: ${error.message}`);

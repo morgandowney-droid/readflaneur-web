@@ -137,13 +137,18 @@ export type SingaporeMarketAlert = MotorWatchAlert | GCBAlert;
 /**
  * Fetch COE bidding results from LTA DataMall
  */
+// Mock COE/GCB data was published as real Singapore news daily from 20 Apr to
+// 3 Sep 2026 because LTA_DATAMALL_KEY / URA_ACCESS_TOKEN were never set in
+// production. Mock data is now opt-in for local development only.
+const MOCK_ALLOWED = process.env.ALLOW_MOCK_FEATURES === 'true';
+
 export async function fetchCOEResults(): Promise<COEResult[]> {
   const apiKey = process.env.LTA_DATAMALL_KEY;
 
   if (!apiKey) {
     console.log('LTA_DATAMALL_KEY not configured, using mock data');
     // Return mock data for development
-    return getMockCOEResults();
+    return MOCK_ALLOWED ? getMockCOEResults() : [];
   }
 
   try {
@@ -159,7 +164,7 @@ export async function fetchCOEResults(): Promise<COEResult[]> {
 
     if (!response.ok) {
       console.error(`LTA DataMall API error: ${response.status}`);
-      return getMockCOEResults();
+      return MOCK_ALLOWED ? getMockCOEResults() : [];
     }
 
     const data = await response.json();
@@ -188,7 +193,7 @@ export async function fetchCOEResults(): Promise<COEResult[]> {
     return results;
   } catch (error) {
     console.error('COE fetch error:', error);
-    return getMockCOEResults();
+    return MOCK_ALLOWED ? getMockCOEResults() : [];
   }
 }
 
@@ -247,7 +252,7 @@ export async function fetchGCBTransactions(
 
   if (!uraToken) {
     console.log('URA_ACCESS_TOKEN not configured, using mock data');
-    return getMockGCBTransactions();
+    return MOCK_ALLOWED ? getMockGCBTransactions() : [];
   }
 
   try {
@@ -265,7 +270,7 @@ export async function fetchGCBTransactions(
 
     if (!response.ok) {
       console.error(`URA API error: ${response.status}`);
-      return getMockGCBTransactions();
+      return MOCK_ALLOWED ? getMockGCBTransactions() : [];
     }
 
     const data = await response.json();
@@ -305,7 +310,7 @@ export async function fetchGCBTransactions(
     return transactions;
   } catch (error) {
     console.error('GCB fetch error:', error);
-    return getMockGCBTransactions();
+    return MOCK_ALLOWED ? getMockGCBTransactions() : [];
   }
 }
 

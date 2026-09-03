@@ -288,8 +288,11 @@ export async function fetchARCOMAgendaItems(
     // - Project descriptions
     // - Meeting dates
 
-    // Return mock data for development
-    return getMockARCOMItems();
+    // No live scraper exists yet. The mock items below were being published as
+    // real Palm Beach news every morning from 20 Apr to 3 Sep 2026 (411 fake
+    // articles). Mock data is now opt-in for local development only.
+    if (process.env.ALLOW_MOCK_FEATURES === 'true') return getMockARCOMItems();
+    return [];
   } catch (error) {
     console.error('ARCOM agenda fetch error:', error);
     return [];
