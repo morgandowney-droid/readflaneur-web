@@ -14,18 +14,20 @@ import {
 } from './hyperlink-injector';
 import { recordGeminiCall } from '@/lib/ai-cost';
 import type { StructuredEvent } from '@/lib/look-ahead-events';
+import { extractGroundingChunks, resolveGroundingChunks, cleanStorySources } from '@/lib/source-links';
 
 export interface EnrichedStoryItem {
   entity: string;
+  /** url is null when the source was named but no checkable page could be attached */
   source: {
     name: string;
-    url: string;
+    url: string | null;
   } | null;
   context: string;
   note?: string;
   secondarySource?: {
     name: string;
-    url: string;
+    url: string | null;
   };
   googleFallbackUrl: string;
 }
@@ -655,6 +657,11 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
 
     const rawText = response.text || '';
 
+    // The pages Google Search grounding actually read, with their redirect
+    // URLs resolved to real ones. Used below to attach URLs to name-only
+    // sources and to replace redirect URLs before anything is stored.
+    const groundingChunks = await resolveGroundingChunks(extractGroundingChunks(response));
+
     // Strip markdown and JSON from response for clean prose display
     // But preserve [[section headers]] which we explicitly asked for
     let text = rawText
@@ -792,11 +799,20 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
       };
     }
 
+    // Post-process: drop placeholder sources, resolve grounding redirects,
+    // attach URLs to name-only sources from the grounding chunks
+    const allStories = enrichedData.categories.flatMap(c => c.stories || []);
+    const sourceStats = await cleanStorySources(allStories, groundingChunks);
+    if (sourceStats.placeholdersDropped || sourceStats.redirectsResolved || sourceStats.redirectsDropped || sourceStats.urlsAttached) {
+      console.log(`Source cleanup for ${neighborhoodName}: ${JSON.stringify(sourceStats)} (${groundingChunks.length} grounding chunks)`);
+    }
+
     // Post-process: filter blocked domains and add fallback URLs
     for (const category of enrichedData.categories) {
       for (const story of category.stories) {
         // Filter blocked domains
-        if (story.source?.url && blockedDomains.some(d => story.source!.url.toLowerCase().includes(d))) {
+        const sourceUrl = story.source?.url?.toLowerCase() || '';
+        if (sourceUrl && blockedDomains.some(d => sourceUrl.includes(d))) {
           story.source = null;
           story.context = `[Source excluded] ${story.context}`;
         }

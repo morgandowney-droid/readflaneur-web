@@ -5,6 +5,7 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { CITY_PREFIX_MAP } from '@/lib/neighborhood-utils';
+import { extractArticleSources } from '@/lib/source-links';
 import { toHeadlineCase } from '@/lib/utils';
 import {
   EmailRecipient,
@@ -235,42 +236,11 @@ async function fetchBriefAsStory(
   }
 
   if (newArticle) {
-    // Insert sources from enriched categories (best-effort)
-    if (brief.enriched_categories && Array.isArray(brief.enriched_categories)) {
-      const sources: { article_id: string; source_name: string; source_type: string; source_url?: string }[] = [];
-      const seen = new Set<string>();
-      for (const cat of brief.enriched_categories as any[]) {
-        for (const story of cat.stories || []) {
-          if (story.source?.name && !seen.has(story.source.name.toLowerCase())) {
-            seen.add(story.source.name.toLowerCase());
-            const url = story.source.url;
-            const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
-            sources.push({
-              article_id: newArticle.id,
-              source_name: story.source.name,
-              source_type: story.source.name.startsWith('@') || url?.includes('x.com') ? 'x_user' : 'publication',
-              source_url: isValidUrl ? url : undefined,
-            });
-          }
-          if (story.secondarySource?.name && !seen.has(story.secondarySource.name.toLowerCase())) {
-            seen.add(story.secondarySource.name.toLowerCase());
-            const url = story.secondarySource.url;
-            const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
-            sources.push({
-              article_id: newArticle.id,
-              source_name: story.secondarySource.name,
-              source_type: story.secondarySource.name.startsWith('@') || url?.includes('x.com') ? 'x_user' : 'publication',
-              source_url: isValidUrl ? url : undefined,
-            });
-          }
-        }
-      }
-      if (sources.length === 0) {
-        sources.push(
-          { article_id: newArticle.id, source_name: 'X (Twitter)', source_type: 'platform' },
-          { article_id: newArticle.id, source_name: 'Google News', source_type: 'platform' },
-        );
-      }
+    // Insert sources from enriched categories (best-effort). Shared extractor:
+    // no placeholders, redirects resolved, no rows when nothing is checkable.
+    const extracted = await extractArticleSources(brief.enriched_categories);
+    if (extracted.length > 0) {
+      const sources = extracted.map(s => ({ article_id: newArticle.id, ...s }));
       await supabase.from('article_sources').insert(sources).then(null, (e: Error) =>
         console.error(`[assembler] Failed to insert sources for ${newArticle.id}:`, e)
       );

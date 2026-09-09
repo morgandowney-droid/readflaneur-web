@@ -2,92 +2,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 import { toHeadlineCase } from '@/lib/utils';
+import { extractArticleSources } from '@/lib/source-links';
 
-interface ArticleSourceInput {
-  source_name: string;
-  source_type: 'publication' | 'x_user' | 'platform' | 'other';
-  source_url?: string;
-}
-
-interface EnrichedCategory {
-  name: string;
-  stories: Array<{
-    entity: string;
-    source?: { name: string; url: string } | null;
-    secondarySource?: { name: string; url: string };
-    context: string;
-  }>;
-}
-
-/**
- * Extract sources from enriched categories JSON
- */
-function extractSourcesFromCategories(categories: EnrichedCategory[] | null): ArticleSourceInput[] {
-  if (!categories || !Array.isArray(categories)) {
-    return [
-      { source_name: 'X (Twitter)', source_type: 'platform' },
-      { source_name: 'Google News', source_type: 'platform' },
-    ];
-  }
-
-  const sources: ArticleSourceInput[] = [];
-  const seenSources = new Set<string>();
-
-  for (const category of categories) {
-    for (const story of category.stories || []) {
-      if (story.source?.name) {
-        const key = story.source.name.toLowerCase();
-        if (!seenSources.has(key)) {
-          seenSources.add(key);
-
-          let sourceType: ArticleSourceInput['source_type'] = 'publication';
-          if (story.source.name.startsWith('@') || story.source.url?.includes('x.com') || story.source.url?.includes('twitter.com')) {
-            sourceType = 'x_user';
-          }
-
-          const url = story.source.url;
-          const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
-
-          sources.push({
-            source_name: story.source.name,
-            source_type: sourceType,
-            source_url: isValidUrl ? url : undefined,
-          });
-        }
-      }
-
-      if (story.secondarySource?.name) {
-        const key = story.secondarySource.name.toLowerCase();
-        if (!seenSources.has(key)) {
-          seenSources.add(key);
-
-          let sourceType: ArticleSourceInput['source_type'] = 'publication';
-          if (story.secondarySource.name.startsWith('@') || story.secondarySource.url?.includes('x.com')) {
-            sourceType = 'x_user';
-          }
-
-          const url = story.secondarySource.url;
-          const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
-
-          sources.push({
-            source_name: story.secondarySource.name,
-            source_type: sourceType,
-            source_url: isValidUrl ? url : undefined,
-          });
-        }
-      }
-    }
-  }
-
-  if (sources.length === 0) {
-    return [
-      { source_name: 'X (Twitter)', source_type: 'platform' },
-      { source_name: 'Google News', source_type: 'platform' },
-    ];
-  }
-
-  return sources;
-}
 
 /**
  * Generate Articles from Neighborhood Briefs
@@ -386,7 +302,7 @@ export async function GET(request: Request) {
       const previewText = brief.email_teaser || generatePreviewText(articleBody);
 
       // Extract sources from enriched categories
-      const extractedSources = extractSourcesFromCategories(brief.enriched_categories as EnrichedCategory[] | null);
+      const extractedSources = await extractArticleSources(brief.enriched_categories);
 
       // Compute published_at as 7 AM local time on brief_date (not generated_at).
       // generated_at can fall on the wrong UTC calendar day when briefs are created

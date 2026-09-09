@@ -4,6 +4,7 @@ import { GoogleGenAI } from '@google/genai';
 import { AI_MODELS } from '@/config/ai-models';
 import { insiderPersona } from '@/lib/ai-persona';
 import { recordGeminiCall } from '@/lib/ai-cost';
+import { isPlaceholderSourceName, isGroundingRedirect } from '@/lib/source-links';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -137,8 +138,12 @@ export async function GET(request: NextRequest) {
 
       if (sources) {
         for (const s of sources) {
+          // Belt and braces for rows written before the source cleanup: never
+          // syndicate a placeholder name, and never hand out a Gemini grounding
+          // redirect URL (they 404 within weeks). Name-only beats a dead link.
+          if (isPlaceholderSourceName(s.source_name)) continue;
           if (!sourcesMap[s.article_id]) sourcesMap[s.article_id] = [];
-          sourcesMap[s.article_id].push({ source_name: s.source_name, source_url: s.source_url });
+          sourcesMap[s.article_id].push({ source_name: s.source_name, source_url: isGroundingRedirect(s.source_url) ? null : s.source_url });
         }
       }
     }

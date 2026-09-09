@@ -8,6 +8,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { CronIssue, FixResult, FIX_CONFIG, EmailDiagnosis } from './types';
 import { fixEmailRootCause, resendEmail } from './email-monitor';
 import { generateGrokNewsStories } from '@/lib/grok';
+import { extractArticleSources } from '@/lib/source-links';
 
 /**
  * Calculate the next retry time based on retry count
@@ -414,45 +415,13 @@ async function fixMissingSources(
       .eq('id', article.brief_id)
       .single();
 
-    if (!brief?.enriched_categories || !Array.isArray(brief.enriched_categories)) {
-      // Fall back to platform sources
-      await supabase.from('article_sources').insert([
-        { article_id: articleId, source_name: 'X (Twitter)', source_type: 'platform' },
-        { article_id: articleId, source_name: 'Google News', source_type: 'platform' },
-      ]);
-      return { success: true, message: 'Added platform fallback sources' };
+    // Shared extractor: no placeholder rows. An article with nothing checkable
+    // is left without sources rather than given "X (Twitter)" / "Google News".
+    const extracted = await extractArticleSources(brief?.enriched_categories);
+    if (extracted.length === 0) {
+      return { success: true, message: 'No checkable sources in the brief; left without placeholder rows' };
     }
-
-    // Extract sources from enriched categories
-    const sources: { article_id: string; source_name: string; source_type: string; source_url?: string }[] = [];
-    const seen = new Set<string>();
-
-    for (const cat of brief.enriched_categories as any[]) {
-      for (const story of cat.stories || []) {
-        for (const srcKey of ['source', 'secondarySource']) {
-          const src = story[srcKey];
-          if (src?.name && !seen.has(src.name.toLowerCase())) {
-            seen.add(src.name.toLowerCase());
-            const url = src.url;
-            const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
-            sources.push({
-              article_id: articleId,
-              source_name: src.name,
-              source_type: src.name.startsWith('@') || url?.includes('x.com') ? 'x_user' : 'publication',
-              source_url: isValidUrl ? url : undefined,
-            });
-          }
-        }
-      }
-    }
-
-    if (sources.length === 0) {
-      sources.push(
-        { article_id: articleId, source_name: 'X (Twitter)', source_type: 'platform' },
-        { article_id: articleId, source_name: 'Google News', source_type: 'platform' },
-      );
-    }
-
+    const sources = extracted.map(s => ({ article_id: articleId, ...s }));
     const { error } = await supabase.from('article_sources').insert(sources);
     if (error) {
       return { success: false, message: `Insert failed: ${error.message}` };

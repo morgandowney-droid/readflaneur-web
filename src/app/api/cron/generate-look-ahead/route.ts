@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateLookAhead } from '@/lib/grok';
+import { extractArticleSources } from '@/lib/source-links';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { getComboInfo } from '@/lib/combo-utils';
 import { getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
@@ -36,11 +37,6 @@ export const maxDuration = 300;
 const TIME_BUDGET_MS = 200_000;
 const CONCURRENCY = 6;
 
-interface ArticleSourceInput {
-  source_name: string;
-  source_type: 'publication' | 'x_user' | 'platform' | 'other';
-  source_url?: string;
-}
 
 function generateSlug(headline: string, neighborhoodId: string, publishDate: string): string {
   const headlineSlug = headline
@@ -171,46 +167,6 @@ function generatePreviewText(content: string): string {
   return lastSpace > 0 ? cleaned.slice(0, lastSpace) : slice;
 }
 
-function extractSources(enrichedData: { categories?: Array<{ stories: Array<{ source?: { name: string; url: string } | null; secondarySource?: { name: string; url: string } }> }> }): ArticleSourceInput[] {
-  if (!enrichedData?.categories) {
-    return [
-      { source_name: 'X (Twitter)', source_type: 'platform' },
-      { source_name: 'Google News', source_type: 'platform' },
-    ];
-  }
-
-  const sources: ArticleSourceInput[] = [];
-  const seen = new Set<string>();
-
-  for (const category of enrichedData.categories) {
-    for (const story of category.stories || []) {
-      if (story.source?.name && !seen.has(story.source.name.toLowerCase())) {
-        seen.add(story.source.name.toLowerCase());
-        const isX = story.source.name.startsWith('@') || story.source.url?.includes('x.com') || story.source.url?.includes('twitter.com');
-        const url = story.source.url;
-        const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
-        sources.push({
-          source_name: story.source.name,
-          source_type: isX ? 'x_user' : 'publication',
-          source_url: isValidUrl ? url : undefined,
-        });
-      }
-      if (story.secondarySource?.name && !seen.has(story.secondarySource.name.toLowerCase())) {
-        seen.add(story.secondarySource.name.toLowerCase());
-        sources.push({
-          source_name: story.secondarySource.name,
-          source_type: 'publication',
-          source_url: story.secondarySource.url?.startsWith('http') ? story.secondarySource.url : undefined,
-        });
-      }
-    }
-  }
-
-  return sources.length > 0 ? sources : [
-    { source_name: 'X (Twitter)', source_type: 'platform' },
-    { source_name: 'Google News', source_type: 'platform' },
-  ];
-}
 
 /**
  * @swagger
@@ -550,7 +506,7 @@ export async function GET(request: Request) {
 
           // Step 4: Store sources
           if (inserted?.id) {
-            const sources = extractSources(enriched);
+            const sources = await extractArticleSources(enriched?.categories);
             if (sources.length > 0) {
               await supabase
                 .from('article_sources')
