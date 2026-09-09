@@ -11,6 +11,7 @@
 // Usage (dry run by default, nothing is written without --confirm):
 //   node scripts/backfill-source-links.mjs                 # Irish counties, last 3 days
 //   node scripts/backfill-source-links.mjs --all --days 14 # every neighborhood, last 14 days
+//   node scripts/backfill-source-links.mjs --redirects-only     # every grounding redirect row, any age
 //   node scripts/backfill-source-links.mjs --confirm
 
 import dotenv from 'dotenv';
@@ -20,6 +21,7 @@ import { createClient } from '@supabase/supabase-js';
 const args = process.argv.slice(2);
 const CONFIRM = args.includes('--confirm');
 const ALL = args.includes('--all');
+const REDIRECTS_ONLY = args.includes('--redirects-only');
 const daysIdx = args.indexOf('--days');
 const DAYS = daysIdx >= 0 ? Number(args[daysIdx + 1]) : 3;
 
@@ -44,6 +46,38 @@ async function resolve(url) {
     if (loc && /^https?:\/\/\S+$/i.test(loc) && !/google\.com|googleusercontent\.com|vertexaisearch/i.test(new URL(loc).hostname)) return loc;
   } catch { /* dead */ }
   return null;
+}
+
+// --redirects-only: sweep every grounding-redirect row in article_sources regardless
+// of article age. Old ones are mostly dead already; resolving what still answers and
+// nulling the rest stops article pages from showing links that 404.
+if (REDIRECTS_ONLY) {
+  const rows = [];
+  let from = 0;
+  for (;;) {
+    const { data, error: e } = await sb.from('article_sources').select('id, source_url').like('source_url', '%grounding-api-redirect%').order('id').range(from, from + 999);
+    if (e) { console.error(e); process.exit(1); }
+    rows.push(...(data || []));
+    if (!data || data.length < 1000) break;
+    from += 1000;
+  }
+  console.log(`${CONFIRM ? 'LIVE' : 'DRY RUN'}: ${rows.length} grounding redirect rows`);
+  let resolved = 0, dead = 0;
+  const CONC = 10;
+  for (let i = 0; i < rows.length; i += CONC) {
+    const batch = rows.slice(i, i + CONC);
+    const results = await Promise.all(batch.map(async (r) => ({ r, final: await resolve(r.source_url) })));
+    for (const { r, final } of results) {
+      if (final) resolved++; else dead++;
+      if (CONFIRM) {
+        const { error: e } = await sb.from('article_sources').update({ source_url: final }).eq('id', r.id);
+        if (e) console.error('update failed:', e.message);
+      }
+    }
+    if ((i / CONC) % 50 === 0) process.stdout.write(`  ${Math.min(i + CONC, rows.length)}/${rows.length}`);
+  }
+  console.log(`\nredirects: ${resolved} resolved, ${dead} dead (url set to null)${CONFIRM ? '' : ' [not written]'}`);
+  process.exit(0);
 }
 
 const since = new Date(Date.now() - DAYS * 86400000).toISOString();
