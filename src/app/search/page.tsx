@@ -78,18 +78,23 @@ function SearchContent() {
     }
   }, []);
 
-  // Search on initial load if query param exists
+  // Search as you type. Debounced so a fast typist fires one request, not
+  // one per keystroke; the abort controller in performSearch drops any that
+  // overlap. Also covers the initial ?q= on first render. Before this the
+  // page only searched on Enter, so typing showed nothing (2026-09-10).
   useEffect(() => {
-    if (initialQuery) {
-      performSearch(initialQuery);
-    }
-  }, [initialQuery, performSearch]);
+    const trimmed = query.trim();
+    const id = setTimeout(() => performSearch(trimmed), trimmed.length < 2 ? 0 : 250);
+    return () => clearTimeout(id);
+  }, [query, performSearch]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
-      performSearch(query.trim());
+    const trimmed = query.trim();
+    if (trimmed) {
+      // Keep the URL shareable without adding a history entry per search
+      router.replace(`/search?q=${encodeURIComponent(trimmed)}`, { scroll: false });
+      performSearch(trimmed);
     }
   };
 
@@ -135,7 +140,7 @@ function SearchContent() {
         </form>
 
         {/* Results */}
-        {loading ? (
+        {loading && neighborhoods.length === 0 && results.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-fg-muted">{t('search.searching')}</p>
           </div>

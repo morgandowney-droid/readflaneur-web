@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { resolveSearchQuery } from '@/lib/search-aliases';
 
 /**
@@ -56,14 +56,22 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Query must be at least 2 characters' }, { status: 400 });
   }
 
-  const supabase = await createClient();
+  // Service role, not the cookie client. Under row-level security Postgres
+  // will not use a non-leakproof operator (ILIKE) as an index condition, so
+  // the anon role seq-scans 80k rows (6.6s) and hits its 3s statement
+  // timeout; every search returned 500 (2026-09-10). Without RLS the same
+  // query is a Bitmap Index Scan on the trigram index, ~50ms. Safe because
+  // the queries below filter to status = 'published' themselves.
+  const supabase = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  );
 
-  // Search articles and neighborhoods in parallel
-  const [articlesResult, neighborhoodsResult] = await Promise.all([
-    // Article search
-    supabase
-      .from('articles')
-      .select(`
+  // Three indexed ILIKE queries in parallel, one per column, then merge.
+  // A single OR across the three columns ran 3.6-5.3s even without RLS;
+  // per column each query is 50-500ms on its own trigram index.
+  const articleSelect = `
         id,
         headline,
         preview_text,
@@ -77,12 +85,20 @@ export async function GET(request: NextRequest) {
           name,
           city
         )
-      `)
+      `;
+  const articleQuery = (column: 'headline' | 'preview_text' | 'body_text') =>
+    supabase
+      .from('articles')
+      .select(articleSelect)
       .eq('status', 'published')
-      .or(`headline.ilike.%${query}%,body_text.ilike.%${query}%,preview_text.ilike.%${query}%`)
+      .ilike(column, `%${query}%`)
       .order('published_at', { ascending: false, nullsFirst: false })
-      .limit(limit),
+      .limit(limit);
 
+  const [headlineResult, previewResult, bodyResult, neighborhoodsResult] = await Promise.all([
+    articleQuery('headline'),
+    articleQuery('preview_text'),
+    articleQuery('body_text'),
     // Neighborhood search - fetch all active for fuzzy matching
     supabase
       .from('neighborhoods')
@@ -92,10 +108,30 @@ export async function GET(request: NextRequest) {
       .order('name'),
   ]);
 
-  if (articlesResult.error) {
-    console.error('Search error:', articlesResult.error);
+  const columnResults = [headlineResult, previewResult, bodyResult];
+  if (columnResults.every(r => r.error)) {
+    console.error('Search error:', headlineResult.error);
     return NextResponse.json({ error: 'Search failed' }, { status: 500 });
   }
+  for (const r of columnResults) if (r.error) console.error('Search column error:', r.error.message);
+
+  // Merge: headline matches first, then dedupe by id, newest first, cap at limit
+  const seen = new Set<string>();
+  const merged: any[] = [];
+  for (const r of columnResults) {
+    for (const a of (r.data || []) as any[]) {
+      if (seen.has(a.id)) continue;
+      seen.add(a.id);
+      merged.push(a);
+    }
+  }
+  const headlineIds = new Set(((headlineResult.data || []) as any[]).map(a => a.id));
+  merged.sort((a, b) => {
+    const ah = headlineIds.has(a.id) ? 1 : 0, bh = headlineIds.has(b.id) ? 1 : 0;
+    if (ah !== bh) return bh - ah;
+    return String(b.published_at || b.created_at || '').localeCompare(String(a.published_at || a.created_at || ''));
+  });
+  const articlesResult = { data: merged.slice(0, limit) };
 
   // Transform article results
   const results = (articlesResult.data || []).map((article: any) => {
