@@ -12,8 +12,10 @@
 - **Sentry:** https://sentry.io/organizations/flaneur-vk/issues/
 - **270 neighborhoods** across 91 cities, 42 countries
 
-## Last Updated: 2026-09-09
+## Last Updated: 2026-09-10
 
+
+Recent work (2026-09-10 session): Search returned 500 on every query. Found when typing into /search during a live demo showed nothing. Under row-level security Postgres will not use a non-leakproof operator (`ILIKE`) as an index condition, so the anon role seq-scanned 80k articles (6.6s) and hit its 3s statement timeout; the trigram indexes only work without RLS (~50ms). `/api/search` now reads with the service-role client and filters `status = 'published'` itself, runs one indexed query per column in parallel and merges, and stops fetching `body_text` for excerpts. The page now searches as you type (250ms debounce). **Rule: text search on an RLS table runs with the service role and enforces published itself; the anon client can never use the trigram indexes.** Detail in `docs/CHANGELOG.md` (2026-09-10).
 
 Recent work (2026-09-09 session): Source rows leaked placeholders and dead Gemini redirect URLs. Found when an ex-AP executive looked at yous.news county pages (fed by `/api/syndicate/irish-briefs`) and saw sources like "User provided content" and Look Ahead links that 404. Causes: Gemini's placeholder label and our own "X (Twitter)" / "Google News" fallbacks were stored in `article_sources` as publications; Google-Search grounding URLs (`vertexaisearch.cloud.google.com/grounding-api-redirect/...`) were stored verbatim and die within ~2 weeks; name-only sources were never matched to the `groundingChunks` the same Gemini response carries. Fix: `src/lib/source-links.ts` (placeholder detection, redirect resolution, grounding-chunk matching, `extractArticleSources()` replacing four copied extractors in generate-brief-articles / generate-look-ahead / assembler / auto-fixer); the enricher cleans sources before storing; syndication filters at the boundary; `scripts/backfill-source-links.mjs` cleans old rows. **Rule: a source row is a checkable publication, site or account; never store a placeholder name or a grounding redirect URL; an article with nothing checkable gets no source rows.** Detail in `docs/CHANGELOG.md` (2026-09-09).
 
