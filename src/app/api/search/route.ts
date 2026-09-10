@@ -75,7 +75,6 @@ export async function GET(request: NextRequest) {
         id,
         headline,
         preview_text,
-        body_text,
         image_url,
         slug,
         created_at,
@@ -146,7 +145,9 @@ export async function GET(request: NextRequest) {
       url = `/${citySlug}/${neighborhoodSlug}/${article.slug || article.id}`;
     }
 
-    let excerpt = article.preview_text || article.body_text?.substring(0, 200) || '';
+    // preview_text only: fetching body_text for 60 candidate rows made the
+    // response 3-8x larger and the queries 2-5x slower for a 200-char excerpt.
+    let excerpt = article.preview_text || '';
     if (excerpt.length > 200) {
       excerpt = excerpt.substring(0, 200) + '...';
     }
