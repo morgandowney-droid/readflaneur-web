@@ -48,6 +48,11 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   'sauerland-balve',
   'thueringen-drei-gleichen',
   'hamburg-eppendorf',
+  // Newsquest, UK South Coast (one district per masthead, 2026-09-11):
+  // Bournemouth Echo, Southern Daily Echo and The Argus
+  'dorset-christchurch',
+  'hampshire-lymington',
+  'sussex-lewes',
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */
