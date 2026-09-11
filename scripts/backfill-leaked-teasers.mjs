@@ -40,14 +40,22 @@ function strip(text, subjectTeaser, emailTeaser) {
   return rebuilt || text;
 }
 
+// Paginate: Supabase silently caps a query at 1000 rows, and 14 days is ~1500
+// briefs, so a single .limit(1000) leaves an arbitrary remainder behind.
 const since = new Date(Date.now() - DAYS * 86400000).toISOString();
-const { data: briefs, error } = await sb
-  .from('neighborhood_briefs')
-  .select('id, neighborhood_id, subject_teaser, email_teaser, enriched_content')
-  .gte('created_at', since)
-  .not('enriched_content', 'is', null)
-  .limit(1000);
-if (error) { console.error(error); process.exit(1); }
+const briefs = [];
+for (let from = 0; ; from += 500) {
+  const { data, error } = await sb
+    .from('neighborhood_briefs')
+    .select('id, neighborhood_id, subject_teaser, email_teaser, enriched_content')
+    .gte('created_at', since)
+    .not('enriched_content', 'is', null)
+    .order('id')
+    .range(from, from + 499);
+  if (error) { console.error(error); process.exit(1); }
+  briefs.push(...(data || []));
+  if (!data || data.length < 500) break;
+}
 
 console.log(`${CONFIRM ? 'LIVE' : 'DRY RUN'}: ${briefs.length} enriched briefs in the last ${DAYS} days`);
 
