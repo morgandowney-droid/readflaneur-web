@@ -182,6 +182,56 @@ function extractFallbackLinkCandidates(text: string): LinkCandidate[] {
 }
 
 /**
+ * Strip teasers that leaked into the prose.
+ *
+ * The teasers belong in the JSON block only, but Gemini sometimes also writes
+ * them into the newsletter as bare paragraphs near the top, unlabelled, so the
+ * SUBJECT_TEASER:/EMAIL_TEASER: line strippers miss them. A reader then sees
+ * "Good morning, Lewes. / 5G mast appeal / New Look store gone. Artwave
+ * Festival continues." before the first section (seen 2026-09-11 on a UK
+ * pilot edition, and on the same brief's first run).
+ *
+ * Safe because the exact strings are known from the parsed JSON: only a
+ * paragraph matching one of them, and only before the first [[header]], is
+ * removed. Runs BEFORE hyperlink injection, while the prose is still plain.
+ */
+function stripLeakedTeasers(
+  text: string,
+  subjectTeaser: string | null,
+  emailTeaser: string | null,
+): string {
+  if (!text || (!subjectTeaser && !emailTeaser)) return text;
+
+  const normalise = (s: string): string =>
+    s
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // markdown link -> its text
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const targets = [subjectTeaser, emailTeaser]
+    .filter((t): t is string => !!t)
+    .map(normalise)
+    .filter(t => t.length > 3);
+  if (targets.length === 0) return text;
+
+  const firstHeader = text.indexOf('[[');
+  const head = firstHeader > 0 ? text.slice(0, firstHeader) : text;
+  const tail = firstHeader > 0 ? text.slice(firstHeader) : '';
+
+  const kept = head
+    .split(/\n{2,}/)
+    .filter(block => !targets.includes(normalise(block)));
+
+  const rebuilt = (kept.join('\n\n') + (tail ? '\n\n' + tail : ''))
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  return rebuilt || text;
+}
+
+/**
  * Strip a leaked reasoning/planning preamble from Gemini output.
  *
  * Gemini 2.5 Pro (thinking enabled) occasionally emits its planning prose
@@ -824,6 +874,12 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     }
 
     // Sanitize any Gemini-generated markdown links with unencoded parens in URLs
+    const beforeTeaserStrip = text;
+    text = stripLeakedTeasers(text, subjectTeaser, emailTeaser);
+    if (text !== beforeTeaserStrip) {
+      console.warn(`Stripped leaked teaser prose for ${neighborhoodName}`);
+    }
+
     text = sanitizeMarkdownLinks(text);
 
     if (linkCandidates.length > 0 && text) {
