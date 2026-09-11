@@ -42,6 +42,18 @@ export function useLanguage() {
   // Hydrate from localStorage, auto-detect browser language on first visit
   useEffect(() => {
     try {
+      // ?lang=xx on the URL wins over everything and persists, so a shared
+      // link can open a page in a given language regardless of the reader's
+      // browser or an earlier choice (publisher pilot links, 2026-09-11).
+      const fromUrl = new URLSearchParams(window.location.search).get('lang') as LanguageCode | null;
+      if (fromUrl && fromUrl in SUPPORTED_LANGUAGES) {
+        setLanguageState(fromUrl);
+        setIsTranslated(fromUrl !== 'en');
+        if (fromUrl === 'en') localStorage.removeItem(STORAGE_KEY); else localStorage.setItem(STORAGE_KEY, fromUrl);
+        localStorage.setItem(OFFERED_KEY, '1');
+        document.documentElement.lang = fromUrl;
+        return;
+      }
       const stored = localStorage.getItem(STORAGE_KEY) as LanguageCode | null;
       if (stored && stored in SUPPORTED_LANGUAGES) {
         setLanguageState(stored);
