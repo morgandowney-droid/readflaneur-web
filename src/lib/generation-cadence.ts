@@ -50,6 +50,13 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   'hamburg-eppendorf',
 ]);
 
+/** The language a pilot publisher reads in; translations are pre-warmed in it. */
+export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' | 'pt' | 'it' | 'zh' | 'ja'>> = {
+  'sauerland-balve': 'de',
+  'thueringen-drei-gleichen': 'de',
+  'hamburg-eppendorf': 'de',
+};
+
 export function isPilotNeighborhood(neighborhoodId: string): boolean {
   return PILOT_NEIGHBORHOOD_IDS.has(neighborhoodId);
 }

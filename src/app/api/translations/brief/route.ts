@@ -9,7 +9,7 @@ import { translateBrief, type LanguageCode } from '@/lib/translation-service';
  *  from the corresponding brief_summary article translation (best-effort). */
 
 export const runtime = 'nodejs';
-export const maxDuration = 60; // first-view translation takes a few seconds
+export const maxDuration = 120; // first-view Qwen translation of a long brief runs 40-55s; leave headroom
 
 const SUPPORTED_LANGS: Set<string> = new Set(['sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja']);
 const CACHE_HEADERS = { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' };

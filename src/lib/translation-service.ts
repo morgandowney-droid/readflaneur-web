@@ -5,6 +5,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 export type LanguageCode = 'sv' | 'fr' | 'de' | 'es' | 'pt' | 'it' | 'zh' | 'ja';
 
+/** Which model does the work. Default (Qwen via OpenRouter, Gemini fallback) is
+ * cheap but takes 40-55s on a 400-word brief, which is fine for a cached
+ * translation and fatal inside a 60s request. 'gemini' is ~10s; use it when a
+ * reader is waiting or a page must be ready by a deadline (publisher pilots). */
+export type TranslationProvider = 'default' | 'gemini';
+
 const LANGUAGE_NAMES: Record<LanguageCode, string> = {
   sv: 'Swedish',
   fr: 'French',
@@ -41,7 +47,8 @@ export async function translateArticle(
   headline: string,
   body: string,
   previewText: string | null,
-  targetLang: LanguageCode
+  targetLang: LanguageCode,
+  provider: TranslationProvider = 'default',
 ): Promise<ArticleTranslation | null> {
   // Extract [[Event Listing]]...--- block before translation.
   // Event listings contain structured data (times, venues, addresses, semicolons)
@@ -71,7 +78,7 @@ BODY:
 ${bodyToTranslate}
 ${previewText ? `\nPREVIEW TEXT:\n${previewText}` : ''}`;
 
-  const result = await translateJson<ArticleTranslation>(prompt, 'translate_article', targetLang);
+  const result = await translateJson<ArticleTranslation>(prompt, 'translate_article', targetLang, provider);
 
   // Recombine: prepend the original English event listing to the translated body
   if (result && eventListingBlock) {
@@ -85,7 +92,8 @@ ${previewText ? `\nPREVIEW TEXT:\n${previewText}` : ''}`;
 export async function translateBrief(
   content: string,
   enrichedContent: string | null,
-  targetLang: LanguageCode
+  targetLang: LanguageCode,
+  provider: TranslationProvider = 'default',
 ): Promise<BriefTranslation | null> {
   const langName = LANGUAGE_NAMES[targetLang];
   const prompt = `Translate the following daily neighborhood brief from English to ${langName}.
@@ -104,7 +112,7 @@ CONTENT:
 ${content}
 ${enrichedContent ? `\nENRICHED CONTENT:\n${enrichedContent}` : ''}`;
 
-  return translateJson<BriefTranslation>(prompt, 'translate_brief', targetLang);
+  return translateJson<BriefTranslation>(prompt, 'translate_brief', targetLang, provider);
 }
 
 /** Parse a JSON object out of a model response, tolerating code fences and prose. */
@@ -137,8 +145,9 @@ async function translateJson<T>(
   prompt: string,
   operation: string,
   label: string,
+  provider: TranslationProvider = 'default',
 ): Promise<T | null> {
-  if (process.env.OPENROUTER_API_KEY?.trim()) {
+  if (provider !== 'gemini' && process.env.OPENROUTER_API_KEY?.trim()) {
     const qwen = await callQwen<T>(prompt, operation, label);
     if (qwen) return qwen;
     console.warn(`[translate] Qwen failed for ${operation}/${label}, falling back to Gemini`);
