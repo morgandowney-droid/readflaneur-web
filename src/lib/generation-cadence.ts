@@ -38,8 +38,25 @@ export function isIrishEntity(neighborhoodId: string): boolean {
 }
 
 /**
- * A "priority" neighborhood has a real audience: it either has a subscriber or
- * is an Irish syndication entity (feeding yous.news). Priority neighborhoods get
+ * Publisher pilot neighborhoods: places a prospective publisher customer has
+ * asked to see running before a call. They have no subscriber yet but must
+ * get the full daily treatment. Add ids here when a pilot is agreed; remove
+ * them when it ends. Region 'test' keeps them out of lists and the sitemap.
+ */
+export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
+  // Funke Regionalmedien, Germany (named by Carsten Gross, 2026-09-11)
+  'sauerland-balve',
+  'thueringen-drei-gleichen',
+  'hamburg-eppendorf',
+]);
+
+export function isPilotNeighborhood(neighborhoodId: string): boolean {
+  return PILOT_NEIGHBORHOOD_IDS.has(neighborhoodId);
+}
+
+/**
+ * A "priority" neighborhood has a real audience: it either has a subscriber,
+ * is an Irish syndication entity (feeding yous.news), or is a publisher pilot. Priority neighborhoods get
  * the full treatment - daily generation, Grok+Gemini dual-source search, Pro
  * enrichment, Look Ahead, and the Sunday Edition. Cold (non-priority)
  * neighborhoods get a lean Gemini-only Daily Brief every COLD_INTERVAL_DAYS,
@@ -50,7 +67,7 @@ export function isPriorityNeighborhood(
   neighborhoodId: string,
   subscribed: boolean,
 ): boolean {
-  return subscribed || isIrishEntity(neighborhoodId);
+  return subscribed || isIrishEntity(neighborhoodId) || isPilotNeighborhood(neighborhoodId);
 }
 
 /**
