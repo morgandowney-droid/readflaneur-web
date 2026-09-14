@@ -49,7 +49,7 @@ execFileSync(
   ],
   { stdio: 'inherit', shell: process.platform === 'win32' }
 );
-const { anglicise, usesBritishEnglish } = await import(
+const { anglicise, usesBritishEnglish, getPlaceNoun, enforcePlaceNoun } = await import(
   pathToFileURL(join(outDir, 'locale-register.js')).href
 );
 
@@ -64,6 +64,10 @@ const british = hoods.filter(
   (h) => usesBritishEnglish(h.country) && (!COUNTRY_FILTER || h.country === COUNTRY_FILTER)
 );
 const ids = new Set(british.map((h) => h.id));
+// Spelling is universal; register depends on the place. A Birmingham suburb is
+// "the area", a Dorset market town is "the town", an Irish county is "the county".
+const nounById = Object.fromEntries(british.map((h) => [h.id, getPlaceNoun(h)]));
+const fixFor = (id) => (v) => enforcePlaceNoun(anglicise(v), nounById[id] || 'neighbourhood');
 console.log(
   `${CONFIRM ? 'LIVE' : 'DRY RUN'}: ${british.length} British-English places, last ${DAYS} days` +
     (COUNTRY_FILTER ? ` (country: ${COUNTRY_FILTER})` : '')
@@ -108,9 +112,10 @@ const touchedArticleIds = [];
 
 for (const b of briefs) {
   const patch = {};
+  const fix = fixFor(b.neighborhood_id);
   for (const col of ['enriched_content', 'subject_teaser', 'email_teaser']) {
     if (!b[col]) continue;
-    const fixed = anglicise(b[col]);
+    const fixed = fix(b[col]);
     if (fixed !== b[col]) patch[col] = fixed;
   }
   if (Object.keys(patch).length === 0) continue;
@@ -125,9 +130,10 @@ for (const b of briefs) {
 
 for (const a of articles) {
   const patch = {};
+  const fix = fixFor(a.neighborhood_id);
   for (const col of ['headline', 'body_text', 'preview_text']) {
     if (!a[col]) continue;
-    const fixed = anglicise(a[col]);
+    const fixed = fix(a[col]);
     if (fixed !== a[col]) patch[col] = fixed;
   }
   if (Object.keys(patch).length === 0) continue;

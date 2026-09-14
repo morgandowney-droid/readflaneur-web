@@ -32,6 +32,20 @@ export function usesBritishEnglish(country: string | null | undefined): boolean 
 }
 
 /**
+ * The register rules below are drawn from British and Irish local newspapers.
+ * They do not travel: "neighbourhood" is ordinary in Singapore and Hong Kong,
+ * and Australia says "suburb". Spelling still applies everywhere.
+ */
+const UK_IE_COUNTRIES = new Set(
+  ['UK', 'United Kingdom', 'Great Britain', 'England', 'Scotland', 'Wales',
+   'Northern Ireland', 'Ireland', 'Republic of Ireland'].map((c) => c.toLowerCase())
+);
+
+function isUkOrIreland(country: string | null | undefined): boolean {
+  return UK_IE_COUNTRIES.has((country || '').trim().toLowerCase());
+}
+
+/**
  * UK and Irish counties / administrative areas that appear in our `city` column.
  * When the "city" is one of these, the place itself is a town, not a district of
  * a city. Greater London and the named cities are deliberately absent: Mayfair
@@ -98,8 +112,10 @@ export function getPlaceNoun(place: PlaceDescriptor): string {
   if (CITY_LEVEL_EDITION_IDS.has(id)) return 'city';
   if (british && COUNTY_LEVEL_AREAS.has(city)) return 'town';
   // "Area" is what British and Irish local press actually calls a district of a
-  // city. "Neighbourhood" is correct English and still reads as an import.
-  return british ? 'area' : 'neighborhood';
+  // city. "Neighbourhood" is correct English and still reads as an import there,
+  // but it is ordinary usage in Singapore and Hong Kong, so this stays local.
+  if (isUkOrIreland(place.country)) return 'area';
+  return british ? 'neighbourhood' : 'neighborhood';
 }
 
 /**
@@ -227,6 +243,28 @@ export function anglicise(text: string | null | undefined): string {
     new RegExp(`${PLACEHOLDER_OPEN}(\\d+)${PLACEHOLDER_CLOSE}`, 'g'),
     (_m, i) => parked[Number(i)]
   );
+}
+
+/**
+ * Replace "neighbourhood" with the noun this place actually takes.
+ *
+ * The prompt asks for it and Gemini still writes "our neighbourhood" about a
+ * Birmingham suburb. Spelling is enforced after generation for the same reason;
+ * register needs the same treatment. Only runs when the place is not itself a
+ * neighbourhood, so Mayfair keeps the word.
+ */
+export function enforcePlaceNoun(text: string | null | undefined, noun: string): string {
+  if (!text || noun === 'neighbourhood' || noun === 'neighborhood') return text || '';
+  const plural = noun === 'city' ? 'cities' : `${noun}s`;
+  return text
+    .replace(/\bneighbourhoods\b/g, plural)
+    .replace(/\bneighborhoods\b/g, plural)
+    .replace(/\bNeighbourhoods\b/g, capitalise(plural))
+    .replace(/\bNeighborhoods\b/g, capitalise(plural))
+    .replace(/\bneighbourhood\b/g, noun)
+    .replace(/\bneighborhood\b/g, noun)
+    .replace(/\bNeighbourhood\b/g, capitalise(noun))
+    .replace(/\bNeighborhood\b/g, capitalise(noun));
 }
 
 /**

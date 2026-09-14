@@ -15,7 +15,7 @@ import {
 import { recordGeminiCall } from '@/lib/ai-cost';
 import type { StructuredEvent } from '@/lib/look-ahead-events';
 import { extractGroundingChunks, resolveGroundingChunks, cleanStorySources } from '@/lib/source-links';
-import { anglicise, britishStyleBlock, getPlaceNoun, usesBritishEnglish } from '@/lib/locale-register';
+import { anglicise, britishStyleBlock, enforcePlaceNoun, getPlaceNoun, usesBritishEnglish } from '@/lib/locale-register';
 
 export interface EnrichedStoryItem {
   entity: string;
@@ -839,9 +839,9 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
       console.log('No JSON found, returning raw response for manual review');
 
       if (isBritishEnglish) {
-        text = anglicise(text);
-        subjectTeaser = subjectTeaser ? anglicise(subjectTeaser) : subjectTeaser;
-        emailTeaser = emailTeaser ? anglicise(emailTeaser) : emailTeaser;
+        text = enforcePlaceNoun(anglicise(text), placeNoun);
+        subjectTeaser = subjectTeaser ? enforcePlaceNoun(anglicise(subjectTeaser), placeNoun) : subjectTeaser;
+        emailTeaser = emailTeaser ? enforcePlaceNoun(anglicise(emailTeaser), placeNoun) : emailTeaser;
       }
 
       if (linkCandidates.length > 0 && text) {
@@ -899,19 +899,22 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     // Spelling safety net. The prompt asks for British English, but Gemini
     // follows its examples over its instructions, so enforce it after the fact.
     if (isBritishEnglish) {
-      const beforeAnglicise = text;
-      text = anglicise(text);
-      if (text !== beforeAnglicise) {
-        console.warn(`Anglicised American spellings for ${neighborhoodName}`);
+      // Spelling, then register. Gemini writes "our neighbourhood" about a
+      // Birmingham suburb however plainly the prompt says "the area".
+      const fix = (v: string) => enforcePlaceNoun(anglicise(v), placeNoun);
+      const beforeFix = text;
+      text = fix(text);
+      if (text !== beforeFix) {
+        console.warn(`Corrected British spelling/register for ${neighborhoodName}`);
       }
-      subjectTeaser = subjectTeaser ? anglicise(subjectTeaser) : subjectTeaser;
-      emailTeaser = emailTeaser ? anglicise(emailTeaser) : emailTeaser;
+      subjectTeaser = subjectTeaser ? fix(subjectTeaser) : subjectTeaser;
+      emailTeaser = emailTeaser ? fix(emailTeaser) : emailTeaser;
       for (const category of enrichedData.categories) {
-        category.name = anglicise(category.name);
+        category.name = fix(category.name);
         for (const story of category.stories) {
           // entity and source names are proper nouns, left exactly as written
-          story.context = anglicise(story.context);
-          if (story.note) story.note = anglicise(story.note);
+          story.context = fix(story.context);
+          if (story.note) story.note = fix(story.note);
         }
       }
     }
