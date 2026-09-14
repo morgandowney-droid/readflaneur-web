@@ -319,12 +319,20 @@ export async function GET(request: Request) {
     const windowStart = new Date(new Date(minPublish).getTime() - 3600_000).toISOString();
     const windowEnd = new Date(new Date(maxPublish).getTime() + 3600_000).toISOString();
     {
-      const { data: existingArticles } = await supabase
+      const { data: existingArticles, error: dedupError } = await supabase
         .from('articles')
         .select('neighborhood_id, published_at')
         .eq('article_type', 'look_ahead')
         .gte('published_at', windowStart)
         .lt('published_at', windowEnd);
+      // An unchecked failure here empties the skip list, so every neighborhood
+      // the earlier run already finished gets a SECOND edition. That is exactly
+      // what happened on 12 and 14 Sep: the 00:00 run finished ~15 towns before
+      // its time budget, and the 02:00 run duplicated all of them.
+      if (dedupError) {
+        console.error('[generate-look-ahead] Dedup query FAILED, per-neighborhood guard is now the only protection:', dedupError.message);
+        results.errors.push(`dedup query failed: ${dedupError.message}`);
+      }
       if (existingArticles) {
         for (const a of existingArticles) {
           // Mark as processed if the article's published_at matches this neighborhood's target
@@ -461,19 +469,55 @@ export async function GET(request: Request) {
             localDate,
             city
           );
-          const articleBody = eventListing
+          const rawBody = eventListing
             ? eventListing + '\n\n' + enrichedBody
             : enrichedBody;
+          // A Look Ahead has no intro by design: the prompt says jump straight
+          // into the first event, so the body must begin at a [[header]].
+          // Anything before it is leakage - a teaser written as prose, or in
+          // four Irish cases a fragment of the raw JSON block (found 2026-09-14).
+          const firstHeader = rawBody.indexOf('[[');
+          const articleBody = firstHeader > 0 ? rawBody.slice(firstHeader).trim() : rawBody;
+          if (firstHeader > 0) {
+            console.warn(`[generate-look-ahead] Stripped ${firstHeader} chars before the first section for ${name}`);
+          }
 
           // Step 3: Create article
-          // Prefer Gemini's punchy subject_teaser over Grok's generic headline
-          const headline = enriched.subjectTeaser
+          // Prefer Gemini's punchy subject_teaser over Grok's generic headline.
+          // Grok sometimes reports "No Confirmed Events This Week" while the
+          // enriched body lists a dozen of them; never publish a headline that
+          // contradicts the article (found 2026-09-14, five live articles).
+          const EMPTY_HEADLINE = /no confirmed events|no events|nothing (major|much)|quiet (week|day|weekend|friday)|slow (week|day)|not much going on/i;
+          let headline = enriched.subjectTeaser
             ? toHeadlineCase(enriched.subjectTeaser)
             : lookAheadBrief.headline;
+          if (EMPTY_HEADLINE.test(headline)) {
+            const firstEvent = listingEvents[0]?.name?.trim();
+            if (firstEvent) {
+              headline = toHeadlineCase(firstEvent.split(/\s+/).slice(0, 4).join(' '));
+              console.warn(`[generate-look-ahead] Replaced an empty-week headline for ${name} with "${headline}"`);
+            }
+          }
           const articleHeadline = `LOOK AHEAD: ${headline}`;
           const slug = generateSlug(headline, id, localDate);
           // Use email_teaser from Gemini enrichment if available, otherwise auto-generate
           const previewText = enriched.emailTeaser || generatePreviewText(articleBody);
+
+          // Last line of defence: re-check immediately before the insert, so a
+          // failed or stale bulk dedup cannot produce a second edition for a
+          // town that already has one for this publish time.
+          const { data: raceCheck } = await supabase
+            .from('articles')
+            .select('id')
+            .eq('neighborhood_id', id)
+            .eq('article_type', 'look_ahead')
+            .gte('published_at', new Date(new Date(dates.publishAtUtc).getTime() - 7200_000).toISOString())
+            .lte('published_at', new Date(new Date(dates.publishAtUtc).getTime() + 7200_000).toISOString())
+            .limit(1);
+          if (raceCheck && raceCheck.length > 0) {
+            console.log(`[generate-look-ahead] ${name} already has a Look Ahead for ${localDate}, skipping insert`);
+            return 'skipped';
+          }
 
           const { data: inserted, error: insertError } = await supabase
             .from('articles')
