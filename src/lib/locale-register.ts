@@ -205,6 +205,21 @@ const SPELLINGS: Array<[string, string]> = [
   ['soccer', 'football'],
 ];
 
+/**
+ * Phrase-level tells that no word list catches. British and Irish English drops
+ * the article: "taken to hospital", "in hospital", "at university". An Armagh
+ * brief said a pedestrian was "taken to the hospital", which is the kind of
+ * thing a news editor hears immediately even though every word is spelled right.
+ */
+const PHRASES: Array<[RegExp, string]> = [
+  [/\b(taken|rushed|airlifted|admitted|brought)\s+to\s+the\s+hospital\b/gi, '$1 to hospital'],
+  [/\bwent\s+to\s+the\s+hospital\b/gi, 'went to hospital'],
+  [/\bis\s+in\s+the\s+hospital\b/gi, 'is in hospital'],
+  [/\bremains\s+in\s+the\s+hospital\b/gi, 'remains in hospital'],
+  [/\bat\s+the\s+university\s+studying\b/gi, 'at university studying'],
+  [/\bon\s+the\s+weekend\b/gi, 'at the weekend'],
+];
+
 const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const PLACEHOLDER_OPEN = 'PN';
@@ -237,6 +252,10 @@ export function anglicise(text: string | null | undefined): string {
   for (const [us, uk] of SPELLINGS) {
     out = out.replace(new RegExp(`\\b${us}\\b`, 'g'), uk);
     out = out.replace(new RegExp(`\\b${capitalise(us)}\\b`, 'g'), capitalise(uk));
+  }
+
+  for (const [re, replacement] of PHRASES) {
+    out = out.replace(re, replacement);
   }
 
   return out.replace(
