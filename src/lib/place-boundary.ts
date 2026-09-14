@@ -49,6 +49,50 @@ export function getCurrencyName(country: string | null | undefined): string | nu
 }
 
 /**
+ * Countries as they appear in a venue address. Asking the model to reject these
+ * is not enough on its own: a Birmingham edition was published with ten events
+ * at Tin Roof, The Nick and Cahaba Brewing, all in Birmingham, Alabama, from a
+ * prompt that already said "if it is not in the United Kingdom, DROP IT". The
+ * prompt reduces the problem; this removes it.
+ */
+const COUNTRY_IN_ADDRESS =
+  'New Zealand|Aotearoa|Australia|Canada|United States|U\\.?S\\.?A\\.?|South Africa|Singapore|India|Pakistan|Germany|Deutschland|France|Spain|España|Italy|Italia|Netherlands|Belgium|Portugal|Sweden|Norway|Denmark|Finland|Poland|Austria|Switzerland|Greece|Turkey|Japan|China|Hong Kong|Brazil|Argentina|Mexico|Kenya|Nigeria|UAE|Dubai|Ireland|United Kingdom|England|Scotland|Wales';
+
+/** US state codes in the ", AL 35205" / ", AL." shape that ends an address. */
+const US_STATE_IN_ADDRESS =
+  /,\s*(?:AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IA|KS|KY|LA|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\b(?:\s*\d{5})?(?=[.,;]|\s|$)/;
+
+/** Countries that mean the same market, so one does not look foreign to the other. */
+const SAME_MARKET: Record<string, string[]> = {
+  'uk': ['united kingdom', 'great britain', 'england', 'scotland', 'wales', 'northern ireland'],
+  'united kingdom': ['uk', 'great britain', 'england', 'scotland', 'wales', 'northern ireland'],
+  'ireland': ['republic of ireland', 'northern ireland', 'united kingdom', 'uk'],
+};
+
+/**
+ * True when a venue's address names a country that is not this edition's.
+ *
+ * Tested against the venue and address only, never a whole story: a Belfast
+ * wine tasting may pour New Zealand wine, and "All My Friends Are In Australia"
+ * is a play in Portlaoise. Where the venue IS decides it.
+ */
+export function isVenueAbroad(venue: string | null | undefined, country: string | null | undefined): boolean {
+  if (!venue || !country) return false;
+  const home = country.trim().toLowerCase();
+  const ours = new Set([home, ...(SAME_MARKET[home] || [])]);
+
+  if (!ours.has('usa') && !ours.has('united states') && US_STATE_IN_ADDRESS.test(venue)) return true;
+
+  const re = new RegExp(`(?:^|,|\\(|\\s)\\s*(${COUNTRY_IN_ADDRESS})\\b`, 'gi');
+  for (const match of venue.matchAll(re)) {
+    const named = match[1].toLowerCase().replace(/\./g, '');
+    const normalised = /^u\.?s\.?a?$/.test(named) ? 'united states' : named;
+    if (!ours.has(normalised)) return true;
+  }
+  return false;
+}
+
+/**
  * A rejection rule for any prompt that searches the open web for a named place.
  * Written as a test the model applies per item, not as background context.
  */

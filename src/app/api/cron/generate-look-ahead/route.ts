@@ -7,6 +7,7 @@ import { getComboInfo } from '@/lib/combo-utils';
 import { getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 import { formatEventListing } from '@/lib/look-ahead-events';
+import { isVenueAbroad } from '@/lib/place-boundary';
 import { searchUpcomingEvents, mergeContent, mergeStructuredEvents } from '@/lib/gemini-search';
 import { toHeadlineCase } from '@/lib/utils';
 import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
@@ -460,10 +461,22 @@ export async function GET(request: Request) {
           // match it) over the lossier upstream Grok/Gemini-search extraction,
           // and merge in any upstream events the enrichment missed.
           // mergeStructuredEvents dedups by name.
-          const listingEvents = mergeStructuredEvents(
+          const mergedListing = mergeStructuredEvents(
             enriched.structuredEvents || [],
             lookAheadBrief.structuredEvents || []
           );
+
+          // Drop anything whose venue is in another country. The prompts ask for
+          // this and do not reliably deliver it: a Birmingham edition published
+          // ten events in Birmingham, Alabama from a prompt that said to drop
+          // them. Checked against the venue and address only, so a local event
+          // that merely mentions another country survives.
+          const listingEvents = mergedListing.filter((e) => {
+            const venue = [e.location, e.address].filter(Boolean).join(', ');
+            if (!isVenueAbroad(venue, country)) return true;
+            console.warn(`[generate-look-ahead] Dropped foreign venue for ${name}: ${e.name} @ ${venue}`);
+            return false;
+          });
           const eventListing = formatEventListing(
             listingEvents,
             localDate,
