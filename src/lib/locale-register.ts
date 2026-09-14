@@ -65,6 +65,16 @@ const COUNTY_LEVEL_AREAS = new Set(
   ].map((c) => c.toLowerCase())
 );
 
+/**
+ * Editions that cover a whole city rather than one part of it. Without this,
+ * a city-wide Birmingham edition inherits "town" from its county-level `city`
+ * column, and calling Birmingham a town in front of a Birmingham publisher is
+ * exactly the tell we are trying to remove.
+ */
+export const CITY_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
+  'westmidlands-birmingham',
+]);
+
 export interface PlaceDescriptor {
   id?: string | null;
   name: string;
@@ -85,8 +95,11 @@ export function getPlaceNoun(place: PlaceDescriptor): string {
 
   if (id.startsWith('ie-county-') || /^county\s/i.test(name)) return 'county';
   if (id === 'ie-ireland' || name.toLowerCase() === 'ireland') return 'country';
+  if (CITY_LEVEL_EDITION_IDS.has(id)) return 'city';
   if (british && COUNTY_LEVEL_AREAS.has(city)) return 'town';
-  return british ? 'neighbourhood' : 'neighborhood';
+  // "Area" is what British and Irish local press actually calls a district of a
+  // city. "Neighbourhood" is correct English and still reads as an import.
+  return british ? 'area' : 'neighborhood';
 }
 
 /**
@@ -228,9 +241,11 @@ export function britishStyleBlock(place: PlaceDescriptor): string {
       ? `${place.name} is a COUNTY. Call it "the county" or by name. Never "the neighbourhood", never "the area's community".`
       : noun === 'country'
         ? `Ireland is a COUNTRY. Call it "the country" or by name.`
-        : noun === 'town'
-          ? `${place.name} is a TOWN. Call it "the town" or by name. NEVER "the neighborhood" or "the neighbourhood" - British and Irish local press does not use that word for a place.`
-          : `${place.name} is a ${noun}. Use the spelling "${noun}", never "neighborhood".`;
+        : noun === 'city'
+          ? `${place.name} is a CITY. Call it "the city" or by name, and name the district or suburb a story happens in. NEVER "the neighborhood" or "the neighbourhood".`
+          : noun === 'town'
+            ? `${place.name} is a TOWN. Call it "the town" or by name. NEVER "the neighborhood" or "the neighbourhood" - British and Irish local press does not use that word for a place.`
+            : `${place.name} is a district of ${place.city}. Call it by name, or "the area". NEVER "the neighborhood" or "the neighbourhood": British and Irish local press does not use that word, and it is the clearest sign the writer is not local. Name the streets, the high street and the ward.`;
 
   return `
 

@@ -53,6 +53,18 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   'dorset-christchurch',
   'hampshire-lymington',
   'sussex-lewes',
+  // Newsquest follow-up (2026-09-14 call): Birmingham as a whole city and as one
+  // district, because they were unsure which unit they wanted; East Kilbride as
+  // an expansion market with no Newsquest title; Helston for Simon's Cornwall patch.
+  'westmidlands-birmingham',
+  'birmingham-sutton-coldfield',
+  'birmingham-moseley',
+  'birmingham-kings-heath',
+  'birmingham-harborne',
+  'birmingham-erdington',
+  'birmingham-digbeth',
+  'lanarkshire-east-kilbride',
+  'cornwall-helston',
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */
