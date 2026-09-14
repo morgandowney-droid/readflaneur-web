@@ -1,4 +1,4 @@
-// Strip United States events that were pulled into UK and Irish editions.
+// Strip events whose venue is in another country from a local edition.
 //
 // The event search matches on town name, so the American namesake wins as often
 // as not. County Roscommon ran a Roscommon, Michigan Board of Commissioners
@@ -15,10 +15,25 @@
 //   node scripts/purge-foreign-events.mjs                          # last 7 days
 //   node scripts/purge-foreign-events.mjs --days 14 --confirm
 //   node scripts/purge-foreign-events.mjs --ids hampshire-lymington --confirm
+//
+// Default scope is the UK and Irish editions. --ids names any market: the German
+// pilots were carrying a Musikverein concert in Vienna, which is the same fault.
 
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local', quiet: true });
 import { createClient } from '@supabase/supabase-js';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+// Compile the shipped rule rather than keeping a second copy of the country list
+const outDir = mkdtempSync(join(tmpdir(), 'pb-'));
+execFileSync('npx', ['tsc', 'src/lib/place-boundary.ts', '--outDir', outDir, '--module', 'es2022',
+  '--target', 'es2022', '--moduleResolution', 'bundler', '--skipLibCheck', '--typeRoots', outDir],
+  { stdio: 'inherit', shell: process.platform === 'win32' });
+const { isVenueAbroad } = await import(pathToFileURL(join(outDir, 'place-boundary.js')).href);
 
 const args = process.argv.slice(2);
 const CONFIRM = args.includes('--confirm');
@@ -51,23 +66,14 @@ const STRONG_TELLS = [
   /\b(?:Fwy|Freeway|Turnpike)\b/,
 ];
 
-// Countries that are not this market. Tested ONLY against the venue/address
-// segment of an event line, never the whole line: a Belfast wine tasting can
-// pour New Zealand wine, and "All My Friends Are In Australia" is a play at the
-// Dunamaise Arts Centre in Portlaoise. What matters is where the venue IS.
+// The venue and address of "Name; Category, Time; Venue, Address." is
+// everything after the second semicolon. isVenueAbroad() is tested against that
+// only, never the whole line: a Belfast wine tasting can pour New Zealand wine,
+// and "All My Friends Are In Australia" is a play in Portlaoise.
 //
 // Newsquest's CEO found this live on a demo call: Christchurch, Dorset was
-// carrying a concert at Te Matatiki Toi Ora The Arts Centre, 2 Worcester
-// Boulevard, Christchurch, New Zealand 8011. The US-only rules missed it.
-const FOREIGN_COUNTRIES =
-  'New Zealand|Aotearoa|Australia|Canada|United States|U\\.?S\\.?A\\.?|South Africa|Singapore|India|Pakistan|Germany|Deutschland|France|Spain|España|Italy|Italia|Netherlands|Belgium|Portugal|Sweden|Norway|Denmark|Finland|Poland|Austria|Switzerland|Greece|Turkey|Japan|China|Hong Kong|Brazil|Argentina|Mexico|Kenya|Nigeria|UAE|Dubai';
-
-const FOREIGN_VENUE = new RegExp(`(?:,|\\(|\\bin\\s)\\s*(?:${FOREIGN_COUNTRIES})\\b`, 'i');
-
-/**
- * The venue and address of "Name; Category, Time; Venue, Address." is
- * everything after the second semicolon.
- */
+// carrying a concert at Te Matatiki Toi Ora The Arts Centre, Christchurch,
+// New Zealand. US-only rules missed it.
 function venueSegment(line) {
   const parts = line.split(';');
   return parts.length >= 3 ? parts.slice(2).join(';') : '';
@@ -81,18 +87,19 @@ const WEAK_TELLS = [
   new RegExp(`\\b(?:${US_ABBREV})\\b\\s*\\d{5}`),
 ];
 
-const whyForeign = (line) => {
+const whyForeign = (line, country) => {
   const venue = venueSegment(line);
-  if (venue && FOREIGN_VENUE.test(venue)) {
-    return `VENUE-ABROAD ${venue.match(FOREIGN_VENUE)[0].trim()}`;
-  }
+  if (venue && isVenueAbroad(venue, country)) return 'VENUE-ABROAD';
+  // The US-specific tells catch a bare state code or civic body with no country
+  // named. Meaningless for a US edition, so skip them there.
+  if (/^(usa|united states)$/i.test((country || '').trim())) return null;
   const strong = STRONG_TELLS.find((re) => re.test(line));
   if (strong) return `STRONG ${line.match(strong)[0]}`;
   const weak = WEAK_TELLS.filter((re) => re.test(line));
   if (weak.length >= 2) return `WEAK x${weak.length} ${weak.map((re) => line.match(re)[0]).join(' + ')}`;
   return null;
 };
-const isForeign = (line) => whyForeign(line) !== null;
+const isForeign = (line, country) => whyForeign(line, country) !== null;
 
 /**
  * Split a paragraph into sentences. Markdown links are parked first: a URL can
@@ -113,7 +120,7 @@ function splitSentences(paragraph) {
 const isEventLine = (line) => (line.match(/;/g) || []).length >= 2;
 const isDayHeader = (line) => /^\[\[.+\]\]$/.test(line.trim());
 
-function purge(body) {
+function purge(body, country) {
   if (!body) return { body, removed: [] };
   const removed = [];
 
@@ -122,7 +129,7 @@ function purge(body) {
   if (start === -1 || end === -1) {
     // No structured listing; fall back to dropping whole offending paragraphs
     const kept = body.split(/\n{2,}/).filter((p) => {
-      if (isForeign(p)) { removed.push(`[prose ${whyForeign(p)}] ${p.slice(0, 120)}`); return false; }
+      if (isForeign(p, country)) { removed.push(`[prose ${whyForeign(p, country)}] ${p.slice(0, 120)}`); return false; }
       return true;
     });
     return { body: kept.join('\n\n').replace(/\n{3,}/g, '\n\n').trim(), removed };
@@ -134,8 +141,8 @@ function purge(body) {
   const blocks = listing.split(/\n{2,}/);
   const keptBlocks = [];
   for (const block of blocks) {
-    if (isEventLine(block) && isForeign(block)) {
-      removed.push(`[${whyForeign(block)}] ${block.slice(0, 90)}`);
+    if (isEventLine(block) && isForeign(block, country)) {
+      removed.push(`[${whyForeign(block, country)}] ${block.slice(0, 90)}`);
       continue;
     }
     keptBlocks.push(block);
@@ -158,8 +165,8 @@ function purge(body) {
   const proseParts = rest.split(/\n{2,}/).map((p) => {
     if (isDayHeader(p)) return p;
     const kept = splitSentences(p).filter((sentence) => {
-      if (!isForeign(sentence)) return true;
-      removed.push(`[prose ${whyForeign(sentence)}] ${sentence.trim().slice(0, 110)}`);
+      if (!isForeign(sentence, country)) return true;
+      removed.push(`[prose ${whyForeign(sentence, country)}] ${sentence.trim().slice(0, 110)}`);
       return false;
     });
     return kept.join(' ').replace(/\s{2,}/g, ' ').trim();
@@ -173,11 +180,12 @@ function purge(body) {
 
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-const { data: hoods } = await sb
-  .from('neighborhoods')
-  .select('id, name, country')
-  .in('country', ['Ireland', 'United Kingdom', 'UK', 'Great Britain', 'England', 'Scotland', 'Wales']);
-const ids = (ONLY_IDS || hoods.map((h) => h.id)).filter((id) => hoods.some((h) => h.id === id));
+const UK_IE = ['Ireland', 'United Kingdom', 'UK', 'Great Britain', 'England', 'Scotland', 'Wales'];
+const { data: hoods } = await sb.from('neighborhoods').select('id, name, country');
+// Default scope stays UK and Ireland; --ids names any market, including German pilots
+const ids = ONLY_IDS
+  ? ONLY_IDS.filter((id) => hoods.some((h) => h.id === id))
+  : hoods.filter((h) => UK_IE.includes(h.country)).map((h) => h.id);
 const byId = Object.fromEntries(hoods.map((h) => [h.id, h]));
 
 const since = new Date(Date.now() - DAYS * 86400000).toISOString();
@@ -195,13 +203,13 @@ for (let from = 0; ; from += 500) {
   if (!data || data.length < 500) break;
 }
 
-console.log(`${CONFIRM ? 'LIVE' : 'DRY RUN'}: ${rows.length} UK/IE articles in the last ${DAYS} days\n`);
+console.log(`${CONFIRM ? 'LIVE' : 'DRY RUN'}: ${rows.length} articles in the last ${DAYS} days\n`);
 
 let changed = 0;
 let linesRemoved = 0;
 const touched = [];
 for (const a of rows) {
-  const { body, removed } = purge(a.body_text);
+  const { body, removed } = purge(a.body_text, byId[a.neighborhood_id]?.country);
   if (!removed.length) continue;
   changed++;
   linesRemoved += removed.length;
