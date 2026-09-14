@@ -51,6 +51,28 @@ const STRONG_TELLS = [
   /\b(?:Fwy|Freeway|Turnpike)\b/,
 ];
 
+// Countries that are not this market. Tested ONLY against the venue/address
+// segment of an event line, never the whole line: a Belfast wine tasting can
+// pour New Zealand wine, and "All My Friends Are In Australia" is a play at the
+// Dunamaise Arts Centre in Portlaoise. What matters is where the venue IS.
+//
+// Newsquest's CEO found this live on a demo call: Christchurch, Dorset was
+// carrying a concert at Te Matatiki Toi Ora The Arts Centre, 2 Worcester
+// Boulevard, Christchurch, New Zealand 8011. The US-only rules missed it.
+const FOREIGN_COUNTRIES =
+  'New Zealand|Aotearoa|Australia|Canada|United States|U\\.?S\\.?A\\.?|South Africa|Singapore|India|Pakistan|Germany|Deutschland|France|Spain|España|Italy|Italia|Netherlands|Belgium|Portugal|Sweden|Norway|Denmark|Finland|Poland|Austria|Switzerland|Greece|Turkey|Japan|China|Hong Kong|Brazil|Argentina|Mexico|Kenya|Nigeria|UAE|Dubai';
+
+const FOREIGN_VENUE = new RegExp(`(?:,|\\(|\\bin\\s)\\s*(?:${FOREIGN_COUNTRIES})\\b`, 'i');
+
+/**
+ * The venue and address of "Name; Category, Time; Venue, Address." is
+ * everything after the second semicolon.
+ */
+function venueSegment(line) {
+  const parts = line.split(';');
+  return parts.length >= 3 ? parts.slice(2).join(';') : '';
+}
+
 // Suggestive but not sufficient. A dollar price can just be a hallucinated
 // currency on a real local event, and deleting that loses genuine copy.
 const WEAK_TELLS = [
@@ -60,6 +82,10 @@ const WEAK_TELLS = [
 ];
 
 const whyForeign = (line) => {
+  const venue = venueSegment(line);
+  if (venue && FOREIGN_VENUE.test(venue)) {
+    return `VENUE-ABROAD ${venue.match(FOREIGN_VENUE)[0].trim()}`;
+  }
   const strong = STRONG_TELLS.find((re) => re.test(line));
   if (strong) return `STRONG ${line.match(strong)[0]}`;
   const weak = WEAK_TELLS.filter((re) => re.test(line));
