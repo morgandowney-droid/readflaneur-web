@@ -15,6 +15,7 @@ import {
 import { recordGeminiCall } from '@/lib/ai-cost';
 import type { StructuredEvent } from '@/lib/look-ahead-events';
 import { extractGroundingChunks, resolveGroundingChunks, cleanStorySources } from '@/lib/source-links';
+import { anglicise, britishStyleBlock, getPlaceNoun, usesBritishEnglish } from '@/lib/locale-register';
 
 export interface EnrichedStoryItem {
   entity: string;
@@ -445,13 +446,20 @@ export async function enrichBriefWithGemini(
     ? buildContinuityBlock(options?.continuityContext || [])
     : ''; // Continuity context only applies to daily briefs
 
+  // Register and spelling. A Sussex market town is a "town", an Irish county is
+  // a "county", and neither is spelled the American way. See locale-register.ts.
+  const place = { id: neighborhoodSlug, name: neighborhoodName, city, country };
+  const placeNoun = getPlaceNoun(place);
+  const isBritishEnglish = usesBritishEnglish(country);
+  const britishBlock = britishStyleBlock(place);
+
   // System instruction varies by article type
-  const basePersona = `You are a well-travelled, successful 35-year-old who has lived in ${neighborhoodName}, ${city} for years. You know every corner of the neighborhood - the hidden gems, the local drama, the new openings before anyone else does.
+  const basePersona = `You are a well-travelled, successful 35-year-old who has lived in ${neighborhoodName}, ${city} for years. You know every corner of the ${placeNoun} - the hidden gems, the local drama, the new openings before anyone else does.
 
 CRITICAL CONTEXT - CURRENT TIME: It is currently ${contextTimeStr} in ${neighborhoodName}. The LOCAL date today is ${dateStr}. When you refer to "today", "tomorrow", "this week", etc., use this timestamp as your reference point. This is when readers will see your update.
 DATE CORRECTION: The source material below may reference dates/days from when data was collected (which could be a different calendar day in a different timezone). You MUST correct ALL date references to match the LOCAL date above. If the source says "Friday" but the local date is a Saturday, write "Saturday". If the source says "February 20" but the local date is February 21, write "February 21". The local date is always authoritative.
 
-IMPORTANT: Your response will be published directly to readers in a neighborhood newsletter. You are NOT responding to the person who submitted this query - you are writing content for third-party readers who live in ${neighborhoodName}.`;
+IMPORTANT: Your response will be published directly to readers in a local newsletter for ${neighborhoodName}. You are NOT responding to the person who submitted this query - you are writing content for third-party readers who live in ${neighborhoodName}.${britishBlock}`;
 
   const dailyBriefStyle = `
 Your writing style:
@@ -459,12 +467,12 @@ Your writing style:
 - Deadpan humor when appropriate
 - You drop specific details that only a local would know (exact addresses, which corner, who owns what)
 - You present information conversationally, like telling a friend what's happening in the neighborhood
-- Start with a brief, casual intro greeting in the LOCAL LANGUAGE of the neighborhood (e.g., "God morgon, grannar." for Stockholm, "Bonjour, voisins." for Paris, "Buongiorno." for Milan, "Goedemorgen." for Amsterdam). For English-speaking cities, use "Good morning" with a local twist (e.g., "Morning, neighbors." for New York, "Good morning, loves." for London). This local greeting is the signature charm of each brief.
+- Start with a brief, casual intro greeting in the LOCAL LANGUAGE of the neighborhood (e.g., "God morgon, grannar." for Stockholm, "Bonjour, voisins." for Paris, "Buongiorno." for Milan, "Goedemorgen." for Amsterdam). For English-speaking cities, use "Good morning" with a local twist (e.g., "Morning, neighbors." for New York, "Good morning, loves." for London, "Morning, ${neighborhoodName}." for a UK town, "Good morning, ${neighborhoodName}." for an Irish county). This local greeting is the signature charm of each brief.
 - End with a brief, friendly sign-off in the LOCAL LANGUAGE (e.g., "Ha en fin dag." for Stockholm, "Bonne journee." for Paris, "Vi ses." for Stockholm). For English-speaking cities, a casual farewell works (e.g., "See you tomorrow." or "Enjoy the day.").
 - CRITICAL: This is a DAILY update published every morning. Never use "another week", "this week's roundup", or any weekly/monthly framing. Treat each brief as today's news.
 - CRITICAL: If you cannot verify something with a source, DO NOT mention it at all. Only include stories you can confirm.
 - Never say "you mentioned" or correct the query - just write about what IS happening
-- ALWAYS write the main prose in English, but ALWAYS include 1-2 local language phrases naturally throughout (not just in greetings/sign-offs). Examples: a Swedish brief might say "the new konditori on Odengatan" instead of "the new pastry shop", a French brief might say "the new boulangerie on rue de Bretagne" instead of "the new bakery". These local touches are the seasoning that gives each brief its distinctive flavor and sense of place. NEVER use a foreign word for "neighborhood" itself (no "quartier", "barrio", "Viertel", "quartiere", etc.); the word is ALWAYS "neighborhood". All section headers MUST be in English.
+- ALWAYS write the main prose in English, but ALWAYS include 1-2 local language phrases naturally throughout (not just in greetings/sign-offs). Examples: a Swedish brief might say "the new konditori on Odengatan" instead of "the new pastry shop", a French brief might say "the new boulangerie on rue de Bretagne" instead of "the new bakery". These local touches are the seasoning that gives each brief its distinctive flavor and sense of place. NEVER use a foreign word for the place itself (no "quartier", "barrio", "Viertel", "quartiere", etc.); the English word for this place is ALWAYS "${placeNoun}". All section headers MUST be in English.
 
 TONE AND VOCABULARY:
 - Do NOT use lowbrow or overly casual words like "ya", "folks", "eats", "grub", "spot" (for restaurant)
@@ -491,7 +499,7 @@ Your writing style:
 - You drop specific details that only a local would know (exact addresses, which corner, who owns what)
 - CRITICAL: If you cannot verify something with a source, DO NOT mention it at all. Only include stories you can confirm.
 - Never say "you mentioned" or correct the query - just write about what IS happening
-- ALWAYS write the main prose in English, but naturally include 1-2 local language terms throughout (e.g., "konditori" instead of "pastry shop" in Stockholm, "boulangerie" instead of "bakery" in Paris). NEVER use a foreign word for "neighborhood" itself (no "quartier", "barrio", "Viertel", "quartiere", etc.); the word is ALWAYS "neighborhood". These local touches give each edition its distinctive sense of place. All section headers MUST be in English.
+- ALWAYS write the main prose in English, but naturally include 1-2 local language terms throughout (e.g., "konditori" instead of "pastry shop" in Stockholm, "boulangerie" instead of "bakery" in Paris). NEVER use a foreign word for the place itself (no "quartier", "barrio", "Viertel", "quartiere", etc.); the English word for this place is ALWAYS "${placeNoun}". These local touches give each edition its distinctive sense of place. All section headers MUST be in English.
 
 TONE AND VOCABULARY:
 - Do NOT use lowbrow or overly casual words like "ya", "folks", "eats", "grub", "spot" (for restaurant)
@@ -515,7 +523,7 @@ Your writing style:
 - Each event must include: what it is, where (specific address), when (date and time), and why it matters
 - CRITICAL: ONLY include events you can verify with a real source. If you cannot find a source, LEAVE IT OUT
 - Never include past events or vague "coming soon" items without dates
-- ALWAYS write the main prose in English, but naturally include 1-2 local language terms throughout (e.g., "konditori" instead of "pastry shop" in Stockholm, "boulangerie" instead of "bakery" in Paris). NEVER use a foreign word for "neighborhood" itself (no "quartier", "barrio", "Viertel", "quartiere", etc.); the word is ALWAYS "neighborhood". All section headers MUST be in English.
+- ALWAYS write the main prose in English, but naturally include 1-2 local language terms throughout (e.g., "konditori" instead of "pastry shop" in Stockholm, "boulangerie" instead of "bakery" in Paris). NEVER use a foreign word for the place itself (no "quartier", "barrio", "Viertel", "quartiere", etc.); the English word for this place is ALWAYS "${placeNoun}". All section headers MUST be in English.
 
 TONE AND VOCABULARY:
 - Do NOT use lowbrow or overly casual words like "ya", "folks", "eats", "grub", "spot" (for restaurant)
@@ -830,6 +838,12 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     if (enrichedData.categories.length === 0) {
       console.log('No JSON found, returning raw response for manual review');
 
+      if (isBritishEnglish) {
+        text = anglicise(text);
+        subjectTeaser = subjectTeaser ? anglicise(subjectTeaser) : subjectTeaser;
+        emailTeaser = emailTeaser ? anglicise(emailTeaser) : emailTeaser;
+      }
+
       if (linkCandidates.length > 0 && text) {
         text = injectHyperlinks(text, linkCandidates, { name: neighborhoodName, city });
       }
@@ -881,6 +895,26 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     }
 
     text = sanitizeMarkdownLinks(text);
+
+    // Spelling safety net. The prompt asks for British English, but Gemini
+    // follows its examples over its instructions, so enforce it after the fact.
+    if (isBritishEnglish) {
+      const beforeAnglicise = text;
+      text = anglicise(text);
+      if (text !== beforeAnglicise) {
+        console.warn(`Anglicised American spellings for ${neighborhoodName}`);
+      }
+      subjectTeaser = subjectTeaser ? anglicise(subjectTeaser) : subjectTeaser;
+      emailTeaser = emailTeaser ? anglicise(emailTeaser) : emailTeaser;
+      for (const category of enrichedData.categories) {
+        category.name = anglicise(category.name);
+        for (const story of category.stories) {
+          // entity and source names are proper nouns, left exactly as written
+          story.context = anglicise(story.context);
+          if (story.note) story.note = anglicise(story.note);
+        }
+      }
+    }
 
     if (linkCandidates.length > 0 && text) {
       text = injectHyperlinks(text, linkCandidates, { name: neighborhoodName, city });

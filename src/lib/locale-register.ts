@@ -1,0 +1,244 @@
+/**
+ * British-English register for the markets that are not American.
+ *
+ * Two separate problems, both visible to publishers:
+ *
+ * 1. SPELLING. The enrichment prompt is written in American English, so Gemini
+ *    returns "theater", "center", "program" even for a Sussex market town. A UK
+ *    editor reads that as a foreign wire feed, not local copy. Lewes carried
+ *    "Theater Performance" on the same line as "Lewes Little Theatre".
+ *
+ * 2. REGISTER. "Neighborhood" is not a word British or Irish local press uses
+ *    for a place. Christchurch is a town. County Clare is a county. Calling
+ *    either a neighbourhood is the tell that nobody local wrote it.
+ *
+ * The prompt asks for both (see brief-enricher-gemini.ts). anglicise() is the
+ * net underneath: Gemini follows its examples over its instructions, so spelling
+ * is enforced after generation rather than hoped for.
+ */
+
+/** Countries whose readers expect British spelling. */
+const BRITISH_ENGLISH_COUNTRIES = new Set(
+  [
+    'UK', 'United Kingdom', 'Great Britain', 'England', 'Scotland', 'Wales',
+    'Northern Ireland', 'Ireland', 'Republic of Ireland',
+    'Australia', 'New Zealand', 'South Africa',
+    'Singapore', 'Hong Kong', 'India', 'Malaysia',
+  ].map((c) => c.toLowerCase())
+);
+
+export function usesBritishEnglish(country: string | null | undefined): boolean {
+  return BRITISH_ENGLISH_COUNTRIES.has((country || '').trim().toLowerCase());
+}
+
+/**
+ * UK and Irish counties / administrative areas that appear in our `city` column.
+ * When the "city" is one of these, the place itself is a town, not a district of
+ * a city. Greater London and the named cities are deliberately absent: Mayfair
+ * really is a neighbourhood.
+ */
+const COUNTY_LEVEL_AREAS = new Set(
+  [
+    // England
+    'Bedfordshire', 'Berkshire', 'Buckinghamshire', 'Cambridgeshire', 'Cheshire',
+    'Cornwall', 'Cumbria', 'Derbyshire', 'Devon', 'Dorset', 'Durham',
+    'East Riding of Yorkshire', 'East Sussex', 'Essex', 'Gloucestershire',
+    'Greater Manchester', 'Hampshire', 'Herefordshire', 'Hertfordshire',
+    'Isle of Wight', 'Kent', 'Lancashire', 'Leicestershire', 'Lincolnshire',
+    'Merseyside', 'Norfolk', 'North Yorkshire', 'Northamptonshire',
+    'Northumberland', 'Nottinghamshire', 'Oxfordshire', 'Rutland', 'Shropshire',
+    'Somerset', 'South Yorkshire', 'Staffordshire', 'Suffolk', 'Surrey',
+    'Sussex', 'Tyne and Wear', 'Warwickshire', 'West Midlands', 'West Sussex',
+    'West Yorkshire', 'Wiltshire', 'Worcestershire',
+    // Scotland
+    'Aberdeenshire', 'Angus', 'Argyll and Bute', 'Ayrshire', 'Clackmannanshire',
+    'Dumfries and Galloway', 'Dunbartonshire', 'East Lothian', 'Fife',
+    'Highland', 'Inverclyde', 'Midlothian', 'Moray', 'Perth and Kinross',
+    'Renfrewshire', 'Scottish Borders', 'Stirling', 'West Lothian',
+    // Wales
+    'Anglesey', 'Blaenau Gwent', 'Bridgend', 'Caerphilly', 'Carmarthenshire',
+    'Ceredigion', 'Conwy', 'Denbighshire', 'Flintshire', 'Gwynedd',
+    'Merthyr Tydfil', 'Monmouthshire', 'Neath Port Talbot', 'Pembrokeshire',
+    'Powys', 'Rhondda Cynon Taf', 'Torfaen', 'Vale of Glamorgan', 'Wrexham',
+    // Northern Ireland
+    'Antrim', 'Armagh', 'Down', 'Fermanagh', 'Londonderry', 'Tyrone',
+  ].map((c) => c.toLowerCase())
+);
+
+export interface PlaceDescriptor {
+  id?: string | null;
+  name: string;
+  city?: string | null;
+  country?: string | null;
+}
+
+/**
+ * The noun the copy should use for this place: "county", "town", or the local
+ * spelling of neighbourhood. This is what the reader sees in a sentence like
+ * "the {noun}'s rich history".
+ */
+export function getPlaceNoun(place: PlaceDescriptor): string {
+  const id = (place.id || '').toLowerCase();
+  const name = (place.name || '').trim();
+  const city = (place.city || '').trim().toLowerCase();
+  const british = usesBritishEnglish(place.country);
+
+  if (id.startsWith('ie-county-') || /^county\s/i.test(name)) return 'county';
+  if (id === 'ie-ireland' || name.toLowerCase() === 'ireland') return 'country';
+  if (british && COUNTY_LEVEL_AREAS.has(city)) return 'town';
+  return british ? 'neighbourhood' : 'neighborhood';
+}
+
+/**
+ * Proper nouns that keep American spelling wherever they appear, plus the UK
+ * brands that are genuinely spelled the American way.
+ */
+const PROTECTED = [
+  'Center Parcs',
+  'Lincoln Center', 'Kennedy Center', 'Rockefeller Center', 'World Trade Center',
+  'Barclays Center', 'Javits Center', 'Moscone Center',
+  'Labor Day', 'Pearl Harbor', 'Department of Labor',
+  'World Health Organization', 'International Labour Organization',
+  'Centers for Disease Control', 'Center for Disease Control',
+  'Color Factory', 'Technicolor',
+];
+
+/** US to UK, whole words only, applied in lower and capitalised form. */
+const SPELLINGS: Array<[string, string]> = [
+  ['neighborhood', 'neighbourhood'],
+  ['neighborhoods', 'neighbourhoods'],
+  ['neighbor', 'neighbour'],
+  ['neighbors', 'neighbours'],
+  ['neighboring', 'neighbouring'],
+  ['center', 'centre'],
+  ['centers', 'centres'],
+  ['centered', 'centred'],
+  ['theater', 'theatre'],
+  ['theaters', 'theatres'],
+  ['program', 'programme'],
+  ['programs', 'programmes'],
+  ['color', 'colour'],
+  ['colors', 'colours'],
+  ['colored', 'coloured'],
+  ['colorful', 'colourful'],
+  ['favorite', 'favourite'],
+  ['favorites', 'favourites'],
+  ['favor', 'favour'],
+  ['flavor', 'flavour'],
+  ['flavors', 'flavours'],
+  ['harbor', 'harbour'],
+  ['honor', 'honour'],
+  ['honored', 'honoured'],
+  ['humor', 'humour'],
+  ['labor', 'labour'],
+  ['rumor', 'rumour'],
+  ['rumors', 'rumours'],
+  ['savor', 'savour'],
+  ['behavior', 'behaviour'],
+  ['endeavor', 'endeavour'],
+  ['organize', 'organise'],
+  ['organized', 'organised'],
+  ['organizer', 'organiser'],
+  ['organizers', 'organisers'],
+  ['organizing', 'organising'],
+  ['organization', 'organisation'],
+  ['organizations', 'organisations'],
+  ['recognize', 'recognise'],
+  ['recognized', 'recognised'],
+  ['realize', 'realise'],
+  ['realized', 'realised'],
+  ['apologize', 'apologise'],
+  ['apologized', 'apologised'],
+  ['specialize', 'specialise'],
+  ['specialized', 'specialised'],
+  ['specializing', 'specialising'],
+  ['traveled', 'travelled'],
+  ['traveling', 'travelling'],
+  ['traveler', 'traveller'],
+  ['travelers', 'travellers'],
+  ['canceled', 'cancelled'],
+  ['canceling', 'cancelling'],
+  ['modeled', 'modelled'],
+  ['modeling', 'modelling'],
+  ['fueled', 'fuelled'],
+  ['defense', 'defence'],
+  ['offense', 'offence'],
+  ['gray', 'grey'],
+  ['liter', 'litre'],
+  ['liters', 'litres'],
+  ['aluminum', 'aluminium'],
+  ['gotten', 'got'],
+  // Vocabulary that is unambiguous as a whole word.
+  // "downtown" is deliberately absent: it turns up inside proper event names
+  // ("Downtown Dublin Farmers Market"), so the prompt asks for it instead.
+  ['sidewalk', 'pavement'],
+  ['sidewalks', 'pavements'],
+  ['soccer', 'football'],
+];
+
+const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const PLACEHOLDER_OPEN = 'PN';
+const PLACEHOLDER_CLOSE = 'PN';
+
+/**
+ * Rewrite American spellings into British ones, leaving protected proper nouns
+ * alone. Safe to run more than once.
+ */
+export function anglicise(text: string | null | undefined): string {
+  if (!text) return text || '';
+  let out = text;
+
+  const parked: string[] = [];
+  const park = (value: string) => {
+    parked.push(value);
+    return `${PLACEHOLDER_OPEN}${parked.length - 1}${PLACEHOLDER_CLOSE}`;
+  };
+
+  // Park URLs first. "/theater/" inside a link would otherwise be rewritten and
+  // the link would 404.
+  out = out.replace(/https?:\/\/[^\s)\]]+/g, (m) => park(m));
+
+  // Park the proper nouns behind placeholders so the word rules cannot touch them
+  for (const phrase of PROTECTED) {
+    const re = new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    out = out.replace(re, (m) => park(m));
+  }
+
+  for (const [us, uk] of SPELLINGS) {
+    out = out.replace(new RegExp(`\\b${us}\\b`, 'g'), uk);
+    out = out.replace(new RegExp(`\\b${capitalise(us)}\\b`, 'g'), capitalise(uk));
+  }
+
+  return out.replace(
+    new RegExp(`${PLACEHOLDER_OPEN}(\\d+)${PLACEHOLDER_CLOSE}`, 'g'),
+    (_m, i) => parked[Number(i)]
+  );
+}
+
+/**
+ * The prompt block. Tells Gemini the register and the spelling before it writes,
+ * so anglicise() has little left to catch.
+ */
+export function britishStyleBlock(place: PlaceDescriptor): string {
+  if (!usesBritishEnglish(place.country)) return '';
+  const noun = getPlaceNoun(place);
+  const nounLine =
+    noun === 'county'
+      ? `${place.name} is a COUNTY. Call it "the county" or by name. Never "the neighbourhood", never "the area's community".`
+      : noun === 'country'
+        ? `Ireland is a COUNTRY. Call it "the country" or by name.`
+        : noun === 'town'
+          ? `${place.name} is a TOWN. Call it "the town" or by name. NEVER "the neighborhood" or "the neighbourhood" - British and Irish local press does not use that word for a place.`
+          : `${place.name} is a ${noun}. Use the spelling "${noun}", never "neighborhood".`;
+
+  return `
+
+BRITISH ENGLISH - NON-NEGOTIABLE. This edition is read in ${place.country}.
+- ${nounLine}
+- British spelling throughout: theatre, centre, programme, colour, favourite, honour, organised, recognised, travelled, cancelled, defence, grey, litre. NEVER the American forms.
+- British vocabulary: pavement not sidewalk, town centre not downtown, car park not parking lot, football not soccer, autumn not fall, shop not store, flat where the source says apartment, postcode not zip code, council not city hall, A&E not ER.
+- Money in pounds for the UK, euro for Ireland. Dates as "Monday 15 September", never "September 15".
+- A licence is the noun, to license is the verb.
+- Keep proper nouns exactly as their owner spells them (Lewes Little Theatre, Center Parcs, The Thomas Tripp).`;
+}

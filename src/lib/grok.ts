@@ -11,6 +11,7 @@
 import { getSearchLocation } from '@/lib/neighborhood-utils';
 import { AI_MODELS } from '@/config/ai-models';
 import { recordGrokCall } from '@/lib/ai-cost';
+import { geographicBoundaryBlock } from './place-boundary';
 
 const GROK_API_URL = 'https://api.x.ai/v1';
 const GROK_MODEL = AI_MODELS.GROK_FAST;
@@ -127,6 +128,8 @@ Search for recent posts and news about ${location}. Focus on:
 ADDITIONAL CONTEXT FROM NYC PUBLIC DATA:
 ${nycDataContext}
 You may weave this into your brief naturally, e.g., "Meanwhile, DOB records show..." or "In other news, a new liquor license was issued to..."` : ''}
+
+${geographicBoundaryBlock(neighborhoodName, city, country)}
 
 After searching, create a brief "What's Happening Today" summary.
 
@@ -448,6 +451,8 @@ GALLERY AND MUSEUM FILTER (CRITICAL):
 - Do NOT include galleries or museums simply because they are open during normal hours with an ongoing exhibition. "Gallery X is showing Artist Y" is NOT an event - it's just a venue being open
 - The test: would a local resident specifically plan to visit on THIS day vs any other day? If the answer is "no, it's the same exhibition that's been there for weeks", do NOT include it
 - Opening RECEPTIONS (with a specific evening time like 6-8 PM) are events. An exhibition that opened last month and is still running is NOT an event
+
+${geographicBoundaryBlock(neighborhoodName, city, country)}
 
 After searching, create a "Look Ahead" summary.
 

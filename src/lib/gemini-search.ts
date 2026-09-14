@@ -12,6 +12,7 @@ import { GoogleGenAI } from '@google/genai';
 import { AI_MODELS } from '@/config/ai-models';
 import { recordGeminiCall } from '@/lib/ai-cost';
 import type { StructuredEvent } from './look-ahead-events';
+import { geographicBoundaryBlock } from './place-boundary';
 
 const RETRY_DELAYS = [2000, 5000, 15000]; // 2s, 5s, 15s exponential backoff
 
@@ -71,6 +72,7 @@ Return your findings as a bullet-point list of distinct facts. Each bullet shoul
 
 Format each bullet as:
 - [FACT]: What happened or is happening, with specific names, dates, addresses. (Source: publication or site name)
+${geographicBoundaryBlock(neighborhoodName, city, country)}
 ${avoidBlock}`;
 
   try {
@@ -149,7 +151,7 @@ GALLERY/MUSEUM FILTER: Only include a gallery or museum if there is a specific T
 
 For each event found, provide: the specific date (YYYY-MM-DD), day of week, time if available, event name, category, venue name, address, and price if listed.
 
-IMPORTANT: Only include events with confirmed dates within the ${fromStr} to ${toStr} window. Skip anything without a specific date.
+IMPORTANT: Only include events with confirmed dates within the ${fromStr} to ${toStr} window. Skip anything without a specific date.${geographicBoundaryBlock(neighborhoodName, city, country)}
 
 After listing all events, output a JSON array in this exact format:
 EVENTS_JSON:
