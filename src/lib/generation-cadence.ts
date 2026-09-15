@@ -77,6 +77,10 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   'sydney-paddington',
   'auckland-remuera',
   'toronto-yorkville',
+  // Neutral German-language showcase: the German pilot towns above were named by
+  // a live prospect, so cold outreach to other German-speaking publishers links
+  // this one instead.
+  'berlin-prenzlauer-berg',
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */
@@ -89,6 +93,7 @@ export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' 
   'milan-navigli': 'it',
   'madrid-salamanca': 'es',
   'montreal-westmount': 'fr',
+  'berlin-prenzlauer-berg': 'de',
 };
 
 export function isPilotNeighborhood(neighborhoodId: string): boolean {
