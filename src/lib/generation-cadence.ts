@@ -65,6 +65,18 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   'birmingham-digbeth',
   'lanarkshire-east-kilbride',
   'cornwall-helston',
+  // Country-wave showcases (2026-09-15): one live edition per market so a cold
+  // email to a French, Italian, Spanish, Canadian, Australian or New Zealand
+  // publisher can link to this morning's edition in the reader's language.
+  // Existing public neighbourhoods, promoted to daily generation for the wave.
+  // Review for removal after 2026-10-15 (about $0.50-1.00/day each).
+  'paris-le-marais',
+  'milan-navigli',
+  'madrid-salamanca',
+  'montreal-westmount',
+  'sydney-paddington',
+  'auckland-remuera',
+  'toronto-yorkville',
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */
@@ -72,6 +84,11 @@ export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' 
   'sauerland-balve': 'de',
   'thueringen-drei-gleichen': 'de',
   'hamburg-eppendorf': 'de',
+  // Country-wave showcases (2026-09-15)
+  'paris-le-marais': 'fr',
+  'milan-navigli': 'it',
+  'madrid-salamanca': 'es',
+  'montreal-westmount': 'fr',
 };
 
 export function isPilotNeighborhood(neighborhoodId: string): boolean {
