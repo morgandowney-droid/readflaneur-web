@@ -1,9 +1,12 @@
 import { GoogleGenAI } from '@google/genai';
 import { AI_MODELS } from '@/config/ai-models';
 import { recordGeminiCall, recordAiUsage } from '@/lib/ai-cost';
+import { parseSectionLabel, buildTranslatedHeadline } from '@/lib/section-labels';
+import type { LanguageCode } from '@/lib/section-labels';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-export type LanguageCode = 'sv' | 'fr' | 'de' | 'es' | 'pt' | 'it' | 'zh' | 'ja';
+// Defined in section-labels so that module compiles standalone for the backfill.
+export type { LanguageCode };
 
 /** Which model does the work. Default (Qwen via OpenRouter, Gemini fallback) is
  * cheap but takes 40-55s on a 400-word brief, which is fine for a cached
@@ -58,6 +61,16 @@ export async function translateArticle(
   const eventListingBlock = eventMatch ? eventMatch[0] : null;
   const bodyToTranslate = eventListingBlock ? body.substring(eventListingBlock.length) : body;
 
+  // Park the section label ("LOOK AHEAD:", "{Place} DAILY BRIEF:", "The Sunday
+  // Edition:") before translating. It is a fixed term, and left in the prompt the
+  // model renames it every run: the German pilot carried VORAUSSCHAU, VORAUSBLICK
+  // and VORAUSGESCHAUT in four days, and left "DAILY BRIEF" in English. Only the
+  // teaser goes to the model; the label is restored from one table afterwards.
+  const section = parseSectionLabel(headline);
+  const headlineToTranslate = section
+    ? (section.kind === 'sunday_edition' ? section.place : section.rest)
+    : headline;
+
   const langName = LANGUAGE_NAMES[targetLang];
   const prompt = `Translate the following newspaper article from English to ${langName}.
 
@@ -72,7 +85,7 @@ Return ONLY valid JSON (no markdown fences):
 {"headline": "...", "body": "...", "preview_text": ${previewText ? '"..."' : 'null'}}
 
 HEADLINE:
-${headline}
+${headlineToTranslate}
 
 BODY:
 ${bodyToTranslate}
@@ -83,6 +96,11 @@ ${previewText ? `\nPREVIEW TEXT:\n${previewText}` : ''}`;
   // Recombine: prepend the original English event listing to the translated body
   if (result && eventListingBlock) {
     result.body = eventListingBlock + result.body;
+  }
+
+  // Restore the parked section label from the canonical table.
+  if (result && section) {
+    result.headline = buildTranslatedHeadline(section, result.headline, targetLang);
   }
 
   return result;
