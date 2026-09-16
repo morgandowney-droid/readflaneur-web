@@ -65,6 +65,13 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   'birmingham-digbeth',
   'lanarkshire-east-kilbride',
   'cornwall-helston',
+  // PA Media (2026-09-16 call): Jack Lefley named Haringey himself, as the
+  // London borough he is from. Built at both units, the borough and two of its
+  // neighbourhoods, because the unit question is the one PA has to answer
+  // before it can price anything.
+  'london-haringey',
+  'haringey-tottenham',
+  'haringey-crouch-end',
   // Country-wave showcases (2026-09-15): one live edition per market so a cold
   // email to a French, Italian, Spanish, Canadian, Australian or New Zealand
   // publisher can link to this morning's edition in the reader's language.

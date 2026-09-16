@@ -89,6 +89,16 @@ export const CITY_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
   'westmidlands-birmingham',
 ]);
 
+/**
+ * Editions covering a whole London borough. British local press calls these
+ * "the borough" and never "the city" or "the area", and the borough is the unit
+ * a London reader recognises. Without this, Haringey inherits "area" from the
+ * UK-and-Ireland district rule and reads like one of its own neighbourhoods.
+ */
+export const BOROUGH_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
+  'london-haringey',
+]);
+
 export interface PlaceDescriptor {
   id?: string | null;
   name: string;
@@ -110,6 +120,7 @@ export function getPlaceNoun(place: PlaceDescriptor): string {
   if (id.startsWith('ie-county-') || /^county\s/i.test(name)) return 'county';
   if (id === 'ie-ireland' || name.toLowerCase() === 'ireland') return 'country';
   if (CITY_LEVEL_EDITION_IDS.has(id)) return 'city';
+  if (BOROUGH_LEVEL_EDITION_IDS.has(id)) return 'borough';
   if (british && COUNTY_LEVEL_AREAS.has(city)) return 'town';
   // "Area" is what British and Irish local press actually calls a district of a
   // city. "Neighbourhood" is correct English and still reads as an import there,
