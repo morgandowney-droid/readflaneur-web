@@ -72,6 +72,12 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   'london-haringey',
   'haringey-tottenham',
   'haringey-crouch-end',
+  // Overstory Media Group, British Columbia (2026-09-16): Shannon Havard named
+  // Chilliwack, Langley and Abbotsford. Fraser Valley cities between Overstory's
+  // existing titles, all well above the 25,000 the unit is sized for.
+  'fraservalley-chilliwack',
+  'fraservalley-langley',
+  'fraservalley-abbotsford',
   // Country-wave showcases (2026-09-15): one live edition per market so a cold
   // email to a French, Italian, Spanish, Canadian, Australian or New Zealand
   // publisher can link to this morning's edition in the reader's language.

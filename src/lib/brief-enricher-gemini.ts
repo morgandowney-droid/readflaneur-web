@@ -15,7 +15,7 @@ import {
 import { recordGeminiCall } from '@/lib/ai-cost';
 import type { StructuredEvent } from '@/lib/look-ahead-events';
 import { extractGroundingChunks, resolveGroundingChunks, cleanStorySources } from '@/lib/source-links';
-import { anglicise, britishStyleBlock, enforcePlaceNoun, getPlaceNoun, usesBritishEnglish } from '@/lib/locale-register';
+import { anglicise, britishStyleBlock, enforcePlaceNoun, getPlaceNoun, usesBritishEnglish, spellingVariantFor } from '@/lib/locale-register';
 
 export interface EnrichedStoryItem {
   entity: string;
@@ -451,6 +451,9 @@ export async function enrichBriefWithGemini(
   const place = { id: neighborhoodSlug, name: neighborhoodName, city, country };
   const placeNoun = getPlaceNoun(place);
   const isBritishEnglish = usesBritishEnglish(country);
+  // Canada takes only half the British spelling list, so route by variant
+  // rather than by a British yes/no. 'american' makes anglicise a no-op.
+  const spellingVariant = spellingVariantFor(country);
   const britishBlock = britishStyleBlock(place);
 
   // System instruction varies by article type
@@ -838,10 +841,11 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     if (enrichedData.categories.length === 0) {
       console.log('No JSON found, returning raw response for manual review');
 
-      if (isBritishEnglish) {
-        text = enforcePlaceNoun(anglicise(text), placeNoun);
-        subjectTeaser = subjectTeaser ? enforcePlaceNoun(anglicise(subjectTeaser), placeNoun) : subjectTeaser;
-        emailTeaser = emailTeaser ? enforcePlaceNoun(anglicise(emailTeaser), placeNoun) : emailTeaser;
+      if (spellingVariant !== 'american') {
+        const fixRaw = (v: string) => enforcePlaceNoun(anglicise(v, spellingVariant), placeNoun);
+        text = fixRaw(text);
+        subjectTeaser = subjectTeaser ? fixRaw(subjectTeaser) : subjectTeaser;
+        emailTeaser = emailTeaser ? fixRaw(emailTeaser) : emailTeaser;
       }
 
       if (linkCandidates.length > 0 && text) {
@@ -898,10 +902,10 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
 
     // Spelling safety net. The prompt asks for British English, but Gemini
     // follows its examples over its instructions, so enforce it after the fact.
-    if (isBritishEnglish) {
+    if (spellingVariant !== 'american') {
       // Spelling, then register. Gemini writes "our neighbourhood" about a
       // Birmingham suburb however plainly the prompt says "the area".
-      const fix = (v: string) => enforcePlaceNoun(anglicise(v), placeNoun);
+      const fix = (v: string) => enforcePlaceNoun(anglicise(v, spellingVariant), placeNoun);
       const beforeFix = text;
       text = fix(text);
       if (text !== beforeFix) {

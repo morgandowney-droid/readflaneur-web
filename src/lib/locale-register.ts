@@ -32,6 +32,28 @@ export function usesBritishEnglish(country: string | null | undefined): boolean 
 }
 
 /**
+ * Canada takes half of the British list and rejects the other half. It writes
+ * colour, centre, travelled and defence, and it writes organize, program,
+ * sidewalk, soccer, aluminum and gotten. Treating it as British is as wrong as
+ * treating it as American: a Chilliwack reader spots "organise" and "pavement"
+ * exactly as fast as a Lewes reader spotted "theater".
+ */
+const CANADIAN_ENGLISH_COUNTRIES = new Set(['canada']);
+
+export function usesCanadianEnglish(country: string | null | undefined): boolean {
+  return CANADIAN_ENGLISH_COUNTRIES.has((country || '').trim().toLowerCase());
+}
+
+/** Which spelling set applies. Anything else keeps American spelling. */
+export type SpellingVariant = 'british' | 'canadian' | 'american';
+
+export function spellingVariantFor(country: string | null | undefined): SpellingVariant {
+  if (usesCanadianEnglish(country)) return 'canadian';
+  if (usesBritishEnglish(country)) return 'british';
+  return 'american';
+}
+
+/**
  * The register rules below are drawn from British and Irish local newspapers.
  * They do not travel: "neighbourhood" is ordinary in Singapore and Hong Kong,
  * and Australia says "suburb". Spelling still applies everywhere.
@@ -87,6 +109,12 @@ const COUNTY_LEVEL_AREAS = new Set(
  */
 export const CITY_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
   'westmidlands-birmingham',
+  // Overstory Media Group, Fraser Valley (named by Shannon Havard, 2026-09-16).
+  // All three are cities in their own right, so without this they inherit
+  // "neighbourhood" from the fallback and a 160,000-person city calls itself one.
+  'fraservalley-chilliwack',
+  'fraservalley-langley',
+  'fraservalley-abbotsford',
 ]);
 
 /**
@@ -126,7 +154,10 @@ export function getPlaceNoun(place: PlaceDescriptor): string {
   // city. "Neighbourhood" is correct English and still reads as an import there,
   // but it is ordinary usage in Singapore and Hong Kong, so this stays local.
   if (isUkOrIreland(place.country)) return 'area';
-  return british ? 'neighbourhood' : 'neighborhood';
+  // Canada spells it the British way even though the rest of its register is
+  // closer to American.
+  if (british || usesCanadianEnglish(place.country)) return 'neighbourhood';
+  return 'neighborhood';
 }
 
 /**
@@ -143,8 +174,11 @@ const PROTECTED = [
   'Color Factory', 'Technicolor',
 ];
 
-/** US to UK, whole words only, applied in lower and capitalised form. */
-const SPELLINGS: Array<[string, string]> = [
+/**
+ * Spellings Canada shares with Britain: -our, -re, doubled -ll-, -ce, grey,
+ * litre. Whole words only, applied in lower and capitalised form.
+ */
+const SHARED_SPELLINGS: Array<[string, string]> = [
   ['neighborhood', 'neighbourhood'],
   ['neighborhoods', 'neighbourhoods'],
   ['neighbor', 'neighbour'],
@@ -155,8 +189,6 @@ const SPELLINGS: Array<[string, string]> = [
   ['centered', 'centred'],
   ['theater', 'theatre'],
   ['theaters', 'theatres'],
-  ['program', 'programme'],
-  ['programs', 'programmes'],
   ['color', 'colour'],
   ['colors', 'colours'],
   ['colored', 'coloured'],
@@ -176,6 +208,34 @@ const SPELLINGS: Array<[string, string]> = [
   ['savor', 'savour'],
   ['behavior', 'behaviour'],
   ['endeavor', 'endeavour'],
+  ['traveled', 'travelled'],
+  ['traveling', 'travelling'],
+  ['traveler', 'traveller'],
+  ['travelers', 'travellers'],
+  ['canceled', 'cancelled'],
+  ['canceling', 'cancelling'],
+  ['modeled', 'modelled'],
+  ['modeling', 'modelling'],
+  ['fueled', 'fuelled'],
+  ['defense', 'defence'],
+  ['offense', 'offence'],
+  ['gray', 'grey'],
+  ['liter', 'litre'],
+  ['liters', 'litres'],
+];
+
+/**
+ * British but NOT Canadian. Canada keeps American -ize, writes "program",
+ * "aluminum" and "gotten", and says sidewalk and soccer. Applying these to a
+ * Canadian edition is its own tell.
+ *
+ * "downtown" is deliberately absent from the vocabulary rules: it turns up
+ * inside proper event names ("Downtown Dublin Farmers Market"), so the prompt
+ * asks for it instead.
+ */
+const BRITISH_ONLY_SPELLINGS: Array<[string, string]> = [
+  ['program', 'programme'],
+  ['programs', 'programmes'],
   ['organize', 'organise'],
   ['organized', 'organised'],
   ['organizer', 'organiser'],
@@ -192,25 +252,8 @@ const SPELLINGS: Array<[string, string]> = [
   ['specialize', 'specialise'],
   ['specialized', 'specialised'],
   ['specializing', 'specialising'],
-  ['traveled', 'travelled'],
-  ['traveling', 'travelling'],
-  ['traveler', 'traveller'],
-  ['travelers', 'travellers'],
-  ['canceled', 'cancelled'],
-  ['canceling', 'cancelling'],
-  ['modeled', 'modelled'],
-  ['modeling', 'modelling'],
-  ['fueled', 'fuelled'],
-  ['defense', 'defence'],
-  ['offense', 'offence'],
-  ['gray', 'grey'],
-  ['liter', 'litre'],
-  ['liters', 'litres'],
   ['aluminum', 'aluminium'],
   ['gotten', 'got'],
-  // Vocabulary that is unambiguous as a whole word.
-  // "downtown" is deliberately absent: it turns up inside proper event names
-  // ("Downtown Dublin Farmers Market"), so the prompt asks for it instead.
   ['sidewalk', 'pavement'],
   ['sidewalks', 'pavements'],
   ['soccer', 'football'],
@@ -240,8 +283,12 @@ const PLACEHOLDER_CLOSE = 'PN';
  * Rewrite American spellings into British ones, leaving protected proper nouns
  * alone. Safe to run more than once.
  */
-export function anglicise(text: string | null | undefined): string {
+export function anglicise(
+  text: string | null | undefined,
+  variant: SpellingVariant = 'british',
+): string {
   if (!text) return text || '';
+  if (variant === 'american') return text;
   let out = text;
 
   const parked: string[] = [];
@@ -260,12 +307,18 @@ export function anglicise(text: string | null | undefined): string {
     out = out.replace(re, (m) => park(m));
   }
 
-  for (const [us, uk] of SPELLINGS) {
+  const rules = variant === 'canadian'
+    ? SHARED_SPELLINGS
+    : [...SHARED_SPELLINGS, ...BRITISH_ONLY_SPELLINGS];
+
+  for (const [us, uk] of rules) {
     out = out.replace(new RegExp(`\\b${us}\\b`, 'g'), uk);
     out = out.replace(new RegExp(`\\b${capitalise(us)}\\b`, 'g'), capitalise(uk));
   }
 
-  for (const [re, replacement] of PHRASES) {
+  // PHRASES is British only. Canada says "taken to the hospital" and "on the
+  // weekend", the same as the United States.
+  for (const [re, replacement] of variant === 'canadian' ? [] : PHRASES) {
     out = out.replace(re, replacement);
   }
 
