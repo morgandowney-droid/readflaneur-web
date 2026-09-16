@@ -123,7 +123,7 @@ export function isPriorityNeighborhood(
  * @param neighborhoodId - neighborhood ID
  * @param localDate      - the neighborhood's local date, 'YYYY-MM-DD'
  * @param subscribed     - true if the neighborhood has >=1 subscriber
- * @returns true for subscribed/Irish neighborhoods (always), or for cold
+ * @returns true for subscribed, Irish and pilot neighborhoods (always), or for cold
  *   neighborhoods only on their bucketed day (every COLD_INTERVAL_DAYS).
  */
 export function shouldGenerateToday(
@@ -131,6 +131,6 @@ export function shouldGenerateToday(
   localDate: string,
   subscribed: boolean,
 ): boolean {
-  if (subscribed || isIrishEntity(neighborhoodId)) return true;
+  if (isPriorityNeighborhood(neighborhoodId, subscribed)) return true;
   return djb2(neighborhoodId) % COLD_INTERVAL_DAYS === dayNumber(localDate) % COLD_INTERVAL_DAYS;
 }
