@@ -86,6 +86,10 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   'paris-le-marais',
   'milan-navigli',
   'madrid-salamanca',
+  // Missed in the original wave, found 2026-09-16: the Lusa draft links to
+  // Chiado as proof the engine writes Portuguese daily, and on the cold cycle
+  // it was 42 hours stale.
+  'lisbon-chiado',
   'montreal-westmount',
   'sydney-paddington',
   'auckland-remuera',
@@ -105,6 +109,7 @@ export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' 
   'paris-le-marais': 'fr',
   'milan-navigli': 'it',
   'madrid-salamanca': 'es',
+  'lisbon-chiado': 'pt',
   'montreal-westmount': 'fr',
   'berlin-prenzlauer-berg': 'de',
 };
