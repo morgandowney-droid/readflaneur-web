@@ -98,6 +98,11 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   // a live prospect, so cold outreach to other German-speaking publishers links
   // this one instead.
   'berlin-prenzlauer-berg',
+  // The Canadian Press (named by Malcolm Kirk, 2026-09-17) ahead of the 21 Sep
+  // call. He picked both and called them local news deserts, which is precisely
+  // the case the product exists to answer. English, so no PILOT_LANGUAGES entry.
+  'newfoundland-gander',
+  'newfoundland-corner-brook',
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */
