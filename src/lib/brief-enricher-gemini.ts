@@ -221,9 +221,19 @@ function stripLeakedTeasers(
   const head = firstHeader > 0 ? text.slice(0, firstHeader) : text;
   const tail = firstHeader > 0 ? text.slice(firstHeader) : '';
 
+  // Gemini sometimes emits both teasers as consecutive lines inside ONE
+  // paragraph, so a whole-block comparison matches neither of them. Strip any
+  // matching line first, then drop a block that leaves empty.
   const kept = head
     .split(/\n{2,}/)
-    .filter(block => !targets.includes(normalise(block)));
+    .map(block =>
+      block
+        .split('\n')
+        .filter(line => !targets.includes(normalise(line)))
+        .join('\n')
+        .trim(),
+    )
+    .filter(block => block.length > 0 && !targets.includes(normalise(block)));
 
   const rebuilt = (kept.join('\n\n') + (tail ? '\n\n' + tail : ''))
     .replace(/\n{3,}/g, '\n\n')
