@@ -15,7 +15,7 @@ import {
 import { recordGeminiCall } from '@/lib/ai-cost';
 import type { StructuredEvent } from '@/lib/look-ahead-events';
 import { extractGroundingChunks, resolveGroundingChunks, cleanStorySources } from '@/lib/source-links';
-import { anglicise, britishStyleBlock, enforcePlaceNoun, getPlaceNoun, usesBritishEnglish, spellingVariantFor } from '@/lib/locale-register';
+import { anglicise, britishStyleBlock, enforcePlaceNoun, getPlaceNoun, isEnglishSpeaking, usesBritishEnglish, spellingVariantFor } from '@/lib/locale-register';
 
 export interface EnrichedStoryItem {
   entity: string;
@@ -466,6 +466,16 @@ export async function enrichBriefWithGemini(
   const spellingVariant = spellingVariantFor(country);
   const britishBlock = britishStyleBlock(place);
 
+  // "Sprinkle in local language" is good advice in Stockholm and Paris and
+  // actively harmful in Gander. With no second language to borrow from, the
+  // model reaches for regional dialect it cannot verify: a Gander softball
+  // tournament was described as "a real ballycater", which is the ice that
+  // forms along the shore. Proper nouns are always safe; dialect vocabulary
+  // never is, because a local spots a misused one in the first sentence.
+  const localFlavourRule = isEnglishSpeaking(country)
+    ? `Write in the ordinary English of ${country}. Use the local names of streets, venues, schools, teams, festivals and dishes exactly as residents write them, because those are proper nouns and they carry the sense of place on their own. Do NOT reach for regional dialect, slang or a local idiom to sound authentic, and never invent local colour. A dialect word used slightly wrong is far worse than a plain word used correctly. NEVER use a foreign word for the place itself; the English word for this place is ALWAYS "${placeNoun}". All section headers MUST be in English.`
+    : `ALWAYS write the main prose in English, but ALWAYS include 1-2 local language phrases naturally throughout (not just in greetings/sign-offs). Examples: a Swedish brief might say "the new konditori on Odengatan" instead of "the new pastry shop", a French brief might say "the new boulangerie on rue de Bretagne" instead of "the new bakery". These local touches are the seasoning that gives each brief its distinctive flavor and sense of place. NEVER use a foreign word for the place itself (no "quartier", "barrio", "Viertel", "quartiere", etc.); the English word for this place is ALWAYS "${placeNoun}". All section headers MUST be in English.`;
+
   // System instruction varies by article type
   const basePersona = `You are a well-travelled, successful 35-year-old who has lived in ${neighborhoodName}, ${city} for years. You know every corner of the ${placeNoun} - the hidden gems, the local drama, the new openings before anyone else does.
 
@@ -485,7 +495,7 @@ Your writing style:
 - CRITICAL: This is a DAILY update published every morning. Never use "another week", "this week's roundup", or any weekly/monthly framing. Treat each brief as today's news.
 - CRITICAL: If you cannot verify something with a source, DO NOT mention it at all. Only include stories you can confirm.
 - Never say "you mentioned" or correct the query - just write about what IS happening
-- ALWAYS write the main prose in English, but ALWAYS include 1-2 local language phrases naturally throughout (not just in greetings/sign-offs). Examples: a Swedish brief might say "the new konditori on Odengatan" instead of "the new pastry shop", a French brief might say "the new boulangerie on rue de Bretagne" instead of "the new bakery". These local touches are the seasoning that gives each brief its distinctive flavor and sense of place. NEVER use a foreign word for the place itself (no "quartier", "barrio", "Viertel", "quartiere", etc.); the English word for this place is ALWAYS "${placeNoun}". All section headers MUST be in English.
+- ${localFlavourRule}
 
 TONE AND VOCABULARY:
 - Do NOT use lowbrow or overly casual words like "ya", "folks", "eats", "grub", "spot" (for restaurant)
@@ -512,7 +522,7 @@ Your writing style:
 - You drop specific details that only a local would know (exact addresses, which corner, who owns what)
 - CRITICAL: If you cannot verify something with a source, DO NOT mention it at all. Only include stories you can confirm.
 - Never say "you mentioned" or correct the query - just write about what IS happening
-- ALWAYS write the main prose in English, but naturally include 1-2 local language terms throughout (e.g., "konditori" instead of "pastry shop" in Stockholm, "boulangerie" instead of "bakery" in Paris). NEVER use a foreign word for the place itself (no "quartier", "barrio", "Viertel", "quartiere", etc.); the English word for this place is ALWAYS "${placeNoun}". These local touches give each edition its distinctive sense of place. All section headers MUST be in English.
+- ${localFlavourRule}
 
 TONE AND VOCABULARY:
 - Do NOT use lowbrow or overly casual words like "ya", "folks", "eats", "grub", "spot" (for restaurant)
@@ -536,7 +546,7 @@ Your writing style:
 - Each event must include: what it is, where (specific address), when (date and time), and why it matters
 - CRITICAL: ONLY include events you can verify with a real source. If you cannot find a source, LEAVE IT OUT
 - Never include past events or vague "coming soon" items without dates
-- ALWAYS write the main prose in English, but naturally include 1-2 local language terms throughout (e.g., "konditori" instead of "pastry shop" in Stockholm, "boulangerie" instead of "bakery" in Paris). NEVER use a foreign word for the place itself (no "quartier", "barrio", "Viertel", "quartiere", etc.); the English word for this place is ALWAYS "${placeNoun}". All section headers MUST be in English.
+- ${localFlavourRule}
 
 TONE AND VOCABULARY:
 - Do NOT use lowbrow or overly casual words like "ya", "folks", "eats", "grub", "spot" (for restaurant)

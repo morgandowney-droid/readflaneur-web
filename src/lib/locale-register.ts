@@ -32,6 +32,29 @@ export function usesBritishEnglish(country: string | null | undefined): boolean 
 }
 
 /**
+ * Countries whose local language already IS English.
+ *
+ * The enrichment prompt tells the model to sprinkle "local language" words
+ * through the prose, which reads well in Stockholm (konditori) and Paris
+ * (boulangerie). In an English-speaking place there is no second language to
+ * borrow from, so the model satisfies the instruction with regional dialect and
+ * has no way to check what the dialect means. Gander was told a softball
+ * tournament was "a real ballycater", which is Newfoundland for the ice that
+ * forms along the shore. Same shape as the Americanisms bug: the instruction
+ * was written for one kind of place and applied to every kind.
+ */
+const ENGLISH_LANGUAGE_COUNTRIES = new Set([
+  ...BRITISH_ENGLISH_COUNTRIES,
+  ...['Canada', 'USA', 'United States', 'United States of America', 'US', 'America'].map((c) =>
+    c.toLowerCase(),
+  ),
+]);
+
+export function isEnglishSpeaking(country: string | null | undefined): boolean {
+  return ENGLISH_LANGUAGE_COUNTRIES.has((country || '').trim().toLowerCase());
+}
+
+/**
  * Canada takes half of the British list and rejects the other half. It writes
  * colour, centre, travelled and defence, and it writes organize, program,
  * sidewalk, soccer, aluminum and gotten. Treating it as British is as wrong as
