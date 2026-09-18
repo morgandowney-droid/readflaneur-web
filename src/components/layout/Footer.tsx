@@ -121,6 +121,17 @@ export function Footer() {
           <Link href="/standards" className="text-sm text-fg-muted hover:text-fg transition-colors">
             {t('footer.standards')}
           </Link>
+          {/* Flaneur is a showroom for the licensed engine. Publishers who
+              arrive here need one route to what is actually for sale. Not
+              translated: the licensing page itself is English only. */}
+          <a
+            href="https://yous.news/publishers"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-fg-muted hover:text-fg transition-colors"
+          >
+            For publishers
+          </a>
         </div>
 
         {/* Copyright */}
