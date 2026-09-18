@@ -103,6 +103,11 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   // the case the product exists to answer. English, so no PILOT_LANGUAGES entry.
   'newfoundland-gander',
   'newfoundland-corner-brook',
+  // Russmedia (named by Simon Mathis, Head of AI Studio, 2026-09-18) ahead of
+  // the 22 Sep call. Lochau is about 5,800 on its own, under the floor, so the
+  // catchment is drawn at 4km to take in the Leiblachtal without letting
+  // Bregenz dominate and turn it into an edition about Bregenz.
+  'vorarlberg-lochau',
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */
@@ -117,6 +122,7 @@ export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' 
   'lisbon-chiado': 'pt',
   'montreal-westmount': 'fr',
   'berlin-prenzlauer-berg': 'de',
+  'vorarlberg-lochau': 'de',
 };
 
 export function isPilotNeighborhood(neighborhoodId: string): boolean {
