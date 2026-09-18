@@ -34,7 +34,14 @@ export interface SourceRef {
 const PLACEHOLDER_SOURCE_PATTERNS: RegExp[] = [
   /^user[\s-]*provided/i,
   /provided (content|context|information|data)/i,
-  /^(local|event|events?) ?listings?$/i,
+  // Generic descriptions of where copy came from, rather than a publication.
+  // The old pattern was anchored with room for one word only, so it caught
+  // "Event Listing" and missed "Local Event Listing"; "Local News Compilation"
+  // matched nothing at all. Both reached a published Newfoundland edition on
+  // 2026-09-18, on pages shown to an agency whose stated objection is that this
+  // looks like aggregation. A name like that proves their point for them.
+  /^(local|regional|community|area|city|town)?\s*(news|event|events|media|press)?\s*(listings?|compilation|round-?up|digest|summary|aggregation|sources?)$/i,
+  /^(local|regional|community) (news|media|press)$/i,
   /^listings?$/i,
   /^various( sources)?$/i,
   /^multiple sources$/i,
