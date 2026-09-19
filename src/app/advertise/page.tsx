@@ -19,7 +19,10 @@ export default async function AdvertisePage() {
   const cityCount = new Set(regularNeighborhoods.map(n => n.city)).size;
 
   return (
-    <div className="bg-neutral-950 text-white min-h-screen -mt-[1px]">
+    // Committed dark page. data-theme="dark" scopes the dark token values to
+    // everything inside, so bg-surface and friends match the hardcoded shell
+    // instead of turning white when the reader is in the light theme.
+    <div data-theme="dark" className="bg-neutral-950 text-white min-h-screen -mt-[1px]">
       {/* Hero */}
       <section className="pt-20 pb-16 px-4 text-center">
         <p className="text-xs tracking-[0.3em] uppercase text-fg-subtle mb-6">

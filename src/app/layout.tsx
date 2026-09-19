@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Cormorant_Garamond, Merriweather } from 'next/font/google';
 import './globals.css';
 import { Header } from '@/components/layout/Header';
+import { ShowroomBar } from '@/components/layout/ShowroomBar';
 import { Footer } from '@/components/layout/Footer';
 import { PersonaSwitcher } from '@/components/admin/PersonaSwitcher';
 import { NeighborhoodModalProvider } from '@/components/neighborhoods/NeighborhoodSelectorModal';
@@ -85,6 +86,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{var k="flaneur-neighborhood-preferences",c="flaneur-neighborhoods",s=localStorage.getItem(k);if(s){var ids=JSON.parse(s);if(Array.isArray(ids)&&ids.length>0){document.cookie=c+"="+ids.join(",")+";path=/;max-age=31536000;SameSite=Strict"}}else{var m=document.cookie.match(new RegExp("(?:^|; )"+c+"=([^;]*)"));if(m&&m[1]){var ci=m[1].split(",").filter(Boolean);if(ci.length>0){localStorage.setItem(k,JSON.stringify(ci))}}else{document.cookie=c+"=;path=/;max-age=0;SameSite=Strict"}}}catch(e){}})()` }} />
         <LanguageProvider>
           <NeighborhoodModalProvider>
+            <ShowroomBar />
             <Header />
             <main>{children}</main>
             <Footer />

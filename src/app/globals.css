@@ -44,6 +44,43 @@
   --theme-accent-muted: rgba(138, 122, 104, 0.5);
 }
 
+/* Force-dark sections re-declare the dark palette on themselves.
+ *
+ * The dark palette lives on :root and [data-theme="light"] overrides it, so a
+ * nested data-theme="dark" had nothing to match and inherited the light values
+ * from <html> anyway. Every force-dark section in the app carried that
+ * attribute expecting it to work: the homepage, discover and invite heroes,
+ * the onboarding flow and the advertise page. They looked right only because
+ * they also hardcode bg-black and text-white, while any child using a theme
+ * token got light values on a black ground.
+ *
+ * That is what made the advertise stat cards vanish in the light theme: the
+ * card took bg-surface, which is #ffffff there, and the figure inside
+ * inherited text-white from the page shell. White on white.
+ *
+ * Keep these values identical to :root above.
+ */
+[data-theme="dark"] {
+  --background: #050505;
+  --foreground: #e5e5e5;
+  --theme-canvas: #050505;
+  --theme-surface: #121212;
+  --theme-elevated: #1a1a1a;
+  --theme-fg: #e5e5e5;
+  --theme-fg-muted: #a3a3a3;
+  --theme-fg-subtle: #737373;
+  --theme-border: rgba(255,255,255,0.08);
+  --theme-border-strong: rgba(255,255,255,0.2);
+  --theme-hover: rgba(255,255,255,0.05);
+  --theme-overlay: rgba(0,0,0,0.8);
+  --theme-header-bg: rgba(0,0,0,0.8);
+  --theme-modal-bg: rgba(23,23,23,0.9);
+  --theme-selection-bg: #a89a85;
+  --theme-selection-fg: #ffffff;
+  --theme-accent: #c9b99a;
+  --theme-accent-muted: rgba(201, 185, 154, 0.6);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
