@@ -148,11 +148,93 @@ function parseJsonLoose<T>(text: string): T | null {
       try {
         return JSON.parse(match[0]) as T;
       } catch {
-        // fall through
+        try {
+          return JSON.parse(repairJsonStrings(match[0])) as T;
+        } catch {
+          // fall through
+        }
       }
     }
   }
   return null;
+}
+
+/**
+ * Escape the quotes and raw newlines a model leaves inside JSON string values.
+ *
+ * Translating a Zaragoza Look Ahead, Gemini wrote `presentará "Las Cuatro
+ * Estaciones" de Vivaldi` with bare quotes on every attempt, JSON mode included,
+ * so the whole article came back untranslated. A response schema parses but
+ * silently dropped two of nine sections in two of three runs, which is worse.
+ * The free-text output was complete; only the quoting was wrong.
+ *
+ * Inside a string, a quote closes it only where JSON structure follows: a colon
+ * after a key, `}` or `]`, or a comma leading to the next key or value. Anything
+ * else is a quote in the prose and gets escaped.
+ */
+function repairJsonStrings(text: string): string {
+  let out = '';
+  let inString = false;
+  let isKey = false;
+  // Container stack so we know whether the next string is a key or a value.
+  const stack: Array<'{' | '['> = [];
+  let expectKey = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+
+    if (!inString) {
+      if (ch === '"') {
+        inString = true;
+        isKey = expectKey;
+      } else if (ch === '{') {
+        stack.push('{');
+        expectKey = true;
+      } else if (ch === '[') {
+        stack.push('[');
+        expectKey = false;
+      } else if (ch === '}' || ch === ']') {
+        stack.pop();
+        expectKey = false;
+      } else if (ch === ',') {
+        expectKey = stack[stack.length - 1] === '{';
+      } else if (ch === ':') {
+        expectKey = false;
+      }
+      out += ch;
+      continue;
+    }
+
+    if (ch === '\\') {
+      out += ch + (text[i + 1] ?? '');
+      i++;
+      continue;
+    }
+    if (ch === '\n') { out += '\\n'; continue; }
+    if (ch === '\r') { out += '\\r'; continue; }
+    if (ch === '\t') { out += '\\t'; continue; }
+
+    if (ch === '"') {
+      const rest = text.slice(i + 1);
+      const inObject = stack[stack.length - 1] === '{';
+      const closes = isKey
+        ? /^\s*:/.test(rest)
+        : /^\s*$/.test(rest)
+          || (inObject
+            ? /^\s*(\}|,\s*"[^"\\\n]{1,60}"\s*:)/.test(rest)
+            : /^\s*(\]|,\s*[{\["\d\-tfn])/.test(rest));
+      if (closes) {
+        inString = false;
+        out += ch;
+      } else {
+        out += '\\"';
+      }
+      continue;
+    }
+
+    out += ch;
+  }
+  return out;
 }
 
 /**
