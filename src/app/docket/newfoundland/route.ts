@@ -104,7 +104,7 @@ function render(sheet: CentreDay[], start: string, days: number, generatedAt: st
         .slice(0, 5);
       const topList = top.length
         ? `<ol class="top">${top
-            .map((a) => `<li><span class="tt">${esc(a.time)}</span><span class="tc">${esc(a.centre)}</span><span class="tw">${esc(displayName(a.accused))}: ${esc(a.why)}${a.sensitivity ? ' <span class="tban">Likely ban. Check first.</span>' : ''}</span></li>`)
+            .map((a) => `<li><span class="tt">${esc(a.time)}</span><span class="tc">${esc(a.centre)}</span><span class="tw">${esc(displayName(a.accused))}: ${esc(a.why)}.${a.sensitivity ? ' <span class="tban">Likely ban. Check first.</span>' : ''}</span></li>`)
             .join('')}</ol>`
         : '';
       return `
