@@ -221,12 +221,21 @@ export async function fetchNlDocket(startDate: string, days: number): Promise<Do
 
 // ─── Newsroom judgement ─────────────────────────────────────────────────────
 
-/** Offences a reporter would go to court for on their own. */
-const LEAD_PATTERNS: RegExp[] = [
+/** A death or an attempt on a life. Worth a reporter at any stage. */
+const MAJOR_PATTERNS: RegExp[] = [
   /murder/i,
   /manslaughter/i,
   /causing death/i,
   /criminal negligence/i,
+];
+
+/**
+ * Serious offences. A lead when something happens in court, a watch at an
+ * election or plea, and routine at a status or scheduling hearing. The first
+ * live run flagged 37 robbery and sexual-assault status hearings as leads,
+ * which no editor would send a reporter to.
+ */
+const SERIOUS_PATTERNS: RegExp[] = [
   /aggravated/i,
   /robbery/i,
   /kidnap/i,
@@ -262,20 +271,26 @@ const DOMESTIC = /intimate partner|family|spouse/i;
 
 function stageOf(stages: string[]): { label: string; weight: number } {
   const all = stages.join(' | ');
+  if (/for Decision|Verdict|Judgment/i.test(all)) return { label: 'Decision', weight: 3 };
   if (/Trial Continuation/i.test(all)) return { label: 'Trial continues', weight: 2.5 };
   if (/for Trial/i.test(all)) return { label: 'Trial', weight: 2.5 };
   if (/Sentenc/i.test(all)) return { label: 'Sentencing', weight: 2 };
   if (/Speedy Disposition/i.test(all)) return { label: 'Possible plea and sentence', weight: 1.5 };
+  if (/ruling/i.test(all)) return { label: 'Ruling', weight: 1.5 };
   if (/Appearance Notice|Summons|Undertaking|Arrest|In Custody|Show Cause|Bail/i.test(all)) {
     return { label: 'First appearance', weight: 1.2 };
   }
   if (/Election and\/or Plea/i.test(all)) return { label: 'Election or plea', weight: 1 };
+  if (/Charter/i.test(all)) return { label: 'Charter application', weight: 0.8 };
+  if (/pre-?trial/i.test(all)) return { label: 'Pre-trial conference', weight: 0.4 };
   if (/Set a Date/i.test(all)) return { label: 'Setting a date', weight: 0.3 };
   if (/Status/i.test(all)) return { label: 'Status', weight: 0.2 };
   return { label: stages[0] || 'Appearance', weight: 0.5 };
 }
 
-const ACTIVE_STAGES = new Set(['Trial', 'Trial continues', 'Sentencing', 'Possible plea and sentence', 'First appearance']);
+/** Stages where something happens that a reporter could write up the same day. */
+const HAPPENING = new Set(['Decision', 'Trial', 'Trial continues', 'Sentencing', 'Possible plea and sentence', 'Ruling']);
+
 
 /** Charge wording is generic, so the whole description can be lowercased. */
 function lower(s: string): string {
@@ -284,15 +299,20 @@ function lower(s: string): string {
 
 export function scoreAppearance(a: DocketAppearance): ScoredAppearance {
   const descriptions = a.charges.map((c) => c.description);
-  const lead = descriptions.find((d) => LEAD_PATTERNS.some((p) => p.test(d)));
+  const major = descriptions.find((d) => MAJOR_PATTERNS.some((p) => p.test(d)));
+  const serious = descriptions.find((d) => SERIOUS_PATTERNS.some((p) => p.test(d)));
   const watch = descriptions.find((d) => WATCH_PATTERNS.some((p) => p.test(d)));
   const stage = stageOf(a.charges.map((c) => c.stage));
+  const happening = HAPPENING.has(stage.label);
 
   let tier: Tier = 'routine';
-  if (lead) tier = 'lead';
-  else if (watch && ACTIVE_STAGES.has(stage.label)) tier = 'watch';
-  else if ((stage.label === 'Trial' || stage.label === 'Trial continues') && a.durationMinutes >= 60) tier = 'watch';
+  if (major) tier = 'lead';
+  else if (serious && (happening || stage.label === 'First appearance')) tier = 'lead';
+  else if (serious && stage.label === 'Election or plea') tier = 'watch';
+  else if (watch && happening) tier = 'watch';
+  else if ((stage.label === 'Trial' || stage.label === 'Trial continues') && a.durationMinutes >= 120) tier = 'watch';
 
+  const lead = major || serious;
   const headline = lead || watch || descriptions[0] || 'charges not listed';
   const others = new Set(descriptions.filter((d) => d !== headline)).size;
   let why = `${stage.label} on ${lower(headline)}`;

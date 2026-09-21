@@ -96,9 +96,21 @@ function render(sheet: CentreDay[], start: string, days: number, generatedAt: st
   const byDay = dates
     .map((date) => {
       const blocks = sheet.filter((d) => d.date === date);
+      // The day's best five across the province, so an editor with one
+      // reporter to place can decide without reading every centre.
+      const top = blocks
+        .flatMap((b) => b.flagged)
+        .sort((x, y) => y.score - x.score)
+        .slice(0, 5);
+      const topList = top.length
+        ? `<ol class="top">${top
+            .map((a) => `<li><span class="tt">${esc(a.time)}</span><span class="tc">${esc(a.centre)}</span><span class="tw">${esc(displayName(a.accused))}: ${esc(a.why)}${a.sensitivity ? ' <span class="tban">Likely ban. Check first.</span>' : ''}</span></li>`)
+            .join('')}</ol>`
+        : '';
       return `
   <section class="day" id="d-${date}">
     <h2>${esc(dayLabel(date))}</h2>
+    ${top.length ? `<p class="top-label">The day's five</p>${topList}` : ''}
     ${blocks.map(centreBlock).join('')}
   </section>`;
     })
@@ -150,6 +162,12 @@ function render(sheet: CentreDay[], start: string, days: number, generatedAt: st
   nav.days a{color:var(--ink);text-decoration:none;border-bottom:2px solid transparent}
   nav.days a:hover,nav.days a:focus-visible{border-bottom-color:var(--ink);outline:none}
   .day h2{font-size:21px;margin:34px 0 4px;text-wrap:balance}
+  .top-label{font:500 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+  ol.top{list-style:none;margin:0;padding:0;border-top:2px solid var(--ink)}
+  ol.top li{display:grid;grid-template-columns:4.8rem 9.5rem 1fr;gap:10px;padding:7px 0;border-bottom:1px solid var(--rule);font-size:14px}
+  .tt{font:500 13px var(--mono);font-variant-numeric:tabular-nums}
+  .tc{font-weight:600}
+  .tban{font:600 11px var(--mono);color:var(--ban);white-space:nowrap}
   .centre{margin:18px 0 0;padding-top:14px;border-top:1px solid var(--rule)}
   .centre-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 16px}
   .centre h3{font-size:17px;margin:0}
@@ -188,6 +206,8 @@ function render(sheet: CentreDay[], start: string, days: number, generatedAt: st
     h1{font-size:25px}
     .item{grid-template-columns:1fr;gap:6px}
     .when .t,.when .room{display:inline;margin:0 8px 0 0}
+    ol.top li{grid-template-columns:4.2rem 1fr}
+    .tw{grid-column:1 / -1}
   }
 </style>
 </head>
