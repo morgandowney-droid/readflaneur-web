@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { extractArticleSources } from '@/lib/source-links';
 import { createClient } from '@supabase/supabase-js';
 import { enrichBriefWithGemini, ContinuityItem } from '@/lib/brief-enricher-gemini';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
@@ -192,65 +193,14 @@ function generatePreviewText(content: string): string {
   return lastSpace > 0 ? cleaned.slice(0, lastSpace) : slice;
 }
 
-function extractSourcesFromCategories(categories: EnrichedCategory[] | null): ArticleSourceInput[] {
-  if (!categories || !Array.isArray(categories)) {
-    return [
-      { source_name: 'X (Twitter)', source_type: 'platform' },
-      { source_name: 'Google News', source_type: 'platform' },
-    ];
-  }
-
-  const sources: ArticleSourceInput[] = [];
-  const seenSources = new Set<string>();
-
-  for (const category of categories) {
-    for (const story of category.stories || []) {
-      if (story.source?.name) {
-        const key = story.source.name.toLowerCase();
-        if (!seenSources.has(key)) {
-          seenSources.add(key);
-          let sourceType: ArticleSourceInput['source_type'] = 'publication';
-          if (story.source.name.startsWith('@') || story.source.url?.includes('x.com') || story.source.url?.includes('twitter.com')) {
-            sourceType = 'x_user';
-          }
-          const url = story.source.url;
-          const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
-          sources.push({
-            source_name: story.source.name,
-            source_type: sourceType,
-            source_url: isValidUrl ? url : undefined,
-          });
-        }
-      }
-      if (story.secondarySource?.name) {
-        const key = story.secondarySource.name.toLowerCase();
-        if (!seenSources.has(key)) {
-          seenSources.add(key);
-          let sourceType: ArticleSourceInput['source_type'] = 'publication';
-          if (story.secondarySource.name.startsWith('@') || story.secondarySource.url?.includes('x.com')) {
-            sourceType = 'x_user';
-          }
-          const url = story.secondarySource.url;
-          const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
-          sources.push({
-            source_name: story.secondarySource.name,
-            source_type: sourceType,
-            source_url: isValidUrl ? url : undefined,
-          });
-        }
-      }
-    }
-  }
-
-  if (sources.length === 0) {
-    return [
-      { source_name: 'X (Twitter)', source_type: 'platform' },
-      { source_name: 'Google News', source_type: 'platform' },
-    ];
-  }
-
-  return sources;
-}
+// Source extraction used to have its own copy here, with "X (Twitter)" and
+// "Google News" hardcoded as fallback sources whenever a story had none. The
+// 2026-09-09 fix centralised four extractors in source-links.ts and missed this
+// one, which is the inline path that creates most brief articles, so those two
+// placeholders kept publishing as "sources" under stories on pages shown to a
+// news agency whose written objection was that this looks like aggregation.
+// One extractor now, the filtered one. An article with nothing checkable gets
+// no source rows, per the rule in CLAUDE.md.
 
 /**
  * @swagger
@@ -497,7 +447,7 @@ export async function GET(request: Request) {
                   const articleHeadline = `${hood.name} DAILY BRIEF: ${baseHeadline}`;
                   const slug = generateBriefSlug(articleHeadline, hood.id, brief.generated_at, hood.timezone);
                   const previewText = result.emailTeaser || generatePreviewText(enrichedContent);
-                  const extractedSources = extractSourcesFromCategories(result.categories as EnrichedCategory[] | null);
+                  const extractedSources = await extractArticleSources(result.categories);
 
                   const { data: insertedArticle, error: insertError } = await supabase
                     .from('articles')

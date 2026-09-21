@@ -55,6 +55,10 @@ const PLACEHOLDER_SOURCE_PATTERNS: RegExp[] = [
   /^web search$/i,
   /^search results?$/i,
   /^internal( source)?$/i,
+  // "Internal Summary" and "Real Estate Listing" reached Newfoundland editions
+  // shown to the Canadian Press on 2026-09-20 and 21. Neither is a publication.
+  /^internal\s+(summary|notes?|data|research|compilation)$/i,
+  /^(real estate|property|housing|rental|job|jobs|classified)\s+(listings?|ads?)$/i,
   /^ai[- ]generated/i,
   /^grok/i,
   /^gemini/i,
