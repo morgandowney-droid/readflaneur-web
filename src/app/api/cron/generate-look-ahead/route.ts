@@ -5,6 +5,7 @@ import { extractArticleSources } from '@/lib/source-links';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { getComboInfo } from '@/lib/combo-utils';
 import { searchCatchmentFor } from '@/lib/search-catchment';
+import { unpublishableReason } from '@/lib/model-refusal';
 import { getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 import { formatEventListing } from '@/lib/look-ahead-events';
@@ -562,17 +563,14 @@ export async function GET(request: Request) {
           // The second is a degenerate stub: headline "No Confirmed Events",
           // body "no confirmed events." That is the passive framing the ENERGY
           // RULES ban, published as a finished edition under a masthead.
-          const refusal = /\b(I am sorry|I'm sorry|I cannot|I can't|as an AI|my instructions|I am unable|cannot fulfill|unable to generate|critical context states)\b/i;
-          const bodyWords = articleBody.trim().split(/\s+/).filter(Boolean).length;
-          const unpublishable =
-            listingEvents.length === 0 ||
-            refusal.test(articleBody) ||
-            bodyWords < 40 ||
-            EMPTY_HEADLINE.test(articleBody.slice(0, 200));
-          if (unpublishable) {
+          const reason =
+            listingEvents.length === 0
+              ? 'no events in the listing'
+              : unpublishableReason(articleBody);
+          if (reason) {
             console.warn(
-              `[generate-look-ahead] ${name}: refusing to publish. events=${listingEvents.length} ` +
-              `words=${bodyWords} refusal=${refusal.test(articleBody)} headline="${articleHeadline}"`
+              `[generate-look-ahead] ${name}: refusing to publish (${reason}). ` +
+              `events=${listingEvents.length} headline="${articleHeadline}"`
             );
             return 'skipped';
           }

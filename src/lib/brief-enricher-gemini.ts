@@ -6,6 +6,7 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
+import { isModelRefusal } from '@/lib/model-refusal';
 import {
   LinkCandidate,
   injectHyperlinks,
@@ -780,6 +781,19 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     }
 
     console.log('Gemini response length:', text.length);
+
+    // The model declining the job reads like prose and is the right length, so
+    // nothing downstream catches it. Throwing here leaves enriched_content null,
+    // which is the state the whole pipeline already treats as "not ready": no
+    // article is created, the syndication API filters it out, and the health
+    // monitor queues a re-enrichment. A refusal is a failed enrichment, so it is
+    // handled as one.
+    if (isModelRefusal(text)) {
+      throw new Error(
+        `Enrichment for ${neighborhoodName} returned a model refusal rather than a brief: ` +
+        `"${text.slice(0, 160).replace(/\s+/g, ' ')}"`
+      );
+    }
 
     // Extract JSON from original response (before markdown stripping)
     let enrichedData: { categories: EnrichedCategory[]; link_candidates?: unknown[] } = { categories: [] };

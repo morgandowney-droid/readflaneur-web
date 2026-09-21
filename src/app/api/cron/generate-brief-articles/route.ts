@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { unpublishableReason } from '@/lib/model-refusal';
 import { createClient } from '@supabase/supabase-js';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 import { toHeadlineCase } from '@/lib/utils';
@@ -309,6 +310,19 @@ export async function GET(request: Request) {
       // near midnight UTC for the next local date (e.g., Irish briefs at 11pm UTC for tomorrow).
       const neighborhoodTz = (brief.neighborhoods as any)?.timezone || 'America/New_York';
       const publishedAt = computeLocalPublishTime(brief.brief_date, neighborhoodTz);
+
+      // Defence in depth. The enricher already refuses to store a refusal as
+      // enriched_content, so this should never fire, but this is the last point
+      // before a masthead carries whatever the model produced and the cost of
+      // checking is nothing.
+      const unpublishable = unpublishableReason(articleBody, { minWords: 60 });
+      if (unpublishable) {
+        console.warn(
+          `[generate-brief-articles] ${brief.neighborhood_id}: refusing to publish (${unpublishable})`
+        );
+        results.articles_skipped++;
+        continue;
+      }
 
       // Create the article
       const { data: insertedArticle, error: insertError } = await supabase
