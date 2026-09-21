@@ -532,6 +532,35 @@ export async function GET(request: Request) {
             return 'skipped';
           }
 
+          // Nothing to say is a reason to publish nothing. A Look Ahead is a
+          // list of what is coming, so with no events there is no article, and
+          // the two things the pipeline produces instead are both worse than
+          // silence.
+          //
+          // The first is a model refusal published verbatim as the body. A
+          // Charters Towers edition went live reading "I am sorry, but I cannot
+          // fulfill your request... My instructions explicitly state:" followed
+          // by a quote of its own system prompt. Same family as the Pro
+          // thinking-leak, except this one hands the prompt to the reader.
+          //
+          // The second is a degenerate stub: headline "No Confirmed Events",
+          // body "no confirmed events." That is the passive framing the ENERGY
+          // RULES ban, published as a finished edition under a masthead.
+          const refusal = /\b(I am sorry|I'm sorry|I cannot|I can't|as an AI|my instructions|I am unable|cannot fulfill|unable to generate|critical context states)\b/i;
+          const bodyWords = articleBody.trim().split(/\s+/).filter(Boolean).length;
+          const unpublishable =
+            listingEvents.length === 0 ||
+            refusal.test(articleBody) ||
+            bodyWords < 40 ||
+            EMPTY_HEADLINE.test(articleBody.slice(0, 200));
+          if (unpublishable) {
+            console.warn(
+              `[generate-look-ahead] ${name}: refusing to publish. events=${listingEvents.length} ` +
+              `words=${bodyWords} refusal=${refusal.test(articleBody)} headline="${articleHeadline}"`
+            );
+            return 'skipped';
+          }
+
           const { data: inserted, error: insertError } = await supabase
             .from('articles')
             .insert({
