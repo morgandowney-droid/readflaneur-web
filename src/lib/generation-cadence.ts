@@ -76,6 +76,12 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   // Areas himself, one in Victoria and one in Queensland, for a call on
   // 29 October. Deliberately built five weeks early so the archive is deep by
   // the time three AAP editors look at it.
+  //
+  // DO NOT REMOVE BEFORE 29 OCTOBER 2026. The country-wave showcases below
+  // carry a "review for removal after 2026-10-15" note, and these two sit two
+  // weeks the wrong side of it. The whole argument made to AAP in writing is
+  // that they can read thirty-five consecutive mornings rather than a demo, so
+  // a gap in the archive is the one thing that cannot be repaired later.
   'victoria-greater-shepparton',
   'queensland-charters-towers',
   // Overstory Media Group, British Columbia (2026-09-16): Shannon Havard named
