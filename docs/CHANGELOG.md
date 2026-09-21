@@ -38,6 +38,9 @@ New `src/lib/search-catchment.ts`. **Two knobs, not one.** `neighborhoods.radius
 
 Worth recording: **the thin Charters Towers edition turned out to be search variance, not catchment.** The same geography produced a full listing at 05:40, nothing at 05:52 and a 351-word article at 06:00.
 
+### Placeholder sources from the inline brief path
+`src/app/api/cron/enrich-briefs/route.ts` had a private `extractSourcesFromCategories()` that returned `X (Twitter)` and `Google News` as sources whenever a story had none, and inserted them via inline article creation. The 2026-09-09 centralisation into `source-links.ts` missed it. Deleted; the call site now uses `extractArticleSources()`. `PLACEHOLDER_SOURCE_PATTERNS` gains `internal (summary|notes|data|research|compilation)` and `(real estate|property|housing|rental|job|classified) (listing|ad)`, verified not to touch "Real Estate Board of Newfoundland", "Town of Gander" or "SaltWire". One-off cleanup compiled the shipped patterns (no copy) and deleted **487 rows across 4,055 articles in 14 days**, after a dry run listing every name: 190 each of X (Twitter) and Google News, the rest generic descriptions. Also: Corner Brook's pre-guard "No Events Listed" Look Ahead replaced, and a Cow Head event (~350km away) removed from Gander's listing.
+
 ### Pilot editions
 `victoria-greater-shepparton`, `queensland-charters-towers`. Region `test`, radius 25km, on `PILOT_NEIGHBORHOOD_IDS`. **Marked DO NOT REMOVE BEFORE 29 OCTOBER 2026**, because the country-wave showcases in the same list carry a review-for-removal note dated 15 October.
 
