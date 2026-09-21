@@ -67,11 +67,33 @@ export function usesCanadianEnglish(country: string | null | undefined): boolean
   return CANADIAN_ENGLISH_COUNTRIES.has((country || '').trim().toLowerCase());
 }
 
+/**
+ * Australian English takes the -ise endings, aluminium and the -our/-re group,
+ * and then parts company with Britain on the three words that matter most in a
+ * local paper:
+ *
+ *   program    Macquarie keeps "program". "Programme" is a British import and
+ *              every council agenda in the country spells it the short way.
+ *   footpath   not "pavement".
+ *   soccer     stays "soccer". This is the dangerous one. In Australia
+ *              "football" means AFL or rugby league depending on the state, so
+ *              rewriting soccer to football in a Victorian edition does not
+ *              read as a spelling choice, it reads as the wrong sport.
+ *
+ * New Zealand keeps "programme" and is closer to Britain, so it stays British.
+ */
+const AUSTRALIAN_ENGLISH_COUNTRIES = new Set(['australia']);
+
+export function usesAustralianEnglish(country: string | null | undefined): boolean {
+  return AUSTRALIAN_ENGLISH_COUNTRIES.has((country || '').trim().toLowerCase());
+}
+
 /** Which spelling set applies. Anything else keeps American spelling. */
-export type SpellingVariant = 'british' | 'canadian' | 'american';
+export type SpellingVariant = 'british' | 'canadian' | 'australian' | 'american';
 
 export function spellingVariantFor(country: string | null | undefined): SpellingVariant {
   if (usesCanadianEnglish(country)) return 'canadian';
+  if (usesAustralianEnglish(country)) return 'australian';
   if (usesBritishEnglish(country)) return 'british';
   return 'american';
 }
@@ -150,6 +172,20 @@ export const BOROUGH_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
   'london-haringey',
 ]);
 
+/**
+ * Editions covering an Australian Local Government Area. An LGA is the unit AAP
+ * and every Australian council round works in, and it is neither a city nor a
+ * suburb: Greater Shepparton is a City council covering farmland and several
+ * towns, Charters Towers is a Region covering an area the size of Tasmania.
+ * Australian local press calls both "the region". Without this they would fall
+ * through to "suburb", which is what an Australian reader calls one street grid
+ * inside a city and would be plainly wrong for either.
+ */
+export const REGION_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
+  'victoria-greater-shepparton',
+  'queensland-charters-towers',
+]);
+
 export interface PlaceDescriptor {
   id?: string | null;
   name: string;
@@ -172,11 +208,16 @@ export function getPlaceNoun(place: PlaceDescriptor): string {
   if (id === 'ie-ireland' || name.toLowerCase() === 'ireland') return 'country';
   if (CITY_LEVEL_EDITION_IDS.has(id)) return 'city';
   if (BOROUGH_LEVEL_EDITION_IDS.has(id)) return 'borough';
+  if (REGION_LEVEL_EDITION_IDS.has(id)) return 'region';
   if (british && COUNTY_LEVEL_AREAS.has(city)) return 'town';
   // "Area" is what British and Irish local press actually calls a district of a
   // city. "Neighbourhood" is correct English and still reads as an import there,
   // but it is ordinary usage in Singapore and Hong Kong, so this stays local.
   if (isUkOrIreland(place.country)) return 'area';
+  // Australia says "suburb" for a named part of a city, and means it neutrally:
+  // Paddington and Toorak are suburbs the same way Broadmeadows is. "Neighbourhood"
+  // is the import here, the same way "neighborhood" was in Sussex.
+  if (usesAustralianEnglish(place.country)) return 'suburb';
   // Canada spells it the British way even though the rest of its register is
   // closer to American.
   if (british || usesCanadianEnglish(place.country)) return 'neighbourhood';
@@ -256,9 +297,8 @@ const SHARED_SPELLINGS: Array<[string, string]> = [
  * inside proper event names ("Downtown Dublin Farmers Market"), so the prompt
  * asks for it instead.
  */
-const BRITISH_ONLY_SPELLINGS: Array<[string, string]> = [
-  ['program', 'programme'],
-  ['programs', 'programmes'],
+/** The -ise group, aluminium and "got". Britain and Australia both take these. */
+const ISE_SPELLINGS: Array<[string, string]> = [
   ['organize', 'organise'],
   ['organized', 'organised'],
   ['organizer', 'organiser'],
@@ -277,9 +317,25 @@ const BRITISH_ONLY_SPELLINGS: Array<[string, string]> = [
   ['specializing', 'specialising'],
   ['aluminum', 'aluminium'],
   ['gotten', 'got'],
+];
+
+/**
+ * British and Irish only. Every entry here is wrong in Australia: Macquarie
+ * keeps "program", the path beside a road is a footpath, and "football" names a
+ * different sport in every Australian state. See AUSTRALIAN_ENGLISH_COUNTRIES.
+ */
+const BRITISH_ONLY_SPELLINGS: Array<[string, string]> = [
+  ['program', 'programme'],
+  ['programs', 'programmes'],
   ['sidewalk', 'pavement'],
   ['sidewalks', 'pavements'],
   ['soccer', 'football'],
+];
+
+/** Australian only. "soccer" and "program" are deliberately left alone. */
+const AUSTRALIAN_ONLY_SPELLINGS: Array<[string, string]> = [
+  ['sidewalk', 'footpath'],
+  ['sidewalks', 'footpaths'],
 ];
 
 /**
@@ -332,7 +388,9 @@ export function anglicise(
 
   const rules = variant === 'canadian'
     ? SHARED_SPELLINGS
-    : [...SHARED_SPELLINGS, ...BRITISH_ONLY_SPELLINGS];
+    : variant === 'australian'
+      ? [...SHARED_SPELLINGS, ...ISE_SPELLINGS, ...AUSTRALIAN_ONLY_SPELLINGS]
+      : [...SHARED_SPELLINGS, ...ISE_SPELLINGS, ...BRITISH_ONLY_SPELLINGS];
 
   for (const [us, uk] of rules) {
     out = out.replace(new RegExp(`\\b${us}\\b`, 'g'), uk);

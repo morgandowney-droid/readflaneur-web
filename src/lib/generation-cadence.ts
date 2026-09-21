@@ -72,6 +72,12 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   'london-haringey',
   'haringey-tottenham',
   'haringey-crouch-end',
+  // AAP, Australia (2026-09-21): Andrew Drummond named two Local Government
+  // Areas himself, one in Victoria and one in Queensland, for a call on
+  // 29 October. Deliberately built five weeks early so the archive is deep by
+  // the time three AAP editors look at it.
+  'victoria-greater-shepparton',
+  'queensland-charters-towers',
   // Overstory Media Group, British Columbia (2026-09-16): Shannon Havard named
   // Chilliwack, Langley and Abbotsford. Fraser Valley cities between Overstory's
   // existing titles, all well above the 25,000 the unit is sized for.
