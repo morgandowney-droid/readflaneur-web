@@ -237,12 +237,13 @@ function formatEventLine(event: StructuredEvent, city?: string, alsoOn?: string)
 
 /**
  * Check if a value is a placeholder that shouldn't be displayed.
- * Catches "Not Listed", "TBD", "TBA", "N/A", "Unknown", "Not Available", "None".
+ * Catches "Not Listed", "TBD", "TBA", "N/A", "Unknown", "Not Available", "None",
+ * and "Not specified" (the first Zaragoza Look Ahead printed it as a venue and a price).
  */
 export function isPlaceholder(val: string | null | undefined): boolean {
   if (!val?.trim()) return true;
   const lower = val.trim().toLowerCase();
-  return ['not listed', 'tbd', 'tba', 'n/a', 'unknown', 'not available', 'none'].includes(lower);
+  return ['not listed', 'tbd', 'tba', 'n/a', 'unknown', 'not available', 'none', 'not specified', 'unspecified', 'not provided', 'not stated'].includes(lower);
 }
 
 /**
