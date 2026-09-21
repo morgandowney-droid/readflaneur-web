@@ -4,6 +4,7 @@ import { generateLookAhead } from '@/lib/grok';
 import { extractArticleSources } from '@/lib/source-links';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { getComboInfo } from '@/lib/combo-utils';
+import { searchCatchmentFor } from '@/lib/search-catchment';
 import { getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 import { formatEventListing } from '@/lib/look-ahead-events';
@@ -383,7 +384,10 @@ export async function GET(request: Request) {
 
           // For combo neighborhoods, build search name from component names
           // (same pattern as sync-neighborhood-briefs)
-          let searchName = name;
+          // Some editions cover more ground than their name implies (an
+          // Australian LGA contains its outlying townships). radius does not
+          // reach the search; the place-name string is the only lever.
+          let searchName = searchCatchmentFor(id, name);
           if (neighborhood.is_combo) {
             const comboInfo = await getComboInfo(supabase, id);
             if (comboInfo && comboInfo.components.length > 0) {

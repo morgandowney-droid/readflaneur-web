@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { searchCatchmentFor } from '@/lib/search-catchment';
 import { createClient } from '@supabase/supabase-js';
 import { generateNeighborhoodBrief, isGrokConfigured } from '@/lib/grok';
 import { getComboInfo } from '@/lib/combo-utils';
@@ -295,7 +296,7 @@ export async function GET(request: Request) {
       results.neighborhoods_processed++;
 
       // For combo neighborhoods, build search location from component names
-      let searchName = hood.name;
+      let searchName = searchCatchmentFor(hood.id, hood.name);
       if (hood.is_combo) {
         const comboInfo = await getComboInfo(supabase, hood.id);
         if (comboInfo && comboInfo.components.length > 0) {
