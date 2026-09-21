@@ -24,7 +24,19 @@ import { isPriorityNeighborhood } from '@/lib/generation-cadence';
  * local day they refer to as "today". Each neighborhood gets its local date
  * computed via IANA timezone, and published_at is set to 7 AM local time.
  *
- * Schedule: 0 0,2,4,6 * * * (every 2h midnight-6 AM UTC, halved from hourly to cut xAI search costs, dedup skips already-processed)
+ * Schedule: 0 0-7,17-23 * * *
+ *
+ * The 17-23 UTC half exists for Asia-Pacific. 7am local is (7 - offset) UTC on
+ * the PREVIOUS day, so Auckland's is 18:00 UTC, Sydney's 20:00 and Brisbane's
+ * 21:00, and a window of 0-7 UTC missed every one of them: an Australian Look
+ * Ahead was being generated at 10 or 11am local and backdated to a 7am stamp it
+ * had never actually met. Found when AAP named two Queensland and Victorian
+ * LGAs to watch for five weeks.
+ *
+ * This costs almost nothing. Dedup runs BEFORE the Grok call, so on the extra
+ * invocations a neighbourhood that already has today's edition is skipped
+ * without a search. The number of generations per neighbourhood per local day
+ * is unchanged; only which invocation does the work moves.
  */
 
 export const runtime = 'nodejs';
