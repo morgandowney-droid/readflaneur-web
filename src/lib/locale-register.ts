@@ -332,10 +332,22 @@ const BRITISH_ONLY_SPELLINGS: Array<[string, string]> = [
   ['soccer', 'football'],
 ];
 
-/** Australian only. "soccer" and "program" are deliberately left alone. */
+/**
+ * Australian only. Two of these run BACKWARDS relative to every other rule in
+ * this file: anglicise() otherwise only ever rewrites American into British, so
+ * when the model writes "programme" or "pavement" of its own accord there is
+ * nothing to pull it back. It does write them, because the style block used to
+ * ask for British spelling in Australia too. The reverse rules are the net.
+ *
+ * "soccer" is deliberately absent. It must never be renamed.
+ */
 const AUSTRALIAN_ONLY_SPELLINGS: Array<[string, string]> = [
   ['sidewalk', 'footpath'],
   ['sidewalks', 'footpaths'],
+  ['pavement', 'footpath'],
+  ['pavements', 'footpaths'],
+  ['programme', 'program'],
+  ['programmes', 'programs'],
 ];
 
 /**
@@ -432,11 +444,41 @@ export function enforcePlaceNoun(text: string | null | undefined, noun: string):
 }
 
 /**
+ * Australia takes most of the British list and then breaks it on the words a
+ * local notices first. The sport rule is the one that matters: this block must
+ * never tell the model to prefer "football", because in Victoria that means AFL
+ * and in Queensland rugby league, so renaming a soccer clinic changes the sport
+ * rather than the spelling.
+ */
+function australianStyleBlock(place: PlaceDescriptor): string {
+  const noun = getPlaceNoun(place);
+  const nounLine =
+    noun === 'region'
+      ? `${place.name} is a LOCAL GOVERNMENT AREA. Call it "the region", "the council area", or by name. It contains several towns and farmland, so never call it a suburb and never call it a neighbourhood.`
+      : noun === 'suburb'
+        ? `${place.name} is a SUBURB of ${place.city}. Call it "the suburb" or by name. NEVER "neighbourhood" or "neighborhood": Australians say suburb and mean it neutrally.`
+        : `${place.name} is in ${place.city}. Call it by name. NEVER "neighborhood" or "neighbourhood".`;
+
+  return `
+
+AUSTRALIAN ENGLISH - NON-NEGOTIABLE. This edition is read in Australia.
+- ${nounLine}
+- Australian spelling: theatre, centre, colour, favourite, honour, organised, recognised, travelled, cancelled, defence, grey, litre. NEVER the American forms.
+- Australian English keeps the SHORT form of these two, unlike British English: "program" NEVER "programme", and "footpath" NEVER "pavement" or "sidewalk".
+- NEVER rename a sport. "Football" in Australia means AFL in Victoria and rugby league in Queensland. If the source says soccer, write soccer. If the source names a code, keep it exactly as given.
+- Australian vocabulary: car park not parking lot, CBD or town centre not downtown, shop not store, postcode not zip code, council not city hall, emergency department not ER, autumn not fall.
+- Money in Australian dollars. Dates as "Monday 15 September", never "September 15".
+- A licence is the noun, to license is the verb.
+- Keep proper nouns exactly as their owner spells them, including organisations whose own name uses Football (Football Queensland, Brisbane Roar, Football Victoria).`;
+}
+
+/**
  * The prompt block. Tells Gemini the register and the spelling before it writes,
  * so anglicise() has little left to catch.
  */
 export function britishStyleBlock(place: PlaceDescriptor): string {
   if (!usesBritishEnglish(place.country)) return '';
+  if (usesAustralianEnglish(place.country)) return australianStyleBlock(place);
   const noun = getPlaceNoun(place);
   const nounLine =
     noun === 'county'
