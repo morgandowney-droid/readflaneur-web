@@ -154,6 +154,8 @@ const COUNTY_LEVEL_AREAS = new Set(
  */
 export const CITY_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
   'westmidlands-birmingham',
+  // AMI, Spain (2026-09-21): the whole city of Zaragoza, around 680,000 people.
+  'aragon-zaragoza',
   // Overstory Media Group, Fraser Valley (named by Shannon Havard, 2026-09-16).
   // All three are cities in their own right, so without this they inherit
   // "neighbourhood" from the fallback and a 160,000-person city calls itself one.

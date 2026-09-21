@@ -72,6 +72,13 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   'london-haringey',
   'haringey-tottenham',
   'haringey-crouch-end',
+  // AMI, the Spanish news publishers' association (2026-09-21): Irene
+  // Lanzaco's office named Zaragoza for a meeting in October. Built as the
+  // whole city and two of its districts, the Birmingham and Haringey pattern,
+  // so the meeting can compare units. Promised in writing to run in Spanish.
+  'aragon-zaragoza',
+  'zaragoza-casco-historico',
+  'zaragoza-delicias',
   // AAP, Australia (2026-09-21): Andrew Drummond named two Local Government
   // Areas himself, one in Victoria and one in Queensland, for a call on
   // 29 October. Deliberately built five weeks early so the archive is deep by
@@ -132,6 +139,10 @@ export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' 
   'milan-navigli': 'it',
   'madrid-salamanca': 'es',
   'lisbon-chiado': 'pt',
+  // AMI, Spain (2026-09-21)
+  'aragon-zaragoza': 'es',
+  'zaragoza-casco-historico': 'es',
+  'zaragoza-delicias': 'es',
   'montreal-westmount': 'fr',
   'berlin-prenzlauer-berg': 'de',
   'vorarlberg-lochau': 'de',
