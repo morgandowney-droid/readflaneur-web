@@ -3,6 +3,49 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-09-21
+
+**Context: AAP's editor-in-chief named Greater Shepparton (Victoria) and Charters Towers (Queensland) for a call on 29 October.** Both were built the same day, five weeks early, so the agency reads about thirty-five consecutive mornings rather than a demonstration. Everything below was found because of that, not by testing.
+
+### Australian English as its own spelling variant
+`src/lib/locale-register.ts`. Australia was in `BRITISH_ENGLISH_COUNTRIES` and inherited every British substitution. Three are wrong in Australia:
+- **`soccer` -> `football`**: in Victoria football means AFL, in Queensland rugby league. This renames the sport, not the spelling. The Charters Towers edition surfaced "Football Queensland & Brisbane Roar Holiday Clinic", which on inspection was CORRECT because those are the organisations' registered names. The rewrite risk was real but had not fired.
+- **`program` -> `programme`**: Macquarie keeps the short form.
+- **`sidewalk` -> `pavement`**: Australia says footpath.
+
+`BRITISH_ONLY_SPELLINGS` split three ways: `ISE_SPELLINGS` (the -ise group, aluminium, got - shared with Australia), `BRITISH_ONLY_SPELLINGS` (program, sidewalk, soccer), `AUSTRALIAN_ONLY_SPELLINGS` (footpath). `SpellingVariant` gained `'australian'`. New Zealand stays British because it keeps "programme".
+
+**The variant alone did not fix it.** Both editions still published "programme" because (1) `anglicise()` only ever rewrites American into British, so nothing pulls a British form back when the model writes it directly, and (2) `britishStyleBlock()` applied to Australia and its spelling line literally listed "programme", its vocabulary line said "football not soccer", and its money line said pounds and euro. Added four REVERSE rules plus a dedicated `australianStyleBlock()` forbidding sport renaming.
+
+### Place nouns
+`getPlaceNoun()` returned "neighbourhood" for Australia despite the file's own comment saying Australia says "suburb"; Sydney Paddington had read as an import since launch. Australia now returns "suburb". New `REGION_LEVEL_EDITION_IDS` returns "region" for a Local Government Area. `nounLine` gained region and suburb cases.
+
+### Model refusals published as article bodies
+New `src/lib/model-refusal.ts`. A Charters Towers Look Ahead published with the model's refusal as its entire body, quoting its own system prompt. The existing `EMPTY_HEADLINE` guard only rewrites the headline from the first event, so with zero events it fell through to the insert.
+
+`isModelRefusal()` anchors first-person meta to the opening 400 characters (a genuine brief may quote "I am sorry it took this long") and matches prompt-leak phrases anywhere. `unpublishableReason()` adds a word floor and empty-edition framing. Wired into:
+- **`brief-enricher-gemini.ts` throws**, leaving `enriched_content` null. One guard covers article creation, the syndication API and the health monitor re-queue. **The syndication path was the hidden risk: a refusal stored as `enriched_content` would have been served to yous.news with no article created.**
+- **`generate-brief-articles`** re-checks before insert at a 60-word floor.
+- **`generate-look-ahead`** uses the shared helper and additionally skips when the event listing is empty.
+
+Verified against both bodies that actually published and two genuine briefs quoting "I am sorry" and "cannot": both failures blocked, no false positives.
+
+### Look Ahead cron never covered Asia-Pacific
+`vercel.json`: `0 0-7 * * *` -> `0 0-7,17-23 * * *`. The target is 7am LOCAL, which is `(7 - offset)` UTC on the previous day: Auckland 18:00, Sydney 20:00, Brisbane 21:00, Tokyo 22:00, Singapore 23:00. None fell inside 0-7 UTC. APAC Look Aheads were generated at 10-11am local and stamped 7am. Nothing errored and no count was short, which is why it survived. Marginal cost near zero: dedup runs before the Grok call. The daily brief was unaffected because `sync-neighborhood-briefs` runs `*/15` and gates on local hour.
+
+### Search catchment
+New `src/lib/search-catchment.ts`. **Two knobs, not one.** `neighborhoods.radius` (metres) drives the structured event-source lookups in `event-sources.ts` and `google-places.ts`, feeding `sync-tonight`/`sync-guides`; its catchment rule is a 10,000 floor and 25,000+ target. It does NOT reach `generate-look-ahead` or `sync-neighborhood-briefs`, which receive place NAMES only. `search-catchment.ts` widens those by name for non-combo editions covering more ground than their title, using each council's own locality list. Townsville deliberately excluded from Charters Towers: 130km east, 200,000 people, different council.
+
+Worth recording: **the thin Charters Towers edition turned out to be search variance, not catchment.** The same geography produced a full listing at 05:40, nothing at 05:52 and a 351-word article at 06:00.
+
+### Pilot editions
+`victoria-greater-shepparton`, `queensland-charters-towers`. Region `test`, radius 25km, on `PILOT_NEIGHBORHOOD_IDS`. **Marked DO NOT REMOVE BEFORE 29 OCTOBER 2026**, because the country-wave showcases in the same list carry a review-for-removal note dated 15 October.
+
+### Process notes
+Two background deploy jobs raced: a poller parsing `vercel ls` by line number failed silently (dropping stderr shifts the offsets), so the promote never happened and generation ran against the OLD build; a second job promoted correctly but found the briefs already there and deduped, leaving the bad content live. **Match the deployment URL, never a line number, and never run generation from a job whose promote step was not verified.**
+
+---
+
 ## 2026-09-14
 
 **UK and Irish editions were publishing American content, in American English.** Two independent faults, both found while preparing Christchurch, Lymington and Lewes for a Newsquest demo the same afternoon.

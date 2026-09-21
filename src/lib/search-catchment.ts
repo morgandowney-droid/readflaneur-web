@@ -1,10 +1,21 @@
 /**
  * What place names the search is actually given.
  *
- * `neighborhoods.radius` looks like the knob for this and is not: it is stored
- * on every row and never reaches Grok or Gemini. The only thing that widens or
- * narrows a catchment is the string of place names handed to the search, which
- * is why combo neighbourhoods work by joining their component names.
+ * There are TWO catchment knobs and they control different halves of the
+ * product. Reaching for the wrong one does nothing and looks like it should.
+ *
+ * `neighborhoods.radius` (metres) drives the STRUCTURED event-source lookups:
+ * `event-sources.ts` converts it to km for the Eventbrite `location.within`
+ * query and `google-places.ts` uses it for nearby search. Those feed
+ * `sync-tonight`, `sync-guides` and the guides API. The catchment rule for it
+ * is a soft floor of 10,000 people and a target of 25,000 or more.
+ *
+ * It does NOT reach `generate-look-ahead` or `sync-neighborhood-briefs`, which
+ * are the Grok and Gemini search paths that actually write the Daily Brief and
+ * the Look Ahead. Those receive place NAMES and nothing else, so the only way
+ * to widen or narrow them is the string handed to the search. That is why combo
+ * neighbourhoods work by joining their component names, and it is what this
+ * file generalises.
  *
  * This is the same mechanism for editions that are not combos but still cover
  * more ground than their name implies. An Australian Local Government Area is
