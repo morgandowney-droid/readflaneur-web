@@ -39,7 +39,12 @@ export function formatEventListing(
 ): string {
   // Filter out invalid events (must have date and name at minimum)
   // Also filter out generic tourist activities that shouldn't appear in local content
-  const valid = events.filter(e => e.date && e.name?.trim() && !isTouristActivity(e));
+  // and anything dated before today. The search returns ongoing exhibitions under
+  // the date they OPENED, so the first Vorarlberg listings for Russmedia opened on
+  // "Sat, Apr 5" and "Tue, Sep 1" above today. The prose can still mention a
+  // running exhibition; the dated listing is for what is coming.
+  const isPast = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && d < localDate;
+  const valid = events.filter(e => e.date && e.name?.trim() && !isPast(e.date) && !isTouristActivity(e));
   if (valid.length === 0) return '';
 
   // Deduplicate recurring events: same name across multiple dates
