@@ -57,6 +57,10 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/cron/flag-brief-stories",
+      "schedule": "5,20,35,50 * * * *"
+    },
+    {
       "path": "/api/cron/generate-brief-articles",
       "schedule": "*/15 * * * *"
     },
