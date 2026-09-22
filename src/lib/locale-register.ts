@@ -162,6 +162,8 @@ export const CITY_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
   'fraservalley-chilliwack',
   'fraservalley-langley',
   'fraservalley-abbotsford',
+  // Russmedia, Vorarlberg (2026-09-22): Bregenz, the state capital, as one area.
+  'vorarlberg-bregenz',
 ]);
 
 /**
@@ -186,6 +188,16 @@ export const BOROUGH_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
 export const REGION_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
   'victoria-greater-shepparton',
   'queensland-charters-towers',
+  // Russmedia, Vorarlberg (2026-09-22): areas of several Gemeinden each, drawn
+  // by the publisher. Neither a town nor a neighbourhood. The two Dornbirn
+  // halves are parts of one city and keep the default noun.
+  'vorarlberg-leiblachtal',
+  'vorarlberg-rheindelta',
+  'vorarlberg-lauterach-wolfurt',
+  'vorarlberg-hohenems',
+  'vorarlberg-goetzis-vorderland',
+  'vorarlberg-rankweil',
+  'vorarlberg-arlberg-klostertal',
 ]);
 
 export interface PlaceDescriptor {

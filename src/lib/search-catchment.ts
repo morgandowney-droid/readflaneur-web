@@ -55,6 +55,85 @@ const SEARCH_CATCHMENTS: Readonly<Record<string, readonly string[]>> = {
     'Murchison',
     'Merrigum',
   ],
+
+  // Russmedia, Vorarlberg (2026-09-22). Ten areas Simon Mathis drew himself,
+  // each listing its Gemeinden or Dornbirn Stadtbezirke exactly as he sent them.
+  // Several names exist elsewhere in the German-speaking world and would pull
+  // the wrong town into the edition, so they carry a qualifier: Hoechst is a
+  // district of Frankfurt, Langen a town in Hesse, Schwarzach a market town in
+  // Salzburg, Krumbach towns in Swabia and Lower Austria, Sulzberg and Meiningen
+  // places in Bavaria and Thuringia, Warth a village in Lower Austria, and Hard,
+  // Klaus, Weiler, Sulz and Buch are ordinary words or common names.
+  'vorarlberg-bregenz': ['Bregenz'],
+  'vorarlberg-leiblachtal': [
+    'Lochau',
+    'Hörbranz',
+    'Hohenweiler',
+    'Möggers',
+    'Eichenberg (Vorarlberg)',
+    'Langen bei Bregenz',
+    'Kennelbach',
+    'Sulzberg (Vorarlberg)',
+    'Doren',
+    'Riefensberg',
+    'Krumbach (Vorarlberg)',
+    'Hittisau',
+    'Buch (Vorarlberg)',
+    'Bildstein',
+  ],
+  'vorarlberg-rheindelta': [
+    'Hard (Vorarlberg)',
+    'Höchst (Vorarlberg)',
+    'Fußach',
+    'Gaißau',
+  ],
+  'vorarlberg-lauterach-wolfurt': [
+    'Lauterach',
+    'Wolfurt',
+    'Schwarzach (Vorarlberg)',
+    'Alberschwende',
+  ],
+  'vorarlberg-dornbirn-nordwest': [
+    'Dornbirn-Markt',
+    'Dornbirn-Rohrbach',
+    'Dornbirn-Schoren',
+    'Dornbirn-Haselstauden',
+  ],
+  'vorarlberg-dornbirn-suedost': [
+    'Dornbirn-Hatlerdorf',
+    'Dornbirn-Oberdorf',
+    'Watzenegg (Dornbirn)',
+    'Kehlegg (Dornbirn)',
+    'Ebnit (Dornbirn)',
+  ],
+  'vorarlberg-hohenems': ['Hohenems', 'Altach', 'Mäder'],
+  'vorarlberg-goetzis-vorderland': [
+    'Götzis',
+    'Koblach',
+    'Klaus (Vorarlberg)',
+    'Weiler (Vorarlberg)',
+    'Röthis',
+    'Sulz (Vorarlberg)',
+  ],
+  'vorarlberg-rankweil': [
+    'Rankweil',
+    'Frastanz',
+    'Zwischenwasser',
+    'Meiningen (Vorarlberg)',
+    'Übersaxen',
+    'Laterns',
+  ],
+  // Roughly 5,000 residents, well under the floor, and Simon sent no population
+  // for it. Lech is a large ski resort and he drew the area this way, so it is
+  // built as drawn. Innerbraz is as he listed it ("Ortsteil von Braz").
+  'vorarlberg-arlberg-klostertal': [
+    'Lech am Arlberg',
+    'Warth (Vorarlberg)',
+    'Schröcken',
+    'Klösterle',
+    'Dalaas',
+    'Innerbraz',
+  ],
 };
 
 /**

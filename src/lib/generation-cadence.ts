@@ -127,6 +127,22 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   // catchment is drawn at 4km to take in the Leiblachtal without letting
   // Bregenz dominate and turn it into an edition about Bregenz.
   'vorarlberg-lochau',
+  // Russmedia after the 22 Sep call: Simon Mathis drew ten areas of 25,000 to
+  // 30,000 people across Vorarlberg himself, the unit exactly as pitched, for a
+  // free test of a month or two. Their own hyperlocal project kicks off the week
+  // of 28 Sep and he comes back around 30 Sep; editions do not backfill, so every
+  // morning before then is archive he can show. Lochau (above) sits inside
+  // area two and keeps running.
+  'vorarlberg-bregenz',
+  'vorarlberg-leiblachtal',
+  'vorarlberg-rheindelta',
+  'vorarlberg-lauterach-wolfurt',
+  'vorarlberg-dornbirn-nordwest',
+  'vorarlberg-dornbirn-suedost',
+  'vorarlberg-hohenems',
+  'vorarlberg-goetzis-vorderland',
+  'vorarlberg-rankweil',
+  'vorarlberg-arlberg-klostertal',
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */
@@ -146,6 +162,17 @@ export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' 
   'montreal-westmount': 'fr',
   'berlin-prenzlauer-berg': 'de',
   'vorarlberg-lochau': 'de',
+  // Russmedia's ten areas (2026-09-22)
+  'vorarlberg-bregenz': 'de',
+  'vorarlberg-leiblachtal': 'de',
+  'vorarlberg-rheindelta': 'de',
+  'vorarlberg-lauterach-wolfurt': 'de',
+  'vorarlberg-dornbirn-nordwest': 'de',
+  'vorarlberg-dornbirn-suedost': 'de',
+  'vorarlberg-hohenems': 'de',
+  'vorarlberg-goetzis-vorderland': 'de',
+  'vorarlberg-rankweil': 'de',
+  'vorarlberg-arlberg-klostertal': 'de',
 };
 
 export function isPilotNeighborhood(neighborhoodId: string): boolean {
