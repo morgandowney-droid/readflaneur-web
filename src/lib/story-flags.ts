@@ -104,7 +104,10 @@ export function briefStories(enrichedCategories: unknown): BriefStory[] {
 // can cost a defamation claim. English first because enrichment writes English;
 // the German terms catch local names and quoted phrases.
 const CRIME_OR_COURT = /\b(police|polizei|arrest(ed|s)?|charged with|suspects?|court (case|hearing|ruling|date)|in court|(district|regional|supreme|high|appeals?|criminal) court|landesgericht|bezirksgericht|trial|prosecut\w*|staatsanwalt\w*|murder\w*|homicide|manslaughter|stabb(ed|ing)|assault\w*|robber(y|ies)|burglar(y|ies)|fraud|rape|sexual (assault|abuse)|shooting)\b/i;
-const DEATH_OR_INJURY = /\b(died|dies|dead|deaths?|killed|fatal(ly|ity)?|body (was )?found|verstorben|t[öo]dlich\w*|injur(ed|ies|y)|verletzt\w*|hospitali[sz]ed|accident|unfall|crash(ed)?|collision)\b/i;
+// Not bare "dead" or "death": on the first Vorarlberg desk a concert by the band
+// Sweeping Death came out as needing a legal check. The phrases below are how a
+// real death or injury is reported. Same for bare "crash" ("crash course").
+const DEATH_OR_INJURY = /\b(died|dies|killed|deaths|death of|death toll|(found|was|were|is) dead|fatal(ly|ity)?|body (was )?found|verstorben|t[öo]dlich\w*|injur(ed|ies|y)|verletzt\w*|hospitali[sz]ed|accident|unfall|crashed|car crash|collision)\b/i;
 const MINORS = /\b(child|children|minors?|teen(ager)?s?|pupils?|schoolchildren|jugendlich\w*)\b/i;
 
 /** Fixed rules. Minors only counts alongside crime or injury, or every children's event would be flagged. */
