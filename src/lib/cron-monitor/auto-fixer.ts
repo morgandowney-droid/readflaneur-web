@@ -9,6 +9,7 @@ import { CronIssue, FixResult, FIX_CONFIG, EmailDiagnosis } from './types';
 import { fixEmailRootCause, resendEmail } from './email-monitor';
 import { generateGrokNewsStories } from '@/lib/grok';
 import { extractArticleSources } from '@/lib/source-links';
+import { rulesForEdition } from '@/lib/edition-rules';
 
 /**
  * Calculate the next retry time based on retry count
@@ -277,6 +278,12 @@ export async function fixThinContent(
 
     if (nhError || !neighborhood) {
       return { success: false, message: `Neighborhood ${neighborhoodId} not found` };
+    }
+
+    // Raw Grok stories bypass the publisher's edition rules, so an edition with
+    // rules is never padded this way.
+    if (rulesForEdition(neighborhoodId)) {
+      return { success: false, message: `${neighborhoodId} has publisher edition rules; thin-content padding is disabled for it` };
     }
 
     let articlesCreated = 0;

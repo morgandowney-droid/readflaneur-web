@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 import { toHeadlineCase } from '@/lib/utils';
 import { extractArticleSources } from '@/lib/source-links';
+import { checkBeforeInsert, fallbackTeaser, mentionsDroppedStory } from '@/lib/edition-rules';
 
 
 /**
@@ -144,6 +145,8 @@ export async function GET(request: Request) {
     articles_skipped: 0,
     articles_failed: 0,
     errors: [] as string[],
+    // Publisher edition rules (edition-rules.ts): what was cut from which edition and why.
+    edition_rules_removals: [] as Array<{ neighborhood: string; header: string; rule: string }>,
   };
 
   try {
@@ -281,14 +284,8 @@ export async function GET(request: Request) {
 
       const neighborhood = brief.neighborhoods as unknown as { id: string; name: string; city: string };
 
-      // Use subject_teaser (Title Case) as headline when available, fall back to Grok headline
-      const baseHeadline = brief.subject_teaser
-        ? toHeadlineCase(brief.subject_teaser)
-        : (brief.headline || `What's Happening in ${neighborhood.name}`);
-      const articleHeadline = `${neighborhood.name} DAILY BRIEF: ${baseHeadline}`;
-
       // Only use enriched content — never publish raw/unenriched briefs
-      const articleBody = brief.enriched_content;
+      let articleBody: string | null = brief.enriched_content;
 
       if (!articleBody) {
         results.articles_failed++;
@@ -296,14 +293,46 @@ export async function GET(request: Request) {
         continue;
       }
 
+      // Publisher edition rules: re-check the exact body about to be inserted.
+      // Null (no change at all) for editions without rules.
+      const rulesCheck = checkBeforeInsert({
+        neighborhoodId: brief.neighborhood_id,
+        body: articleBody,
+        categories: brief.enriched_categories,
+        placeNames: [neighborhood.name, neighborhood.city],
+      });
+      if (rulesCheck) {
+        for (const r of rulesCheck.removals) results.edition_rules_removals.push({ neighborhood: brief.neighborhood_id, header: r.header, rule: r.rule });
+        if (rulesCheck.blockReason) {
+          console.warn(`[generate-brief-articles] ${brief.neighborhood_id}: not published (${rulesCheck.blockReason})`);
+          results.articles_skipped++;
+          continue;
+        }
+        articleBody = rulesCheck.body;
+      }
+
+      // Use subject_teaser (Title Case) as headline when available, fall back to Grok headline.
+      // With rules, never the Grok headline (it predates every rule) and never a
+      // teaser about a story the rules removed.
+      let teaser: string | null = brief.subject_teaser;
+      if (rulesCheck && (!teaser || mentionsDroppedStory(teaser, rulesCheck.droppedStories, [neighborhood.name, neighborhood.city]))) {
+        teaser = fallbackTeaser(rulesCheck.categories);
+      }
+      const baseHeadline = teaser
+        ? toHeadlineCase(teaser)
+        : (rulesCheck ? `What's Happening in ${neighborhood.name}` : (brief.headline || `What's Happening in ${neighborhood.name}`));
+      const articleHeadline = `${neighborhood.name} DAILY BRIEF: ${baseHeadline}`;
+
       // Generate slug using neighborhood id and brief's local generation date
       const slug = generateSlug(articleHeadline, neighborhood.id, brief.generated_at, (brief.neighborhoods as any)?.timezone);
 
       // Use email_teaser from Gemini enrichment if available, otherwise auto-generate
-      const previewText = brief.email_teaser || generatePreviewText(articleBody);
+      const previewText = (rulesCheck && rulesCheck.droppedStories.length > 0)
+        ? generatePreviewText(articleBody)
+        : (brief.email_teaser || generatePreviewText(articleBody));
 
-      // Extract sources from enriched categories
-      const extractedSources = await extractArticleSources(brief.enriched_categories);
+      // Extract sources from enriched categories (the rule-filtered ones for an edition with rules)
+      const extractedSources = await extractArticleSources(rulesCheck ? rulesCheck.categories : brief.enriched_categories);
 
       // Compute published_at as 7 AM local time on brief_date (not generated_at).
       // generated_at can fall on the wrong UTC calendar day when briefs are created
@@ -343,6 +372,7 @@ export async function GET(request: Request) {
           image_url: selectLibraryImage(brief.neighborhood_id, 'brief_summary', undefined, libraryReadyIds),
           enriched_at: new Date().toISOString(),
           enrichment_model: brief.enrichment_model || 'gemini-2.5-flash',
+          ...(rulesCheck?.editorNotes ? { editor_notes: rulesCheck.editorNotes } : {}),
         })
         .select('id')
         .single();
@@ -403,6 +433,7 @@ export async function GET(request: Request) {
         briefs_processed: results.briefs_processed,
         articles_created: results.articles_created,
         articles_failed: results.articles_failed,
+        edition_rules_removals: results.edition_rules_removals.slice(0, 200),
       },
     }).then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
   }

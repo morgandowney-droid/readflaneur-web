@@ -6,6 +6,8 @@ import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/
 import { toHeadlineCase } from '@/lib/utils';
 import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
 import { isPriorityNeighborhood } from '@/lib/generation-cadence';
+import { checkBeforeInsert, fallbackTeaser, mentionsDroppedStory } from '@/lib/edition-rules';
+import { unpublishableReason } from '@/lib/model-refusal';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -282,6 +284,8 @@ export async function GET(request: Request) {
     skipped_time_budget: false,
     model_pro_used: 0,
     model_flash_used: 0,
+    // Publisher edition rules (edition-rules.ts): what was cut from which edition and why.
+    edition_rules_removals: [] as Array<{ neighborhood: string; header: string; rule: string }>,
   };
 
   const elapsed = () => Date.now() - functionStart;
@@ -439,15 +443,47 @@ export async function GET(request: Request) {
                 .maybeSingle();
 
               if (!existingArticle) {
-                const enrichedContent = result.rawResponse;
+                let enrichedContent: string | null | undefined = result.rawResponse;
+                // Publisher edition rules: the enricher already applied them;
+                // this re-checks the exact body being inserted and carries the
+                // enricher's removals into editor_notes. Null for editions
+                // without rules.
+                const rulesCheck = enrichedContent
+                  ? checkBeforeInsert({
+                      neighborhoodId: hood.id,
+                      body: enrichedContent,
+                      categories: result.categories,
+                      placeNames: [hood.name, hood.city],
+                      priorRemovals: result.editionRules?.removals,
+                    })
+                  : null;
+                if (rulesCheck) {
+                  for (const r of rulesCheck.removals) results.edition_rules_removals.push({ neighborhood: hood.id, header: r.header, rule: r.rule });
+                  const blocked = rulesCheck.blockReason || unpublishableReason(rulesCheck.body, { minWords: 60 });
+                  if (blocked) {
+                    console.warn(`[enrich-briefs] ${hood.id}: inline article not published (${blocked})`);
+                    enrichedContent = null;
+                  } else {
+                    enrichedContent = rulesCheck.body;
+                  }
+                }
                 if (enrichedContent) {
-                  const baseHeadline = result.subjectTeaser
-                    ? toHeadlineCase(result.subjectTeaser)
-                    : (brief.headline || `What's Happening in ${hood.name}`);
+                  let teaser = result.subjectTeaser;
+                  if (rulesCheck && teaser && mentionsDroppedStory(teaser, rulesCheck.droppedStories, [hood.name, hood.city])) {
+                    teaser = fallbackTeaser(rulesCheck.categories);
+                  }
+                  const baseHeadline = teaser
+                    ? toHeadlineCase(teaser)
+                    : rulesCheck
+                      // With rules, the Grok headline predates every rule; never use it.
+                      ? (fallbackTeaser(rulesCheck.categories) ? toHeadlineCase(fallbackTeaser(rulesCheck.categories) as string) : `What's Happening in ${hood.name}`)
+                      : (brief.headline || `What's Happening in ${hood.name}`);
                   const articleHeadline = `${hood.name} DAILY BRIEF: ${baseHeadline}`;
                   const slug = generateBriefSlug(articleHeadline, hood.id, brief.generated_at, hood.timezone);
-                  const previewText = result.emailTeaser || generatePreviewText(enrichedContent);
-                  const extractedSources = await extractArticleSources(result.categories);
+                  const previewText = (rulesCheck && rulesCheck.droppedStories.length > 0)
+                    ? generatePreviewText(enrichedContent)
+                    : (result.emailTeaser || generatePreviewText(enrichedContent));
+                  const extractedSources = await extractArticleSources(rulesCheck ? rulesCheck.categories : result.categories);
 
                   const { data: insertedArticle, error: insertError } = await supabase
                     .from('articles')
@@ -467,6 +503,7 @@ export async function GET(request: Request) {
                       image_url: selectLibraryImage(brief.neighborhood_id, 'brief_summary', undefined, libraryReadyIds),
                       enriched_at: new Date().toISOString(),
                       enrichment_model: result.model,
+                      ...(rulesCheck?.editorNotes ? { editor_notes: rulesCheck.editorNotes } : {}),
                     })
                     .select('id')
                     .single();
@@ -773,6 +810,7 @@ export async function GET(request: Request) {
           model_flash_used: results.model_flash_used,
           elapsed_ms: Date.now() - functionStart,
           skipped_time_budget: results.skipped_time_budget,
+          edition_rules_removals: results.edition_rules_removals.slice(0, 200),
         },
       }).then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
     }

@@ -4,6 +4,7 @@ import { isGrokConfigured } from '@/lib/grok';
 import { enrichBriefWithGemini, EnrichedBriefOutput } from '@/lib/brief-enricher-gemini';
 import { getSearchLocation } from '@/lib/neighborhood-utils';
 import { getComboInfo } from '@/lib/combo-utils';
+import { rulesForEdition } from '@/lib/edition-rules';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 
 interface ArticleSourceInput {
@@ -465,6 +466,14 @@ export async function GET(request: Request) {
             // Continue with unenriched content
             console.error(`Enrichment failed for ${hood.name}:`, enrichErr);
           }
+        }
+
+        // An edition with publisher rules publishes only text that passed them.
+        // The enricher applies the rules; when it fails or refuses (every story
+        // removed), falling through here would publish the raw combined briefs.
+        if (rulesForEdition(hood.id) && !enrichmentModel) {
+          console.warn(`[generate-community-news] ${hood.name}: edition rules apply and enrichment did not pass, skipping`);
+          continue;
         }
 
         // If no enrichment or no sources found, add default platform sources
