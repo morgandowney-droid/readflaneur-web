@@ -59,6 +59,9 @@ const PLACEHOLDER_SOURCE_PATTERNS: RegExp[] = [
   // shown to the Canadian Press on 2026-09-20 and 21. Neither is a publication.
   /^internal\s+(summary|notes?|data|research|compilation)$/i,
   /^(real estate|property|housing|rental|job|jobs|classified)\s+(listings?|ads?)$/i,
+  // "Not listed" reached a Milan Look Ahead on 2026-09-23 as a source with no
+  // URL; it is the model's answer for an unknown venue, not a publication.
+  /^(not listed|not specified|not available|n\/a|none|tbd|tba)$/i,
   /^ai[- ]generated/i,
   /^grok/i,
   /^gemini/i,
