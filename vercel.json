@@ -219,6 +219,10 @@
     {
       "path": "/api/cron/prewarm-pilot-translations",
       "schedule": "40 5,7 * * *"
+    },
+    {
+      "path": "/api/cron/shadow-edition-rules",
+      "schedule": "15 8 * * *"
     }
   ]
 }
