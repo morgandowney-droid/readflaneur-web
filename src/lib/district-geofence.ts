@@ -9,21 +9,20 @@
  * district-scoped editions every listed venue is geocoded and anything outside
  * the edition's radius (plus a short walk) is dropped.
  *
- * Geocoding uses Mapbox forward geocoding with the public token, biased to the
- * edition's centre. A venue that cannot be placed at street or point level is
- * dropped too: for a district edition, fewer events that are certainly local
- * beat a listing padded with ones that might not be. If the geocoder itself is
- * unreachable for every event, the listing is returned unchanged so an outage
- * never empties an edition.
+ * Geocoding uses OpenStreetMap's Nominatim, one request a second as its usage
+ * policy requires (the Mapbox token in this project is restricted to the
+ * website's own URL, so a server call gets a 403). Each venue is tried by
+ * street address first, then by venue name, both with the edition's city. A
+ * venue that cannot be placed is dropped: for a district edition, fewer events
+ * that are certainly local beat a listing padded with ones that might not be.
+ * If the geocoder is unreachable for every event, the listing is returned
+ * unchanged so an outage never empties an edition.
  */
 
 import type { StructuredEvent } from '@/lib/look-ahead-events';
 
 /** How far past the edition's radius a venue may sit: roughly a short walk. */
 const WALK_MARGIN_M = 500;
-
-/** Mapbox relevance below this is a guess, not a match. */
-const MIN_RELEVANCE = 0.6;
 
 export interface DistrictCentre {
   latitude: number;
@@ -52,57 +51,67 @@ type Placement =
   | { ok: true; lat: number; lng: number }
   | { ok: false; reason: string; networkError?: boolean };
 
-async function placeVenue(query: string, centre: DistrictCentre, token: string): Promise<Placement> {
-  const url =
-    `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json` +
-    `?proximity=${centre.longitude},${centre.latitude}&types=poi,address&limit=1&access_token=${token}`;
+const USER_AGENT = 'readflaneur-geofence/1.0 (contact@readflaneur.com)';
+let lastRequestAt = 0;
+
+async function politePause() {
+  const wait = lastRequestAt + 1100 - Date.now();
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  lastRequestAt = Date.now();
+}
+
+async function geocode(query: string): Promise<Placement> {
+  await politePause();
+  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`;
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
-    if (!res.ok) return { ok: false, reason: `geocoder HTTP ${res.status}`, networkError: res.status >= 500 || res.status === 429 };
-    const json = (await res.json()) as { features?: Array<{ center?: [number, number]; relevance?: number }> };
-    const f = json.features?.[0];
-    if (!f?.center) return { ok: false, reason: 'venue not found' };
-    if ((f.relevance ?? 0) < MIN_RELEVANCE) return { ok: false, reason: `weak match (${(f.relevance ?? 0).toFixed(2)})` };
-    return { ok: true, lng: f.center[0], lat: f.center[1] };
+    const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return { ok: false, reason: `geocoder HTTP ${res.status}`, networkError: true };
+    const json = (await res.json()) as Array<{ lat?: string; lon?: string }>;
+    const f = json[0];
+    if (!f?.lat || !f?.lon) return { ok: false, reason: 'venue not found' };
+    return { ok: true, lat: Number(f.lat), lng: Number(f.lon) };
   } catch {
     return { ok: false, reason: 'geocoder unreachable', networkError: true };
   }
+}
+
+/** Address first, then venue name; both anchored to the city. */
+async function placeVenue(e: StructuredEvent, city: string, cache: Map<string, Placement>): Promise<Placement> {
+  const withCity = (s: string) => (s.toLowerCase().includes(city.toLowerCase()) ? s : `${s}, ${city}`);
+  const tries = [e.address, e.location].filter((x): x is string => !!x && x.trim().length > 2).map((x) => withCity(x.trim()));
+  if (tries.length === 0) return { ok: false, reason: 'no venue' };
+  let last: Placement = { ok: false, reason: 'venue not found' };
+  for (const q of tries) {
+    const cached = cache.get(q);
+    const placed = cached ?? (await geocode(q));
+    cache.set(q, placed);
+    if (placed.ok) return placed;
+    last = placed;
+  }
+  return last;
 }
 
 export async function filterEventsToDistrict(
   events: StructuredEvent[],
   centre: DistrictCentre,
 ): Promise<GeofenceResult> {
-  const token = process.env.MAPBOX_ACCESS_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
-  if (!token || events.length === 0) return { kept: events, dropped: [] };
+  if (events.length === 0) return { kept: events, dropped: [] };
 
   const limit = centre.radiusM + WALK_MARGIN_M;
-  const verdicts: Array<{ keep: boolean; reason: string; networkError?: boolean }> = new Array(events.length);
-
-  // Small fixed concurrency: a listing is rarely more than thirty events.
-  let next = 0;
-  async function worker() {
-    while (next < events.length) {
-      const i = next++;
-      const e = events[i];
-      const venue = [e.location, e.address].filter(Boolean).join(', ').trim();
-      if (!venue) {
-        verdicts[i] = { keep: false, reason: 'no venue' };
-        continue;
-      }
-      const query = venue.toLowerCase().includes(centre.city.toLowerCase()) ? venue : `${venue}, ${centre.city}`;
-      const placed = await placeVenue(query, centre, token!);
-      if (!placed.ok) {
-        verdicts[i] = { keep: false, reason: placed.reason, networkError: placed.networkError };
-        continue;
-      }
-      const d = distanceM(centre.latitude, centre.longitude, placed.lat, placed.lng);
-      verdicts[i] = d <= limit
-        ? { keep: true, reason: `${Math.round(d)}m` }
-        : { keep: false, reason: `${(d / 1000).toFixed(1)}km from the district centre` };
+  const cache = new Map<string, Placement>();
+  // Sequential on purpose: Nominatim allows one request a second.
+  const verdicts: Array<{ keep: boolean; reason: string; networkError?: boolean }> = [];
+  for (const e of events) {
+    const placed = await placeVenue(e, centre.city, cache);
+    if (!placed.ok) {
+      verdicts.push({ keep: false, reason: placed.reason, networkError: placed.networkError });
+      continue;
     }
+    const d = distanceM(centre.latitude, centre.longitude, placed.lat, placed.lng);
+    verdicts.push(d <= limit
+      ? { keep: true, reason: `${Math.round(d)}m` }
+      : { keep: false, reason: `${(d / 1000).toFixed(1)}km from the district centre` });
   }
-  await Promise.all(Array.from({ length: Math.min(5, events.length) }, worker));
 
   // An outage must never empty an edition.
   if (verdicts.every((v) => v.networkError)) return { kept: events, dropped: [] };
