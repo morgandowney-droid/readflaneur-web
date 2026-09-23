@@ -147,6 +147,12 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   // on Will Lewis's introduction for Repubblica's city editions. Was cold
   // (weekly brief, no Look Ahead); promoted the morning of the call.
   'milan-brera',
+  // GEDI after the 23 Sep call: Mirja Cartia d'Asero named Scicli, the Sicilian
+  // town she is from, and Prati in Rome, where Repubblica's editor-in-chief
+  // lives. A third quartiere is to come from the head of digital. She asked
+  // whether it could be live for 1 November, so these start the archive now.
+  'sicily-scicli',
+  'rome-prati',
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */
@@ -179,6 +185,8 @@ export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' 
   'vorarlberg-arlberg-klostertal': 'de',
   // GEDI / Repubblica (2026-09-23)
   'milan-brera': 'it',
+  'sicily-scicli': 'it',
+  'rome-prati': 'it',
 };
 
 export function isPilotNeighborhood(neighborhoodId: string): boolean {

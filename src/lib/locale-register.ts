@@ -164,6 +164,9 @@ export const CITY_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
   'fraservalley-abbotsford',
   // Russmedia, Vorarlberg (2026-09-22): Bregenz, the state capital, as one area.
   'vorarlberg-bregenz',
+  // GEDI (2026-09-23): Scicli is a comune of about 26,000 and styles itself a
+  // città; "neighbourhood" would read as an import in Italian and in English.
+  'sicily-scicli',
 ]);
 
 /**

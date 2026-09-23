@@ -37,6 +37,14 @@ const SEARCH_CATCHMENTS: Readonly<Record<string, readonly string[]>> = {
   // same quartiere and carry most of its street life. Stops short of Porta
   // Nuova and the Duomo, which would turn it into an edition about the centre.
   'milan-brera': ['Brera', 'Moscova', 'Corso Garibaldi'],
+  // Scicli (GEDI, 2026-09-23). The comune is about 26,000 people, and a good
+  // share of them live in its coastal frazioni, which a search for the town
+  // alone misses. Stops short of Modica and Ragusa, which have their own news.
+  'sicily-scicli': ['Scicli', 'Donnalucata', 'Sampieri', "Cava d'Aliga"],
+  // Prati, Rome (GEDI, 2026-09-23). Named as "Prati, near Piazza Mazzini", which
+  // sits in the adjoining Della Vittoria quartiere, so both are named. Stops
+  // short of the Vatican and Borgo, which would turn it into tourist news.
+  'rome-prati': ['Prati', 'Piazza Mazzini', 'Della Vittoria'],
   // Charters Towers Region, Queensland. Townships per the regional council's
   // own listing. They are very small (Mingela 14 people, Ravenswood 297), so
   // this widens council and district coverage rather than adding much event
