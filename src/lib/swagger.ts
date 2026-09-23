@@ -50,6 +50,7 @@ export function getApiDocs() {
         { name: 'Admin', description: 'Admin-only endpoints' },
         { name: 'Cron', description: 'Scheduled cron jobs (Vercel-triggered)' },
         { name: 'Internal', description: 'Internal service endpoints' },
+        { name: 'Licensee Feed', description: 'Versioned machine feed for licensees (/api/v1), per-licensee bearer key' },
       ],
       components: {
         securitySchemes: {
@@ -64,6 +65,11 @@ export function getApiDocs() {
             in: 'header',
             name: 'x-vercel-cron',
             description: 'Vercel cron secret or CRON_SECRET header',
+          },
+          licenseeKey: {
+            type: 'http',
+            scheme: 'bearer',
+            description: 'Per-licensee key for the /api/v1 feed (docs/licensee-feed-api.md)',
           },
         },
         schemas: {

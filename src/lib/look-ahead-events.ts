@@ -279,3 +279,120 @@ function isTouristActivity(event: StructuredEvent): boolean {
 export function isEventLine(text: string): boolean {
   return (text.match(/;/g) || []).length >= 2;
 }
+
+/**
+ * Split a Look Ahead article body into its event listing block and its prose.
+ * The listing is the `[[Event Listing]] ... ---` block formatEventListing()
+ * writes at the top of the body; everything after it is the enriched prose.
+ * Returns listing: null when the body has no listing.
+ */
+export function splitEventListing(body: string): { listing: string | null; prose: string } {
+  const match = body.match(/^\s*\[\[Event Listing\]\]\s*([\s\S]*?)\n---[ \t]*(?:\n|$)/);
+  if (!match) return { listing: null, prose: body.trim() };
+  return { listing: match[1].trim(), prose: body.slice(match[0].length).trim() };
+}
+
+const MONTHS: Record<string, number> = {
+  jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+};
+
+/**
+ * Resolve a listing date header ("Today, Wed Sep 23" or "Thu, Sep 24") to
+ * YYYY-MM-DD. formatDateHeader() writes no year, so the year comes from the
+ * edition's local date, rolling forward when the month is well before the
+ * edition's (a late-December listing that reaches into January).
+ */
+function resolveHeaderDate(header: string, localDate: string): string | null {
+  if (/^today\b/i.test(header)) return localDate;
+  const m = header.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})\b/i);
+  if (!m) return null;
+  const month = MONTHS[m[1].toLowerCase()];
+  const day = parseInt(m[2], 10);
+  const [baseYear, baseMonth] = localDate.split('-').map(Number);
+  const year = month < baseMonth - 6 ? baseYear + 1 : baseYear;
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function weekdayName(date: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
+}
+
+export interface ListedEvent extends StructuredEvent {
+  /** "(also on Sun, Mon)" suffix written for a recurring event, as short day names. */
+  also_on: string | null;
+}
+
+/**
+ * Parse the text of an event listing (the inside of the block returned by
+ * splitEventListing) back into structured events. The inverse of
+ * formatEventListing()/formatEventLine(): "Name; Category, Time; Venue,
+ * Address; Price." under [[date]] headers. Same reading as the article page's
+ * EventListingBlock: the segment after the name holds category and time (the
+ * part that looks like a clock time is the time), the next holds venue then
+ * address, and the last holds price.
+ */
+export function parseEventListing(listing: string, localDate: string): ListedEvent[] {
+  const lines = listing.split(/\n+/).map(l => l.trim()).filter(Boolean);
+  const events: ListedEvent[] = [];
+  let currentDate: string | null = null;
+
+  for (const line of lines) {
+    const header = line.match(/^\[\[(.+)\]\]$/);
+    if (header) {
+      currentDate = resolveHeaderDate(header[1], localDate);
+      continue;
+    }
+    if (!currentDate || !line.includes(';')) continue;
+
+    let clean = line.replace(/\.\s*$/, '');
+    let alsoOn: string | null = null;
+    const also = clean.match(/\s*\(also on ([^)]+)\)\s*$/);
+    if (also) {
+      alsoOn = also[1].trim();
+      clean = clean.slice(0, also.index);
+    }
+
+    const segments = clean.split(';').map(s => s.trim());
+    const name = segments[0] || '';
+    if (isPlaceholder(name)) continue;
+
+    let category: string | null = null;
+    let time: string | null = null;
+    if (segments[1]) {
+      const rest: string[] = [];
+      for (const part of segments[1].split(',').map(s => s.trim()).filter(Boolean)) {
+        if (!time && (/\d{1,2}[:.]\d{2}/.test(part) || /\d{1,2}\s*(am|pm)\b/i.test(part) || /^all day$/i.test(part))) {
+          time = part;
+        } else if (!isPlaceholder(part)) {
+          rest.push(part);
+        }
+      }
+      category = rest.length ? rest.join(', ') : null;
+    }
+
+    let location: string | null = null;
+    let address: string | null = null;
+    if (segments[2]) {
+      const parts = segments[2].split(',').map(s => s.trim()).filter(Boolean);
+      location = parts[0] && !isPlaceholder(parts[0]) ? parts[0] : null;
+      const addr = parts.slice(1).join(', ');
+      address = addr && !isPlaceholder(addr) ? addr : null;
+    }
+
+    const price = segments[3] && !isPlaceholder(segments[3]) ? segments.slice(3).join('; ') : null;
+
+    events.push({
+      date: currentDate,
+      day_label: weekdayName(currentDate),
+      time,
+      name,
+      category,
+      location,
+      address,
+      price,
+      also_on: alsoOn,
+    });
+  }
+  return events;
+}

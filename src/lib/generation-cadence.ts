@@ -16,6 +16,8 @@
  * automatically - the gate reads live subscriber state every run.
  */
 
+import { LICENSED_EDITION_IDS } from './licensees';
+
 export const COLD_INTERVAL_DAYS = 7;
 
 /** djb2 string hash - deterministic, stable across runs. */
@@ -210,7 +212,10 @@ export function isPriorityNeighborhood(
   neighborhoodId: string,
   subscribed: boolean,
 ): boolean {
-  return subscribed || isIrishEntity(neighborhoodId) || isPilotNeighborhood(neighborhoodId);
+  return subscribed || isIrishEntity(neighborhoodId) || isPilotNeighborhood(neighborhoodId)
+    // A licensee reads the edition through /api/v1 every morning. Left cold it
+    // would publish one day in seven and the feed would be empty the other six.
+    || LICENSED_EDITION_IDS.has(neighborhoodId);
 }
 
 /**

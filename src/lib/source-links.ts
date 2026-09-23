@@ -62,6 +62,9 @@ const PLACEHOLDER_SOURCE_PATTERNS: RegExp[] = [
   // "Not listed" reached a Milan Look Ahead on 2026-09-23 as a source with no
   // URL; it is the model's answer for an unknown venue, not a publication.
   /^(not listed|not specified|not available|n\/a|none|tbd|tba)$/i,
+  // "Local Market Data" was the only source on a Madrid brief on 2026-09-23,
+  // found building the licensee feed. It names a kind of data, not a publisher.
+  /^(local|regional|city|area)?\s*(market|property|price|sales)\s+(data|figures|statistics|stats|reports?)$/i,
   /^ai[- ]generated/i,
   /^grok/i,
   /^gemini/i,
