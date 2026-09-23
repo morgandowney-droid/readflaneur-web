@@ -344,4 +344,20 @@ The version is in the path (`/api/v1`) and in every response (`"version": "v1"` 
 
 ## Editorial rules and source blocking
 
-Which sources an edition may draw on, sources you want excluded, and any editorial rules specific to your publication are configured per licensee at onboarding. The feed has no request parameters for them.
+Each licensee has its own rule set, agreed at onboarding and applied before anything reaches the feed. There are no request parameters for it; changing a rule is a configuration change on our side, and it takes effect from the next morning's editions.
+
+**Blocking sources.** A blocked source can be any of:
+
+- a whole site, by domain (`example-competitor.de` also blocks `www.` and every other subdomain);
+- one page, account or group on a platform, by its address (`facebook.com/groups/123456`, `instagram.com/somepage`, `x.com/somehandle`; `twitter.com` addresses are treated as `x.com`);
+- a publication, by name.
+
+Blocking is enforced twice. The search that gathers each edition's facts is told not to use blocked sources. Then, before publication, a check removes every blocked source from every story, removes links to it from the text, and drops any story that no longer meets the sourcing rule without it. A story that rested on a blocked source does not appear.
+
+**Sourcing.** A named person, date or figure needs two independent sources, unless one of them is a newspaper of record from the licensee's agreed list, which can stand alone. Where a story rests on social media, the second source must be a different kind (an official site, a published notice, a news outlet).
+
+**Topics.** A licensee can exclude whole topics (for example active criminal cases, party politics, sports commentary, or any subject named at onboarding). Private individuals are not named, and personal details about them are removed.
+
+**Review before publication.** Stories that pass the fixed rules are checked by a second model against the gathered sources before publication; a story whose claims the sources do not support is dropped.
+
+**The record of what was cut.** Every story removed by a rule is logged with the rule that removed it, so an editor can see exactly what was left out and why.
