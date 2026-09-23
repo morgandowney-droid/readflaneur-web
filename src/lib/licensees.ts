@@ -37,7 +37,6 @@ export const LICENSEES: Readonly<Record<string, Licensee>> = {
       'milan-navigli',
       'madrid-salamanca',
       'berlin-prenzlauer-berg',
-      'london-belgravia',
     ],
   },
 };
