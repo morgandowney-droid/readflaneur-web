@@ -1008,6 +1008,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
         country,
         placeNames: [neighborhoodName, city],
         label: neighborhoodName,
+        today: dateStr,
       });
       text = enforced.body;
       enrichedData.categories = enforced.categories as EnrichedCategory[];

@@ -44,13 +44,16 @@ function buildReviewPrompt(
   stories: Array<RuleStory & { prose: string }>,
   sourceMaterial: string,
   chunks: GroundingChunk[],
+  today?: string,
 ): string {
   const list = stories.map((s) => {
     const sources = s.sources.map((r) => `${r.name}${r.url ? ` <${r.url}>` : ''}`).join('; ') || 'none';
     return `[${s.index}] ${s.entity}\nContext: ${s.context}\nAs written: ${s.prose || '(not found in the body)'}\nSources: ${sources}`;
   }).join('\n\n');
   const pages = chunks.slice(0, 60).map((c) => `- ${c.title || c.domain || ''} <${c.uri}>`).join('\n');
-  return `You are the standards editor for a local news edition covering ${place}, ${country}, published under a newspaper group's rules. Check each story below before it is published.
+  return `You are the standards editor for a local news edition covering ${place}, ${country}, published under a newspaper group's rules. Check each story below before it is published.${today ? `
+
+TODAY is ${today}. Resolve every relative date ("tomorrow", "this Friday", "this weekend") against it before comparing with the sources: a story saying "this Friday" for an event the sources date to the coming Friday is supported.` : ''}
 
 For each story decide:
 - "supported": true only if every specific claim (names, dates, times, figures, places) is supported by the SOURCE MATERIAL or by the source names and page titles listed. If a claim appears nowhere in them, false.
@@ -93,6 +96,8 @@ export async function reviewStoriesWithModel(args: {
   sourceMaterial: string;
   chunks: GroundingChunk[];
   label?: string;
+  /** The edition's local date, e.g. "Wednesday, September 23, 2026". */
+  today?: string;
 }): Promise<Map<number, ModelVerdict> | null> {
   if (args.stories.length === 0) return new Map();
   const apiKey = process.env.GEMINI_API_KEY;
@@ -101,7 +106,7 @@ export async function reviewStoriesWithModel(args: {
     const ai = new GoogleGenAI({ apiKey });
     const result = await ai.models.generateContent({
       model: AI_MODELS.GEMINI_FLASH,
-      contents: [{ role: 'user', parts: [{ text: buildReviewPrompt(args.place, args.country, args.stories, args.sourceMaterial, args.chunks) }] }],
+      contents: [{ role: 'user', parts: [{ text: buildReviewPrompt(args.place, args.country, args.stories, args.sourceMaterial, args.chunks, args.today) }] }],
       config: {
         temperature: 0.1,
         responseMimeType: 'application/json',
@@ -163,6 +168,8 @@ export async function enforceEditionRules<E extends ListingEvent>(args: {
   country: string;
   placeNames: string[];
   label?: string;
+  /** The edition's local date, so the review resolves "this Friday" correctly. */
+  today?: string;
 }): Promise<EnforceResult<E>> {
   const { rules, placeNames } = args;
   const secondSourcesAttached = attachSecondSources(args.categories, args.chunks, rules);
@@ -186,6 +193,7 @@ export async function enforceEditionRules<E extends ListingEvent>(args: {
       sourceMaterial: args.sourceMaterial,
       chunks: args.chunks,
       label: args.label,
+      today: args.today,
     });
     reviewStatus = verdicts ? 'ok' : 'failed';
   }
