@@ -32,6 +32,11 @@
 
 /** Edition id -> the place names the search should cover, in priority order. */
 const SEARCH_CATCHMENTS: Readonly<Record<string, readonly string[]>> = {
+  // Brera, Milan (GEDI, 2026-09-23). The Brera NIL is about 11,000 people, so
+  // the search also names Moscova and Corso Garibaldi, which sit inside the
+  // same quartiere and carry most of its street life. Stops short of Porta
+  // Nuova and the Duomo, which would turn it into an edition about the centre.
+  'milan-brera': ['Brera', 'Moscova', 'Corso Garibaldi'],
   // Charters Towers Region, Queensland. Townships per the regional council's
   // own listing. They are very small (Mingela 14 people, Ravenswood 297), so
   // this widens council and district coverage rather than adding much event

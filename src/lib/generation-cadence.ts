@@ -143,6 +143,10 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   'vorarlberg-goetzis-vorderland',
   'vorarlberg-rankweil',
   'vorarlberg-arlberg-klostertal',
+  // GEDI (named by Mirja Cartia d'Asero, 2026-09-22) ahead of the 23 Sep call,
+  // on Will Lewis's introduction for Repubblica's city editions. Was cold
+  // (weekly brief, no Look Ahead); promoted the morning of the call.
+  'milan-brera',
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */
@@ -173,6 +177,8 @@ export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' 
   'vorarlberg-goetzis-vorderland': 'de',
   'vorarlberg-rankweil': 'de',
   'vorarlberg-arlberg-klostertal': 'de',
+  // GEDI / Repubblica (2026-09-23)
+  'milan-brera': 'it',
 };
 
 export function isPilotNeighborhood(neighborhoodId: string): boolean {
