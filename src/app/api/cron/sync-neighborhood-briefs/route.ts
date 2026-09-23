@@ -7,6 +7,7 @@ import { generateBriefContextSnippet } from '@/lib/nyc-content-generator';
 import { NYCPermit } from '@/lib/nyc-permits';
 import { LiquorLicense } from '@/lib/nyc-liquor';
 import { searchNeighborhoodFacts, mergeContent } from '@/lib/gemini-search';
+import { pagesToStored } from '@/lib/source-links';
 import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
 import { shouldGenerateToday, isPriorityNeighborhood } from '@/lib/generation-cadence';
 
@@ -404,7 +405,11 @@ export async function GET(request: Request) {
           neighborhood_id: hood.id,
           headline: brief.headline,
           content: brief.content,
-          sources: brief.sources,
+          // Every page a search read for this brief: Grok's cited posts
+          // (with post text) and the Gemini fact search's grounding pages
+          // (with the fact passages each grounded). Enrichment matches
+          // stories against these; nothing here is written by a model.
+          sources: [...(brief.sources || []), ...pagesToStored(geminiFacts?.pages || [])],
           source_count: brief.sourceCount,
           model: brief.model,
           search_query: brief.searchQuery,

@@ -15,7 +15,7 @@ import {
 } from './hyperlink-injector';
 import { recordGeminiCall } from '@/lib/ai-cost';
 import type { StructuredEvent } from '@/lib/look-ahead-events';
-import { extractGroundingChunks, resolveGroundingChunks, cleanStorySources } from '@/lib/source-links';
+import { extractGroundingChunks, resolveGroundingChunks, cleanStorySources, pagesFromText, markSourceOrigins, type GroundingChunk } from '@/lib/source-links';
 import { editionRulesBlock, rulesForEdition, type Removal } from '@/lib/edition-rules';
 import { enforceEditionRules } from '@/lib/edition-rules-review';
 import { anglicise, britishStyleBlock, enforcePlaceNoun, getPlaceNoun, isEnglishSpeaking, usesBritishEnglish, spellingVariantFor } from '@/lib/locale-register';
@@ -26,6 +26,8 @@ export interface EnrichedStoryItem {
   source: {
     name: string;
     url: string | null;
+    /** How the URL was established; see SourceOrigin in source-links.ts. Absent on briefs enriched before 2026-09-23. */
+    origin?: 'tool' | 'story-match' | 'name-match' | 'model';
   } | null;
   context: string;
   note?: string;
@@ -365,6 +367,13 @@ export async function enrichBriefWithGemini(
      * this; otherwise neighborhoodSlug is used.
      */
     editionId?: string;
+    /**
+     * Pages the fact-gathering searches read for this brief (Grok's cited
+     * posts, the Gemini fact search's grounding pages), with the passages each
+     * supports. Stories without a source are matched against these,
+     * deterministically; see cleanStorySources in source-links.ts.
+     */
+    gatheredPages?: GroundingChunk[];
   }
 ): Promise<EnrichedBriefOutput> {
   const apiKey = options?.apiKey || process.env.GEMINI_API_KEY;
@@ -764,7 +773,13 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     // The pages Google Search grounding actually read, with their redirect
     // URLs resolved to real ones. Used below to attach URLs to name-only
     // sources and to replace redirect URLs before anything is stored.
-    const groundingChunks = await resolveGroundingChunks(extractGroundingChunks(response));
+    const groundingChunks = await resolveGroundingChunks(extractGroundingChunks(response, 'enrichment'));
+    // URLs written into the gathered facts (e.g. a Grok [[1]](url) marker that
+    // survived cleaning) count as read pages too, with their line as passage.
+    const gatheredPages = [
+      ...(options?.gatheredPages || []),
+      ...(await resolveGroundingChunks(pagesFromText(briefContent))),
+    ];
 
     // Strip markdown and JSON from response for clean prose display
     // But preserve [[section headers]] which we explicitly asked for
@@ -931,10 +946,21 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
 
     // Post-process: drop placeholder sources, resolve grounding redirects,
     // attach URLs to name-only sources from the grounding chunks
+    // and, for a story with no source at all, attach a page some search in
+    // this pipeline read whose grounded passage names the story. No model is
+    // asked for a source at any point.
     const allStories = enrichedData.categories.flatMap(c => c.stories || []);
-    const sourceStats = await cleanStorySources(allStories, groundingChunks);
-    if (sourceStats.placeholdersDropped || sourceStats.redirectsResolved || sourceStats.redirectsDropped || sourceStats.urlsAttached) {
-      console.log(`Source cleanup for ${neighborhoodName}: ${JSON.stringify(sourceStats)} (${groundingChunks.length} grounding chunks)`);
+    const sourceStats = await cleanStorySources(allStories, groundingChunks, {
+      gathered: gatheredPages,
+      placeNames: [neighborhoodName, city],
+      exclude: (p) => blockedDomains.some(d => p.uri.toLowerCase().includes(d)),
+    });
+    // Record, per story, whether its URL came from tool metadata or only from
+    // the model's own JSON. The shadow source check reports the latter as
+    // unverifiable_origin.
+    markSourceOrigins(allStories, [...groundingChunks, ...gatheredPages]);
+    if (sourceStats.placeholdersDropped || sourceStats.redirectsResolved || sourceStats.redirectsDropped || sourceStats.urlsAttached || sourceStats.storiesMatched) {
+      console.log(`Source cleanup for ${neighborhoodName}: ${JSON.stringify(sourceStats)} (${groundingChunks.length} grounding chunks, ${gatheredPages.length} gathered pages)`);
     }
 
     // Post-process: filter blocked domains and add fallback URLs

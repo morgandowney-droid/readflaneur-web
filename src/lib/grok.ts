@@ -14,6 +14,7 @@ import { recordGrokCall } from '@/lib/ai-cost';
 import { geographicBoundaryBlock } from './place-boundary';
 import { districtScopeBlock } from '@/lib/search-catchment';
 import { editionRulesBlock, rulesForEdition } from './edition-rules';
+import { extractGrokCitations, hydrateXPosts } from './grok-citations';
 
 const GROK_API_URL = 'https://api.x.ai/v1';
 const GROK_MODEL = AI_MODELS.GROK_FAST;
@@ -24,6 +25,32 @@ interface XSearchResult {
   snippet?: string;
   author?: string;
   published_at?: string;
+  /** Claims an inline marker ties to this URL, or the cited post's own text. */
+  supports?: string[];
+  origin?: 'grok';
+}
+
+/**
+ * Citations from a Responses API result, with X post text attached where it
+ * can be read. Bounded to ~6s so a slow syndication endpoint cannot hold up a
+ * brief; on timeout the citations go out without post text. Never throws.
+ */
+async function grokSourcesFrom(data: unknown, responseText: string): Promise<XSearchResult[]> {
+  try {
+    const citations = extractGrokCitations(data, responseText);
+    await Promise.race([
+      hydrateXPosts(citations),
+      new Promise(resolve => setTimeout(resolve, 6000)),
+    ]);
+    return citations.map(c => ({
+      title: c.title,
+      url: c.url,
+      origin: 'grok' as const,
+      ...(c.supports?.length ? { supports: [...c.supports] } : {}),
+    }));
+  } catch {
+    return [];
+  }
 }
 
 interface GrokResponsesOutput {
@@ -233,11 +260,12 @@ DO NOT lead with or dedicate a paragraph to these topics UNLESS you find genuine
       .replace(/\n{3,}/g, '\n\n')
       .trim();
 
-    // Extract citations/sources
-    const sources: XSearchResult[] = (data.citations || []).map((c: { title?: string; url?: string }) => ({
-      title: c.title,
-      url: c.url,
-    }));
+    // The posts x_search read. The Responses API puts them in url_citation
+    // annotations, not data.citations (which it never returns), so until
+    // 2026-09-23 every brief stored an empty list. Inline [[n]](url) markers
+    // are read from the raw text before it is cleaned, and each cited post's
+    // own text is fetched so a story can be matched to the post it came from.
+    const sources: XSearchResult[] = await grokSourcesFrom(data, responseText);
 
     return {
       headline,
@@ -583,11 +611,12 @@ ${districtScoped ? `- ${districtScopeBlock(neighborhoodName, city)}` : `- MAJOR 
       .replace(/\n{3,}/g, '\n\n')
       .trim();
 
-    // Extract citations/sources
-    const sources: XSearchResult[] = (data.citations || []).map((c: { title?: string; url?: string }) => ({
-      title: c.title,
-      url: c.url,
-    }));
+    // The posts x_search read. The Responses API puts them in url_citation
+    // annotations, not data.citations (which it never returns), so until
+    // 2026-09-23 every brief stored an empty list. Inline [[n]](url) markers
+    // are read from the raw text before it is cleaned, and each cited post's
+    // own text is fetched so a story can be matched to the post it came from.
+    const sources: XSearchResult[] = await grokSourcesFrom(data, responseText);
 
     console.log(`[generateLookAhead] Parsed ${structuredEvents.length} structured events for ${neighborhoodName}`);
 

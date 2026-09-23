@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateLookAhead } from '@/lib/grok';
-import { extractArticleSources } from '@/lib/source-links';
+import { extractArticleSources, pagesFromStored } from '@/lib/source-links';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { getComboInfo } from '@/lib/combo-utils';
 import { searchCatchmentFor, isDistrictScoped } from '@/lib/search-catchment';
@@ -470,6 +470,12 @@ export async function GET(request: Request) {
               briefGeneratedAt: dates.publishAtUtc,
               // neighborhoodSlug above is the display slug ("brera"), not the id
               editionId: id,
+              // Pages both searches read (Grok's cited posts, Gemini's
+              // grounding) for deterministic story-to-page source matching.
+              gatheredPages: [
+                ...pagesFromStored(grokLookAhead?.sources || []),
+                ...(geminiEvents?.pages || []),
+              ],
             }
           );
 

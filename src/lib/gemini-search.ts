@@ -15,6 +15,7 @@ import type { StructuredEvent } from './look-ahead-events';
 import { geographicBoundaryBlock } from './place-boundary';
 import { districtScopeBlock } from '@/lib/search-catchment';
 import { editionRulesBlock, rulesForEdition } from './edition-rules';
+import { extractGroundingChunks, resolveGroundingChunks, type GroundingChunk } from './source-links';
 
 const RETRY_DELAYS = [2000, 5000, 15000]; // 2s, 5s, 15s exponential backoff
 
@@ -36,7 +37,7 @@ export async function searchNeighborhoodFacts(
   recentTopics?: string[],
   /** neighborhoods.id, for publisher edition rules (edition-rules.ts). */
   editionId?: string,
-): Promise<{ facts: string; sourceCount: number } | null> {
+): Promise<{ facts: string; sourceCount: number; pages: GroundingChunk[] } | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
@@ -91,6 +92,10 @@ ${avoidBlock}`;
     return {
       facts: text,
       sourceCount: Math.max(bulletCount, 1),
+      // The pages Google Search read for these facts, each with the passages
+      // of the facts it grounded. Kept so a story can later be tied to the
+      // page it came from without asking a model (source-links.ts).
+      pages: await resolveGroundingChunks(response?.chunks || []),
     };
   } catch (err) {
     console.error(`[gemini-search] searchNeighborhoodFacts failed for ${neighborhoodName}:`, err instanceof Error ? err.message : err);
@@ -117,7 +122,7 @@ export async function searchUpcomingEvents(
   districtScoped = false,
   /** neighborhoods.id, for publisher edition rules (edition-rules.ts). */
   editionId?: string,
-): Promise<{ events: string; structuredEvents: StructuredEvent[]; sourceCount: number } | null> {
+): Promise<{ events: string; structuredEvents: StructuredEvent[]; sourceCount: number; pages: GroundingChunk[] } | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
@@ -212,6 +217,7 @@ List the events in prose first, then the JSON array.`;
       events: prose,
       structuredEvents,
       sourceCount: Math.max(bulletCount, structuredEvents.length, 1),
+      pages: await resolveGroundingChunks(response?.chunks || []),
     };
   } catch (err) {
     console.error(`[gemini-search] searchUpcomingEvents failed for ${neighborhoodName}:`, err instanceof Error ? err.message : err);
@@ -299,7 +305,7 @@ async function callGeminiWithRetry(
   systemInstruction: string,
   operation: string,
   label?: string,
-): Promise<{ text: string } | null> {
+): Promise<{ text: string; chunks: GroundingChunk[] } | null> {
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
@@ -314,7 +320,7 @@ async function callGeminiWithRetry(
         },
       });
       recordGeminiCall(response, { operation, kind: 'search', model: AI_MODELS.GEMINI_FLASH, label });
-      return { text: response.text || '' };
+      return { text: response.text || '', chunks: extractGroundingChunks(response, 'gemini_search') };
     } catch (err: unknown) {
       lastError = err;
       const errMsg = err instanceof Error ? err.message : String(err);

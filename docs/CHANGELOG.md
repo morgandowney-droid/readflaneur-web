@@ -3,6 +3,36 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-09-23 (later): every story's source, from what the search read, checked and archived
+
+**Context: we tell publishers every story has a source that is independently checked and archived.** Measured today for the local editions: 54% of 1,499 brief and Look Ahead articles in 7 days had any source URL; sources were stored per article, not per story; no `article_sources` row had an `archive_url` or `source_snapshot`; nothing opened a source page. **Hard constraint from the owner: a model never supplies, finds or invents a source**, because early yous.news and Flaneur showed models fabricate sources when pushed. No prompt was changed.
+
+### Why stories had no source (three causes, all in our code)
+1. **The Gemini fact search threw its grounding away.** For pilot editions nearly every story comes from `searchNeighborhoodFacts()` (the "ALSO NOTED" block). It read real pages through Google Search grounding, but `callGeminiWithRetry` returned only `response.text`, so the facts reached enrichment with no URLs.
+2. **Grok's citations were never stored.** `grok.ts` read `data.citations`, a field the xAI Responses API does not return. The citations are `url_citation` annotations on the message's `output_text` part (start/end index 0, so they do not say which sentence each post supports, and x_search returns no post text). Result: `neighborhood_briefs.sources = []` and `source_count = 0` on every one of 262 Grok briefs for the pilot editions in 7 days; no Grok brief with a stored citation was found at all. Inline `[[n]](url)` markers survive in the stored text in 1 of 262 (numeric markers in 15, stripped).
+3. **So the enrichment model labelled the tips.** Given facts with no URLs and no search hit of its own, Gemini Pro names the source "Provided Context", "Internal Summary", "Self-reported", "Local News Researcher Notes", "Implicit" and similar. The placeholder filter (2026-09-09) correctly nulls these. Pro-enriched stories with `source: null` rose from ~1% to 21% of all stories per day between 2 and 23 September (19% of Pro stories, 2% of Flash stories over 21 days); every story in vorarlberg-lochau, hampshire-lymington and zaragoza-casco-historico on 23 Sep.
+
+### 1. Per-story source retention (live, additive)
+- `extractGroundingChunks()` now also reads `groundingSupports`, so each page carries the passages of the answer it grounded. `gemini-search.ts` returns these pages (`pages`, redirects resolved) from `searchNeighborhoodFacts` and `searchUpcomingEvents`.
+- New `src/lib/grok-citations.ts`: `extractGrokCitations()` reads the annotations (and the legacy field, and inline `[[n]](url)` markers with the sentence they close); `hydrateXPosts()` reads each cited post's text from X's public syndication endpoint (no login, bounded to ~6s, fail-soft) so the post text becomes the passage. `grok.ts` uses both in `generateNeighborhoodBrief` and `generateLookAhead`; prompts unchanged.
+- `sync-neighborhood-briefs` (and the community-create path) store every read page on `neighborhood_briefs.sources`: Grok citations plus the fact search's pages, each `{ title, url, domain, origin, supports }`. `enrich-briefs` reads them back (`pagesFromStored`) and passes them to `enrichBriefWithGemini()` as `gatheredPages`; `generate-look-ahead` passes its two searches' pages in-process. URLs written into the gathered facts count too (`pagesFromText`).
+- In enrichment, `cleanStorySources()` keeps its placeholder and redirect cleaning, then for a story with no source runs `matchStoryToPages()`: a page qualifies only if a passage it grounded names the story's subject (the entity as a phrase, or all of at least two subject tokens; a one-token subject also needs a figure or proper noun from the story's context), place names and descriptive words ("prices", "reopening") ignored, publication beats social post on a tie. No clear match, no source. `markSourceOrigins()` stamps each source `tool`, `name-match`, `story-match` or `model` (URL only in the model's JSON). Model-written URLs are kept live as before and reported by the shadow check.
+- More placeholder labels recognised ("Internal Note", "Self-reported", "Implicit", "Source Material", "Local News Researcher Notes", "Local Input", "Official Event Calendars" and similar).
+
+### 2-5. Deterministic source check, archive and shadow cron
+- `src/lib/source-check.ts`: fetch (8s, `FlaneurSourceCheck/1.0` User-Agent, redirects, 1.5MB cap; X posts via the syndication record), text extraction (title, meta descriptions, JSON-LD strings, body without script/style/nav), fact extraction and matching with no model: numbers across `1,000 / 1.000 / 1 000`, decimals, prices and percentages; dates in English, Italian, German, Spanish, French and Portuguese plus ISO and numeric day-first; clock times across `7:00 PM / 19:00 / 19 Uhr / ore 19.00`; proper names accent- and apostrophe-insensitive, generic institution words optional so "Pablo Gargallo Museum" matches "Museo Pablo Gargallo". Verdicts `verified` (all facts, or the subject plus at least 60%), `partial`, `not_found`, `fetch_failed`, `no_source`, `unverifiable_origin`.
+- Migration `20260923090000_story_source_checks.sql` (not yet run): table `story_source_checks` (unique `brief_id, story_index, source_url`; service-role grants and policy) and private bucket `source-snapshots`.
+- Cron `shadow-source-checks` (08:30 UTC, after `shadow-edition-rules`): latest enriched brief of every pilot edition (`?neighborhood=`, `?date=`), concurrency 6, 240s budget, skips rows already checked, archives raw HTML (or the post's JSON) and extracted text to `<neighborhood_id>/<brief_date>/<sha1(url)>.html|.txt` with content hash, status and fetch time, and logs per-edition verdict counts and the share of stories with at least one verified source. It never touches articles, briefs or `article_sources`.
+
+### Tests
+`node scripts/test-source-check.mjs` (32 cases: number formats, month names in five languages, times, accent-insensitive names, verified / partial / not_found, story-to-page matching, origins, grounding supports, Grok annotations and inline markers).
+
+### Not done
+- Wayback Machine archiving (no key in this project); the private bucket is the archive for now.
+- Sites that block non-browser fetches (Zoopla, immobiliare.it, housemetric returned 403/405) end as `fetch_failed` and cannot be archived this way.
+- An English descriptive entity ("Navigli Canals Reopening Project") is not found on an Italian page that says "riaprire i Navigli"; the checker does not translate.
+- Stories already stored with `source: null` stay that way; the fix applies from the next brief.
+
 ## 2026-09-23
 
 **Context: GEDI (la Repubblica, La Stampa) was sent a written note promising editorial rules for its four pilot editions, and the German publishers' association asked the same day how a publisher blocks a source.** Both answers had to be true in code, not only in the note.

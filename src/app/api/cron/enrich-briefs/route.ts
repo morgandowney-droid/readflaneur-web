@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { extractArticleSources } from '@/lib/source-links';
+import { extractArticleSources, pagesFromStored } from '@/lib/source-links';
 import { createClient } from '@supabase/supabase-js';
 import { enrichBriefWithGemini, ContinuityItem } from '@/lib/brief-enricher-gemini';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
@@ -311,6 +311,7 @@ export async function GET(request: Request) {
           neighborhood_id,
           generated_at,
           model,
+          sources,
           neighborhoods (
             name,
             id,
@@ -334,6 +335,7 @@ export async function GET(request: Request) {
             neighborhood_id,
             generated_at,
             model,
+            sources,
             neighborhoods (
               name,
               id,
@@ -409,6 +411,9 @@ export async function GET(request: Request) {
                 timezone: hood.timezone,
                 modelOverride: useModel,
                 continuityContext: continuityItems.length > 0 ? continuityItems : undefined,
+                // Pages the fact searches read, stored on the brief by
+                // sync-neighborhood-briefs, for story-to-page source matching.
+                gatheredPages: pagesFromStored(brief.sources),
               }
             );
 

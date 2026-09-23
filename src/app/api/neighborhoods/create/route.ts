@@ -10,6 +10,7 @@ import { sendEmail } from '@/lib/email';
 import { selectLibraryImageAsync } from '@/lib/image-library';
 import { generateNeighborhoodLibrary } from '@/lib/image-library-generator';
 import { searchNeighborhoodFacts } from '@/lib/gemini-search';
+import { pagesToStored } from '@/lib/source-links';
 import { insiderPersona } from '@/lib/ai-persona';
 import { translateArticle, translateBrief, type LanguageCode } from '@/lib/translation-service';
 
@@ -481,6 +482,7 @@ export async function POST(request: NextRequest) {
             neighborhood_id: neighborhoodId,
             headline,
             content: facts.facts,
+            sources: pagesToStored(facts.pages || []),
             source_count: facts.sourceCount || 0,
             model: 'gemini-2.5-flash',
             generated_at: new Date().toISOString(),
@@ -517,7 +519,7 @@ export async function POST(request: NextRequest) {
               neighborhoodId,
               validation.city,
               validation.country,
-              { briefGeneratedAt: new Date().toISOString(), timezone: validation.timezone }
+              { briefGeneratedAt: new Date().toISOString(), timezone: validation.timezone, gatheredPages: facts.pages || [] }
             );
 
             if (enriched) {
