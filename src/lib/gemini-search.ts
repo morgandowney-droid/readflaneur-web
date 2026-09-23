@@ -13,6 +13,7 @@ import { AI_MODELS } from '@/config/ai-models';
 import { recordGeminiCall } from '@/lib/ai-cost';
 import type { StructuredEvent } from './look-ahead-events';
 import { geographicBoundaryBlock } from './place-boundary';
+import { districtScopeBlock } from '@/lib/search-catchment';
 
 const RETRY_DELAYS = [2000, 5000, 15000]; // 2s, 5s, 15s exponential backoff
 
@@ -109,7 +110,8 @@ export async function searchUpcomingEvents(
   city: string,
   country?: string,
   timezone?: string,
-  targetLocalDate?: string
+  targetLocalDate?: string,
+  districtScoped = false
 ): Promise<{ events: string; structuredEvents: StructuredEvent[]; sourceCount: number } | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
@@ -141,11 +143,13 @@ Search specifically for:
 6. Community board meetings and public hearings
 7. Sports events at local venues
 8. Food festivals, wine tastings, book signings
-9. Theater, opera, ballet, and classical music performances at major cultural venues in ${city}
+${districtScoped ? `9. Sample sales, flash sales, trunk shows, pop-up shops (time-sensitive retail events, often announced on Instagram)
+
+${districtScopeBlock(neighborhoodName, city)}` : `9. Theater, opera, ballet, and classical music performances at major cultural venues in ${city}
 10. Performances at the city's national theater, opera house, concert halls, and philharmonic
 11. Sample sales, flash sales, trunk shows, pop-up shops, warehouse sales (these are time-sensitive retail events, often announced on Instagram)
 
-MAJOR CULTURAL VENUES: Always search for what's playing at ${city}'s major theaters, opera houses, concert halls, and philharmonics. These are NOT tourist traps - they are the cultural heartbeat of the city. Include tonight's performance, this week's opera, upcoming symphony concerts. These venues serve ALL neighborhoods in the city, not just the one they're located in.
+MAJOR CULTURAL VENUES: Always search for what's playing at ${city}'s major theaters, opera houses, concert halls, and philharmonics. These are NOT tourist traps - they are the cultural heartbeat of the city. Include tonight's performance, this week's opera, upcoming symphony concerts. These venues serve ALL neighborhoods in the city, not just the one they're located in.`}
 
 GALLERY/MUSEUM FILTER: Only include a gallery or museum if there is a specific TIME-LIMITED event (opening reception, closing day, artist talk, premiere). Do NOT include a gallery/museum just because it is open with an ongoing exhibition. "Gallery X shows Artist Y" is not an event.
 

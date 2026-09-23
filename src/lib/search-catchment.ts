@@ -168,3 +168,31 @@ export function searchCatchmentFor(
 export function hasSearchCatchment(neighborhoodId: string | null | undefined): boolean {
   return Boolean(SEARCH_CATCHMENTS[(neighborhoodId || '').toLowerCase()]);
 }
+
+/**
+ * Editions that are a district of a larger city and must stay inside it.
+ *
+ * The Look Ahead search prompts deliberately pull in a city's opera house,
+ * national theatre and concert halls, on the reasoning that those venues serve
+ * every neighbourhood. That is right for a Flaneur showroom reader and wrong
+ * for a licensed quartiere edition: on 23 Sep 2026 Brera and Porta Venezia, two
+ * GEDI pilots, carried the same La Scala and Palazzo Reale listings, and Prati
+ * carried tourist opera in churches across the river. A publisher's city
+ * edition already covers the city; the quartiere edition exists to cover what
+ * the city desk cannot.
+ */
+export const DISTRICT_SCOPED_EDITION_IDS: ReadonlySet<string> = new Set([
+  'milan-brera',
+  'milan-porta-venezia',
+  'milan-navigli',
+  'rome-prati',
+]);
+
+export function isDistrictScoped(neighborhoodId: string | null | undefined): boolean {
+  return DISTRICT_SCOPED_EDITION_IDS.has((neighborhoodId || '').toLowerCase());
+}
+
+/** The prompt rule that replaces the city-wide venue instruction. */
+export function districtScopeBlock(placeNames: string, city: string): string {
+  return `LOCAL SCOPE (CRITICAL): This edition covers only ${placeNames}, a district of ${city}. Include an event ONLY if its venue is inside ${placeNames} or within about a ten-minute walk of it. Do NOT include ${city}'s major opera houses, national theatres, concert halls, stadiums, trade fairs or city-wide festivals unless the venue itself is inside the district. Exclude shows and tastings sold to visitors (opera concerts in churches, rooftop opera shows, wine tastings for tourists). Prefer the district's own life: its markets, local council and district council meetings and public consultations, school and parish events, shop and restaurant openings, small venues, street works and closures. Fewer, genuinely local events are better than a long list of city events.`;
+}

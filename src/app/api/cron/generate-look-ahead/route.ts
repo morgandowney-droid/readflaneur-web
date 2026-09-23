@@ -4,7 +4,7 @@ import { generateLookAhead } from '@/lib/grok';
 import { extractArticleSources } from '@/lib/source-links';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { getComboInfo } from '@/lib/combo-utils';
-import { searchCatchmentFor } from '@/lib/search-catchment';
+import { searchCatchmentFor, isDistrictScoped } from '@/lib/search-catchment';
 import { unpublishableReason } from '@/lib/model-refusal';
 import { getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
@@ -411,8 +411,8 @@ export async function GET(request: Request) {
           // Step 1: Grok + Gemini search in parallel for upcoming events
           console.log(`[generate-look-ahead] Searching for ${searchName}, ${city} (local date: ${localDate})...`);
           const [grokResult, geminiResult] = await Promise.allSettled([
-            generateLookAhead(searchName, city, country || undefined, tz, localDate),
-            searchUpcomingEvents(searchName, city, country || undefined, tz, localDate),
+            generateLookAhead(searchName, city, country || undefined, tz, localDate, isDistrictScoped(id)),
+            searchUpcomingEvents(searchName, city, country || undefined, tz, localDate, isDistrictScoped(id)),
           ]);
 
           const grokLookAhead = grokResult.status === 'fulfilled' ? grokResult.value : null;

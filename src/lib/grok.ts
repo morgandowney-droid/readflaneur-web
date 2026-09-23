@@ -12,6 +12,7 @@ import { getSearchLocation } from '@/lib/neighborhood-utils';
 import { AI_MODELS } from '@/config/ai-models';
 import { recordGrokCall } from '@/lib/ai-cost';
 import { geographicBoundaryBlock } from './place-boundary';
+import { districtScopeBlock } from '@/lib/search-catchment';
 
 const GROK_API_URL = 'https://api.x.ai/v1';
 const GROK_MODEL = AI_MODELS.GROK_FAST;
@@ -385,6 +386,7 @@ export async function generateLookAhead(
   country?: string,
   timezone?: string,
   targetLocalDate?: string, // YYYY-MM-DD in neighborhood's local timezone
+  districtScoped = false,
 ): Promise<LookAheadResult | null> {
   const apiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
 
@@ -438,7 +440,7 @@ Search X and the web for upcoming events, openings, and happenings in ${location
 - Seasonal happenings (markets, festivals, pop-ups)
 - Sample sales, flash sales, trunk shows, pop-up shops, warehouse sales (time-sensitive retail events)
 - Theater, opera, ballet, classical music, and live performance events
-- Performances at major cultural venues in ${city} (theaters, opera houses, concert halls, philharmonics) - these serve the whole city and are relevant even if not physically in ${neighborhoodName}
+${districtScoped ? '- Performances at small venues inside the district' : `- Performances at major cultural venues in ${city} (theaters, opera houses, concert halls, philharmonics) - these serve the whole city and are relevant even if not physically in ${neighborhoodName}`}
 
 CRITICAL RULES:
 - ONLY include events that are CONFIRMED and upcoming (${todayStr} through the following 7 days)
@@ -482,7 +484,7 @@ Rules:
 - NEVER use passive, defeatist, or "nothing happening" headlines. There is ALWAYS something worth highlighting. Banned headline patterns: "Quiet Week", "Slow Week", "Not Much Going On", "A Calm Week", "Nothing Major". Always lead with the most interesting specific event or venue name.
 - NEVER repeat the same venue, restaurant, or event across multiple days. If a venue is open every day (like a restaurant or bar), mention it ONCE on the most relevant day. Each day should feature DIFFERENT events. If there aren't enough distinct events, include fewer days rather than padding with repeats.
 - EXCLUDE only these specific items: permanent Broadway/West End shows ("Mamma Mia!", "The Lion King", "Phantom of the Opera", "Wicked"), guided walking tours, food tours, hop-on-hop-off buses, segway tours, pub crawls, escape rooms, and galleries/museums that are simply open during normal hours with ongoing exhibitions (no special event happening). DO include everything else - gallery opening RECEPTIONS, temporary exhibition premieres, closing days, artist talks, pop-up markets, concerts, comedy shows, restaurant/bar openings, art shows, food festivals, sports events, community events, museum special exhibitions, theater premieres, opera/ballet performances, classical concerts, and any other time-limited happening. Cast a WIDE net and find as many events as possible.
-- MAJOR CULTURAL VENUES: Always search for what's playing at the city's major theaters, opera houses, concert halls, and philharmonics. These are NOT tourist traps - they are the cultural heartbeat of the city. Include tonight's performance at the national theater, this week's opera, the upcoming symphony concert. These venues serve all neighborhoods in ${city}.`
+${districtScoped ? `- ${districtScopeBlock(neighborhoodName, city)}` : `- MAJOR CULTURAL VENUES: Always search for what's playing at the city's major theaters, opera houses, concert halls, and philharmonics. These are NOT tourist traps - they are the cultural heartbeat of the city. Include tonight's performance at the national theater, this week's opera, the upcoming symphony concert. These venues serve all neighborhoods in ${city}.`}`
           },
           {
             role: 'user',
