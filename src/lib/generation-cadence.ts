@@ -153,6 +153,9 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   // whether it could be live for 1 November, so these start the archive now.
   'sicily-scicli',
   'rome-prati',
+  // The third, named by Veronica Diquattro (CEO GEDI Digital from 1 Oct) via
+  // Mirja the same day.
+  'milan-porta-venezia',
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */
@@ -187,6 +190,7 @@ export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' 
   'milan-brera': 'it',
   'sicily-scicli': 'it',
   'rome-prati': 'it',
+  'milan-porta-venezia': 'it',
 };
 
 export function isPilotNeighborhood(neighborhoodId: string): boolean {

@@ -45,6 +45,10 @@ const SEARCH_CATCHMENTS: Readonly<Record<string, readonly string[]>> = {
   // sits in the adjoining Della Vittoria quartiere, so both are named. Stops
   // short of the Vatican and Borgo, which would turn it into tourist news.
   'rome-prati': ['Prati', 'Piazza Mazzini', 'Della Vittoria'],
+  // Porta Venezia, Milan (GEDI, 2026-09-23). Lazzaretto and Corso Buenos Aires
+  // are inside the same Buenos Aires-Venezia NIL and carry most of its street
+  // life. Stops short of Stazione Centrale and the Quadrilatero.
+  'milan-porta-venezia': ['Porta Venezia', 'Lazzaretto', 'Corso Buenos Aires'],
   // Charters Towers Region, Queensland. Townships per the regional council's
   // own listing. They are very small (Mingela 14 people, Ravenswood 297), so
   // this widens council and district coverage rather than adding much event
