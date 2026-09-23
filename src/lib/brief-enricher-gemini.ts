@@ -687,7 +687,7 @@ After your prose, include this JSON with ONLY the verified stories:
       "stories": [
         {
           "entity": "Entity Name (key detail)",
-          "source": {"name": "Source Name", "url": "https://..."},${editionRules ? `
+          "source": {"name": "Source Name", "url": "https://..."},${editionRules?.requireTwoSourcesForNamedFacts ? `
           "secondarySource": {"name": "A second, independent source", "url": "https://..."},` : ''}
           "context": "Your insider context here..."
         }

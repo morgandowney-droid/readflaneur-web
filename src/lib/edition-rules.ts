@@ -81,7 +81,12 @@ export const EDITION_RULE_GROUPS: Record<string, EditionRuleGroup> = {
     excludePartyPolitics: true,
     excludeSportsCommentary: true,
     protectPrivateIndividuals: true,
-    requireTwoSourcesForNamedFacts: true,
+    // Off (2026-09-23). Forcing a second source pushes the model to invent one,
+    // which yous.news and Flaneur both saw in early development, and enrichment
+    // gives almost every story a single source, so the rule would cut most of
+    // the edition. Measured in shadow first: see scripts/ and the
+    // shadow-edition-rules cron before switching it back on.
+    requireTwoSourcesForNamedFacts: false,
   },
   // Examples for the other licensees. Not active: nothing has been agreed with
   // them, and an edition without a group must behave exactly as before.

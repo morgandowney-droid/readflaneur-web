@@ -49,7 +49,10 @@ function test(name, fn) {
   }
 }
 
-const gedi = R.rulesForEdition('milan-brera');
+const gediLive = R.rulesForEdition('milan-brera');
+// The sourcing rule is off for GEDI (2026-09-23) and measured in shadow; its
+// logic is still tested with the rule switched on.
+const gedi = { ...gediLive, requireTwoSourcesForNamedFacts: true };
 const withBlocks = (blockedSources, extra = {}) => ({ ...gedi, blockedSources, ...extra });
 const story = (entity, context, sources) => ({ index: 0, category: 'News', entity, context, sources });
 const src = (name, url) => ({ name, url: url ?? null });
@@ -67,7 +70,12 @@ test('an edition without a group gets null, and the insert check is a no-op', ()
   assert.equal(R.checkBeforeInsert({ neighborhoodId: 'nyc-tribeca', body: '[[A]]\n\nAnything.', categories: [] }), null);
   assert.equal(R.editionRulesBlock(null), '');
 });
-test('the prompt block states every GEDI rule', () => {
+test('the live GEDI prompt block states its rules and never asks for a second source', () => {
+  const live = R.editionRulesBlock(gediLive).toLowerCase();
+  for (const s of ['party politics', 'sports commentary', 'private individuals', 'active criminal cases']) assert.ok(live.includes(s), s);
+  assert.equal(live.includes('two independent sources'), false, 'the live prompt must not demand a second source');
+});
+test('with the sourcing rule on, the prompt block states it', () => {
   const b = R.editionRulesBlock(gedi);
   for (const s of ['party politics', 'sports commentary', 'private individuals', 'active criminal cases', 'two independent sources', 'different kind']) {
     assert.ok(b.toLowerCase().includes(s), s);
