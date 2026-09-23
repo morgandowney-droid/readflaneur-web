@@ -16,6 +16,8 @@ import {
 import { recordGeminiCall } from '@/lib/ai-cost';
 import type { StructuredEvent } from '@/lib/look-ahead-events';
 import { extractGroundingChunks, resolveGroundingChunks, cleanStorySources } from '@/lib/source-links';
+import { editionRulesBlock, rulesForEdition, type Removal } from '@/lib/edition-rules';
+import { enforceEditionRules } from '@/lib/edition-rules-review';
 import { anglicise, britishStyleBlock, enforcePlaceNoun, getPlaceNoun, isEnglishSpeaking, usesBritishEnglish, spellingVariantFor } from '@/lib/locale-register';
 
 export interface EnrichedStoryItem {
@@ -54,6 +56,16 @@ export interface EnrichedBriefOutput {
    *  enrichment model writes the prose, so these match it - unlike the lossier
    *  upstream Grok/Gemini-search extraction. */
   structuredEvents?: StructuredEvent[];
+  /** Present only for editions with publisher rules (edition-rules.ts): what the filter removed and why. */
+  editionRules?: {
+    groupId: string;
+    label: string;
+    removals: Removal[];
+    reviewStatus: 'ok' | 'failed' | 'skipped';
+    keptStories: number;
+    droppedStories: number;
+    secondSourcesAttached: number;
+  };
 }
 
 export interface ContinuityItem {
@@ -347,6 +359,12 @@ export async function enrichBriefWithGemini(
     modelOverride?: string;
     /** Recent coverage history for narrative continuity (daily briefs only) */
     continuityContext?: ContinuityItem[];
+    /**
+     * The edition's neighborhoods.id, for publisher edition rules. Callers that
+     * pass a display slug as neighborhoodSlug (generate-look-ahead) must pass
+     * this; otherwise neighborhoodSlug is used.
+     */
+    editionId?: string;
   }
 ): Promise<EnrichedBriefOutput> {
   const apiKey = options?.apiKey || process.env.GEMINI_API_KEY;
@@ -357,6 +375,9 @@ export async function enrichBriefWithGemini(
 
   const genAI = new GoogleGenAI({ apiKey });
   const blockedDomains = BLOCKED_DOMAINS[neighborhoodSlug.toLowerCase()] || [];
+  // Publisher rules (edition-rules.ts). Null for every edition without a group,
+  // and then nothing below changes.
+  const editionRules = rulesForEdition(options?.editionId || neighborhoodSlug);
 
   // Determine the context time - use provided timestamp or current time
   const contextTime = options?.briefGeneratedAt
@@ -604,7 +625,7 @@ EVENTS ARRAY (MANDATORY for Look Ahead - you MUST include this):
   const prompt = `Here are some tips about what might be happening in ${neighborhoodName}, ${city}. Research each one and write a neighborhood update for our readers.
 
 ${briefContent}
-${blockedNote}${urbanContextNote}${continuityBlock}
+${blockedNote}${urbanContextNote}${continuityBlock}${editionRulesBlock(editionRules)}
 
 ${languageHint}
 
@@ -666,7 +687,8 @@ After your prose, include this JSON with ONLY the verified stories:
       "stories": [
         {
           "entity": "Entity Name (key detail)",
-          "source": {"name": "Source Name", "url": "https://..."},
+          "source": {"name": "Source Name", "url": "https://..."},${editionRules ? `
+          "secondarySource": {"name": "A second, independent source", "url": "https://..."},` : ''}
           "context": "Your insider context here..."
         }
       ]
@@ -873,6 +895,12 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
 
     // If no JSON found, try to extract structured data from the natural response
     if (enrichedData.categories.length === 0) {
+      // With publisher rules, prose that no structured story backs cannot be
+      // checked against the rules, so it is not stored. Same treatment as a
+      // refusal: enriched_content stays null and the health monitor re-queues.
+      if (editionRules) {
+        throw new Error(`Enrichment for ${neighborhoodName} returned no structured stories, so the ${editionRules.label} edition rules cannot be checked`);
+      }
       console.log('No JSON found, returning raw response for manual review');
 
       if (spellingVariant !== 'american') {
@@ -961,6 +989,48 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
       text = injectHyperlinks(text, linkCandidates, { name: neighborhoodName, city });
     }
 
+    // Publisher edition rules: the deterministic filter plus one second-model
+    // review, on the finished text, so what is stored as enriched_content (and
+    // shown in the feed, the email and every article built from it) is already
+    // filtered. Every article insert re-checks it (checkBeforeInsert).
+    let editionRulesReport: EnrichedBriefOutput['editionRules'];
+    if (editionRules) {
+      const enforced = await enforceEditionRules({
+        rules: editionRules,
+        body: text,
+        categories: enrichedData.categories,
+        events: structuredEvents,
+        subjectTeaser,
+        emailTeaser,
+        sourceMaterial: briefContent,
+        chunks: groundingChunks,
+        place: `${neighborhoodName}, ${city}`,
+        country,
+        placeNames: [neighborhoodName, city],
+        label: neighborhoodName,
+      });
+      text = enforced.body;
+      enrichedData.categories = enforced.categories as EnrichedCategory[];
+      structuredEvents = enforced.events;
+      subjectTeaser = enforced.subjectTeaser;
+      emailTeaser = enforced.emailTeaser;
+      editionRulesReport = {
+        groupId: editionRules.groupId,
+        label: editionRules.label,
+        removals: enforced.removals,
+        reviewStatus: enforced.reviewStatus,
+        keptStories: enforced.keptStories,
+        droppedStories: enforced.droppedStories.length,
+        secondSourcesAttached: enforced.secondSourcesAttached,
+      };
+      if (enforced.removals.length > 0) {
+        console.warn(`[edition-rules] ${neighborhoodName}: ${enforced.removals.length} removal(s), review ${enforced.reviewStatus}: ${enforced.removals.map(r => `${r.header} -> ${r.rule}`).join(' | ').slice(0, 600)}`);
+      }
+      if (enforced.keptStories === 0) {
+        throw new Error(`Edition rules (${editionRules.label}) removed every story for ${neighborhoodName}; nothing is stored`);
+      }
+    }
+
     return {
       date: dateStr,
       neighborhood: neighborhoodName,
@@ -973,6 +1043,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
       subjectTeaser,
       emailTeaser,
       structuredEvents,
+      editionRules: editionRulesReport,
     };
 
   } catch (error) {

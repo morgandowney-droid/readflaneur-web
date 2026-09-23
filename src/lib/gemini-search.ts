@@ -14,6 +14,7 @@ import { recordGeminiCall } from '@/lib/ai-cost';
 import type { StructuredEvent } from './look-ahead-events';
 import { geographicBoundaryBlock } from './place-boundary';
 import { districtScopeBlock } from '@/lib/search-catchment';
+import { editionRulesBlock, rulesForEdition } from './edition-rules';
 
 const RETRY_DELAYS = [2000, 5000, 15000]; // 2s, 5s, 15s exponential backoff
 
@@ -32,7 +33,9 @@ export async function searchNeighborhoodFacts(
   city: string,
   country?: string,
   timezone?: string,
-  recentTopics?: string[]
+  recentTopics?: string[],
+  /** neighborhoods.id, for publisher edition rules (edition-rules.ts). */
+  editionId?: string,
 ): Promise<{ facts: string; sourceCount: number } | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
@@ -73,7 +76,7 @@ Return your findings as a bullet-point list of distinct facts. Each bullet shoul
 
 Format each bullet as:
 - [FACT]: What happened or is happening, with specific names, dates, addresses. (Source: publication or site name)
-${geographicBoundaryBlock(neighborhoodName, city, country)}
+${geographicBoundaryBlock(neighborhoodName, city, country)}${editionRulesBlock(rulesForEdition(editionId))}
 ${avoidBlock}`;
 
   try {
@@ -111,7 +114,9 @@ export async function searchUpcomingEvents(
   country?: string,
   timezone?: string,
   targetLocalDate?: string,
-  districtScoped = false
+  districtScoped = false,
+  /** neighborhoods.id, for publisher edition rules (edition-rules.ts). */
+  editionId?: string,
 ): Promise<{ events: string; structuredEvents: StructuredEvent[]; sourceCount: number } | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
@@ -155,7 +160,7 @@ GALLERY/MUSEUM FILTER: Only include a gallery or museum if there is a specific T
 
 For each event found, provide: the specific date (YYYY-MM-DD), day of week, time if available, event name, category, venue name, address, and price if listed.
 
-IMPORTANT: Only include events with confirmed dates within the ${fromStr} to ${toStr} window. Skip anything without a specific date.${geographicBoundaryBlock(neighborhoodName, city, country)}
+IMPORTANT: Only include events with confirmed dates within the ${fromStr} to ${toStr} window. Skip anything without a specific date.${geographicBoundaryBlock(neighborhoodName, city, country)}${editionRulesBlock(rulesForEdition(editionId))}
 
 After listing all events, output a JSON array in this exact format:
 EVENTS_JSON:

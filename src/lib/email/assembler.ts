@@ -6,6 +6,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { CITY_PREFIX_MAP } from '@/lib/neighborhood-utils';
 import { extractArticleSources } from '@/lib/source-links';
+import { checkBeforeInsert, fallbackTeaser, mentionsDroppedStory } from '@/lib/edition-rules';
 import { toHeadlineCase } from '@/lib/utils';
 import {
   EmailRecipient,
@@ -146,10 +147,30 @@ async function fetchBriefAsStory(
   if (!brief) return null;
 
   // Create an article from the enriched brief so the email link goes to a full article page
-  const articleBody = brief.enriched_content;
-  const baseHeadline = brief.subject_teaser
-    ? toHeadlineCase(brief.subject_teaser)
-    : brief.headline;
+  let articleBody: string = brief.enriched_content;
+
+  // Publisher edition rules: re-check the body before this fallback inserts an
+  // article. Null for editions without rules.
+  const rulesCheck = checkBeforeInsert({
+    neighborhoodId,
+    body: articleBody,
+    categories: brief.enriched_categories,
+    placeNames: [neighborhoodName, cityName],
+  });
+  if (rulesCheck) {
+    if (rulesCheck.blockReason) {
+      console.warn(`[assembler] ${neighborhoodId}: brief article not created (${rulesCheck.blockReason})`);
+      return null;
+    }
+    articleBody = rulesCheck.body;
+  }
+  let teaser: string | null = brief.subject_teaser;
+  if (rulesCheck && (!teaser || mentionsDroppedStory(teaser, rulesCheck.droppedStories, [neighborhoodName, cityName]))) {
+    teaser = fallbackTeaser(rulesCheck.categories);
+  }
+  const baseHeadline = teaser
+    ? toHeadlineCase(teaser)
+    : (rulesCheck ? `What's Happening in ${neighborhoodName}` : brief.headline);
   const articleHeadline = `${neighborhoodName} DAILY BRIEF: ${baseHeadline}`;
   const date = new Date().toISOString().split('T')[0];
   const headlineSlug = baseHeadline
@@ -161,7 +182,7 @@ async function fetchBriefAsStory(
 
   // Use email_teaser from Gemini enrichment if available, otherwise auto-generate
   let previewText = '';
-  if (brief.email_teaser) {
+  if (brief.email_teaser && !(rulesCheck && rulesCheck.droppedStories.length > 0)) {
     previewText = brief.email_teaser;
   } else {
     previewText = articleBody
@@ -219,6 +240,7 @@ async function fetchBriefAsStory(
       image_url: imageUrl,
       enriched_at: new Date().toISOString(),
       enrichment_model: brief.enrichment_model || 'gemini-2.5-flash',
+      ...(rulesCheck?.editorNotes ? { editor_notes: rulesCheck.editorNotes } : {}),
     })
     .select('id, headline, preview_text, body_text, image_url, category_label, slug, neighborhood_id, published_at, created_at')
     .single();
@@ -238,7 +260,7 @@ async function fetchBriefAsStory(
   if (newArticle) {
     // Insert sources from enriched categories (best-effort). Shared extractor:
     // no placeholders, redirects resolved, no rows when nothing is checkable.
-    const extracted = await extractArticleSources(brief.enriched_categories);
+    const extracted = await extractArticleSources(rulesCheck ? rulesCheck.categories : brief.enriched_categories);
     if (extracted.length > 0) {
       const sources = extracted.map(s => ({ article_id: newArticle.id, ...s }));
       await supabase.from('article_sources').insert(sources).then(null, (e: Error) =>

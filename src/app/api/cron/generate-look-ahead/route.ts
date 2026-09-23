@@ -15,6 +15,7 @@ import { searchUpcomingEvents, mergeContent, mergeStructuredEvents } from '@/lib
 import { toHeadlineCase } from '@/lib/utils';
 import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
 import { isPriorityNeighborhood } from '@/lib/generation-cadence';
+import { checkBeforeInsert, fallbackTeaser, filterListingEvents, mentionsDroppedStory, rulesForEdition, type Removal } from '@/lib/edition-rules';
 
 /**
  * Generate Look Ahead Articles
@@ -248,6 +249,8 @@ export async function GET(request: Request) {
     articles_created: 0,
     articles_failed: 0,
     errors: [] as string[],
+    // Publisher edition rules (edition-rules.ts): what was cut from which edition and why.
+    edition_rules_removals: [] as Array<{ neighborhood: string; header: string; rule: string }>,
   };
 
   try {
@@ -412,8 +415,8 @@ export async function GET(request: Request) {
           // Step 1: Grok + Gemini search in parallel for upcoming events
           console.log(`[generate-look-ahead] Searching for ${searchName}, ${city} (local date: ${localDate})...`);
           const [grokResult, geminiResult] = await Promise.allSettled([
-            generateLookAhead(searchName, city, country || undefined, tz, localDate, isDistrictScoped(id)),
-            searchUpcomingEvents(searchName, city, country || undefined, tz, localDate, isDistrictScoped(id)),
+            generateLookAhead(searchName, city, country || undefined, tz, localDate, isDistrictScoped(id), id),
+            searchUpcomingEvents(searchName, city, country || undefined, tz, localDate, isDistrictScoped(id), id),
           ]);
 
           const grokLookAhead = grokResult.status === 'fulfilled' ? grokResult.value : null;
@@ -465,6 +468,8 @@ export async function GET(request: Request) {
               timezone: tz,
               date: localDateReadable,
               briefGeneratedAt: dates.publishAtUtc,
+              // neighborhoodSlug above is the display slug ("brera"), not the id
+              editionId: id,
             }
           );
 
@@ -511,6 +516,17 @@ export async function GET(request: Request) {
             }
             listingEvents = fenced.kept;
           }
+
+          // Publisher edition rules. The upstream search events were never
+          // checked by the enricher, so a listing entry stays only when a story
+          // that survived the rules accounts for it.
+          const editionRules = rulesForEdition(id);
+          const priorRemovals: Removal[] = [...(enriched.editionRules?.removals || [])];
+          if (editionRules) {
+            const filtered = filterListingEvents(listingEvents, enriched.categories, editionRules, [name, city]);
+            listingEvents = filtered.events;
+            priorRemovals.push(...filtered.removals);
+          }
           const eventListing = formatEventListing(
             listingEvents,
             localDate,
@@ -524,9 +540,29 @@ export async function GET(request: Request) {
           // Anything before it is leakage - a teaser written as prose, or in
           // four Irish cases a fragment of the raw JSON block (found 2026-09-14).
           const firstHeader = rawBody.indexOf('[[');
-          const articleBody = firstHeader > 0 ? rawBody.slice(firstHeader).trim() : rawBody;
+          let articleBody = firstHeader > 0 ? rawBody.slice(firstHeader).trim() : rawBody;
           if (firstHeader > 0) {
             console.warn(`[generate-look-ahead] Stripped ${firstHeader} chars before the first section for ${name}`);
+          }
+
+          // Last deterministic pass for an edition with rules, on the exact body
+          // about to be inserted. No-op (null) for every other edition.
+          const rulesCheck = checkBeforeInsert({
+            neighborhoodId: id,
+            body: articleBody,
+            categories: enriched.categories,
+            placeNames: [name, city],
+            priorRemovals,
+          });
+          let sourceCategories: unknown = enriched?.categories;
+          if (rulesCheck) {
+            for (const r of rulesCheck.removals) results.edition_rules_removals.push({ neighborhood: id, header: r.header, rule: r.rule });
+            if (rulesCheck.blockReason) {
+              console.warn(`[generate-look-ahead] ${name}: not published (${rulesCheck.blockReason})`);
+              return 'skipped';
+            }
+            articleBody = rulesCheck.body;
+            sourceCategories = rulesCheck.categories;
           }
 
           // Step 3: Create article
@@ -538,6 +574,12 @@ export async function GET(request: Request) {
           let headline = enriched.subjectTeaser
             ? toHeadlineCase(enriched.subjectTeaser)
             : lookAheadBrief.headline;
+          // With rules, never headline a story the rules removed. The Grok
+          // headline was written before any rule ran.
+          if (rulesCheck && (!enriched.subjectTeaser || mentionsDroppedStory(headline, rulesCheck.droppedStories, [name, city]))) {
+            const fb = fallbackTeaser(rulesCheck.categories);
+            if (fb) headline = toHeadlineCase(fb);
+          }
           if (EMPTY_HEADLINE.test(headline)) {
             const firstEvent = listingEvents[0]?.name?.trim();
             if (firstEvent) {
@@ -548,7 +590,9 @@ export async function GET(request: Request) {
           const articleHeadline = `LOOK AHEAD: ${headline}`;
           const slug = generateSlug(headline, id, localDate);
           // Use email_teaser from Gemini enrichment if available, otherwise auto-generate
-          const previewText = enriched.emailTeaser || generatePreviewText(articleBody);
+          const previewText = (rulesCheck && rulesCheck.droppedStories.length > 0)
+            ? generatePreviewText(articleBody)
+            : (enriched.emailTeaser || generatePreviewText(articleBody));
 
           // Last line of defence: re-check immediately before the insert, so a
           // failed or stale bulk dedup cannot produce a second edition for a
@@ -609,6 +653,7 @@ export async function GET(request: Request) {
               image_url: selectLibraryImage(id, 'look_ahead', undefined, libraryReadyIds),
               enriched_at: new Date().toISOString(),
               enrichment_model: 'gemini-2.5-flash',
+              ...(rulesCheck?.editorNotes ? { editor_notes: rulesCheck.editorNotes } : {}),
             })
             .select('id')
             .single();
@@ -623,7 +668,7 @@ export async function GET(request: Request) {
 
           // Step 4: Store sources
           if (inserted?.id) {
-            const sources = await extractArticleSources(enriched?.categories);
+            const sources = await extractArticleSources(sourceCategories);
             if (sources.length > 0) {
               await supabase
                 .from('article_sources')

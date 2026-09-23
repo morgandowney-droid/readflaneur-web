@@ -3,6 +3,33 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-09-23
+
+**Context: GEDI (la Repubblica, La Stampa) was sent a written note promising editorial rules for its four pilot editions, and the German publishers' association asked the same day how a publisher blocks a source.** Both answers had to be true in code, not only in the note.
+
+### Per-publisher edition rules
+New `src/lib/edition-rules.ts` (pure, testable) and `src/lib/edition-rules-review.ts` (the model call). `EDITION_RULE_GROUPS` maps a group id to its editions (exact ids or an id prefix) and its rules: `blockedSources`, `blockedTopics`, `excludeActiveCrime`, `excludePartyPolitics`, `excludeSportsCommentary`, `protectPrivateIndividuals`, `requireTwoSourcesForNamedFacts`. `rulesForEdition(id)` returns null for any edition outside a group, and every call site is a no-op on null, so nothing changes for the other editions. The `gedi` group covers `milan-brera`, `milan-porta-venezia`, `rome-prati`, `sicily-scicli` with every rule on and an empty block list (commented examples show the three entry kinds: a domain, which also blocks its subdomains; a URL prefix for one Facebook group, Instagram account or X handle; a publication name). Russmedia (`vorarlberg-`) and Canadian Press (`newfoundland-`) groups are included commented out: nothing has been agreed with them.
+
+`NEWSPAPERS_OF_RECORD.italy` is a short reviewable list (la Repubblica, Corriere della Sera, La Stampa, Il Sole 24 Ore, Il Messaggero, Il Mattino, La Sicilia, Giornale di Sicilia, Il Giorno, ANSA, AGI, Adnkronos), matched by domain or full name. A paper's own Facebook page counts as social, not as the paper.
+
+### Two layers, as usual
+1. **Prompt:** `editionRulesBlock()` goes into `generateNeighborhoodBrief`, `searchNeighborhoodFacts`, `generateLookAhead`, `searchUpcomingEvents` (new optional `editionId` argument, passed by `sync-neighborhood-briefs` and `generate-look-ahead`) and into the Gemini enrichment prompt, whose JSON example gains a `secondarySource` for editions with rules (the model follows the example, not the prose).
+2. **Deterministic filter:** `applyEditionRules()` runs on the enriched story list and the `[[section]]` body. It removes blocked sources, drops a story whose remaining sources fail the standard, drops stories under an excluded topic, removes the dropped stories' prose and any prose no surviving story accounts for (a greeting and a sign-off survive), unlinks body links to a blocked source, filters Look Ahead listing lines and structured events, and rebuilds the body with no orphan `[[header]]`. With nothing to remove it returns the body byte for byte, so it can run twice.
+
+Where it runs: **inside `enrichBriefWithGemini()`** (new `options.editionId`; Look Ahead passes it because its `neighborhoodSlug` is the display slug), so the stored `enriched_content` and `enriched_categories` are already filtered for the feed, the email and every article built from them; then **`checkBeforeInsert()` at every insert of a `brief_summary` or `look_ahead` article**: inline creation in `enrich-briefs`, `generate-brief-articles`, the email assembler fallback and `generate-look-ahead` (which also filters its upstream search events through `filterListingEvents()`). Headlines and teasers about a dropped story fall back to the first surviving story; the Grok headline is never used for a rules edition. If the rules remove every story, the enricher throws and nothing is stored, the same path as a model refusal. `generate-community-news` no longer falls back to raw text for a rules edition, and the thin-content auto-fixer no longer pads one with raw Grok stories.
+
+### Second-model review
+One Gemini Flash call per enrichment for a rules edition (`edition_rules_review` in `ai_usage_events`, `thinkingBudget: 0`), batching every story the fixed rules left standing. It checks each claim against the search facts handed to the enricher and the titles of the pages grounding read, and classifies party politics, sports commentary, active crime, a named private individual and private personal information. It returns keep or drop and never rewrites; the decision stays in code. If the call fails, stories that appear to name a person are dropped and the rest keep. About eight calls a day for the four GEDI editions.
+
+### Sourcing standard, precisely
+A story needs at least one unblocked source. If none is a newspaper of record, a story with a named person, date or figure (in practice almost all) needs two independent sources, independent meaning different registrable domains, or different accounts for social. A story resting on a social source needs a second source that is not social. Single-source stories get a second source from the enrichment's own grounding pages where one clearly matches the story's subject (`attachSecondSources()`).
+
+### Logging
+Every removal carries the story header and the rule that fired, into `articles.editor_notes` ("Edition rules (GEDI) removed or changed N item(s): ...", never starting with "Source:" so the government-source parser ignores it) and into `edition_rules_removals` in the `enrich-briefs`, `generate-brief-articles` and `generate-look-ahead` response data.
+
+### Tests
+`node scripts/test-edition-rules.mjs` compiles the shipped module and runs 27 checks: domain and subdomain blocks, social URL prefixes (including twitter.com as x.com and a bare @handle), the two-source rule, social plus a different kind, the newspaper-of-record exception, crime with and without a paper of record, party politics, sports commentary versus a fixture, the fail-closed review, the body rebuild, idempotence, the Look Ahead listing and the no-op for editions without rules. The fixed crime rules moved from `story-flags.ts` to `src/lib/sensitive-story-rules.ts` so the desk and the rules share one definition.
+
 ## 2026-09-21
 
 **Context: AAP's editor-in-chief named Greater Shepparton (Victoria) and Charters Towers (Queensland) for a call on 29 October.** Both were built the same day, five weeks early, so the agency reads about thirty-five consecutive mornings rather than a demonstration. Everything below was found because of that, not by testing.

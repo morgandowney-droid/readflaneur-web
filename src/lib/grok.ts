@@ -13,6 +13,7 @@ import { AI_MODELS } from '@/config/ai-models';
 import { recordGrokCall } from '@/lib/ai-cost';
 import { geographicBoundaryBlock } from './place-boundary';
 import { districtScopeBlock } from '@/lib/search-catchment';
+import { editionRulesBlock, rulesForEdition } from './edition-rules';
 
 const GROK_API_URL = 'https://api.x.ai/v1';
 const GROK_MODEL = AI_MODELS.GROK_FAST;
@@ -75,7 +76,9 @@ export async function generateNeighborhoodBrief(
   country?: string,
   nycDataContext?: string,
   timezone?: string,
-  recentTopics?: string[]
+  recentTopics?: string[],
+  /** neighborhoods.id, for publisher edition rules (edition-rules.ts). */
+  editionId?: string,
 ): Promise<NeighborhoodBrief | null> {
   const apiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
 
@@ -130,7 +133,7 @@ ADDITIONAL CONTEXT FROM NYC PUBLIC DATA:
 ${nycDataContext}
 You may weave this into your brief naturally, e.g., "Meanwhile, DOB records show..." or "In other news, a new liquor license was issued to..."` : ''}
 
-${geographicBoundaryBlock(neighborhoodName, city, country)}
+${geographicBoundaryBlock(neighborhoodName, city, country)}${editionRulesBlock(rulesForEdition(editionId))}
 
 After searching, create a brief "What's Happening Today" summary.
 
@@ -387,6 +390,8 @@ export async function generateLookAhead(
   timezone?: string,
   targetLocalDate?: string, // YYYY-MM-DD in neighborhood's local timezone
   districtScoped = false,
+  /** neighborhoods.id, for publisher edition rules (edition-rules.ts). */
+  editionId?: string,
 ): Promise<LookAheadResult | null> {
   const apiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
 
@@ -454,7 +459,7 @@ GALLERY AND MUSEUM FILTER (CRITICAL):
 - The test: would a local resident specifically plan to visit on THIS day vs any other day? If the answer is "no, it's the same exhibition that's been there for weeks", do NOT include it
 - Opening RECEPTIONS (with a specific evening time like 6-8 PM) are events. An exhibition that opened last month and is still running is NOT an event
 
-${geographicBoundaryBlock(neighborhoodName, city, country)}
+${geographicBoundaryBlock(neighborhoodName, city, country)}${editionRulesBlock(rulesForEdition(editionId))}
 
 After searching, create a "Look Ahead" summary.
 

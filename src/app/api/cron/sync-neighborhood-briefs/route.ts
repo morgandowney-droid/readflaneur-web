@@ -367,9 +367,9 @@ export async function GET(request: Request) {
       const isPriority = isPriorityNeighborhood(hood.id, subscribedIds.has(hood.id));
       const [grokResult, geminiResult] = await Promise.allSettled([
         isPriority
-          ? generateNeighborhoodBrief(searchName, hood.city, hood.country, nycDataContext, hood.timezone, recentTopics)
+          ? generateNeighborhoodBrief(searchName, hood.city, hood.country, nycDataContext, hood.timezone, recentTopics, hood.id)
           : Promise.resolve(null),
-        searchNeighborhoodFacts(searchName, hood.city, hood.country, hood.timezone, recentTopics),
+        searchNeighborhoodFacts(searchName, hood.city, hood.country, hood.timezone, recentTopics, hood.id),
       ]);
 
       const grokBrief = grokResult.status === 'fulfilled' ? grokResult.value : null;
