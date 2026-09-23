@@ -10,6 +10,7 @@ import { getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 import { formatEventListing } from '@/lib/look-ahead-events';
 import { isVenueAbroad } from '@/lib/place-boundary';
+import { filterEventsToDistrict } from '@/lib/district-geofence';
 import { searchUpcomingEvents, mergeContent, mergeStructuredEvents } from '@/lib/gemini-search';
 import { toHeadlineCase } from '@/lib/utils';
 import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
@@ -69,7 +70,7 @@ function generateSlug(headline: string, neighborhoodId: string, publishDate: str
  * (whose morning is 10+ hours away).
  */
 function sortByDeliveryUrgency(
-  neighborhoods: Array<{ id: string; name: string; city: string; country: string | null; timezone: string | null; is_combo: boolean; is_active: boolean }>
+  neighborhoods: Array<{ id: string; name: string; city: string; country: string | null; timezone: string | null; is_combo: boolean; is_active: boolean; latitude?: number | null; longitude?: number | null; radius?: number | null }>
 ): typeof neighborhoods {
   const now = Date.now();
   return [...neighborhoods].sort((a, b) => {
@@ -257,13 +258,13 @@ export async function GET(request: Request) {
     // Use is_active=true (same as Daily Brief cron): combos are is_active=true,
     // their components are is_active=false. This naturally generates one Look Ahead
     // per combo covering all components, instead of separate articles per component.
-    let neighborhoods: Array<{ id: string; name: string; city: string; country: string | null; timezone: string | null; is_combo: boolean; is_active: boolean }>;
+    let neighborhoods: Array<{ id: string; name: string; city: string; country: string | null; timezone: string | null; is_combo: boolean; is_active: boolean; latitude?: number | null; longitude?: number | null; radius?: number | null }>;
 
     if (testNeighborhoodId) {
       // Test mode: process a single neighborhood directly
       const { data, error: fetchError } = await supabase
         .from('neighborhoods')
-        .select('id, name, city, country, timezone, is_combo, is_active')
+        .select('id, name, city, country, timezone, is_combo, is_active, latitude, longitude, radius')
         .eq('id', testNeighborhoodId);
 
       if (fetchError || !data || data.length === 0) {
@@ -275,7 +276,7 @@ export async function GET(request: Request) {
       // Fetch all is_active=true neighborhoods (combos + standalone, excludes components)
       const { data, error: fetchError } = await supabase
         .from('neighborhoods')
-        .select('id, name, city, country, timezone, is_combo, is_active')
+        .select('id, name, city, country, timezone, is_combo, is_active, latitude, longitude, radius')
         .eq('is_active', true)
         .order('name');
 
@@ -488,12 +489,28 @@ export async function GET(request: Request) {
           // ten events in Birmingham, Alabama from a prompt that said to drop
           // them. Checked against the venue and address only, so a local event
           // that merely mentions another country survives.
-          const listingEvents = mergedListing.filter((e) => {
+          let listingEvents = mergedListing.filter((e) => {
             const venue = [e.location, e.address].filter(Boolean).join(', ');
             if (!isVenueAbroad(venue, country)) return true;
             console.warn(`[generate-look-ahead] Dropped foreign venue for ${name}: ${e.name} @ ${venue}`);
             return false;
           });
+
+          // A district edition keeps only venues inside the district. The
+          // local-scope prompt rule narrows the search; this removes what gets
+          // through it (see district-geofence.ts).
+          if (isDistrictScoped(id) && neighborhood.latitude != null && neighborhood.longitude != null) {
+            const fenced = await filterEventsToDistrict(listingEvents, {
+              latitude: Number(neighborhood.latitude),
+              longitude: Number(neighborhood.longitude),
+              radiusM: Number(neighborhood.radius) || 1000,
+              city,
+            });
+            for (const d of fenced.dropped) {
+              console.warn(`[generate-look-ahead] Outside ${name}: ${d.event.name} @ ${[d.event.location, d.event.address].filter(Boolean).join(', ')} (${d.reason})`);
+            }
+            listingEvents = fenced.kept;
+          }
           const eventListing = formatEventListing(
             listingEvents,
             localDate,
