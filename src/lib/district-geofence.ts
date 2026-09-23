@@ -9,9 +9,10 @@
  * district-scoped editions every listed venue is geocoded and anything outside
  * the edition's radius (plus a short walk) is dropped.
  *
- * Geocoding uses OpenStreetMap's Nominatim, one request a second as its usage
- * policy requires (the Mapbox token in this project is restricted to the
- * website's own URL, so a server call gets a 403). Each venue is tried by
+ * Geocoding uses OpenStreetMap: Photon first (fuzzy, biased to the edition
+ * centre), then Nominatim at one request a second as its usage policy
+ * requires. The Mapbox token in this project is restricted to the website's
+ * own URL, so a server call gets a 403. Each venue is tried by
  * street address first, then by venue name, both with the edition's city.
  * Only a venue PLACED outside the district is dropped, plus one with no venue at
  * all. A venue the geocoder cannot find is kept: dropping those emptied all three
@@ -63,7 +64,7 @@ async function politePause() {
   lastRequestAt = Date.now();
 }
 
-async function geocode(query: string): Promise<Placement> {
+async function nominatim(query: string): Promise<Placement> {
   await politePause();
   const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`;
   try {
@@ -78,17 +79,42 @@ async function geocode(query: string): Promise<Placement> {
   }
 }
 
+/**
+ * Photon (komoot's search over OpenStreetMap) is fuzzy and takes a location
+ * bias, so it finds venues by the English names the models write ("Vatican
+ * Museums", "Apollo Club") where Nominatim finds nothing. Tried first.
+ */
+async function photon(query: string, bias: { lat: number; lng: number }): Promise<Placement> {
+  const url = `https://photon.komoot.io/api/?limit=1&lat=${bias.lat}&lon=${bias.lng}&q=${encodeURIComponent(query)}`;
+  try {
+    const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return { ok: false, reason: `geocoder HTTP ${res.status}`, networkError: true };
+    const json = (await res.json()) as { features?: Array<{ geometry?: { coordinates?: [number, number] } }> };
+    const c = json.features?.[0]?.geometry?.coordinates;
+    if (!c) return { ok: false, reason: 'venue not found' };
+    return { ok: true, lng: c[0], lat: c[1] };
+  } catch {
+    return { ok: false, reason: 'geocoder unreachable', networkError: true };
+  }
+}
+
+async function geocode(query: string, bias: { lat: number; lng: number }): Promise<Placement> {
+  const first = await photon(query, bias);
+  if (first.ok) return first;
+  return nominatim(query);
+}
+
 /** Address first, then venue name; both anchored to the city. */
-async function placeVenue(e: StructuredEvent, city: string, cache: Map<string, Placement>): Promise<Placement> {
+async function placeVenue(e: StructuredEvent, city: string, bias: { lat: number; lng: number }, cache: Map<string, Placement>): Promise<Placement> {
   const withCity = (s: string) => (s.toLowerCase().includes(city.toLowerCase()) ? s : `${s}, ${city}`);
-  const tries = [e.address, e.location].filter((x): x is string => !!x && x.trim().length > 2).map((x) => withCity(x.trim()));
+  const tries = [e.address, e.location?.replace(/\s*\(also on [^)]*\)/i, '')].filter((x): x is string => !!x && x.trim().length > 2).map((x) => withCity(x.trim()));
   if (tries.length === 0) return { ok: false, reason: 'no venue' };
   // "Various locations across Milan" is not a venue in the district.
   if (GENERIC_VENUE.test([e.location, e.address].filter(Boolean).join(' '))) return { ok: false, reason: 'no venue' };
   let last: Placement = { ok: false, reason: 'venue not found' };
   for (const q of tries) {
     const cached = cache.get(q);
-    const placed = cached ?? (await geocode(q));
+    const placed = cached ?? (await geocode(q, bias));
     cache.set(q, placed);
     if (placed.ok) return placed;
     last = placed;
@@ -104,7 +130,7 @@ async function placeVenue(e: StructuredEvent, city: string, cache: Map<string, P
   for (const seg of segments.slice(-2).reverse()) {
     const q = seg;
     const cached = cache.get(q);
-    const placed = cached ?? (await geocode(q));
+    const placed = cached ?? (await geocode(q, bias));
     cache.set(q, placed);
     if (placed.ok) return placed;
   }
@@ -122,7 +148,7 @@ export async function filterEventsToDistrict(
   // Sequential on purpose: Nominatim allows one request a second.
   const verdicts: Array<{ keep: boolean; reason: string; networkError?: boolean }> = [];
   for (const e of events) {
-    const placed = await placeVenue(e, centre.city, cache);
+    const placed = await placeVenue(e, centre.city, { lat: centre.latitude, lng: centre.longitude }, cache);
     if (!placed.ok) {
       verdicts.push({ keep: placed.reason !== 'no venue', reason: placed.reason, networkError: placed.networkError });
       continue;
