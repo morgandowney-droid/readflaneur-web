@@ -14,6 +14,19 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Documents sent to prospects (the licensee API spec) are readable by link
+  // and kept out of search engines.
+  async headers() {
+    return [
+      {
+        source: '/docs/:path*',
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+          { key: 'Content-Type', value: 'text/markdown; charset=utf-8' },
+        ],
+      },
+    ];
+  },
 };
 
 export default withSentryConfig(nextConfig, {
