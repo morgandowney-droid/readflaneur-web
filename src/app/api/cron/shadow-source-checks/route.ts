@@ -27,6 +27,11 @@ import {
  * unverifiable_origin whatever the page says, because a model-written URL is
  * exactly what the pipeline must never rely on.
  *
+ * Each edition also reports how its story sources were settled: stories by
+ * origin (tool, story-match, name-match, repair, model, none) and how many
+ * model-written URLs the enricher dropped (story.droppedModelUrl), read
+ * straight from enriched_categories.
+ *
  * Params: ?neighborhood=<id> (any edition, not only pilots), ?date=YYYY-MM-DD
  * (that brief_date; default: the latest enriched brief in the last 3 days).
  * Results: cron_executions.response_data (job 'shadow-source-checks').
@@ -44,6 +49,32 @@ interface RawStory {
   context?: string;
   source?: SourceRef | null;
   secondarySource?: SourceRef | null;
+  /** A model-written URL the enricher removed (brief-enricher-gemini.ts). */
+  droppedModelUrl?: string;
+}
+
+const ORIGIN_KEYS = ['tool', 'story-match', 'name-match', 'repair', 'model', 'no_url', 'no_source'] as const;
+type OriginKey = (typeof ORIGIN_KEYS)[number];
+
+/**
+ * Per story, where its primary source's URL came from: a SourceOrigin, or
+ * no_url (a publication named, no page), or no_source. A URL with no origin
+ * stamp predates 2026-09-23 and counts as model.
+ */
+function originCounts(categories: unknown): Record<OriginKey | 'stories' | 'model_urls_dropped', number> {
+  const out = { stories: 0, model_urls_dropped: 0 } as Record<OriginKey | 'stories' | 'model_urls_dropped', number>;
+  for (const k of ORIGIN_KEYS) out[k] = 0;
+  for (const { story } of storiesOf(categories)) {
+    out.stories++;
+    if (story.droppedModelUrl) out.model_urls_dropped++;
+    const ref = story.source;
+    let key: OriginKey;
+    if (!ref || !ref.name || isPlaceholderSourceName(ref.name)) key = 'no_source';
+    else if (!isHttpUrl(ref.url)) key = 'no_url';
+    else key = (ref.origin && (ORIGIN_KEYS as readonly string[]).includes(ref.origin) ? ref.origin : 'model') as OriginKey;
+    out[key]++;
+  }
+  return out;
 }
 interface RawCategory { name?: string; stories?: RawStory[] }
 
@@ -289,10 +320,20 @@ export async function GET(request: NextRequest) {
       });
       return t;
     };
+    // Source settling per edition, from the stored stories themselves.
+    const settling = new Map(briefs.map((b) => [b.neighborhood_id, originCounts(b.enriched_categories)]));
+    const settlingTotal: Record<string, number> = {};
+    settling.forEach((c) => { for (const [k, v] of Object.entries(c)) settlingTotal[k] = (settlingTotal[k] || 0) + v; });
     editions = Array.from(byEdition.entries())
       .map(([edition, stories]) => {
         const t = tally(stories);
-        return { edition, ...t, verified_share_pct: t.stories ? Math.round((t.verified / t.stories) * 100) : 0 };
+        const s = settling.get(edition);
+        return {
+          edition,
+          ...t,
+          verified_share_pct: t.stories ? Math.round((t.verified / t.stories) * 100) : 0,
+          ...(s ? { origins: Object.fromEntries(ORIGIN_KEYS.map((k) => [k, s[k]])), model_urls_dropped: s.model_urls_dropped } : {}),
+        };
       })
       .sort((a, b) => String(a.edition).localeCompare(String(b.edition)));
     const everything = new Map<string, CheckVerdict[]>();
@@ -304,6 +345,8 @@ export async function GET(request: NextRequest) {
       ...total,
       share_with_verified_source_pct: total.stories ? Math.round((total.verified / total.stories) * 100) : 0,
       share_with_any_source_pct: total.stories ? Math.round((total.with_source / total.stories) * 100) : 0,
+      origins: Object.fromEntries(ORIGIN_KEYS.map((k) => [k, settlingTotal[k] || 0])),
+      model_urls_dropped: settlingTotal.model_urls_dropped || 0,
       ...counters,
       note: 'Shadow only: nothing that publishes was read or changed. Verdicts are per story, best across its sources.',
     };

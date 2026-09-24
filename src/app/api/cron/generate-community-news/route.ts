@@ -1,95 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { isGrokConfigured } from '@/lib/grok';
-import { enrichBriefWithGemini, EnrichedBriefOutput } from '@/lib/brief-enricher-gemini';
+import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { getSearchLocation } from '@/lib/neighborhood-utils';
 import { getComboInfo } from '@/lib/combo-utils';
 import { rulesForEdition } from '@/lib/edition-rules';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
-
-interface ArticleSourceInput {
-  source_name: string;
-  source_type: 'publication' | 'x_user' | 'platform' | 'other';
-  source_url?: string;
-}
-
-/**
- * Extract sources from Gemini enrichment response
- * Only includes URLs that appear valid (no dead links)
- */
-function extractSourcesFromEnrichment(enrichResult: EnrichedBriefOutput): ArticleSourceInput[] {
-  const sources: ArticleSourceInput[] = [];
-  const seenSources = new Set<string>();
-
-  for (const category of enrichResult.categories) {
-    for (const story of category.stories) {
-      if (story.source && story.source.name) {
-        const key = story.source.name.toLowerCase();
-        if (!seenSources.has(key)) {
-          seenSources.add(key);
-
-          // Determine source type based on name/url
-          let sourceType: ArticleSourceInput['source_type'] = 'publication';
-          if (story.source.name.startsWith('@') || story.source.url?.includes('x.com') || story.source.url?.includes('twitter.com')) {
-            sourceType = 'x_user';
-          }
-
-          // Only include URL if it looks valid (not a search URL or placeholder)
-          const url = story.source.url;
-          const isValidUrl = url &&
-            !url.includes('google.com/search') &&
-            !url.includes('example.com') &&
-            url.startsWith('http');
-
-          sources.push({
-            source_name: story.source.name,
-            source_type: sourceType,
-            source_url: isValidUrl ? url : undefined,
-          });
-        }
-      }
-
-      // Also check secondary source
-      if (story.secondarySource && story.secondarySource.name) {
-        const key = story.secondarySource.name.toLowerCase();
-        if (!seenSources.has(key)) {
-          seenSources.add(key);
-
-          let sourceType: ArticleSourceInput['source_type'] = 'publication';
-          if (story.secondarySource.name.startsWith('@') || story.secondarySource.url?.includes('x.com')) {
-            sourceType = 'x_user';
-          }
-
-          const url = story.secondarySource.url;
-          const isValidUrl = url &&
-            !url.includes('google.com/search') &&
-            !url.includes('example.com') &&
-            url.startsWith('http');
-
-          sources.push({
-            source_name: story.secondarySource.name,
-            source_type: sourceType,
-            source_url: isValidUrl ? url : undefined,
-          });
-        }
-      }
-    }
-  }
-
-  // If no specific sources found, add platform-level attribution
-  if (sources.length === 0) {
-    sources.push({
-      source_name: 'X (Twitter)',
-      source_type: 'platform',
-    });
-    sources.push({
-      source_name: 'Google News',
-      source_type: 'platform',
-    });
-  }
-
-  return sources;
-}
+import { extractArticleSources, type ArticleSourceInput } from '@/lib/source-links';
 
 /**
  * Community News Generator
@@ -461,7 +378,8 @@ export async function GET(request: Request) {
               enrichmentModel = enrichResult.model;
             }
             // Extract sources from enrichment
-            extractedSources = extractSourcesFromEnrichment(enrichResult);
+            // The shared extractor ('model' URLs and placeholders never emitted).
+            extractedSources = await extractArticleSources(enrichResult.categories);
           } catch (enrichErr) {
             // Continue with unenriched content
             console.error(`Enrichment failed for ${hood.name}:`, enrichErr);

@@ -5,6 +5,7 @@ import { AI_MODELS } from '@/config/ai-models';
 import { getDistance } from '@/lib/geo-utils';
 import { generateCommunityId, generateBriefArticleSlug, generatePreviewText } from '@/lib/community-pipeline';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
+import { extractArticleSources } from '@/lib/source-links';
 import { performInstantResend } from '@/lib/email/instant-resend';
 import { sendEmail } from '@/lib/email';
 import { selectLibraryImageAsync } from '@/lib/image-library';
@@ -629,32 +630,14 @@ export async function POST(request: NextRequest) {
                 .eq('id', effectiveBriefId)
                 .single();
 
-              const cats = briefData?.enriched_categories as Array<{ stories?: Array<{ source?: { name: string; url?: string }; secondarySource?: { name: string; url?: string } }> }> | null;
-              if (cats && Array.isArray(cats)) {
-                const sources: { article_id: string; source_name: string; source_type: string; source_url?: string }[] = [];
-                const seen = new Set<string>();
-                for (const cat of cats) {
-                  for (const story of cat.stories || []) {
-                    for (const src of [story.source, story.secondarySource]) {
-                      if (src?.name && !seen.has(src.name.toLowerCase())) {
-                        seen.add(src.name.toLowerCase());
-                        const url = src.url;
-                        const isValidUrl = url && !url.includes('google.com/search') && url.startsWith('http');
-                        sources.push({
-                          article_id: insertedArticle.id,
-                          source_name: src.name,
-                          source_type: src.name.startsWith('@') || url?.includes('x.com') ? 'x_user' : 'publication',
-                          source_url: isValidUrl ? url : undefined,
-                        });
-                      }
-                    }
-                  }
-                }
-                if (sources.length > 0) {
-                  await admin.from('article_sources').insert(sources).then(null, (e: Error) =>
-                    console.error(`Failed to insert sources for community article:`, e)
-                  );
-                }
+              // The shared extractor: placeholders, grounding redirects and
+              // 'model' URLs are never emitted (this path had its own copy).
+              const extracted = await extractArticleSources(briefData?.enriched_categories);
+              const sources = extracted.map(s => ({ article_id: insertedArticle.id, ...s }));
+              if (sources.length > 0) {
+                await admin.from('article_sources').insert(sources).then(null, (e: Error) =>
+                  console.error(`Failed to insert sources for community article:`, e)
+                );
               }
             } catch (e) {
               console.error('Source extraction error (non-fatal):', e);

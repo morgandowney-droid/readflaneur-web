@@ -278,15 +278,16 @@ export function toMarkdown(body: string): string {
 interface RawStory {
   entity?: string;
   context?: string;
-  source?: { name?: string; url?: string } | null;
-  secondarySource?: { name?: string; url?: string } | null;
+  source?: { name?: string; url?: string; origin?: string } | null;
+  secondarySource?: { name?: string; url?: string; origin?: string } | null;
 }
 
-function cleanSource(ref: { name?: string; url?: string } | null | undefined): FeedSource | null {
+function cleanSource(ref: { name?: string; url?: string; origin?: string } | null | undefined): FeedSource | null {
   const name = ref?.name?.trim();
   if (!name || isPlaceholderSourceName(name)) return null;
   const url = ref?.url?.trim();
-  const usable = isHttpUrl(url) && !isGroundingRedirect(url) && !/google\.[a-z.]+\/search/i.test(url);
+  // origin 'model': written by the enrichment model, in no tool's metadata. Never published.
+  const usable = ref?.origin !== 'model' && isHttpUrl(url) && !isGroundingRedirect(url) && !/google\.[a-z.]+\/search/i.test(url);
   return { name, url: usable ? url! : null };
 }
 

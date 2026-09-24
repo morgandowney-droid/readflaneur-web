@@ -286,6 +286,12 @@ export async function GET(request: Request) {
     model_flash_used: 0,
     // Publisher edition rules (edition-rules.ts): what was cut from which edition and why.
     edition_rules_removals: [] as Array<{ neighborhood: string; header: string; rule: string }>,
+    // Source settling (source-links.ts, source-repair.ts): model-written URLs
+    // dropped, and the bounded repair search on priority editions.
+    model_urls_dropped: 0,
+    repair_searches: 0,
+    repair_stories_attempted: 0,
+    repair_stories_accepted: 0,
   };
 
   const elapsed = () => Date.now() - functionStart;
@@ -395,9 +401,8 @@ export async function GET(request: Request) {
               console.log(`[enrich-briefs] ${hood.name}: ${continuityItems.length} continuity items (${continuityItems.filter(i => i.type === 'brief').length} briefs, ${continuityItems.filter(i => i.type === 'article').length} articles)`);
             }
 
-            const useModel = isPriorityNeighborhood(brief.neighborhood_id, subscribedIds.has(brief.neighborhood_id))
-              ? MODEL_PRO
-              : MODEL_FLASH;
+            const isPriority = isPriorityNeighborhood(brief.neighborhood_id, subscribedIds.has(brief.neighborhood_id));
+            const useModel = isPriority ? MODEL_PRO : MODEL_FLASH;
             console.log(`Enriching brief for ${hood.name} [${useModel}]...`);
 
             const result = await enrichBriefWithGemini(
@@ -414,11 +419,23 @@ export async function GET(request: Request) {
                 // Pages the fact searches read, stored on the brief by
                 // sync-neighborhood-briefs, for story-to-page source matching.
                 gatheredPages: pagesFromStored(brief.sources),
+                // One bounded search for stories that name a publication but
+                // have no traced page. Priority editions only (cost).
+                sourceRepair: isPriority,
               }
             );
 
             if (useModel === MODEL_PRO) results.model_pro_used++;
             else results.model_flash_used++;
+            if (result.sourceSettling) {
+              results.model_urls_dropped += result.sourceSettling.modelUrlsDropped;
+              const rp = result.sourceSettling.repair;
+              if (rp && rp.attempted > 0) {
+                results.repair_searches++;
+                results.repair_stories_attempted += rp.attempted;
+                results.repair_stories_accepted += rp.accepted;
+              }
+            }
 
             const { error: updateError } = await supabase
               .from('neighborhood_briefs')
@@ -713,47 +730,16 @@ export async function GET(request: Request) {
             throw new Error(`Article ${article.id}: ${updateError.message}`);
           }
 
-          // Extract and save sources from enriched categories
+          // Sources from the settled story sources, through the one shared
+          // extractor (placeholders, grounding redirects and 'model' URLs are
+          // never emitted). This path had its own copy until 2026-09-24.
           if (result.categories && result.categories.length > 0) {
-            const sourcesToInsert: Array<{
-              article_id: string;
-              source_name: string;
-              source_type: string;
-              source_url: string;
-            }> = [];
-
-            for (const category of result.categories) {
-              for (const story of category.stories) {
-                if (story.source?.url && story.source?.name) {
-                  sourcesToInsert.push({
-                    article_id: article.id,
-                    source_name: story.source.name,
-                    source_type: 'publication',
-                    source_url: story.source.url,
-                  });
-                }
-                if (story.secondarySource?.url && story.secondarySource?.name) {
-                  sourcesToInsert.push({
-                    article_id: article.id,
-                    source_name: story.secondarySource.name,
-                    source_type: 'publication',
-                    source_url: story.secondarySource.url,
-                  });
-                }
-              }
-            }
-
-            if (sourcesToInsert.length > 0) {
-              const seen = new Set<string>();
-              const uniqueSources = sourcesToInsert.filter(s => {
-                if (seen.has(s.source_url)) return false;
-                seen.add(s.source_url);
-                return true;
-              });
-
+            const extracted = await extractArticleSources(result.categories);
+            const uniqueSources = extracted.filter(s => s.source_url);
+            if (uniqueSources.length > 0) {
               const { error: sourcesError } = await supabase
                 .from('article_sources')
-                .insert(uniqueSources);
+                .insert(uniqueSources.map(s => ({ article_id: article.id, ...s })));
 
               if (sourcesError) {
                 console.error(`Failed to insert sources for article ${article.id}:`, sourcesError.message);
@@ -816,6 +802,10 @@ export async function GET(request: Request) {
           elapsed_ms: Date.now() - functionStart,
           skipped_time_budget: results.skipped_time_budget,
           edition_rules_removals: results.edition_rules_removals.slice(0, 200),
+          model_urls_dropped: results.model_urls_dropped,
+          repair_searches: results.repair_searches,
+          repair_stories_attempted: results.repair_stories_attempted,
+          repair_stories_accepted: results.repair_stories_accepted,
         },
       }).then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
     }

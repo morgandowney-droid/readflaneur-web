@@ -3,6 +3,49 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-09-24: the writing model no longer supplies a URL; untraced links are dropped and a bounded, checked repair search finds the page
+
+**Context: measured on 24 Sep, the first briefs with the 23 Sep sourcing, across 52 pilot editions.** Sources from the search tools' own citations: 27 (15 verified on the page, 1 dead). Sources matched in code to pages the search read: 64 (30 verified). Sources whose URL the enrichment model wrote and that appear in no tool metadata: 109, of which 60 returned 404 or 410; a retest of 30 with a browser User-Agent loaded 0 of the pages while 26 of their sites' homepages loaded. Cause: the enrichment JSON example asked for `"source": {"name": "...", "url": "https://..."}` on every story, so the model supplied a URL whether or not it had one. On the Cork brief of 24 Sep all five Irish Examiner and Echo URLs were invented article ids; the real articles have different ids. **Owner's rule: never make a model supply or find a source.**
+
+### 1. The prompt asks for a name only
+The JSON example is now `"source": {"name": "Publication Name"}` (and `secondarySource` name-only where a publisher's two-source rule is on), with one line after it: name the publication only if it is named in the material or a page read, otherwise `null`; never write a URL. Nothing else in the prompt changed. The parser still accepts a `url` and treats it as untrusted; any `origin` or `droppedModelUrl` field the model writes is discarded.
+
+### 2. Untraced URLs are dropped
+`cleanStorySources()` takes `traced` (the enrichment's resolved grounding pages, the pages the fact searches read, and URLs in the raw gathered facts). A story URL that is none of these is removed, the publication name kept, and the URL recorded on the story as `droppedModelUrl` for the shadow report only. Then the deterministic attach runs: **name-match now also requires the read page's grounded passage to name the story** (measured: name-only matching gave three different Irish Examiner stories the same Cork section front, and two different building permits one unrelated permit page), and a named source still without a page falls through to `matchStoryToPages()` (keeping the model's name only when the page is on that publication's host). A model-written URL is never stored.
+
+### 3. Repair search, bounded and checked (`src/lib/source-repair.ts`, `src/lib/source-repair-search.ts`)
+For stories that still name a real publication (placeholders never qualify) and have no page: ONE Gemini Flash call per brief with Google Search grounding, thinking off, recorded as `source_repair`. Only the grounding chunk URLs are used (redirects resolved), never a URL in the model's text. A candidate must be on the named publication's own host (`hostMatchesPublication()`: registrable host, words or initials, so "Vorarlberger Nachrichten" matches vn.at and "Il Giorno" never matches corriere.it) and be an article, not a section front or pager (`isListingUrl()`). Pages this pipeline already read on that host are checked too. Each candidate is fetched and run through the source-check fact matcher; it is attached (origin `repair`) only when the verdict is `verified`, or `partial` with the story's subject or two facts on the page. At most 8 stories per brief, 4 candidates per story, 25s total, never throws. Priority editions only (`sourceRepair: isPriority` from `enrich-briefs`), daily briefs only, and before the GEDI edition rules so they see settled sources.
+
+Prompt wording was tested: "search the publication's site" made Flash run bare searches and return one page from another host; "one search per item naming the publication" returned the publication's own article for each item.
+
+### 4. Every path builds article sources from settled story sources
+`extractArticleSources()` never emits a `model` URL (briefs enriched before today). Three private copies of the extractor were still live and are replaced by it: `enrich-briefs` Phase 2 (RSS articles), `generate-community-news`, and the community-create path in `neighborhoods/create`. Read boundaries withhold `model` URLs too: `NeighborhoodBrief` source links, `licensee-feed` `cleanSource()`, and the Irish syndication `categories` (via `publishableCategories()`, which also strips `droppedModelUrl`).
+
+### 5. Look Ahead
+The same enricher runs for Look Ahead, so model-written story URLs are dropped there too. Look Ahead prose links are all Google search links (1,634 prose links in 48h of briefs, none to another host), and structured events carry no URL. No repair search for Look Ahead in this change.
+
+### 6. Shadow report
+`shadow-source-checks` adds per edition `origins` (tool, story-match, name-match, repair, model, no_url, no_source) and `model_urls_dropped`, read from the stored stories, plus totals in the summary. `enrich-briefs` logs `model_urls_dropped`, `repair_searches`, `repair_stories_attempted` and `repair_stories_accepted`.
+
+### Local run (read-only, nothing written)
+Replay of the new settling on three stored 24 Sep briefs (story text identical before and after in every case):
+- ie-county-cork: 5 model URLs dropped; repair attached 4 real articles (2 verified, 2 partial on subject), 1 left without a page. 1 search call, 6.7s.
+- nyc-greenwich-village: 7 model URLs dropped; 2 name-matched, 1 story-matched, 1 repaired (verified 7/7), 3 left without a page (Redfin and PermitProspect pages could not be confirmed).
+- newfoundland-gander: 2 model URLs dropped; both story-matched to the X posts the search read.
+
+Fresh enrichment through the new prompt (Gemini Pro, as for a priority edition): Cork wrote 0 URLs; 8 stories, 7 repaired and verified on the page, 1 (Cork Beo) left without a page; 38s including 7.7s of repair. Gander: 0 URLs written, 5 stories all story-matched, no repair needed.
+
+### Cost
+About 80 to 100 priority daily briefs a day (78 to 99 Pro enrichments per day over the last week); repair runs only when a named story has no traced page. Measured calls used about 490 input and 270 output tokens: about $0.0008 each, so roughly $0.08 a day, $2.50 a month in tokens. Grounded prompts are free up to Google's daily allowance for Flash; if the project is over it, add $35 per 1,000, up to about $3.50 a day. Page fetches cost nothing. Added time in `enrich-briefs`: typically 4 to 8s per priority brief, capped at 25s.
+
+### Tests
+`node scripts/test-source-settling.mjs` (22 cases: untraced URL dropped and recorded, traced URL kept as tool, facts URL and X status id traced, story-match after a drop, name-match needs the story, host matching, section fronts rejected, placeholders never trigger repair, repair accepts verified and subject-partial pages on the named host and rejects other hosts, pages without the story, dead or redirected pages, a failing or hung search; cap of 8 in one call; read boundaries withhold model URLs). `test-source-check.mjs` 32 and `test-edition-rules.mjs` 28 still pass.
+
+### Not done
+- Stored briefs keep their `model` URLs in `enriched_categories`; they are withheld at every read boundary rather than rewritten, and existing `article_sources` rows are unchanged (a backfill is a separate, reviewed step).
+- Story-match can still attach a listing page the search read (Gander's `gandercanada.com/news/?page=13`) and can tie two stories to one X post; the listing rule applies to repair only.
+- Sites that refuse non-browser fetches (Redfin, PermitProspect here) cannot be confirmed, so their stories keep the name and no link.
+
 ## 2026-09-23 (later): every story's source, from what the search read, checked and archived
 
 **Context: we tell publishers every story has a source that is independently checked and archived.** Measured today for the local editions: 54% of 1,499 brief and Look Ahead articles in 7 days had any source URL; sources were stored per article, not per story; no `article_sources` row had an `archive_url` or `source_snapshot`; nothing opened a source page. **Hard constraint from the owner: a model never supplies, finds or invents a source**, because early yous.news and Flaneur showed models fabricate sources when pushed. No prompt was changed.

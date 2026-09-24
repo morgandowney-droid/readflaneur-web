@@ -13,7 +13,7 @@ interface BriefSource {
 
 interface EnrichedStory {
   entity: string;
-  source: { name: string; url: string } | null;
+  source: { name: string; url: string; origin?: string } | null;
   context: string;
   note?: string;
   googleFallbackUrl: string;
@@ -655,7 +655,9 @@ export function NeighborhoodBrief({
                 const uniqueSources = new Map<string, { name: string; url: string }>();
                 enrichedCategories.forEach(cat => {
                   cat.stories.forEach(story => {
-                    if (story.source && story.source.url && !uniqueSources.has(story.source.name)) {
+                    // origin 'model': a URL the enrichment model wrote that no search
+                  // returned (briefs enriched before 2026-09-24). Never linked.
+                  if (story.source && story.source.url && story.source.origin !== 'model' && !uniqueSources.has(story.source.name)) {
                       uniqueSources.set(story.source.name, story.source);
                     }
                   });

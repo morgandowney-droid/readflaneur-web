@@ -4,7 +4,7 @@ import { GoogleGenAI } from '@google/genai';
 import { AI_MODELS } from '@/config/ai-models';
 import { insiderPersona } from '@/lib/ai-persona';
 import { recordGeminiCall } from '@/lib/ai-cost';
-import { isPlaceholderSourceName, isGroundingRedirect } from '@/lib/source-links';
+import { isPlaceholderSourceName, isGroundingRedirect, publishableCategories } from '@/lib/source-links';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -172,7 +172,8 @@ export async function GET(request: NextRequest) {
           subjectTeaser: brief.subject_teaser,
           emailTeaser: brief.email_teaser,
           enrichedContent: brief.enriched_content,
-          categories: brief.enriched_categories,
+          // 'model' URLs withheld and the shadow-only droppedModelUrl stripped.
+          categories: publishableCategories(brief.enriched_categories),
           model: brief.model,
           enrichmentModel: brief.enrichment_model,
           briefDate: brief.brief_date,
