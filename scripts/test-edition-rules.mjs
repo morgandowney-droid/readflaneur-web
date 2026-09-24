@@ -158,6 +158,14 @@ test('with a newspaper of record it stays, unless it names a private individual'
   assert.equal(named.keep, false);
   assert.ok(named.rules.includes('active-crime-names-private-individual'));
 });
+test('"trial" counts as crime only in court phrasing', () => {
+  for (const t of ['Autonomous bus trial in Wolfurt', 'A pilot trial of the new app', 'clinical trial at the hospital', 'free trial for residents']) {
+    assert.equal(R.topicHits(t, gedi).includes('active-crime'), false, t);
+  }
+  for (const t of ['He went on trial in Feldkirch', 'The murder trial opens Monday', 'The trial judge adjourned the case']) {
+    assert.ok(R.topicHits(t, gedi).includes('active-crime'), t);
+  }
+});
 test('Italian crime terms are caught too', () => {
   assert.ok(R.topicHits('Carabinieri: arrestato un uomo in Via Brera', gedi).includes('active-crime'));
 });

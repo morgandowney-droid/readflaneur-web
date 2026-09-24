@@ -11,7 +11,7 @@ export type SensitiveRuleHit = 'crime-or-court' | 'death-or-injury' | 'minors';
 // Deliberately broad: a false flag costs an editor five seconds, a missed one
 // can cost a defamation claim. English first because enrichment writes English;
 // the German terms catch local names and quoted phrases.
-export const CRIME_OR_COURT = /\b(police|polizei|arrest(ed|s)?|charged with|suspects?|court (case|hearing|ruling|date)|in court|(district|regional|supreme|high|appeals?|criminal) court|landesgericht|bezirksgericht|trial|prosecut\w*|staatsanwalt\w*|murder\w*|homicide|manslaughter|stabb(ed|ing)|assault\w*|robber(y|ies)|burglar(y|ies)|fraud|rape|sexual (assault|abuse)|shooting)\b/i;
+export const CRIME_OR_COURT = /\b(police|polizei|arrest(ed|s)?|charged with|suspects?|court (case|hearing|ruling|date)|in court|(district|regional|supreme|high|appeals?|criminal) court|landesgericht|bezirksgericht|(?:stands?|stood|standing|goes|went|go|put) on trial|on trial for|faces? trial|facing trial|awaiting trial|(?:murder|criminal|jury|court|fraud|rape|manslaughter|assault) trial|trial (?:judge|jury|court|verdict)|retrial|prosecut\w*|staatsanwalt\w*|murder\w*|homicide|manslaughter|stabb(ed|ing)|assault\w*|robber(y|ies)|burglar(y|ies)|fraud|rape|sexual (assault|abuse)|shooting)\b/i;
 // Not bare "dead" or "death": on the first Vorarlberg desk a concert by the band
 // Sweeping Death came out as needing a legal check. The phrases below are how a
 // real death or injury is reported. Same for bare "crash" ("crash course").
