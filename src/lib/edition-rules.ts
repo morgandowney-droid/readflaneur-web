@@ -483,6 +483,8 @@ export interface StoryDecision {
   rules: string[];
   keptSources: SourceRef[];
   blockedSources: string[];
+  /** Review findings that are logged but do not remove the story. */
+  advisories?: string[];
 }
 
 /**
@@ -500,6 +502,7 @@ export function decideStories(
   return stories.map((story) => {
     const text = `${story.entity}\n${story.context}\n${proseByStory?.get(story.index) || ''}`;
     const fired: string[] = [];
+    const advisories: string[] = [];
     const sv = sourceVerdict(story, rules, text);
     if (sv.failure) fired.push(sv.failure);
 
@@ -511,7 +514,11 @@ export function decideStories(
       if (rules.excludePartyPolitics && v.partyPolitics) fired.push('party-politics (review)');
       if (rules.excludeSportsCommentary && v.sportsCommentary) fired.push('sports-commentary (review)');
       if (rules.protectPrivateIndividuals && v.privatePersonalInfo) fired.push('private-individual (review)');
-      if (!v.supported) fired.push(`unsupported-by-sources (review)${v.reason ? `: ${v.reason}` : ''}`);
+      // Log-only since 2026-09-24: on the first GEDI mornings the review cut
+      // real events for invented date mismatches ("opens on 24 September, not
+      // today, 24 September") and cut stories it could not map to the body.
+      // Its "unsupported" verdict is recorded; the fixed rules still remove.
+      if (!v.supported) advisories.push(`unsupported-by-sources (review, log only)${v.reason ? `: ${v.reason}` : ''}`);
     } else if (reviewRequired && looksLikePersonName(text)) {
       fired.push('review-unavailable-names-person');
     }
@@ -530,6 +537,7 @@ export function decideStories(
       rules: Array.from(new Set(fired)),
       keptSources: sv.kept,
       blockedSources: sv.blocked,
+      advisories,
     };
   });
 }
@@ -842,6 +850,7 @@ export function applyEditionRules<E extends ListingEvent = ListingEvent>(input: 
   for (const d of decisions) {
     for (const b of d.blockedSources) removals.push({ header: d.entity, rule: `blocked-source: ${b}` });
     if (!d.keep) removals.push({ header: d.entity, rule: d.rules[0] });
+    else for (const a of d.advisories || []) removals.push({ header: d.entity, rule: a });
   }
 
   // Decide which units go.

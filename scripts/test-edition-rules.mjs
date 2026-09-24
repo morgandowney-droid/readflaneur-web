@@ -178,11 +178,11 @@ test('a failed review drops a story that names a person and keeps one that does 
   assert.equal(d[0].rules[0], 'review-unavailable-names-person');
   assert.equal(d[1].keep, true);
 });
-test('the review can drop an unsupported story', () => {
+test('an unsupported review verdict is logged, not acted on', () => {
   const v = new Map([[0, { index: 0, supported: false, partyPolitics: false, sportsCommentary: false, activeCrime: false, namesPrivateIndividual: false, privatePersonalInfo: false, reason: 'date not in sources' }]]);
   const [d] = R.decideStories([story('Market', 'The market returns on 14 June.', [nor])], gedi, v);
-  assert.equal(d.keep, false);
-  assert.match(d.rules[0], /^unsupported-by-sources/);
+  assert.equal(d.keep, true);
+  assert.match((d.advisories || [])[0] || '', /^unsupported-by-sources \(review, log only\)/);
 });
 
 console.log('\nBody rebuild');
