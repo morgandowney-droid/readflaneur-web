@@ -9,6 +9,7 @@ import { CronIssue, FixResult, FIX_CONFIG, EmailDiagnosis } from './types';
 import { fixEmailRootCause, resendEmail } from './email-monitor';
 import { generateGrokNewsStories } from '@/lib/grok';
 import { extractArticleSources } from '@/lib/source-links';
+import { scheduleSourceArchive } from '@/lib/source-archive-schedule';
 import { rulesForEdition } from '@/lib/edition-rules';
 
 /**
@@ -433,6 +434,7 @@ async function fixMissingSources(
     if (error) {
       return { success: false, message: `Insert failed: ${error.message}` };
     }
+    scheduleSourceArchive(supabase, articleId);
 
     return { success: true, message: `Added ${sources.length} sources` };
   } catch (err) {

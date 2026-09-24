@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 import { toHeadlineCase } from '@/lib/utils';
 import { extractArticleSources } from '@/lib/source-links';
+import { scheduleSourceArchive } from '@/lib/source-archive-schedule';
 import { checkBeforeInsert, fallbackTeaser, mentionsDroppedStory } from '@/lib/edition-rules';
 
 
@@ -405,6 +406,9 @@ export async function GET(request: Request) {
 
         if (sourcesError) {
           console.error(`Failed to insert sources for article ${insertedArticle.id}:`, sourcesError.message);
+        } else {
+          // Archive each source page after the response (never blocks publishing).
+          scheduleSourceArchive(supabase, insertedArticle.id);
         }
       }
 

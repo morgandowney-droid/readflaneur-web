@@ -51,3 +51,41 @@ export function geminiRepairSearch(opts: { place: string; label?: string; apiKey
     return resolveGroundingChunks(extractGroundingChunks(response, 'repair'));
   };
 }
+
+/**
+ * Prompt for the shadow second-source search (second-source.ts). The search
+ * is asked to find another report of each item on a different site; the
+ * model's answer is discarded, and only the pages its search read are used,
+ * each fetched and fact-checked in code. It never reaches the writing step.
+ */
+export function buildSecondSourcePrompt(requests: RepairRequest[], place: string): string {
+  const lines = requests.map(r =>
+    `${r.n}. Already reported by: ${r.publication}\n   Story: ${r.entity}${r.context ? `\n   Detail: ${r.context}` : ''}`,
+  );
+  return `Each item below is a local news item from ${place} that one site has already reported. For EACH item, run its own Google search on the item's key names and find a report of the same item on a DIFFERENT website: another news outlet, or the official page of the public body, venue or organiser involved. Do not use the site that already reported it.
+
+${lines.join('\n\n')}
+
+Reply with one short line per item: its number and the title of the page you found, or "not found". Do not write any URLs.`;
+}
+
+/** The second-source search, bound to an edition. Returns [] when GEMINI_API_KEY is unset. */
+export function geminiSecondSourceSearch(opts: { place: string; label?: string; apiKey?: string }): RepairSearch {
+  return async (requests, signal) => {
+    const apiKey = opts.apiKey || process.env.GEMINI_API_KEY;
+    if (!apiKey || requests.length === 0) return [];
+    const genAI = new GoogleGenAI({ apiKey });
+    const response = await genAI.models.generateContent({
+      model: AI_MODELS.GEMINI_FLASH,
+      contents: buildSecondSourcePrompt(requests, opts.place),
+      config: {
+        tools: [{ googleSearch: {} }],
+        temperature: 0.2,
+        thinkingConfig: { thinkingBudget: 0 },
+        abortSignal: signal,
+      },
+    });
+    recordGeminiCall(response, { operation: 'shadow_second_source', kind: 'search', model: AI_MODELS.GEMINI_FLASH, label: opts.label });
+    return resolveGroundingChunks(extractGroundingChunks(response, 'repair'));
+  };
+}

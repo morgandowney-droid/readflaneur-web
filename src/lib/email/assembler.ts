@@ -6,6 +6,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { CITY_PREFIX_MAP } from '@/lib/neighborhood-utils';
 import { extractArticleSources } from '@/lib/source-links';
+import { scheduleSourceArchive } from '@/lib/source-archive-schedule';
 import { checkBeforeInsert, fallbackTeaser, mentionsDroppedStory } from '@/lib/edition-rules';
 import { toHeadlineCase } from '@/lib/utils';
 import {
@@ -266,6 +267,8 @@ async function fetchBriefAsStory(
       await supabase.from('article_sources').insert(sources).then(null, (e: Error) =>
         console.error(`[assembler] Failed to insert sources for ${newArticle.id}:`, e)
       );
+      // Archive each source page after the send (never blocks the email).
+      scheduleSourceArchive(supabase, newArticle.id);
     }
     return toEmailStory(newArticle, neighborhoodName, cityName, timezone, neighborhoodTimezone);
   }

@@ -123,7 +123,65 @@ export const NEWSPAPERS_OF_RECORD: Record<string, { names: string[]; domains: st
       'ilmattino.it', 'lasicilia.it', 'gds.it', 'ilgiorno.it', 'ansa.it', 'agi.it', 'adnkronos.com',
     ],
   },
+  // The countries below serve the tiered sourcing standard (source-standard.ts,
+  // shadow only): national papers, the national news agency and the public
+  // broadcaster. No edition-rule group uses them yet.
+  ireland: {
+    names: ['the irish times', 'irish times', 'irish independent', 'irish examiner', 'rte', 'rte news', 'business post'],
+    domains: ['irishtimes.com', 'independent.ie', 'irishexaminer.com', 'rte.ie', 'businesspost.ie'],
+  },
+  uk: {
+    names: ['bbc', 'bbc news', 'the guardian', 'the times', 'financial times', 'the telegraph', 'pa media', 'reuters'],
+    domains: ['bbc.co.uk', 'bbc.com', 'theguardian.com', 'thetimes.co.uk', 'thetimes.com', 'ft.com', 'telegraph.co.uk', 'pa.media', 'reuters.com'],
+  },
+  austria: {
+    names: ['orf', 'der standard', 'die presse', 'apa', 'wiener zeitung'],
+    domains: ['orf.at', 'derstandard.at', 'diepresse.com', 'apa.at', 'wienerzeitung.at'],
+  },
+  germany: {
+    names: ['frankfurter allgemeine', 'faz', 'suddeutsche zeitung', 'sueddeutsche zeitung', 'die zeit', 'der spiegel', 'dpa', 'tagesschau'],
+    domains: ['faz.net', 'sueddeutsche.de', 'zeit.de', 'spiegel.de', 'dpa.com', 'tagesschau.de'],
+  },
+  spain: {
+    names: ['el pais', 'el mundo', 'la vanguardia', 'efe', 'rtve'],
+    domains: ['elpais.com', 'elmundo.es', 'abc.es', 'lavanguardia.com', 'efe.com', 'rtve.es'],
+  },
+  france: {
+    names: ['le monde', 'le figaro', 'afp', 'liberation', 'franceinfo'],
+    domains: ['lemonde.fr', 'lefigaro.fr', 'afp.com', 'liberation.fr', 'francetvinfo.fr'],
+  },
+  portugal: {
+    names: ['publico', 'expresso', 'lusa', 'rtp'],
+    domains: ['publico.pt', 'expresso.pt', 'lusa.pt', 'rtp.pt'],
+  },
+  canada: {
+    names: ['the globe and mail', 'globe and mail', 'cbc', 'cbc news', 'the canadian press', 'toronto star'],
+    domains: ['theglobeandmail.com', 'cbc.ca', 'thecanadianpress.com', 'thestar.com'],
+  },
+  australia: {
+    names: ['abc news', 'sydney morning herald', 'the age', 'the australian', 'aap', 'australian associated press'],
+    domains: ['abc.net.au', 'smh.com.au', 'theage.com.au', 'theaustralian.com.au', 'aap.com.au'],
+  },
+  'new-zealand': {
+    names: ['nz herald', 'new zealand herald', 'stuff', 'rnz'],
+    domains: ['nzherald.co.nz', 'stuff.co.nz', 'rnz.co.nz'],
+  },
+  usa: {
+    names: ['associated press', 'ap news', 'the new york times', 'new york times', 'the washington post', 'wall street journal', 'reuters'],
+    domains: ['apnews.com', 'nytimes.com', 'washingtonpost.com', 'wsj.com', 'reuters.com'],
+  },
 };
+
+const RECORD_COUNTRY_BY_NAME: Record<string, string> = {
+  italy: 'italy', ireland: 'ireland', uk: 'uk', 'united kingdom': 'uk', austria: 'austria', germany: 'germany',
+  spain: 'spain', france: 'france', portugal: 'portugal', canada: 'canada', australia: 'australia',
+  'new zealand': 'new-zealand', usa: 'usa', 'united states': 'usa',
+};
+
+/** The NEWSPAPERS_OF_RECORD key for a neighborhoods.country value, or '' when there is no list. */
+export function recordCountryFor(country: string | null | undefined): string {
+  return RECORD_COUNTRY_BY_NAME[(country || '').trim().toLowerCase()] || '';
+}
 
 export interface EditionRules extends EditionRuleGroup {
   groupId: string;

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { extractArticleSources, pagesFromStored } from '@/lib/source-links';
+import { scheduleSourceArchive } from '@/lib/source-archive-schedule';
 import { createClient } from '@supabase/supabase-js';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
@@ -444,6 +445,8 @@ export async function GET(request: Request) {
                         .from('article_sources')
                         .insert(sourcesToInsert)
                         .then(null, (e: unknown) => console.error(`[enrich-briefs] Sources insert failed for ${hood.name}:`, e));
+                      // Archive each source page after the response (never blocks publishing).
+                      scheduleSourceArchive(supabase, insertedArticle.id);
                     }
                   }
                 }

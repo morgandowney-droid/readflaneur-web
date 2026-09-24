@@ -6,6 +6,7 @@ import { getDistance } from '@/lib/geo-utils';
 import { generateCommunityId, generateBriefArticleSlug, generatePreviewText } from '@/lib/community-pipeline';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { extractArticleSources } from '@/lib/source-links';
+import { scheduleSourceArchive } from '@/lib/source-archive-schedule';
 import { performInstantResend } from '@/lib/email/instant-resend';
 import { sendEmail } from '@/lib/email';
 import { selectLibraryImageAsync } from '@/lib/image-library';
@@ -638,6 +639,7 @@ export async function POST(request: NextRequest) {
                 await admin.from('article_sources').insert(sources).then(null, (e: Error) =>
                   console.error(`Failed to insert sources for community article:`, e)
                 );
+                scheduleSourceArchive(admin, insertedArticle.id);
               }
             } catch (e) {
               console.error('Source extraction error (non-fatal):', e);

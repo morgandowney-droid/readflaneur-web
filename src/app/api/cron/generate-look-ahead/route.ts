@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateLookAhead } from '@/lib/grok';
 import { extractArticleSources, pagesFromStored } from '@/lib/source-links';
+import { scheduleSourceArchive } from '@/lib/source-archive-schedule';
 import { enrichBriefWithGemini } from '@/lib/brief-enricher-gemini';
 import { getComboInfo } from '@/lib/combo-utils';
 import { searchCatchmentFor, isDistrictScoped } from '@/lib/search-catchment';
@@ -687,6 +688,8 @@ export async function GET(request: Request) {
                 .then(null, (err: Error) => {
                   console.error(`Failed to insert sources for ${name}:`, err.message);
                 });
+              // Archive each source page after the response (never blocks publishing).
+              scheduleSourceArchive(supabase, inserted.id);
             }
 
             // Image is set via selectLibraryImage() at insert time

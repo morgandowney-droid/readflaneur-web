@@ -229,6 +229,14 @@
       "schedule": "30 8 * * *"
     },
     {
+      "path": "/api/cron/shadow-source-standard",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/archive-article-sources",
+      "schedule": "10,40 * * * *"
+    },
+    {
       "path": "/api/cron/shadow-model-trial?stage=writer",
       "schedule": "30 9,13 * * *"
     },
