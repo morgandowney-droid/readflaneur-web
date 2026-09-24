@@ -22,4 +22,10 @@ export const AI_MODELS = {
   IMAGEN: 'imagen-4.0-generate-001',
   IMAGEN_FAST: 'imagen-4.0-fast-generate-001',
   GROK_FAST: 'grok-4-1-fast',
+  // Shadow model trial candidates only (src/lib/model-trial.ts). Nothing that
+  // publishes uses these. Verified callable with our keys on 2026-09-24:
+  // gemini-3.8-flash is the newest GA Gemini (no 3.x Pro is GA; 3.1 Pro is
+  // preview), grok-4.5 is xAI's "minimal hallucinations" model.
+  GEMINI_WRITER_TRIAL: 'gemini-3.8-flash',
+  GROK_SEARCH_TRIAL: 'grok-4.5',
 } as const;

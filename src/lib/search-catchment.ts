@@ -168,6 +168,11 @@ export function searchCatchmentFor(
   return places && places.length > 0 ? places.join(', ') : fallbackName;
 }
 
+/** The catchment's place names, or an empty list. */
+export function searchCatchmentPlaces(neighborhoodId: string | null | undefined): readonly string[] {
+  return SEARCH_CATCHMENTS[(neighborhoodId || '').toLowerCase()] || [];
+}
+
 export function hasSearchCatchment(neighborhoodId: string | null | undefined): boolean {
   return Boolean(SEARCH_CATCHMENTS[(neighborhoodId || '').toLowerCase()]);
 }

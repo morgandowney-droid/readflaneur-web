@@ -3,6 +3,63 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-09-24 (later): shadow model trial, newer Gemini and Grok side by side with production
+
+**Question from the owner:** would newer models improve sources and writing and reduce hallucination, and would migrating risk worse content? This builds the measurement instead of answering from release notes. It publishes nothing.
+
+### Which models exist (verified with our keys, 24 Sep)
+- **Gemini** (`models.list`): GA `gemini-2.5-pro`, `2.5-flash`, `2.5-flash-lite`, `3.1-flash-lite`, `3.5-flash`, `3.5-flash-lite`, `3.6-flash`, `3.7-flash`, `3.8-flash`; preview `3-flash-preview`, `3.1-pro-preview`. **No 3.x Pro is GA.** Prices (pricing page): 3.6/3.7/3.8 Flash $0.75 in / $3.75 out per 1M until 31 Dec 2026, then $1.50 / $7.50; 3.5 Flash $1.50 / $9.00; 3.1 Pro preview $2 / $12; 2.5 Pro $1.25 / $10; 2.5 Flash $0.30 / $2.50. Thinking is billed as output. Gemini 3 grounding is per search query: 5,000 a month free, then $14 per 1,000.
+- **xAI** (`/v1/language-models`, docs): `grok-4.20` (reasoning, non-reasoning, multi-agent) and `grok-4.3` at $1.25 / $2.50; `grok-4.5` $2 / $6 (cached $0.30); `grok-4.6` and `grok-4.7` $2 / $6 (cached $0.50); `grok-build-0.1` $1 / $2. Tool calls $5 per 1,000 and X posts read $5 per 1,000. **`grok-4-1-fast`, which production uses, is no longer on the models list or the pricing page but still answers**: a call today billed $0.034 (our $0.03 surcharge is right). Treat it as a retirement risk.
+
+### Candidates
+- Writer: **`gemini-3.8-flash`**, the newest GA Gemini (no GA Pro-class model exists). It runs through the unchanged enricher, so as a Flash model it gets `thinkingBudget: 0`, as production would configure it; 3.8 Flash accepted that (0 thinking tokens).
+- Search: **`grok-4.5`**, on the same prompt and the same `x_search` tool.
+- IDs in `AI_MODELS.GEMINI_WRITER_TRIAL` / `GROK_SEARCH_TRIAL`; prices added to `MODEL_PRICING` in `ai-cost.ts`.
+
+### How it runs (`src/lib/model-trial.ts`, cron `shadow-model-trial`)
+- **Writer** (09:30 and 13:30 UTC, all 12 editions): the latest enriched brief's stored `content` and `sources` go through `enrichBriefWithGemini()` with the candidate as `modelOverride` and every option production passes: continuity context (`fetchContinuityContext`, moved unchanged from the enrich-briefs route to `src/lib/enrichment-continuity.ts`, with an optional `before` so a replay sees only coverage older than the original enrichment), gathered pages, source repair for priority editions, and the GEDI edition rules (the rules review stays on 2.5 Flash). Baseline: what production stored for the same brief.
+- **Search** (09:45 UTC): `generateNeighborhoodBrief()` gained an optional trial argument (`model`, `stream`). The candidate and a **same-time control run of `grok-4-1-fast`** go in parallel; the control is the baseline, because X at 03:00 local is not X at 11:00. What production stored is kept in the output for reference. Both are streamed: a non-streamed `grok-4.5` call that searched past 60 seconds had its connection closed at 60s (Brera and Cork both failed that way on the first attempt). At about $0.45 to $0.65 a pair, **four editions a day in rotation** (each edition every three days).
+- Editions: `milan-brera`, `milan-porta-venezia`, `rome-prati`, `sicily-scicli`, `vorarlberg-bregenz`, `vorarlberg-dornbirn-nordwest`, `newfoundland-gander`, `newjersey-warren`, `birmingham-harborne`, `aragon-zaragoza`, `paris-le-marais`, `ie-county-cork`.
+- **Usage tap** (`src/lib/ai-usage-tap.ts`): code run inside `withUsageTap()` records its AI calls as always, but `recordAiUsage()` files them under `trial_writer` / `trial_search` (original operation in metadata) and hands them to the trial to total. AsyncLocalStorage keeps the tap on the trial's own async chain; production calls in the same process are untouched. `recordGrokCall` passes xAI's `cost_in_usd_ticks` to the tap only; the `ai_usage_events` estimate is unchanged.
+- **Daily cap $3** (both stages, UTC day): a unit starts only if spent plus the reserves in flight plus its own reserve stays under it. Idempotent per (brief date, edition, stage, model).
+- Storage: `model_trial_runs` (migration `20260924120000_model_trial.sql`, **not run**), unique on (run_date, neighborhood_id, stage, model), service role only.
+
+### Metrics (`src/lib/model-trial-metrics.ts`, identical for both sides)
+- Writer: stories, words, share of stories with a traced source, source-check verdict mix per story (pages fetched and checked by `source-check.ts`, up to 12 per side), model-written URLs attempted (new `diagnostics` on the enricher output, counted from the parsed JSON before any is dropped) and dropped, edition-rules removals by rule (production's read from its article's `editor_notes`), refusal, thinking and teaser leaks stripped (candidate only; production never recorded them) and residual leaks on the final text (both), JSON parse failure, grounding queries, thinking tokens, latency, cost.
+- Search: citations, X posts, posts read (xAI usage), distinct domains, share that load (X posts through the public syndication endpoint, pages by fetch; up to 15 per side), share that name the edition's place (accent-insensitive, whole word, catchment names included), words, whether the result opens by saying nothing was found, failed, latency, cost (xAI's billed figure).
+- `cron_executions` (job `shadow-model-trial`) carries candidate and baseline means per metric; `node scripts/model-trial-report.mjs [--days N] [--stage writer|search] [--editions]` prints the table from `model_trial_runs` with the same `compareRuns()`.
+
+### Local run (read-only; no database writes, usage rows suppressed)
+Writer, 24 Sep briefs:
+
+| | gemini-3.8-flash | production (gemini-2.5-pro) |
+|---|---|---|
+| Gander | 3 stories, 282 words, 3/3 traced, 1 verified + 2 partial, 0 URLs written, 6.4s, $0.006 | 3 stories, 165 words, 1/3 traced, 1 partial + 2 model-written URLs, $0.022 |
+| Brera (GEDI rules) | 2 stories, 186 words, 2/2 verified, rules removed 2, 8.5s, $0.007 with the review | 2 stories, 123 words, 2/2 verified, rules removed 3, $0.023 |
+
+The Gander baseline was enriched at 02:30 UTC, before the name-only source prompt shipped, so its two model URLs are the old behaviour and not a model difference.
+
+Search, streamed, same-time pairs:
+
+| | grok-4.5 | grok-4-1-fast control |
+|---|---|---|
+| Brera | 2 citations (both name Brera), 22 x_search calls, 62 posts read, 200s, $0.41 | 11 citations, 4 name the place, 12s, $0.07; opened "Quiet Day on Corso Garibaldi" |
+| Cork | 2 citations (both name Cork), 22 calls, 99 posts, 78s, $0.59 | 12 citations, 12 name Cork, 15s, $0.07 |
+| Gander (not streamed) | 2 citations, 14 calls, 75 posts, 49s, $0.46 | 5 citations, 2 calls, 5 posts, 15s, $0.03 |
+
+grok-4.5 cites only through inline markers, so it cites far fewer posts than it reads. On Brera it found three real items where the control reported a quiet day. Two samples prove nothing either way; the trial exists to collect the rest.
+
+### Projected cost
+Writer about $0.007 per edition, 12 a day plus any US brief picked up at 13:30: about $0.10 a day. Search four pairs at $0.45 to $0.65: about $1.80 to $2.60 a day. Total about $2 to $2.70 a day, $60 to $80 a month, capped at $3 a day. Gemini 3 grounding (two queries per writer call) stays inside the 5,000 a month free allowance at this volume.
+
+### Not made true, and limits
+- Production kept no enrichment latency and no record of which leaks it stripped, so those are null on the baseline; residual leaks are compared on both.
+- The writer replay's own Google grounding runs at replay time, so it can read pages newer than production could.
+- Baseline writer cost is our estimate from `ai_usage_events` in a window around `enriched_at`; search cost is xAI's billed figure on both sides of the pair. Gemini 3 grounding fees are not in the candidate's cost.
+- A unit still running at 270s is abandoned; its spend reaches `ai_usage_events` but not `model_trial_runs`, so the cap undercounts it that day.
+- The cron's paths carry `?stage=`; if the scheduler drops a query string the route infers the stage from the time slot.
+- Tests: `node scripts/test-model-trial-metrics.mjs` (19). `test-source-settling` 22, `test-source-check` 32 and `test-edition-rules` 28 still pass.
+
 ## 2026-09-24: the writing model no longer supplies a URL; untraced links are dropped and a bounded, checked repair search finds the page
 
 **Context: measured on 24 Sep, the first briefs with the 23 Sep sourcing, across 52 pilot editions.** Sources from the search tools' own citations: 27 (15 verified on the page, 1 dead). Sources matched in code to pages the search read: 64 (30 verified). Sources whose URL the enrichment model wrote and that appear in no tool metadata: 109, of which 60 returned 404 or 410; a retest of 30 with a browser User-Agent loaded 0 of the pages while 26 of their sites' homepages loaded. Cause: the enrichment JSON example asked for `"source": {"name": "...", "url": "https://..."}` on every story, so the model supplied a URL whether or not it had one. On the Cork brief of 24 Sep all five Irish Examiner and Echo URLs were invented article ids; the real articles have different ids. **Owner's rule: never make a model supply or find a source.**

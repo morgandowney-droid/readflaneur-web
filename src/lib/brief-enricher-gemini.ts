@@ -79,6 +79,11 @@ export interface EnrichedBriefOutput {
     storiesMatched: number;
     repair: RepairStats | null;
   };
+  /**
+   * What the enricher saw and corrected on the way, for the shadow model
+   * trial (model-trial.ts). Production ignores it; nothing here is stored.
+   */
+  diagnostics?: EnrichmentDiagnostics;
   editionRules?: {
     groupId: string;
     label: string;
@@ -88,6 +93,25 @@ export interface EnrichedBriefOutput {
     droppedStories: number;
     secondSourcesAttached: number;
   };
+}
+
+export interface EnrichmentDiagnostics {
+  /** Gemini usageMetadata of the writing call (thoughtsTokenCount included). */
+  usage: Record<string, number> | null;
+  /** stripThinkingPreamble changed the text: planning prose leaked into the output. */
+  thinkingPreambleStripped: boolean;
+  /** stripLeakedTeasers changed the text: a teaser leaked into the prose. */
+  teaserLeakStripped: boolean;
+  /** A ```json block was present. */
+  jsonFound: boolean;
+  /** The ```json block was present but did not parse. */
+  jsonParseFailed: boolean;
+  /** Story source URLs the model wrote into its JSON, before any were dropped. */
+  modelUrlsWritten: number;
+  /** Google Search queries the grounding tool issued (billed per query on Gemini 3). */
+  groundingQueries: number;
+  /** Pages the grounding tool read. */
+  groundingChunks: number;
 }
 
 export interface ContinuityItem {
@@ -231,7 +255,7 @@ function extractFallbackLinkCandidates(text: string): LinkCandidate[] {
  * paragraph matching one of them, and only before the first [[header]], is
  * removed. Runs BEFORE hyperlink injection, while the prose is still plain.
  */
-function stripLeakedTeasers(
+export function stripLeakedTeasers(
   text: string,
   subjectTeaser: string | null,
   emailTeaser: string | null,
@@ -292,7 +316,7 @@ function stripLeakedTeasers(
  * touched. Returns the input unchanged if no leak is detected or no boundary
  * can be located.
  */
-function stripThinkingPreamble(
+export function stripThinkingPreamble(
   text: string,
   articleType: 'daily_brief' | 'weekly_recap' | 'look_ahead'
 ): string {
@@ -796,11 +820,22 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     });
 
     const rawText = response.text || '';
+    const diagnostics: EnrichmentDiagnostics = {
+      usage: (response.usageMetadata as unknown as Record<string, number>) || null,
+      thinkingPreambleStripped: false,
+      teaserLeakStripped: false,
+      jsonFound: false,
+      jsonParseFailed: false,
+      modelUrlsWritten: 0,
+      groundingQueries: (response.candidates?.[0]?.groundingMetadata?.webSearchQueries || []).length,
+      groundingChunks: 0,
+    };
 
     // The pages Google Search grounding actually read, with their redirect
     // URLs resolved to real ones. Used below to attach URLs to name-only
     // sources and to replace redirect URLs before anything is stored.
     const groundingChunks = await resolveGroundingChunks(extractGroundingChunks(response, 'enrichment'));
+    diagnostics.groundingChunks = groundingChunks.length;
     // URLs written into the gathered facts (e.g. a Grok [[1]](url) marker that
     // survived cleaning) count as read pages too, with their line as passage.
     const gatheredPages = [
@@ -841,6 +876,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     const beforeStrip = text;
     text = stripThinkingPreamble(text, articleType);
     if (text !== beforeStrip) {
+      diagnostics.thinkingPreambleStripped = true;
       console.warn(`Stripped leaked reasoning preamble for ${neighborhoodName} (${beforeStrip.length} -> ${text.length} chars)`);
     }
 
@@ -868,6 +904,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
 
     const jsonMatch = rawText.match(/```json\s*([\s\S]*?)```/);
     if (jsonMatch) {
+      diagnostics.jsonFound = true;
       try {
         const parsed = JSON.parse(jsonMatch[1].trim());
         if (parsed.categories) {
@@ -923,6 +960,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
           console.log(`Parsed ${structuredEvents.length} structured events from enrichment`);
         }
       } catch (e) {
+        diagnostics.jsonParseFailed = true;
         console.error('Failed to parse Gemini JSON:', e);
       }
     }
@@ -968,6 +1006,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
         subjectTeaser,
         emailTeaser,
         structuredEvents,
+        diagnostics,
       };
     }
 
@@ -980,6 +1019,12 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     // The JSON is the model's; nothing in it about provenance is trusted. Keep
     // only a source's name and url (the url is checked against the tools'
     // pages next), and drop any origin or dropped-URL field it wrote itself.
+    for (const story of allStories) {
+      for (const key of ['source', 'secondarySource'] as const) {
+        const u = (story[key] as { url?: unknown } | null | undefined)?.url;
+        if (typeof u === 'string' && /^https?:\/\//i.test(u.trim())) diagnostics.modelUrlsWritten++;
+      }
+    }
     for (const story of allStories) {
       delete story.droppedModelUrl;
       for (const key of ['source', 'secondarySource'] as const) {
@@ -1053,6 +1098,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     const beforeTeaserStrip = text;
     text = stripLeakedTeasers(text, subjectTeaser, emailTeaser);
     if (text !== beforeTeaserStrip) {
+      diagnostics.teaserLeakStripped = true;
       console.warn(`Stripped leaked teaser prose for ${neighborhoodName}`);
     }
 
@@ -1142,6 +1188,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
       structuredEvents,
       sourceSettling,
       editionRules: editionRulesReport,
+      diagnostics,
     };
 
   } catch (error) {

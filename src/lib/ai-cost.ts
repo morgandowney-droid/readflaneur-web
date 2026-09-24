@@ -14,6 +14,7 @@
  *   the xAI console's Grok total by COUNT(*) of grok rows in ai_usage_events.
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { currentUsageTap } from '@/lib/ai-usage-tap';
 
 export type AiProvider = 'gemini' | 'grok' | 'claude' | 'openai' | 'qwen';
 export type AiKind = 'search' | 'generation';
@@ -31,6 +32,17 @@ const MODEL_PRICING: Record<string, ModelPrice> = {
   'gemini-2.5-flash': { inputPerM: 0.3, outputPerM: 2.5, cachedInputPerM: 0.075 },
   'gemini-2.0-flash': { inputPerM: 0.1, outputPerM: 0.4, cachedInputPerM: 0.025 },
   'grok-4-1-fast': { inputPerM: 0.2, outputPerM: 0.5, cachedInputPerM: 0.05 },
+  // Shadow model trial candidates (model-trial.ts). Prices from the providers'
+  // pricing pages, 2026-09-24. Gemini 3.6-3.8 Flash are at a launch price
+  // until 2026-12-31 ($1.50 / $7.50 after). Thinking is billed as output.
+  'gemini-3.8-flash': { inputPerM: 0.75, outputPerM: 3.75, cachedInputPerM: 0.19 },
+  'gemini-3.7-flash': { inputPerM: 0.75, outputPerM: 3.75, cachedInputPerM: 0.19 },
+  'gemini-3.6-flash': { inputPerM: 0.75, outputPerM: 3.75, cachedInputPerM: 0.19 },
+  'gemini-3.5-flash': { inputPerM: 1.5, outputPerM: 9.0, cachedInputPerM: 0.375 },
+  'gemini-3.1-pro': { inputPerM: 2.0, outputPerM: 12.0, cachedInputPerM: 0.5 },
+  'grok-4.5': { inputPerM: 2.0, outputPerM: 6.0, cachedInputPerM: 0.3 },
+  'grok-4.6': { inputPerM: 2.0, outputPerM: 6.0, cachedInputPerM: 0.5 },
+  'grok-4.7': { inputPerM: 2.0, outputPerM: 6.0, cachedInputPerM: 0.5 },
   'claude-sonnet-4-5': { inputPerM: 3.0, outputPerM: 15.0, cachedInputPerM: 0.3 },
   // Qwen via OpenRouter (translation). Approximate - matches any 'qwen/...' model.
   qwen: { inputPerM: 0.4, outputPerM: 0.4, cachedInputPerM: 0.4 },
@@ -77,6 +89,8 @@ export interface AiUsageEvent {
   cachedTokens?: number;
   sourceCount?: number | null;
   metadata?: Record<string, unknown> | null;
+  /** The provider's own billed cost when the response reports it. Passed to a usage tap only. */
+  providerCostUsd?: number | null;
 }
 
 let cachedClient: SupabaseClient | null = null;
@@ -95,9 +109,6 @@ function getClient(): SupabaseClient | null {
  */
 export function recordAiUsage(event: AiUsageEvent): void {
   try {
-    const client = getClient();
-    if (!client) return;
-
     const inputTokens = event.inputTokens || 0;
     const outputTokens = event.outputTokens || 0;
     const cachedTokens = event.cachedTokens || 0;
@@ -109,12 +120,37 @@ export function recordAiUsage(event: AiUsageEvent): void {
       cachedTokens,
     });
 
+    // A shadow trial (ai-usage-tap.ts) files its calls under its own operation
+    // and totals them itself. Production calls never run inside a tap.
+    const tap = currentUsageTap();
+    let operation = event.operation;
+    let metadata = event.metadata ?? null;
+    if (tap) {
+      tap.calls.push({
+        provider: event.provider,
+        model: event.model,
+        operation: event.operation,
+        inputTokens,
+        outputTokens,
+        cachedTokens,
+        estimatedCostUsd: cost,
+        providerCostUsd: event.providerCostUsd ?? null,
+        metadata: event.metadata ?? null,
+      });
+      if (tap.suppressWrite) return;
+      operation = tap.operation;
+      metadata = { ...(metadata || {}), original_operation: event.operation };
+    }
+
+    const client = getClient();
+    if (!client) return;
+
     void client
       .from('ai_usage_events')
       .insert({
         provider: event.provider,
         model: event.model,
-        operation: event.operation,
+        operation,
         kind: event.kind,
         label: event.label ?? null,
         input_tokens: inputTokens,
@@ -122,7 +158,7 @@ export function recordAiUsage(event: AiUsageEvent): void {
         cached_tokens: cachedTokens,
         source_count: event.sourceCount ?? null,
         estimated_cost_usd: Number(cost.toFixed(6)),
-        metadata: event.metadata ?? null,
+        metadata,
       })
       .then(null, (err: unknown) => {
         console.warn('[ai-cost] insert failed:', err instanceof Error ? err.message : err);
@@ -197,7 +233,13 @@ export function recordClaudeCall(
 }
 
 interface GrokResponseData {
-  usage?: { input_tokens?: number; output_tokens?: number; num_sources_used?: number };
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+    num_sources_used?: number;
+    /** xAI's billed cost for the call, in 1e-10 USD, when the API reports it. */
+    cost_in_usd_ticks?: number;
+  };
   citations?: unknown[];
 }
 
@@ -224,5 +266,6 @@ export function recordGrokCall(
     inputTokens: u?.input_tokens || 0,
     outputTokens: u?.output_tokens || 0,
     sourceCount,
+    providerCostUsd: typeof u?.cost_in_usd_ticks === 'number' ? u.cost_in_usd_ticks / 1e10 : null,
   });
 }

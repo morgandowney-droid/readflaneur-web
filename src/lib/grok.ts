@@ -79,6 +79,8 @@ interface NeighborhoodBrief {
   sourceCount: number;
   model: string;
   searchQuery: string;
+  /** The Responses API usage block, as returned (tokens, and xAI's billed cost when present). */
+  usage?: Record<string, unknown> | null;
 }
 
 interface GrokNewsStory {
@@ -87,6 +89,24 @@ interface GrokNewsStory {
   previewText: string;
   sources: XSearchResult[];
   category: string;
+}
+
+/**
+ * The final response object from a streamed Responses API call (the
+ * `response.completed` server-sent event), shaped exactly like a non-streamed
+ * response body.
+ */
+function completedFromStream(sse: string): Record<string, unknown> {
+  let completed: Record<string, unknown> | null = null;
+  for (const line of sse.split('\n')) {
+    if (!line.startsWith('data:')) continue;
+    try {
+      const e = JSON.parse(line.slice(5).trim()) as { type?: string; response?: Record<string, unknown> };
+      if ((e.type === 'response.completed' || e.type === 'response.incomplete') && e.response) completed = e.response;
+    } catch { /* keep-alive or partial line */ }
+  }
+  if (!completed) throw new Error('Grok stream ended without a completed response');
+  return completed;
 }
 
 /**
@@ -106,7 +126,13 @@ export async function generateNeighborhoodBrief(
   recentTopics?: string[],
   /** neighborhoods.id, for publisher edition rules (edition-rules.ts). */
   editionId?: string,
+  /**
+   * Shadow model trial only (model-trial.ts): run the same prompt on another
+   * model. Production never passes this.
+   */
+  trial?: { model?: string; stream?: boolean },
 ): Promise<NeighborhoodBrief | null> {
+  const model = trial?.model || GROK_MODEL;
   const apiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
 
   if (!apiKey) {
@@ -140,7 +166,7 @@ export async function generateNeighborhoodBrief(
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: GROK_MODEL,
+        model,
         input: [
           {
             role: 'system',
@@ -193,6 +219,9 @@ DO NOT lead with or dedicate a paragraph to these topics UNLESS you find genuine
           { type: 'x_search' }
         ],
         temperature: 0.7,
+        // Trial only: a reasoning model searching for over a minute has its
+        // non-streamed connection closed at 60s; streaming keeps it open.
+        ...(trial?.stream ? { stream: true } : {}),
       }),
     });
 
@@ -202,8 +231,8 @@ DO NOT lead with or dedicate a paragraph to these topics UNLESS you find genuine
       throw new Error(`Grok API ${response.status}: ${error.slice(0, 200)}`);
     }
 
-    const data = await response.json();
-    recordGrokCall(data, { operation: 'neighborhood_brief', label: `${neighborhoodName}, ${city}` });
+    const data = trial?.stream ? completedFromStream(await response.text()) : await response.json();
+    recordGrokCall(data, { operation: 'neighborhood_brief', label: `${neighborhoodName}, ${city}`, model });
 
     // Debug: Log the response structure
     console.log('Grok response structure:', JSON.stringify(data, null, 2).slice(0, 500));
@@ -272,8 +301,9 @@ DO NOT lead with or dedicate a paragraph to these topics UNLESS you find genuine
       content,
       sources,
       sourceCount: sources.length,
-      model: GROK_MODEL,
+      model,
       searchQuery,
+      usage: data?.usage ?? null,
     };
   } catch (error) {
     console.error('Grok API error:', error);

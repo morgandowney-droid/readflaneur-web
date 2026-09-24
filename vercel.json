@@ -227,6 +227,14 @@
     {
       "path": "/api/cron/shadow-source-checks",
       "schedule": "30 8 * * *"
+    },
+    {
+      "path": "/api/cron/shadow-model-trial?stage=writer",
+      "schedule": "30 9,13 * * *"
+    },
+    {
+      "path": "/api/cron/shadow-model-trial?stage=search",
+      "schedule": "45 9 * * *"
     }
   ]
 }
