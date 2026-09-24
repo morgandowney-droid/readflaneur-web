@@ -49,6 +49,9 @@ const SEARCH_CATCHMENTS: Readonly<Record<string, readonly string[]>> = {
   // are inside the same Buenos Aires-Venezia NIL and carry most of its street
   // life. Stops short of Stazione Centrale and the Quadrilatero.
   'milan-porta-venezia': ['Porta Venezia', 'Lazzaretto', 'Corso Buenos Aires'],
+  // Warren Township, New Jersey (AP, 2026-09-24). Always with the county: the
+  // bare name belongs to Warren, Michigan and Warren, Ohio in any search.
+  'newjersey-warren': ['Warren Township (Somerset County, New Jersey)'],
   // Charters Towers Region, Queensland. Townships per the regional council's
   // own listing. They are very small (Mingela 14 people, Ravenswood 297), so
   // this widens council and district coverage rather than adding much event
@@ -186,6 +189,8 @@ export const DISTRICT_SCOPED_EDITION_IDS: ReadonlySet<string> = new Set([
   'milan-porta-venezia',
   'milan-navigli',
   'rome-prati',
+  // Not a district, but the same fence keeps Warren, Michigan events out.
+  'newjersey-warren',
 ]);
 
 export function isDistrictScoped(neighborhoodId: string | null | undefined): boolean {
@@ -194,5 +199,5 @@ export function isDistrictScoped(neighborhoodId: string | null | undefined): boo
 
 /** The prompt rule that replaces the city-wide venue instruction. */
 export function districtScopeBlock(placeNames: string, city: string): string {
-  return `LOCAL SCOPE (CRITICAL): This edition covers only ${placeNames}, a district of ${city}. Include an event ONLY if its venue is inside ${placeNames} or within about a ten-minute walk of it. Do NOT include ${city}'s major opera houses, national theatres, concert halls, stadiums, trade fairs or city-wide festivals unless the venue itself is inside the district. Exclude shows and tastings sold to visitors (opera concerts in churches, rooftop opera shows, wine tastings for tourists). Prefer the district's own life: its markets, local council and district council meetings and public consultations, school and parish events, shop and restaurant openings, small venues, street works and closures. Fewer, genuinely local events are better than a long list of city events.`;
+  return `LOCAL SCOPE (CRITICAL): This edition covers only ${placeNames}, in ${city}. Include an event ONLY if its venue is inside ${placeNames} or within about a ten-minute walk of it. Do NOT include ${city}'s major opera houses, national theatres, concert halls, stadiums, trade fairs or city-wide festivals unless the venue itself is inside the district. Exclude shows and tastings sold to visitors (opera concerts in churches, rooftop opera shows, wine tastings for tourists). Prefer the district's own life: its markets, local council and district council meetings and public consultations, school and parish events, shop and restaurant openings, small venues, street works and closures. Fewer, genuinely local events are better than a long list of city events.`;
 }

@@ -158,6 +158,11 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   // The third, named by Veronica Diquattro (CEO GEDI Digital from 1 Oct) via
   // Mirja the same day.
   'milan-porta-venezia',
+  // AP (named by Paul Shanley, Senior Director of Strategy, 2026-09-24) ahead
+  // of the 30 Sep call: Warren Township, Somerset County, about 16,000 people.
+  // Warren, Michigan (140,000) and Warren, Ohio outrank it in any search, so
+  // the catchment carries the county and the Look Ahead is geofenced.
+  'newjersey-warren',
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */

@@ -203,6 +203,14 @@ export const REGION_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
   'vorarlberg-arlberg-klostertal',
 ]);
 
+/**
+ * US townships. An American local reader says "the township", and "neighborhood"
+ * would read as a part of a city. AP named Warren, New Jersey on 2026-09-24.
+ */
+export const TOWNSHIP_EDITION_IDS: ReadonlySet<string> = new Set([
+  'newjersey-warren',
+]);
+
 export interface PlaceDescriptor {
   id?: string | null;
   name: string;
@@ -226,6 +234,7 @@ export function getPlaceNoun(place: PlaceDescriptor): string {
   if (CITY_LEVEL_EDITION_IDS.has(id)) return 'city';
   if (BOROUGH_LEVEL_EDITION_IDS.has(id)) return 'borough';
   if (REGION_LEVEL_EDITION_IDS.has(id)) return 'region';
+  if (TOWNSHIP_EDITION_IDS.has(id)) return 'township';
   if (british && COUNTY_LEVEL_AREAS.has(city)) return 'town';
   // "Area" is what British and Irish local press actually calls a district of a
   // city. "Neighbourhood" is correct English and still reads as an import there,
