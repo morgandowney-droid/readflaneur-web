@@ -16,26 +16,39 @@ import {
 import { recordGeminiCall } from '@/lib/ai-cost';
 import type { StructuredEvent } from '@/lib/look-ahead-events';
 import { extractGroundingChunks, resolveGroundingChunks, cleanStorySources, pagesFromText, markSourceOrigins, type GroundingChunk } from '@/lib/source-links';
+import { repairStorySources, type RepairStats } from '@/lib/source-repair';
+import { geminiRepairSearch } from '@/lib/source-repair-search';
 import { editionRulesBlock, rulesForEdition, type Removal } from '@/lib/edition-rules';
 import { enforceEditionRules } from '@/lib/edition-rules-review';
 import { anglicise, britishStyleBlock, enforcePlaceNoun, getPlaceNoun, isEnglishSpeaking, usesBritishEnglish, spellingVariantFor } from '@/lib/locale-register';
 
 export interface EnrichedStoryItem {
   entity: string;
-  /** url is null when the source was named but no checkable page could be attached */
+  /**
+   * url is null when the source was named but no checkable page could be
+   * attached. The model is asked for a publication NAME only; every URL here
+   * was attached in code from pages a search tool returned.
+   */
   source: {
     name: string;
     url: string | null;
     /** How the URL was established; see SourceOrigin in source-links.ts. Absent on briefs enriched before 2026-09-23. */
-    origin?: 'tool' | 'story-match' | 'name-match' | 'model';
+    origin?: 'tool' | 'story-match' | 'name-match' | 'repair' | 'model';
   } | null;
   context: string;
   note?: string;
   secondarySource?: {
     name: string;
     url: string | null;
+    origin?: 'tool' | 'story-match' | 'name-match' | 'repair' | 'model';
   };
   googleFallbackUrl: string;
+  /**
+   * A URL the enrichment model wrote that no search tool returned, removed
+   * before storage. Kept for the shadow source report only; never published
+   * (publishableCategories strips it at the syndication boundary).
+   */
+  droppedModelUrl?: string;
 }
 
 export interface EnrichedCategory {
@@ -59,6 +72,13 @@ export interface EnrichedBriefOutput {
    *  upstream Grok/Gemini-search extraction. */
   structuredEvents?: StructuredEvent[];
   /** Present only for editions with publisher rules (edition-rules.ts): what the filter removed and why. */
+  /** How the story sources were settled: model URLs dropped, pages attached, repair search. */
+  sourceSettling?: {
+    modelUrlsDropped: number;
+    urlsAttachedByName: number;
+    storiesMatched: number;
+    repair: RepairStats | null;
+  };
   editionRules?: {
     groupId: string;
     label: string;
@@ -374,6 +394,12 @@ export async function enrichBriefWithGemini(
      * deterministically; see cleanStorySources in source-links.ts.
      */
     gatheredPages?: GroundingChunk[];
+    /**
+     * Run the bounded repair search (source-repair.ts) for stories that name a
+     * publication but have no traced page. Callers pass true only for
+     * priority editions (isPriorityNeighborhood); daily briefs only.
+     */
+    sourceRepair?: boolean;
   }
 ): Promise<EnrichedBriefOutput> {
   const apiKey = options?.apiKey || process.env.GEMINI_API_KEY;
@@ -696,8 +722,8 @@ After your prose, include this JSON with ONLY the verified stories:
       "stories": [
         {
           "entity": "Entity Name (key detail)",
-          "source": {"name": "Source Name", "url": "https://..."},${editionRules?.requireTwoSourcesForNamedFacts ? `
-          "secondarySource": {"name": "A second, independent source", "url": "https://..."},` : ''}
+          "source": {"name": "Publication Name"},${editionRules?.requireTwoSourcesForNamedFacts ? `
+          "secondarySource": {"name": "A second, independent publication"},` : ''}
           "context": "Your insider context here..."
         }
       ]
@@ -710,6 +736,7 @@ After your prose, include this JSON with ONLY the verified stories:
   "email_teaser": "Shin Takumi finally opens on Spring St. DEJAVU pop-up extended again. Golden Steer reservations live."${eventsJsonExample}
 }
 \`\`\`
+SOURCE: "source" is the name of the publication or site the fact came from, only if that publication is named in the material above or in a page you read; otherwise set "source" to null. Never write a URL anywhere in the JSON.
 ${eventsRules}
 
 LINK CANDIDATES RULES (MANDATORY - you MUST include these):
@@ -950,7 +977,25 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     // this pipeline read whose grounded passage names the story. No model is
     // asked for a source at any point.
     const allStories = enrichedData.categories.flatMap(c => c.stories || []);
+    // The JSON is the model's; nothing in it about provenance is trusted. Keep
+    // only a source's name and url (the url is checked against the tools'
+    // pages next), and drop any origin or dropped-URL field it wrote itself.
+    for (const story of allStories) {
+      delete story.droppedModelUrl;
+      for (const key of ['source', 'secondarySource'] as const) {
+        const ref = story[key] as unknown;
+        if (!ref || typeof ref !== 'object') { if (key === 'source') story.source = null; else delete story.secondarySource; continue; }
+        const r = ref as { name?: unknown; url?: unknown };
+        const clean = { name: typeof r.name === 'string' ? r.name : '', url: typeof r.url === 'string' ? r.url : null };
+        if (key === 'source') story.source = clean; else story.secondarySource = clean;
+      }
+    }
+    // Every URL a search tool in this pipeline returned, or that sat in the
+    // gathered facts. A story URL outside this set was written by the model
+    // and is dropped (60 of 109 measured on 2026-09-24 were 404 or 410).
+    const tracedPages = [...groundingChunks, ...gatheredPages];
     const sourceStats = await cleanStorySources(allStories, groundingChunks, {
+      traced: tracedPages,
       gathered: gatheredPages,
       placeNames: [neighborhoodName, city],
       exclude: (p) => blockedDomains.some(d => p.uri.toLowerCase().includes(d)),
@@ -958,10 +1003,35 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     // Record, per story, whether its URL came from tool metadata or only from
     // the model's own JSON. The shadow source check reports the latter as
     // unverifiable_origin.
-    markSourceOrigins(allStories, [...groundingChunks, ...gatheredPages]);
-    if (sourceStats.placeholdersDropped || sourceStats.redirectsResolved || sourceStats.redirectsDropped || sourceStats.urlsAttached || sourceStats.storiesMatched) {
+    markSourceOrigins(allStories, tracedPages);
+    if (sourceStats.placeholdersDropped || sourceStats.redirectsResolved || sourceStats.redirectsDropped || sourceStats.urlsAttached || sourceStats.storiesMatched || sourceStats.modelUrlsDropped) {
       console.log(`Source cleanup for ${neighborhoodName}: ${JSON.stringify(sourceStats)} (${groundingChunks.length} grounding chunks, ${gatheredPages.length} gathered pages)`);
     }
+
+    // Stories that still name a real publication with no page behind it: one
+    // bounded search for all of them, each result checked on the page in code
+    // (source-repair.ts). Priority editions only, daily briefs only, and
+    // before the edition rules so they see the settled sources.
+    let repairStats: RepairStats | null = null;
+    if (options?.sourceRepair && articleType === 'daily_brief') {
+      repairStats = await repairStorySources(allStories, {
+        search: geminiRepairSearch({ place: `${neighborhoodName}, ${city}, ${country}`, label: neighborhoodName, apiKey }),
+        placeNames: [neighborhoodName, city],
+        exclude: (u) => blockedDomains.some(d => u.toLowerCase().includes(d)),
+        // Pages already read here that sit on a named publication's host are
+        // fetched and checked too, alongside the repair search's own pages.
+        knownPages: tracedPages,
+      });
+      if (repairStats.attempted > 0) {
+        console.log(`[source-repair] ${neighborhoodName}: ${repairStats.accepted}/${repairStats.attempted} attached (${repairStats.pagesReturned} pages returned, ${repairStats.candidatePages} on the named hosts, ${repairStats.ms}ms${repairStats.timedOut ? ', timed out' : ''})`);
+      }
+    }
+    const sourceSettling: EnrichedBriefOutput['sourceSettling'] = {
+      modelUrlsDropped: sourceStats.modelUrlsDropped,
+      urlsAttachedByName: sourceStats.urlsAttached,
+      storiesMatched: sourceStats.storiesMatched,
+      repair: repairStats,
+    };
 
     // Post-process: filter blocked domains and add fallback URLs
     for (const category of enrichedData.categories) {
@@ -1070,6 +1140,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
       subjectTeaser,
       emailTeaser,
       structuredEvents,
+      sourceSettling,
       editionRules: editionRulesReport,
     };
 
@@ -1101,8 +1172,10 @@ export function formatGeminiEnrichedBriefAsMarkdown(brief: EnrichedBriefOutput):
     for (const story of category.stories) {
       md += `* **${story.entity}**\n`;
 
-      if (story.source) {
+      if (story.source?.url) {
         md += `  * *Source:* **[${story.source.name}](${story.source.url})**\n`;
+      } else if (story.source) {
+        md += `  * *Source:* ${story.source.name}\n`;
       } else {
         md += `  * *Source:* [Search Google](${story.googleFallbackUrl})\n`;
       }

@@ -34,7 +34,7 @@ export interface GroundingChunk {
    */
   supports?: string[];
   /** Where the page came from: enrichment grounding, the fact search, a URL in the facts, a Grok citation. */
-  origin?: 'enrichment' | 'gemini_search' | 'facts_url' | 'grok';
+  origin?: 'enrichment' | 'gemini_search' | 'facts_url' | 'grok' | 'repair';
 }
 
 /**
@@ -45,16 +45,58 @@ export interface GroundingChunk {
  *    page whose domain or title matches that name.
  *  - story-match: the story had no source; the URL is a read page whose
  *    grounded passage names the story (matchStoryToPages).
+ *  - repair: the story named a publication but no page was traced; one bounded
+ *    search found a page on that publication's own host, and the deterministic
+ *    fact check (source-check.ts) found the story on it (source-repair.ts).
  *  - model: the URL appears only in the model's own JSON, in no tool metadata.
- *    Kept live as before; the shadow source check reports it as
- *    unverifiable_origin.
+ *    Only briefs enriched before 2026-09-24 carry it: since then an untraced
+ *    URL is dropped at enrichment (cleanStorySources with `traced`), and every
+ *    read boundary withholds a 'model' URL (publishableSourceUrl).
  */
-export type SourceOrigin = 'tool' | 'name-match' | 'story-match' | 'model';
+export type SourceOrigin = 'tool' | 'name-match' | 'story-match' | 'repair' | 'model';
 
 export interface SourceRef {
   name: string;
   url?: string | null;
   origin?: SourceOrigin;
+}
+
+/**
+ * The URL a reader may be shown for a source, or null. A URL with origin
+ * 'model' was written by the enrichment model and appears in no tool's
+ * metadata; 60 of 109 such URLs measured on 2026-09-24 were 404 or 410. It is
+ * never published, including on briefs enriched before the enricher learned to
+ * drop it.
+ */
+export function publishableSourceUrl(ref: { url?: string | null; origin?: string } | null | undefined): string | null {
+  if (!ref || ref.origin === 'model') return null;
+  return isHttpUrl(ref.url) ? ref.url.trim() : null;
+}
+
+/**
+ * A copy of enriched_categories fit to leave the building: 'model' URLs
+ * removed and the shadow-only droppedModelUrl field stripped. For the
+ * syndication and licensee boundaries, which pass categories through whole.
+ */
+export function publishableCategories(categories: unknown): unknown {
+  if (!Array.isArray(categories)) return categories;
+  return categories.map((c) => {
+    if (!c || typeof c !== 'object' || !Array.isArray((c as { stories?: unknown }).stories)) return c;
+    const cat = c as { stories: Array<Record<string, unknown>> };
+    return {
+      ...cat,
+      stories: cat.stories.map((s) => {
+        if (!s || typeof s !== 'object') return s;
+        const { droppedModelUrl: _dropped, ...rest } = s as Record<string, unknown> & { droppedModelUrl?: unknown };
+        void _dropped;
+        for (const key of ['source', 'secondarySource'] as const) {
+          const ref = rest[key] as SourceRef | null | undefined;
+          if (ref && ref.origin === 'model') rest[key] = { ...ref, url: null };
+        }
+        return rest;
+      }),
+    };
+  });
 }
 
 const PLACEHOLDER_SOURCE_PATTERNS: RegExp[] = [
@@ -275,6 +317,41 @@ export function matchSourceToChunk(name: string, chunks: GroundingChunk[]): Grou
   return best && best.score >= 2 ? best.chunk : null;
 }
 
+/** Hostname of a URL without "www.", lowercased; '' when unparseable. */
+export function hostOf(url: string): string {
+  try { return new URL(url).hostname.toLowerCase().replace(/^www\./, ''); } catch { return ''; }
+}
+
+function foldAccents(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+/**
+ * True when a page's host is plausibly the named publication's own site:
+ * the name's letters run inside the host's registrable part or vice versa
+ * ("Il Giorno" -> ilgiorno.it, "The Irish Times" -> irishtimes.com), or every
+ * significant word of the name is in the host ("CBC News" -> cbc.ca). Page
+ * titles are NOT consulted: a title can name any publication, the host is
+ * the one thing a page cannot claim falsely. Used by the repair search.
+ */
+export function hostMatchesPublication(name: string | null | undefined, url: string): boolean {
+  if (!name || isPlaceholderSourceName(name)) return false;
+  const host = hostOf(url);
+  if (!host) return false;
+  const labels = host.split('.');
+  // Drop the public suffix: the last label, and a second-level one like co.uk / com.au.
+  const suffixLen = labels.length >= 3 && /^(co|com|org|net|gov|ac|gv|or|ne)$/.test(labels[labels.length - 2]) ? 2 : 1;
+  const registrable = labels.slice(0, labels.length - suffixLen).filter(l => !/^(www|m|mobile|amp|www2)$/.test(l));
+  const hostCompact = registrable.join('');
+  const root = registrable[registrable.length - 1] || '';
+  const compact = foldAccents(name).toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (root.length >= 4 && compact.length >= 4 && (compact.includes(root) || root.includes(compact))) return true;
+  const words = significantWords(foldAccents(name));
+  if (words.length > 0 && words.every(w => hostCompact.includes(w))) return true;
+  // Initials: "Vorarlberger Nachrichten" -> vn.at, "New York Times" -> nyt.com.
+  return words.length >= 2 && root.length >= 2 && root === words.map(w => w[0]).join('');
+}
+
 // ─── Story-to-page matching ────────────────────────────────────────────────
 //
 // Why this exists (found 2026-09-23): a large share of stories reached
@@ -470,8 +547,10 @@ export interface AttachStats {
   redirectsResolved: number;
   redirectsDropped: number;
   urlsAttached: number;
-  /** Stories with no source that got one by story-to-page matching. */
+  /** Stories with no source URL that got one by story-to-page matching. */
   storiesMatched: number;
+  /** Model-written URLs removed because no tool returned them (only with `traced`). */
+  modelUrlsDropped: number;
 }
 
 export interface CleanStoryOptions {
@@ -485,27 +564,37 @@ export interface CleanStoryOptions {
   placeNames?: string[];
   /** Pages never to attach (blocked domains). */
   exclude?: (chunk: GroundingChunk) => boolean;
+  /**
+   * Every page a search tool in this pipeline returned, plus URLs written in
+   * the gathered facts. When given, a story source URL that is none of these
+   * was written by the enrichment model: it is removed (the name is kept for
+   * matching) and recorded on the story as droppedModelUrl for the shadow
+   * report. Measured 2026-09-24: 60 of 109 such URLs were 404 or 410.
+   */
+  traced?: GroundingChunk[];
 }
 
 /**
  * Clean the source refs on enrichment stories in place:
  * placeholder names -> null; redirect URLs -> resolved or dropped;
- * missing URLs -> attached from grounding chunks where the name match is clear;
- * no source at all -> a page the pipeline read whose grounded passage names
- * the story (matchStoryToPages), or still null.
+ * with `traced`, URLs no tool returned -> dropped (name kept);
+ * missing URLs -> attached from pages read where the name match is clear;
+ * still no URL -> a page the pipeline read whose grounded passage names the
+ * story (matchStoryToPages), or none.
  */
 export async function cleanStorySources(
-  stories: Array<{ entity?: string; context?: string; source: SourceRef | null; secondarySource?: SourceRef }>,
+  stories: Array<{ entity?: string; context?: string; source: SourceRef | null; secondarySource?: SourceRef; droppedModelUrl?: string }>,
   chunks: GroundingChunk[],
   options: CleanStoryOptions = {},
 ): Promise<AttachStats> {
-  const stats: AttachStats = { placeholdersDropped: 0, redirectsResolved: 0, redirectsDropped: 0, urlsAttached: 0, storiesMatched: 0 };
+  const stats: AttachStats = { placeholdersDropped: 0, redirectsResolved: 0, redirectsDropped: 0, urlsAttached: 0, storiesMatched: 0, modelUrlsDropped: 0 };
   const allPages = [...chunks, ...(options.gathered || [])]
     .filter(p => !isGroundingRedirect(p.uri))
     .filter(p => !options.exclude || !options.exclude(p));
+  const traced = options.traced ? tracedUrlChecker(options.traced) : null;
 
-  const clean = async (ref: SourceRef | null | undefined): Promise<SourceRef | null> => {
-    if (!ref) return null;
+  const clean = async (ref: SourceRef | null | undefined, story: StoryLike, onDrop: (url: string) => void): Promise<SourceRef | null> => {
+    if (!ref || typeof ref !== 'object') return null;
     if (isPlaceholderSourceName(ref.name)) { stats.placeholdersDropped++; return null; }
     let url: string | null = isHttpUrl(ref.url) ? ref.url.trim() : null;
     if (url && isGroundingRedirect(url)) {
@@ -514,28 +603,63 @@ export async function cleanStorySources(
       else { stats.redirectsDropped++; url = null; }
     }
     let origin: SourceOrigin | undefined = ref.origin;
+    if (url && traced && !traced(url)) {
+      stats.modelUrlsDropped++;
+      onDrop(url);
+      url = null;
+    }
     if (!url) {
-      const m = matchSourceToChunk(ref.name, allPages);
-      if (m) { stats.urlsAttached++; url = m.uri; origin = 'name-match'; }
+      origin = undefined;
+      // A read page from the named publication, and only one whose grounded
+      // passage names this story. The publication's name alone is not enough:
+      // measured 2026-09-24, name-only matching gave three different Irish
+      // Examiner stories the same Cork section front, and two different
+      // building permits one unrelated permit page.
+      const onHost = allPages.filter(p => hostMatchesPublication(ref.name, p.uri) || matchSourceToChunk(ref.name, [p]));
+      const m = matchStoryToPages(story, onHost, options.placeNames || []);
+      if (m) { stats.urlsAttached++; url = m.chunk.uri; origin = 'name-match'; }
     }
     return { name: ref.name.trim(), url, ...(origin ? { origin } : {}) };
   };
 
   for (const story of stories) {
-    story.source = await clean(story.source);
+    story.source = await clean(story.source, story, (u) => { story.droppedModelUrl = u; });
     if (story.secondarySource) {
-      const s = await clean(story.secondarySource);
+      const s = await clean(story.secondarySource, story, (u) => { story.droppedModelUrl = story.droppedModelUrl || u; });
       if (s) story.secondarySource = s; else delete story.secondarySource;
     }
-    if (!story.source) {
+    if (!story.source || !story.source.url) {
       const m = matchStoryToPages(story, allPages, options.placeNames || []);
       if (m) {
-        story.source = { name: sourceNameForPage(m.chunk), url: m.chunk.uri, origin: 'story-match' };
+        // The page names the story. Keep the model's publication name only
+        // when the page is on that publication's own host; otherwise the page
+        // is what backs the story, so it is named for itself.
+        const named = story.source?.name;
+        const keepName = !!named && hostMatchesPublication(named, m.chunk.uri);
+        story.source = { name: keepName ? (named as string) : sourceNameForPage(m.chunk), url: m.chunk.uri, origin: 'story-match' };
         stats.storiesMatched++;
       }
     }
   }
   return stats;
+}
+
+/**
+ * A membership test for "a search tool returned this page": URLs compared by
+ * urlKey, X posts by status id (the same post has several URL forms).
+ */
+export function tracedUrlChecker(pages: GroundingChunk[]): (url: string) => boolean {
+  const keys = new Set<string>();
+  for (const p of pages) {
+    if (!p?.uri) continue;
+    keys.add(urlKey(p.uri));
+    const id = p.uri.match(/\/status\/(\d+)/)?.[1];
+    if (id) keys.add(`xstatus:${id}`);
+  }
+  return (url: string) => {
+    const id = url.match(/(?:x|twitter)\.com\/[^/]+\/status\/(\d+)/i)?.[1];
+    return keys.has(urlKey(url)) || (!!id && keys.has(`xstatus:${id}`));
+  };
 }
 
 /** Comparable form of a URL: host without www, path without trailing slash, no query or hash. */
@@ -555,16 +679,7 @@ export function markSourceOrigins(
   stories: Array<{ source?: SourceRef | null; secondarySource?: SourceRef | null }>,
   pages: GroundingChunk[],
 ): void {
-  const keys = new Set<string>();
-  for (const p of pages) {
-    keys.add(urlKey(p.uri));
-    const id = p.uri.match(/\/status\/(\d+)/)?.[1];
-    if (id) keys.add(`xstatus:${id}`);
-  }
-  const known = (url: string) => {
-    const id = url.match(/(?:x|twitter)\.com\/[^/]+\/status\/(\d+)/i)?.[1];
-    return keys.has(urlKey(url)) || (!!id && keys.has(`xstatus:${id}`));
-  };
+  const known = tracedUrlChecker(pages);
   for (const s of stories) {
     for (const ref of [s.source, s.secondarySource]) {
       if (!ref || ref.origin || !isHttpUrl(ref.url)) continue;
@@ -608,7 +723,8 @@ export async function extractArticleSources(categories: unknown): Promise<Articl
         seen.add(key);
 
         let url: string | undefined;
-        if (isHttpUrl(ref.url) && !ref.url.includes('google.com/search')) {
+        // A 'model' URL (briefs enriched before 2026-09-24) is never published.
+        if (ref.origin !== 'model' && isHttpUrl(ref.url) && !ref.url.includes('google.com/search')) {
           url = isGroundingRedirect(ref.url) ? (await resolveGroundingRedirect(ref.url)) || undefined : ref.url.trim();
         }
         const isX = ref.name.startsWith('@') || /(^|\.)(x|twitter)\.com/i.test(url || '');
