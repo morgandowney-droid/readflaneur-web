@@ -196,6 +196,9 @@ export const DISTRICT_SCOPED_EDITION_IDS: ReadonlySet<string> = new Set([
   'rome-prati',
   // Not a district, but the same fence keeps Warren, Michigan events out.
   'newjersey-warren',
+  // GEDI, 25 Sep: Mirja saw Scicli's edition drift to Ragusa, Modica and
+  // towns across Sicily. The fence keeps its Look Ahead inside the comune.
+  'sicily-scicli',
 ]);
 
 export function isDistrictScoped(neighborhoodId: string | null | undefined): boolean {
