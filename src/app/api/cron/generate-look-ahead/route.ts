@@ -9,7 +9,7 @@ import { searchCatchmentFor, isDistrictScoped } from '@/lib/search-catchment';
 import { unpublishableReason } from '@/lib/model-refusal';
 import { getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
-import { formatEventListing } from '@/lib/look-ahead-events';
+import { formatEventListing, dropRepeatedDayMentions } from '@/lib/look-ahead-events';
 import { isVenueAbroad } from '@/lib/place-boundary';
 import { filterEventsToDistrict } from '@/lib/district-geofence';
 import { searchUpcomingEvents, mergeContent, mergeStructuredEvents } from '@/lib/gemini-search';
@@ -539,9 +539,14 @@ export async function GET(request: Request) {
             localDate,
             city
           );
+          // The prompt forbids repeating an event across day sections and the
+          // model does it anyway (Brera, 25 Sep: two exhibitions, eight days).
+          const repeats = dropRepeatedDayMentions(enrichedBody, mergedListing);
+          if (repeats.dropped.length) console.warn(`[generate-look-ahead] ${name}: dropped ${repeats.dropped.length} repeated day paragraph(s)`);
+          const proseBody = repeats.prose;
           const rawBody = eventListing
-            ? eventListing + '\n\n' + enrichedBody
-            : enrichedBody;
+            ? eventListing + '\n\n' + proseBody
+            : proseBody;
           // A Look Ahead has no intro by design: the prompt says jump straight
           // into the first event, so the body must begin at a [[header]].
           // Anything before it is leakage - a teaser written as prose, or in

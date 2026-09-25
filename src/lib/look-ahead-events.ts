@@ -396,3 +396,80 @@ export function parseEventListing(listing: string, localDate: string): ListedEve
   }
   return events;
 }
+
+/**
+ * Drop Look Ahead prose that only repeats an event an earlier day already
+ * covered. The enrichment prompt forbids repeating a venue across day
+ * sections and the model does it anyway: Brera's 25 Sep edition gave the same
+ * two exhibitions a paragraph on each of eight days. A paragraph in a later
+ * section is dropped when every event it names was named in an earlier
+ * section and it says nothing new about it (a last day, an opening, a talk).
+ * A paragraph that names no known event is kept. A section left with no
+ * paragraph loses its header. Runs on the English prose before translation.
+ */
+const NEWS_ABOUT_EVENT = /\b(last|final|closing|closes|concludes|ends?|ending|opens (?:on|at|tonight|today)|opening (?:day|night|reception)|premiere|launch|first day|vernissage|finissage|talk|q&a|screening|special|guest|reception|preview|sold out|extended|reopens?|reopening)\b/i;
+
+// Only padding is dropped: a paragraph saying an exhibition or run is still on.
+// A second performance, another tour or a market returning on its day stays.
+const STILL_ON = /\b(continues|continuing|is (?:also |still )?open|remains open|still (?:open|running|on)|you can still|there is still time|is on view|remains on view|on display)\b/i;
+
+function coreName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/\b(exhibition|mostra|show|concert|festival|opening|closing day|art exhibition)\b/g, ' ')
+    .replace(/[“”"'’:;,.!?]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function dropRepeatedDayMentions(prose: string, events: StructuredEvent[]): { prose: string; dropped: string[] } {
+  const keys = new Set<string>();
+  for (const e of events) {
+    const n = coreName(e.name || '');
+    if (n.length >= 5) keys.add(n);
+    const loc = coreName(e.location || '');
+    if (loc.length >= 8) keys.add(loc);
+  }
+  const lines = prose.replace(/\r\n/g, '\n').split('\n');
+  type Section = { header: string | null; paras: string[] };
+  const sections: Section[] = [{ header: null, paras: [] }];
+  let buf: string[] = [];
+  const flush = () => { if (buf.length) { sections[sections.length - 1].paras.push(buf.join('\n')); buf = []; } };
+  for (const line of lines) {
+    const t = line.trim();
+    if (/^\[\[[^\]]+\]\]$/.test(t) || /^#{2,3}\s+\S/.test(t)) { flush(); sections.push({ header: t, paras: [] }); continue; }
+    if (!t) { flush(); continue; }
+    buf.push(line);
+  }
+  flush();
+
+  const seen = new Set<string>();
+  const dropped: string[] = [];
+  let daySections = 0;
+  for (const s of sections) {
+    if (!s.header) continue;
+    daySections++;
+    const kept: string[] = [];
+    const namedHere = new Set<string>();
+    for (const p of s.paras) {
+      const text = coreName(p);
+      const quoted = Array.from(p.matchAll(/["“]([^"”]{4,80})["”]/g)).map((m) => coreName(m[1])).filter((q) => q.length >= 4);
+      const named = new Set<string>([...Array.from(keys).filter((k) => text.includes(k)), ...quoted]);
+      const repeatOnly = daySections > 1 && named.size > 0 && STILL_ON.test(p) && Array.from(named).every((k) => seen.has(k)) && !NEWS_ABOUT_EVENT.test(p);
+      if (repeatOnly) { dropped.push(p.slice(0, 80)); continue; }
+      kept.push(p);
+      named.forEach((k) => namedHere.add(k));
+    }
+    namedHere.forEach((k) => seen.add(k));
+    s.paras = kept;
+  }
+  if (!dropped.length) return { prose, dropped };
+  const out: string[] = [];
+  for (const s of sections) {
+    if (s.header && s.paras.length === 0) continue;
+    if (s.header) out.push(s.header);
+    out.push(...s.paras.map((p) => p + '\n'));
+  }
+  return { prose: out.join('\n').replace(/\n{3,}/g, '\n\n').trim(), dropped };
+}
