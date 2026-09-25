@@ -57,7 +57,7 @@ export function getCurrencyName(country: string | null | undefined): string | nu
  * prompt reduces the problem; this removes it.
  */
 const COUNTRY_IN_ADDRESS =
-  'New Zealand|Aotearoa|Australia|Canada|United States|U\\.?S\\.?A\\.?|South Africa|Singapore|India|Pakistan|Germany|Deutschland|France|Spain|España|Italy|Italia|Netherlands|Belgium|Portugal|Sweden|Norway|Denmark|Finland|Poland|Austria|Switzerland|Greece|Turkey|Japan|China|Hong Kong|Brazil|Argentina|Mexico|Kenya|Nigeria|UAE|Dubai|Ireland|United Kingdom|England|Scotland|Wales';
+  'New Zealand|Aotearoa|Australia|Canada|United States|U\\.?S\\.?A\\.?|South Africa|Singapore|India|Pakistan|Germany|Deutschland|France|Spain|España|Italy|Italia|Netherlands|Belgium|Portugal|Sweden|Norway|Denmark|Finland|Poland|Austria|Österreich|Switzerland|Schweiz|Suisse|Svizzera|Sverige|Norge|Danmark|Greece|Turkey|Japan|China|Hong Kong|Brazil|Argentina|Mexico|Kenya|Nigeria|UAE|Dubai|Ireland|United Kingdom|England|Scotland|Wales';
 
 /** US state codes in the ", AL 35205" / ", AL." shape that ends an address. */
 const US_STATE_IN_ADDRESS =
@@ -68,6 +68,16 @@ const SAME_MARKET: Record<string, string[]> = {
   'uk': ['united kingdom', 'great britain', 'england', 'scotland', 'wales', 'northern ireland'],
   'united kingdom': ['uk', 'great britain', 'england', 'scotland', 'wales', 'northern ireland'],
   'ireland': ['republic of ireland', 'northern ireland', 'united kingdom', 'uk'],
+  // A country's own name for itself is home, not abroad. Without these a venue
+  // whose address ended "Italia" counted as abroad in an Italian edition.
+  'italy': ['italia'],
+  'germany': ['deutschland'],
+  'spain': ['españa'],
+  'austria': ['österreich'],
+  'switzerland': ['schweiz', 'suisse', 'svizzera'],
+  'sweden': ['sverige'],
+  'norway': ['norge'],
+  'denmark': ['danmark'],
 };
 
 /**
