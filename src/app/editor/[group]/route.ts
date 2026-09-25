@@ -209,7 +209,9 @@ function fmt(s: string, vars: Record<string, string | number>): string {
 
 /** Story text: paragraphs, markdown links as links, **bold**. Everything escaped first. */
 function renderText(md: string): string {
-  const paras = md.replace(/\r\n/g, '\n').split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  const paras = md.replace(/\r\n/g, '\n').split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
+    // "## Oggi, venerdì 25 settembre" often sits on the first line of its paragraph.
+    .flatMap((p) => { const m = p.match(/^(#{2,3}\s+[^\n]+|\[\[[^\]\n]+\]\])\n([\s\S]+)$/); return m ? [m[1].trim(), m[2].trim()] : [p]; });
   return paras
     .map((p) => {
       const sub = p.match(/^#{2,3}\s+(.+)$/) || p.match(/^\[\[(.+)\]\]$/);

@@ -29,6 +29,7 @@ import {
 import type { ListedEvent } from './look-ahead-events';
 import { socialPlatform, type JudgeVerdict, type SocialPlatform } from './social-judge-core';
 import { audioForFeed, loadEditionAudio } from './edition-audio';
+import { italianCity, italianDay, italianPlace, italianTime, translateEventNames } from '@/lib/italian-display';
 
 export const SNAPSHOT_BUCKET = 'source-snapshots';
 
@@ -419,6 +420,19 @@ export async function loadDeskDay(db: SupabaseClient, group: EditorGroup, date: 
       audio,
     };
   });
+
+  // The listing is stored in English so it parses; in the Italian view show
+  // what an Italian paper would print: city, event names, day, 24-hour time.
+  if (lang === 'it') {
+    const evs = out.flatMap((ed) => ed.lookAhead?.events || []);
+    const names = await translateEventNames(evs.map((ev) => ev.header), 'editor_desk_event_names');
+    evs.forEach((ev, i) => {
+      const e = ev.event;
+      ev.header = names[i];
+      if (e) ev.text = [italianDay(e.date), italianTime(e.time), italianPlace([e.location, e.address].filter(Boolean).join(', ')), e.price].filter(Boolean).join(' · ');
+    });
+    for (const ed of out) ed.city = italianCity(ed.city);
+  }
 
   // History: every decision on these articles, newest first, labelled.
   const labels = new Map<string, { label: string; edition: string }>();
