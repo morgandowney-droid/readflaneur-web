@@ -28,6 +28,7 @@ import {
 } from './editorial-decisions';
 import type { ListedEvent } from './look-ahead-events';
 import { socialPlatform, type JudgeVerdict, type SocialPlatform } from './social-judge-core';
+import { audioForFeed, loadEditionAudio } from './edition-audio';
 
 export const SNAPSHOT_BUCKET = 'source-snapshots';
 
@@ -138,6 +139,12 @@ export interface DeskEdition {
     sources: DeskSource[];
     removals: LoggedRemoval[];
   } | null;
+  /**
+   * The spoken edition for this date (edition-audio.ts), in the licensee's
+   * language. feedReady: every story and event it speaks is approved and
+   * unedited, so the feed carries it.
+   */
+  audio: { url: string; durationS: number | null; voice: string; script: string; language: string; feedReady: boolean } | null;
 }
 
 export interface DeskDay {
@@ -284,13 +291,15 @@ export async function loadDeskDay(db: SupabaseClient, group: EditorGroup, date: 
 
   const articleIds = english.flatMap((d) => [d.daily_brief?.article_id, d.look_ahead?.article_id]).filter((x): x is string => Boolean(x));
   const briefRows = (briefs.data || []) as Array<{ id: string; neighborhood_id: string; enriched_categories: unknown; story_flags: StoryFlags | null }>;
-  const [notes, sourceRows, checks, decisions] = await Promise.all([
+  const audioLang = group.licensee.defaultLang || SOURCE_LANGUAGE;
+  const [notes, sourceRows, checks, decisions, audioRows] = await Promise.all([
     articleIds.length
       ? db.from('articles').select('id, slug, editor_notes').in('id', articleIds)
       : Promise.resolve({ data: [] as Array<{ id: string; slug: string; editor_notes: string | null }> }),
     loadSourceRows(db, articleIds),
     loadChecks(db, briefRows.map((b) => b.id)),
     loadDecisionStates(db, group.id, articleIds),
+    loadEditionAudio(db, ids, date, audioLang),
   ]);
   const articleMeta = new Map(((notes.data || []) as Array<{ id: string; slug: string; editor_notes: string | null }>).map((a) => [a.id, a]));
   const states = decisions.states;
@@ -389,12 +398,25 @@ export async function loadDeskDay(db: SupabaseClient, group: EditorGroup, date: 
       };
     }
 
+    const audioRow = audioRows.get(e.id);
+    const audio: DeskEdition['audio'] = audioRow
+      ? {
+          url: audioRow.audio_url,
+          durationS: audioRow.duration_s === null ? null : Number(audioRow.duration_s),
+          voice: audioRow.voice,
+          script: audioRow.script,
+          language: audioRow.language,
+          feedReady: !decisions.error && Boolean(audioForFeed(audioRow, en, states)),
+        }
+      : null;
+
     return {
       id: e.id, name: e.name, city: e.city, timezone: e.timezone,
       showroomUrl: `${showroomUrl}${lang === SOURCE_LANGUAGE ? '' : `?lang=${lang}`}`,
       language: viewLang,
       brief: briefOut,
       lookAhead: laOut,
+      audio,
     };
   });
 

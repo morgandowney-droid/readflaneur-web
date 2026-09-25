@@ -15,6 +15,7 @@ import { getDailyEdition, localDateIn, type Edition, type FeedStory } from '@/li
 import { editorKey } from '@/lib/editor-desk';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import type { ListedEvent } from '@/lib/look-ahead-events';
+import { loadEditionAudio, type EditionAudioRow } from '@/lib/edition-audio';
 
 export const GEDI_GROUP = 'gedi';
 export const GEDI_TIMEZONE = 'Europe/Rome';
@@ -47,6 +48,8 @@ export interface MorningEdition {
   city: string;
   brief: { headline: string; url: string; stories: MorningStory[]; moreCount: number } | null;
   lookAhead: { headline: string; url: string; intro: string | null; events: MorningEvent[]; moreCount: number } | null;
+  /** The spoken edition (edition-audio.ts), when this morning's was made. */
+  audio: { url: string; label: string } | null;
   /** True when a part is shown in English because the Italian could not be made. */
   english: boolean;
   error: string | null;
@@ -130,8 +133,18 @@ async function slugsFor(db: SupabaseClient, ids: string[]): Promise<Map<string, 
   return map;
 }
 
-async function buildEdition(db: SupabaseClient, edition: Edition, date: string): Promise<MorningEdition> {
-  const out: MorningEdition = { id: edition.id, name: edition.name, city: ITALIAN_CITY[edition.city] || edition.city, brief: null, lookAhead: null, english: false, error: null };
+/** "Ascolta (1 min)": whole minutes, at least one. */
+export function audioLabel(durationS: number | null): string {
+  const mins = Math.max(1, Math.round((durationS || 60) / 60));
+  return `Ascolta (${mins} min)`;
+}
+
+async function buildEdition(db: SupabaseClient, edition: Edition, date: string, audioRow?: EditionAudioRow): Promise<MorningEdition> {
+  const out: MorningEdition = {
+    id: edition.id, name: edition.name, city: ITALIAN_CITY[edition.city] || edition.city, brief: null, lookAhead: null,
+    audio: audioRow ? { url: audioRow.audio_url, label: audioLabel(audioRow.duration_s === null ? null : Number(audioRow.duration_s)) } : null,
+    english: false, error: null,
+  };
   try {
     const day = await getDailyEdition(db, edition, date, 'it', null);
     out.english = day.language !== 'it';
@@ -180,7 +193,8 @@ export async function buildGediMorning(db: SupabaseClient, date: string): Promis
       id: r.id, name: r.name, city: r.city, region: r.broader_area || null, country: r.country, timezone: r.timezone,
       language: 'en' as const, languages: ['en', 'it'] as const,
     }));
-  const built = await Promise.all(editions.map((e) => buildEdition(db, e, date)));
+  const audio = await loadEditionAudio(db, editions.map((e) => e.id), date, 'it');
+  const built = await Promise.all(editions.map((e) => buildEdition(db, e, date, audio.get(e.id))));
   return { date, dateLabel: italianDate(date), deskUrl: deskUrlFor(date), editions: built };
 }
 

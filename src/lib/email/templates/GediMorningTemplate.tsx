@@ -64,6 +64,13 @@ function EditionBlock({ ed }: { ed: MorningEdition }) {
       </Text>
       <Hr style={goldRule} />
 
+      {ed.audio && (
+        <Text style={audioLine}>
+          <Link href={ed.audio.url} style={audioLink}>{ed.audio.label}</Link>
+          <span style={audioNote}> &middot; l&apos;edizione letta da una voce locale</span>
+        </Text>
+      )}
+
       {nothing && (
         <Text style={emptyLine}>
           {ed.error
@@ -169,6 +176,9 @@ const eventWhen = { color: '#999999', fontSize: '12px', letterSpacing: '0.03em' 
 const eventPlace = { color: '#888888' };
 const readMore = { fontSize: '13px', margin: '8px 0 0', fontFamily: sans };
 const readMoreLink = { color: '#171717', fontWeight: 600 as const, textDecoration: 'underline' };
+const audioLine = { fontSize: '13px', textAlign: 'center' as const, margin: '0 0 14px', fontFamily: sans };
+const audioLink = { color: '#171717', fontWeight: 600 as const, textDecoration: 'underline' };
+const audioNote = { color: '#999999' };
 const emptyLine = { fontSize: '14px', color: '#999999', fontStyle: 'italic' as const, margin: '0 0 8px', fontFamily: sans };
 const note = { fontSize: '12px', color: '#999999', margin: '8px 0 0', fontFamily: sans };
 const footer = { fontSize: '12px', lineHeight: '1.5', color: '#999999', textAlign: 'center' as const, margin: '12px 0', fontFamily: sans };

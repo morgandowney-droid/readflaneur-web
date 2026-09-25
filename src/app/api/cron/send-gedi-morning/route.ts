@@ -120,6 +120,7 @@ export async function GET(request: NextRequest) {
       brief_stories: e.brief?.stories.length || 0,
       look_ahead: Boolean(e.lookAhead),
       look_ahead_events: e.lookAhead?.events.length || 0,
+      audio: Boolean(e.audio),
       english_fallback: e.english,
       error: e.error,
     }));

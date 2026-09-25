@@ -573,8 +573,12 @@ export async function getDailyEdition(
   date: string,
   lang: FeedLanguage,
   scope: ApprovalScope | null = null,
+  opts: { asOf?: Date } = {},
 ): Promise<DailyEdition> {
-  const nowIso = new Date().toISOString();
+  // asOf lets a job that prepares ahead of publication (the audio edition,
+  // built at 06:40 for a 07:00 publication) read articles already scheduled.
+  // Everything a reader or licensee sees uses the real clock.
+  const nowIso = (opts.asOf || new Date()).toISOString();
   const place: Place = { edition_id: edition.id, name: edition.name, city: edition.city, country: edition.country };
 
   // The daily brief for a local date is the brief row with that brief_date and

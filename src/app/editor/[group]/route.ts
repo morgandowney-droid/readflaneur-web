@@ -51,6 +51,11 @@ const STRINGS = {
     language: 'Language',
     dailyBrief: 'Daily Brief',
     lookAhead: 'Look Ahead',
+    audio: 'Audio edition',
+    audioScript: 'Script',
+    audioVoice: 'Local voice: {v} (standard Italian, not a dialect)',
+    audioReady: 'Your feed carries this audio: every story and event it reads is approved.',
+    audioNotReady: 'Read from the edition published this morning. Your feed carries it only once every story and event it reads is approved without edits.',
     headline: 'Headline',
     laText: 'Look Ahead text',
     events: 'Events',
@@ -122,6 +127,11 @@ const STRINGS = {
     language: 'Lingua',
     dailyBrief: 'Il punto del giorno',
     lookAhead: 'In arrivo',
+    audio: 'Edizione audio',
+    audioScript: 'Testo letto',
+    audioVoice: 'Voce locale: {v} (italiano standard, non dialetto)',
+    audioReady: 'Il vostro feed trasporta questo audio: ogni notizia ed evento letto è approvato.',
+    audioNotReady: "Letto dall'edizione pubblicata stamattina. Il vostro feed lo trasporta solo quando ogni notizia ed evento letto è approvato senza modifiche.",
     headline: 'Titolo',
     laText: 'Testo di In arrivo',
     events: 'Eventi',
@@ -315,6 +325,21 @@ function countsText(items: DeskItem[], s: Strings): string {
   return fmt(s.counts, { a: n('approved'), h: n('held'), n: n('pending') });
 }
 
+function audioHtml(ed: DeskEdition, s: Strings): string {
+  const a = ed.audio;
+  if (!a) return '';
+  const secs = a.durationS ? Math.round(a.durationS) : null;
+  const len = secs ? ` · ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}` : '';
+  const voiceName = a.voice.replace(/^[a-z]{2}-[A-Z]{2}-/, '').replace(/Neural$/, '');
+  const script = a.script.split(/\n\s*\n/).map((p) => `<p>${esc(p.trim())}</p>`).join('');
+  return `<div class="block audio"><h3>${s.audio}<span class="muted small">${len}</span></h3>
+      <audio controls preload="none" src="${esc(a.url)}"></audio>
+      <p class="muted small">${esc(fmt(s.audioVoice, { v: voiceName }))}</p>
+      <p class="small ${a.feedReady ? 'verdict ok' : 'muted'}">${a.feedReady ? s.audioReady : s.audioNotReady}</p>
+      <details class="cut"><summary>${s.audioScript}</summary><div class="t">${script}</div></details>
+    </div>`;
+}
+
 function editionHtml(ed: DeskEdition, day: DeskDay, s: Strings, archiveBase: string): string {
   const items = allItems(ed);
   const fallback = day.lang !== 'en' && ed.language !== day.lang ? `<p class="note">${s.langFallback}</p>` : '';
@@ -341,7 +366,7 @@ function editionHtml(ed: DeskEdition, day: DeskDay, s: Strings, archiveBase: str
       </div>`
     : '';
 
-  return `<section class="edition" data-hood="${esc(ed.id)}">${head}${fallback}${brief}${la}</section>`;
+  return `<section class="edition" data-hood="${esc(ed.id)}">${head}${fallback}${audioHtml(ed, s)}${brief}${la}</section>`;
 }
 
 function renderPage(day: DeskDay, key: string, tz: string): string {
@@ -458,6 +483,8 @@ function renderPage(day: DeskDay, key: string, tz: string): string {
   .removals li{font-size:13px;padding:3px 0;color:var(--muted)}
   .removals .rh{color:var(--fg)}
   .rule{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+  .audio audio{width:100%;max-width:520px;display:block;margin:0 0 6px}
+  .audio p{margin:2px 0}
   details.cut{margin:6px 0 0;font-size:14px}
   details.cut summary{cursor:pointer;color:var(--muted)}
   .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}

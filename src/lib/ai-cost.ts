@@ -16,7 +16,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { currentUsageTap } from '@/lib/ai-usage-tap';
 
-export type AiProvider = 'gemini' | 'grok' | 'claude' | 'openai' | 'qwen' | 'meta';
+export type AiProvider = 'gemini' | 'grok' | 'claude' | 'openai' | 'qwen' | 'meta' | 'azure';
 export type AiKind = 'search' | 'generation';
 
 interface ModelPrice {
@@ -51,6 +51,10 @@ const MODEL_PRICING: Record<string, ModelPrice> = {
   'meta-llama/llama-4-maverick': { inputPerM: 0.19, outputPerM: 0.65, cachedInputPerM: 0.19 },
   'meta-llama/llama-4-scout': { inputPerM: 0.1, outputPerM: 0.3, cachedInputPerM: 0.1 },
   'meta-llama/llama-3.3-70b': { inputPerM: 0.1, outputPerM: 0.32, cachedInputPerM: 0.1 },
+  // Azure Speech text to speech, standard neural voices (edition-audio.ts).
+  // Billed per character, not per token: record characters as inputTokens.
+  // $16 per 1M characters (Azure pay-as-you-go, checked 2026-09-25).
+  'azure-tts-neural': { inputPerM: 16.0, outputPerM: 0, cachedInputPerM: 16.0 },
 };
 
 // Empirical per-call live-search fee for Grok (xAI console total / call count).

@@ -8,8 +8,10 @@ import {
   parseLang,
   FEED_VERSION,
   approvalScope,
+  loadDecisionStates,
   SUPPORTED_LANGUAGES,
 } from '@/lib/licensee-feed';
+import { audioForFeed, loadEditionAudio } from '@/lib/edition-audio';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -81,7 +83,23 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return feedError(400, 'bad_request', `"date" is after today (${today}) in ${edition.timezone}.`);
     }
 
-    const daily = await getDailyEdition(db, edition, date, lang, approvalScope(auth));
-    return feedJson({ version: FEED_VERSION, ...daily });
+    const scope = approvalScope(auth);
+    const daily = await getDailyEdition(db, edition, date, lang, scope);
+
+    // The spoken edition, when one was made in the language returned and from
+    // the same articles. With approval, only when every story and event it
+    // speaks is approved and unedited (fails closed on unreadable decisions).
+    let audio: ReturnType<typeof audioForFeed> = null;
+    const row = (await loadEditionAudio(db, [edition.id], date, daily.language)).get(edition.id);
+    if (row) {
+      if (scope.requireApproval) {
+        const ids = [daily.daily_brief?.article_id, daily.look_ahead?.article_id].filter((x): x is string => Boolean(x));
+        const decisions = await loadDecisionStates(db, scope.groupId, ids);
+        audio = decisions.error ? null : audioForFeed(row, daily, decisions.states);
+      } else {
+        audio = audioForFeed(row, daily, null);
+      }
+    }
+    return feedJson({ version: FEED_VERSION, ...daily, audio });
   });
 }

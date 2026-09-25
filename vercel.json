@@ -217,6 +217,10 @@
       "schedule": "0 * * * 1"
     },
     {
+      "path": "/api/cron/generate-edition-audio",
+      "schedule": "10,40 4-6 * * *"
+    },
+    {
       "path": "/api/cron/send-gedi-morning",
       "schedule": "30 5,6 * * *"
     },
