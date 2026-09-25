@@ -24,6 +24,15 @@ export interface Licensee {
   editions: readonly string[];
   /** Language returned when a request has no `lang` parameter. Defaults to 'en'. */
   defaultLang?: FeedLanguage;
+  /**
+   * When true, the feed carries only what the licensee's editors approved on
+   * the editor desk (/editor/<licenseeId>), with their edits applied; anything
+   * pending or held is left out. The public Flaneur pages are unaffected. See
+   * editorial-decisions.ts.
+   */
+  requireApproval?: boolean;
+  /** Publisher name shown on the editor desk. Defaults to `name`. */
+  deskName?: string;
 }
 
 export const LICENSEES: Readonly<Record<string, Licensee>> = {
@@ -38,6 +47,17 @@ export const LICENSEES: Readonly<Record<string, Licensee>> = {
       'madrid-salamanca',
       'berlin-prenzlauer-berg',
     ],
+  },
+  // GEDI (la Repubblica, La Stampa). On 25 Sep 2026 GEDI said a human must
+  // check anything before it runs under their logo, so the feed carries only
+  // what their editors approve on /editor/gedi. Same four quartieri as the
+  // `gedi` group in edition-rules.ts.
+  gedi: {
+    name: 'GEDI (la Repubblica)',
+    deskName: 'GEDI',
+    editions: ['milan-brera', 'milan-porta-venezia', 'rome-prati', 'sicily-scicli'],
+    defaultLang: 'it',
+    requireApproval: true,
   },
 };
 

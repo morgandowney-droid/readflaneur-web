@@ -6,6 +6,19 @@ import { splitEventListing, parseEventListing, type ListedEvent } from './look-a
 import { isPlaceholderSourceName, isGroundingRedirect, isHttpUrl } from './source-links';
 import { translateArticle, type LanguageCode } from './translation-service';
 import { cleanArticleHeadline } from './utils';
+import {
+  applyDecisionsToStories,
+  approvedEvents,
+  approvedValue,
+  foldDecisions,
+  rebuildMarkdown,
+  stateFor,
+  storyKey,
+  type DecisionRow,
+  type EditorialStatus,
+  type ItemState,
+  type Withheld,
+} from './editorial-decisions';
 
 /**
  * The licensee feed behind /api/v1: auth, rate limit, and the data functions the
@@ -366,8 +379,49 @@ function sourcesBySection(sections: Section[], stories: RawStory[]): FeedSource[
   });
 }
 
+/** Same key the editor desk records decisions under (editorial-decisions.ts). */
 export function storyId(articleId: string, index: number): string {
-  return createHash('sha256').update(`${articleId}:${index}`).digest('hex').slice(0, 24);
+  return storyKey(articleId, index);
+}
+
+// ---------------------------------------------------------------------------
+// Editorial decisions (licensees with requireApproval)
+// ---------------------------------------------------------------------------
+
+export interface ApprovalScope {
+  /** The licensee id; decisions are recorded under it as group_id. */
+  groupId: string;
+  requireApproval: boolean;
+}
+
+export function approvalScope(auth: AuthedLicensee): ApprovalScope {
+  return { groupId: auth.id, requireApproval: Boolean(auth.licensee.requireApproval) };
+}
+
+/**
+ * Decision states for the given articles. Fails closed: if the table cannot be
+ * read (not yet migrated, or an outage), every item is pending, so a licensee
+ * that requires approval gets nothing rather than something unchecked.
+ */
+export async function loadDecisionStates(
+  db: SupabaseClient,
+  groupId: string,
+  articleIds: string[],
+): Promise<{ states: Map<string, ItemState>; rows: DecisionRow[]; error: string | null }> {
+  if (!articleIds.length) return { states: new Map(), rows: [], error: null };
+  const { data, error } = await db
+    .from('editorial_decisions')
+    .select('story_key, article_id, neighborhood_id, action, edited_header, edited_text, decided_by, decided_at')
+    .eq('group_id', groupId)
+    .in('article_id', articleIds)
+    .order('decided_at', { ascending: true })
+    .limit(5000);
+  if (error) {
+    console.warn('[licensee-feed] editorial_decisions unreadable, treating all as pending:', error.message);
+    return { states: new Map(), rows: [], error: error.message };
+  }
+  const rows = (data || []) as DecisionRow[];
+  return { states: foldDecisions(rows), rows, error: null };
 }
 
 export interface FeedStory {
@@ -377,6 +431,8 @@ export interface FeedStory {
   text: string;
   sources: FeedSource[];
   place: Place;
+  /** Present only for a licensee that requires approval. */
+  editorial?: EditorialStatus;
 }
 
 /**
@@ -487,7 +543,8 @@ export interface DailyEdition {
   requested_language: FeedLanguage;
   daily_brief: {
     article_id: string;
-    headline: string;
+    /** Null only for a licensee that requires approval, while the headline is not approved. */
+    headline: string | null;
     subject_teaser: string | null;
     published_at: string;
     greeting: string | null;
@@ -495,14 +552,18 @@ export interface DailyEdition {
     body_markdown: string;
     stories: FeedStory[];
     sources: FeedSource[];
+    /** Licensees that require approval: the headline's decision and what was left out. */
+    editorial?: { headline: EditorialStatus; withheld: Withheld };
   } | null;
   look_ahead: {
     article_id: string;
     headline: string;
     published_at: string;
-    body_markdown: string;
+    /** Null only for a licensee that requires approval, while the prose is not approved. */
+    body_markdown: string | null;
     events: ListedEvent[];
     sources: FeedSource[];
+    editorial?: { prose: EditorialStatus; withheld: Withheld };
   } | null;
 }
 
@@ -511,6 +572,7 @@ export async function getDailyEdition(
   edition: Edition,
   date: string,
   lang: FeedLanguage,
+  scope: ApprovalScope | null = null,
 ): Promise<DailyEdition> {
   const nowIso = new Date().toISOString();
   const place: Place = { edition_id: edition.id, name: edition.name, city: edition.city, country: edition.country };
@@ -562,11 +624,15 @@ export async function getDailyEdition(
     (a) => localDateIn(edition.timezone, new Date(a.published_at)) === date,
   ) || null;
 
-  const [sources, briefTx, laTx] = await Promise.all([
-    sourcesByArticle(db, [briefArticle?.id, lookAhead?.id].filter((x): x is string => Boolean(x))),
+  const articleIds = [briefArticle?.id, lookAhead?.id].filter((x): x is string => Boolean(x));
+  const requireApproval = Boolean(scope?.requireApproval);
+  const [sources, briefTx, laTx, decisions] = await Promise.all([
+    sourcesByArticle(db, articleIds),
     briefArticle ? translatedArticle(db, briefArticle, lang) : Promise.resolve(null),
     lookAhead ? translatedArticle(db, lookAhead, lang) : Promise.resolve(null),
+    requireApproval && scope ? loadDecisionStates(db, scope.groupId, articleIds) : Promise.resolve(null),
   ]);
+  const states = decisions?.states || new Map<string, ItemState>();
 
   // A translation that failed falls back to English for that part; the
   // response says which language it actually carries.
@@ -585,19 +651,40 @@ export async function getDailyEdition(
       brief.enriched_categories,
       place,
     );
-    dailyBrief = {
-      article_id: briefArticle.id,
-      headline,
-      // The teaser is written in English; in a translated response it is the
-      // translated headline, which is the same teaser in title case.
-      subject_teaser: useTx ? headline : brief.subject_teaser || null,
-      published_at: briefArticle.published_at,
-      greeting: parsed.greeting,
-      sign_off: parsed.sign_off,
-      body_markdown: toMarkdown(body),
-      stories,
-      sources: sources.get(briefArticle.id) || [],
-    };
+    // The teaser is written in English; in a translated response it is the
+    // translated headline, which is the same teaser in title case.
+    const teaser = useTx ? headline : brief.subject_teaser || null;
+    if (!requireApproval) {
+      dailyBrief = {
+        article_id: briefArticle.id,
+        headline,
+        subject_teaser: teaser,
+        published_at: briefArticle.published_at,
+        greeting: parsed.greeting,
+        sign_off: parsed.sign_off,
+        body_markdown: toMarkdown(body),
+        stories,
+        sources: sources.get(briefArticle.id) || [],
+      };
+    } else {
+      // Only what an editor approved, with their edits; the body is rebuilt
+      // from those stories so nothing held reaches it.
+      const kept = applyDecisionsToStories(stories, states, true);
+      const headState = stateFor(states, storyKey(briefArticle.id, 'headline'));
+      const head = approvedValue(headline, headState, true);
+      dailyBrief = {
+        article_id: briefArticle.id,
+        headline: head.value,
+        subject_teaser: head.value === null ? null : headState.edited ? head.value : teaser,
+        published_at: briefArticle.published_at,
+        greeting: parsed.greeting,
+        sign_off: parsed.sign_off,
+        body_markdown: rebuildMarkdown(parsed.greeting, kept.stories, parsed.sign_off),
+        stories: kept.stories,
+        sources: sources.get(briefArticle.id) || [],
+        editorial: { headline: head.editorial!, withheld: kept.withheld },
+      };
+    }
   }
 
   let lookAheadOut: DailyEdition['look_ahead'] = null;
@@ -607,14 +694,22 @@ export async function getDailyEdition(
     // prose, so the events always parse from the source body.
     const source = splitEventListing(lookAhead.body_text || '');
     const prose = useTx ? splitEventListing(laTx.body).prose : source.prose;
+    const events = source.listing ? parseEventListing(source.listing, date) : [];
     lookAheadOut = {
       article_id: lookAhead.id,
       headline: cleanArticleHeadline(useTx ? laTx.headline : lookAhead.headline),
       published_at: lookAhead.published_at,
       body_markdown: toMarkdown(prose),
-      events: source.listing ? parseEventListing(source.listing, date) : [],
+      events,
       sources: sources.get(lookAhead.id) || [],
     };
+    if (requireApproval) {
+      const p = approvedValue(toMarkdown(prose), stateFor(states, storyKey(lookAhead.id, 'prose')), true);
+      const ev = approvedEvents(events, lookAhead.id, states, true);
+      lookAheadOut.body_markdown = p.value;
+      lookAheadOut.events = ev.events;
+      lookAheadOut.editorial = { prose: p.editorial!, withheld: ev.withheld };
+    }
   }
 
   const { languages: _languages, ...editionOut } = edition;
@@ -709,6 +804,7 @@ export function parseStoriesQuery(
 export async function listStories(
   db: SupabaseClient,
   q: StoriesQuery,
+  scope: ApprovalScope | null = null,
 ): Promise<{ stories: FeedItem[]; next_cursor: string | null }> {
   const { data: hoods, error: hoodErr } = await db
     .from('neighborhoods')
@@ -752,6 +848,9 @@ export async function listStories(
       if (bErr) throw new Error(`neighborhood_briefs: ${bErr.message}`);
       for (const b of briefs || []) cats.set(b.id, b.enriched_categories);
     }
+    const states = scope?.requireApproval
+      ? (await loadDecisionStates(db, scope.groupId, rows.map((r) => r.id))).states
+      : null;
 
     for (const row of rows) {
       // Resume strictly after the cursor: rows sort by (published_at desc, id desc).
@@ -763,8 +862,10 @@ export async function listStories(
       }
       const place = places.get(row.neighborhood_id || '');
       if (!place) continue;
-      const { stories } = buildStories(row.id, row.body_text || '', null, row.brief_id ? cats.get(row.brief_id) : null, place);
-      for (const s of stories.slice(startAt)) {
+      const built = buildStories(row.id, row.body_text || '', null, row.brief_id ? cats.get(row.brief_id) : null, place).stories.slice(startAt);
+      // A licensee that requires approval gets only approved stories, edited.
+      const stories = states ? applyDecisionsToStories(built, states, true).stories : built;
+      for (const s of stories) {
         out.push({ ...s, edition_id: place.edition_id, article_id: row.id, published_at: row.published_at });
         last = { p: row.published_at, a: row.id, i: s.position };
         if (out.length >= q.limit) break;

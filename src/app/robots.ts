@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/api/v1/', '/admin/', '/_next/', '/docket/', '/desk/', '/docs/'],
+        disallow: ['/api/', '/api/v1/', '/admin/', '/_next/', '/docket/', '/desk/', '/editor/', '/docs/'],
       },
       // Block AI training crawlers
       {
