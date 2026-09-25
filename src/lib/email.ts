@@ -1,13 +1,14 @@
 // Email service using Resend
 
 interface SendEmailParams {
-  to: string;
+  to: string | string[];
   subject: string;
   html: string;
   from?: string;
+  replyTo?: string;
 }
 
-export async function sendEmail({ to, subject, html, from }: SendEmailParams): Promise<boolean> {
+export async function sendEmail({ to, subject, html, from, replyTo }: SendEmailParams): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
@@ -27,6 +28,7 @@ export async function sendEmail({ to, subject, html, from }: SendEmailParams): P
         to,
         subject,
         html,
+        ...(replyTo ? { reply_to: replyTo } : {}),
       }),
     });
 
