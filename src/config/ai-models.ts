@@ -29,9 +29,10 @@ export const AI_MODELS = {
   GEMINI_WRITER_TRIAL: 'gemini-3.8-flash',
   GROK_SEARCH_TRIAL: 'grok-4.5',
   // Judge for Facebook, Instagram, Threads and TikTok sources
-  // (src/lib/social-judge.ts), via OpenRouter. Llama 4 Maverick is the newest
-  // Meta Llama on OpenRouter (checked 2026-09-25; $0.19 / $0.65 per 1M).
-  // Override with LLAMA_JUDGE_MODEL, e.g. meta-llama/llama-3.3-70b-instruct
-  // (text-only) if the Llama 4 multimodal licence terms rule Maverick out.
-  LLAMA_JUDGE: 'meta-llama/llama-4-maverick',
+  // (src/lib/social-judge.ts), via OpenRouter. Llama 3.3 70B, text-only: the
+  // Llama 4 models are multimodal, and Meta's acceptable use policy withholds
+  // the multimodal licence from companies whose principal place of business
+  // is in the EU. The judge only reads text we fetched, so nothing is lost.
+  // Override with LLAMA_JUDGE_MODEL.
+  LLAMA_JUDGE: 'meta-llama/llama-3.3-70b-instruct',
 } as const;
