@@ -193,6 +193,67 @@ test('an unsupported review verdict is logged, not acted on', () => {
   assert.match((d.advisories || [])[0] || '', /^unsupported-by-sources \(review, log only\)/);
 });
 
+console.log('\nEvergreen filler');
+test('GEDI opts in; a group without the flag does not drop filler', () => {
+  assert.equal(gediLive.excludeEvergreenFiller, true);
+  const off = { ...gedi, excludeEvergreenFiller: false };
+  const [d] = R.decideStories([story('FIVE Rooftop', 'FIVE Rooftop continues to be a popular choice for an aperitivo above Porta Venezia.', [nor])], off, new Map());
+  assert.equal(d.keep, true);
+});
+test('the Porta Venezia rooftop item is dropped as evergreen-filler', () => {
+  const [d] = R.decideStories([story('FIVE Rooftop', 'FIVE Rooftop continues to be a popular choice for an aperitivo above Porta Venezia, with views across the rooftops.', [nor])], gedi, new Map());
+  assert.equal(d.keep, false);
+  assert.equal(d.rules[0], 'evergreen-filler');
+});
+test('English and Italian filler phrases with nothing dated are caught', () => {
+  for (const t of [
+    'Bar Basso remains a local favourite for a Negroni sbagliato.',
+    'The Pinacoteca is always worth a visit on a grey morning.',
+    'A must-visit for anyone who loves old bookshops.',
+    'The trattoria has no special programming but the terrace is lovely.',
+    'Il Caffe della Pace continua a essere una meta per gli aperitivi.',
+    'La pasticceria resta una meta per i milanesi.',
+    'Per un pranzo veloce, sempre una buona scelta.',
+  ]) assert.equal(R.isEvergreenFiller(t), true, t);
+});
+test('the dated "no programming today" sentence and a street number do not rescue filler', () => {
+  // The published Porta Venezia paragraph, 25 Sep 2026.
+  assert.equal(R.isEvergreenFiller('FIVE Rooftop continues to be a popular choice for an evening aperitivo. Its terrace offers a great vantage point over the neighborhood. There is no special programming announced for today, Friday, September 25, but it remains a reliable option for drinks with a view.'), true);
+  assert.equal(R.isEvergreenFiller('Bar Jamaica remains a steadfast favorite. Nothing new to report, just a reliable gem holding down its corner of Brera.'), true);
+  assert.equal(R.isEvergreenFiller('The Arts Centre at 155 Airport Blvd continues to be a key venue for performances.'), true);
+  assert.equal(R.isEvergreenFiller('BIVIO Milano on Via Lambro 12 is always worth a visit for unique finds.'), true);
+});
+test('a review, an award or a sale is news even beside a filler phrase', () => {
+  assert.equal(R.isEvergreenFiller('Khao Soi received a positive review from the NZ Herald, solidifying its status as a neighbourhood favourite.'), false);
+  assert.equal(R.isEvergreenFiller('A designer sample sale continues to draw crowds at The Bond.'), false);
+});
+test('a dated event, a figure or a change keeps a story that also says "remains popular"', () => {
+  for (const t of [
+    'Bar Basso remains a local favourite, and hosts a jazz night on Friday.',
+    'The rooftop remains popular; it closes for the season on 30 September.',
+    'The terrace continues to be busy and reopens after renovation.',
+    'Il bar resta una meta: domani sera concerto dal vivo.',
+    'Remains a popular choice, with a new autumn menu from the chef.',
+    'Continues to draw crowds at 12 euro a cocktail.',
+  ]) assert.equal(R.isEvergreenFiller(t), false, t);
+});
+test('ordinary news without filler phrases is untouched', () => {
+  assert.equal(R.isEvergreenFiller('The market returns to Piazza Castello.'), false);
+  const [d] = R.decideStories([story('Brera market', dated, [nor])], gedi, new Map());
+  assert.equal(d.keep, true, JSON.stringify(d.rules));
+});
+test('applyEditionRules removes the filler section and logs evergreen-filler', () => {
+  const cats = [{ name: 'Food', stories: [
+    { entity: 'FIVE Rooftop', context: 'FIVE Rooftop continues to be a popular choice for an aperitivo.', source: nor },
+    { entity: 'Pasticceria Marchesi (new counter)', context: 'Pasticceria Marchesi opens a second counter on Via Solferino on 14 June.', source: nor },
+  ] }];
+  const b = ['Buongiorno, Porta Venezia.', '[[Rooftop Evenings]]', 'FIVE Rooftop continues to be a popular choice for an aperitivo.', '[[A Second Marchesi Counter]]', 'Pasticceria Marchesi opens a second counter on Via Solferino on 14 June.'].join('\n\n');
+  const r = R.applyEditionRules({ body: b, categories: cats, rules: gediLive, verdicts: null, reviewRequired: false, placeNames: ['Porta Venezia', 'Milan'] });
+  assert.ok(!r.body.includes('FIVE Rooftop'), r.body);
+  assert.ok(r.body.includes('Marchesi'));
+  assert.ok(r.removals.some((x) => x.header === 'FIVE Rooftop' && x.rule === 'evergreen-filler'), JSON.stringify(r.removals));
+});
+
 console.log('\nBody rebuild');
 const categories = [
   { name: 'Openings', stories: [

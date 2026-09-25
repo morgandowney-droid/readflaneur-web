@@ -697,6 +697,7 @@ IMPORTANT RULES:
    - Real dates and times
    - The actual business/project names
    - Any backstory or context
+5. NEWS TEST: every story must report something that happened, something that will happen on a stated date, or something that changed (opened, closed, moved, reopened, was approved, was announced, raised its prices). A place that is simply still there is not a story. DROP evergreen recommendations such as "X continues to be a popular choice", "X remains a favourite", "always worth a visit", "a must-visit", "a reliable choice for an aperitivo", or a venue with "no special programming". If the only thing you can say about a place is that people like it, leave it out.
 
 FORMATTING RULES:
 - CRITICAL: Output ONLY the finished newsletter. Do NOT include any planning, reasoning, process notes, or meta-commentary before, after, or anywhere in your response. Never write things like "Reviewing the plan", "Structuring the Newsletter", "Generating Teasers", "Final Polish", "I'm ready to write", source-number tallies (e.g. "Sources (16, 23) confirm"), or any narration of your thought process. Begin immediately with the actual content.

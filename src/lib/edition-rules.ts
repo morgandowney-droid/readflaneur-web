@@ -60,6 +60,12 @@ export interface EditionRuleGroup {
    * the second source must be a different kind (not social).
    */
   requireTwoSourcesForNamedFacts: boolean;
+  /**
+   * Drop evergreen promotional filler: a story that only says a place is
+   * popular or worth a visit, with no date, time, figure or change. Opt-in per
+   * group; see isEvergreenFiller().
+   */
+  excludeEvergreenFiller?: boolean;
 }
 
 export const EDITION_RULE_GROUPS: Record<string, EditionRuleGroup> = {
@@ -87,6 +93,9 @@ export const EDITION_RULE_GROUPS: Record<string, EditionRuleGroup> = {
     // the edition. Measured in shadow first: see scripts/ and the
     // shadow-edition-rules cron before switching it back on.
     requireTwoSourcesForNamedFacts: false,
+    // On (2026-09-25) after Porta Venezia published "FIVE Rooftop continues
+    // to be a popular choice", an item with no event, date or change.
+    excludeEvergreenFiller: true,
   },
   // Examples for the other licensees. Not active: nothing has been agreed with
   // them, and an edition without a group must behave exactly as before.
@@ -463,7 +472,74 @@ const SPORT_WORDS = /\b(goals?|scored|scorer|match|game|derby|league|serie [abc]
 const SCORELINE = /(^|[^:\d])\d{1,2}\s?[-–]\s?\d{1,2}(?![:\d])/;
 const SPORT_COMMENTARY = /\b(match report|post-match|player ratings|pagelle|transfer (news|rumou?rs?|window)|calciomercato|(coach|manager|allenatore) (said|says|admitted|blamed|praised))\b/i;
 
-export type TopicRule = 'active-crime' | 'party-politics' | 'sports-commentary' | `blocked-topic:${string}`;
+// ─── Evergreen filler ──────────────────────────────────────────────────────
+
+// Phrases that say only that a place is popular or worth a visit. English and
+// Italian, since enrichment writes English but quotes local copy.
+const EVERGREEN_PHRASE = new RegExp([
+  String.raw`\bcontinues? to (be|draw|attract|delight|impress|pull in)\b`,
+  String.raw`\bremains? (a |an |one of the )?(popular|firm|local|perennial|reliable|beloved|favou?rite|go-to|staple|top|solid|safe|classic)\b`,
+  String.raw`\bremains? popular\b`,
+  String.raw`\bpopular (choice|spot|destination|option|haunt|hangout|pick)\b`,
+  String.raw`\b(go-to|reliable|safe|solid) (spot|choice|option|pick|address)\b`,
+  String.raw`\balways (worth|a good|a safe|a reliable|popular|busy)\b`,
+  String.raw`\bworth a (visit|stop|detour|look)\b`,
+  String.raw`\ba must[- ](visit|see|try)\b`,
+  String.raw`\bnever disappoints\b`,
+  String.raw`\b(perennial|local|neighbourhood|neighborhood) favou?rite\b`,
+  String.raw`\bas popular as ever\b`,
+  String.raw`\bstill (draws|attracts|packs|pulls)\b`,
+  String.raw`\bno special (programming|events?|programme|program)\b`,
+  // Italian
+  String.raw`\bcontinua a(d)? (essere|attirare|richiamare)\b`,
+  String.raw`\b(resta|rimane) (una|un|la|il) (meta|punto di riferimento|classico|garanzia|certezza|tappa)\b`,
+  String.raw`\bsempre una (buona|ottima) scelta\b`,
+  String.raw`\bsempre (molto )?(apprezzat[oaie]|frequentat[oaie]|affollat[oaie]|amat[oaie])\b`,
+  String.raw`\b(meta|tappa) (imperdibile|obbligata|fissa)\b`,
+  String.raw`\bun classico intramontabile\b`,
+  String.raw`\bvale (sempre )?la (pena|visita)\b`,
+  // Admissions that there is no news.
+  String.raw`\bnothing new( to report)?\b`,
+  String.raw`\bno (specific |special |new )?events? (are |is )?(scheduled|planned|announced|listed)\b`,
+  String.raw`\b(niente di nuovo|nessun evento)\b`,
+].join('|'), 'i');
+
+// Sentences that admit there is no news. The enrichment prompt makes the model
+// date every relative reference, so these arrive as "There is no special
+// programming announced for today, Friday, September 25": the date is the
+// publication date, not an event, and must not count as one.
+const NO_NEWS_SENTENCE = /[^.!?\n]*\b(no special (programming|events?|programme|program)|nothing new( to report)?|no (specific |special |new )?events? (are |is )?(scheduled|planned|announced|listed)|niente di nuovo|nessun evento)\b[^.!?\n]*[.!?]?/gi;
+// Street numbers are location, not figures: "155 Airport Blvd", "Via Lambro 12", "Hufelandstrasse 3".
+const ADDRESS_NUMBER = new RegExp([
+  String.raw`\b\d{1,4}[a-z]?\s+(?=(?:[A-Z][\w'’.-]*\s+){0,3}(?:St|Street|Rd|Road|Ave|Avenue|Blvd|Boulevard|Lane|Ln|Drive|Dr|Way|Place|Pl|Square|Sq|Terrace|Crescent|Quay)\b)`,
+  String.raw`\b(?:Via|Viale|Corso|Piazza|Piazzale|Largo|Vicolo|Rua|Calle|Avenida|Rue)\s+(?:[\p{L}'’.-]+\s+){1,4}?\d{1,4}[a-z]?\b`,
+  String.raw`\b[\p{L}-]+(?:straße|strasse|gasse|weg|platz|allee)\s+\d{1,4}[a-z]?\b`,
+].join('|'), 'giu');
+
+// Anything that makes an item news: a date, a weekday, a time, a figure, or a
+// verb of change. One of these and the story stands.
+const EVERGREEN_DATE_WORDS = /\b(today|tonight|tomorrow|yesterday|this (morning|afternoon|evening|weekend|week|month)|next (week|month|weekend)|last (night|week|month|weekend)|weekend|monday|tuesday|wednesday|thursday|friday|saturday|sunday|oggi|stasera|stanotte|domani|ieri|fine settimana|luned[iì]|marted[iì]|mercoled[iì]|gioved[iì]|venerd[iì]|sabato|domenica)\b/i;
+const CHANGE_VERB = /\b(open(s|ed|ing)?|reopen(s|ed|ing)?|clos(e|es|ed|ing|ure)|shut(s|ting)?|launch(es|ed|ing)?|debut(s|ed)?|premiere(s|d)?|unveil(s|ed)?|announc(e|es|ed)|approv(e|es|ed|al)|return(s|ed|ing)?|mov(e|es|ed|ing) (to|into)|relocat(e|es|ed|ing)|replac(e|es|ed|ing)|renovat(e|es|ed|ing|ion)|expand(s|ed|ing)?|extend(s|ed|ing)?|start(s|ed|ing)?|begin(s|ning)?|began|end(s|ed|ing)?|cancel(s|led|ed)?|postpon(e|es|ed)|rais(e|es|ed)|cut(s)?|introduc(e|es|ed|ing)|new|newly|first|last day|final|receiv(e|es|ed)|review(s|ed)?|award(s|ed)?|won|wins?|named|rank(s|ed)?|join(s|ed|ing)?|install(s|ed|ation)?|remov(e|es|ed|al)|sign(s|ed)|sold|hired?|appoint(s|ed|ment)?|sale|discounts?|saldi|sconti|inaugur\w*|apre|aprir[aà]|riapre|chiude|chiuder[aà]|chiuso|lancia|nuov[oaie]|debutta|annuncia\w*|approvat\w*|trasferi\w*|rinnova\w*|prima volta)\b/i;
+
+/**
+ * True when a story is evergreen promotional filler: it says a place is
+ * popular or worth a visit, and carries no date, weekday, time, figure or
+ * change. Deliberately conservative: a story that says "remains popular" and
+ * also gives a dated event survives.
+ */
+export function isEvergreenFiller(text: string): boolean {
+  const clean = stripLinks(text || '').replace(/https?:\/\/\S+/g, ' ');
+  if (!EVERGREEN_PHRASE.test(clean)) return false;
+  // Look for news only outside the sentences that admit there is none, and
+  // with street numbers taken out.
+  const rest = clean.replace(NO_NEWS_SENTENCE, ' ').replace(ADDRESS_NUMBER, ' ');
+  if (/\d/.test(rest)) return false; // a date, time, price or any figure
+  if (MONTHS.test(rest) || EVERGREEN_DATE_WORDS.test(rest)) return false;
+  if (CHANGE_VERB.test(rest)) return false;
+  return true;
+}
+
+export type TopicRule ='active-crime' | 'party-politics' | 'sports-commentary' | `blocked-topic:${string}`;
 
 /** Fixed topic rules on a piece of text. */
 export function topicHits(text: string, rules: EditionRules): TopicRule[] {
@@ -568,6 +644,7 @@ export function decideStories(
     const v = verdicts?.get(story.index) || null;
 
     for (const t of topics) if (t !== 'active-crime') fired.push(t);
+    if (rules.excludeEvergreenFiller && isEvergreenFiller(text)) fired.push('evergreen-filler');
     if (v) {
       if (rules.excludePartyPolitics && v.partyPolitics) fired.push('party-politics (review)');
       if (rules.excludeSportsCommentary && v.sportsCommentary) fired.push('sports-commentary (review)');
