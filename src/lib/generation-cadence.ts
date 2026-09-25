@@ -163,6 +163,11 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   // Warren, Michigan (140,000) and Warren, Ohio outrank it in any search, so
   // the catchment carries the county and the Look Ahead is geofenced.
   'newjersey-warren',
+  // Schibsted (2026-09-25): Oslo in Norwegian, Stockholm in Swedish, so the
+  // follow-up can show daily editions in both of its markets.
+  'oslo-frogner',
+  'oslo-grunerløkka',
+  'stockholm-sodermalm',
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */
@@ -198,6 +203,10 @@ export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' 
   'sicily-scicli': 'it',
   'rome-prati': 'it',
   'milan-porta-venezia': 'it',
+  // Schibsted (2026-09-25)
+  'oslo-frogner': 'nb',
+  'oslo-grunerløkka': 'nb',
+  'stockholm-sodermalm': 'sv',
 };
 
 export function isPilotNeighborhood(neighborhoodId: string): boolean {
