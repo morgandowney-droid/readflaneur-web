@@ -1,4 +1,4 @@
-import { withLicensee, feedJson, feedError, listStories, parseStoriesQuery, FEED_VERSION } from '@/lib/licensee-feed';
+import { withLicensee, feedJson, feedError, listStories, parseStoriesQuery, FEED_VERSION, approvalScope } from '@/lib/licensee-feed';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
   return withLicensee(request, async (auth, db) => {
     const parsed = parseStoriesQuery(new URL(request.url), auth);
     if (!parsed.ok) return feedError(parsed.status, parsed.code, parsed.message);
-    const page = await listStories(db, parsed.query);
+    const page = await listStories(db, parsed.query, approvalScope(auth));
     return feedJson({ version: FEED_VERSION, ...page });
   });
 }

@@ -7,6 +7,7 @@ import {
   localDateIn,
   parseLang,
   FEED_VERSION,
+  approvalScope,
   SUPPORTED_LANGUAGES,
 } from '@/lib/licensee-feed';
 
@@ -80,7 +81,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return feedError(400, 'bad_request', `"date" is after today (${today}) in ${edition.timezone}.`);
     }
 
-    const daily = await getDailyEdition(db, edition, date, lang);
+    const daily = await getDailyEdition(db, edition, date, lang, approvalScope(auth));
     return feedJson({ version: FEED_VERSION, ...daily });
   });
 }

@@ -361,3 +361,18 @@ Blocking is enforced twice. The search that gathers each edition's facts is told
 **Review before publication.** Stories that pass the fixed rules are checked by a second model against the gathered sources before publication; a story whose claims the sources do not support is dropped.
 
 **The record of what was cut.** Every story removed by a rule is logged with the rule that removed it, so an editor can see exactly what was left out and why.
+
+## Editorial approval (licensees that require it)
+
+A licensee can require that a person on its own staff approves each item before the feed carries it. The licensee's editors work on a private editor desk (a web page we provide, one per licensee) where they approve, hold, edit or restore each item of each morning's editions: the Daily Brief headline, each story, the Look Ahead text and each Look Ahead event. Our public pages are not affected; the desk governs only what that licensee's feed carries.
+
+For such a licensee:
+
+- `daily_brief.stories` contains only approved stories, with the editor's header and text where they rewrote them. Each story carries `editorial: { status, edited, decided_by, decided_at }`; `status` is always `"approved"` in the feed.
+- `daily_brief.body_markdown` is rebuilt from the approved stories only (greeting, `## Header` sections, sign-off).
+- `daily_brief.headline` and `subject_teaser` are `null` until the headline is approved.
+- `daily_brief.editorial` gives the headline's status and `withheld: { pending, held }`, the number of stories left out.
+- `look_ahead.body_markdown` is `null` until the Look Ahead text is approved; `look_ahead.events` contains only approved events; `look_ahead.editorial` gives the prose status and the events withheld.
+- `/api/v1/stories` returns only approved stories, edited.
+
+Nothing is carried by default: if no editor has acted, the edition is empty. A story's `id` is the key the desk records its decision under, so the same story keeps the same id before and after approval. An edit is stored in the language the editor wrote it in and is carried in every language.
