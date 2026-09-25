@@ -29,7 +29,7 @@ import {
 import type { ListedEvent } from './look-ahead-events';
 import { socialPlatform, type JudgeVerdict, type SocialPlatform } from './social-judge-core';
 import { audioForFeed, loadEditionAudio } from './edition-audio';
-import { italianCity, italianDay, italianPlace, italianTime, translateEventNames } from '@/lib/italian-display';
+import { italianCity, italianDay, italianPlace, italianPrice, italianTime, translateEventNames } from '@/lib/italian-display';
 
 export const SNAPSHOT_BUCKET = 'source-snapshots';
 
@@ -429,7 +429,7 @@ export async function loadDeskDay(db: SupabaseClient, group: EditorGroup, date: 
     evs.forEach((ev, i) => {
       const e = ev.event;
       ev.header = names[i];
-      if (e) ev.text = [italianDay(e.date), italianTime(e.time), italianPlace([e.location, e.address].filter(Boolean).join(', ')), e.price].filter(Boolean).join(' · ');
+      if (e) ev.text = [italianDay(e.date), italianTime(e.time), italianPlace([e.location, e.address].filter(Boolean).join(', ')), italianPrice(e.price)].filter(Boolean).join(' · ');
     });
     for (const ed of out) ed.city = italianCity(ed.city);
   }

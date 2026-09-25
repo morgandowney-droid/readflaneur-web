@@ -91,3 +91,10 @@ export async function translateEventNames(names: string[], operation = 'italian_
   }
   return names.map((n) => nameCache.get(n) || n);
 }
+
+/** "Free" and "Free entry" as an Italian listing prints them; prices pass through. */
+export function italianPrice(price: string | null | undefined): string {
+  if (!price) return '';
+  if (/^\s*free(\s+(entry|admission))?\s*$/i.test(price)) return 'Ingresso libero';
+  return price.replace(/\bfree\b/gi, 'gratuito');
+}
