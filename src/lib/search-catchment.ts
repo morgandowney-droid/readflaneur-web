@@ -44,7 +44,10 @@ const SEARCH_CATCHMENTS: Readonly<Record<string, readonly string[]>> = {
   // Prati, Rome (GEDI, 2026-09-23). Named as "Prati, near Piazza Mazzini", which
   // sits in the adjoining Della Vittoria quartiere, so both are named. Stops
   // short of the Vatican and Borgo, which would turn it into tourist news.
-  'rome-prati': ['Prati', 'Piazza Mazzini', 'Della Vittoria'],
+  // Widened 25 Sep after GEDI's editor saw a two-story brief and a one-event
+  // Look Ahead: Trionfale (the market district on Via Andrea Doria) and
+  // Via Cola di Rienzo, the high street, carry most of the area's daily life.
+  'rome-prati': ['Prati', 'Piazza Mazzini', 'Della Vittoria', 'Trionfale', 'Via Cola di Rienzo'],
   // Porta Venezia, Milan (GEDI, 2026-09-23). Lazzaretto and Corso Buenos Aires
   // are inside the same Buenos Aires-Venezia NIL and carry most of its street
   // life. Stops short of Stazione Centrale and the Quadrilatero.
