@@ -7,12 +7,12 @@ import { translateArticle, type LanguageCode } from '@/lib/translation-service';
  *  Returns a cached article translation, or translates on-demand (lazy) and
  *  caches it. Lazy translation means we only ever translate articles someone
  *  actually views in a non-English language, instead of pre-translating every
- *  article into 8 languages on a cron - the bulk of which is never read. */
+ *  article into 9 languages on a cron - the bulk of which is never read. */
 
 export const runtime = 'nodejs';
 export const maxDuration = 120; // first-view Qwen translation of a long brief runs 40-55s; leave headroom
 
-const SUPPORTED_LANGS: Set<string> = new Set(['sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja']);
+const SUPPORTED_LANGS: Set<string> = new Set(['sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja', 'nb']);
 const CACHE_HEADERS = { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' };
 
 /**
@@ -35,7 +35,7 @@ const CACHE_HEADERS = { 'Cache-Control': 'public, s-maxage=3600, stale-while-rev
  *         required: true
  *         schema:
  *           type: string
- *           enum: [sv, fr, de, es, pt, it, zh, ja]
+ *           enum: [sv, fr, de, es, pt, it, zh, ja, nb]
  *         description: Target language code (not "en")
  *     responses:
  *       200:

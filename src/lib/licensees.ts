@@ -15,7 +15,7 @@
  * This file has no imports on purpose: generation-cadence.ts reads it.
  */
 
-export type FeedLanguage = 'en' | 'sv' | 'fr' | 'de' | 'es' | 'pt' | 'it' | 'zh' | 'ja';
+export type FeedLanguage = 'en' | 'sv' | 'fr' | 'de' | 'es' | 'pt' | 'it' | 'zh' | 'ja' | 'nb';
 
 export interface Licensee {
   /** Who the key belongs to, for our own records. Never returned to the caller. */

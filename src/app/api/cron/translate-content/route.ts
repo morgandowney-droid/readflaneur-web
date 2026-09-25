@@ -20,7 +20,7 @@ export const maxDuration = 300;
 const TIME_BUDGET_MS = 250_000;
 const PHASE1_BUDGET_RATIO = 0.75;
 const CONCURRENCY = 8;
-const ALL_LANGUAGES: LanguageCode[] = ['sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja'];
+const ALL_LANGUAGES: LanguageCode[] = ['sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja', 'nb'];
 
 /** Rotate language order based on current quarter-hour so all languages get fair coverage */
 function getRotatedLanguages(): LanguageCode[] {

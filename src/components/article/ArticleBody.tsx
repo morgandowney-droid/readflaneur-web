@@ -12,12 +12,12 @@ interface ArticleBodyProps {
   t?: (key: string) => string;
 }
 
-/** Detect greeting lines across 9 languages - matches the patterns in NeighborhoodBrief.tsx */
+/** Detect greeting lines across 10 languages - matches the patterns in NeighborhoodBrief.tsx */
 function isGreetingLine(text: string): boolean {
   const trimmed = text.trim();
   const patterns = [
     /^(good\s+morning|morning|hello|hey|greetings)/i,
-    /^(god\s+morgon|hej|morrn)/i,
+    /^(god\s+morg[eo]n|hej|hei\b|morrn)/i,
     /^(bonjour|bon\s+matin|salut)/i,
     /^(guten\s+morgen|morgen|hallo)/i,
     /^(buenos\s+d[ií]as|hola|buen\s+d[ií]a)/i,

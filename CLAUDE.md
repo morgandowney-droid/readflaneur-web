@@ -145,7 +145,7 @@ Recent work: getCitySlugFromId now picks the user-friendly city slug for shared 
 - **Discover page:** `/discover` — full homepage experience with `HomeSignupEnhanced` (neighborhood chips + "READ STORIES"), no auto-redirect
 - **API:** `src/app/api/location/detect-and-match/route.ts` — uses `detectLocationFromIP()` + Haversine sort against all active non-combo neighborhoods
 - **WelcomeBanner:** `src/components/feed/WelcomeBanner.tsx` — "Viewing stories near {city}. Customize" with dismiss X. Strips `welcome` param on dismiss. Stores dismissal in localStorage.
-- **Translation keys:** `homepage.readStories` (9 languages), `nav.frontDoor` (9 languages)
+- **Translation keys:** `homepage.readStories` (10 languages), `nav.frontDoor` (10 languages)
 - **SmartRedirect:** Component still exists (`src/components/home/SmartRedirect.tsx`) but no longer used on homepage. Kept for potential reuse.
 
 ### Auth
@@ -170,7 +170,7 @@ Recent work: getCitySlugFromId now picks the user-friendly city slug for shared 
 - **Approach (2026-06-07):** Translate articles/briefs **on first view** in a non-English language, then cache. Translations are client-side fetched and NOT indexed, so pre-translating everything was mostly wasted; lazy translation cuts ~90% of translation calls. UI strings via client-side dictionary (unchanged).
 - **Provider:** Qwen via OpenRouter (`qwen/qwen-2.5-72b-instruct`), automatic Gemini Flash fallback on any Qwen failure. REQUIRES OpenRouter credits + auto-top-up enabled or it silently (and expensively) falls back to Gemini - `checkTranslationFallback` health check alerts if >50% of 24h translation runs on Gemini.
 - **No batch cron:** `translate-content` was removed from `vercel.json` (route file kept for optional manual backfill).
-- **Languages:** English (default), Swedish (sv), French (fr), German (de), Spanish (es), Portuguese (pt), Italian (it), Simplified Chinese (zh), Japanese (ja)
+- **Languages:** English (default), Swedish (sv), French (fr), German (de), Spanish (es), Portuguese (pt), Italian (it), Simplified Chinese (zh), Japanese (ja), Norwegian Bokmål (nb, added 2026-09-25; browsers reporting `no` or `nn` and `?lang=no` map to it)
 - **DB tables:** `article_translations` (article_id, language_code, headline, body, preview_text), `brief_translations` (brief_id, language_code, content, enriched_content). RLS: public read, service_role write.
 - **Hook:** `useLanguage()` (`src/hooks/useLanguage.ts`) - language state, browser detection via `navigator.languages`, localStorage `flaneur-language`
 - **Provider:** `LanguageProvider` (`src/components/providers/LanguageProvider.tsx`) - React context wrapping useLanguage, added to layout.tsx
@@ -214,7 +214,7 @@ Recent work: getCitySlugFromId now picks the user-friendly city slug for shared 
 - **Email:** Look Ahead URL fetched in `assembler.ts` (`fetchLookAheadUrl()`), passed via `DailyBriefContent.lookAheadUrl`. Rendered in `DailyBriefTemplate` (after stories, before satellites) and `SundayEditionTemplate` (after THE NEXT FEW DAYS section). Link text: "Read the Look Ahead (next 7 days) for {name}". Both `fetchLookAheadAsStory()` and `fetchLookAheadUrl()` accept `isCombo` param — for combo neighborhoods, `expandNeighborhoodIds()` queries `combo_neighborhoods` table to include component IDs in the article lookup (fixes Tribeca, Ostermalm, Hamptons Overview missing Look Ahead articles stored under component IDs).
 - **Article pages:** `BriefDiscoveryFooter` rendered with `variant="look_ahead"` on Look Ahead pages (shows "Read today's Daily Brief", hides self-referential Look Ahead link, shows add-to-neighborhoods + email capture), `variant="sunday"` on Sunday Edition pages (discovery links only), default `variant="daily"` on daily brief pages. Uses `article.neighborhood_id` from DB (not `buildNeighborhoodId()`) to avoid mismatches for non-standard country slugs.
 - **Cost:** ~$0.48/day (~50-80 neighborhoods x $0.006 per Grok+Flash call)
-- **Translation keys:** `feed.lookAhead`, `feed.lookAheadCta` in all 9 languages. Article body translation handled by existing `translate-content` cron.
+- **Translation keys:** `feed.lookAhead`, `feed.lookAheadCta` in all 10 languages. Article body translation handled by existing `translate-content` cron.
 
 ### Mobile UX Overhaul
 - **Navigation wayfinding:** Logo links to `/feed` (not `/`). "Stories" link in both desktop and mobile nav for all users. "Dashboard" gated behind admin. Default entry point changed from `/login` to `/signup`.
@@ -811,7 +811,7 @@ src/
     ├── brief-enricher-gemini.ts   # Gemini enrichment pipeline
     ├── weekly-brief-service.ts    # Sunday Edition generation
     ├── ad-quality-service.ts      # AI ad review pipeline
-    ├── translations.ts            # UI string dictionaries (9 languages)
+    ├── translations.ts            # UI string dictionaries (10 languages)
     ├── translation-service.ts     # Gemini Flash translation + DB lookup
     └── weather.ts                 # Server-side Open-Meteo weather fetch (10-min cache)
 ```

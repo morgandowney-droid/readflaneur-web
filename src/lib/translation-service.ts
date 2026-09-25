@@ -23,7 +23,20 @@ const LANGUAGE_NAMES: Record<LanguageCode, string> = {
   it: 'Italian',
   zh: 'Simplified Chinese',
   ja: 'Japanese',
+  nb: 'Norwegian (Bokmål)',
 };
+
+/** An extra rule for a language whose neighbours a model tends to blend in.
+ * Norwegian Bokmål sits between Swedish and Danish, and a model asked for
+ * "Norwegian" can drift into either, or into Nynorsk. */
+const LANGUAGE_RULES: Partial<Record<LanguageCode, string>> = {
+  nb: 'Write Norwegian Bokmål as a Norwegian newspaper writes it (Aftenposten, VG). Not Nynorsk, and never Swedish or Danish spellings or words (write "ikke", "hva", "også", "nabolag", "i dag", not "inte", "hvad", "också", "grannskap"). Use Norwegian date and number conventions (24-hour time, "kl. 19.30", decimal comma).',
+};
+
+function languageRule(lang: LanguageCode, n: number): string {
+  const rule = LANGUAGE_RULES[lang];
+  return rule ? `\n${n}. ${rule}` : '';
+}
 
 const RETRY_DELAYS = [2000, 5000, 15000];
 
@@ -79,7 +92,7 @@ Rules:
 2. PRESERVE all proper nouns exactly as written: neighborhood names, venue names, street names, people's names.
 3. PRESERVE all [[section headers]] and **bold markers** exactly as they appear (translate the text inside them).
 4. Maintain the editorial/literary tone - this is a premium neighborhood newsletter, not a machine translation.
-5. Adapt idioms naturally rather than translating literally.
+5. Adapt idioms naturally rather than translating literally.${languageRule(targetLang, 6)}
 
 Return ONLY valid JSON (no markdown fences):
 {"headline": "...", "body": "...", "preview_text": ${previewText ? '"..."' : 'null'}}
@@ -121,7 +134,7 @@ Rules:
 2. PRESERVE all proper nouns exactly as written: neighborhood names, venue names, street names, people's names.
 3. PRESERVE all [[section headers]] and **bold markers** exactly as they appear (translate the text inside them).
 4. Maintain the editorial/literary tone - warm, informed, like a knowledgeable neighbor.
-5. Adapt idioms naturally rather than translating literally.
+5. Adapt idioms naturally rather than translating literally.${languageRule(targetLang, 6)}
 
 Return ONLY valid JSON (no markdown fences):
 {"content": "...", "enriched_content": ${enrichedContent ? '"..."' : 'null'}}

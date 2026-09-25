@@ -49,7 +49,7 @@ Rewrite the bullet-point facts below into a polished daily neighborhood brief fo
 TODAY'S LOCAL DATE: ${localDate}
 
 RULES:
-- Start with a greeting in the LOCAL LANGUAGE (e.g., "Buenos dias, vecinos." for Spain, "Bonjour, voisins." for Paris, "God morgon, grannar." for Stockholm, "Morning, neighbors." for English-speaking cities)
+- Start with a greeting in the LOCAL LANGUAGE (e.g., "Buenos dias, vecinos." for Spain, "Bonjour, voisins." for Paris, "God morgon, grannar." for Stockholm, "God morgen, naboer." for Oslo, "Morning, neighbors." for English-speaking cities)
 - Use [[Double Bracket Section Headers]] for each topic
 - Write 1-2 conversational prose paragraphs per section
 - Include specific details (addresses, names, prices, times)
@@ -656,7 +656,7 @@ export async function POST(request: NextRequest) {
                 .maybeSingle();
 
               const lang = profile?.preferred_language as LanguageCode | null;
-              const validLangs: LanguageCode[] = ['sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja'];
+              const validLangs: LanguageCode[] = ['sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja', 'nb'];
 
               if (lang && validLangs.includes(lang)) {
                 console.log(`Translating brief+article to ${lang} for creator...`);

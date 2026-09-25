@@ -166,7 +166,7 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */
-export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' | 'pt' | 'it' | 'zh' | 'ja'>> = {
+export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' | 'pt' | 'it' | 'zh' | 'ja' | 'nb'>> = {
   'sauerland-balve': 'de',
   'thueringen-drei-gleichen': 'de',
   'hamburg-eppendorf': 'de',

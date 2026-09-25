@@ -3,6 +3,17 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-09-25: Norwegian Bokmål (`nb`) as a tenth language
+
+**Context.** To pitch Schibsted and other Norwegian publishers with editions in Norwegian, `nb` is supported everywhere the other eight non-English languages are.
+
+- **UI chrome:** full `nb` dictionary in `src/lib/translations.ts` (356 keys, written as a Norwegian paper writes its own chrome: "saker", "nabolag", "Dagens oversikt", "Dette skjer", "KI"). `scripts/check-translations.mjs` checks it.
+- **Language detection:** `normaliseLanguageCode()` in `src/hooks/useLanguage.ts` maps browser `nb-NO`, `no` and `nn` to `nb`, and the same for `?lang=`. Picker label "Norsk".
+- **Translation:** `translation-service.ts` names the language "Norwegian (Bokmål)" and adds a per-language rule (`LANGUAGE_RULES`): Bokmål as Aftenposten or VG writes it, never Nynorsk, Swedish or Danish forms, 24-hour "kl. 19.30", decimal comma. Section labels (`section-labels.ts`): DAGENS OVERSIKT, DETTE SKJER, Søndagsutgaven.
+- **Lists and types:** `FeedLanguage` (`licensees.ts`), `SUPPORTED_LANGUAGES` (`licensee-feed.ts`, so `/api/v1 ?lang=nb`), `PILOT_LANGUAGES` type, `/api/translations/article|brief` validation and OpenAPI enums, `/api/v1/editions/{id}/daily` enum, `translate-content`, community-neighbourhood creation. No DB change: `language_code` has no CHECK constraint.
+- **Enrichment for Norway:** greeting example "God morgen, naboer." for Oslo, Norwegian search hint (Aftenposten, VG, Dagbladet, NRK, local paper), `bakeri` local-flavour example, NOK in the Sunday data point, 17. mai in the holiday list, Norwegian kroner in `place-boundary.ts`, and Norway in `NEWSPAPERS_OF_RECORD` (shadow sourcing standard). Greeting detectors (`ArticleBody`, `CompactArticleCard`, `NeighborhoodBrief`, `assembler`, `grok`, enricher) accept "God morgen" and a whole-word "Hei".
+- **Docs:** `docs/licensee-feed-api.md` and its `public/docs` copy list `nb`.
+
 ## 2026-09-25 (late): GEDI morning email, Italian display, Llama social judge, filler and repeated-day rules, Italian audio
 
 **Context.** GEDI's second call (25 Sep) asked for a daily link to each quartiere, an editor interface for Veronica Diquattro, room for 10 to 20 more quartieri, and a human check before anything runs under Repubblica's name. Prati read thin (two stories, one event) and Porta Venezia carried filler.

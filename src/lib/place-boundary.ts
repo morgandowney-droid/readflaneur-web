@@ -34,6 +34,7 @@ const CURRENCY_BY_COUNTRY: Record<string, string> = {
   'usa': 'US dollars ($)',
   'united states': 'US dollars ($)',
   'sweden': 'Swedish kronor (kr)',
+  'norway': 'Norwegian kroner (kr)',
   'switzerland': 'Swiss francs (CHF)',
   'australia': 'Australian dollars (A$)',
   'new zealand': 'New Zealand dollars (NZ$)',

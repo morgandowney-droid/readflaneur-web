@@ -175,6 +175,10 @@ export const NEWSPAPERS_OF_RECORD: Record<string, { names: string[]; domains: st
     names: ['nz herald', 'new zealand herald', 'stuff', 'rnz'],
     domains: ['nzherald.co.nz', 'stuff.co.nz', 'rnz.co.nz'],
   },
+  norway: {
+    names: ['aftenposten', 'vg', 'verdens gang', 'dagbladet', 'nrk', 'ntb', 'bergens tidende', 'adresseavisen'],
+    domains: ['aftenposten.no', 'vg.no', 'dagbladet.no', 'nrk.no', 'ntb.no', 'bt.no', 'adressa.no', 'dn.no'],
+  },
   usa: {
     names: ['associated press', 'ap news', 'the new york times', 'new york times', 'the washington post', 'wall street journal', 'reuters'],
     domains: ['apnews.com', 'nytimes.com', 'washingtonpost.com', 'wsj.com', 'reuters.com'],
@@ -184,7 +188,7 @@ export const NEWSPAPERS_OF_RECORD: Record<string, { names: string[]; domains: st
 const RECORD_COUNTRY_BY_NAME: Record<string, string> = {
   italy: 'italy', ireland: 'ireland', uk: 'uk', 'united kingdom': 'uk', austria: 'austria', germany: 'germany',
   spain: 'spain', france: 'france', portugal: 'portugal', canada: 'canada', australia: 'australia',
-  'new zealand': 'new-zealand', usa: 'usa', 'united states': 'usa',
+  'new zealand': 'new-zealand', usa: 'usa', 'united states': 'usa', norway: 'norway',
 };
 
 /** The NEWSPAPERS_OF_RECORD key for a neighborhoods.country value, or '' when there is no list. */

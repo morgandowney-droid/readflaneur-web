@@ -725,7 +725,7 @@ function isGreetingStart(text: string): boolean {
   const stripped = text.trim().replace(/\s+/g, ' ');
   // Check the first sentence for greeting/filler patterns
   const firstSentence = stripped.split(/(?<=[.!?])\s+/)[0] || stripped;
-  return /^(good morning|god morgon|bonjour|buongiorno|guten morgen|buenos d[ií]as|bom dia|goedemorgen|morning|gr[üu]ezi|hey|hello)[,.]?\s/i.test(firstSentence)
+  return /^(good morning|god morg[eo]n|bonjour|buongiorno|guten morgen|buenos d[ií]as|bom dia|goedemorgen|morning|gr[üu]ezi|hey|hello)[,.]?\s/i.test(firstSentence)
     || /^here['\u2019']?s\s+(the\s+)?(download|latest|lowdown|rundown|roundup|update|what['\u2019']?s\s+happening|your\s+morning)/i.test(firstSentence)
     || /^(if\s+you['\u2019']?re\s+just\s+waking\s+up)/i.test(firstSentence);
 }

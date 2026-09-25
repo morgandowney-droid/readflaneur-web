@@ -366,7 +366,7 @@ export function stripThinkingPreamble(
   // first header (the model restates it right before the real content begins).
   if (articleType === 'daily_brief') {
     const gap = text.slice(lastMarkerEnd, contentStart);
-    const greetingRe = /(?:^|[.!?\n])\s*((?:good\s+morning|morning|god\s+morgon|bonjour|buongiorno|guten\s+morgen|buenos\s+d[ií]as|bom\s+dia|goedemorgen|maidin\s+mhaith|dia\s+(?:duit|dhaoibh)|hej|hola|ol[áa]|ciao|salut|moin)\b[^\n]*?[.!?])/gi;
+    const greetingRe = /(?:^|[.!?\n])\s*((?:good\s+morning|morning|god\s+morg[eo]n|bonjour|buongiorno|guten\s+morgen|buenos\s+d[ií]as|bom\s+dia|goedemorgen|maidin\s+mhaith|dia\s+(?:duit|dhaoibh)|hej|hola|ol[áa]|ciao|salut|moin)\b[^\n]*?[.!?])/gi;
     let gm: RegExpExecArray | null;
     let lastGreeting: string | null = null;
     while ((gm = greetingRe.exec(gap)) !== null) lastGreeting = gm[1].trim();
@@ -515,6 +515,7 @@ export async function enrichBriefWithGemini(
 
   // Determine language hint based on country
   const languageHint = country === 'Sweden' ? 'IMPORTANT: Search Swedish news sites like Thatsup.se, Restaurangvärlden, Mitt i, DN.se, and SVD.se. Also try Swedish search terms like "öppnar", "nytt café", "restaurang".' :
+                       country === 'Norway' ? 'IMPORTANT: Search Norwegian news sites such as Aftenposten, VG, Dagbladet, NRK and the local paper for this town. Also try Norwegian search terms like "åpner", "ny kafé", "restaurant", "arrangement".' :
                        country === 'France' ? 'Search in both French and English. Try French news sites.' :
                        country === 'Germany' ? 'Search in both German and English. Try German news sites.' :
                        country === 'Spain' ? 'Search in both Spanish and English. Try Spanish news sites.' :
@@ -555,7 +556,7 @@ export async function enrichBriefWithGemini(
   // never is, because a local spots a misused one in the first sentence.
   const localFlavourRule = isEnglishSpeaking(country)
     ? `Write in the ordinary English of ${country}. Use the local names of streets, venues, schools, teams, festivals and dishes exactly as residents write them, because those are proper nouns and they carry the sense of place on their own. Do NOT reach for regional dialect, slang or a local idiom to sound authentic, and never invent local colour. A dialect word used slightly wrong is far worse than a plain word used correctly. NEVER use a foreign word for the place itself; the English word for this place is ALWAYS "${placeNoun}". All section headers MUST be in English.`
-    : `ALWAYS write the main prose in English, but ALWAYS include 1-2 local language phrases naturally throughout (not just in greetings/sign-offs). Examples: a Swedish brief might say "the new konditori on Odengatan" instead of "the new pastry shop", a French brief might say "the new boulangerie on rue de Bretagne" instead of "the new bakery". These local touches are the seasoning that gives each brief its distinctive flavor and sense of place. NEVER use a foreign word for the place itself (no "quartier", "barrio", "Viertel", "quartiere", etc.); the English word for this place is ALWAYS "${placeNoun}". All section headers MUST be in English.`;
+    : `ALWAYS write the main prose in English, but ALWAYS include 1-2 local language phrases naturally throughout (not just in greetings/sign-offs). Examples: a Swedish brief might say "the new konditori on Odengatan" instead of "the new pastry shop", a Norwegian brief might say "the new bakeri on Thereses gate", a French brief might say "the new boulangerie on rue de Bretagne" instead of "the new bakery". These local touches are the seasoning that gives each brief its distinctive flavor and sense of place. NEVER use a foreign word for the place itself (no "quartier", "barrio", "Viertel", "quartiere", etc.); the English word for this place is ALWAYS "${placeNoun}". All section headers MUST be in English.`;
 
   // System instruction varies by article type
   const basePersona = `You are a well-travelled, successful 35-year-old who has lived in ${neighborhoodName}, ${city} for years. You know every corner of the ${placeNoun} - the hidden gems, the local drama, the new openings before anyone else does.
@@ -571,7 +572,7 @@ Your writing style:
 - Deadpan humor when appropriate
 - You drop specific details that only a local would know (exact addresses, which corner, who owns what)
 - You present information conversationally, like telling a friend what's happening in the neighborhood
-- Start with a brief, casual intro greeting in the LOCAL LANGUAGE of the neighborhood (e.g., "God morgon, grannar." for Stockholm, "Bonjour, voisins." for Paris, "Buongiorno." for Milan, "Goedemorgen." for Amsterdam). For English-speaking cities, use "Good morning" with a local twist (e.g., "Morning, neighbors." for New York, "Good morning, loves." for London, "Morning, ${neighborhoodName}." for a UK town, "Good morning, ${neighborhoodName}." for an Irish county). This local greeting is the signature charm of each brief.
+- Start with a brief, casual intro greeting in the LOCAL LANGUAGE of the neighborhood (e.g., "God morgon, grannar." for Stockholm, "God morgen, naboer." for Oslo, "Bonjour, voisins." for Paris, "Buongiorno." for Milan, "Goedemorgen." for Amsterdam). For English-speaking cities, use "Good morning" with a local twist (e.g., "Morning, neighbors." for New York, "Good morning, loves." for London, "Morning, ${neighborhoodName}." for a UK town, "Good morning, ${neighborhoodName}." for an Irish county). This local greeting is the signature charm of each brief.
 - End with a brief, friendly sign-off in the LOCAL LANGUAGE (e.g., "Ha en fin dag." for Stockholm, "Bonne journee." for Paris, "Vi ses." for Stockholm). For English-speaking cities, a casual farewell works (e.g., "See you tomorrow." or "Enjoy the day.").
 - CRITICAL: This is a DAILY update published every morning. Never use "another week", "this week's roundup", or any weekly/monthly framing. Treat each brief as today's news.
 - CRITICAL: If you cannot verify something with a source, DO NOT mention it at all. Only include stories you can confirm.
@@ -701,7 +702,7 @@ IMPORTANT RULES:
 
 FORMATTING RULES:
 - CRITICAL: Output ONLY the finished newsletter. Do NOT include any planning, reasoning, process notes, or meta-commentary before, after, or anywhere in your response. Never write things like "Reviewing the plan", "Structuring the Newsletter", "Generating Teasers", "Final Polish", "I'm ready to write", source-number tallies (e.g. "Sources (16, 23) confirm"), or any narration of your thought process. Begin immediately with the actual content.
-${articleType === 'look_ahead' || articleType === 'weekly_recap' ? '- CRITICAL: Do NOT include any greeting or intro line. Jump DIRECTLY into the first section header or event.' : `- CRITICAL: Your very first line MUST be a morning greeting to the neighborhood in the LOCAL LANGUAGE (e.g., "God morgon, grannar." for Stockholm, "Bonjour, ${neighborhoodName}." for Paris, "Good morning, ${neighborhoodName}." for English-speaking cities). This greeting is non-negotiable - every Daily Brief opens with it. Do NOT skip it, do NOT jump straight into section headers.`}
+${articleType === 'look_ahead' || articleType === 'weekly_recap' ? '- CRITICAL: Do NOT include any greeting or intro line. Jump DIRECTLY into the first section header or event.' : `- CRITICAL: Your very first line MUST be a morning greeting to the neighborhood in the LOCAL LANGUAGE (e.g., "God morgon, grannar." for Stockholm, "God morgen, naboer." for Oslo, "Bonjour, ${neighborhoodName}." for Paris, "Good morning, ${neighborhoodName}." for English-speaking cities). This greeting is non-negotiable - every Daily Brief opens with it. Do NOT skip it, do NOT jump straight into section headers.`}
 - DATE REFERENCES: When using relative time words (yesterday, today, tomorrow, Thursday, last week, this morning, etc.), ALWAYS include the explicit calendar date - e.g., "yesterday (February 19)", "this Thursday, February 20", "last week (February 10-14)". Readers may see this days later, so relative references alone are confusing.
 - Organize your update into sections with creative, punchy section headers
 - IMPORTANT: Wrap each section header in double brackets like this: [[Section Header Here]]
@@ -932,7 +933,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
         if (parsed.email_teaser && typeof parsed.email_teaser === 'string') {
           const et = cleanEmailTeaser(parsed.email_teaser.trim());
           const hasEnding = /[.!]/.test(et);
-          const isGreeting = /^(good morning|god morgon|bonjour|buongiorno|guten morgen|buenos d[ií]as|bom dia|goedemorgen|morning)/i.test(et);
+          const isGreeting = /^(good morning|god morg[eo]n|bonjour|buongiorno|guten morgen|buenos d[ií]as|bom dia|goedemorgen|morning)/i.test(et);
           if (et.length >= 10 && et.length <= 200 && hasEnding && !isGreeting) {
             emailTeaser = et;
             console.log(`Email teaser: "${emailTeaser}"`);

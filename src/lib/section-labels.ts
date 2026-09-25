@@ -23,7 +23,7 @@ export type SectionLabelKind = 'daily_brief' | 'look_ahead' | 'sunday_edition';
  * and the backfill script can compile it on its own, importing the shipped table
  * instead of copying it. translation-service re-exports the type.
  */
-export type LanguageCode = 'sv' | 'fr' | 'de' | 'es' | 'pt' | 'it' | 'zh' | 'ja';
+export type LanguageCode = 'sv' | 'fr' | 'de' | 'es' | 'pt' | 'it' | 'zh' | 'ja' | 'nb';
 
 const SECTION_LABELS: Record<LanguageCode, Record<SectionLabelKind, string>> = {
   sv: { daily_brief: 'DAGENS ÖVERSIKT', look_ahead: 'PÅ GÅNG', sunday_edition: 'Söndagsutgåvan' },
@@ -34,6 +34,7 @@ const SECTION_LABELS: Record<LanguageCode, Record<SectionLabelKind, string>> = {
   it: { daily_brief: 'IL PUNTO DEL GIORNO', look_ahead: 'IN ARRIVO', sunday_edition: "L'Edizione Domenicale" },
   zh: { daily_brief: '每日简报', look_ahead: '近期预告', sunday_edition: '周日特刊' },
   ja: { daily_brief: 'デイリーブリーフ', look_ahead: '今後の予定', sunday_edition: '日曜版' },
+  nb: { daily_brief: 'DAGENS OVERSIKT', look_ahead: 'DETTE SKJER', sunday_edition: 'Søndagsutgaven' },
 };
 
 type ParsedHeadline =

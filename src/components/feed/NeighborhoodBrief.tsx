@@ -297,7 +297,7 @@ function cleanContent(text: string): string {
 /**
  * Detect if a paragraph is a greeting or filler line that shouldn't be the preview.
  * Catches: greetings ("Good morning"), filler ("Here's the download"),
- * date-only sentences, and generic openers across all 9 languages.
+ * date-only sentences, and generic openers across all 10 languages.
  */
 function isGreetingOrFillerParagraph(text: string): boolean {
   const trimmed = text.trim();
@@ -320,6 +320,8 @@ function isGreetingOrFillerParagraph(text: string): boolean {
     /^let['\u2019]?s\s+see\s+what/i,
     // Swedish
     /^(god\s+morgon|hej|morrn|h[äa]r\s+[äa]r)/i,
+    // Norwegian
+    /^(god\s+morgen|hei\b|her\s+er\b)/i,
     // French
     /^(bonjour|bon\s+matin|salut|voici)/i,
     // German

@@ -11,7 +11,7 @@ import { translateBrief, type LanguageCode } from '@/lib/translation-service';
 export const runtime = 'nodejs';
 export const maxDuration = 120; // first-view Qwen translation of a long brief runs 40-55s; leave headroom
 
-const SUPPORTED_LANGS: Set<string> = new Set(['sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja']);
+const SUPPORTED_LANGS: Set<string> = new Set(['sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja', 'nb']);
 const CACHE_HEADERS = { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' };
 
 /**
@@ -34,7 +34,7 @@ const CACHE_HEADERS = { 'Cache-Control': 'public, s-maxage=3600, stale-while-rev
  *         required: true
  *         schema:
  *           type: string
- *           enum: [sv, fr, de, es, pt, it, zh, ja]
+ *           enum: [sv, fr, de, es, pt, it, zh, ja, nb]
  *         description: Target language code (not "en")
  *       - in: query
  *         name: neighborhoodId

@@ -12,6 +12,7 @@ export const SUPPORTED_LANGUAGES = {
   it: 'Italiano',
   zh: '中文(简体)',
   ja: '日本語',
+  nb: 'Norsk',
 } as const;
 
 export type LanguageCode = keyof typeof SUPPORTED_LANGUAGES;
@@ -19,15 +20,29 @@ export type LanguageCode = keyof typeof SUPPORTED_LANGUAGES;
 const STORAGE_KEY = 'flaneur-language';
 const OFFERED_KEY = 'flaneur-language-offered';
 
+/** Browser and URL codes that mean one of ours. Norwegian browsers report
+ * nb-NO, but older ones and some OS settings report the macrolanguage "no",
+ * and Nynorsk readers report "nn"; all three read the Bokmål edition. */
+const LANGUAGE_ALIASES: Record<string, LanguageCode> = {
+  no: 'nb',
+  nn: 'nb',
+};
+
+/** Normalise a code from a browser or a ?lang= parameter to a supported one. */
+export function normaliseLanguageCode(code: string | null | undefined): LanguageCode | null {
+  if (!code) return null;
+  const prefix = code.split('-')[0].toLowerCase();
+  const mapped = LANGUAGE_ALIASES[prefix] || prefix;
+  return mapped in SUPPORTED_LANGUAGES ? (mapped as LanguageCode) : null;
+}
+
 /** Map navigator.language prefixes to our supported codes */
 function detectBrowserLanguage(): LanguageCode | null {
   try {
     const langs = navigator.languages || [navigator.language];
     for (const lang of langs) {
-      const prefix = lang.split('-')[0].toLowerCase() as LanguageCode;
-      if (prefix in SUPPORTED_LANGUAGES && prefix !== 'en') {
-        return prefix;
-      }
+      const prefix = normaliseLanguageCode(lang);
+      if (prefix && prefix !== 'en') return prefix;
     }
   } catch {
     // SSR or unavailable
@@ -45,8 +60,8 @@ export function useLanguage() {
       // ?lang=xx on the URL wins over everything and persists, so a shared
       // link can open a page in a given language regardless of the reader's
       // browser or an earlier choice (publisher pilot links, 2026-09-11).
-      const fromUrl = new URLSearchParams(window.location.search).get('lang') as LanguageCode | null;
-      if (fromUrl && fromUrl in SUPPORTED_LANGUAGES) {
+      const fromUrl = normaliseLanguageCode(new URLSearchParams(window.location.search).get('lang'));
+      if (fromUrl) {
         setLanguageState(fromUrl);
         setIsTranslated(fromUrl !== 'en');
         if (fromUrl === 'en') localStorage.removeItem(STORAGE_KEY); else localStorage.setItem(STORAGE_KEY, fromUrl);

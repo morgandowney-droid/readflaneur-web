@@ -32,7 +32,7 @@ function isFillerSentence(s: string): boolean {
     || /^a\s+(crisp|brisk|chilly|cold|warm|foggy|rainy|snowy|sunny|beautiful|lovely|quiet)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|morning|day|evening|week)/i.test(t)
     || /^(here\s+is\s+the\s+latest|there['\u2019]?s\s+always\s+something|for\s+those\s+looking\s+to)/i.test(t)
     || /^let['\u2019]?s\s+see\s+what/i.test(t)
-    || /^(god\s+morgon|hej|bonjour|guten\s+morgen|buenos\s+d[ií]as|bom\s+dia|buongiorno|ciao)/i.test(t)
+    || /^(god\s+morg[eo]n|hej|hei\b|bonjour|guten\s+morgen|buenos\s+d[ií]as|bom\s+dia|buongiorno|ciao)/i.test(t)
     || /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d/i.test(t);
 }
 

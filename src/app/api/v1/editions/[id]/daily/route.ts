@@ -47,7 +47,7 @@ export const maxDuration = 120;
  *         required: false
  *         schema:
  *           type: string
- *           enum: [en, de, fr, es, it, pt, sv, zh, ja]
+ *           enum: [en, de, fr, es, it, pt, sv, zh, ja, nb]
  *         description: Language to return. Falls back to English when a translation fails; the response field "language" says which was returned.
  *     responses:
  *       200:

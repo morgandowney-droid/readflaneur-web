@@ -30,7 +30,7 @@ import {
  */
 
 export const FEED_VERSION = 'v1';
-export const SUPPORTED_LANGUAGES: readonly FeedLanguage[] = ['en', 'de', 'fr', 'es', 'it', 'pt', 'sv', 'zh', 'ja'];
+export const SUPPORTED_LANGUAGES: readonly FeedLanguage[] = ['en', 'de', 'fr', 'es', 'it', 'pt', 'sv', 'zh', 'ja', 'nb'];
 /** Source language of every edition: enrichment writes English, translation is a layer on top. */
 export const SOURCE_LANGUAGE: FeedLanguage = 'en';
 

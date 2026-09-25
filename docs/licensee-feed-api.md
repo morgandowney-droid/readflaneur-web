@@ -65,7 +65,7 @@ curl -H "Authorization: Bearer $KEY" https://readflaneur.com/api/v1/editions
       "country": "Germany",
       "timezone": "Europe/Berlin",
       "language": "en",
-      "languages": ["en", "de", "fr", "es", "it", "pt", "sv", "zh", "ja"]
+      "languages": ["en", "de", "fr", "es", "it", "pt", "sv", "zh", "ja", "nb"]
     }
   ]
 }
@@ -330,7 +330,7 @@ The daily edition for past dates stays available. The story feed reaches back 30
 
 ## Languages
 
-Editions are written in English, with local names and phrases kept in the original language. Any edition can be requested in `de`, `fr`, `es`, `it`, `pt`, `sv`, `zh` or `ja` with `lang`, or `en` for the original. A default language can be agreed for your key at onboarding, so you need not send `lang` on every call.
+Editions are written in English, with local names and phrases kept in the original language. Any edition can be requested in `de`, `fr`, `es`, `it`, `pt`, `sv`, `nb` (Norwegian Bokmål), `zh` or `ja` with `lang`, or `en` for the original. A default language can be agreed for your key at onboarding, so you need not send `lang` on every call.
 
 Translations are made once and stored. The first request for a given edition, date and language translates on demand and can take 10 to 20 seconds; every later request for it is immediate. Allow for that on the first call of the morning.
 

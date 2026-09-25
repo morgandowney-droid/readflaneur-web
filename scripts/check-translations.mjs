@@ -20,7 +20,7 @@ const content = readFileSync(filePath, 'utf-8');
 const verbose = process.argv.includes('--verbose');
 
 // Parse the translation keys per language by extracting quoted keys
-const languages = ['en', 'sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja'];
+const languages = ['en', 'sv', 'fr', 'de', 'es', 'pt', 'it', 'zh', 'ja', 'nb'];
 const keysByLang = {};
 
 for (const lang of languages) {

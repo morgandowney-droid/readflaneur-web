@@ -661,7 +661,7 @@ const DATA_POINT_PROMPTS: Record<DataPointType, (n: string, c: string, co: strin
     return `What is the current temperature in ${n}, ${c}? Provide the temperature in ${unit} ONLY as the value (e.g., "${example}") and one sentence of context about current weather conditions. Do NOT use AQI or air quality index. Do NOT include both °F and °C - use ${unit} only. VOICE: Reference the neighborhood by name - e.g., "${n} is staying indoors today" or "${n} is dealing with a cold snap." NEVER use "we/our/us." NEVER say "Residents are." NEVER use em dashes.`;
   },
   flaneur_index: (n, c, co) => {
-    const currency = co === 'USA' ? 'USD' : co === 'UK' ? 'GBP' : co === 'Sweden' ? 'SEK' : co === 'Australia' ? 'AUD' : 'local currency';
+    const currency = co === 'USA' ? 'USD' : co === 'UK' ? 'GBP' : co === 'Sweden' ? 'SEK' : co === 'Norway' ? 'NOK' : co === 'Australia' ? 'AUD' : 'local currency';
     return `What is the average price of a latte at premium cafes in ${n}, ${c}? Give the price in ${currency} and compare to the city average. This is the "Flaneur Index" - a lighthearted cost-of-living indicator. VOICE: Reference the neighborhood by name - e.g., "A ${n} morning latte runs about $6.50" or "${n} prices sit above the city average." NEVER use "we/our/us." NEVER say "Residents are." NEVER use em dashes.`;
   },
 };
@@ -862,6 +862,7 @@ const HOLIDAYS: HolidayDef[] = [
   // ── European country-specific ──
   { name: "Epiphany", getDate: (y) => new Date(y, 0, 6), countries: ['Italy', 'Spain'] },
   { name: "Walpurgis Night", getDate: (y) => new Date(y, 3, 30), countries: ['Sweden'] },
+  { name: "Constitution Day (17. mai)", getDate: (y) => new Date(y, 4, 17), countries: ['Norway'] },
   { name: "King's Day", getDate: (y) => new Date(y, 3, 27), countries: ['Netherlands'] },
   { name: "Constitution Day", getDate: (y) => new Date(y, 5, 5), countries: ['Denmark'] },
   { name: "Republic Day", getDate: (y) => new Date(y, 5, 2), countries: ['Italy'] },

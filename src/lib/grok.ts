@@ -637,7 +637,7 @@ ${districtScoped ? `- ${districtScopeBlock(neighborhoodName, city)}` : `- MAJOR 
       .replace(/\u2014/g, ' - ')
       .replace(/\u2013/g, '-')
       // Strip greeting lines (Grok sometimes adds these despite instructions)
-      .replace(/^(Good morning|God morgon|Bonjour|Buongiorno|Goedemorgen|Buenos d[ií]as|Guten Morgen|Bom dia|Morning),?\s*[^\n]*\.\s*\n+/i, '')
+      .replace(/^(Good morning|God morg[eo]n|Bonjour|Buongiorno|Goedemorgen|Buenos d[ií]as|Guten Morgen|Bom dia|Morning),?\s*[^\n]*\.\s*\n+/i, '')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
 
