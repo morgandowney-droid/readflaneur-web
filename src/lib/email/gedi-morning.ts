@@ -16,6 +16,9 @@ import { editorKey } from '@/lib/editor-desk';
 import { getCitySlugFromId, getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import type { ListedEvent } from '@/lib/look-ahead-events';
 import { loadEditionAudio, type EditionAudioRow } from '@/lib/edition-audio';
+import { GoogleGenAI } from '@google/genai';
+import { AI_MODELS } from '@/config/ai-models';
+import { recordGeminiCall } from '@/lib/ai-cost';
 
 export const GEDI_GROUP = 'gedi';
 export const GEDI_TIMEZONE = 'Europe/Rome';
@@ -181,6 +184,44 @@ async function buildEdition(db: SupabaseClient, edition: Edition, date: string, 
   return out;
 }
 
+/**
+ * Event names reach the email in English: the Look Ahead listing is kept in
+ * English on purpose so its lines still parse (translation-service.ts strips it
+ * before translating). An Italian email with "Voices of Denim Exhibition" in it
+ * reads as unfinished, so the names are translated here, all editions in one
+ * Flash call. Titles of works, venue and organisation names stay as they are.
+ * Any failure, or an answer of the wrong shape, keeps the English names.
+ */
+export async function translateEventNames(names: string[]): Promise<string[]> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!names.length || !apiKey) return names;
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const prompt = [
+      'Translate these event names from a local events listing into natural Italian, as an Italian local paper would print them.',
+      'Keep unchanged: proper names, titles of plays, operas, films, songs, books and exhibitions, venue names, organisation and brand names, and anything already in Italian.',
+      'Translate only the descriptive words (for example "Closing Day" becomes "ultimo giorno", "Tribute to" becomes "Tributo a").',
+      'A generic word next to a title, such as "Exhibition", "exhibition", "Show", "Concert" or "Talk", is description, not part of the title: translate it and place it the Italian way, for example "Spectrum Exhibition" becomes "mostra Spectrum" and "The Sun of Metaphysics exhibition" becomes "mostra The Sun of Metaphysics".',
+      'Never add information. Never use em dashes. Return JSON: {"names": [...]} with exactly one entry per input, in the same order.',
+      '',
+      JSON.stringify(names),
+    ].join('\n');
+    const result = await ai.models.generateContent({
+      model: AI_MODELS.GEMINI_FLASH,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: { temperature: 0.1, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } },
+    });
+    recordGeminiCall(result, { operation: 'gedi_morning_event_names', kind: 'generation', model: AI_MODELS.GEMINI_FLASH });
+    const parsed = JSON.parse((result.text || '').trim()) as { names?: unknown };
+    const out = Array.isArray(parsed?.names) ? parsed.names : null;
+    if (!out || out.length !== names.length || out.some((n) => typeof n !== 'string' || !n.trim())) return names;
+    return (out as string[]).map((n) => n.replace(/\s*[—–]\s*/g, ' - ').trim()).map((n) => n.charAt(0).toUpperCase() + n.slice(1));
+  } catch (err) {
+    console.error('[gedi-morning] event name translation failed:', err instanceof Error ? err.message : err);
+    return names;
+  }
+}
+
 /** Everything the email shows for one Rome local date. */
 export async function buildGediMorning(db: SupabaseClient, date: string): Promise<MorningContent> {
   const ids = LICENSEES[GEDI_GROUP].editions as string[];
@@ -195,6 +236,9 @@ export async function buildGediMorning(db: SupabaseClient, date: string): Promis
     }));
   const audio = await loadEditionAudio(db, editions.map((e) => e.id), date, 'it');
   const built = await Promise.all(editions.map((e) => buildEdition(db, e, date, audio.get(e.id))));
+  const events = built.flatMap((b) => b.lookAhead?.events || []);
+  const translated = await translateEventNames(events.map((e) => e.name));
+  events.forEach((e, i) => { e.name = translated[i]; });
   return { date, dateLabel: italianDate(date), deskUrl: deskUrlFor(date), editions: built };
 }
 
