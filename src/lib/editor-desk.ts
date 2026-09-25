@@ -27,6 +27,7 @@ import {
   type LoggedRemoval,
 } from './editorial-decisions';
 import type { ListedEvent } from './look-ahead-events';
+import { socialPlatform, type JudgeVerdict, type SocialPlatform } from './social-judge-core';
 
 export const SNAPSHOT_BUCKET = 'source-snapshots';
 
@@ -83,6 +84,16 @@ export interface DeskSource {
   verdict: string | null;
   factsFound: number | null;
   factsTotal: number | null;
+  /** Llama's verdict on a Facebook, Instagram, Threads or TikTok post (social-judge.ts). */
+  judge: DeskJudge | null;
+}
+
+export interface DeskJudge {
+  platform: SocialPlatform | null;
+  verdict: JudgeVerdict;
+  supported: number;
+  total: number;
+  reason: string | null;
 }
 
 export type ItemKind = 'headline' | 'story' | 'prose' | 'event';
@@ -171,6 +182,11 @@ interface CheckRow {
   facts_found: number | null;
   facts_total: number | null;
   snapshot_html_path: string | null;
+  judge?: string | null;
+  judge_platform?: string | null;
+  judge_verdict?: string | null;
+  judge_supported_facts?: unknown;
+  judge_reason?: string | null;
 }
 
 async function loadSourceRows(db: SupabaseClient, articleIds: string[]): Promise<SourceRow[]> {
@@ -187,10 +203,14 @@ async function loadSourceRows(db: SupabaseClient, articleIds: string[]): Promise
 
 async function loadChecks(db: SupabaseClient, briefIds: string[]): Promise<CheckRow[]> {
   if (!briefIds.length) return [];
-  const { data, error } = await db
+  const base = 'brief_id, story_index, story_entity, source_url, verdict, facts_found, facts_total, snapshot_html_path';
+  const full = await db
     .from('story_source_checks')
-    .select('brief_id, story_index, story_entity, source_url, verdict, facts_found, facts_total, snapshot_html_path')
+    .select(`${base}, judge, judge_platform, judge_verdict, judge_supported_facts, judge_reason`)
     .in('brief_id', briefIds);
+  if (!full.error) return (full.data || []) as CheckRow[];
+  // The judge columns (migration 20260926120000) may not exist yet.
+  const { data, error } = await db.from('story_source_checks').select(base).in('brief_id', briefIds);
   return error ? [] : ((data || []) as CheckRow[]);
 }
 
@@ -212,6 +232,15 @@ function deskSource(
     verdict: check?.verdict || null,
     factsFound: check?.facts_found ?? null,
     factsTotal: check?.facts_total ?? null,
+    judge: check?.judge && check.judge_verdict
+      ? {
+          platform: (check.judge_platform as SocialPlatform) || socialPlatform(url),
+          verdict: check.judge_verdict as JudgeVerdict,
+          supported: Array.isArray(check.judge_supported_facts) ? check.judge_supported_facts.length : 0,
+          total: check.facts_total ?? 0,
+          reason: check.judge_reason || null,
+        }
+      : null,
   };
 }
 

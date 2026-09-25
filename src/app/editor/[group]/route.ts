@@ -13,6 +13,7 @@ import {
 } from '@/lib/editor-desk';
 import type { LoggedRemoval } from '@/lib/editorial-decisions';
 import type { FeedLanguage } from '@/lib/licensees';
+import { judgeLabel } from '@/lib/social-judge-core';
 
 /**
  * Private editor desk for a licensee whose feed requires approval.
@@ -38,6 +39,7 @@ export const maxDuration = 120;
 
 const STRINGS = {
   en: {
+    judgeLang: 'en' as 'en' | 'it',
     kicker: 'Editor desk · Prepared for {p} · Private',
     title: 'Editor desk: {p}',
     governs: 'This governs what your feed carries; the showroom page is unchanged.',
@@ -108,6 +110,7 @@ const STRINGS = {
     actionLabel: { approved: 'approved', held: 'held', edited: 'edited', restored: 'restored' } as Record<string, string>,
   },
   it: {
+    judgeLang: 'it' as 'en' | 'it',
     kicker: 'Desk redazionale · Preparato per {p} · Riservato',
     title: 'Desk redazionale: {p}',
     governs: 'Questa pagina decide cosa trasporta il vostro feed; la pagina vetrina resta invariata.',
@@ -248,6 +251,10 @@ function sourceHtml(src: DeskSource, s: Strings, archiveBase: string): string {
     const cls = src.verdict === 'verified' ? 'ok' : src.verdict === 'partial' ? 'mid' : 'bad';
     const facts = src.factsTotal ? ` (${src.factsFound ?? 0}/${src.factsTotal})` : '';
     bits.push(`<span class="verdict ${cls}">${esc((s.verdict[src.verdict] || src.verdict) + facts)}</span>`);
+  }
+  if (src.judge) {
+    const cls = src.judge.verdict === 'supports' ? 'ok' : src.judge.verdict === 'contradicts' ? 'bad' : 'mid';
+    bits.push(`<span class="verdict ${cls}" title="${esc(src.judge.reason || '')}">${esc(judgeLabel(src.judge, s.judgeLang))}</span>`);
   }
   return `<li>${bits.join('<span class="dot">·</span>')}</li>`;
 }

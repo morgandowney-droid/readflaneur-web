@@ -16,7 +16,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { currentUsageTap } from '@/lib/ai-usage-tap';
 
-export type AiProvider = 'gemini' | 'grok' | 'claude' | 'openai' | 'qwen';
+export type AiProvider = 'gemini' | 'grok' | 'claude' | 'openai' | 'qwen' | 'meta';
 export type AiKind = 'search' | 'generation';
 
 interface ModelPrice {
@@ -46,6 +46,10 @@ const MODEL_PRICING: Record<string, ModelPrice> = {
   'claude-sonnet-4-5': { inputPerM: 3.0, outputPerM: 15.0, cachedInputPerM: 0.3 },
   // Qwen via OpenRouter (translation). Approximate - matches any 'qwen/...' model.
   qwen: { inputPerM: 0.4, outputPerM: 0.4, cachedInputPerM: 0.4 },
+  // Meta Llama via OpenRouter (social-source judge). OpenRouter prices, 2026-09-25.
+  'meta-llama/llama-4-maverick': { inputPerM: 0.19, outputPerM: 0.65, cachedInputPerM: 0.19 },
+  'meta-llama/llama-4-scout': { inputPerM: 0.1, outputPerM: 0.3, cachedInputPerM: 0.1 },
+  'meta-llama/llama-3.3-70b': { inputPerM: 0.1, outputPerM: 0.32, cachedInputPerM: 0.1 },
 };
 
 // Empirical per-call live-search fee for Grok (xAI console total / call count).

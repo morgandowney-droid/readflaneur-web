@@ -10,6 +10,7 @@ import {
   type CheckVerdict,
   type PageText,
 } from '@/lib/source-check';
+import { judgeSocialSource, socialPlatform, type SocialJudgement } from '@/lib/social-judge';
 
 /**
  * Shadow run of the deterministic source check.
@@ -18,8 +19,8 @@ import {
  * page is fetched, reduced to text, and checked in code for the story's
  * figures, dates, times and names (src/lib/source-check.ts). Every page read
  * is archived to the private `source-snapshots` bucket, and one row per
- * (brief, story, source URL) goes to `story_source_checks`. No model is
- * called. Nothing that publishes is read from or written to: articles,
+ * (brief, story, source URL) goes to `story_source_checks`. No model takes
+ * part in that check. Nothing that publishes is read from or written to: articles,
  * briefs and article_sources are untouched.
  *
  * A URL that appears only in the enrichment model's own JSON, in no search
@@ -31,6 +32,12 @@ import {
  * origin (tool, story-match, name-match, repair, model, none) and how many
  * model-written URLs the enricher dropped (story.droppedModelUrl), read
  * straight from enriched_categories.
+ *
+ * A source that is a Facebook, Instagram, Threads or TikTok post also gets a
+ * verdict from Llama (src/lib/social-judge.ts): the post's public text, which
+ * we fetched, is set against the story's facts. The model only judges that
+ * text; it never finds or names a source. Its verdict is stored in the judge_*
+ * columns next to the deterministic one (migration 20260926120000).
  *
  * Params: ?neighborhood=<id> (any edition, not only pilots), ?date=YYYY-MM-DD
  * (that brief_date; default: the latest enriched brief in the last 3 days).
@@ -109,6 +116,29 @@ interface Row {
   snapshot_text_path: string | null;
   content_hash: string | null;
   fetched_at: string | null;
+  judge?: string | null;
+  judge_model?: string | null;
+  judge_platform?: string | null;
+  judge_verdict?: string | null;
+  judge_supported_facts?: unknown;
+  judge_contradicted_facts?: unknown;
+  judge_reason?: string | null;
+  judged_at?: string | null;
+}
+
+const JUDGE_COLUMNS = ['judge', 'judge_model', 'judge_platform', 'judge_verdict', 'judge_supported_facts', 'judge_contradicted_facts', 'judge_reason', 'judged_at'] as const;
+
+function judgeFields(j: SocialJudgement): Partial<Row> {
+  return {
+    judge: j.judge,
+    judge_model: j.model,
+    judge_platform: j.platform,
+    judge_verdict: j.error ? null : j.verdict,
+    judge_supported_facts: j.supportedFacts,
+    judge_contradicted_facts: j.contradictedFacts,
+    judge_reason: j.error ? `${j.reason ? `${j.reason} ` : ''}(error: ${j.error})`.trim() : j.reason,
+    judged_at: new Date().toISOString(),
+  };
 }
 
 /**
@@ -150,7 +180,7 @@ export async function GET(request: NextRequest) {
   const onlyDate = url.searchParams.get('date');
   const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   const errors: string[] = [];
-  const counters = { tasks: 0, skipped_already_checked: 0, pages_fetched: 0, snapshots_stored: 0, rows_written: 0, skipped_time_budget: false };
+  const counters = { social_judged: 0, social_model_calls: 0, tasks: 0, skipped_already_checked: 0, pages_fetched: 0, snapshots_stored: 0, rows_written: 0, skipped_time_budget: false };
   let summary: Record<string, unknown> = {};
   let editions: Array<Record<string, unknown>> = [];
 
@@ -218,6 +248,21 @@ export async function GET(request: NextRequest) {
     const snapshotCache = new Map<string, Promise<{ html: string | null; text: string | null; hash: string | null }>>();
     const rows: Row[] = [];
 
+    // An archived copy of a source page, from the publish-time archive
+    // (article_sources.archive_url), for when the live page cannot be read.
+    const archivedCopy = async (pageUrl: string): Promise<string | null> => {
+      const { data } = await admin
+        .from('article_sources')
+        .select('archive_url')
+        .eq('source_url', pageUrl)
+        .not('archive_url', 'is', null)
+        .limit(1);
+      const path = (data?.[0]?.archive_url as string | undefined)?.replace(new RegExp(`^${BUCKET}/`), '');
+      if (!path) return null;
+      const { data: blob } = await admin.storage.from(BUCKET).download(path);
+      return blob ? await blob.text() : null;
+    };
+
     const snapshot = (t: Task, pageUrl: string, page: PageText) => {
       const key = `${t.editionId}/${t.briefDate}/${urlSha1(pageUrl)}`;
       if (!snapshotCache.has(key)) {
@@ -261,7 +306,20 @@ export async function GET(request: NextRequest) {
       const result = await checkStorySource(t.story, pageUrl, { placeNames: t.placeNames, page });
       const snap = await snapshot(t, pageUrl, page);
       const origin = t.ref?.origin || 'unknown';
+      // Meta platforms and TikTok: Llama judges the post's public text.
+      let judged: Partial<Row> = {};
+      if (socialPlatform(pageUrl)) {
+        const snapshotHtml = page.ok ? null : await archivedCopy(pageUrl);
+        const j = await judgeSocialSource({ url: pageUrl, story: t.story, page, snapshotHtml, placeNames: t.placeNames, label: t.editionId });
+        if (j) {
+          counters.social_judged++;
+          if (j.modelCalled) counters.social_model_calls++;
+          if (j.error) errors.push(`llama ${t.editionId}#${t.storyIndex}: ${j.error}`);
+          judged = judgeFields(j);
+        }
+      }
       rows.push({
+        ...judged,
         brief_id: t.briefId, neighborhood_id: t.editionId, brief_date: t.briefDate, story_index: t.storyIndex,
         story_entity: entity, source_name: t.ref?.name || null, source_url: pageUrl, source_origin: origin,
         verdict: origin === 'model' ? 'unverifiable_origin' : result.verdict,
@@ -287,11 +345,23 @@ export async function GET(request: NextRequest) {
     await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 
     for (let i = 0; i < rows.length; i += 100) {
-      const { error } = await admin
+      const batch = rows.slice(i, i + 100);
+      const upsert = (b: Row[]) => admin
         .from('story_source_checks')
-        .upsert(rows.slice(i, i + 100), { onConflict: 'brief_id,story_index,source_url', ignoreDuplicates: true });
+        .upsert(b, { onConflict: 'brief_id,story_index,source_url', ignoreDuplicates: true });
+      let { error } = await upsert(batch);
+      // The judge columns come with migration 20260926120000. Until it runs,
+      // keep the deterministic rows and say why the Llama verdicts are missing.
+      if (error && /judge/i.test(error.message)) {
+        errors.push(`insert: ${error.message} (run migration 20260926120000; rows written without the Llama verdicts)`);
+        ({ error } = await upsert(batch.map((r) => {
+          const copy: Record<string, unknown> = { ...r };
+          for (const c of JUDGE_COLUMNS) delete copy[c];
+          return copy as unknown as Row;
+        })));
+      }
       if (error) errors.push(`insert: ${error.message}`);
-      else counters.rows_written += Math.min(100, rows.length - i);
+      else counters.rows_written += batch.length;
     }
 
     // Summary over everything recorded for these briefs, this run and earlier.
