@@ -165,7 +165,8 @@ Response (trimmed; a real Daily Brief usually has several stories and a Look Ahe
       }
     ],
     "sources": []
-  }
+  },
+  "audio": null
 }
 ```
 
@@ -178,6 +179,7 @@ Response (trimmed; a real Daily Brief usually has several stories and a Look Ahe
 | `requested_language` | The language you asked for. If it differs from `language`, a translation failed and you received the original (see Languages). |
 | `daily_brief` | The Daily Brief, or `null` if none has been published for this date yet. |
 | `look_ahead` | The Look Ahead, or `null` if none has been published for this date yet. |
+| `audio` | The spoken edition for this date, or `null` (see `audio` below). |
 
 **`daily_brief`**
 
@@ -230,6 +232,26 @@ Response (trimmed; a real Daily Brief usually has several stories and a Look Ahe
 | `also_on` | For an event that repeats in the period, the other days as short weekday names (for example `Sat, Sun`), otherwise `null`. The event is listed once, on its first day. |
 
 Event fields are kept in their original language when you request a translation, because names, venues and addresses are proper nouns. The written guide in `body_markdown` is translated.
+
+**`audio`**
+
+A spoken version of the morning's edition, 60 to 90 seconds: the place and date, the Daily Brief stories, two or three upcoming events from the Look Ahead, and a short close. The script is written only from the published edition (no other source is consulted, and a script naming anything not in the edition is rejected before any audio is made), then read by a standard neural text-to-speech voice in the edition's language. The voices are standard voices for the language, not regional dialects; each edition keeps its own voice. Made each morning before 07:30 local time for editions that have it enabled (currently GEDI's four quartieri, in Italian).
+
+```json
+"audio": {
+  "url": "https://<project>.supabase.co/storage/v1/object/public/edition-audio/sicily-scicli/2026-09-28.mp3?v=m1abcd",
+  "duration_s": 74.5,
+  "voice": "it-IT-GiuseppeNeural"
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `url` | An MP3 (24 kHz mono, 48 kbit/s) you may play or copy to your own storage. The link does not expire. |
+| `duration_s` | Length in seconds. |
+| `voice` | The text-to-speech voice used. |
+
+`audio` is `null` when no audio was made for this date, when it was made in a different language from the one returned (`language`), or when it was made from a different version of the Daily Brief or Look Ahead than the one returned.
 
 ### 3. Story-by-story feed
 
@@ -361,3 +383,19 @@ Blocking is enforced twice. The search that gathers each edition's facts is told
 **Review before publication.** Stories that pass the fixed rules are checked by a second model against the gathered sources before publication; a story whose claims the sources do not support is dropped.
 
 **The record of what was cut.** Every story removed by a rule is logged with the rule that removed it, so an editor can see exactly what was left out and why.
+
+## Editorial approval (licensees that require it)
+
+A licensee can require that a person on its own staff approves each item before the feed carries it. The licensee's editors work on a private editor desk (a web page we provide, one per licensee) where they approve, hold, edit or restore each item of each morning's editions: the Daily Brief headline, each story, the Look Ahead text and each Look Ahead event. Our public pages are not affected; the desk governs only what that licensee's feed carries.
+
+For such a licensee:
+
+- `daily_brief.stories` contains only approved stories, with the editor's header and text where they rewrote them. Each story carries `editorial: { status, edited, decided_by, decided_at }`; `status` is always `"approved"` in the feed.
+- `daily_brief.body_markdown` is rebuilt from the approved stories only (greeting, `## Header` sections, sign-off).
+- `daily_brief.headline` and `subject_teaser` are `null` until the headline is approved.
+- `daily_brief.editorial` gives the headline's status and `withheld: { pending, held }`, the number of stories left out.
+- `look_ahead.body_markdown` is `null` until the Look Ahead text is approved; `look_ahead.events` contains only approved events; `look_ahead.editorial` gives the prose status and the events withheld.
+- `/api/v1/stories` returns only approved stories, edited.
+- `audio` is `null` until every story and event the audio reads is approved without edits. The audio is spoken from the edition as published, so an edit or a held item would make it say something your feed does not carry.
+
+Nothing is carried by default: if no editor has acted, the edition is empty. A story's `id` is the key the desk records its decision under, so the same story keeps the same id before and after approval. An edit is stored in the language the editor wrote it in and is carried in every language.
