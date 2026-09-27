@@ -543,7 +543,12 @@ export async function GET(request: Request) {
           // model does it anyway (Brera, 25 Sep: two exhibitions, eight days).
           const repeats = dropRepeatedDayMentions(enrichedBody, mergedListing);
           if (repeats.dropped.length) console.warn(`[generate-look-ahead] ${name}: dropped ${repeats.dropped.length} repeated day paragraph(s)`);
-          const proseBody = repeats.prose;
+          // The prose must also open at a [[header]]. A teaser leaked above the
+          // first header ("art and antiquariato", Prati, 27 Sep) sits after the
+          // event listing, where the whole-body check below never looks.
+          const proseStart = repeats.prose.indexOf('[[');
+          const proseBody = proseStart > 0 ? repeats.prose.slice(proseStart).trim() : repeats.prose;
+          if (proseStart > 0) console.warn(`[generate-look-ahead] Stripped ${proseStart} chars before the first prose section for ${name}`);
           const rawBody = eventListing
             ? eventListing + '\n\n' + proseBody
             : proseBody;

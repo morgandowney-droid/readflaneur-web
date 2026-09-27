@@ -113,6 +113,35 @@ ${avoidBlock}`;
  * @param timezone - IANA timezone string
  * @param targetLocalDate - YYYY-MM-DD of the publication date in local time
  */
+/**
+ * Event listings for a district outside the English-speaking world are mostly
+ * published in the local language (RomaToday, the Comune's own pages, parish
+ * and library notices). An English-only search finds the tourist-facing
+ * venues and little else: Prati's Look Ahead of 27 Sep had four events on two
+ * days. Ask for local-language searches and the local kind of source.
+ */
+const LOCAL_SEARCH: Record<string, { language: string; queries: (n: string, c: string) => string[] }> = {
+  italy: { language: 'Italian', queries: (n, c) => [`eventi ${n} ${c} questa settimana`, `cosa fare a ${n} ${c}`, `${n} mercatino`, `${n} municipio incontro`] },
+  germany: { language: 'German', queries: (n, c) => [`Veranstaltungen ${n} ${c} diese Woche`, `${n} Termine`, `${n} Flohmarkt`] },
+  austria: { language: 'German', queries: (n, c) => [`Veranstaltungen ${n} diese Woche`, `${n} Gemeinde Termine`, `${n} Veranstaltungskalender`] },
+  switzerland: { language: 'German, French or Italian as spoken there', queries: (n, c) => [`Veranstaltungen ${n} ${c}`, `agenda ${n}`] },
+  spain: { language: 'Spanish', queries: (n, c) => [`agenda ${n} ${c} esta semana`, `qué hacer en ${n}`, `${n} mercadillo`] },
+  france: { language: 'French', queries: (n, c) => [`agenda ${n} ${c} cette semaine`, `que faire à ${n}`, `${n} marché`] },
+  portugal: { language: 'Portuguese', queries: (n, c) => [`agenda ${n} ${c} esta semana`, `o que fazer em ${n}`] },
+  sweden: { language: 'Swedish', queries: (n, c) => [`evenemang ${n} ${c} denna vecka`, `vad händer i ${n}`] },
+  norway: { language: 'Norwegian', queries: (n, c) => [`arrangementer ${n} ${c} denne uken`, `hva skjer i ${n}`] },
+  denmark: { language: 'Danish', queries: (n, c) => [`arrangementer ${n} ${c} denne uge`, `hvad sker der i ${n}`] },
+  netherlands: { language: 'Dutch', queries: (n, c) => [`evenementen ${n} ${c} deze week`, `wat te doen in ${n}`] },
+};
+
+function localLanguageSearchBlock(name: string, city: string, country?: string | null): string {
+  const local = LOCAL_SEARCH[(country || '').trim().toLowerCase()];
+  if (!local) return '';
+  const qs = local.queries(name, city).map((q) => `"${q}"`).join(', ');
+  return `LOCAL-LANGUAGE SEARCH: Most listings for this place are published in ${local.language}. Search in ${local.language} as well as English, for example ${qs}. Check the city's and district's official event pages, local news sites, parish, library and school notices, and neighbourhood associations. Write event names as the organisers write them.
+`;
+}
+
 export async function searchUpcomingEvents(
   neighborhoodName: string,
   city: string,
@@ -160,6 +189,9 @@ ${districtScopeBlock(neighborhoodName, city)}` : `9. Theater, opera, ballet, and
 11. Sample sales, flash sales, trunk shows, pop-up shops, warehouse sales (these are time-sensitive retail events, often announced on Instagram)
 
 MAJOR CULTURAL VENUES: Always search for what's playing at ${city}'s major theaters, opera houses, concert halls, and philharmonics. These are NOT tourist traps - they are the cultural heartbeat of the city. Include tonight's performance, this week's opera, upcoming symphony concerts. These venues serve ALL neighborhoods in the city, not just the one they're located in.`}
+
+${localLanguageSearchBlock(neighborhoodName, city, country)}
+COVERAGE: Look at every day in the window, not only today and tomorrow. A district like this usually has several genuine dated events on most days: weekly markets, library and bookshop readings, church and school concerts, neighbourhood association events, sports fixtures, council and district meetings. Include recurring events on each date they happen. Never pad with anything undated or invented.
 
 GALLERY/MUSEUM FILTER: Only include a gallery or museum if there is a specific TIME-LIMITED event (opening reception, closing day, artist talk, premiere). Do NOT include a gallery/museum just because it is open with an ongoing exhibition. "Gallery X shows Artist Y" is not an event.
 

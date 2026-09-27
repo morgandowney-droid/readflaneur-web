@@ -214,9 +214,36 @@ const ELISION = /^(?:l|un|dell|all|dall|nell|sull|coll|d|c|quell|quest|sant)'/i;
  * is checked only when the next word is capitalised too (a two-word name such
  * as "Mario Rossi"), because Italian capitalises every sentence opening.
  */
+/**
+ * Italian words the script may use for an English word in the source. The
+ * Look Ahead listing is stored in English, so "Vatican Museums" is correctly
+ * read as "Musei Vaticani"; without this the check called that an invented
+ * name and Prati lost its audio on 27 Sep. A word counts only when one of its
+ * English equivalents is in the source, so nothing new can slip in this way.
+ */
+const ITALIAN_FOR_ENGLISH: Record<string, string[]> = {
+  museo: ['museum'], musei: ['museums', 'museum'], vaticano: ['vatican'], vaticani: ['vatican'], vaticana: ['vatican'],
+  nazionale: ['national'], galleria: ['gallery'], gallerie: ['galleries', 'gallery'], teatro: ['theatre', 'theater'],
+  piazza: ['square', 'piazza'], chiesa: ['church'], basilica: ['basilica'], biblioteca: ['library'], mercato: ['market'],
+  mercatino: ['market'], parco: ['park'], palazzo: ['palace', 'palazzo'], mostra: ['exhibition'], festa: ['festival', 'party'],
+  festival: ['festival'], concerto: ['concert'], giardino: ['garden'], giardini: ['gardens', 'garden'], fiume: ['river'],
+  castello: ['castle'], ponte: ['bridge'], stazione: ['station'], scuola: ['school'], comune: ['council', 'municipality'],
+  municipio: ['municipality', 'municipio'], maratona: ['marathon'], fiera: ['fair'], antiquariato: ['antiques', 'antique'],
+  arte: ['art'], moderna: ['modern'], contemporanea: ['contemporary'], internazionale: ['international'], europee: ['european'],
+  giornate: ['days'], patrimonio: ['heritage'],
+};
+
+const ITALIAN_FUNCTION_WORDS = new Set([
+  'il', 'lo', 'la', 'i', 'gli', 'le', 'un', 'uno', 'una', 'al', 'allo', 'alla', 'ai', 'agli', 'alle', 'del', 'dello', 'della',
+  'dei', 'degli', 'delle', 'nel', 'nello', 'nella', 'nei', 'negli', 'nelle', 'sul', 'sullo', 'sulla', 'sui', 'sugli', 'sulle',
+  'dal', 'dallo', 'dalla', 'dai', 'dagli', 'dalle', 'a', 'da', 'di', 'in', 'con', 'su', 'per', 'tra', 'fra', 'e', 'ed', 'o',
+  'anche', 'poi', 'oggi', 'domani', 'infine', 'inoltre', 'sempre', 'ma', 'mentre', 'presso', 'questo', 'questa', 'ecco',
+]);
+
 export function unknownProperNouns(script: string, sourceText: string, allowed: string[] = []): string[] {
   const hay = ` ${fold(sourceText)} ${fold(allowed.join(' '))} `.replace(/[^\p{L}\p{N}']+/gu, ' ');
-  const inSource = (w: string) => hay.includes(` ${fold(w)} `) || hay.includes(` ${fold(w)}'`) || hay.includes(`'${fold(w)} `);
+  const inSourceExact = (w: string) => hay.includes(` ${fold(w)} `) || hay.includes(` ${fold(w)}'`) || hay.includes(`'${fold(w)} `);
+  const inSource = (w: string) => inSourceExact(w) || (ITALIAN_FOR_ENGLISH[fold(w)] || []).some((en) => hay.includes(` ${en} `));
   const bad = new Set<string>();
   // Figures compared as numbers, so "alle 9" matches "09:00" in the source.
   const figures = new Set((`${sourceText} ${allowed.join(' ')}`.match(/\d+/g) || []).map((n) => String(Number(n))));
@@ -235,6 +262,9 @@ export function unknownProperNouns(script: string, sourceText: string, allowed: 
       }
       if (!/^\p{Lu}/u.test(w)) return;
       const initial = i === 0 && w === raw;
+      // "Al Museo...", "Nella Galleria...": an article or preposition opening a
+      // sentence before a name is not itself a name.
+      if (initial && ITALIAN_FUNCTION_WORDS.has(fold(w))) return;
       if (initial) {
         const next = words[i + 1];
         if (!next || !/^\p{Lu}/u.test(next)) return;
@@ -285,7 +315,7 @@ export function scriptProblem(body: string, src: ScriptSource, allowed: string[]
 
 export function openingLine(edition: Pick<Edition, 'name' | 'city'>, date: string): string {
   const p = spokenPlace(edition);
-  return `${p.name}, ${p.city}. ${italianSpokenDate(date)}. Ecco le notizie di stamattina.`;
+  return `${p.name}, ${p.city}. ${italianSpokenDate(date)}. Buongiorno, ${p.name}. Ecco le notizie di stamattina.`;
 }
 
 export const CLOSING_LINE = 'Per oggi è tutto. Buona giornata.';
@@ -330,7 +360,7 @@ export async function writeScript(
   const allowed = [p.name, p.city, edition.name, edition.city, 'Flaneur', italianSpokenDate(date), date];
   const rejected: string[] = [];
   let feedback: string | null = null;
-  for (let attempt = 1; attempt <= 2; attempt++) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
     const response = await genAI.models.generateContent({
       model: AI_MODELS.GEMINI_FLASH,
       contents: buildPrompt(edition, date, src, feedback),

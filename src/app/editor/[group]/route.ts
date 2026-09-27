@@ -82,6 +82,8 @@ const STRINGS = {
     removedStory: 'The edition rules also changed this story:',
     noEdition: 'Nothing published for this date yet.',
     showroom: 'Showroom page',
+    edNo: 'Area {i} of {n}',
+    jump: 'Areas',
     history: 'History',
     noHistory: 'No decisions for this date yet.',
     counts: '{a} approved · {h} held · {n} pending',
@@ -158,6 +160,8 @@ const STRINGS = {
     removedStory: 'Le regole editoriali hanno modificato anche questa notizia:',
     noEdition: 'Nulla ancora pubblicato per questa data.',
     showroom: 'Pagina vetrina',
+    edNo: 'Quartiere {i} di {n}',
+    jump: 'Quartieri',
     history: 'Cronologia',
     noHistory: 'Nessuna decisione per questa data.',
     counts: '{a} approvati · {h} sospesi · {n} in attesa',
@@ -342,14 +346,14 @@ function audioHtml(ed: DeskEdition, s: Strings): string {
     </div>`;
 }
 
-function editionHtml(ed: DeskEdition, day: DeskDay, s: Strings, archiveBase: string): string {
+function editionHtml(ed: DeskEdition, day: DeskDay, s: Strings, archiveBase: string, idx = 0, total = 1): string {
   const items = allItems(ed);
   const fallback = day.lang !== 'en' && ed.language !== day.lang ? `<p class="note">${s.langFallback}</p>` : '';
   const head = `<header class="ed-head">
-      <div><h2>${esc(ed.name)}</h2><p class="muted small">${esc(ed.city)} · <a href="${esc(ed.showroomUrl)}" target="_blank" rel="noopener">${s.showroom}</a></p></div>
+      <div><p class="ed-no">${esc(fmt(s.edNo, { i: idx + 1, n: total }))}</p><h2>${esc(ed.name)}</h2><p class="muted small">${esc(ed.city)} · <a href="${esc(ed.showroomUrl)}" target="_blank" rel="noopener">${s.showroom}</a></p></div>
       <div class="ed-tools"><span class="counts" data-counts>${countsText(items, s)}</span>${items.length ? `<button type="button" class="b primary" data-act="approve-all">${s.approveAll}</button>` : ''}</div>
     </header>`;
-  if (!ed.brief && !ed.lookAhead) return `<section class="edition" data-hood="${esc(ed.id)}">${head}<p class="muted">${s.noEdition}</p></section>`;
+  if (!ed.brief && !ed.lookAhead) return `<section class="edition" id="ed-${esc(ed.id)}" data-hood="${esc(ed.id)}">${head}<p class="muted">${s.noEdition}</p></section>`;
 
   const brief = ed.brief
     ? `<div class="block"><h3>${s.dailyBrief}</h3>
@@ -368,7 +372,7 @@ function editionHtml(ed: DeskEdition, day: DeskDay, s: Strings, archiveBase: str
       </div>`
     : '';
 
-  return `<section class="edition" data-hood="${esc(ed.id)}">${head}${fallback}${audioHtml(ed, s)}${brief}${la}</section>`;
+  return `<section class="edition" id="ed-${esc(ed.id)}" data-hood="${esc(ed.id)}">${head}${fallback}${audioHtml(ed, s)}${brief}${la}</section>`;
 }
 
 function renderPage(day: DeskDay, key: string, tz: string): string {
@@ -445,9 +449,19 @@ function renderPage(day: DeskDay, key: string, tz: string): string {
   .lang.on{background:var(--fg);color:var(--canvas);border-color:var(--fg)}
   .alert{margin:14px 0 0;padding:10px 12px;border:1px solid var(--held);color:var(--held);background:var(--held-soft);border-radius:6px;font-size:14px}
   .alert[hidden]{display:none}
-  .edition{margin-top:34px;padding-top:6px}
-  .ed-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:8px 16px;border-bottom:1px solid var(--border-strong);padding-bottom:10px}
-  .ed-head h2{font:600 30px/1.1 var(--display);margin:0}
+  .edition{margin-top:56px;padding-top:0;scroll-margin-top:12px}
+  .edition+.edition{border-top:3px double var(--border-strong);padding-top:40px}
+  .ed-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:10px 16px;background:var(--fg);color:var(--canvas);border-radius:10px;padding:16px 18px}
+  .ed-head h2{font:600 32px/1.05 var(--display);margin:0}
+  .ed-head .muted{color:inherit;opacity:.72}
+  .ed-head a{text-decoration-color:currentColor}
+  .ed-head .counts{color:inherit;opacity:.85}
+  .ed-head .b.primary{background:var(--canvas);color:var(--fg);border-color:var(--canvas)}
+  .ed-no{font:600 11px/1.3 var(--sans);letter-spacing:.16em;text-transform:uppercase;margin:0 0 6px;opacity:.7}
+  .jump{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:18px 0 0}
+  .jump .jl{font:500 11px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--subtle);margin-right:4px}
+  .jump a{text-decoration:none;border:1px solid var(--border-strong);border-radius:999px;padding:6px 12px;font-size:13.5px;background:var(--surface)}
+  .jump a b{font-variant-numeric:tabular-nums;margin-right:4px;color:var(--subtle)}
   .ed-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
   .counts{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
   .block{margin-top:18px}
@@ -534,7 +548,8 @@ function renderPage(day: DeskDay, key: string, tz: string): string {
     </form>
     <div class="langs" aria-label="${s.language}">${langLinks}</div>
   </div>
-  ${day.editions.map((ed) => editionHtml(ed, day, s, archiveBase)).join('')}
+  <nav class="jump" aria-label="${s.jump}"><span class="jl">${s.jump}</span>${day.editions.map((ed, i) => `<a href="#ed-${esc(ed.id)}"><b>${i + 1}</b> ${esc(ed.name)}</a>`).join('')}</nav>
+  ${day.editions.map((ed, i) => editionHtml(ed, day, s, archiveBase, i, day.editions.length)).join('')}
   <h2 class="sec">${s.history}</h2>
   ${history}
   <footer>
