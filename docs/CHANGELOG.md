@@ -14,6 +14,20 @@
 - **Enrichment for Norway:** greeting example "God morgen, naboer." for Oslo, Norwegian search hint (Aftenposten, VG, Dagbladet, NRK, local paper), `bakeri` local-flavour example, NOK in the Sunday data point, 17. mai in the holiday list, Norwegian kroner in `place-boundary.ts`, and Norway in `NEWSPAPERS_OF_RECORD` (shadow sourcing standard). Greeting detectors (`ArticleBody`, `CompactArticleCard`, `NeighborhoodBrief`, `assembler`, `grok`, enricher) accept "God morgen" and a whole-word "Hei".
 - **Docs:** `docs/licensee-feed-api.md` and its `public/docs` copy list `nb`.
 
+## 2026-09-27: GEDI email live, Prati audio, local-language event search, desk bands, Norwegian
+
+**Context.** Morgan read the first weekend's GEDI preview email and the editor desk and listed five things: Prati had no audio, no recording said good morning to its quartiere, the content was light (Prati's Look Ahead had only today and tomorrow), whether all three GEDI readers get the same email, and quartieri on the desk blended into each other.
+
+- **Email live:** `GEDI_MORNING_LIVE=true` set in Vercel production on 27 Sep. The cron sends one message to all three live recipients from the Rome date 2026-09-28; before that it still goes to md@ with "[ANTEPRIMA]".
+- **Prati audio:** the 27 Sep script was rejected twice ("names not in the edition: Musei, Vaticani, Nazionale", then "too long"). `unknownProperNouns()` now accepts an Italian word when an English equivalent is in the source (`ITALIAN_FOR_ENGLISH`), ignores a sentence-opening article or preposition (`ITALIAN_FUNCTION_WORDS`), and `writeScript()` makes three attempts. Tested: "Musei Vaticani" and "Museo Nazionale" pass against an English listing; "Prado" and "Picasso" still fail. All four 27 Sep recordings were regenerated.
+- **Opening:** `openingLine()` now reads "<Quartiere>, <city>. <date>. Buongiorno, <Quartiere>. Ecco le notizie di stamattina."
+- **Local-language event search:** `localLanguageSearchBlock()` in `gemini-search.ts` adds queries in the local language (e.g. "eventi Prati Roma questa settimana", "cosa fare a Prati") and local sources (city and district event pages, local news, parishes, libraries, schools, neighbourhood associations) for eleven countries; a COVERAGE rule asks for every day of the window, genuine dated events only.
+- **Native country names:** `SAME_MARKET` in `place-boundary.ts` maps Italia, Deutschland, España, Österreich, Schweiz/Suisse/Svizzera, Sverige, Norge and Danmark to home, so `isVenueAbroad()` no longer drops a local venue whose address uses the local name.
+- **Leaked teaser:** `generate-look-ahead` strips text above the first prose `[[header]]`.
+- **Desk:** `.ed-head` is a solid band with "Quartiere {i} di {n}" (`edNo`), sections are separated by a double rule, and a jump list (`jump`) links to each quartiere.
+- **Norwegian:** `nb` added everywhere the other languages are (see the 2026-09-25 entry); Oslo Frogner and Grünerløkka publish daily in Norwegian and Stockholm Södermalm in Swedish as pilots.
+- **Not changed:** the desk headline carries the translated section label ("Porta Venezia IL PUNTO DEL GIORNO: ..."), because that is what the feed returns; to be cleaned in both places together.
+
 ## 2026-09-25 (late): GEDI morning email, Italian display, Llama social judge, filler and repeated-day rules, Italian audio
 
 **Context.** GEDI's second call (25 Sep) asked for a daily link to each quartiere, an editor interface for Veronica Diquattro, room for 10 to 20 more quartieri, and a human check before anything runs under Repubblica's name. Prati read thin (two stories, one event) and Porta Venezia carried filler.
