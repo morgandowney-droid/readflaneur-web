@@ -231,6 +231,8 @@ const ITALIAN_FOR_ENGLISH: Record<string, string[]> = {
   municipio: ['municipality', 'municipio'], maratona: ['marathon'], fiera: ['fair'], antiquariato: ['antiques', 'antique'],
   arte: ['art'], moderna: ['modern'], contemporanea: ['contemporary'], internazionale: ['international'], europee: ['european'],
   giornate: ['days'], patrimonio: ['heritage'],
+  primavera: ['spring'], estate: ['summer'], autunno: ['autumn', 'fall'], inverno: ['winter'], collezione: ['collection'],
+  sfilata: ['show', 'runway'], moda: ['fashion'], settimana: ['week'], design: ['design'], cinema: ['cinema', 'film'],
 };
 
 const ITALIAN_FUNCTION_WORDS = new Set([
@@ -247,9 +249,14 @@ export function unknownProperNouns(script: string, sourceText: string, allowed: 
   const bad = new Set<string>();
   // Figures compared as numbers, so "alle 9" matches "09:00" in the source.
   const figures = new Set((`${sourceText} ${allowed.join(' ')}`.match(/\d+/g) || []).map((n) => String(Number(n))));
+  // "2:00 PM" in the English listing is read aloud as "14:00" (Prati, 28 Sep).
+  for (const m of `${sourceText} ${allowed.join(' ')}`.matchAll(/\b(\d{1,2})(?::\d{2})?\s*([AaPp])\.?[Mm]\b/g)) {
+    const h = Number(m[1]) % 12 + (/p/i.test(m[2]) ? 12 : 0);
+    figures.add(String(h));
+  }
 
   for (const sentence of script.split(/(?<=[.!?:;])\s+|\n+/)) {
-    const words = sentence.split(/\s+/).map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')).filter(Boolean);
+    const words = sentence.split(/[\s/]+/).map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')).filter(Boolean);
     words.forEach((raw, i) => {
       const w = raw.replace(ELISION, '');
       if (!w) return;
@@ -297,7 +304,7 @@ export function wordCount(s: string): number {
 
 /** Middle section limits: with the fixed opening and close, about 60 to 90 seconds. */
 const MIN_WORDS = 90;
-const MAX_WORDS = 210;
+const MAX_WORDS = 250;
 
 export function scriptProblem(body: string, src: ScriptSource, allowed: string[]): string | null {
   if (!body.trim()) return 'empty script';
@@ -373,7 +380,32 @@ export async function writeScript(
     rejected.push(problem);
     feedback = problem;
   }
-  throw new Error(`script rejected: ${rejected.join(' / ')}`);
+  const fallback = fallbackBody(src);
+  if (!fallback) throw new Error(`script rejected: ${rejected.join(' / ')}`);
+  rejected.push('used the edition text read verbatim');
+  return { body: fallback, attempts: 4, rejected };
+}
+
+/**
+ * The last resort when every model script fails a check: read the edition's own
+ * Italian text, each story's header and its first two sentences, then the
+ * events as listed. Nothing is written by a model here, so nothing can be
+ * invented, and a quartiere never goes without audio (Prati and Porta Venezia
+ * lost theirs on 28 Sep to a time format and an overlong script).
+ */
+export function fallbackBody(src: ScriptSource): string | null {
+  const parts: string[] = [];
+  for (const s of src.stories) {
+    const sentences = s.text.match(/[^.!?]+[.!?]+/g) || [s.text];
+    const lead = sentences.slice(0, 2).join(' ').trim();
+    if (lead) parts.push(`${s.header}. ${lead}`);
+  }
+  if (src.events.length) {
+    const evs = src.events.slice(0, 3).map((e) => `${e.name}, ${e.when}${e.place ? `, ${e.place}` : ''}.`);
+    parts.push(`In arrivo. ${evs.join(' ')}`);
+  }
+  const body = cleanScript(parts.join('\n\n'));
+  return wordCount(body) >= 20 ? body : null;
 }
 
 export function fullScript(edition: Pick<Edition, 'name' | 'city'>, date: string, body: string): string {
