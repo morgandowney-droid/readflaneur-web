@@ -66,6 +66,13 @@ export interface EditionRuleGroup {
    * group; see isEvergreenFiller().
    */
   excludeEvergreenFiller?: boolean;
+  /**
+   * A Look Ahead listing entry may stand without a story in the written text,
+   * as long as it has a named venue (not a placeholder) and no topic rule
+   * fires. Listings are low stakes: who, where, when. Off by default, where a
+   * listing entry stands only on a story whose source was checked.
+   */
+  listingEventsStandAlone?: boolean;
 }
 
 export const EDITION_RULE_GROUPS: Record<string, EditionRuleGroup> = {
@@ -96,6 +103,10 @@ export const EDITION_RULE_GROUPS: Record<string, EditionRuleGroup> = {
     // On (2026-09-25) after Porta Venezia published "FIVE Rooftop continues
     // to be a popular choice", an item with no event, date or change.
     excludeEvergreenFiller: true,
+    // On (2026-09-28), Morgan: "Event listings are low stakes." A dry run of
+    // Prati found in-area events (Cinema Eden, the Foro Italico) cut only
+    // because the written text did not mention them.
+    listingEventsStandAlone: true,
   },
   // Examples for the other licensees. Not active: nothing has been agreed with
   // them, and an edition without a group must behave exactly as before.
@@ -909,6 +920,13 @@ function unlinkBlocked(text: string, rules: EditionRules): { text: string; unlin
   return { text: out, unlinked };
 }
 
+/** A venue a reader could go to: not missing, not "various", not a placeholder. */
+const PLACEHOLDER_VENUE = /^(?:not (?:specified|listed|available)|various|multiple|tbd|tba|n\/?a|unknown|none|online|varie|diverse)\b/i;
+function hasNamedVenue(e: ListingEvent): boolean {
+  const v = (e.location || e.address || '').trim();
+  return v.length >= 3 && !PLACEHOLDER_VENUE.test(v);
+}
+
 function eventText(e: { name: string; category?: string | null; location?: string | null; address?: string | null }): string {
   return [e.name, e.category, e.location, e.address].filter(Boolean).join(' ');
 }
@@ -941,6 +959,7 @@ function filterEventsAgainst<E extends ListingEvent>(
     const hits = topicHits(t, rules);
     const accounted = keptStories.some((s, i) => eventMatchesStory(t, matchers[i], s, exclude));
     if (hits.length === 0 && accounted) return true;
+    if (hits.length === 0 && rules.listingEventsStandAlone && hasNamedVenue(e)) return true;
     removals.push({ header: `Listing: ${e.name}`, rule: hits[0] || 'listing-without-verified-story' });
     return false;
   });

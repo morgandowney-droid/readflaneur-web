@@ -14,6 +14,14 @@
 - **Enrichment for Norway:** greeting example "God morgen, naboer." for Oslo, Norwegian search hint (Aftenposten, VG, Dagbladet, NRK, local paper), `bakeri` local-flavour example, NOK in the Sunday data point, 17. mai in the holiday list, Norwegian kroner in `place-boundary.ts`, and Norway in `NEWSPAPERS_OF_RECORD` (shadow sourcing standard). Greeting detectors (`ArticleBody`, `CompactArticleCard`, `NeighborhoodBrief`, `assembler`, `grok`, enricher) accept "God morgen" and a whole-word "Hei".
 - **Docs:** `docs/licensee-feed-api.md` and its `public/docs` copy list `nb`.
 
+## 2026-09-28: first live GEDI morning, audio fallback, Prati dry run, standalone listings for GEDI
+
+- **First live send:** `send-gedi-morning` sent at 07:30 Rome (05:30 UTC) to all three recipients in one message; audio links for Brera and Scicli only.
+- **Audio failures:** Prati ("names not in the edition: 14:00" three times) and Porta Venezia ("too long" twice, then "Primavera/Estate"). Fixes in `edition-audio.ts`: 12-hour times in the source also count as 24-hour hours; words split on "/"; spring/summer/collection/show/fashion equivalents; `MAX_WORDS` 250; `fallbackBody()` reads each story's header and first two sentences and the listed events verbatim when all model attempts fail. Both recordings regenerated at 09:34.
+- **Prati dry run (search half, a few cents, nothing published):** Grok 0 events; Gemini 29; district fence dropped 16 (Teatro Vascello 3.3 km, Sapienza 5 km, libraries 5 to 8 km, unplaced items); GEDI listing rule dropped 13 (the daily markets). With the Stadio Olimpico, Foro Italico and Castel Sant'Angelo named in the catchment, the same search found the Venice Festival screenings at Cinema Eden (Piazza Cola di Rienzo) and Tennis & Friends at the Foro Italico.
+- **`listingEventsStandAlone`** (new `EditionRuleGroup` option, on for GEDI): `filterEventsAgainst()` keeps a listing entry with no matching story when it has a named venue and no topic rule fires. Test added to `scripts/test-edition-rules.mjs` (38 pass): Cinema Eden kept; "Not specified", "Various cinemas" and a party rally dropped.
+- **Follow-ups:** the seven scheduled 20-Sep follow-ups sent at 09:00 CEST; Hughie Devine (Mediahuis, cc) out of office.
+
 ## 2026-09-27: GEDI email live, Prati audio, local-language event search, desk bands, Norwegian
 
 **Context.** Morgan read the first weekend's GEDI preview email and the editor desk and listed five things: Prati had no audio, no recording said good morning to its quartiere, the content was light (Prati's Look Ahead had only today and tomorrow), whether all three GEDI readers get the same email, and quartieri on the desk blended into each other.

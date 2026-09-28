@@ -347,8 +347,18 @@ test('listing lines only stand on a surviving story; empty day headers go', () =
   assert.ok(!r.body.includes('[[Sun, Jun 15]]'), 'empty listing day removed');
   assert.ok(!r.body.includes('[[Sunday, June 15]]'), 'empty prose day removed');
   assert.ok(r.body.includes('\n---'), 'listing block still closed');
-  const ev = R.filterListingEvents([{ name: 'Jazz trio at Blue Note', location: 'Blue Note Milano' }, { name: 'Unverified street party', location: 'Via Brera' }], r.categories, gedi, ['Brera', 'Milan']);
+  const strict = { ...gedi, listingEventsStandAlone: false };
+  const ev = R.filterListingEvents([{ name: 'Jazz trio at Blue Note', location: 'Blue Note Milano' }, { name: 'Unverified street party', location: 'Via Brera' }], r.categories, strict, ['Brera', 'Milan']);
   assert.deepEqual(ev.events.map((e) => e.name), ['Jazz trio at Blue Note']);
+});
+test('GEDI keeps a listing with a named venue and no story, but not a placeholder venue or a topic hit', () => {
+  const ev = R.filterListingEvents([
+    { name: 'Venice Festival screenings', location: 'Cinema Eden', address: 'Piazza Cola di Rienzo 74' },
+    { name: 'Poetry reading', location: 'Not specified' },
+    { name: 'Film week', location: 'Various cinemas' },
+    { name: "Fratelli d'Italia rally", location: 'Piazza Mazzini' },
+  ], [], gedi, ['Prati', 'Rome']);
+  assert.deepEqual(ev.events.map((e) => e.name), ['Venice Festival screenings']);
 });
 
 console.log('\nInsert check');
