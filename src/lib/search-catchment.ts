@@ -47,7 +47,10 @@ const SEARCH_CATCHMENTS: Readonly<Record<string, readonly string[]>> = {
   // Widened 25 Sep after GEDI's editor saw a two-story brief and a one-event
   // Look Ahead: Trionfale (the market district on Via Andrea Doria) and
   // Via Cola di Rienzo, the high street, carry most of the area's daily life.
-  'rome-prati': ['Prati', 'Piazza Mazzini', 'Della Vittoria', 'Trionfale', 'Via Cola di Rienzo'],
+  // The Stadio Olimpico and Foro Italico are in Della Vittoria, inside the
+  // area: home games, concerts and tennis. A 28 Sep dry run found none of them
+  // until they were named (the searches found only what they were asked for).
+  'rome-prati': ['Prati', 'Piazza Mazzini', 'Della Vittoria', 'Trionfale', 'Via Cola di Rienzo', 'Stadio Olimpico', 'Foro Italico', "Castel Sant'Angelo"],
   // Porta Venezia, Milan (GEDI, 2026-09-23). Lazzaretto and Corso Buenos Aires
   // are inside the same Buenos Aires-Venezia NIL and carry most of its street
   // life. Stops short of Stazione Centrale and the Quadrilatero.
