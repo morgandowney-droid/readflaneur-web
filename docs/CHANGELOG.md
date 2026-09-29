@@ -3,6 +3,33 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-09-29: the publisher chooses the audio voice (A to E)
+
+**Context.** Morgan picked Isabella Multilingual for Brera in a blind listen, but he is not a native speaker of Italian, German or French. Native editors should choose. During a publisher's setup, besides defining the area, we send them audio samples for that area; they pick a voice labelled A to E. Model and provider names stay hidden. A is the default and always an Azure voice.
+
+**Onboarding step.** At setup, send the publisher `/editor/<group>/voices?key=<desk key>&edition=<id>` for their area (key from `node scripts/print-editor-key.mjs <group>`). They listen and press "Choose this voice". A is the default. The choice applies from the next morning's audio run.
+
+- **Catalogue** `src/lib/voice-options.ts`: per language (it, de, fr, es, en, nb, sv, pt) five options `{ label, provider, voice, model?, rate?, gender }`. Azure A to C checked against `GET https://northeurope.tts.speech.microsoft.com/cognitiveservices/voices/list` on 29 Sep, and all 24 rendered locally:
+  - it: A IsabellaMultilingual (F), B GiuseppeMultilingual (M), C AlessioMultilingual (M)
+  - de: A SeraphinaMultilingual (F), B FlorianMultilingual (M), C Katja (F)
+  - fr: A VivienneMultilingual (F), B RemyMultilingual (M), C LucienMultilingual (M)
+  - es: A XimenaMultilingual (F), B TristanMultilingual (M), C ArabellaMultilingual (F)
+  - en (en-GB): A AdaMultilingual (F), B OllieMultilingual (M), C Sonia (F)
+  - nb: A Pernille (F), B Finn (M), C Iselin (F) (no Multilingual nb-NO voice exists)
+  - sv: A Sofie (F), B Mattias (M), C Hillevi (F) (no Multilingual sv-SE voice exists)
+  - pt (pt-PT): A Raquel (F), B Duarte (M), C Fernanda (F)
+  - D and E everywhere: ElevenLabs `eleven_v4`, premade Alice (`Xb7hH8MSUJpSbSDYk0k2`, F) and George (`JBFqnCBsd6RMkjVDRZzb`, M), both native British English. The production key lacks `voices_read`, so native voice ids cannot be listed by us; every non-English D/E carries a TODO to replace it with a native voice from the ElevenLabs library.
+- **Choice** table `edition_voice_choice` (migration `20260929120000_edition_voice_choice.sql`, not run): `neighborhood_id` primary key, `label` (A-E check), `language`, resolved `provider`/`voice`/`model`, `chosen_by`, `chosen_at`. Service role grant and RLS.
+- **Resolution** (`resolveVoice()` in voice-options, `resolveEditionVoice()` in edition-audio): choice (through the catalogue by label; the stored provider/voice if the label was removed) > `EDITION_VOICES` > language option A. `loadVoiceChoice(s)` never throws; an unreadable table keeps the existing behaviour.
+- **ElevenLabs synthesis** (`synthesizeElevenLabs()`, `synthesizeVoice()` in edition-audio): `POST /v1/text-to-speech/<voice>?output_format=mp3_44100_128` with `xi-api-key` and `model_id`; plain text only. On any failure the edition's Azure voice (`azureFallbackVoice()`) reads the script. Duration uses the bitrate of the format actually produced (48 kbps Azure, 128 kbps ElevenLabs). The `edition_audio.model` column reads `<gemini> + <provider>:<model>:<voice>` with ` (fallback)` when it fell back; the cron response adds `provider`, `voice_label`, `voice_source`, `fell_back`. The Italian IPA lexicon now applies only to an Italian voice.
+- **Cost**: `ai-cost.ts` provider `elevenlabs`, price key `eleven_v4` at $80 per 1M characters (list $0.08 per 1,000); launch price $0.022 per 1,000 until 12 Oct 2026 noted in a comment only. Sample renders are recorded as operation `edition_audio_sample`.
+- **Samples page** `src/app/editor/[group]/voices/route.ts` (+ `src/lib/voice-samples.ts`): desk key, `PRIVATE_HEADERS`, 404 on a bad key or an edition outside the group. Each option reads the first ~150 words of the edition's latest `edition_audio` script in the group language, or the latest Daily Brief read verbatim (`fallbackBody`) when there is none. Samples cached in the public `edition-audio` bucket at `samples/<edition>/<label>-<date>-<hash>.mp3` (a hash of provider/voice/model/rate so an edited option renders afresh; `?refresh=1` forces it); up to 6 renders at a time within an 80 s budget, later ones show "being prepared". A failed sample shows as unavailable and never falls back to another voice. Shows the current voice (chosen by whom and when, the one set up for the area, or "not one of A to E" for Prati's Marcello), marks A as default, and says the choice applies from the next morning. Italian UI for GEDI.
+- **Choose** `src/app/editor/[group]/voices/choose/route.ts`: POST `{ edition, label, name? }`; name from the `flaneur-editor-name` cookie (or body), required; edition must be in the group; label must be in the group language's catalogue; upserts `edition_voice_choice`; 503 with a plain message while the table does not exist.
+- **Desk**: "Voce / Voice" link next to each quartiere's audio heading (also when there is no audio yet); a catalogue voice is shown as "Voce A" rather than a provider voice name.
+- **Licensee feed**: `audio.voice` is the option label ("Voce B") for a catalogue voice.
+- **Tests**: `scripts/test-voice-options.mjs` (resolution order, label validation, no provider/model/voice string in customer labels, sample paths, feed label, or in quoted strings of the two new routes).
+- **Not tested**: ElevenLabs synthesis and fallback against the live API (no valid local key); rendering and uploading samples to the bucket (no local Azure key in `.env.local`; Azure voices were rendered separately to local files only); a successful choice upsert (table not created).
+
 ## 2026-09-25: Norwegian Bokmål (`nb`) as a tenth language
 
 **Context.** To pitch Schibsted and other Norwegian publishers with editions in Norwegian, `nb` is supported everywhere the other eight non-English languages are.
