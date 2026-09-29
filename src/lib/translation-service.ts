@@ -250,6 +250,11 @@ function repairJsonStrings(text: string): string {
   return out;
 }
 
+/** Languages translated with Gemini Pro plus a copy-edit pass, with the copy editor's brief. */
+const QUALITY_LANGUAGES: Record<string, string> = {
+  nb: 'Du er språkvasker i Aftenposten. Les denne norske teksten (bokmål) og rett alt som ikke er korrekt, naturlig norsk: grammatikk (kjønn på substantiv, bøying, verbformer etter modalverb), ordvalg, idiomer og setninger som leses som oversatt fra engelsk. Teksten skal leses som skrevet av en norsk journalist. Ikke endre fakta, navn, steder, tall, datoer, lenker i [tekst](url)-form, [[overskrifter]] eller **fet skrift** utover språket. Ikke legg til eller fjern innhold.',
+};
+
 /**
  * Translate via Qwen (OpenRouter) when available, otherwise Gemini Flash.
  * Qwen failure also falls back to Gemini, so translation never goes dark.
@@ -260,6 +265,19 @@ async function translateJson<T>(
   label: string,
   provider: TranslationProvider = 'default',
 ): Promise<T | null> {
+  // Norwegian goes to Gemini Pro and then through a native copy-edit pass.
+  // Flash and Qwen wrote grammatical errors a Norwegian editor sees at once
+  // ("vil forblir", "en innlegg", "entusiaserte", Frogner, 29 Sep), and the
+  // Norwegian editions exist to be read by Norwegian publishers.
+  const quality = QUALITY_LANGUAGES[label];
+  const proKey = process.env.GEMINI_API_KEY;
+  if (quality && proKey) {
+    const draft = await callGeminiWithRetry<T>(proKey, prompt, operation, label, AI_MODELS.GEMINI_PRO);
+    if (draft) {
+      const edited = await callGeminiWithRetry<T>(proKey, `${quality}\n\nReturn ONLY the corrected JSON, with exactly the same keys and structure.\n\n${JSON.stringify(draft)}`, `${operation}_copyedit`, label, AI_MODELS.GEMINI_PRO);
+      return edited || draft;
+    }
+  }
   if (provider !== 'gemini' && process.env.OPENROUTER_API_KEY?.trim()) {
     const qwen = await callQwen<T>(prompt, operation, label);
     if (qwen) return qwen;
@@ -337,19 +355,21 @@ async function callGeminiWithRetry<T>(
   prompt: string,
   operation: string,
   label?: string,
+  model: string = AI_MODELS.GEMINI_FLASH,
 ): Promise<T | null> {
   const ai = new GoogleGenAI({ apiKey });
 
   for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
     try {
       const result = await ai.models.generateContent({
-        model: AI_MODELS.GEMINI_FLASH,
+        model,
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: {
-          thinkingConfig: { thinkingBudget: 0 },
+          // Flash thinking stays off (billed hidden tokens); Pro gets a small budget.
+          thinkingConfig: { thinkingBudget: model === AI_MODELS.GEMINI_FLASH ? 0 : 1024 },
         },
       });
-      recordGeminiCall(result, { operation, kind: 'generation', model: AI_MODELS.GEMINI_FLASH, label });
+      recordGeminiCall(result, { operation, kind: 'generation', model, label });
 
       const text = result.text?.trim() || '';
       return parseJsonLoose<T>(text);
