@@ -90,7 +90,7 @@ test('SSML escapes text and applies the lexicon once, whole words only', () => {
   assert.ok(ssml.includes('<phoneme alphabet="ipa" ph="ˈʃikli">Scicli</phoneme> &amp; <phoneme alphabet="ipa" ph="donnaluˈkaːta">Donnalucata</phoneme>'));
   assert.ok(ssml.includes('Sciclitani a <phoneme'), 'Sciclitani is not Scicli');
   assert.ok(ssml.includes('<break time="700ms"/>'));
-  assert.ok(ssml.includes('<voice name="it-IT-GiuseppeNeural">'));
+  assert.ok(ssml.includes('<voice name="it-IT-GiuseppeMultilingualNeural">'));
   assert.ok(!A.buildSsml('Scicli', A.voiceFor('sicily-scicli'), false).includes('phoneme'));
 });
 

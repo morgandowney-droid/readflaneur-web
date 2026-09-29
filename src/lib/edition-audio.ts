@@ -62,16 +62,20 @@ export interface EditionVoice {
  * accent: Azure's Italian voices are standard Italian.
  */
 export const EDITION_VOICES: Record<string, EditionVoice> = {
-  'milan-brera': { voice: 'it-IT-IsabellaNeural', lang: 'it-IT', rate: '+4%' },
-  'milan-porta-venezia': { voice: 'it-IT-DiegoNeural', lang: 'it-IT', rate: '+4%' },
-  'rome-prati': { voice: 'it-IT-ElsaNeural', lang: 'it-IT', rate: '+4%' },
-  'sicily-scicli': { voice: 'it-IT-GiuseppeNeural', lang: 'it-IT', rate: '+2%' },
+  // Multilingual voices since 29 Sep: in a blind listen of the same Brera
+  // script, Morgan picked Isabella Multilingual as more human and higher
+  // definition than standard Isabella and than the MAI-Voice-2.1 HD previews
+  // (which sounded flat). Isabella is the only female Multilingual voice.
+  'milan-brera': { voice: 'it-IT-IsabellaMultilingualNeural', lang: 'it-IT', rate: '+4%' },
+  'milan-porta-venezia': { voice: 'it-IT-AlessioMultilingualNeural', lang: 'it-IT', rate: '+4%' },
+  'rome-prati': { voice: 'it-IT-MarcelloMultilingualNeural', lang: 'it-IT', rate: '+4%' },
+  'sicily-scicli': { voice: 'it-IT-GiuseppeMultilingualNeural', lang: 'it-IT', rate: '+2%' },
 };
 
 export const AUDIO_EDITION_IDS = Object.keys(EDITION_VOICES);
 
 export function voiceFor(editionId: string): EditionVoice {
-  return EDITION_VOICES[editionId] || { voice: 'it-IT-IsabellaNeural', lang: 'it-IT', rate: '+4%' };
+  return EDITION_VOICES[editionId] || { voice: 'it-IT-IsabellaMultilingualNeural', lang: 'it-IT', rate: '+4%' };
 }
 
 /**

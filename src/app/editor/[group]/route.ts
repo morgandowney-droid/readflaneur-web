@@ -336,7 +336,7 @@ function audioHtml(ed: DeskEdition, s: Strings): string {
   if (!a) return '';
   const secs = a.durationS ? Math.round(a.durationS) : null;
   const len = secs ? ` · ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}` : '';
-  const voiceName = a.voice.replace(/^[a-z]{2}-[A-Z]{2}-/, '').replace(/Neural$/, '');
+  const voiceName = a.voice.replace(/^[a-z]{2}-[A-Z]{2}-/, '').replace(/Neural$/, '').replace(/Multilingual$/, '');
   const script = a.script.split(/\n\s*\n/).map((p) => `<p>${esc(p.trim())}</p>`).join('');
   return `<div class="block audio"><h3>${s.audio}<span class="muted small">${len}</span></h3>
       <audio controls preload="none" src="${esc(a.url)}"></audio>
