@@ -16,11 +16,10 @@
  * a fresh sample on the next view without ?refresh=1.
  *
  * Azure voices checked against the voices list endpoint (northeurope) on
- * 29 Sep 2026. ElevenLabs: our production key lacks voices_read, so voice ids
- * cannot be listed by us; D and E use ElevenLabs premade voices whose ids are
- * publicly documented, which speak every Eleven v4 language but are native
- * English speakers. They carry a TODO until a native voice from the ElevenLabs
- * library replaces them.
+ * 29 Sep 2026. ElevenLabs: Italian D and E are native voices found in the
+ * shared Voice Library (GET /api/admin/tts-compare?op=shared&language=it).
+ * Other languages still use premade British voices and carry a TODO until a
+ * native library voice replaces them.
  *
  * Pure module (no database, no network) so scripts/test-voice-options.mjs can
  * load it directly.
@@ -53,6 +52,9 @@ export const ELEVEN_MODEL = 'eleven_v4';
  */
 const ELEVEN_ALICE = 'Xb7hH8MSUJpSbSDYk0k2'; // female, British English
 const ELEVEN_GEORGE = 'JBFqnCBsd6RMkjVDRZzb'; // male, British English
+/** Native Italian, ElevenLabs shared Voice Library. Library voices speak by id without being added to the account. */
+const ELEVEN_IT_CARLA = 'litDcG1avVppv4R90BLu'; // female, "Natural, Reflective & Narrative"
+const ELEVEN_IT_LUIGI = 'KUqzTMhYFYqnFWfMUjfX'; // male, "Natural Italian"
 
 function az(label: VoiceLabel, voice: string, gender: VoiceOption['gender'], rate = '+4%'): VoiceOption {
   return { label, provider: 'azure', voice, rate, gender };
@@ -67,10 +69,11 @@ export const VOICE_OPTIONS: Record<VoiceLanguage, VoiceOption[]> = {
     az('A', 'it-IT-IsabellaMultilingualNeural', 'female'),
     az('B', 'it-IT-GiuseppeMultilingualNeural', 'male'),
     az('C', 'it-IT-AlessioMultilingualNeural', 'male'),
-    // TODO: replace with a native Italian voice from the ElevenLabs library.
-    el('D', ELEVEN_ALICE, 'female'),
-    // TODO: replace with a native Italian voice from the ElevenLabs library.
-    el('E', ELEVEN_GEORGE, 'male'),
+    // D, E: native Italian voices from the ElevenLabs shared library, standard
+    // accent, narration style (chosen 29 Sep; runners-up Beatrice
+    // UnOINkXZ3yK4vVg3Iayj and Valentino lJylpTXX0sNdqq5EUv4M).
+    el('D', ELEVEN_IT_CARLA, 'female'),
+    el('E', ELEVEN_IT_LUIGI, 'male'),
   ],
   de: [
     az('A', 'de-DE-SeraphinaMultilingualNeural', 'female'),
