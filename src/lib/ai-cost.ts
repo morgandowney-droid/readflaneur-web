@@ -16,7 +16,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { currentUsageTap } from '@/lib/ai-usage-tap';
 
-export type AiProvider = 'gemini' | 'grok' | 'claude' | 'openai' | 'qwen' | 'meta' | 'azure';
+export type AiProvider = 'gemini' | 'grok' | 'claude' | 'openai' | 'qwen' | 'meta' | 'azure' | 'elevenlabs';
 export type AiKind = 'search' | 'generation';
 
 interface ModelPrice {
@@ -55,6 +55,12 @@ const MODEL_PRICING: Record<string, ModelPrice> = {
   // Billed per character, not per token: record characters as inputTokens.
   // $16 per 1M characters (Azure pay-as-you-go, checked 2026-09-25).
   'azure-tts-neural': { inputPerM: 16.0, outputPerM: 0, cachedInputPerM: 16.0 },
+  // ElevenLabs text to speech, Eleven v4 (edition-audio.ts, voice-options.ts).
+  // Per character like Azure: record characters as inputTokens. List price
+  // $0.08 per 1,000 characters = $80 per 1M. (Launch price $0.022 per 1,000
+  // until 12 Oct 2026; we record the list price so estimates do not drop and
+  // then jump.)
+  eleven_v4: { inputPerM: 80.0, outputPerM: 0, cachedInputPerM: 80.0 },
 };
 
 // Empirical per-call live-search fee for Grok (xAI console total / call count).

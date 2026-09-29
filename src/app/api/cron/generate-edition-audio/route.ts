@@ -126,7 +126,8 @@ export async function GET(request: NextRequest) {
       ...responseData,
       created,
       editions: results.map((r) => ({
-        edition: r.edition, status: r.status, reason: r.reason, voice: r.voice, duration_s: r.duration_s,
+        edition: r.edition, status: r.status, reason: r.reason, voice: r.voice, provider: r.provider,
+        voice_label: r.voice_label, voice_source: r.voice_source, fell_back: r.fell_back, duration_s: r.duration_s,
         words: r.words, characters: r.characters, cost_usd: r.cost_usd, attempts: r.attempts, rejected: r.rejected,
       })),
       cost_usd: Number(results.reduce((s, r) => s + (r.cost_usd || 0), 0).toFixed(4)),

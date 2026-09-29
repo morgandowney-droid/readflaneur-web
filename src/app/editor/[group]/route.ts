@@ -14,6 +14,7 @@ import {
 import type { LoggedRemoval } from '@/lib/editorial-decisions';
 import type { FeedLanguage } from '@/lib/licensees';
 import { judgeLabel } from '@/lib/social-judge-core';
+import { customerVoiceLabel, labelForVoice } from '@/lib/voice-options';
 
 /**
  * Private editor desk for a licensee whose feed requires approval.
@@ -53,7 +54,9 @@ const STRINGS = {
     lookAhead: 'Look Ahead',
     audio: 'Audio edition',
     audioScript: 'Script',
-    audioVoice: 'Local voice: {v} (standard Italian, not a dialect)',
+    voiceLink: 'Voice',
+    voiceLinkTitle: 'Listen to voices A to E and choose one for this area',
+    audioVoice: 'Voice: {v} (standard Italian, not a dialect)',
     audioReady: 'Your feed carries this audio: every story and event it reads is approved.',
     audioNotReady: 'Read from the edition published this morning. Your feed carries it only once every story and event it reads is approved without edits.',
     headline: 'Headline',
@@ -131,7 +134,9 @@ const STRINGS = {
     lookAhead: 'In arrivo',
     audio: 'Edizione audio',
     audioScript: 'Testo letto',
-    audioVoice: 'Voce locale: {v} (italiano standard, non dialetto)',
+    voiceLink: 'Voce',
+    voiceLinkTitle: 'Ascolta le voci da A a E e scegline una per questo quartiere',
+    audioVoice: 'Voce: {v} (italiano standard, non dialetto)',
     audioReady: 'Il vostro feed trasporta questo audio: ogni notizia ed evento letto è approvato.',
     audioNotReady: "Letto dall'edizione pubblicata stamattina. Il vostro feed lo trasporta solo quando ogni notizia ed evento letto è approvato senza modifiche.",
     headline: 'Titolo',
@@ -331,14 +336,19 @@ function countsText(items: DeskItem[], s: Strings): string {
   return fmt(s.counts, { a: n('approved'), h: n('held'), n: n('pending') });
 }
 
-function audioHtml(ed: DeskEdition, s: Strings): string {
+function audioHtml(ed: DeskEdition, s: Strings, voicesUrl: string, lang: FeedLanguage): string {
   const a = ed.audio;
-  if (!a) return '';
+  const link = `<a class="voice-link" href="${esc(voicesUrl)}" title="${esc(s.voiceLinkTitle)}">${s.voiceLink}</a>`;
+  if (!a) return `<div class="block audio"><h3>${s.audio}<span class="muted small"> · ${link}</span></h3></div>`;
   const secs = a.durationS ? Math.round(a.durationS) : null;
   const len = secs ? ` · ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}` : '';
-  const voiceName = a.voice.replace(/^[a-z]{2}-[A-Z]{2}-/, '').replace(/Neural$/, '').replace(/Multilingual$/, '');
+  // A catalogue voice shows as its option ("Voce A"); never a provider's voice id.
+  const label = labelForVoice(a.language, a.voice);
+  const voiceName = label
+    ? customerVoiceLabel(label, lang)
+    : a.voice.replace(/^[a-z]{2}-[A-Z]{2}-/, '').replace(/Neural$/, '').replace(/Multilingual$/, '');
   const script = a.script.split(/\n\s*\n/).map((p) => `<p>${esc(p.trim())}</p>`).join('');
-  return `<div class="block audio"><h3>${s.audio}<span class="muted small">${len}</span></h3>
+  return `<div class="block audio"><h3>${s.audio}<span class="muted small">${len} · ${link}</span></h3>
       <audio controls preload="none" src="${esc(a.url)}"></audio>
       <p class="muted small">${esc(fmt(s.audioVoice, { v: voiceName }))}</p>
       <p class="small ${a.feedReady ? 'verdict ok' : 'muted'}">${a.feedReady ? s.audioReady : s.audioNotReady}</p>
@@ -346,7 +356,7 @@ function audioHtml(ed: DeskEdition, s: Strings): string {
     </div>`;
 }
 
-function editionHtml(ed: DeskEdition, day: DeskDay, s: Strings, archiveBase: string, idx = 0, total = 1): string {
+function editionHtml(ed: DeskEdition, day: DeskDay, s: Strings, archiveBase: string, voicesBase: string, idx = 0, total = 1): string {
   const items = allItems(ed);
   const fallback = day.lang !== 'en' && ed.language !== day.lang ? `<p class="note">${s.langFallback}</p>` : '';
   const head = `<header class="ed-head">
@@ -372,7 +382,7 @@ function editionHtml(ed: DeskEdition, day: DeskDay, s: Strings, archiveBase: str
       </div>`
     : '';
 
-  return `<section class="edition" id="ed-${esc(ed.id)}" data-hood="${esc(ed.id)}">${head}${fallback}${audioHtml(ed, s)}${brief}${la}</section>`;
+  return `<section class="edition" id="ed-${esc(ed.id)}" data-hood="${esc(ed.id)}">${head}${fallback}${audioHtml(ed, s, `${voicesBase}&edition=${encodeURIComponent(ed.id)}#ed-${encodeURIComponent(ed.id)}`, day.lang)}${brief}${la}</section>`;
 }
 
 function renderPage(day: DeskDay, key: string, tz: string): string {
@@ -380,6 +390,7 @@ function renderPage(day: DeskDay, key: string, tz: string): string {
   const g = day.group;
   const base = `/editor/${encodeURIComponent(g.id)}`;
   const archiveBase = `${base}/archive?key=${encodeURIComponent(key)}`;
+  const voicesBase = `${base}/voices?key=${encodeURIComponent(key)}&lang=${day.lang}`;
   const langs: FeedLanguage[] = Array.from(new Set<FeedLanguage>(['en', g.licensee.defaultLang || 'en']));
   const langLinks = langs
     .map((l) => `<a class="lang${l === day.lang ? ' on' : ''}" href="${base}?key=${encodeURIComponent(key)}&date=${day.date}&lang=${l}">${l.toUpperCase()}</a>`)
@@ -501,6 +512,7 @@ function renderPage(day: DeskDay, key: string, tz: string): string {
   .rule{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
   .audio audio{width:100%;max-width:520px;display:block;margin:0 0 6px}
   .audio p{margin:2px 0}
+  .voice-link{font:600 11.5px/1.4 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--fg)}
   details.cut{margin:6px 0 0;font-size:14px}
   details.cut summary{cursor:pointer;color:var(--muted)}
   .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
@@ -549,7 +561,7 @@ function renderPage(day: DeskDay, key: string, tz: string): string {
     <div class="langs" aria-label="${s.language}">${langLinks}</div>
   </div>
   <nav class="jump" aria-label="${s.jump}"><span class="jl">${s.jump}</span>${day.editions.map((ed, i) => `<a href="#ed-${esc(ed.id)}"><b>${i + 1}</b> ${esc(ed.name)}</a>`).join('')}</nav>
-  ${day.editions.map((ed, i) => editionHtml(ed, day, s, archiveBase, i, day.editions.length)).join('')}
+  ${day.editions.map((ed, i) => editionHtml(ed, day, s, archiveBase, voicesBase, i, day.editions.length)).join('')}
   <h2 class="sec">${s.history}</h2>
   ${history}
   <footer>

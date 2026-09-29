@@ -28,6 +28,15 @@
  *
  * Storage: public bucket `edition-audio` at <edition>/<local date>.mp3 and a
  * row in `edition_audio` (migration 20260927090000_edition_audio.sql).
+ *
+ * Publisher's voice (29 Sep): the publisher picks a voice A to E on
+ * /editor/[group]/voices (catalogue in voice-options.ts), stored in
+ * `edition_voice_choice`. Resolution: that choice, else EDITION_VOICES below,
+ * else the language's option A. If the choice table cannot be read the
+ * existing behaviour stands. An ElevenLabs voice gets plain text (the IPA
+ * lexicon is Azure SSML); if the ElevenLabs call fails, the edition's Azure
+ * voice reads the script instead, so no edition is left without audio, and
+ * the row records which voice produced it.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { GoogleGenAI } from '@google/genai';
@@ -37,12 +46,25 @@ import { isModelRefusal } from '@/lib/model-refusal';
 import { stateFor, storyKey, type ItemState } from '@/lib/editorial-decisions';
 import { getDailyEdition, type DailyEdition, type Edition } from '@/lib/licensee-feed';
 import type { FeedLanguage } from '@/lib/licensees';
+import {
+  azureLocale,
+  customerVoiceLabel,
+  defaultOption,
+  labelForVoice,
+  resolveVoice,
+  type ResolvedVoice,
+  type StoredVoiceChoice,
+} from '@/lib/voice-options';
 
 export const AUDIO_BUCKET = 'edition-audio';
 export const AUDIO_TABLE = 'edition_audio';
 const OUTPUT_FORMAT = 'audio-24khz-48kbitrate-mono-mp3';
 const BITRATE_BPS = 48_000;
 const TTS_MODEL = 'azure-tts-neural';
+/** ElevenLabs output: MP3 at 44.1 kHz, 128 kbps (duration is computed from this). */
+const ELEVEN_OUTPUT_FORMAT = 'mp3_44100_128';
+export const ELEVEN_BITRATE_BPS = 128_000;
+export const VOICE_CHOICE_TABLE = 'edition_voice_choice';
 
 // ─── Voices ────────────────────────────────────────────────────────────────
 
@@ -76,6 +98,57 @@ export const AUDIO_EDITION_IDS = Object.keys(EDITION_VOICES);
 
 export function voiceFor(editionId: string): EditionVoice {
   return EDITION_VOICES[editionId] || { voice: 'it-IT-IsabellaMultilingualNeural', lang: 'it-IT', rate: '+4%' };
+}
+
+/**
+ * The Azure voice that reads an edition when its chosen ElevenLabs voice
+ * fails: the edition's configured voice, else the language's option A.
+ */
+export function azureFallbackVoice(editionId: string, language: string): EditionVoice {
+  if (Object.prototype.hasOwnProperty.call(EDITION_VOICES, editionId)) return EDITION_VOICES[editionId];
+  const a = defaultOption(language);
+  if (a.provider === 'azure') return { voice: a.voice, lang: azureLocale(a.voice, language), rate: a.rate || '+0%' };
+  return voiceFor(editionId);
+}
+
+/** Choice, else EDITION_VOICES, else the language's option A. */
+export function resolveEditionVoice(editionId: string, language: string, choice: StoredVoiceChoice | null): ResolvedVoice {
+  return resolveVoice(editionId, language, choice, EDITION_VOICES);
+}
+
+export interface VoiceChoiceRow {
+  neighborhood_id: string;
+  label: string;
+  provider: string | null;
+  voice: string | null;
+  model: string | null;
+  chosen_by: string | null;
+  chosen_at: string | null;
+}
+
+/** The publisher's chosen voice for an edition, or null. Never throws (the table may not exist yet). */
+export async function loadVoiceChoice(db: SupabaseClient, editionId: string): Promise<VoiceChoiceRow | null> {
+  return (await loadVoiceChoices(db, [editionId])).get(editionId) || null;
+}
+
+/** Chosen voices keyed by edition. Never throws; an unreadable table gives an empty map. */
+export async function loadVoiceChoices(db: SupabaseClient, editionIds: string[]): Promise<Map<string, VoiceChoiceRow>> {
+  const map = new Map<string, VoiceChoiceRow>();
+  if (!editionIds.length) return map;
+  try {
+    const { data, error } = await db
+      .from(VOICE_CHOICE_TABLE)
+      .select('neighborhood_id, label, provider, voice, model, chosen_by, chosen_at')
+      .in('neighborhood_id', editionIds);
+    if (error) {
+      console.warn('[edition-audio] voice choice read failed:', error.message);
+      return map;
+    }
+    for (const r of (data || []) as VoiceChoiceRow[]) map.set(r.neighborhood_id, r);
+  } catch (e) {
+    console.warn('[edition-audio] voice choice read failed:', e instanceof Error ? e.message : String(e));
+  }
+  return map;
 }
 
 /**
@@ -438,6 +511,8 @@ function applyLexicon(escaped: string): string {
 
 export function buildSsml(script: string, v: EditionVoice, lexicon = true): string {
   const paras = script.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  // The lexicon is Italian IPA; it is only for an Italian voice.
+  lexicon = lexicon && v.lang.startsWith('it');
   const body = paras
     .map((p) => (lexicon ? applyLexicon(escapeXml(p)) : escapeXml(p)))
     .join('<break time="700ms"/>');
@@ -475,7 +550,11 @@ async function azureTts(ssml: string): Promise<{ audio: Buffer | null; status: n
  * phoneme), retry once without the lexicon rather than lose the edition.
  * Characters are counted on the SSML sent, an upper bound on what Azure bills.
  */
-export async function synthesize(script: string, v: EditionVoice): Promise<{ audio: Buffer; characters: number; lexicon: boolean }> {
+export async function synthesize(
+  script: string,
+  v: EditionVoice,
+  operation = 'edition_audio_tts',
+): Promise<{ audio: Buffer; characters: number; lexicon: boolean }> {
   let ssml = buildSsml(script, v, true);
   let characters = ssml.length;
   let r = await azureTts(ssml);
@@ -489,7 +568,7 @@ export async function synthesize(script: string, v: EditionVoice): Promise<{ aud
   recordAiUsage({
     provider: 'azure',
     model: TTS_MODEL,
-    operation: 'edition_audio_tts',
+    operation,
     kind: 'generation',
     inputTokens: characters,
     metadata: { voice: v.voice, ok: Boolean(r.audio), lexicon },
@@ -498,8 +577,105 @@ export async function synthesize(script: string, v: EditionVoice): Promise<{ aud
   return { audio: r.audio, characters, lexicon };
 }
 
-export function mp3DurationSeconds(bytes: number): number {
-  return Math.round(((bytes * 8) / BITRATE_BPS) * 10) / 10;
+export function mp3DurationSeconds(bytes: number, bitrateBps: number = BITRATE_BPS): number {
+  return Math.round(((bytes * 8) / bitrateBps) * 10) / 10;
+}
+
+export function elevenLabsConfigured(): boolean {
+  return Boolean(process.env.ELEVENLABS_API_KEY?.trim());
+}
+
+/** Plain text for ElevenLabs: paragraphs separated by a blank line, nothing else. */
+export function elevenLabsText(script: string): string {
+  return script.split(/\n\s*\n/).map((p) => p.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n\n');
+}
+
+async function elevenLabsTts(text: string, voiceId: string, model: string): Promise<{ audio: Buffer | null; status: number; error: string | null }> {
+  const key = process.env.ELEVENLABS_API_KEY?.trim();
+  if (!key) return { audio: null, status: 0, error: 'ELEVENLABS_API_KEY not set' };
+  try {
+    const res = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=${ELEVEN_OUTPUT_FORMAT}`,
+      {
+        method: 'POST',
+        headers: { 'xi-api-key': key, 'Content-Type': 'application/json', Accept: 'audio/mpeg' },
+        body: JSON.stringify({ text, model_id: model }),
+        signal: AbortSignal.timeout(90_000),
+      },
+    );
+    if (!res.ok) {
+      const err = (await res.text().catch(() => '')).slice(0, 300);
+      return { audio: null, status: res.status, error: `ElevenLabs TTS ${res.status}: ${err}` };
+    }
+    const audio = Buffer.from(await res.arrayBuffer());
+    if (!audio.length) return { audio: null, status: res.status, error: 'ElevenLabs TTS returned no audio' };
+    return { audio, status: res.status, error: null };
+  } catch (e) {
+    return { audio: null, status: 0, error: `ElevenLabs TTS: ${e instanceof Error ? e.message : String(e)}` };
+  }
+}
+
+/** One ElevenLabs call, recorded in ai_usage_events. Throws on failure. */
+export async function synthesizeElevenLabs(
+  script: string,
+  voiceId: string,
+  model: string,
+  operation = 'edition_audio_tts',
+): Promise<{ audio: Buffer; characters: number; cost_usd: number }> {
+  const text = elevenLabsText(script);
+  const r = await elevenLabsTts(text, voiceId, model);
+  const cost = estimateCost({ provider: 'elevenlabs', model, inputTokens: text.length, outputTokens: 0 });
+  recordAiUsage({
+    provider: 'elevenlabs',
+    model,
+    operation,
+    kind: 'generation',
+    inputTokens: text.length,
+    metadata: { voice: voiceId, ok: Boolean(r.audio), status: r.status },
+  });
+  if (!r.audio) throw new Error(r.error || 'ElevenLabs TTS returned no audio');
+  return { audio: r.audio, characters: text.length, cost_usd: cost };
+}
+
+export interface VoiceSynthesis {
+  audio: Buffer;
+  characters: number;
+  provider: 'azure' | 'elevenlabs';
+  voice: string;
+  model: string;
+  bitrateBps: number;
+  /** True when the chosen ElevenLabs voice failed and Azure read the script. */
+  fellBack: boolean;
+  fallbackReason: string | null;
+  cost_usd: number;
+}
+
+/**
+ * Read the script with the resolved voice. An ElevenLabs failure falls back
+ * to the edition's Azure voice so the edition still gets audio.
+ */
+export async function synthesizeVoice(script: string, resolved: ResolvedVoice, fallback: EditionVoice): Promise<VoiceSynthesis> {
+  let fallbackReason: string | null = null;
+  if (resolved.provider === 'elevenlabs') {
+    const model = resolved.model || 'eleven_v4';
+    try {
+      const r = await synthesizeElevenLabs(script, resolved.voice, model);
+      return {
+        audio: r.audio, characters: r.characters, provider: 'elevenlabs', voice: resolved.voice, model,
+        bitrateBps: ELEVEN_BITRATE_BPS, fellBack: false, fallbackReason: null, cost_usd: r.cost_usd,
+      };
+    } catch (e) {
+      fallbackReason = e instanceof Error ? e.message : String(e);
+      console.warn('[edition-audio] ElevenLabs failed, reading with Azure:', fallbackReason);
+    }
+  }
+  const v: EditionVoice = resolved.provider === 'azure' ? { voice: resolved.voice, lang: resolved.lang, rate: resolved.rate } : fallback;
+  const tts = await synthesize(script, v);
+  return {
+    audio: tts.audio, characters: tts.characters, provider: 'azure', voice: v.voice, model: TTS_MODEL,
+    bitrateBps: BITRATE_BPS, fellBack: resolved.provider === 'elevenlabs', fallbackReason,
+    cost_usd: estimateCost({ provider: 'azure', model: TTS_MODEL, inputTokens: tts.characters, outputTokens: 0 }),
+  };
 }
 
 // ─── Rows ──────────────────────────────────────────────────────────────────
@@ -574,7 +750,13 @@ export function audioForFeed(
       if (st.status !== 'approved' || st.edited) return null;
     }
   }
-  return { url: row.audio_url, duration_s: row.duration_s === null ? null : Number(row.duration_s), voice: row.voice };
+  // A licensee sees the voice as its option label ("Voce A"), never a provider's voice name or id.
+  const label = labelForVoice(row.language, row.voice);
+  return {
+    url: row.audio_url,
+    duration_s: row.duration_s === null ? null : Number(row.duration_s),
+    voice: label ? customerVoiceLabel(label, row.language) : row.voice,
+  };
 }
 
 // ─── One edition, end to end ───────────────────────────────────────────────
@@ -584,6 +766,11 @@ export interface AudioResult {
   status: 'created' | 'skipped' | 'failed';
   reason?: string;
   voice?: string;
+  /** Which provider produced the audio, and whether a chosen voice fell back to Azure. */
+  provider?: 'azure' | 'elevenlabs';
+  voice_label?: string | null;
+  voice_source?: ResolvedVoice['source'];
+  fell_back?: boolean;
   duration_s?: number;
   words?: number;
   characters?: number;
@@ -631,26 +818,35 @@ export async function generateEditionAudio(
     }
   }
 
-  const v = voiceFor(edition.id);
+  // The publisher's chosen voice, else the configured one, else option A.
+  // A failed read of the choice table leaves the choice null.
+  const choice = await loadVoiceChoice(db, edition.id);
+  const resolved = resolveEditionVoice(edition.id, opts.language, choice);
   const written = await writeScript(genAI, edition, date, src);
   const script = fullScript(edition, date, written.body);
-  const tts = await synthesize(script, v);
-  const duration = mp3DurationSeconds(tts.audio.length);
-  const ttsCost = estimateCost({ provider: 'azure', model: TTS_MODEL, inputTokens: tts.characters, outputTokens: 0 });
+  const tts = await synthesizeVoice(script, resolved, azureFallbackVoice(edition.id, opts.language));
+  const duration = mp3DurationSeconds(tts.audio.length, tts.bitrateBps);
   // Script cost is small and recorded per call in ai_usage_events; the row
   // carries TTS cost plus a rough allowance for the script call(s).
-  const cost = Number((ttsCost + written.attempts * 0.0015).toFixed(6));
+  const cost = Number((tts.cost_usd + written.attempts * 0.0015).toFixed(6));
+  const rejected = tts.fellBack
+    ? [...written.rejected, `chosen voice failed, read by the Azure voice: ${tts.fallbackReason}`]
+    : written.rejected;
 
   const result: AudioResult = {
     edition: edition.id,
     status: 'created',
-    voice: v.voice,
+    voice: tts.voice,
+    provider: tts.provider,
+    voice_label: labelForVoice(opts.language, tts.voice),
+    voice_source: resolved.source,
+    fell_back: tts.fellBack,
     duration_s: duration,
     words: wordCount(script),
     characters: tts.characters,
     cost_usd: cost,
     attempts: written.attempts,
-    rejected: written.rejected,
+    rejected,
     script,
     audio: tts.audio,
   };
@@ -667,7 +863,7 @@ export async function generateEditionAudio(
     neighborhood_id: edition.id,
     audio_date: date,
     language: opts.language,
-    voice: v.voice,
+    voice: tts.voice,
     script,
     storage_path: path,
     audio_url: url,
@@ -678,7 +874,8 @@ export async function generateEditionAudio(
     item_keys: itemKeys(src),
     tts_characters: tts.characters,
     cost_usd: cost,
-    model: `${AI_MODELS.GEMINI_FLASH} + ${v.voice}`,
+    // Which provider, model and voice produced the file (after any fallback).
+    model: `${AI_MODELS.GEMINI_FLASH} + ${tts.provider}:${tts.model}:${tts.voice}${tts.fellBack ? ' (fallback)' : ''}`,
     updated_at: new Date().toISOString(),
   };
   const { error } = await db.from(AUDIO_TABLE).upsert(row, { onConflict: 'neighborhood_id,audio_date,language' });
