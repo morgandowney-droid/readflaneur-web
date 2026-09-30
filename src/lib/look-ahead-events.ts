@@ -44,7 +44,10 @@ export function formatEventListing(
   // "Sat, Apr 5" and "Tue, Sep 1" above today. The prose can still mention a
   // running exhibition; the dated listing is for what is coming.
   const isPast = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && d < localDate;
-  const valid = events.filter(e => e.date && e.name?.trim() && !isPast(e.date) && !isTouristActivity(e));
+  // A listing entry needs a real calendar date: an undated "restaurant opening"
+  // printed a heading "Invalid Date, Invalid Date NaN" in Clerkenwell on 30 Sep.
+  const isRealDate = (d: string) => /^d{4}-d{2}-d{2}$/.test(d) && !Number.isNaN(Date.parse(`${d}T12:00:00Z`));
+  const valid = events.filter(e => e.date && isRealDate(e.date) && e.name?.trim() && !isPast(e.date) && !isTouristActivity(e));
   if (valid.length === 0) return '';
 
   // Deduplicate recurring events: same name across multiple dates

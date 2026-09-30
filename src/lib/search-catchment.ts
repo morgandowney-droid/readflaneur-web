@@ -60,7 +60,7 @@ const SEARCH_CATCHMENTS: Readonly<Record<string, readonly string[]>> = {
   'newjersey-warren': ['Warren Township (Somerset County, New Jersey)'],
   // Clerkenwell, London (AP, 2026-09-30). Exmouth Market, Farringdon and
   // Finsbury are the same patch; stops short of the City, Angel and King's Cross.
-  'london-clerkenwell': ['Clerkenwell (London EC1)', 'Exmouth Market (Clerkenwell, London EC1)', 'Farringdon (London EC1)', 'Finsbury (London Borough of Islington)', 'Smithfield Market (London EC1)'],
+  'london-clerkenwell': ['Clerkenwell (London EC1)', 'Exmouth Market (Clerkenwell, London EC1)', 'Farringdon (London EC1)', 'Smithfield Market (London EC1)'],
   // Gordes, Vaucluse (AP, 2026-09-30). The village has about 2,000 people, so
   // the edition covers the Luberon villages around it (about 13,000 together),
   // each with its department so a namesake cannot match. Stops short of
