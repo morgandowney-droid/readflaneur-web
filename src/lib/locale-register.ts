@@ -154,6 +154,8 @@ const COUNTY_LEVEL_AREAS = new Set(
  */
 export const CITY_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
   'westmidlands-birmingham',
+  // Local Media Association (2026-09-30): the city of Shreveport, about 180,000.
+  'louisiana-shreveport',
   // AMI, Spain (2026-09-21): the whole city of Zaragoza, around 680,000 people.
   'aragon-zaragoza',
   // Overstory Media Group, Fraser Valley (named by Shannon Havard, 2026-09-16).

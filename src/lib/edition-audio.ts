@@ -94,6 +94,7 @@ export const EDITION_VOICES: Record<string, EditionVoice> = {
   'sicily-scicli': { voice: 'it-IT-GiuseppeMultilingualNeural', lang: 'it-IT', rate: '+2%' },
   // United States, in English (30 Sep 2026, for the AP towns). One US voice per edition.
   'newjersey-warren': { voice: 'en-US-AvaMultilingualNeural', lang: 'en-US', rate: '+0%' },
+  'louisiana-shreveport': { voice: 'en-US-AndrewMultilingualNeural', lang: 'en-US', rate: '+0%' },
   // AP's London and French towns, in British English for an English-reading desk.
   'london-clerkenwell': { voice: 'en-GB-OllieMultilingualNeural', lang: 'en-GB', rate: '+0%' },
   'provence-gordes': { voice: 'en-GB-AdaMultilingualNeural', lang: 'en-GB', rate: '+0%' },

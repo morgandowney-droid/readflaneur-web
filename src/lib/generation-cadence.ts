@@ -169,6 +169,10 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   // 2,000 whose edition covers the surrounding Luberon villages.
   'london-clerkenwell',
   'provence-gordes',
+  // Local Media Association (Frank Mungeam, referred by Knight, 2026-09-30):
+  // Shreveport, Louisiana, for a publisher he will bring to a call on 12 Oct.
+  // About 180,000 people, so a city-wide edition.
+  'louisiana-shreveport',
   // Schibsted (2026-09-25): Oslo in Norwegian, Stockholm in Swedish, so the
   // follow-up can show daily editions in both of its markets.
   'oslo-frogner',

@@ -58,6 +58,9 @@ const SEARCH_CATCHMENTS: Readonly<Record<string, readonly string[]>> = {
   // Warren Township, New Jersey (AP, 2026-09-24). Always with the county: the
   // bare name belongs to Warren, Michigan and Warren, Ohio in any search.
   'newjersey-warren': ['Warren Township (Somerset County, New Jersey)'],
+  // Shreveport, Louisiana (LMA, 2026-09-30). Always with the parish and state.
+  // Bossier City across the Red River is its own city and is left out.
+  'louisiana-shreveport': ['Shreveport (Caddo Parish, Louisiana)'],
   // Clerkenwell, London (AP, 2026-09-30). Exmouth Market, Farringdon and
   // Finsbury are the same patch; stops short of the City, Angel and King's Cross.
   'london-clerkenwell': ['Clerkenwell (London EC1)', 'Exmouth Market (Clerkenwell, London EC1)', 'Farringdon (London EC1)', 'Smithfield Market (London EC1)'],
