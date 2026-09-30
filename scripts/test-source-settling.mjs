@@ -313,6 +313,21 @@ test('publishableCategories withholds model URLs and strips droppedModelUrl', ()
   assert.equal(L.publishableSourceUrl({ url: 'https://a.example', origin: 'repair' }), 'https://a.example');
 });
 
+test('a page credited with one sentence of a fact line matches the story named at its head', () => {
+  const facts = [
+    '*   **Stolen Vehicle Pursuit & Arrests:** On September 24, four Newark men were charged after a stolen BMW X3 led Warren and Bernards Township police on a pursuit onto Interstate 78. The suspects were apprehended near Exit 40 of I-78 after tire deflation devices were deployed.',
+    '*   **Open Space Survey:** The Open Space Advisory Committee is seeking public input through a survey. The deadline to complete the survey is October 9.',
+  ].join('\n');
+  const page = () => ({ uri: 'https://wrnjradio.com/four-men-charged', supports: ['The suspects were apprehended near Exit 40 of I-78 after tire deflation devices were deployed.'] });
+  const story = { entity: 'Stolen Vehicle Pursuit', context: 'Four men from Newark were charged after a police pursuit.' };
+  assert.equal(L.matchStoryToPages(story, [page()], ['Warren']), null);
+  const wide = L.widenSupportsToLines([page()], facts);
+  const m = L.matchStoryToPages(story, wide, ['Warren']);
+  assert.equal(m?.chunk.uri, 'https://wrnjradio.com/four-men-charged');
+  // The widened page backs only its own line: the survey story does not match it.
+  assert.equal(L.matchStoryToPages({ entity: 'Open Space Survey', context: 'survey deadline October 9' }, wide, ['Warren']), null);
+});
+
 for (const [name, fn] of queue) {
   try {
     await fn();

@@ -248,6 +248,39 @@ export function extractGroundingChunks(response: unknown, origin?: GroundingChun
   return chunks;
 }
 
+/** Longest fact line added as a passage by widenSupportsToLines. */
+const MAX_LINE_CHARS = 700;
+
+/**
+ * Give each page, besides the sentences it was credited with, the whole line
+ * of gathered facts each sentence sits in. Google credits a page with one
+ * sentence of a fact bullet, and the story's name is usually at the head of
+ * that bullet ("**Stolen Vehicle Pursuit:** ... The suspects were apprehended
+ * near Exit 40"), so matchStoryToPages rejected pages that did report the
+ * story. Measured 2026-09-30 on Warren, NJ: 12 pages read, 2 of 6 stories
+ * sourced; the local radio report on the pursuit and the township news page
+ * on the walks and the survey were read and never attached. The page still
+ * backs a sentence of that line, and the line is about one item.
+ */
+export function widenSupportsToLines<T extends { supports?: string[] }>(pages: T[], text: string | null | undefined): T[] {
+  if (!text) return pages;
+  const lines = text.split(/\n+/).map(l => l.replace(/\s+/g, ' ').trim()).filter(l => l.length >= 8);
+  const norm = (x: string) => x.replace(/\s+/g, ' ').trim();
+  for (const page of pages) {
+    const extra: string[] = [];
+    for (const sup of page.supports || []) {
+      const probe = norm(sup).slice(0, 80);
+      if (probe.length < 20) continue;
+      const line = lines.find(l => l.includes(probe));
+      if (!line || line === norm(sup)) continue;
+      const clean = line.replace(/^[*\-•\s]+/, '').replace(/\*\*/g, '').slice(0, MAX_LINE_CHARS);
+      if (!extra.includes(clean) && !(page.supports || []).includes(clean)) extra.push(clean);
+    }
+    if (extra.length) page.supports = [...(page.supports || []), ...extra];
+  }
+  return pages;
+}
+
 /** Resolve every redirect chunk to its real URL, a few at a time. Drops dead ones. */
 export async function resolveGroundingChunks(chunks: GroundingChunk[], concurrency = 6): Promise<GroundingChunk[]> {
   const out: GroundingChunk[] = [];

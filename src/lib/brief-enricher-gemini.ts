@@ -15,7 +15,7 @@ import {
 } from './hyperlink-injector';
 import { recordGeminiCall } from '@/lib/ai-cost';
 import type { StructuredEvent } from '@/lib/look-ahead-events';
-import { extractGroundingChunks, resolveGroundingChunks, cleanStorySources, pagesFromText, markSourceOrigins, type GroundingChunk } from '@/lib/source-links';
+import { extractGroundingChunks, resolveGroundingChunks, cleanStorySources, pagesFromText, markSourceOrigins, widenSupportsToLines, type GroundingChunk } from '@/lib/source-links';
 import { repairStorySources, type RepairStats } from '@/lib/source-repair';
 import { geminiRepairSearch } from '@/lib/source-repair-search';
 import { editionRulesBlock, rulesForEdition, type Removal } from '@/lib/edition-rules';
@@ -840,10 +840,12 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
     diagnostics.groundingChunks = groundingChunks.length;
     // URLs written into the gathered facts (e.g. a Grok [[1]](url) marker that
     // survived cleaning) count as read pages too, with their line as passage.
-    const gatheredPages = [
-      ...(options?.gatheredPages || []),
+    // Each read page also carries the whole fact line its credited sentence
+    // sits in, so a story named at the head of that line can match it.
+    const gatheredPages = widenSupportsToLines([
+      ...(options?.gatheredPages || []).map(p => ({ ...p, supports: [...(p.supports || [])] })),
       ...(await resolveGroundingChunks(pagesFromText(briefContent))),
-    ];
+    ], briefContent);
 
     // Strip markdown and JSON from response for clean prose display
     // But preserve [[section headers]] which we explicitly asked for
