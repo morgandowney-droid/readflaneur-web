@@ -19,6 +19,7 @@ import { extractGroundingChunks, resolveGroundingChunks, cleanStorySources, page
 import { repairStorySources, type RepairStats } from '@/lib/source-repair';
 import { geminiRepairSearch } from '@/lib/source-repair-search';
 import { editionRulesBlock, rulesForEdition, type Removal } from '@/lib/edition-rules';
+import { applyShowroomCrimeRule, hasShowroomCrimeRule } from '@/lib/showroom-crime-rule';
 import { enforceEditionRules } from '@/lib/edition-rules-review';
 import { anglicise, britishStyleBlock, enforcePlaceNoun, getPlaceNoun, isEnglishSpeaking, usesBritishEnglish, spellingVariantFor } from '@/lib/locale-register';
 
@@ -1175,6 +1176,25 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
       }
       if (enforced.keptStories === 0) {
         throw new Error(`Edition rules (${editionRules.label}) removed every story for ${neighborhoodName}; nothing is stored`);
+      }
+    }
+
+    // Showroom editions (AP, Local Media Association): crime stories never name
+    // anyone and never lead (showroom-crime-rule.ts). Morgan, 30 Sep 2026.
+    if (hasShowroomCrimeRule(options?.editionId || neighborhoodSlug)) {
+      const crime = applyShowroomCrimeRule({
+        body: text,
+        categories: enrichedData.categories,
+        subjectTeaser,
+        emailTeaser,
+        placeNames: [neighborhoodName, city],
+      });
+      if (crime.changed) {
+        text = crime.body;
+        enrichedData.categories = crime.categories as EnrichedCategory[];
+        subjectTeaser = crime.subjectTeaser;
+        emailTeaser = crime.emailTeaser;
+        console.warn(`[showroom-crime] ${neighborhoodName}: dropped [${crime.dropped.join(', ')}], moved down [${crime.movedDown.join(', ')}], teaser replaced ${crime.teaserReplaced}`);
       }
     }
 
