@@ -163,6 +163,12 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   // Warren, Michigan (140,000) and Warren, Ohio outrank it in any search, so
   // the catchment carries the county and the Look Ahead is geofenced.
   'newjersey-warren',
+  // AP, named by Paul Shanley after the 30 Sep call as the first three of about
+  // ten: Warren (above), Clerkenwell (London) and Gordes (France). Clerkenwell
+  // was a weekly Flaneur showroom page; Gordes is new, a village of about
+  // 2,000 whose edition covers the surrounding Luberon villages.
+  'london-clerkenwell',
+  'provence-gordes',
   // Schibsted (2026-09-25): Oslo in Norwegian, Stockholm in Swedish, so the
   // follow-up can show daily editions in both of its markets.
   'oslo-frogner',
@@ -185,6 +191,8 @@ export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' 
   'zaragoza-casco-historico': 'es',
   'zaragoza-delicias': 'es',
   'montreal-westmount': 'fr',
+  // AP (2026-09-30): English base for AP's readers, French pages pre-warmed.
+  'provence-gordes': 'fr',
   'berlin-prenzlauer-berg': 'de',
   'vorarlberg-lochau': 'de',
   // Russmedia's ten areas (2026-09-22)

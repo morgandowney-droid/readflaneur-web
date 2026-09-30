@@ -58,6 +58,14 @@ const SEARCH_CATCHMENTS: Readonly<Record<string, readonly string[]>> = {
   // Warren Township, New Jersey (AP, 2026-09-24). Always with the county: the
   // bare name belongs to Warren, Michigan and Warren, Ohio in any search.
   'newjersey-warren': ['Warren Township (Somerset County, New Jersey)'],
+  // Clerkenwell, London (AP, 2026-09-30). Exmouth Market, Farringdon and
+  // Finsbury are the same patch; stops short of the City, Angel and King's Cross.
+  'london-clerkenwell': ['Clerkenwell', 'Exmouth Market', 'Farringdon', 'Finsbury', 'Smithfield'],
+  // Gordes, Vaucluse (AP, 2026-09-30). The village has about 2,000 people, so
+  // the edition covers the Luberon villages around it (about 13,000 together),
+  // each with its department so a namesake cannot match. Stops short of
+  // Cavaillon (26,000) and Apt (12,000), which have papers of their own.
+  'provence-gordes': ['Gordes (Vaucluse)', 'Roussillon (Vaucluse)', 'Goult (Vaucluse)', 'Joucas', 'Murs (Vaucluse)', 'Menerbes', 'Lacoste (Vaucluse)', 'Bonnieux', 'Oppede', 'Maubec (Vaucluse)', 'Coustellet', 'Cabrieres-d\'Avignon', 'Beaumettes'],
   // Charters Towers Region, Queensland. Townships per the regional council's
   // own listing. They are very small (Mingela 14 people, Ravenswood 297), so
   // this widens council and district coverage rather than adding much event
@@ -202,6 +210,10 @@ export const DISTRICT_SCOPED_EDITION_IDS: ReadonlySet<string> = new Set([
   'rome-prati',
   // Not a district, but the same fence keeps Warren, Michigan events out.
   'newjersey-warren',
+  // AP, 30 Sep: Clerkenwell must not fill with West End listings, and Gordes
+  // must not drift to Avignon or Aix.
+  'london-clerkenwell',
+  'provence-gordes',
   // GEDI, 25 Sep: Mirja saw Scicli's edition drift to Ragusa, Modica and
   // towns across Sicily. The fence keeps its Look Ahead inside the comune.
   'sicily-scicli',

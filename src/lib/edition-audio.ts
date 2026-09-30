@@ -94,6 +94,9 @@ export const EDITION_VOICES: Record<string, EditionVoice> = {
   'sicily-scicli': { voice: 'it-IT-GiuseppeMultilingualNeural', lang: 'it-IT', rate: '+2%' },
   // United States, in English (30 Sep 2026, for the AP towns). One US voice per edition.
   'newjersey-warren': { voice: 'en-US-AvaMultilingualNeural', lang: 'en-US', rate: '+0%' },
+  // AP's London and French towns, in British English for an English-reading desk.
+  'london-clerkenwell': { voice: 'en-GB-OllieMultilingualNeural', lang: 'en-GB', rate: '+0%' },
+  'provence-gordes': { voice: 'en-GB-AdaMultilingualNeural', lang: 'en-GB', rate: '+0%' },
 };
 
 export const AUDIO_EDITION_IDS = Object.keys(EDITION_VOICES);
@@ -352,7 +355,7 @@ export function unknownProperNouns(script: string, sourceText: string, allowed: 
   }
 
   for (const sentence of script.split(/(?<=[.!?:;])\s+|\n+/)) {
-    const words = sentence.split(/[\s/]+/).map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')).filter(Boolean);
+    const words = sentence.split(/[\s/\-]+/).map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')).filter(Boolean);
     words.forEach((raw, i) => {
       const w = raw.replace(ELISION, '');
       if (!w) return;
@@ -437,16 +440,17 @@ function buildPromptEn(edition: Edition, date: string, src: ScriptSource, feedba
     : src.prose
       ? 'Then sum up the COMING UP text in one or two sentences.'
       : 'There are no events: do not mention any.';
-  return `Write the middle section of a morning local radio news bulletin, in American English, for ${edition.name}, ${edition.city}, ${englishSpokenDate(date)}.
+  const variety = voiceFor(edition.id).lang === 'en-US' ? 'American English' : 'British English';
+  return `Write the middle section of a morning local radio news bulletin, in ${variety}, for ${edition.name}, ${edition.city}, ${englishSpokenDate(date)}.
 
 The opening and the close are already written: do NOT greet, do NOT say the place or the date at the start, do NOT sign off.
 
 SOURCE: the text below is this morning's published edition and it is the ONLY source. Do not add facts, stories, names, figures, dates, times or places that are not written below. Do not use outside knowledge. If a detail is missing, leave it out.
 
 STRUCTURE:
-- The stories first, in the order given, two or three sentences each at most.
+- The stories first, in the order given, two sentences each at most.
 - ${eventsRule}
-- Between 120 and 180 words in all.
+- No more than 170 words in all. Keep it short: this is read aloud in about a minute.
 
 STYLE:
 - Short sentences that are easy to follow by ear. A calm, warm local-news tone.
