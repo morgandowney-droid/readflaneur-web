@@ -114,6 +114,18 @@ test('mp3 duration from bytes at 48 kbit/s', () => {
   assert.equal(A.mp3DurationSeconds(450_000), 75);
 });
 
+test('English editions: US voice, English opening, close and fallback', () => {
+  assert.equal(A.audioLanguageFor('newjersey-warren'), 'en');
+  assert.equal(A.audioLanguageFor('milan-brera'), 'it');
+  assert.ok(A.EDITION_VOICES['newjersey-warren'].voice.startsWith('en-US-'));
+  const ed = { name: 'Warren', city: 'New Jersey' };
+  assert.equal(A.openingLine(ed, '2026-09-30', 'en'), 'Warren, New Jersey. Wednesday, September 30. Good morning, Warren. Here is the news this morning.');
+  assert.ok(A.fullScript(ed, '2026-09-30', 'Body.', 'en').endsWith(A.CLOSING_LINE_EN));
+  assert.ok(A.openingLine({ name: 'Brera', city: 'Milan' }, '2026-09-30').includes('Buongiorno, Brera'), 'Italian stays the default');
+  const src = { stories: [{ key: 'k', header: 'Flu Clinic', text: 'A flu clinic runs today at the court room on Mountain Boulevard. Pre-registration is requested. More details online.' }], events: [{ key: 'e', when: 'Thursday, October 1', name: 'Family Storytime', place: 'Warren Township Library' }], prose: null, text: '' };
+  assert.ok(A.fallbackBody(src, 'en').includes('Coming up.'));
+});
+
 test('feed gate: same articles, all items approved and unedited', () => {
   const brief = 'b1', la = 'l1';
   const keys = [storyKey(brief, 0), storyKey(brief, 1), storyKey(la, 'event:0')];
@@ -121,7 +133,8 @@ test('feed gate: same articles, all items approved and unedited', () => {
   const day = { daily_brief: { article_id: brief }, look_ahead: { article_id: la } };
   const st = (status, edited = false) => ({ status, edited, header: null, text: null, decided_by: 'x', decided_at: 'y' });
   const all = new Map(keys.map((k) => [k, st('approved')]));
-  assert.deepEqual(A.audioForFeed(row, day, null), { url: 'u', duration_s: 70, voice: 'v' });
+  // A voice outside the catalogue is never named to a licensee.
+  assert.deepEqual(A.audioForFeed(row, day, null), { url: 'u', duration_s: 70, voice: 'Voice' });
   assert.ok(A.audioForFeed(row, day, all));
   assert.equal(A.audioForFeed(row, day, new Map([[keys[0], st('approved')]])), null, 'pending items block it');
   assert.equal(A.audioForFeed(row, day, new Map([...all, [keys[1], st('approved', true)]])), null, 'an edit blocks it');

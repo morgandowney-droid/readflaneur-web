@@ -587,6 +587,30 @@ export async function assembleDailyBrief(
     }
   }
 
+  // This morning's English audio edition for each section, matched on the
+  // neighbourhood's own local date. Never blocks the email.
+  try {
+    const sectionIds = [primarySection?.neighborhoodId, ...satelliteSections.map(s => s.neighborhoodId)].filter(Boolean) as string[];
+    if (sectionIds.length) {
+      const since = new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10);
+      const { data: audioRows } = await supabase
+        .from('edition_audio')
+        .select('neighborhood_id, audio_date, audio_url')
+        .in('neighborhood_id', sectionIds)
+        .eq('language', 'en')
+        .gte('audio_date', since);
+      const todayFor = (id: string) => {
+        const tz = neighborhoodMap.get(id)?.timezone || 'UTC';
+        return new Date().toLocaleDateString('en-CA', { timeZone: tz });
+      };
+      const audioFor = (id: string) => (audioRows || []).find(r => r.neighborhood_id === id && r.audio_date === todayFor(id))?.audio_url || null;
+      if (primarySection) primarySection.audioUrl = audioFor(primarySection.neighborhoodId);
+      for (const s of satelliteSections) s.audioUrl = audioFor(s.neighborhoodId);
+    }
+  } catch (e) {
+    console.warn('[assembler] audio lookup failed:', e);
+  }
+
   // Fetch ads (recipientId for deterministic rotation)
   const allIds = subscribedNeighborhoodIds;
   const { headerAd, nativeAd, interstitialAds } = await getEmailAds(supabase, primaryNeighborhoodId, allIds, recipient.id);

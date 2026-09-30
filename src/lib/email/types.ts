@@ -41,6 +41,8 @@ export interface PrimaryNeighborhoodSection {
   briefBody?: string | null;
   briefArticleUrl?: string | null;
   briefSources?: Array<{ name: string; url?: string }>;
+  /** This morning's audio edition, when the edition has one (English editions only). */
+  audioUrl?: string | null;
 }
 
 export interface SatelliteNeighborhoodSection {
@@ -48,6 +50,8 @@ export interface SatelliteNeighborhoodSection {
   neighborhoodName: string;
   cityName: string;
   stories: EmailStory[];
+  /** This morning's audio edition, when the edition has one (English editions only). */
+  audioUrl?: string | null;
 }
 
 export interface EmailStory {

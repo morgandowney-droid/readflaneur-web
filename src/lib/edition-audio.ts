@@ -92,9 +92,18 @@ export const EDITION_VOICES: Record<string, EditionVoice> = {
   'milan-porta-venezia': { voice: 'it-IT-AlessioMultilingualNeural', lang: 'it-IT', rate: '+4%' },
   'rome-prati': { voice: 'it-IT-MarcelloMultilingualNeural', lang: 'it-IT', rate: '+4%' },
   'sicily-scicli': { voice: 'it-IT-GiuseppeMultilingualNeural', lang: 'it-IT', rate: '+2%' },
+  // United States, in English (30 Sep 2026, for the AP towns). One US voice per edition.
+  'newjersey-warren': { voice: 'en-US-AvaMultilingualNeural', lang: 'en-US', rate: '+0%' },
 };
 
 export const AUDIO_EDITION_IDS = Object.keys(EDITION_VOICES);
+
+/** The language an edition's audio is written and read in. */
+export type AudioLanguage = 'it' | 'en';
+
+export function audioLanguageFor(editionId: string): AudioLanguage {
+  return EDITION_VOICES[editionId]?.lang.startsWith('en') ? 'en' : 'it';
+}
 
 export function voiceFor(editionId: string): EditionVoice {
   return EDITION_VOICES[editionId] || { voice: 'it-IT-IsabellaMultilingualNeural', lang: 'it-IT', rate: '+4%' };
@@ -206,9 +215,18 @@ export function italianSpokenDate(date: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-function eventWhen(date: string, time: string | null | undefined): string {
+export function englishSpokenDate(date: string): string {
   const [y, m, d] = date.split('-').map(Number);
-  const day = new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  return new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+}
+
+export function spokenDate(date: string, lang: AudioLanguage = 'it'): string {
+  return lang === 'en' ? englishSpokenDate(date) : italianSpokenDate(date);
+}
+
+function eventWhen(date: string, time: string | null | undefined, lang: AudioLanguage = 'it'): string {
+  const [y, m, d] = date.split('-').map(Number);
+  const day = new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString(lang === 'en' ? 'en-US' : 'it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   return time ? `${day}, ${time}` : day;
 }
 
@@ -224,7 +242,7 @@ export function unshout(name: string): string {
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
-export function buildScriptSource(day: DailyEdition): ScriptSource {
+export function buildScriptSource(day: DailyEdition, lang: AudioLanguage = 'it'): ScriptSource {
   const stories = (day.daily_brief?.stories || [])
     .filter((s) => plain(s.text).length > 0)
     .slice(0, MAX_STORIES)
@@ -237,7 +255,7 @@ export function buildScriptSource(day: DailyEdition): ScriptSource {
       if (events.length >= MAX_EVENTS || e.date < day.date) return;
       events.push({
         key: storyKey(la.article_id, `event:${i}`),
-        when: eventWhen(e.date, e.time),
+        when: eventWhen(e.date, e.time, lang),
         name: unshout(e.name),
         place: e.location || e.address || null,
       });
@@ -248,9 +266,10 @@ export function buildScriptSource(day: DailyEdition): ScriptSource {
     : null;
 
   const parts: string[] = [];
-  stories.forEach((s, i) => parts.push(`NOTIZIA ${i + 1}: ${s.header}\n${s.text}`));
-  events.forEach((e, i) => parts.push(`EVENTO ${i + 1}: ${e.name} | ${e.when}${e.place ? ` | ${e.place}` : ''}`));
-  if (prose) parts.push(`IN ARRIVO: ${prose.text}`);
+  const L = lang === 'en' ? { story: 'STORY', event: 'EVENT', coming: 'COMING UP' } : { story: 'NOTIZIA', event: 'EVENTO', coming: 'IN ARRIVO' };
+  stories.forEach((s, i) => parts.push(`${L.story} ${i + 1}: ${s.header}\n${s.text}`));
+  events.forEach((e, i) => parts.push(`${L.event} ${i + 1}: ${e.name} | ${e.when}${e.place ? ` | ${e.place}` : ''}`));
+  if (prose) parts.push(`${L.coming}: ${prose.text}`);
 
   return {
     text: parts.join('\n\n'),
@@ -397,12 +416,50 @@ export function scriptProblem(body: string, src: ScriptSource, allowed: string[]
 
 // ─── Script writing ────────────────────────────────────────────────────────
 
-export function openingLine(edition: Pick<Edition, 'name' | 'city'>, date: string): string {
+export function openingLine(edition: Pick<Edition, 'name' | 'city'>, date: string, lang: AudioLanguage = 'it'): string {
+  if (lang === 'en') {
+    return `${edition.name}, ${edition.city}. ${englishSpokenDate(date)}. Good morning, ${edition.name}. Here is the news this morning.`;
+  }
   const p = spokenPlace(edition);
   return `${p.name}, ${p.city}. ${italianSpokenDate(date)}. Buongiorno, ${p.name}. Ecco le notizie di stamattina.`;
 }
 
 export const CLOSING_LINE = 'Per oggi è tutto. Buona giornata.';
+export const CLOSING_LINE_EN = 'That is all for this morning. Have a good day.';
+
+export function closingLine(lang: AudioLanguage = 'it'): string {
+  return lang === 'en' ? CLOSING_LINE_EN : CLOSING_LINE;
+}
+
+function buildPromptEn(edition: Edition, date: string, src: ScriptSource, feedback: string | null): string {
+  const eventsRule = src.events.length
+    ? `Then present ${src.events.length >= 2 ? 'two or three' : 'the one'} of the upcoming EVENTS, with the day and place as given.`
+    : src.prose
+      ? 'Then sum up the COMING UP text in one or two sentences.'
+      : 'There are no events: do not mention any.';
+  return `Write the middle section of a morning local radio news bulletin, in American English, for ${edition.name}, ${edition.city}, ${englishSpokenDate(date)}.
+
+The opening and the close are already written: do NOT greet, do NOT say the place or the date at the start, do NOT sign off.
+
+SOURCE: the text below is this morning's published edition and it is the ONLY source. Do not add facts, stories, names, figures, dates, times or places that are not written below. Do not use outside knowledge. If a detail is missing, leave it out.
+
+STRUCTURE:
+- The stories first, in the order given, two or three sentences each at most.
+- ${eventsRule}
+- Between 120 and 180 words in all.
+
+STYLE:
+- Short sentences that are easy to follow by ear. A calm, warm local-news tone.
+- Only text to be read aloud: no headings, lists, symbols, markdown or links.
+- Names of people, businesses, events and streets exactly as written in the source.
+- Write times with digits as in the source, for example 7:00 PM.
+- Do not name any private individual who is not already named in the source.
+- No long dashes; use commas or full stops.
+- One paragraph per story, separated by a blank line.
+${feedback ? `\nCORRECTION: the previous version was rejected because of ${feedback}. Use only names and figures that appear in the source.\n` : ''}
+THIS MORNING'S EDITION:
+${src.text}`;
+}
 
 function buildPrompt(edition: Edition, date: string, src: ScriptSource, feedback: string | null): string {
   const p = spokenPlace(edition);
@@ -439,15 +496,16 @@ export async function writeScript(
   edition: Edition,
   date: string,
   src: ScriptSource,
+  lang: AudioLanguage = 'it',
 ): Promise<{ body: string; attempts: number; rejected: string[] }> {
   const p = spokenPlace(edition);
-  const allowed = [p.name, p.city, edition.name, edition.city, 'Flaneur', italianSpokenDate(date), date];
+  const allowed = [p.name, p.city, edition.name, edition.city, 'Flaneur', spokenDate(date, lang), date];
   const rejected: string[] = [];
   let feedback: string | null = null;
   for (let attempt = 1; attempt <= 3; attempt++) {
     const response = await genAI.models.generateContent({
       model: AI_MODELS.GEMINI_FLASH,
-      contents: buildPrompt(edition, date, src, feedback),
+      contents: lang === 'en' ? buildPromptEn(edition, date, src, feedback) : buildPrompt(edition, date, src, feedback),
       config: { temperature: 0.4, maxOutputTokens: 1200, thinkingConfig: { thinkingBudget: 0 } },
     });
     recordGeminiCall(response, { operation: 'edition_audio_script', kind: 'generation', model: AI_MODELS.GEMINI_FLASH, label: edition.id });
@@ -457,7 +515,7 @@ export async function writeScript(
     rejected.push(problem);
     feedback = problem;
   }
-  const fallback = fallbackBody(src);
+  const fallback = fallbackBody(src, lang);
   if (!fallback) throw new Error(`script rejected: ${rejected.join(' / ')}`);
   rejected.push('used the edition text read verbatim');
   return { body: fallback, attempts: 4, rejected };
@@ -470,7 +528,7 @@ export async function writeScript(
  * invented, and a quartiere never goes without audio (Prati and Porta Venezia
  * lost theirs on 28 Sep to a time format and an overlong script).
  */
-export function fallbackBody(src: ScriptSource): string | null {
+export function fallbackBody(src: ScriptSource, lang: AudioLanguage = 'it'): string | null {
   const parts: string[] = [];
   for (const s of src.stories) {
     const sentences = s.text.match(/[^.!?]+[.!?]+/g) || [s.text];
@@ -479,14 +537,14 @@ export function fallbackBody(src: ScriptSource): string | null {
   }
   if (src.events.length) {
     const evs = src.events.slice(0, 3).map((e) => `${e.name}, ${e.when}${e.place ? `, ${e.place}` : ''}.`);
-    parts.push(`In arrivo. ${evs.join(' ')}`);
+    parts.push(`${lang === 'en' ? 'Coming up.' : 'In arrivo.'} ${evs.join(' ')}`);
   }
   const body = cleanScript(parts.join('\n\n'));
   return wordCount(body) >= 20 ? body : null;
 }
 
-export function fullScript(edition: Pick<Edition, 'name' | 'city'>, date: string, body: string): string {
-  return `${openingLine(edition, date)}\n\n${body.trim()}\n\n${CLOSING_LINE}`;
+export function fullScript(edition: Pick<Edition, 'name' | 'city'>, date: string, body: string, lang: AudioLanguage = 'it'): string {
+  return `${openingLine(edition, date, lang)}\n\n${body.trim()}\n\n${closingLine(lang)}`;
 }
 
 // ─── SSML and synthesis ────────────────────────────────────────────────────
@@ -755,7 +813,8 @@ export function audioForFeed(
   return {
     url: row.audio_url,
     duration_s: row.duration_s === null ? null : Number(row.duration_s),
-    voice: label ? customerVoiceLabel(label, row.language) : row.voice,
+    // A voice outside the A to E catalogue (a US edition voice) is still never named.
+    voice: label ? customerVoiceLabel(label, row.language) : (row.language === 'it' ? 'Voce' : 'Voice'),
   };
 }
 
@@ -803,7 +862,8 @@ export async function generateEditionAudio(
   if (!day.daily_brief) return { ...base, reason: 'no published Daily Brief yet' };
   if (day.language !== opts.language) return { ...base, reason: `translation to ${opts.language} not ready` };
 
-  const src = buildScriptSource(day);
+  const lang: AudioLanguage = opts.language === 'en' ? 'en' : 'it';
+  const src = buildScriptSource(day, lang);
   if (!src.stories.length) return { ...base, reason: 'Daily Brief has no stories' };
 
   if (opts.store && !opts.force) {
@@ -822,8 +882,8 @@ export async function generateEditionAudio(
   // A failed read of the choice table leaves the choice null.
   const choice = await loadVoiceChoice(db, edition.id);
   const resolved = resolveEditionVoice(edition.id, opts.language, choice);
-  const written = await writeScript(genAI, edition, date, src);
-  const script = fullScript(edition, date, written.body);
+  const written = await writeScript(genAI, edition, date, src, lang);
+  const script = fullScript(edition, date, written.body, lang);
   const tts = await synthesizeVoice(script, resolved, azureFallbackVoice(edition.id, opts.language));
   const duration = mp3DurationSeconds(tts.audio.length, tts.bitrateBps);
   // Script cost is small and recorded per call in ai_usage_events; the row

@@ -138,6 +138,24 @@ export function DailyBriefTemplate(content: DailyBriefContent) {
             </Section>
           )}
 
+          {/* This morning's audio edition */}
+          {primary?.audioUrl && (
+            <Section style={{ paddingTop: '8px', paddingBottom: '4px', textAlign: 'center' as const }}>
+              <a
+                href={primary.audioUrl}
+                style={{
+                  color: '#C9A96E',
+                  textDecoration: 'none',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                }}
+              >
+                Listen to this morning&apos;s {primary.neighborhoodName} news (1 min) &rsaquo;
+              </a>
+            </Section>
+          )}
+
           {/* Look Ahead link (only if Look Ahead not already shown as a story) */}
           {content.lookAheadUrl && primary && (primary.briefBody || !primary.stories.some(s => s.categoryLabel?.includes('Look Ahead'))) && (
             <Section style={{ paddingTop: '8px', paddingBottom: '16px', textAlign: 'center' as const }}>

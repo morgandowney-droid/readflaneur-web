@@ -25,6 +25,13 @@ export function SatelliteSection({ section }: SatelliteSectionProps) {
         name={section.neighborhoodName}
         city={section.cityName}
       />
+      {section.audioUrl && (
+        <Text style={listenLine}>
+          <Link href={section.audioUrl} style={listenLink}>
+            Listen to this morning&apos;s {section.neighborhoodName} news (1 min) &rsaquo;
+          </Link>
+        </Text>
+      )}
       {section.stories.map((story, i) => (
         <Section key={i} style={storyRow}>
           {i > 0 && <Hr style={storyDivider} />}
@@ -49,6 +56,19 @@ export function SatelliteSection({ section }: SatelliteSectionProps) {
 
 const container = {
   marginBottom: '8px',
+};
+
+const listenLine = {
+  margin: '0 0 12px',
+  textAlign: 'center' as const,
+};
+
+const listenLink = {
+  color: '#C9A96E',
+  textDecoration: 'none',
+  fontWeight: '600',
+  fontSize: '13px',
+  fontFamily: "'Playfair Display', Georgia, serif",
 };
 
 const storyRow = {

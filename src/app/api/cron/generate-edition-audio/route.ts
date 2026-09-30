@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
-import { LICENSEES } from '@/lib/licensees';
 import type { Edition } from '@/lib/licensee-feed';
-import { AUDIO_EDITION_IDS, azureConfigured, generateEditionAudio, type AudioResult } from '@/lib/edition-audio';
-import { GEDI_GROUP, GEDI_TIMEZONE, romeNow } from '@/lib/email/gedi-morning';
+import { AUDIO_EDITION_IDS, audioLanguageFor, azureConfigured, generateEditionAudio, type AudioResult } from '@/lib/edition-audio';
 
 /**
- * The audio edition for GEDI's four quartieri, in Italian. See
- * src/lib/edition-audio.ts.
+ * The morning audio edition: GEDI's four quartieri in Italian, and US
+ * editions in English (from 30 Sep 2026, for the AP towns). See
+ * src/lib/edition-audio.ts; EDITION_VOICES lists every edition with audio.
  *
- * Schedule: vercel.json runs this at :10 and :40 past 04, 05 and 06 UTC. The
- * route works only between 06:30 and 07:29 Rome time, so exactly two runs do
- * the work in both summer time (04:40 and 05:10 UTC) and winter time from
- * 25 Oct (05:40 and 06:10 UTC): 06:40 and 07:10 Rome, before the 07:30 GEDI
- * morning email. The other runs log a skip.
+ * Schedule: vercel.json runs this at :10 and :40 past every hour. Each
+ * edition is worked only between 06:30 and 07:29 in its OWN timezone, so two
+ * runs make it (06:40 and 07:10 local) whatever the timezone and whatever the
+ * clock change. A cron window written in UTC hours would silently choose which
+ * timezones get audio (the Look Ahead lesson of 21 Sep). Other runs log a skip.
  *
- * The Daily Brief and Look Ahead articles publish at 07:00 Rome, so the job
+ * The Daily Brief and Look Ahead articles publish at 07:00 local, so the job
  * reads them up to 45 minutes ahead of the clock (getDailyEdition asOf). An
  * edition that already has today's audio is skipped, unless a Look Ahead has
  * appeared since the audio was made or the brief article changed.
@@ -24,14 +23,13 @@ import { GEDI_GROUP, GEDI_TIMEZONE, romeNow } from '@/lib/email/gedi-morning';
  * Manual (CRON_SECRET as Bearer or ?secret=):
  *   ?test=<edition>        run one edition now, outside the time gate
  *   ?test=<edition>&force=1 regenerate even if today's audio exists
- *   ?date=YYYY-MM-DD       a Rome date other than today (with test=)
+ *   ?date=YYYY-MM-DD       a local date other than today (with test=)
  */
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const JOB = 'generate-edition-audio';
-const LANGUAGE = 'it' as const;
 const LOOKAHEAD_MS = 45 * 60_000;
 
 function authorised(request: NextRequest): boolean {
@@ -42,12 +40,13 @@ function authorised(request: NextRequest): boolean {
   return auth === `Bearer ${secret}` || request.nextUrl.searchParams.get('secret') === secret;
 }
 
-function romeMinutes(at: Date = new Date()): number {
+function localClock(timezone: string, at: Date = new Date()): { date: string; minutes: number } {
+  const date = at.toLocaleDateString('en-CA', { timeZone: timezone });
   const [h, m] = at
-    .toLocaleTimeString('en-GB', { timeZone: GEDI_TIMEZONE, hour: '2-digit', minute: '2-digit', hour12: false })
+    .toLocaleTimeString('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hour12: false })
     .split(':')
     .map(Number);
-  return (h % 24) * 60 + m;
+  return { date, minutes: (h % 24) * 60 + m };
 }
 
 export async function GET(request: NextRequest) {
@@ -68,11 +67,8 @@ export async function GET(request: NextRequest) {
   const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
     auth: { persistSession: false },
   });
-  const now = romeNow();
-  const minutes = romeMinutes();
-  const date = dateParam || now.date;
   const errors: string[] = [];
-  let responseData: Record<string, unknown> = { rome_date: date, rome_time: `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`, test, force };
+  let responseData: Record<string, unknown> = { test, force };
   let created = 0;
 
   const log = async (success: boolean) => {
@@ -88,8 +84,19 @@ export async function GET(request: NextRequest) {
   };
 
   try {
-    if (!test && (minutes < 6 * 60 + 30 || minutes >= 7 * 60 + 30)) {
-      responseData = { ...responseData, skipped: 'outside 06:30-07:29 Rome' };
+    const ids = test ? [test] : AUDIO_EDITION_IDS;
+    const { data, error } = await admin.from('neighborhoods').select('id, name, city, country, timezone, broader_area').in('id', ids);
+    if (error) throw new Error(`neighborhoods: ${error.message}`);
+
+    // Editions whose local clock is in the 06:30-07:29 window (every edition under test=).
+    const due = ids
+      .map((id) => (data || []).find((r) => r.id === id))
+      .filter((r): r is NonNullable<typeof r> => Boolean(r))
+      .map((r) => ({ row: r, clock: localClock(r.timezone || 'UTC') }))
+      .filter(({ clock }) => test || (clock.minutes >= 6 * 60 + 30 && clock.minutes < 7 * 60 + 30));
+
+    if (!due.length) {
+      responseData = { ...responseData, skipped: 'no edition is between 06:30 and 07:29 local' };
       await log(true);
       return NextResponse.json({ success: true, ...responseData });
     }
@@ -98,26 +105,22 @@ export async function GET(request: NextRequest) {
     if (!apiKey) throw new Error('GEMINI_API_KEY not set');
     const genAI = new GoogleGenAI({ apiKey });
 
-    const ids = test ? [test] : (LICENSEES[GEDI_GROUP].editions as string[]).filter((id) => AUDIO_EDITION_IDS.includes(id));
-    const { data, error } = await admin.from('neighborhoods').select('id, name, city, country, timezone, broader_area').in('id', ids);
-    if (error) throw new Error(`neighborhoods: ${error.message}`);
-    const editions: Edition[] = ids
-      .map((id) => (data || []).find((r) => r.id === id))
-      .filter((r): r is NonNullable<typeof r> => Boolean(r))
-      .map((r) => ({
-        id: r.id, name: r.name, city: r.city, region: r.broader_area || null, country: r.country, timezone: r.timezone,
-        language: 'en' as const, languages: ['en', LANGUAGE] as const,
-      }));
-
     const asOf = new Date(Date.now() + LOOKAHEAD_MS);
-    const results: AudioResult[] = await Promise.all(
-      editions.map(async (e) => {
+    const results: Array<AudioResult & { local_date?: string; language?: string }> = await Promise.all(
+      due.map(async ({ row: r, clock }) => {
+        const language = audioLanguageFor(r.id);
+        const edition: Edition = {
+          id: r.id, name: r.name, city: r.city, region: r.broader_area || null, country: r.country, timezone: r.timezone,
+          language: 'en' as const, languages: (language === 'en' ? ['en'] : ['en', language]) as Edition['languages'],
+        };
+        const date = dateParam || clock.date;
         try {
-          return await generateEditionAudio(admin, genAI, e, date, { language: LANGUAGE, asOf, force, store: true });
+          const res = await generateEditionAudio(admin, genAI, edition, date, { language, asOf, force, store: true });
+          return { ...res, local_date: date, language };
         } catch (err) {
           const reason = err instanceof Error ? err.message : String(err);
-          errors.push(`${e.id}: ${reason}`);
-          return { edition: e.id, status: 'failed' as const, reason };
+          errors.push(`${r.id}: ${reason}`);
+          return { edition: r.id, status: 'failed' as const, reason, local_date: date, language };
         }
       }),
     );
@@ -126,9 +129,10 @@ export async function GET(request: NextRequest) {
       ...responseData,
       created,
       editions: results.map((r) => ({
-        edition: r.edition, status: r.status, reason: r.reason, voice: r.voice, provider: r.provider,
-        voice_label: r.voice_label, voice_source: r.voice_source, fell_back: r.fell_back, duration_s: r.duration_s,
-        words: r.words, characters: r.characters, cost_usd: r.cost_usd, attempts: r.attempts, rejected: r.rejected,
+        edition: r.edition, local_date: r.local_date, language: r.language, status: r.status, reason: r.reason, voice: r.voice,
+        provider: r.provider, voice_label: r.voice_label, voice_source: r.voice_source, fell_back: r.fell_back,
+        duration_s: r.duration_s, words: r.words, characters: r.characters, cost_usd: r.cost_usd, attempts: r.attempts,
+        rejected: r.rejected,
       })),
       cost_usd: Number(results.reduce((s, r) => s + (r.cost_usd || 0), 0).toFixed(4)),
     };
