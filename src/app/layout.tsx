@@ -3,6 +3,7 @@ import { Inter, Cormorant_Garamond, Merriweather } from 'next/font/google';
 import './globals.css';
 import { Header } from '@/components/layout/Header';
 import { ShowroomBar } from '@/components/layout/ShowroomBar';
+import { ShowroomCard } from '@/components/layout/ShowroomCard';
 import { Footer } from '@/components/layout/Footer';
 import { PersonaSwitcher } from '@/components/admin/PersonaSwitcher';
 import { NeighborhoodModalProvider } from '@/components/neighborhoods/NeighborhoodSelectorModal';
@@ -87,6 +88,7 @@ export default function RootLayout({
         <LanguageProvider>
           <NeighborhoodModalProvider>
             <ShowroomBar />
+            <ShowroomCard />
             <Header />
             <main>{children}</main>
             <Footer />

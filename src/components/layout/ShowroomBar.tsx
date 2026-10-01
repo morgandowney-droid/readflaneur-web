@@ -60,7 +60,7 @@ export function ShowroomBar() {
   return (
     <div className="border-b border-border bg-surface">
       <div className="mx-auto flex max-w-[1280px] items-center gap-3 px-4 py-1.5 sm:px-6 lg:px-8">
-        <p className="min-w-0 flex-1 text-[11px] leading-snug tracking-[0.02em] text-fg-subtle">
+        <p className="min-w-0 flex-1 text-[12px] leading-snug tracking-[0.02em] text-fg-muted">
           A showroom for yous.news, a local news engine licensed to publishers.{' '}
           <a
             href="https://yous.news/publishers"
