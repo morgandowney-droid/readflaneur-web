@@ -10,6 +10,7 @@ import { searchNeighborhoodFacts, mergeContent } from '@/lib/gemini-search';
 import { pagesToStored } from '@/lib/source-links';
 import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
 import { shouldGenerateToday, isPriorityNeighborhood } from '@/lib/generation-cadence';
+import { grokDecision } from '@/lib/grok-contribution';
 
 /**
  * Neighborhood Briefs Sync Cron Job
@@ -134,6 +135,7 @@ export async function GET(request: Request) {
     briefs_generated: 0,
     briefs_failed: 0,
     gemini_supplemented: 0,
+    grok_skipped: 0,
     errors: [] as string[],
   };
 
@@ -366,8 +368,13 @@ export async function GET(request: Request) {
       // live X-search (the dominant per-call cost). Priority neighborhoods
       // (subscribed + Irish) keep the full Grok+Gemini dual-source pipeline.
       const isPriority = isPriorityNeighborhood(hood.id, subscribedIds.has(hood.id));
+      // Grok only where it adds stories (grok-contribution.ts): an edition that got a
+      // story from it in 14 days keeps it; otherwise markets where it rarely adds, and
+      // editions with 7 empty searches, get it on a weekly probe day only.
+      const grok = isPriority ? await grokDecision(supabase, hood, briefDate) : { useGrok: false, reason: 'cold' };
+      if (isPriority && !grok.useGrok) results.grok_skipped++;
       const [grokResult, geminiResult] = await Promise.allSettled([
-        isPriority
+        grok.useGrok
           ? generateNeighborhoodBrief(searchName, hood.city, hood.country, nycDataContext, hood.timezone, recentTopics, hood.id)
           : Promise.resolve(null),
         searchNeighborhoodFacts(searchName, hood.city, hood.country, hood.timezone, recentTopics, hood.id),
