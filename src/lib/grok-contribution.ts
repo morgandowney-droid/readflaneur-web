@@ -12,6 +12,8 @@
  * The rule (Morgan, options 2 and 3):
  *  - an edition where Grok was the only source of at least 8% of its stories
  *    (and at least two) in the last 14 days keeps Grok, whatever its country;
+ *  - a thin edition (fewer than 4 stories a brief on average over 14 days)
+ *    keeps Grok;
  *  - otherwise, in a market where Grok rarely adds (GROK_OFF_COUNTRIES), and in
  *    any market for an edition with at least 7 Grok searches and nothing to
  *    show for them, Grok runs only on a weekly probe day, so a source that
@@ -36,6 +38,14 @@ const PROBE_INTERVAL_DAYS = 7;
  * enough (2 Oct: that bar kept Grok on 83 of 92 editions; this one keeps 46).
  */
 const MIN_GROK_SHARE = 0.08;
+/**
+ * A thin edition keeps Grok whatever its share: when a brief carries fewer
+ * than four stories on average, one more story matters more than the search
+ * fee (Morgan, 2 Oct, on Prati at 3.6 stories a brief). 13 of 92 editions on
+ * 2 Oct, all four GEDI quartieri among them.
+ */
+const THIN_AVG_STORIES = 4;
+const THIN_MIN_BRIEFS = 3;
 const MIN_GROK_STORIES = 2;
 
 const STOP = new Set(['the', 'this', 'that', 'with', 'from', 'today', 'tonight', 'tomorrow', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'january', 'february', 'march', 'april', 'june', 'july', 'august', 'september', 'october', 'november', 'december', 'local', 'residents', 'city', 'town', 'council', 'street', 'road', 'free', 'new', 'event', 'festival', 'market']);
@@ -110,6 +120,8 @@ export function decideGrok(
   edition: { id: string; name: string; city: string; country?: string | null },
   localDate: string,
   grokBriefs: Array<{ content: string | null; enriched_categories: unknown }>,
+  /** Stories per brief across all of the window's briefs, Grok or not, and how many briefs. */
+  thinness?: { avgStories: number; briefs: number },
 ): GrokDecision {
   let grokOnly = 0;
   let stories = 0;
@@ -120,6 +132,9 @@ export function decideGrok(
   }
   if (grokOnly >= MIN_GROK_STORIES && stories > 0 && grokOnly / stories >= MIN_GROK_SHARE) {
     return { useGrok: true, reason: `grok-only-${Math.round((100 * grokOnly) / stories)}pct-of-stories` };
+  }
+  if (thinness && thinness.briefs >= THIN_MIN_BRIEFS && thinness.avgStories < THIN_AVG_STORIES) {
+    return { useGrok: true, reason: `thin-edition-${thinness.avgStories.toFixed(1)}-stories` };
   }
   const offMarket = GROK_OFF_COUNTRIES.has((edition.country || '').toLowerCase());
   const provenEmpty = grokBriefs.length >= MIN_HISTORY;
@@ -138,15 +153,21 @@ export async function grokDecision(
     const since = new Date(Date.parse(`${localDate}T12:00:00Z`) - WINDOW_DAYS * 86_400_000).toISOString().slice(0, 10);
     const { data, error } = await supabase
       .from('neighborhood_briefs')
-      .select('content, enriched_categories')
+      .select('content, enriched_categories, model')
       .eq('neighborhood_id', edition.id)
-      .like('model', 'grok%')
       .gte('brief_date', since)
       .lt('brief_date', localDate)
       .not('enriched_content', 'is', null)
-      .limit(WINDOW_DAYS);
+      .limit(WINDOW_DAYS + 2);
     if (error) return { useGrok: true, reason: `history-unreadable: ${error.message}` };
-    return decideGrok(edition, localDate, data || []);
+    const all = data || [];
+    const storyCount = (cats: unknown) => {
+      const list = Array.isArray(cats) ? cats : ((cats as { categories?: unknown[] } | null)?.categories || []);
+      return (list as Array<{ stories?: unknown[] }>).reduce((n, c) => n + (c?.stories?.length || 0), 0);
+    };
+    const avgStories = all.length ? all.reduce((n, b) => n + storyCount(b.enriched_categories), 0) / all.length : 0;
+    const grokBriefs = all.filter((b) => String(b.model || '').startsWith('grok'));
+    return decideGrok(edition, localDate, grokBriefs, { avgStories, briefs: all.length });
   } catch (e) {
     return { useGrok: true, reason: `history-unreadable: ${e instanceof Error ? e.message : String(e)}` };
   }

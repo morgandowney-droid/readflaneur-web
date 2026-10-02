@@ -49,4 +49,13 @@ test('a new edition in a Grok market keeps Grok until it has history', () => {
   assert.deepEqual(G.decideGrok(ed, '2026-10-02', [empty]), { useGrok: true, reason: 'grok-market' });
 });
 
+test('a thin edition keeps Grok even with no Grok-only stories', () => {
+  const ed = { id: 'rome-prati', name: 'Prati', city: 'Rome', country: 'Italy' };
+  const thin = G.decideGrok(ed, '2026-10-02', Array(10).fill(empty), { avgStories: 3.6, briefs: 14 });
+  assert.equal(thin.useGrok, true);
+  assert.match(thin.reason, /^thin-edition-3\.6/);
+  const full = G.decideGrok(ed, '2026-10-02', Array(10).fill(empty), { avgStories: 5.2, briefs: 14 });
+  assert.equal(full.useGrok, G.isGrokProbeDay(ed.id, '2026-10-02'));
+});
+
 console.log(`\n${passed} passed`);
