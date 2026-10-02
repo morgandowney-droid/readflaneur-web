@@ -67,7 +67,7 @@ const SEARCH_CATCHMENTS: Readonly<Record<string, readonly string[]>> = {
   'nrw-neuss': ['Neuss (Rhein-Kreis Neuss, Nordrhein-Westfalen)', 'Fleher Brücke', 'Josef-Kardinal-Frings-Brücke (Neuss Düsseldorf)', 'Rheinbrücke Neuss Düsseldorf'],
   // Duesseldorf Stadtbezirk 4 (Axel Springer, 2026-10-02): the left-bank
   // district bordering Neuss, about 42,000 people, and the bridges into the city.
-  'duesseldorf-oberkassel': ['Oberkassel (Düsseldorf)', 'Heerdt (Düsseldorf)', 'Lörick (Düsseldorf)', 'Niederkassel (Düsseldorf)', 'Oberkasseler Brücke', 'Rheinkniebrücke'],
+  'duesseldorf-oberkassel': ['Düsseldorf-Oberkassel', 'Düsseldorf-Heerdt', 'Düsseldorf-Lörick', 'Düsseldorf-Niederkassel', 'Oberkasseler Brücke (Düsseldorf)', 'Rheinkniebrücke (Düsseldorf)'],
   // Clerkenwell, London (AP, 2026-09-30). Exmouth Market, Farringdon and
   // Finsbury are the same patch; stops short of the City, Angel and King's Cross.
   'london-clerkenwell': ['Clerkenwell (London EC1)', 'Exmouth Market (Clerkenwell, London EC1)', 'Farringdon (London EC1)', 'Smithfield Market (London EC1)'],

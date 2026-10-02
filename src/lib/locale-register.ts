@@ -531,3 +531,26 @@ BRITISH ENGLISH - NON-NEGOTIABLE. This edition is read in ${place.country}.
 - A licence is the noun, to license is the verb.
 - Keep proper nouns exactly as their owner spells them (Lewes Little Theatre, Center Parcs, The Thomas Tripp).`;
 }
+
+/** The morning greeting in each non-English market, by country. */
+const LOCAL_GREETING: Record<string, string> = {
+  germany: 'Guten Morgen', austria: 'Guten Morgen', switzerland: 'Guten Morgen',
+  italy: 'Buongiorno', spain: 'Buenos días', france: 'Bonjour', portugal: 'Bom dia',
+  sweden: 'God morgon', norway: 'God morgen', denmark: 'Godmorgen', netherlands: 'Goedemorgen',
+};
+const ANY_GREETING = /^(\s*)(Guten Morgen|Goedemorgen|God morgon|God morgen|Godmorgen|Buongiorno|Buenos d[ií]as|Bonjour|Bom dia|Bon dia)\b/i;
+
+/**
+ * Put a non-English brief's opening greeting into the country's language.
+ * The enrichment prompt shows example greetings and the model copies the
+ * nearest one: Neuss, near the Dutch border, opened "Goedemorgen, Neuss" on its
+ * first morning (2 Oct 2026). Only an existing greeting in the wrong language
+ * is replaced; English greetings and everything else are left alone.
+ */
+export function fixGreetingLanguage(text: string, country: string | null | undefined): string {
+  const want = LOCAL_GREETING[(country || '').trim().toLowerCase()];
+  if (!want || !text) return text;
+  const m = text.match(ANY_GREETING);
+  if (!m || m[2].toLowerCase() === want.toLowerCase()) return text;
+  return text.replace(ANY_GREETING, `${m[1]}${want}`);
+}

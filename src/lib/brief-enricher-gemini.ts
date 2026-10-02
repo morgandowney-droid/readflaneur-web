@@ -20,6 +20,7 @@ import { repairStorySources, type RepairStats } from '@/lib/source-repair';
 import { geminiRepairSearch } from '@/lib/source-repair-search';
 import { editionRulesBlock, rulesForEdition, type Removal } from '@/lib/edition-rules';
 import { applyShowroomCrimeRule, hasShowroomCrimeRule } from '@/lib/showroom-crime-rule';
+import { fixGreetingLanguage } from '@/lib/locale-register';
 import { enforceEditionRules } from '@/lib/edition-rules-review';
 import { anglicise, britishStyleBlock, enforcePlaceNoun, getPlaceNoun, isEnglishSpeaking, usesBritishEnglish, spellingVariantFor } from '@/lib/locale-register';
 
@@ -573,7 +574,7 @@ Your writing style:
 - Deadpan humor when appropriate
 - You drop specific details that only a local would know (exact addresses, which corner, who owns what)
 - You present information conversationally, like telling a friend what's happening in the neighborhood
-- Start with a brief, casual intro greeting in the LOCAL LANGUAGE of the neighborhood (e.g., "God morgon, grannar." for Stockholm, "God morgen, naboer." for Oslo, "Bonjour, voisins." for Paris, "Buongiorno." for Milan, "Goedemorgen." for Amsterdam). For English-speaking cities, use "Good morning" with a local twist (e.g., "Morning, neighbors." for New York, "Good morning, loves." for London, "Morning, ${neighborhoodName}." for a UK town, "Good morning, ${neighborhoodName}." for an Irish county). This local greeting is the signature charm of each brief.
+- Start with a brief, casual intro greeting in the LOCAL LANGUAGE of the neighborhood (e.g., "God morgon, grannar." for Stockholm, "God morgen, naboer." for Oslo, "Bonjour, voisins." for Paris, "Buongiorno." for Milan, "Guten Morgen." for Berlin, "Goedemorgen." for Amsterdam). For English-speaking cities, use "Good morning" with a local twist (e.g., "Morning, neighbors." for New York, "Good morning, loves." for London, "Morning, ${neighborhoodName}." for a UK town, "Good morning, ${neighborhoodName}." for an Irish county). This local greeting is the signature charm of each brief.
 - End with a brief, friendly sign-off in the LOCAL LANGUAGE (e.g., "Ha en fin dag." for Stockholm, "Bonne journee." for Paris, "Vi ses." for Stockholm). For English-speaking cities, a casual farewell works (e.g., "See you tomorrow." or "Enjoy the day.").
 - CRITICAL: This is a DAILY update published every morning. Never use "another week", "this week's roundup", or any weekly/monthly framing. Treat each brief as today's news.
 - CRITICAL: If you cannot verify something with a source, DO NOT mention it at all. Only include stories you can confirm.
@@ -1178,6 +1179,9 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
         throw new Error(`Edition rules (${editionRules.label}) removed every story for ${neighborhoodName}; nothing is stored`);
       }
     }
+
+    // The greeting in the country's language (the model copies the nearest example).
+    if (articleType !== 'look_ahead' && articleType !== 'weekly_recap') text = fixGreetingLanguage(text, country);
 
     // Showroom editions (AP, Local Media Association): crime stories never name
     // anyone and never lead (showroom-crime-rule.ts). Morgan, 30 Sep 2026.
