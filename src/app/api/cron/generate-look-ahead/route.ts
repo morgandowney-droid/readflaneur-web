@@ -44,6 +44,9 @@ import { checkBeforeInsert, fallbackTeaser, filterListingEvents, mentionsDropped
  */
 
 export const runtime = 'nodejs';
+/** Below this many dated events from the Gemini search, the Grok search runs too (Morgan, 2 Oct 2026). */
+const GROK_FALLBACK_BELOW_EVENTS = 8;
+
 export const maxDuration = 300;
 
 // Budget leaves ~100s of the 300s maxDuration as headroom so an in-flight batch
@@ -252,6 +255,9 @@ export async function GET(request: Request) {
     errors: [] as string[],
     // Publisher edition rules (edition-rules.ts): what was cut from which edition and why.
     edition_rules_removals: [] as Array<{ neighborhood: string; header: string; rule: string }>,
+    // Grok runs only when the Gemini search finds fewer than GROK_FALLBACK_BELOW_EVENTS events.
+    grok_fallbacks: 0,
+    grok_skipped: 0,
   };
 
   try {
@@ -413,15 +419,27 @@ export async function GET(request: Request) {
             }
           }
 
-          // Step 1: Grok + Gemini search in parallel for upcoming events
+          // Step 1: the Gemini web search first; Grok only when Gemini comes back thin.
+          // Measured 2 Oct 2026 (scripts/measure-grok-lookahead.mjs, 44 editions):
+          // Gemini found ~890 dated events, Grok 12, of which 9 were new (~1% of
+          // the listing), and Grok added nothing in 40 of 44 editions. X rarely
+          // carries next week's listings; venue sites and council calendars do.
           console.log(`[generate-look-ahead] Searching for ${searchName}, ${city} (local date: ${localDate})...`);
-          const [grokResult, geminiResult] = await Promise.allSettled([
-            generateLookAhead(searchName, city, country || undefined, tz, localDate, isDistrictScoped(id), id),
+          const geminiResult = await Promise.allSettled([
             searchUpcomingEvents(searchName, city, country || undefined, tz, localDate, isDistrictScoped(id), id),
-          ]);
-
-          const grokLookAhead = grokResult.status === 'fulfilled' ? grokResult.value : null;
+          ]).then((r) => r[0]);
           const geminiEvents = geminiResult.status === 'fulfilled' ? geminiResult.value : null;
+          const geminiCount = (geminiEvents?.structuredEvents || []).length;
+          let grokLookAhead: Awaited<ReturnType<typeof generateLookAhead>> | null = null;
+          if (geminiCount < GROK_FALLBACK_BELOW_EVENTS) {
+            results.grok_fallbacks++;
+            const grokResult = await Promise.allSettled([
+              generateLookAhead(searchName, city, country || undefined, tz, localDate, isDistrictScoped(id), id),
+            ]).then((r) => r[0]);
+            grokLookAhead = grokResult.status === 'fulfilled' ? grokResult.value : null;
+          } else {
+            results.grok_skipped++;
+          }
 
           if (!grokLookAhead && !geminiEvents) {
             console.log(`[generate-look-ahead] No content from either source for ${name}`);

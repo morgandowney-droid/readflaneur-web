@@ -258,7 +258,7 @@ export function isPlaceholder(val: string | null | undefined): boolean {
  * Filter out generic tourist activities that wouldn't interest local residents.
  * Safety net in case Grok includes them despite prompt instructions.
  */
-function isTouristActivity(event: StructuredEvent): boolean {
+export function isTouristActivity(event: StructuredEvent): boolean {
   const name = event.name.toLowerCase();
   const category = (event.category || '').toLowerCase();
   const combined = `${name} ${category}`;
