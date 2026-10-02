@@ -476,3 +476,66 @@ export function dropRepeatedDayMentions(prose: string, events: StructuredEvent[]
   }
   return { prose: out.join('\n').replace(/\n{3,}/g, '\n\n').trim(), dropped };
 }
+
+/**
+ * Remove prose paragraphs about events the district fence removed from the
+ * listing. A district edition's listing is fenced (district-geofence.ts) but its
+ * prose was written before the fence, from the same events: Oberkassel's first
+ * Look Ahead (2 Oct 2026) listed its own weekly market and wrote paragraphs about
+ * the Tonhalle, the Schauspielhaus and K20 across the river. A paragraph goes
+ * when it names a fenced-out event or venue and no event that stayed.
+ * Paragraphs naming nothing in either list are left alone; empty day sections go.
+ */
+export function dropFencedOutMentions(
+  prose: string,
+  fencedOut: StructuredEvent[],
+  kept: StructuredEvent[],
+): { prose: string; dropped: string[] } {
+  const keysOf = (events: StructuredEvent[]) => {
+    const keys = new Set<string>();
+    for (const e of events) {
+      const n = coreName(e.name || '');
+      if (n.length >= 5) keys.add(n);
+      const loc = coreName(e.location || '');
+      if (loc.length >= 8) keys.add(loc);
+    }
+    return keys;
+  };
+  const outKeys = keysOf(fencedOut);
+  if (outKeys.size === 0) return { prose, dropped: [] };
+  const keepKeys = keysOf(kept);
+  // A venue that is in both lists says nothing about where a paragraph belongs.
+  for (const k of keepKeys) outKeys.delete(k);
+
+  const lines = prose.replace(/\r\n/g, '\n').split('\n');
+  type Section = { header: string | null; paras: string[] };
+  const sections: Section[] = [{ header: null, paras: [] }];
+  let buf: string[] = [];
+  const flush = () => { if (buf.length) { sections[sections.length - 1].paras.push(buf.join('\n')); buf = []; } };
+  for (const line of lines) {
+    const t = line.trim();
+    if (/^\[\[[^\]]+\]\]$/.test(t) || /^#{2,3}\s+\S/.test(t)) { flush(); sections.push({ header: t, paras: [] }); continue; }
+    if (!t) { flush(); continue; }
+    buf.push(line);
+  }
+  flush();
+
+  const dropped: string[] = [];
+  for (const s of sections) {
+    s.paras = s.paras.filter((p) => {
+      const text = coreName(p);
+      const namesOut = Array.from(outKeys).some((k) => text.includes(k));
+      const namesKept = Array.from(keepKeys).some((k) => text.includes(k));
+      if (namesOut && !namesKept) { dropped.push(p.slice(0, 80)); return false; }
+      return true;
+    });
+  }
+  if (!dropped.length) return { prose, dropped };
+  const out: string[] = [];
+  for (const s of sections) {
+    if (s.header && s.paras.length === 0) continue;
+    if (s.header) out.push(s.header);
+    out.push(...s.paras.map((p) => p + '\n'));
+  }
+  return { prose: out.join('\n').replace(/\n{3,}/g, '\n\n').trim(), dropped };
+}

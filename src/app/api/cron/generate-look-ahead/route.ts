@@ -9,7 +9,7 @@ import { searchCatchmentFor, isDistrictScoped } from '@/lib/search-catchment';
 import { unpublishableReason } from '@/lib/model-refusal';
 import { getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
-import { formatEventListing, dropRepeatedDayMentions } from '@/lib/look-ahead-events';
+import { formatEventListing, dropRepeatedDayMentions, dropFencedOutMentions } from '@/lib/look-ahead-events';
 import { isVenueAbroad } from '@/lib/place-boundary';
 import { filterEventsToDistrict } from '@/lib/district-geofence';
 import { searchUpcomingEvents, mergeContent, mergeStructuredEvents } from '@/lib/gemini-search';
@@ -529,6 +529,7 @@ export async function GET(request: Request) {
           // A district edition keeps only venues inside the district. The
           // local-scope prompt rule narrows the search; this removes what gets
           // through it (see district-geofence.ts).
+          let fencedOut: typeof listingEvents = [];
           if (isDistrictScoped(id) && neighborhood.latitude != null && neighborhood.longitude != null) {
             const fenced = await filterEventsToDistrict(listingEvents, {
               latitude: Number(neighborhood.latitude),
@@ -540,6 +541,7 @@ export async function GET(request: Request) {
               console.warn(`[generate-look-ahead] Outside ${name}: ${d.event.name} @ ${[d.event.location, d.event.address].filter(Boolean).join(', ')} (${d.reason})`);
             }
             listingEvents = fenced.kept;
+            fencedOut = fenced.dropped.map((d) => d.event);
           }
 
           // Publisher edition rules. The upstream search events were never
@@ -561,6 +563,11 @@ export async function GET(request: Request) {
           // model does it anyway (Brera, 25 Sep: two exhibitions, eight days).
           const repeats = dropRepeatedDayMentions(enrichedBody, mergedListing);
           if (repeats.dropped.length) console.warn(`[generate-look-ahead] ${name}: dropped ${repeats.dropped.length} repeated day paragraph(s)`);
+          // The prose was written before the fence: paragraphs about events it
+          // removed go too, so a district edition stays inside the district.
+          const fencedProse = dropFencedOutMentions(repeats.prose, fencedOut, listingEvents);
+          if (fencedProse.dropped.length) console.warn(`[generate-look-ahead] ${name}: dropped ${fencedProse.dropped.length} prose paragraph(s) about events outside the district`);
+          repeats.prose = fencedProse.prose;
           // The prose must also open at a [[header]]. A teaser leaked above the
           // first header ("art and antiquariato", Prati, 27 Sep) sits after the
           // event listing, where the whole-body check below never looks.
