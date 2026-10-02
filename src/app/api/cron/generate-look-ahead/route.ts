@@ -462,6 +462,25 @@ export async function GET(request: Request) {
             return null;
           }
 
+          // A district edition is written only from events inside the district.
+          // Fencing the listing after the prose was written left the prose
+          // citywide (Oberkassel, 2 Oct 2026: the Tonhalle, K20, a flea market in
+          // Solingen). When the fence keeps at least one event, the writer gets
+          // only those; when it keeps none, the old path runs and the prose is
+          // pruned after the fence below.
+          if (isDistrictScoped(id) && neighborhood.latitude != null && neighborhood.longitude != null && mergedStructuredEvents.length > 0) {
+            const pre = await filterEventsToDistrict(
+              mergedStructuredEvents.filter((e) => !isVenueAbroad([e.location, e.address].filter(Boolean).join(', '), country)),
+              { latitude: Number(neighborhood.latitude), longitude: Number(neighborhood.longitude), radiusM: Number(neighborhood.radius) || 1000, city },
+            );
+            if (pre.kept.length > 0) {
+              const lines = pre.kept.map((e) => `- ${[e.day_label || e.date, e.time].filter(Boolean).join(', ')}: ${e.name}${e.category ? ` (${e.category})` : ''}${e.location ? `, at ${e.location}` : ''}${e.address ? `, ${e.address}` : ''}${e.price ? `. ${e.price}` : ''}`);
+              lookAheadBrief.content = `UPCOMING EVENTS INSIDE ${name.toUpperCase()}, ${city.toUpperCase()}. Write only about these events; they are the ones inside the district.\n${lines.join('\n')}`;
+              lookAheadBrief.structuredEvents = pre.kept;
+              console.log(`[generate-look-ahead] ${name}: writing from ${pre.kept.length} in-district event(s); ${pre.dropped.length} outside left out`);
+            }
+          }
+
           // Step 2: Gemini Flash enrichment
           // Pass today's local date as the context time so Gemini frames
           // "today"/"tomorrow" correctly from the reader's morning perspective

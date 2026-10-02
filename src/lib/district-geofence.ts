@@ -105,6 +105,13 @@ async function geocode(query: string, bias: { lat: number; lng: number }): Promi
 }
 
 /** Address first, then venue name; both anchored to the city. */
+/**
+ * Venue lookups shared across calls in one invocation: a district Look Ahead is
+ * fenced before it is written and again after, and the second pass should not
+ * repeat Nominatim's one-request-a-second lookups.
+ */
+const PLACE_CACHE = new Map<string, Placement>();
+
 async function placeVenue(e: StructuredEvent, city: string, bias: { lat: number; lng: number }, cache: Map<string, Placement>): Promise<Placement> {
   const withCity = (s: string) => (s.toLowerCase().includes(city.toLowerCase()) ? s : `${s}, ${city}`);
   const tries = [e.address, e.location?.replace(/\s*\(also on [^)]*\)/i, '')].filter((x): x is string => !!x && x.trim().length > 2).map((x) => withCity(x.trim()));
@@ -144,7 +151,7 @@ export async function filterEventsToDistrict(
   if (events.length === 0) return { kept: events, dropped: [] };
 
   const limit = centre.radiusM + WALK_MARGIN_M;
-  const cache = new Map<string, Placement>();
+  const cache = PLACE_CACHE;
   // Sequential on purpose: Nominatim allows one request a second.
   const verdicts: Array<{ keep: boolean; reason: string; networkError?: boolean }> = [];
   for (const e of events) {
