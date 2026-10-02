@@ -171,16 +171,10 @@ export async function GET(request: Request) {
 
       console.log(`[Monitor] Batch brief result: ${batchResult.generated} generated, ${batchResult.failed} failed`);
 
-      // Build a set of neighborhoods that got briefs
-      const todayStart = new Date();
-      todayStart.setUTCHours(0, 0, 0, 0);
-      const { data: newBriefs } = await supabase
-        .from('neighborhood_briefs')
-        .select('neighborhood_id')
-        .in('neighborhood_id', neighborhoodIds)
-        .gte('created_at', todayStart.toISOString());
-
-      const generatedIds = new Set((newBriefs || []).map(b => b.neighborhood_id));
+      // Editions that now have a brief for their own local date (made now, made
+      // by another process, or there all along). Not created_at >= UTC midnight,
+      // which never matched a European edition's brief made the evening before.
+      const generatedIds = new Set(batchResult.resolvedIds);
 
       // Update each issue based on whether its neighborhood got a brief
       for (const issue of briefIssuesToFix) {

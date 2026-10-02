@@ -155,11 +155,11 @@ export async function batchFixMissingBriefs(
   supabase: SupabaseClient,
   neighborhoodIds: string[],
   timeBudgetMs: number = 90_000,
-): Promise<{ generated: number; failed: number; errors: string[] }> {
+): Promise<{ generated: number; failed: number; errors: string[]; resolvedIds: string[] }> {
   const { generateNeighborhoodBrief, isGrokConfigured } = await import('@/lib/grok');
   const { getComboInfo } = await import('@/lib/combo-utils');
 
-  const result = { generated: 0, failed: 0, errors: [] as string[] };
+  const result = { generated: 0, failed: 0, errors: [] as string[], resolvedIds: [] as string[] };
 
   if (!isGrokConfigured()) {
     result.errors.push('Grok API not configured');
@@ -189,6 +189,22 @@ export async function batchFixMissingBriefs(
     }
 
     try {
+      // A brief for the edition's local date already exists: nothing to fix, and
+      // no search to pay for. Before 2 Oct 2026 the search ran first and the
+      // insert then failed as a duplicate, every 30 minutes.
+      const localBriefDate = new Date().toLocaleDateString('en-CA', { timeZone: hood.timezone || 'UTC' });
+      const { data: existing } = await supabase
+        .from('neighborhood_briefs')
+        .select('id')
+        .eq('neighborhood_id', hood.id)
+        .eq('brief_date', localBriefDate)
+        .limit(1);
+      if (existing && existing.length > 0) {
+        result.generated++;
+        result.resolvedIds.push(hood.id);
+        continue;
+      }
+
       // Build search name for combo neighborhoods
       let searchName = hood.name;
       if (hood.is_combo) {
@@ -235,6 +251,7 @@ export async function batchFixMissingBriefs(
         // 23505 = unique_violation - brief already exists for this date (another process fixed it)
         if (insertError.code === '23505') {
           result.generated++;
+          result.resolvedIds.push(hood.id);
           console.log(`[BatchBrief] ${hood.name}: already has brief for ${briefDate} (resolved by another process)`);
           continue;
         }
@@ -244,6 +261,7 @@ export async function batchFixMissingBriefs(
       }
 
       result.generated++;
+      result.resolvedIds.push(hood.id);
       console.log(`[BatchBrief] Generated brief for ${hood.name} (${result.generated}/${neighborhoods.length})`);
 
       // Rate limit between Grok calls

@@ -7,6 +7,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { DetectedIssue, FIX_CONFIG, CronIssue } from './types';
 import { isMissingImage, isPlaceholderImage } from './image-validator';
+import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
+import { shouldGenerateToday } from '@/lib/generation-cadence';
 
 /**
  * Detect articles with missing or placeholder images
@@ -72,66 +74,67 @@ export async function detectImageIssues(
 }
 
 /**
- * Detect neighborhoods missing today's brief
+ * Detect neighborhoods missing today's brief.
+ *
+ * "Today" is each edition's own local date (brief_date), and only editions
+ * that publish today (shouldGenerateToday) and whose morning window has
+ * passed count. Until 2 Oct 2026 this read created_at >= UTC midnight: a
+ * European edition's brief is made at its local midnight, 22:00 or 23:00 UTC
+ * the evening before, so after 12:00 UTC every European edition looked
+ * missing, and monitor-and-fix re-ran its Grok search every 30 minutes, all
+ * afternoon, about 290 wasted searches a day (Bregenz: 22 in one day).
  */
 export async function detectMissingBriefs(
   supabase: SupabaseClient
 ): Promise<DetectedIssue[]> {
   const issues: DetectedIssue[] = [];
+  const now = new Date();
 
-  // Get start of today (UTC)
-  const todayStart = new Date();
-  todayStart.setUTCHours(0, 0, 0, 0);
-
-  // Get all active neighborhoods
   const { data: activeNeighborhoods, error: neighborhoodError } = await supabase
     .from('neighborhoods')
-    .select('id, name, city')
+    .select('id, name, city, timezone')
     .eq('is_active', true);
-
   if (neighborhoodError) {
     console.error('Error fetching neighborhoods:', neighborhoodError);
     return issues;
   }
 
-  // Get neighborhoods that already have today's brief
-  // Paginate - Supabase server-side max-rows=1000 silently caps .limit()
-  const todaysBriefs: { neighborhood_id: string }[] = [];
-  let idOffset = 0;
+  const subscribedIds = await getActiveNeighborhoodIds(supabase);
+  const localDate = (tz: string | null) => now.toLocaleDateString('en-CA', { timeZone: tz || 'UTC' });
+  const localHour = (tz: string | null) => Number(now.toLocaleTimeString('en-GB', { timeZone: tz || 'UTC', hour: '2-digit', hour12: false }).slice(0, 2)) % 24;
+
+  // Editions due today whose midnight-to-7am window has passed (9am gives the pipeline slack).
+  const due = (activeNeighborhoods || []).filter((n) =>
+    localHour(n.timezone) >= 9 && shouldGenerateToday(n.id, localDate(n.timezone), subscribedIds.has(n.id)));
+  if (due.length === 0) return issues;
+
+  const dates = Array.from(new Set(due.map((n) => localDate(n.timezone))));
+  const covered = new Set<string>();
+  let offset = 0;
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const { data: page, error: briefError } = await supabase
       .from('neighborhood_briefs')
-      .select('neighborhood_id')
-      .gte('created_at', todayStart.toISOString())
-      .order('created_at', { ascending: true })
-      .range(idOffset, idOffset + 999);
+      .select('neighborhood_id, brief_date')
+      .in('brief_date', dates)
+      .order('brief_date', { ascending: true })
+      .range(offset, offset + 999);
     if (briefError) {
       console.error('Error fetching today\'s briefs:', briefError);
       return issues;
     }
     if (!page || page.length === 0) break;
-    todaysBriefs.push(...page);
+    for (const b of page) covered.add(`${b.neighborhood_id}::${b.brief_date}`);
     if (page.length < 1000) break;
-    idOffset += 1000;
+    offset += 1000;
   }
 
-  const coveredIds = new Set(todaysBriefs.map(b => b.neighborhood_id));
-  const missingNeighborhoods = (activeNeighborhoods || []).filter(n => !coveredIds.has(n.id));
-
-  // Check current hour - only report missing briefs after 12:00 UTC
-  // This gives morning windows around the world time to complete
-  const currentHour = new Date().getUTCHours();
-  if (currentHour < 12) {
-    console.log(`[BriefDetector] Skipping detection - only ${currentHour}:00 UTC, waiting until 12:00 UTC`);
-    return issues;
-  }
-
-  for (const neighborhood of missingNeighborhoods) {
+  for (const n of due) {
+    if (covered.has(`${n.id}::${localDate(n.timezone)}`)) continue;
     issues.push({
       issue_type: 'missing_brief',
-      neighborhood_id: neighborhood.id,
-      description: `${neighborhood.name} (${neighborhood.city}) is missing today's brief`,
+      neighborhood_id: n.id,
+      description: `${n.name} (${n.city}) is missing today's brief`,
       auto_fixable: true,
     });
   }
