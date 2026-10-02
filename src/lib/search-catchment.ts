@@ -61,6 +61,13 @@ const SEARCH_CATCHMENTS: Readonly<Record<string, readonly string[]>> = {
   // Shreveport, Louisiana (LMA, 2026-09-30). Always with the parish and state.
   // Bossier City across the Red River is its own city and is left out.
   'louisiana-shreveport': ['Shreveport (Caddo Parish, Louisiana)'],
+  // Neuss (Axel Springer, 2026-10-02): the city, plus the Rhine crossings to
+  // Duesseldorf its commuters use, because closures and works on them are Neuss
+  // news. Stops short of Duesseldorf itself.
+  'nrw-neuss': ['Neuss (Rhein-Kreis Neuss, Nordrhein-Westfalen)', 'Fleher Brücke', 'Josef-Kardinal-Frings-Brücke (Neuss Düsseldorf)', 'Rheinbrücke Neuss Düsseldorf'],
+  // Duesseldorf Stadtbezirk 4 (Axel Springer, 2026-10-02): the left-bank
+  // district bordering Neuss, about 42,000 people, and the bridges into the city.
+  'duesseldorf-oberkassel': ['Oberkassel (Düsseldorf)', 'Heerdt (Düsseldorf)', 'Lörick (Düsseldorf)', 'Niederkassel (Düsseldorf)', 'Oberkasseler Brücke', 'Rheinkniebrücke'],
   // Clerkenwell, London (AP, 2026-09-30). Exmouth Market, Farringdon and
   // Finsbury are the same patch; stops short of the City, Angel and King's Cross.
   'london-clerkenwell': ['Clerkenwell (London EC1)', 'Exmouth Market (Clerkenwell, London EC1)', 'Farringdon (London EC1)', 'Smithfield Market (London EC1)'],
@@ -217,6 +224,8 @@ export const DISTRICT_SCOPED_EDITION_IDS: ReadonlySet<string> = new Set([
   // must not drift to Avignon or Aix.
   'london-clerkenwell',
   'provence-gordes',
+  // Axel Springer, 2 Oct: a city district keeps the city's listings out.
+  'duesseldorf-oberkassel',
   // GEDI, 25 Sep: Mirja saw Scicli's edition drift to Ragusa, Modica and
   // towns across Sicily. The fence keeps its Look Ahead inside the comune.
   'sicily-scicli',

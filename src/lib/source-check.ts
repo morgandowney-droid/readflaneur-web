@@ -20,6 +20,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { crawlVerdict, pageReservesTdm } from './crawl-policy';
 import { foldText, foldTokens, FUNCTION_WORDS } from './fold-text';
 import { X_STATUS, readXPost } from './grok-citations';
 
@@ -51,6 +52,8 @@ export interface PageText {
   bytes: number;
   truncated: boolean;
   error?: string;
+  /** Set when the site's robots.txt or TDM reservation says not to read the page; nothing was kept. */
+  blocked?: 'robots-disallowed' | 'robots-unreachable' | 'tdm-reserved';
 }
 
 export const SOURCE_CHECK_USER_AGENT = 'FlaneurSourceCheck/1.0 (+https://readflaneur.com/standards; source verification)';
@@ -79,6 +82,11 @@ export async function fetchPage(url: string, timeoutMs = 8000): Promise<PageText
       html: post.raw, text, bytes: post.raw.length, truncated: false,
     };
   }
+
+  // The site's own rules first: robots.txt and its text-and-data-mining
+  // reservation (crawl-policy.ts). A page we may not read is not fetched.
+  const verdict = await crawlVerdict(url);
+  if (!verdict.allowed && verdict.reason) return { ...empty, finalUrl: url, error: verdict.reason, blocked: verdict.reason };
 
   let res: Response;
   try {
@@ -132,6 +140,8 @@ export async function fetchPage(url: string, timeoutMs = 8000): Promise<PageText
   for (const c of chunks) { buf.set(c, off); off += c.length; }
 
   const html = decode(buf, contentType);
+  // A page that declares a TDM reservation in its header or meta tag is not kept or checked.
+  if (pageReservesTdm(res.headers, html)) return { ...base, error: 'tdm-reserved', blocked: 'tdm-reserved' };
   const text = /text\/plain/i.test(contentType || '') ? collapse(html) : htmlToText(html);
   return { ...base, ok: true, html, text, bytes, truncated };
 }

@@ -156,6 +156,8 @@ export const CITY_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
   'westmidlands-birmingham',
   // Local Media Association (2026-09-30): the city of Shreveport, about 180,000.
   'louisiana-shreveport',
+  // Axel Springer (2026-10-02): the city of Neuss, about 150,000.
+  'nrw-neuss',
   // AMI, Spain (2026-09-21): the whole city of Zaragoza, around 680,000 people.
   'aragon-zaragoza',
   // Overstory Media Group, Fraser Valley (named by Shannon Havard, 2026-09-16).

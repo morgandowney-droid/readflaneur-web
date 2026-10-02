@@ -173,6 +173,12 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   // Shreveport, Louisiana, for a publisher he will bring to a call on 12 Oct.
   // About 180,000 people, so a city-wide edition.
   'louisiana-shreveport',
+  // Axel Springer (2 Oct 2026): on the call they showed their own hard case,
+  // Neuss with Duesseldorf across the Rhine and the bridges people commute
+  // over. Neuss as a city edition, and Duesseldorf Stadtbezirk 4 (Oberkassel,
+  // Heerdt, Loerick, Niederkassel), the left-bank district that borders it.
+  'nrw-neuss',
+  'duesseldorf-oberkassel',
   // Schibsted (2026-09-25): Oslo in Norwegian, Stockholm in Swedish, so the
   // follow-up can show daily editions in both of its markets.
   'oslo-frogner',
@@ -197,6 +203,9 @@ export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' 
   'montreal-westmount': 'fr',
   // AP (2026-09-30): English base for AP's readers, French pages pre-warmed.
   'provence-gordes': 'fr',
+  // Axel Springer (2026-10-02)
+  'nrw-neuss': 'de',
+  'duesseldorf-oberkassel': 'de',
   'berlin-prenzlauer-berg': 'de',
   'vorarlberg-lochau': 'de',
   // Russmedia's ten areas (2026-09-22)
