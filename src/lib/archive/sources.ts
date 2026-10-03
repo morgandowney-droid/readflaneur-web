@@ -1,14 +1,12 @@
 /**
  * Low-cost sources for the archive tier, all free except the Serper fallback:
  *
- *  - published news: GDELT's free article index (DOC API here, one request
- *    per 5 seconds; at full scale its 15-minute bulk files, matched to areas
- *    by coordinates);
+ *  - published news: one Serper news query a day (Google News results with
+ *    real article links). GDELT's free index (gdeltArticles, kept for its bulk
+ *    files later) missed the local papers of small towns in testing;
  *  - the area's own council site: news feed or page, found once and stored;
  *  - Bluesky public search and Mastodon hashtag timelines, filtered by the
  *    area's place names;
- *  - Serper (raw Google results, ~$0.001 a query) only when the free sources
- *    find too little.
  *
  * Every item keeps the URL it came from; nothing here asks a model for one.
  */
@@ -247,11 +245,11 @@ export async function councilItems(src: AreaSources): Promise<SourceItem[]> {
   return out;
 }
 
-/** The Serper fallback: one news query for the last day. */
-export async function searchFallback(area: ArchiveArea, lang: Lang): Promise<SourceItem[]> {
+/** Published news: one Serper news query for the last day (Google News results, real article links). */
+export async function newsSearch(area: ArchiveArea, lang: Lang): Promise<SourceItem[]> {
   const place = area.city ? `${area.name.replace(/ und Umgebung$/, '')} ${area.city}` : `${area.name.replace(/ und Umgebung$/, '')} ${area.kreis || ''}`.trim();
   const hits = await serper('news', place, lang, 'qdr:d', area.id).catch(() => [] as SerperHit[]);
-  return hits.slice(0, 8).map((h) => ({ kind: 'search' as const, url: h.link, title: h.title, text: h.snippet || '', date: h.date || null, publisher: h.source || null }));
+  return hits.slice(0, 8).map((h) => ({ kind: 'news' as const, url: h.link, title: h.title, text: h.snippet || '', date: h.date || null, publisher: h.source || null }));
 }
 
 /** Read the article pages of non-social items (robots and TDM honoured), up to `max`. */

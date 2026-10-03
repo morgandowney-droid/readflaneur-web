@@ -18,13 +18,12 @@ import { isModelRefusal } from '@/lib/model-refusal';
 import { fetchPage } from '@/lib/source-check';
 import { langFor, serper, type SerperHit } from '@/lib/open-search';
 import {
-  blueskyPosts, councilItems, discoverCouncil, gdeltArticles, mastodonPosts, namesPlace, readPages, searchFallback, searchNames,
+  blueskyPosts, councilItems, discoverCouncil, mastodonPosts, namesPlace, newsSearch, readPages, searchNames,
   type ArchiveArea, type AreaSources, type SourceItem,
 } from '@/lib/archive/sources';
 
 export const ARCHIVE_MODEL = 'deepseek/deepseek-v4-flash';
 const MAX_ITEMS = 16;
-const MIN_ITEMS_BEFORE_FALLBACK = 4;
 
 const LOCALE: Record<string, { code: string; language: string; timezone: string; greeting: string; weekday: string }> = {
   Germany: { code: 'de', language: 'German', timezone: 'Europe/Berlin', greeting: 'Guten Morgen', weekday: 'de-DE' },
@@ -75,7 +74,7 @@ export interface BriefResult {
   error?: string;
 }
 
-export async function writeBrief(admin: SupabaseClient, area: ArchiveArea, opts: { useFallback?: boolean } = {}): Promise<BriefResult> {
+export async function writeBrief(admin: SupabaseClient, area: ArchiveArea): Promise<BriefResult> {
   const loc = localeFor(area.country);
   const lang = langFor(area.country);
   const names = searchNames(area);
@@ -83,8 +82,10 @@ export async function writeBrief(admin: SupabaseClient, area: ArchiveArea, opts:
   let cost = 0;
 
   const src = await areaSources(admin, area).catch(() => ({ council_url: null, council_feed: null, events_url: null }) as AreaSources);
+  // Published news: one Serper news search (Google News results with real links).
+  // GDELT's free index missed the local papers of small towns in testing.
   const [news, council, bsky, masto] = await Promise.all([
-    gdeltArticles(area).catch(() => []),
+    newsSearch(area, lang).catch(() => []),
     councilItems(src).catch(() => []),
     blueskyPosts(area).catch(() => []),
     mastodonPosts(area).catch(() => []),
@@ -94,11 +95,6 @@ export async function writeBrief(admin: SupabaseClient, area: ArchiveArea, opts:
   let items: SourceItem[] = [...council, ...news, ...bsky.slice(0, 5), ...masto.slice(0, 3)];
   const seen = new Set<string>();
   items = items.filter((i) => (seen.has(i.url) ? false : (seen.add(i.url), true)));
-  if (items.length < MIN_ITEMS_BEFORE_FALLBACK && opts.useFallback !== false) {
-    const extra = await searchFallback(area, lang);
-    gathered.search = extra.length;
-    for (const e of extra) if (!seen.has(e.url)) { seen.add(e.url); items.push(e); }
-  }
   items = items.slice(0, MAX_ITEMS);
   await readPages(items, 10);
   // Keep what names the area, or comes from the area's own council.
@@ -116,6 +112,7 @@ Rules:
 - Every story lists the numbers of the sources it is based on. Never write a URL.
 - Names, dates, places and figures exactly as the sources state them. Nothing from your own knowledge.
 - Skip anything elsewhere, older news, adverts, and general descriptions of the place.
+- Skip standing information: opening hours, services, offers that run all year, page navigation. A story reports something new, dated, or about to happen.
 - Never name a private person in a story about crime, an accident or a court case.
 - No em dashes or en dashes. Plain, factual ${loc.language}.
 - If nothing qualifies, return {"stories": []}.
@@ -126,18 +123,28 @@ Return JSON only:
 SOURCES:
 ${block}`;
 
+  // Two attempts: a timeout or an answer that is not JSON gets one retry.
+  type Parsed = { headline?: string; stories?: Array<{ header?: string; text?: string; sources?: number[]; crime?: boolean }> };
+  let parsed: Parsed | null = null;
   let raw = '';
-  try {
-    const r = await openRouterChat({ model: ARCHIVE_MODEL, prompt, operation: 'archive_brief', label: area.id, maxTokens: 3000, temperature: 0.3, json: true, timeoutMs: 120_000, reasoningEffort: 'low' });
-    raw = r.text;
-    cost += r.costUsd ?? 0;
-  } catch (err) {
-    return { headline: null, body: null, stories: [], sources: [], gathered, costUsd: cost, error: `writer: ${err instanceof Error ? err.message : String(err)}` };
+  let lastError = '';
+  for (let attempt = 0; attempt < 2 && !parsed; attempt++) {
+    try {
+      const r = await openRouterChat({ model: ARCHIVE_MODEL, prompt, operation: 'archive_brief', label: area.id, maxTokens: 3000, temperature: 0.3, json: true, timeoutMs: 150_000, reasoningEffort: 'low' });
+      raw = r.text;
+      cost += r.costUsd ?? 0;
+      if (isModelRefusal(raw)) { lastError = 'model refusal'; continue; }
+      parsed = parseJsonObject(raw) as Parsed | null;
+      if (!parsed) lastError = 'unparseable JSON';
+    } catch (err) {
+      lastError = `writer: ${err instanceof Error ? err.message : String(err)}`;
+    }
   }
-  if (isModelRefusal(raw)) return { headline: null, body: null, stories: [], sources: [], gathered, costUsd: cost, error: 'model refusal' };
-
-  let parsed: { headline?: string; stories?: Array<{ header?: string; text?: string; sources?: number[]; crime?: boolean }> } = {};
-  try { parsed = JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, '')); } catch { return { headline: null, body: null, stories: [], sources: [], gathered, costUsd: cost, error: 'unparseable JSON' }; }
+  if (!parsed) {
+    gathered.raw = raw.slice(0, 400);
+    return { headline: null, body: null, stories: [], sources: [], gathered, costUsd: cost, error: lastError };
+  }
+  gathered.stories_written = (parsed.stories || []).length;
 
   const clean = (s: string) => s.replace(/\s*[–—]\s*/g, ', ').replace(/\s+/g, ' ').trim();
   const placeNames = [...names, area.city || '', area.kreis || ''].filter(Boolean);
@@ -153,6 +160,7 @@ ${block}`;
   }
   stories = [...stories.filter((s) => !s.crime), ...stories.filter((s) => s.crime)];
   gathered.dropped_no_source = droppedNoSource; gathered.dropped_crime_name = droppedCrimeName;
+  if (stories.length === 0) gathered.raw = raw.slice(0, 400);
   if (stories.length === 0) return { headline: null, body: null, stories: [], sources: [], gathered, costUsd: cost, error: 'no story survived the checks' };
 
   const used = Array.from(new Set(stories.flatMap((s) => s.sources))).sort((a, b) => a - b);
@@ -166,6 +174,16 @@ ${block}`;
     gathered,
     costUsd: cost,
   };
+}
+
+/** The JSON object in a model's answer, tolerating code fences and text around it. */
+export function parseJsonObject(raw: string): unknown | null {
+  const t = raw.replace(/```(?:json)?/gi, '').trim();
+  for (const candidate of [t, t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)]) {
+    if (!candidate) continue;
+    try { return JSON.parse(candidate); } catch { /* next */ }
+  }
+  return null;
 }
 
 // ─── Weekly events and the daily Look Ahead ───────────────────────────────
@@ -202,7 +220,9 @@ ${pages.map((p, i) => `[${i + 1}] ${p.title}\n${p.text}`).join('\n\n')}`;
     return { stored: 0, costUsd: cost, error: err instanceof Error ? err.message : String(err) };
   }
   let events: Array<{ date?: string; time?: string; name?: string; venue?: string; category?: string; page?: number }> = [];
-  try { events = (JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, '')).events || []); } catch { return { stored: 0, costUsd: cost, error: 'unparseable JSON' }; }
+  const ev = parseJsonObject(raw) as { events?: typeof events } | null;
+  if (!ev) return { stored: 0, costUsd: cost, error: 'unparseable JSON' };
+  events = ev.events || [];
   const rows = events
     .filter((e) => e.name && e.date && /^\d{4}-\d{2}-\d{2}$/.test(e.date) && e.date >= from && e.date <= to && Number.isInteger(e.page) && e.page! >= 1 && e.page! <= pages.length)
     .map((e) => ({ area_id: area.id, event_date: e.date!, time_text: e.time || null, name: e.name!.trim().slice(0, 200), venue: e.venue?.trim().slice(0, 200) || null, category: e.category || null, source_url: pages[e.page! - 1].url }));
