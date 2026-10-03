@@ -29,7 +29,8 @@ import { compareRuns } from '@/lib/model-trial-metrics';
  *
  *   ?stage=writer  gemini-3.8-flash rewrites the brief from production's
  *                  gathered facts and pages (all 12 editions; ~$0.01 each).
- *   ?stage=search  grok-4.5 runs production's Grok brief search, with a
+ *   ?stage=search  (manual only since 3 Oct: 36 pairs, about the same story count
+ *                  as grok-4-1-fast at seven times the cost) grok-4.5 runs production's Grok brief search, with a
  *                  same-time grok-4-1-fast control (about $0.45-0.65 a pair, so 4
  *                  editions a day in rotation, each edition every 3 days).
  *   ?stage=openroute  the open-weight route end to end: Serper results read by

@@ -249,10 +249,6 @@
       "schedule": "30 9,13 * * *"
     },
     {
-      "path": "/api/cron/shadow-model-trial?stage=search",
-      "schedule": "45 9 * * *"
-    },
-    {
       "path": "/api/cron/shadow-model-trial?stage=openroute",
       "schedule": "15 10 * * *"
     }
