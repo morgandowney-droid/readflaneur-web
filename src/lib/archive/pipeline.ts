@@ -24,6 +24,12 @@ import {
 } from '@/lib/archive/sources';
 
 export const ARCHIVE_MODEL = 'deepseek/deepseek-v4-flash';
+/**
+ * DeepSeek V4 Flash providers by price (OpenRouter, 3 Oct 2026): StreamLake
+ * $0.028/$0.056 per million, DeepInfra and GMICloud about $0.09/$0.18. Some
+ * providers charge $1.28 or more for output, so the ceiling is on output.
+ */
+const ARCHIVE_PROVIDERS = { order: ['StreamLake', 'DeepInfra', 'GMICloud'], maxPrice: { prompt: 0.15, completion: 0.3 } };
 const MAX_ITEMS = 16;
 
 const LOCALE: Record<string, { code: string; language: string; timezone: string; greeting: string; weekday: string }> = {
@@ -132,7 +138,7 @@ ${block}`;
   let lastError = '';
   for (let attempt = 0; attempt < 2 && !parsed; attempt++) {
     try {
-      const r = await openRouterChat({ model: ARCHIVE_MODEL, prompt, operation: 'archive_brief', label: area.id, maxTokens: 3000, temperature: 0.3, json: true, timeoutMs: 150_000, reasoningEffort: 'low', cheapest: true });
+      const r = await openRouterChat({ model: ARCHIVE_MODEL, prompt, operation: 'archive_brief', label: area.id, maxTokens: 3000, temperature: 0.3, json: true, timeoutMs: 150_000, reasoningEffort: 'low', providers: ARCHIVE_PROVIDERS });
       raw = r.text;
       cost += r.costUsd ?? 0;
       if (isModelRefusal(raw)) { lastError = 'model refusal'; continue; }
@@ -228,7 +234,7 @@ Return JSON only: {"events": [{"date": "YYYY-MM-DD", "time": "19:30 or empty", "
 ${pages.map((p, i) => `[${i + 1}] ${p.title}\n${p.text}`).join('\n\n')}`;
   let raw = '', cost = 0;
   try {
-    const r = await openRouterChat({ model: ARCHIVE_MODEL, prompt, operation: 'archive_events', label: area.id, maxTokens: 3500, temperature: 0.2, json: true, timeoutMs: 150_000, reasoningEffort: 'low', cheapest: true });
+    const r = await openRouterChat({ model: ARCHIVE_MODEL, prompt, operation: 'archive_events', label: area.id, maxTokens: 3500, temperature: 0.2, json: true, timeoutMs: 150_000, reasoningEffort: 'low', providers: ARCHIVE_PROVIDERS });
     raw = r.text; cost = r.costUsd ?? 0;
   } catch (err) {
     return { stored: 0, costUsd: cost, error: err instanceof Error ? err.message : String(err) };
