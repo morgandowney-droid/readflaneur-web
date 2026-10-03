@@ -180,14 +180,21 @@ export async function discoverCouncil(area: ArchiveArea, lang: Lang): Promise<Ar
   const place = area.city || area.members[0]?.name || area.name;
   const qualifier = area.kreis && area.kreis !== place ? ` ${area.kreis}` : '';
   const hits: SerperHit[] = await serper('search', `${place}${qualifier} ${area.city ? 'Stadt' : 'Gemeinde'} Rathaus`, lang, null, area.id).catch(() => []);
-  const want = place.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/ß/g, 'ss').replace(/[^a-z]/g, '').slice(0, 6);
-  const site = hits.find((h) => {
+  // Domains spell umlauts both ways: duesseldorf.de, but also dusseldorf.de.
+  const lower = place.toLowerCase().replace(/ß/g, 'ss');
+  const wants = Array.from(new Set([
+    lower.replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue'),
+    lower.normalize('NFKD').replace(/[̀-ͯ]/g, ''),
+  ].map((w) => w.replace(/[^a-z]/g, '').slice(0, 6))));
+  const candidates = hits.filter((h) => {
     try {
       const host = new URL(h.link).hostname.replace(/^www\./, '');
-      const flat = host.normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z]/g, '');
-      return !NOT_COUNCIL.test(host) && flat.includes(want);
+      const flat = host.replace(/[^a-z]/g, '');
+      return !NOT_COUNCIL.test(host) && wants.some((w) => flat.includes(w));
     } catch { return false; }
   });
+  // The place's own site before its Kreis's: a host without "kreis" wins.
+  const site = candidates.find((h) => !/kreis/i.test(new URL(h.link).hostname)) || candidates[0];
   if (!site) return { council_url: null, council_feed: null, events_url: null, notes: { reason: 'no council site found' } };
 
   const home = new URL(site.link).origin + '/';
