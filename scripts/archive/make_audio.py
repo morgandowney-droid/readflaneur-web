@@ -5,9 +5,11 @@ the free open voice model, on our own machine (no per-character fee).
   python scripts/archive/make_audio.py [YYYY-MM-DD] [out_dir] [voices_dir]
 
 Reads archive_editions (kind 'brief') through the Supabase REST API with the
-service key from .env.local, writes <area_id>.wav (and .mp3 when ffmpeg is
-installed) to out_dir. On the archive server the files go to object storage
-and archive_editions.audio_url is set; this script is the same step, local.
+service key (from ~/.env on the archive server, else .env.local), writes
+<area_id>.wav and .mp3 to out_dir. When R2_* is set (the server), each MP3 is
+uploaded to the private bucket at audio/<date>/<area_id>.mp3 and
+archive_editions.audio_url records that key. Editions that already have audio
+are skipped, so a rerun only does what is missing.
 
 Voices (download once from huggingface.co/rhasspy/piper-voices):
   de -> de_DE-thorsten-medium
@@ -20,10 +22,13 @@ VOICES = {'de': 'de_DE-thorsten-medium', 'en': 'en_GB-alan-medium', 'it': 'it_IT
 
 def env():
     out = {}
-    for line in open('.env.local', encoding='utf-8'):
-        if '=' in line and not line.startswith('#'):
-            k, v = line.split('=', 1)
-            out[k.strip()] = v.strip().strip('"')
+    for path in (os.path.expanduser('~/.env'), '.env.local'):
+        if not os.path.exists(path):
+            continue
+        for line in open(path, encoding='utf-8'):
+            if '=' in line and not line.startswith('#'):
+                k, v = line.split('=', 1)
+                out.setdefault(k.strip(), v.strip().strip('"'))
     return out
 
 
@@ -40,9 +45,21 @@ def main():
     voices_dir = sys.argv[3] if len(sys.argv) > 3 else os.path.join(os.environ.get('TEMP', '/tmp'), 'areas', 'voices')
     os.makedirs(out_dir, exist_ok=True)
     e = env()
-    url = f"{e['NEXT_PUBLIC_SUPABASE_URL']}/rest/v1/archive_editions?kind=eq.brief&local_date=eq.{day}&select=area_id,language,body"
-    req = urllib.request.Request(url, headers={'apikey': e['SUPABASE_SERVICE_ROLE_KEY'], 'Authorization': f"Bearer {e['SUPABASE_SERVICE_ROLE_KEY']}"})
-    rows = json.load(urllib.request.urlopen(req, timeout=60))
+    base = f"{e['NEXT_PUBLIC_SUPABASE_URL']}/rest/v1/archive_editions"
+    auth = {'apikey': e['SUPABASE_SERVICE_ROLE_KEY'], 'Authorization': f"Bearer {e['SUPABASE_SERVICE_ROLE_KEY']}"}
+    rows, offset = [], 0
+    while True:
+        req = urllib.request.Request(f"{base}?kind=eq.brief&local_date=eq.{day}&audio_url=is.null&select=id,area_id,language,body&order=id&limit=1000&offset={offset}", headers=auth)
+        page = json.load(urllib.request.urlopen(req, timeout=60))
+        rows += page
+        if len(page) < 1000:
+            break
+        offset += 1000
+    s3 = None
+    if e.get('R2_ENDPOINT') and e.get('R2_ACCESS_KEY_ID'):
+        import boto3
+        s3 = boto3.client('s3', endpoint_url=e['R2_ENDPOINT'], aws_access_key_id=e['R2_ACCESS_KEY_ID'],
+                          aws_secret_access_key=e['R2_SECRET_ACCESS_KEY'], region_name='auto')
     from piper import PiperVoice
     loaded = {}
     ffmpeg = shutil.which('ffmpeg')
@@ -62,8 +79,17 @@ def main():
             secs = w.getnframes() / w.getframerate()
         total_audio += secs
         total_time += took
+        mp3 = wav[:-4] + '.mp3'
         if ffmpeg:
-            subprocess.run([ffmpeg, '-y', '-loglevel', 'error', '-i', wav, '-b:a', '48k', '-ac', '1', wav[:-4] + '.mp3'], check=False)
+            subprocess.run([ffmpeg, '-y', '-loglevel', 'error', '-i', wav, '-b:a', '48k', '-ac', '1', mp3], check=False)
+        if s3 and os.path.exists(mp3):
+            key = f"audio/{day}/{r['area_id']}.mp3"
+            s3.upload_file(mp3, e.get('R2_BUCKET', 'yous-archive'), key, ExtraArgs={'ContentType': 'audio/mpeg'})
+            patch = urllib.request.Request(f"{base}?id=eq.{r['id']}", data=json.dumps({'audio_url': key}).encode(), method='PATCH',
+                                           headers={**auth, 'Content-Type': 'application/json', 'Prefer': 'return=minimal'})
+            urllib.request.urlopen(patch, timeout=30)
+            os.remove(wav)
+            os.remove(mp3)
         print(f"{r['area_id']:<44} {secs:6.1f}s audio in {took:5.1f}s")
     if total_audio:
         print(f'{len(rows)} briefs, {total_audio / 60:.1f} min of audio in {total_time:.0f}s (realtime factor {total_time / total_audio:.2f})')
