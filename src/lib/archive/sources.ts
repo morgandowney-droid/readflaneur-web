@@ -247,7 +247,9 @@ export async function councilItems(src: AreaSources): Promise<SourceItem[]> {
 
 /** Published news: one Serper news query for the last day (Google News results, real article links). */
 export async function newsSearch(area: ArchiveArea, lang: Lang): Promise<SourceItem[]> {
-  const place = area.city ? `${area.name.replace(/ und Umgebung$/, '')} ${area.city}` : `${area.name.replace(/ und Umgebung$/, '')} ${area.kreis || ''}`.trim();
+  // The lead place and its city or Kreis: "Oberkassel Düsseldorf", not the edition's full name.
+  const lead = searchNames(area)[0];
+  const place = `${lead} ${area.city || (area.kreis && area.kreis !== lead ? area.kreis : '')}`.trim();
   const hits = await serper('news', place, lang, 'qdr:d', area.id).catch(() => [] as SerperHit[]);
   return hits.slice(0, 8).map((h) => ({ kind: 'news' as const, url: h.link, title: h.title, text: h.snippet || '', date: h.date || null, publisher: h.source || null }));
 }

@@ -113,6 +113,7 @@ Rules:
 - Names, dates, places and figures exactly as the sources state them. Nothing from your own knowledge.
 - Skip anything elsewhere, older news, adverts, and general descriptions of the place.
 - Skip standing information: opening hours, services, offers that run all year, page navigation. A story reports something new, dated, or about to happen.
+- Skip weather forecasts and general weather.
 - Never name a private person in a story about crime, an accident or a court case.
 - No em dashes or en dashes. Plain, factual ${loc.language}.
 - If nothing qualifies, return {"stories": []}.
@@ -208,13 +209,13 @@ export async function gatherEvents(admin: SupabaseClient, area: ArchiveArea): Pr
   const from = localDate(loc.timezone), to = localDate(loc.timezone, 14);
   const prompt = `List the dated public events in ${area.name}${area.city ? ` (${area.city})` : ''}, ${area.country}, between ${from} and ${to}, from the numbered pages below.
 
-Rules: only events the pages state with a date in that window; only in ${area.name} or right next to it; no permanent attractions, opening hours or adverts. Give names and venues as written. Each event gives the number of the page it came from.
+Rules: only events the pages state with a date in that window; only in ${area.name} or right next to it; no permanent attractions, opening hours or adverts. Give names and venues as written. Each event gives the number of the page it came from. At most 25 events, soonest first; keep each field short.
 Return JSON only: {"events": [{"date": "YYYY-MM-DD", "time": "19:30 or empty", "name": "...", "venue": "...", "category": "music|theatre|market|sport|family|talk|council|festival|other", "page": 2}]}
 
 ${pages.map((p, i) => `[${i + 1}] ${p.title}\n${p.text}`).join('\n\n')}`;
   let raw = '', cost = 0;
   try {
-    const r = await openRouterChat({ model: ARCHIVE_MODEL, prompt, operation: 'archive_events', label: area.id, maxTokens: 3000, temperature: 0.2, json: true, timeoutMs: 120_000, reasoningEffort: 'low' });
+    const r = await openRouterChat({ model: ARCHIVE_MODEL, prompt, operation: 'archive_events', label: area.id, maxTokens: 6000, temperature: 0.2, json: true, timeoutMs: 150_000, reasoningEffort: 'low' });
     raw = r.text; cost = r.costUsd ?? 0;
   } catch (err) {
     return { stored: 0, costUsd: cost, error: err instanceof Error ? err.message : String(err) };
