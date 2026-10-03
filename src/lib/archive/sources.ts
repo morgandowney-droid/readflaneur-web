@@ -250,7 +250,11 @@ export async function newsSearch(area: ArchiveArea, lang: Lang): Promise<SourceI
   // The lead place and its city or Kreis: "Oberkassel Düsseldorf", not the edition's full name.
   const lead = searchNames(area)[0];
   const place = `${lead} ${area.city || (area.kreis && area.kreis !== lead ? area.kreis : '')}`.trim();
-  const hits = await serper('news', place, lang, 'qdr:d', area.id).catch(() => [] as SerperHit[]);
+  // The last week from Google News, kept to the last three days by its own date
+  // ("vor 2 Tagen", "5 hours ago"); a quiet district has no news in 24 hours.
+  const recent = /(minute|hour|stunde|minuten|1 day|2 days|3 days|1 tag|2 tagen|3 tagen|vor einem tag)/i;
+  const hits = (await serper('news', place, lang, 'qdr:w', area.id).catch(() => [] as SerperHit[]))
+    .filter((h) => !h.date || recent.test(h.date));
   return hits.slice(0, 8).map((h) => ({ kind: 'news' as const, url: h.link, title: h.title, text: h.snippet || '', date: h.date || null, publisher: h.source || null }));
 }
 

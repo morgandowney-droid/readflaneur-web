@@ -185,7 +185,7 @@ function parseJsonLoose<T>(text: string): T | null {
  * after a key, `}` or `]`, or a comma leading to the next key or value. Anything
  * else is a quote in the prose and gets escaped.
  */
-function repairJsonStrings(text: string): string {
+export function repairJsonStrings(text: string): string {
   let out = '';
   let inString = false;
   let isKey = false;

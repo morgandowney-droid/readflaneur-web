@@ -15,6 +15,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { openRouterChat } from '@/lib/openrouter-chat';
 import { isModelRefusal } from '@/lib/model-refusal';
+import { repairJsonStrings } from '@/lib/translation-service';
 import { fetchPage } from '@/lib/source-check';
 import { langFor, serper, type SerperHit } from '@/lib/open-search';
 import {
@@ -180,11 +181,23 @@ ${block}`;
 /** The JSON object in a model's answer, tolerating code fences and text around it. */
 export function parseJsonObject(raw: string): unknown | null {
   const t = raw.replace(/```(?:json)?/gi, '').trim();
-  for (const candidate of [t, t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)]) {
+  const inner = t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1);
+  for (const candidate of [t, inner, inner && repairJsonStrings(inner)]) {
     if (!candidate) continue;
     try { return JSON.parse(candidate); } catch { /* next */ }
   }
   return null;
+}
+
+/** The complete objects in a JSON list that was cut off: each {...} that parses on its own. */
+export function salvageObjects(raw: string): Array<Record<string, unknown>> {
+  const out: Array<Record<string, unknown>> = [];
+  for (const m of raw.matchAll(/\{[^{}]*\}/g)) {
+    for (const c of [m[0], repairJsonStrings(m[0])]) {
+      try { out.push(JSON.parse(c)); break; } catch { /* next */ }
+    }
+  }
+  return out;
 }
 
 // ─── Weekly events and the daily Look Ahead ───────────────────────────────
@@ -222,8 +235,9 @@ ${pages.map((p, i) => `[${i + 1}] ${p.title}\n${p.text}`).join('\n\n')}`;
   }
   let events: Array<{ date?: string; time?: string; name?: string; venue?: string; category?: string; page?: number }> = [];
   const ev = parseJsonObject(raw) as { events?: typeof events } | null;
-  if (!ev) return { stored: 0, costUsd: cost, error: 'unparseable JSON' };
-  events = ev.events || [];
+  // A long list cut off at the length limit still has its complete events.
+  events = ev?.events || (salvageObjects(raw) as typeof events);
+  if (!ev && events.length === 0) return { stored: 0, costUsd: cost, error: 'unparseable JSON' };
   const rows = events
     .filter((e) => e.name && e.date && /^\d{4}-\d{2}-\d{2}$/.test(e.date) && e.date >= from && e.date <= to && Number.isInteger(e.page) && e.page! >= 1 && e.page! <= pages.length)
     .map((e) => ({ area_id: area.id, event_date: e.date!, time_text: e.time || null, name: e.name!.trim().slice(0, 200), venue: e.venue?.trim().slice(0, 200) || null, category: e.category || null, source_url: pages[e.page! - 1].url }));
