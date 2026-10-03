@@ -15,6 +15,10 @@ export interface OpenRouterResult {
   outputTokens: number;
   /** What OpenRouter billed, when it says. */
   costUsd: number | null;
+  /** 'stop', 'length' (ran out of max_tokens), ... */
+  finishReason: string | null;
+  /** Tokens the model spent thinking before answering, when reported. */
+  reasoningTokens: number | null;
 }
 
 function providerFor(model: string): AiProvider {
@@ -75,6 +79,8 @@ export async function openRouterChat(opts: {
       inputTokens: usage.prompt_tokens || 0,
       outputTokens: usage.completion_tokens || 0,
       costUsd: typeof usage.cost === 'number' ? usage.cost : null,
+      finishReason: data?.choices?.[0]?.finish_reason ?? null,
+      reasoningTokens: usage.completion_tokens_details?.reasoning_tokens ?? null,
     };
     recordAiUsage({
       provider: providerFor(opts.model),

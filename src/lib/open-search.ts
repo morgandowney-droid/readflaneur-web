@@ -84,6 +84,10 @@ export interface OpenGather {
   pagesBlocked: number;
   factsKept: number;
   factsDropped: number;
+  /** The extraction model's raw answer (first 4,000 characters) and why it stopped, for diagnosis. */
+  extractRaw?: string;
+  extractFinish?: string | null;
+  extractReasoningTokens?: number | null;
   error?: string;
 }
 
@@ -159,14 +163,25 @@ Rules:
 
 ${pageBlock}`;
 
-    const r = await openRouterChat({ model: OPEN_EXTRACT_MODEL, prompt, operation: 'open_extract', label: edition.name, maxTokens: 2500, temperature: 0.2, timeoutMs: 90_000 });
+    const r = await openRouterChat({ model: OPEN_EXTRACT_MODEL, prompt, operation: 'open_extract', label: edition.name, maxTokens: 8000, temperature: 0.2, timeoutMs: 120_000 });
+    out.extractRaw = r.text.slice(0, 4000);
+    out.extractFinish = r.finishReason;
+    out.extractReasoningTokens = r.reasoningTokens;
     const pages = new Map<number, GroundingChunk>();
     const lines: string[] = [];
     for (const raw of r.text.split('\n')) {
       const line = raw.trim();
-      if (!line.startsWith('-')) continue;
-      const tags = Array.from(line.matchAll(/\[P(\d{1,2})\]/g)).map((m) => Number(m[1])).filter((n) => n >= 1 && n <= picked.length);
-      const fact = line.replace(/\s*\[P\d{1,2}\]/g, '').replace(/^-\s*/, '').trim();
+      // A list item in any common form: "- ", "* ", "• ", "1. ", "1) ".
+      if (!/^(?:[-*•]|\d{1,2}[.)])\s+/.test(line)) continue;
+      // Page tags as [P3], (P3), [P3, P5] or [P3][P5], any case.
+      const tags = Array.from(line.matchAll(/P(\d{1,2})(?=[\],)\s])/gi))
+        .filter((m) => /[[(,]\s*$/.test(line.slice(Math.max(0, (m.index ?? 0) - 2), m.index)))
+        .map((m) => Number(m[1]))
+        .filter((n) => n >= 1 && n <= picked.length);
+      const fact = line
+        .replace(/\s*[[(]\s*P\d{1,2}(?:\s*,\s*P?\d{1,2})*\s*[\])]/gi, '')
+        .replace(/^(?:[-*•]|\d{1,2}[.)])\s+/, '')
+        .trim();
       if (tags.length === 0 || fact.length < 15) { out.factsDropped++; continue; }
       lines.push(`- ${fact}`);
       for (const n of tags) {
