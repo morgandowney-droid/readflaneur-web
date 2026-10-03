@@ -31,7 +31,7 @@ const FETCH_CONCURRENCY = 6;
 /** Sites that are never local news: reference, travel, maps, video. */
 const SKIP_HOSTS = /(^|\.)(wikipedia\.org|wikiwand\.com|tripadvisor\.[a-z.]+|booking\.com|expedia\.[a-z.]+|yelp\.[a-z.]+|youtube\.com|maps\.google\.[a-z.]+|google\.[a-z.]+|airbnb\.[a-z.]+|zillow\.com|realtor\.com)$/i;
 
-interface Lang { gl: string; hl: string; news: string; council: string; events: string }
+export interface Lang { gl: string; hl: string; news: string; council: string; events: string }
 
 const LANGS: Record<string, Lang> = {
   italy: { gl: 'it', hl: 'it', news: 'notizie', council: 'consiglio comunale', events: 'eventi' },
@@ -58,9 +58,9 @@ export function langFor(country: string | null | undefined): Lang {
   return LANGS[(country || '').trim().toLowerCase()] || US;
 }
 
-interface SerperHit { title: string; link: string; snippet?: string; date?: string; source?: string }
+export interface SerperHit { title: string; link: string; snippet?: string; date?: string; source?: string }
 
-async function serper(kind: 'news' | 'search', q: string, lang: Lang, tbs: string | null, label: string): Promise<SerperHit[]> {
+export async function serper(kind: 'news' | 'search', q: string, lang: Lang, tbs: string | null, label: string): Promise<SerperHit[]> {
   const key = process.env.SERPER_API_KEY?.trim();
   if (!key) throw new Error('SERPER_API_KEY not set');
   const res = await fetch(`${SERPER_URL}/${kind}`, {
