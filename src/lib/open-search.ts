@@ -163,7 +163,7 @@ Rules:
 
 ${pageBlock}`;
 
-    const r = await openRouterChat({ model: OPEN_EXTRACT_MODEL, prompt, operation: 'open_extract', label: edition.name, maxTokens: 8000, temperature: 0.2, timeoutMs: 120_000 });
+    const r = await openRouterChat({ model: OPEN_EXTRACT_MODEL, prompt, operation: 'open_extract', label: edition.name, maxTokens: 8000, temperature: 0.2, timeoutMs: 120_000, reasoningEffort: 'low' });
     out.extractRaw = r.text.slice(0, 4000);
     out.extractFinish = r.finishReason;
     out.extractReasoningTokens = r.reasoningTokens;
