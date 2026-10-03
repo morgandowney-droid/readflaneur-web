@@ -132,7 +132,7 @@ ${block}`;
   let lastError = '';
   for (let attempt = 0; attempt < 2 && !parsed; attempt++) {
     try {
-      const r = await openRouterChat({ model: ARCHIVE_MODEL, prompt, operation: 'archive_brief', label: area.id, maxTokens: 3000, temperature: 0.3, json: true, timeoutMs: 150_000, reasoningEffort: 'low' });
+      const r = await openRouterChat({ model: ARCHIVE_MODEL, prompt, operation: 'archive_brief', label: area.id, maxTokens: 3000, temperature: 0.3, json: true, timeoutMs: 150_000, reasoningEffort: 'low', cheapest: true });
       raw = r.text;
       cost += r.costUsd ?? 0;
       if (isModelRefusal(raw)) { lastError = 'model refusal'; continue; }
@@ -222,13 +222,13 @@ export async function gatherEvents(admin: SupabaseClient, area: ArchiveArea): Pr
   const from = localDate(loc.timezone), to = localDate(loc.timezone, 14);
   const prompt = `List the dated public events in ${area.name}${area.city ? ` (${area.city})` : ''}, ${area.country}, between ${from} and ${to}, from the numbered pages below.
 
-Rules: only events the pages state with a date in that window; only in ${area.name} or right next to it; no permanent attractions, opening hours or adverts. Give names and venues as written. Each event gives the number of the page it came from. At most 25 events, soonest first; keep each field short.
+Rules: only events the pages state with a date in that window; only in ${area.name} or right next to it; no permanent attractions, opening hours or adverts. Give names and venues as written. Each event gives the number of the page it came from. At most 20 events, soonest first; keep each field short.
 Return JSON only: {"events": [{"date": "YYYY-MM-DD", "time": "19:30 or empty", "name": "...", "venue": "...", "category": "music|theatre|market|sport|family|talk|council|festival|other", "page": 2}]}
 
 ${pages.map((p, i) => `[${i + 1}] ${p.title}\n${p.text}`).join('\n\n')}`;
   let raw = '', cost = 0;
   try {
-    const r = await openRouterChat({ model: ARCHIVE_MODEL, prompt, operation: 'archive_events', label: area.id, maxTokens: 6000, temperature: 0.2, json: true, timeoutMs: 150_000, reasoningEffort: 'low' });
+    const r = await openRouterChat({ model: ARCHIVE_MODEL, prompt, operation: 'archive_events', label: area.id, maxTokens: 3500, temperature: 0.2, json: true, timeoutMs: 150_000, reasoningEffort: 'low', cheapest: true });
     raw = r.text; cost = r.costUsd ?? 0;
   } catch (err) {
     return { stored: 0, costUsd: cost, error: err instanceof Error ? err.message : String(err) };

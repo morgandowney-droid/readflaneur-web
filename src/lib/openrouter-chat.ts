@@ -39,6 +39,8 @@ export async function openRouterChat(opts: {
   timeoutMs?: number;
   /** Cap how long a thinking model thinks before it answers. */
   reasoningEffort?: 'low' | 'medium' | 'high';
+  /** Route to the cheapest provider serving the model (OpenRouter otherwise balances on speed and uptime). */
+  cheapest?: boolean;
 }): Promise<OpenRouterResult> {
   const apiKey = process.env.OPENROUTER_API_KEY?.trim();
   if (!apiKey) throw new Error('OPENROUTER_API_KEY not set');
@@ -65,6 +67,7 @@ export async function openRouterChat(opts: {
           usage: { include: true },
           ...(opts.json ? { response_format: { type: 'json_object' } } : {}),
           ...(opts.reasoningEffort ? { reasoning: { effort: opts.reasoningEffort } } : {}),
+          ...(opts.cheapest ? { provider: { sort: 'price' } } : {}),
         }),
       });
     } catch (err) {
