@@ -4,10 +4,12 @@ import { getActiveNeighborhoodIds } from '@/lib/active-neighborhoods';
 import { isPriorityNeighborhood } from '@/lib/generation-cadence';
 import {
   loadTrialInputs,
+  runOpenRouteTrial,
   runSearchTrial,
   runWriterTrial,
   TRIAL_DAILY_COST_CAP_USD,
   TRIAL_EDITION_IDS,
+  TRIAL_OPEN_ROUTE_MODEL,
   TRIAL_SEARCH_MODEL,
   TRIAL_UNIT_RESERVE_USD,
   TRIAL_WRITER_MODEL,
@@ -30,6 +32,10 @@ import { compareRuns } from '@/lib/model-trial-metrics';
  *   ?stage=search  grok-4.5 runs production's Grok brief search, with a
  *                  same-time grok-4-1-fast control (about $0.45-0.65 a pair, so 4
  *                  editions a day in rotation, each edition every 3 days).
+ *   ?stage=openroute  the open-weight route end to end: Serper results read by
+ *                  our own fetcher, facts listed by DeepSeek V4 Flash, the brief
+ *                  written by DeepSeek V4 Pro (all 12 editions; ~$0.015 each).
+ *                  Needs SERPER_API_KEY and OPENROUTER_API_KEY.
  *
  * Idempotent per (brief_date, edition, stage, model); a rerun only does what
  * is missing. A hard daily cap (TRIAL_DAILY_COST_CAP_USD, both stages
@@ -46,10 +52,10 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 /** No new unit starts after this; a search pair can take over three minutes. */
-const START_BUDGET_MS: Record<TrialStage, number> = { writer: 200_000, search: 60_000 };
+const START_BUDGET_MS: Record<TrialStage, number> = { writer: 200_000, search: 60_000, openroute: 180_000 };
 /** A unit still running at this point is abandoned so the run can log. */
 const HARD_STOP_MS = 270_000;
-const CONCURRENCY: Record<TrialStage, number> = { writer: 4, search: 4 };
+const CONCURRENCY: Record<TrialStage, number> = { writer: 4, search: 4, openroute: 3 };
 const SEARCH_EDITIONS_PER_DAY = 4;
 
 /** Four of the twelve, rotating by UTC day, so every edition is searched every 3 days. */
@@ -92,13 +98,13 @@ export async function GET(request: NextRequest) {
   const stageParam = url.searchParams.get('stage');
   const now = new Date();
   const stage: TrialStage = stageParam
-    ? (stageParam === 'search' ? 'search' : 'writer')
+    ? (stageParam === 'search' ? 'search' : stageParam === 'openroute' ? 'openroute' : 'writer')
     : (now.getUTCHours() === 9 && now.getUTCMinutes() >= 40 ? 'search' : 'writer');
   const onlyEdition = url.searchParams.get('neighborhood');
   const onlyDate = url.searchParams.get('date');
   const dry = url.searchParams.get('dry') === '1';
   const limit = Number(url.searchParams.get('limit')) || SEARCH_EDITIONS_PER_DAY;
-  const model = stage === 'writer' ? TRIAL_WRITER_MODEL : TRIAL_SEARCH_MODEL;
+  const model = stage === 'writer' ? TRIAL_WRITER_MODEL : stage === 'openroute' ? TRIAL_OPEN_ROUTE_MODEL : TRIAL_SEARCH_MODEL;
 
   const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   const errors: string[] = [];
@@ -170,7 +176,9 @@ export async function GET(request: NextRequest) {
                 isPriority: isPriorityNeighborhood(edition.id, subscribed.has(edition.id)),
                 suppressWrite: dry,
               })
-            : runSearchTrial(admin, edition, brief, { suppressWrite: dry });
+            : stage === 'openroute'
+              ? runOpenRouteTrial(admin, edition, brief, { suppressWrite: dry })
+              : runSearchTrial(admin, edition, brief, { suppressWrite: dry });
           const remaining = HARD_STOP_MS - (Date.now() - startTime);
           const row = await Promise.race([
             unit,
@@ -207,7 +215,7 @@ export async function GET(request: NextRequest) {
     summary = {
       stage,
       model,
-      baseline: stage === 'writer' ? 'what production stored (enrichment_model per row)' : 'same-time run of grok-4-1-fast',
+      baseline: stage === 'search' ? 'same-time run of grok-4-1-fast' : 'what production stored (enrichment_model per row)',
       dry,
       runs_compared: compared.length,
       spent_today_usd: Number(spent.toFixed(4)),

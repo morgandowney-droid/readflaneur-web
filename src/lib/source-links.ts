@@ -34,7 +34,7 @@ export interface GroundingChunk {
    */
   supports?: string[];
   /** Where the page came from: enrichment grounding, the fact search, a URL in the facts, a Grok citation. */
-  origin?: 'enrichment' | 'gemini_search' | 'facts_url' | 'grok' | 'repair';
+  origin?: 'enrichment' | 'gemini_search' | 'facts_url' | 'grok' | 'repair' | 'open_search';
 }
 
 /**

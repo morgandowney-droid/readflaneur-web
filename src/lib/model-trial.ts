@@ -25,7 +25,8 @@ import { enrichBriefWithGemini, stripLeakedTeasers, stripThinkingPreamble } from
 import { generateNeighborhoodBrief } from '@/lib/grok';
 import { readXPost, X_STATUS } from '@/lib/grok-citations';
 import { fetchContinuityContext } from '@/lib/enrichment-continuity';
-import { pagesFromStored } from '@/lib/source-links';
+import { pagesFromStored, type GroundingChunk } from '@/lib/source-links';
+import { gatherOpenRoute } from '@/lib/open-search';
 import { checkStorySource, fetchPage, type PageText } from '@/lib/source-check';
 import { isModelRefusal } from '@/lib/model-refusal';
 import { rulesForEdition } from '@/lib/edition-rules';
@@ -71,6 +72,13 @@ export const TRIAL_EDITION_IDS = [
 export const TRIAL_WRITER_MODEL = AI_MODELS.GEMINI_WRITER_TRIAL;
 /** xAI grok-4.5, the search candidate. */
 export const TRIAL_SEARCH_MODEL = AI_MODELS.GROK_SEARCH_TRIAL;
+/**
+ * The open-weight route end to end: Serper results read by our own fetcher,
+ * facts listed by DeepSeek V4 Flash (open-search.ts), the brief written by
+ * DeepSeek V4 Pro through the production enricher. Measured against what
+ * production published from Gemini and Grok on the same day.
+ */
+export const TRIAL_OPEN_ROUTE_MODEL = 'openrouter:deepseek/deepseek-v4-pro';
 
 /** Hard stop for the whole trial, both stages, per UTC day. */
 export const TRIAL_DAILY_COST_CAP_USD = 3;
@@ -79,7 +87,8 @@ export const TRIAL_DAILY_COST_CAP_USD = 3;
 // edition-rules review); a search pair $0.44-0.66 (grok-4.5 billed $0.41-0.59
 // by xAI, 14-22 x_search calls reading 58-99 posts, plus the grok-4-1-fast
 // control at $0.03-0.09).
-export const TRIAL_UNIT_RESERVE_USD = { writer: 0.05, search: 0.7 } as const;
+// An open-route unit: 4 Serper queries ($0.004) plus DeepSeek tokens (~$0.01).
+export const TRIAL_UNIT_RESERVE_USD = { writer: 0.05, search: 0.7, openroute: 0.05 } as const;
 
 /** Source pages fetched per brief per side (candidate, production) for the fact check. */
 const MAX_STORY_PAGES = 12;
@@ -87,7 +96,7 @@ const MAX_STORY_PAGES = 12;
 const MAX_CITATION_CHECKS = 15;
 const FETCH_CONCURRENCY = 6;
 
-export type TrialStage = 'writer' | 'search';
+export type TrialStage = 'writer' | 'search' | 'openroute';
 
 export interface TrialEdition {
   id: string;
@@ -279,11 +288,19 @@ export async function runWriterTrial(
   admin: SupabaseClient,
   edition: TrialEdition,
   brief: TrialBrief,
-  opts: { model?: string; isPriority: boolean; suppressWrite?: boolean },
+  opts: {
+    model?: string;
+    isPriority: boolean;
+    suppressWrite?: boolean;
+    /** Replace production's gathered facts and pages (the open route). */
+    gathered?: { content: string; pages: GroundingChunk[] };
+    stage?: TrialStage;
+    operation?: string;
+  },
 ): Promise<TrialRunRow> {
   const model = opts.model || TRIAL_WRITER_MODEL;
   const placeNames = [edition.name, edition.city];
-  const tap: UsageTap = { operation: 'trial_writer', calls: [], suppressWrite: opts.suppressWrite };
+  const tap: UsageTap = { operation: opts.operation || 'trial_writer', calls: [], suppressWrite: opts.suppressWrite };
   const continuity = await fetchContinuityContext(admin, edition.id, brief.id, edition.timezone || 'UTC', brief.enriched_at || brief.generated_at);
 
   let result: Awaited<ReturnType<typeof enrichBriefWithGemini>> | null = null;
@@ -291,7 +308,7 @@ export async function runWriterTrial(
   const t0 = Date.now();
   try {
     result = await withUsageTap(tap, () => enrichBriefWithGemini(
-      brief.content || '',
+      opts.gathered ? opts.gathered.content : (brief.content || ''),
       edition.name,
       edition.id,
       edition.city,
@@ -301,8 +318,9 @@ export async function runWriterTrial(
         timezone: edition.timezone || undefined,
         modelOverride: model,
         continuityContext: continuity.length > 0 ? continuity : undefined,
-        gatheredPages: pagesFromStored(brief.sources),
-        sourceRepair: opts.isPriority,
+        gatheredPages: opts.gathered ? opts.gathered.pages : pagesFromStored(brief.sources),
+        // Source repair is a Gemini grounded search; the open route runs without it.
+        sourceRepair: opts.gathered ? false : opts.isPriority,
       },
     ));
   } catch (err) {
@@ -365,7 +383,7 @@ export async function runWriterTrial(
   return {
     run_date: brief.brief_date,
     neighborhood_id: edition.id,
-    stage: 'writer',
+    stage: opts.stage || 'writer',
     model,
     baseline_model: brief.enrichment_model,
     output: result
@@ -387,6 +405,62 @@ export async function runWriterTrial(
     latency_ms: latencyMs,
     error,
   };
+}
+
+// ─── Open-weight route ─────────────────────────────────────────────────────
+
+/** Gather with Serper, our fetcher and DeepSeek V4 Flash, then write with DeepSeek V4 Pro. */
+export async function runOpenRouteTrial(
+  admin: SupabaseClient,
+  edition: TrialEdition,
+  brief: TrialBrief,
+  opts: { suppressWrite?: boolean } = {},
+): Promise<TrialRunRow> {
+  const tap: UsageTap = { operation: 'trial_openroute', calls: [], suppressWrite: opts.suppressWrite };
+  const t0 = Date.now();
+  const gathered = await withUsageTap(tap, () => gatherOpenRoute(edition));
+  const gatherMs = Date.now() - t0;
+  const gatherCost = tapCostUsd(tap.calls);
+  const gatherOut = {
+    queries: gathered.queries,
+    hits: gathered.hits,
+    pages_read: gathered.pagesRead,
+    pages_blocked: gathered.pagesBlocked,
+    facts_kept: gathered.factsKept,
+    facts_dropped: gathered.factsDropped,
+    content: gathered.content,
+    pages: gathered.pages,
+    cost_usd: Number(gatherCost.toFixed(6)),
+    latency_ms: gatherMs,
+    calls: tap.calls,
+  };
+  if (gathered.error || !gathered.content) {
+    return {
+      run_date: brief.brief_date,
+      neighborhood_id: edition.id,
+      stage: 'openroute',
+      model: TRIAL_OPEN_ROUTE_MODEL,
+      baseline_model: brief.enrichment_model,
+      output: { brief_id: brief.id, gather: gatherOut },
+      metrics: null,
+      baseline_metrics: null,
+      cost_usd: Number(gatherCost.toFixed(6)),
+      latency_ms: gatherMs,
+      error: `gather: ${gathered.error || 'nothing gathered'}`,
+    };
+  }
+  const row = await runWriterTrial(admin, edition, brief, {
+    model: TRIAL_OPEN_ROUTE_MODEL,
+    isPriority: false,
+    suppressWrite: opts.suppressWrite,
+    gathered: { content: gathered.content, pages: gathered.pages },
+    stage: 'openroute',
+    operation: 'trial_openroute',
+  });
+  const total = Number(((row.cost_usd || 0) + gatherCost).toFixed(6));
+  const latency = (row.latency_ms || 0) + gatherMs;
+  if (row.metrics) Object.assign(row.metrics, { cost_usd: total, latency_ms: latency });
+  return { ...row, output: { ...(row.output || {}), gather: gatherOut }, cost_usd: total, latency_ms: latency };
 }
 
 // ─── Search stage ──────────────────────────────────────────────────────────

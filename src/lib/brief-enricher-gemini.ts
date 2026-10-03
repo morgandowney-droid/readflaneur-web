@@ -14,6 +14,7 @@ import {
   validateLinkCandidates,
 } from './hyperlink-injector';
 import { recordGeminiCall } from '@/lib/ai-cost';
+import { openRouterChat } from '@/lib/openrouter-chat';
 import type { StructuredEvent } from '@/lib/look-ahead-events';
 import { extractGroundingChunks, resolveGroundingChunks, cleanStorySources, pagesFromText, markSourceOrigins, widenSupportsToLines, type GroundingChunk } from '@/lib/source-links';
 import { repairStorySources, type RepairStats } from '@/lib/source-repair';
@@ -781,10 +782,33 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
 
     // Retry with exponential backoff on quota errors (429 RESOURCE_EXHAUSTED)
     const RETRY_DELAYS = [2000, 5000, 15000]; // 2s, 5s, 15s
-    let response;
+    let response: Awaited<ReturnType<typeof genAI.models.generateContent>> | undefined;
     let lastError: unknown;
 
-    for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
+    // Shadow trial of the open-weight route only: an `openrouter:<model>` id
+    // writes through OpenRouter with no live search, from the gathered facts
+    // and pages alone. Production never passes this prefix.
+    const viaOpenRouter = modelId.startsWith('openrouter:');
+    if (viaOpenRouter) {
+      const r = await openRouterChat({
+        model: modelId.slice('openrouter:'.length),
+        prompt: `${systemInstruction}
+
+${prompt}`,
+        operation: `enrich_${options?.articleType || 'daily_brief'}`,
+        label: neighborhoodName,
+        maxTokens: 8000,
+        temperature: 0.6,
+        timeoutMs: 150_000,
+      });
+      response = {
+        text: r.text,
+        usageMetadata: { promptTokenCount: r.inputTokens, candidatesTokenCount: r.outputTokens },
+        candidates: [],
+      } as unknown as NonNullable<typeof response>;
+    }
+
+    for (let attempt = 0; !viaOpenRouter && attempt <= RETRY_DELAYS.length; attempt++) {
       try {
         response = await genAI.models.generateContent({
           model: modelId,
@@ -816,7 +840,7 @@ LINK CANDIDATES RULES (MANDATORY - you MUST include these):
       throw lastError || new Error('Gemini enrichment failed after retries');
     }
 
-    recordGeminiCall(response, {
+    if (!viaOpenRouter) recordGeminiCall(response, {
       operation: `enrich_${options?.articleType || 'daily_brief'}`,
       kind: 'generation',
       model: modelId,

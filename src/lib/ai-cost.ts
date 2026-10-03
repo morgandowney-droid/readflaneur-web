@@ -16,7 +16,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { currentUsageTap } from '@/lib/ai-usage-tap';
 
-export type AiProvider = 'gemini' | 'grok' | 'claude' | 'openai' | 'qwen' | 'meta' | 'azure' | 'elevenlabs';
+export type AiProvider = 'gemini' | 'grok' | 'claude' | 'openai' | 'qwen' | 'meta' | 'azure' | 'elevenlabs' | 'deepseek' | 'openrouter' | 'serper';
 export type AiKind = 'search' | 'generation';
 
 interface ModelPrice {
@@ -61,6 +61,14 @@ const MODEL_PRICING: Record<string, ModelPrice> = {
   // until 12 Oct 2026; we record the list price so estimates do not drop and
   // then jump.)
   eleven_v4: { inputPerM: 80.0, outputPerM: 0, cachedInputPerM: 80.0 },
+  // DeepSeek via OpenRouter (shadow trial of the open-weight route, open-search.ts).
+  // OpenRouter prices, 2026-10-03. OpenRouter also returns its billed cost, which
+  // the usage tap prefers.
+  'deepseek/deepseek-v4-pro': { inputPerM: 0.209, outputPerM: 0.418, cachedInputPerM: 0.209 },
+  'deepseek/deepseek-v4-flash': { inputPerM: 0.028, outputPerM: 0.056, cachedInputPerM: 0.028 },
+  // Serper Google results, per query: record one query as inputTokens = 1.
+  // $1.00 per 1,000 on the starter pack (down to $0.30 at 12.5M queries).
+  serper: { inputPerM: 1000, outputPerM: 0, cachedInputPerM: 1000 },
 };
 
 // Empirical per-call live-search fee for Grok (xAI console total / call count).
