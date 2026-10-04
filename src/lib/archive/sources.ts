@@ -29,7 +29,7 @@ export interface ArchiveArea {
   members: Array<{ name: string; qualified: string; pop: number }>;
 }
 
-export type ItemKind = 'news' | 'council' | 'bluesky' | 'mastodon' | 'search';
+export type ItemKind = 'news' | 'council' | 'official' | 'bluesky' | 'mastodon' | 'search';
 
 export interface SourceItem {
   kind: ItemKind;
@@ -170,11 +170,15 @@ export async function mastodonPosts(area: ArchiveArea): Promise<SourceItem[]> {
 
 // ─── The council site ──────────────────────────────────────────────────────
 
+export interface OfficialFeed { kind: 'police' | 'fire'; url: string; feed: string | null }
+
 export interface AreaSources {
   council_url: string | null;
   council_feed: string | null;
   events_url: string | null;
   notes?: Record<string, unknown>;
+  /** Police and fire news, found once (discoverOfficial); null means not looked for yet. */
+  extra_feeds?: OfficialFeed[] | null;
 }
 
 const NOT_COUNCIL = /(wikipedia|wikiwand|tripadvisor|booking|facebook|instagram|youtube|meinestadt|stadtbranchenbuch|gelbeseiten|cylex|yelp|wetter|immobilienscout|kununu|zeit\.de|spiegel\.de|bild\.de|t-online)/i;
@@ -257,6 +261,84 @@ export async function councilItems(src: AreaSources): Promise<SourceItem[]> {
     if (out.length >= 6) break;
   }
   return out;
+}
+
+/**
+ * Police and fire services post the same items to their own sites and feeds
+ * that they post on Facebook, and those are free to read and clean to cite.
+ * Found once per area by search, kept only when the host is the official one.
+ */
+const OFFICIAL_HOST: Record<string, RegExp> = {
+  police: /(\.police\.uk$|^police\.|\.police\.|garda\.ie$|presseportal\.de$|polizei|police\.govt\.nz$|mpdc\.dc\.gov$|nyc\.gov$)/i,
+  fire: /(fire.*\.(gov|org)\.uk$|\.fire\.|firerescue|fireservice|feuerwehr|rfs\.nsw\.gov\.au$|cfa\.vic\.gov\.au$|fire\.nsw\.gov\.au$|fireandemergency\.nz$)/i,
+};
+
+export async function discoverOfficial(area: ArchiveArea, lang: Lang): Promise<OfficialFeed[]> {
+  const where = area.kreis || area.city || area.members[0]?.name || area.name;
+  const queries: Array<[OfficialFeed['kind'], string]> = lang.hl === 'de'
+    ? [['police', `presseportal blaulicht Polizei ${where}`]]
+    : [['police', `${where} police news`], ['fire', `${where} fire and rescue news`]];
+  const out: OfficialFeed[] = [];
+  for (const [kind, q] of queries) {
+    const hits: SerperHit[] = await serper('search', q, lang, null, area.id).catch(() => []);
+    const hit = hits.find((h) => { try { return OFFICIAL_HOST[kind].test(new URL(h.link).hostname); } catch { return false; } });
+    if (!hit) continue;
+    // German police press releases: each Presseportal station page has a feed.
+    const station = hit.link.match(/presseportal\.de\/blaulicht\/(?:nr|pm)\/(\d+)/)?.[1];
+    if (station) { out.push({ kind, url: `https://www.presseportal.de/blaulicht/nr/${station}`, feed: `https://www.presseportal.de/rss/dienststelle_${station}.rss2` }); continue; }
+    const page = await fetchPage(hit.link).catch(() => null);
+    const html = page?.html || '';
+    const feed = html.match(/<link[^>]+type=["']application\/(?:rss|atom)\+xml["'][^>]*href=["']([^"']+)["']/i)?.[1]
+      || html.match(/<link[^>]+href=["']([^"']+)["'][^>]*type=["']application\/(?:rss|atom)\+xml["']/i)?.[1];
+    out.push({ kind, url: hit.link, feed: feed ? absolute(feed, hit.link) : null });
+  }
+  return out;
+}
+
+/** Items from a feed in the last `days`; shared by the council and official readers. */
+async function feedItems(feedUrl: string, kind: ItemKind, days = 3): Promise<SourceItem[]> {
+  const cutoff = Date.now() - days * 86400_000;
+  const page = await fetchPage(feedUrl).catch(() => null);
+  const xml = page?.html || page?.text || '';
+  const out: SourceItem[] = [];
+  for (const it of Array.from(xml.matchAll(/<(item|entry)[\s>][\s\S]*?<\/\1>/gi)).map((m) => m[0]).slice(0, 40)) {
+    const title = (it.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '').replace(/<!\[CDATA\[|\]\]>/g, '').trim();
+    const link = it.match(/<link[^>]*>([^<]+)<\/link>/i)?.[1]?.trim() || it.match(/<link[^>]+href=["']([^"']+)["']/i)?.[1] || '';
+    const date = it.match(/<(pubDate|updated|published|dc:date)[^>]*>([^<]+)</i)?.[2] || null;
+    const desc = (it.match(/<(description|summary|content)[^>]*>([\s\S]*?)<\/\1>/i)?.[2] || '').replace(/<!\[CDATA\[|\]\]>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (date && Date.parse(date) < cutoff) continue;
+    if (title && link) out.push({ kind, url: link, title, text: desc.slice(0, 1500), date, publisher: (() => { try { return new URL(feedUrl).hostname; } catch { return null; } })() });
+  }
+  return out;
+}
+
+// One police force or fire service covers many areas: read each source once per run.
+const officialCache = new Map<string, Promise<SourceItem[]>>();
+
+/** Today's police and fire items for an area: only those that name one of its places. */
+export async function officialItems(feeds: OfficialFeed[] | null | undefined, names: string[]): Promise<SourceItem[]> {
+  const out: SourceItem[] = [];
+  for (const f of feeds || []) {
+    const key = f.feed || f.url;
+    if (!officialCache.has(key)) {
+      officialCache.set(key, f.feed ? feedItems(f.feed, 'official').catch(() => []) : (async () => {
+        const page = await fetchPage(f.url).catch(() => null);
+        if (!page?.ok || !page.html) return [];
+        const base = page.finalUrl || f.url;
+        const host = new URL(base).hostname;
+        const items: SourceItem[] = [];
+        for (const m of page.html.matchAll(/<a[^>]+href=["']([^"'#]+)["'][^>]*>([\s\S]{25,200}?)<\/a>/gi)) {
+          const url = absolute(m[1], base);
+          const title = m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+          if (url && title.length >= 25 && url.includes(host) && !items.some((x) => x.url === url)) items.push({ kind: 'official', url, title, text: '', date: null, publisher: host });
+          if (items.length >= 30) break;
+        }
+        return items;
+      })());
+    }
+    for (const it of await officialCache.get(key)!) if (namesPlace(`${it.title} ${it.text}`, names)) out.push(it);
+  }
+  return out.slice(0, 5);
 }
 
 /** Published news: one Serper news query for the last day (Google News results, real article links). */

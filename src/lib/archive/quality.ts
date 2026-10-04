@@ -46,6 +46,23 @@ export const QUALITY_PAIRS: Array<{ production: string; archive: string[]; count
   { production: 'nyc-tribeca', archive: ['us-nyc-manhattan-tribeca-civic-center'], country: 'us-nyc' },
 ];
 
+/** Where a story's source lives, by host: the platforms production reaches and the archive may not. */
+export function platformOf(url: string | null | undefined): string {
+  if (!url) return 'none';
+  let host = '';
+  try { host = new URL(url).hostname.replace(/^www\./, '').toLowerCase(); } catch { return 'none'; }
+  if (/(^|\.)(x|twitter)\.com$/.test(host)) return 'x';
+  if (/(^|\.)(facebook|fb)\.com$/.test(host)) return 'facebook';
+  if (/(^|\.)instagram\.com$/.test(host)) return 'instagram';
+  if (/(^|\.)threads\.(net|com)$/.test(host)) return 'threads';
+  if (/(^|\.)reddit\.com$/.test(host)) return 'reddit';
+  if (/(^|\.)tiktok\.com$/.test(host)) return 'tiktok';
+  if (/(^|\.)(youtube\.com|youtu\.be)$/.test(host)) return 'youtube';
+  if (/(^|\.)bsky\.app$/.test(host)) return 'bluesky';
+  if (/nextdoor\./.test(host)) return 'nextdoor';
+  return 'web';
+}
+
 export function matchesPattern(id: string, patterns: string[]): boolean {
   return patterns.some((p) => (p.endsWith('*') ? id.startsWith(p.slice(0, -1)) : id === p));
 }
@@ -166,15 +183,27 @@ export async function comparePair(admin: SupabaseClient, pair: typeof QUALITY_PA
 
   const prodStories = trialStories(prod?.enriched_categories).map((s) => ({
     entity: s.entity || '', context: s.context || '', url: isTracedSource(s.source) ? s.source!.url!.trim() : null,
+    // Any URL production recorded (traced or not), for where the story came from.
+    anyUrl: (s.source?.url || '').trim() || null,
   }));
   const archStories = archRows.flatMap((e) => (e.stories || []).map((s) => ({
     entity: s.header, context: s.text, url: (e.sources || []).find((x) => x.n === s.sources?.[0])?.url || null,
+    anyUrl: (e.sources || []).find((x) => x.n === s.sources?.[0])?.url || null,
   })));
 
   const [prodCheck, archCheck] = await Promise.all([
     confirm(prodStories.slice(0, CHECK_PER_SIDE), names), confirm(archStories.slice(0, CHECK_PER_SIDE), names),
   ]);
-  const prodFoundInArch = prodStories.filter((p) => archStories.some((a) => similar(`${p.entity} ${p.context}`, `${a.entity} ${a.context}`, names))).length;
+  const prodMatched = prodStories.map((p) => archStories.some((a) => similar(`${p.entity} ${p.context}`, `${a.entity} ${a.context}`, names)));
+  const prodFoundInArch = prodMatched.filter(Boolean).length;
+  // The social gap: production's stories the archive missed, by the platform production sourced them from.
+  const missedByPlatform: Record<string, number> = {};
+  const prodByPlatform: Record<string, number> = {};
+  prodStories.forEach((p, i) => {
+    const pl = platformOf(p.anyUrl);
+    prodByPlatform[pl] = (prodByPlatform[pl] || 0) + 1;
+    if (!prodMatched[i]) missedByPlatform[pl] = (missedByPlatform[pl] || 0) + 1;
+  });
   const archFoundInProd = archStories.filter((a) => prodStories.some((p) => similar(`${p.entity} ${p.context}`, `${a.entity} ${a.context}`, names))).length;
 
   let judge: Record<string, unknown> | null = null;
@@ -216,6 +245,7 @@ List a problem only when you are confident. The two briefs may be in different l
     production_confirmed: confirmedShare(prodCheck), archive_confirmed: confirmedShare(archCheck),
     production_checks: prodCheck, archive_checks: archCheck,
     overlap: { production_found_in_archive: prodFoundInArch, archive_found_in_production: archFoundInProd },
+    production_by_platform: prodByPlatform, production_missed_by_platform: missedByPlatform,
     judge, production_model: prod?.enrichment_model || null,
   };
 }

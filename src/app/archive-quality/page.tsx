@@ -34,6 +34,10 @@ export default async function ArchiveQualityPage({ searchParams }: { searchParam
   const judged = pairs.filter((p) => p.metrics.judge?.preferred);
   const tally = { production: 0, archive: 0, tie: 0 } as Record<string, number>;
   for (const p of judged) tally[p.metrics.judge.preferred] = (tally[p.metrics.judge.preferred] || 0) + 1;
+  // The social gap: production stories the archive missed, by where production sourced them.
+  const missed: Record<string, number> = {};
+  for (const p of pairs) for (const [k, v] of Object.entries(p.metrics.production_missed_by_platform || {})) missed[k] = (missed[k] || 0) + Number(v);
+  const missedTotal = Object.values(missed).reduce((n, v) => n + v, 0);
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 text-sm text-fg">
@@ -67,6 +71,10 @@ export default async function ArchiveQualityPage({ searchParams }: { searchParam
 
       <h2 className="mt-10 text-lg font-semibold">Side by side with production</h2>
       <p className="mt-1 text-fg-muted">Blind judge over {judged.length} pairs: production preferred {tally.production}, archive {tally.archive}, tie {tally.tie}.</p>
+      <p className="mt-1 text-fg-muted">
+        Production stories the archive missed, by where production sourced them ({missedTotal}):{' '}
+        {Object.entries(missed).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v} (${missedTotal ? Math.round((v / missedTotal) * 100) : 0}%)`).join(', ') || 'none yet'}.
+      </p>
       <div className="mt-2 overflow-x-auto">
         <table className="w-full border-collapse">
           <thead><tr className="border-b border-border text-left text-fg-muted">

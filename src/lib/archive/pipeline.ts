@@ -20,7 +20,7 @@ import { repairJsonStrings } from '@/lib/translation-service';
 import { fetchPage } from '@/lib/source-check';
 import { langFor, serper, type SerperHit } from '@/lib/open-search';
 import {
-  blueskyPosts, councilItems, discoverCouncil, mastodonPosts, namesPlace, newsSearch, readPages, searchNames,
+  blueskyPosts, councilItems, discoverCouncil, discoverOfficial, mastodonPosts, namesPlace, newsSearch, officialItems, readPages, searchNames,
   type ArchiveArea, type AreaSources, type SourceItem,
 } from '@/lib/archive/sources';
 
@@ -58,9 +58,13 @@ export function localDate(timezone: string, offsetDays = 0): string {
 // ─── Area sources (found once) ─────────────────────────────────────────────
 
 export async function areaSources(admin: SupabaseClient, area: ArchiveArea): Promise<AreaSources> {
-  const { data } = await admin.from('archive_area_sources').select('council_url, council_feed, events_url, notes').eq('area_id', area.id).maybeSingle();
-  if (data) return data as AreaSources;
-  const found = await discoverCouncil(area, langFor(area.country));
+  const { data } = await admin.from('archive_area_sources').select('council_url, council_feed, events_url, notes, extra_feeds').eq('area_id', area.id).maybeSingle();
+  if (data && data.extra_feeds) return data as AreaSources;
+  const lang = langFor(area.country);
+  const council = data ? (data as AreaSources) : await discoverCouncil(area, lang);
+  // Police and fire news, looked for once (areas found before 4 Oct get it on their next run).
+  const extra_feeds = await discoverOfficial(area, lang).catch(() => []);
+  const found = { ...council, extra_feeds };
   await admin.from('archive_area_sources').upsert({ area_id: area.id, country: area.country, ...found });
   return found;
 }
@@ -127,15 +131,16 @@ export async function writeBrief(admin: SupabaseClient, area: ArchiveArea): Prom
   const src = await areaSources(admin, area).catch(() => ({ council_url: null, council_feed: null, events_url: null }) as AreaSources);
   // Published news: one Serper news search (Google News results with real links).
   // GDELT's free index missed the local papers of small towns in testing.
-  const [news, council, bsky, masto] = await Promise.all([
+  const [news, council, official, bsky, masto] = await Promise.all([
     newsSearch(area, lang).catch(() => []),
     councilItems(src).catch(() => []),
+    officialItems(src.extra_feeds, names).catch(() => []),
     blueskyPosts(area).catch(() => []),
     mastodonPosts(area).catch(() => []),
   ]);
-  gathered.news = news.length; gathered.council = council.length; gathered.bluesky = bsky.length; gathered.mastodon = masto.length;
+  gathered.news = news.length; gathered.council = council.length; gathered.official = official.length; gathered.bluesky = bsky.length; gathered.mastodon = masto.length;
 
-  let items: SourceItem[] = [...council, ...news, ...bsky.slice(0, 5), ...masto.slice(0, 3)];
+  let items: SourceItem[] = [...council, ...official, ...news, ...bsky.slice(0, 5), ...masto.slice(0, 3)];
   const seen = new Set<string>();
   items = items.filter((i) => (seen.has(i.url) ? false : (seen.add(i.url), true)));
   items = items.slice(0, MAX_ITEMS);
