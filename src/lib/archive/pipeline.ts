@@ -68,7 +68,7 @@ export async function areaSources(admin: SupabaseClient, area: ArchiveArea): Pro
 // ─── Daily brief ───────────────────────────────────────────────────────────
 
 // Crime, courts, accidents and deaths: never lead, and a named private person drops the story.
-const CRIME = /\b(polizei|festgenommen|festnahme|verhaftet|einbruch|diebstahl|raub|überfall|messer|mord|totschlag|leiche|unfall|verletzt|verletzte|gestorben|verstorben|tot|todesfall|trauer|trauert|tödlich|staatsanwaltschaft|gericht|angeklagt|verurteilt|police|arrest|robbery|stabbing|murder|court|charged|injured|killed|died|dies|death|obituary)\b/i;
+const CRIME = /\b(polizei|festgenommen|festnahme|verhaftet|einbruch|diebstahl|raub|überfall|messer|mord|totschlag|leiche|unfall|verletzt|verletzte|gestorben|verstorben|tot|todesfall|trauer|trauert|tödlich|staatsanwaltschaft|gericht|angeklagt|verurteilt|police|arrest|arrested|robbery|stabbing|stabbed|shooting|assault|murder|court|charged|injured|killed|died|dies|death|obituary|collision|crash|garda|gardai|gardaí|psni|sheriff|nypd|coroner)\b/i;
 
 const MONTHS: Record<string, number> = { januar: 1, jänner: 1, februar: 2, märz: 3, april: 4, mai: 5, juni: 6, juli: 7, august: 8, september: 9, oktober: 10, november: 11, dezember: 12,
   january: 1, february: 2, march: 3, may: 5, june: 6, july: 7, october: 10, december: 12 };
@@ -161,6 +161,7 @@ Rules:
 - Skip anything elsewhere, older news, adverts, and general descriptions of the place.
 - Skip standing information: opening hours, services, offers that run all year, page navigation. A story reports something new, dated, or about to happen.
 - Skip weather forecasts and general weather.
+- Skip national and state politics and government business. Skip any story where the place's name stands for something else: "Capitol Hill" meaning the US Congress, a club or company that shares the name.
 - Never name a private person in a story about crime, an accident or a court case.
 - No em dashes or en dashes. Plain, factual ${loc.language}.
 - If nothing qualifies, return {"stories": []}.
