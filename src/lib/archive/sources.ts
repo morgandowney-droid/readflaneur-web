@@ -22,6 +22,8 @@ export interface ArchiveArea {
   city?: string;
   country: string;
   population: number;
+  /** IANA zone when it differs inside a country (Australia); else the country's. */
+  timezone?: string;
   lat: number;
   lng: number;
   members: Array<{ name: string; qualified: string; pop: number }>;
@@ -41,7 +43,15 @@ export interface SourceItem {
 
 const UA = 'FlaneurArchive/1.0 (+https://readflaneur.com/standards)';
 const FIPS: Record<string, string> = { Germany: 'GM', Austria: 'AU', Switzerland: 'SZ', Italy: 'IT', France: 'FR', Spain: 'SP' };
-const BSKY_LANG: Record<string, string> = { Germany: 'de', Austria: 'de', Switzerland: 'de', Italy: 'it', France: 'fr', Spain: 'es' };
+const BSKY_LANG: Record<string, string> = {
+  Germany: 'de', Austria: 'de', Switzerland: 'de', Italy: 'it', France: 'fr', Spain: 'es',
+  'United Kingdom': 'en', Ireland: 'en', Australia: 'en', 'New Zealand': 'en', 'United States': 'en',
+};
+/** National Mastodon servers, read alongside mastodon.social and the German Land servers. */
+const MASTODON_BY_COUNTRY: Record<string, string[]> = {
+  'United Kingdom': ['mastodonapp.uk'], Ireland: ['mastodon.ie'], Australia: ['aus.social'], 'New Zealand': ['mastodon.nz'],
+};
+const DIRECTIONAL = /\s+(Central|North|South|East|West|North East|North West|South East|South West|Inner|Outer|Town|Village)$/i;
 /** City and regional Mastodon servers by German Land; mastodon.social is always read. */
 const MASTODON_BY_LAND: Record<string, string[]> = {
   'Nordrhein-Westfalen': ['nrw.social'],
@@ -58,7 +68,7 @@ export function searchNames(area: ArchiveArea): string[] {
   const names = [area.name.replace(/ und Umgebung$/, ''), ...area.members.map((m) => m.name)];
   const out: string[] = [];
   for (const n of names) {
-    for (const part of n.split(/,| und /).map((x) => x.trim()).filter(Boolean)) {
+    for (const part of n.split(/,| und | and | & /).map((x) => x.trim()).filter(Boolean)) {
       if (part.length >= 3 && !out.includes(part)) out.push(part);
     }
   }
@@ -139,7 +149,7 @@ function hashtagOf(name: string): string {
 
 export async function mastodonPosts(area: ArchiveArea): Promise<SourceItem[]> {
   const names = searchNames(area);
-  const servers = ['mastodon.social', ...(MASTODON_BY_LAND[area.land || ''] || [])];
+  const servers = ['mastodon.social', ...(MASTODON_BY_LAND[area.land || ''] || []), ...(MASTODON_BY_COUNTRY[area.country] || [])];
   const cutoff = Date.now() - 2 * 86400_000;
   const out: SourceItem[] = [];
   for (const server of servers) {
@@ -175,9 +185,13 @@ function absolute(href: string, base: string): string | null {
 
 /** Find the area's council website, its news feed or page, and its events page. Done once per area. */
 export async function discoverCouncil(area: ArchiveArea, lang: Lang): Promise<AreaSources> {
-  const place = area.city || area.members[0]?.name || area.name;
-  const qualifier = area.kreis && area.kreis !== place ? ` ${area.kreis}` : '';
-  const hits: SerperHit[] = await serper('search', `${place}${qualifier} ${area.city ? 'Stadt' : 'Gemeinde'} Rathaus`, lang, null, area.id).catch(() => []);
+  // German areas search their own Gemeinde or city; elsewhere the council is the
+  // local authority (an English district, an Irish county, an Australian region).
+  const german = lang.hl === 'de';
+  const place = german ? (area.city || area.members[0]?.name || area.name) : (area.city || area.kreis || area.members[0]?.name || area.name);
+  const qualifier = german && area.kreis && area.kreis !== place ? ` ${area.kreis}` : '';
+  const query = german ? `${place}${qualifier} ${area.city ? 'Stadt' : 'Gemeinde'} Rathaus` : `${place} ${lang.council}`;
+  const hits: SerperHit[] = await serper('search', query, lang, null, area.id).catch(() => []);
   // Domains spell umlauts both ways: duesseldorf.de, but also dusseldorf.de.
   const lower = place.toLowerCase().replace(/ß/g, 'ss');
   const wants = Array.from(new Set([
@@ -248,8 +262,10 @@ export async function councilItems(src: AreaSources): Promise<SourceItem[]> {
 /** Published news: one Serper news query for the last day (Google News results, real article links). */
 export async function newsSearch(area: ArchiveArea, lang: Lang): Promise<SourceItem[]> {
   // The lead place and its city or Kreis: "Oberkassel Düsseldorf", not the edition's full name.
-  const lead = searchNames(area)[0];
-  const place = `${lead} ${area.city || (area.kreis && area.kreis !== lead ? area.kreis : '')}`.trim();
+  // Statistical names lose their suffix for search: "Harborne West" is searched as "Harborne".
+  const lead = searchNames(area)[0].replace(DIRECTIONAL, '');
+  const where = area.city || (area.kreis && area.kreis !== lead ? area.kreis : '');
+  const place = `${lead} ${where}`.trim();
   // The last week from Google News, kept to the last three days by its own date
   // ("vor 2 Tagen", "5 hours ago"); a quiet district has no news in 24 hours.
   const recent = /(minute|hour|stunde|minuten|1 day|2 days|3 days|1 tag|2 tagen|3 tagen|vor einem tag)/i;

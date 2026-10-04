@@ -12,12 +12,23 @@ archive_editions.audio_url records that key. Editions that already have audio
 are skipped, so a rerun only does what is missing.
 
 Voices (download once from huggingface.co/rhasspy/piper-voices):
-  de -> de_DE-thorsten-medium
+  de -> de_DE-thorsten-medium; en-gb/ie/au/nz -> en_GB-jenny_dioco-medium; en-us -> en_US-lessac-medium
+
+  An optional fourth argument limits the run to one archive country
+  ("United Kingdom"), so each country's audio can run in its own morning.
 """
-import json, os, re, shutil, subprocess, sys, time, urllib.request, wave
+import json, os, re, shutil, subprocess, sys, time, urllib.parse, urllib.request, wave
 from datetime import date
 
-VOICES = {'de': 'de_DE-thorsten-medium', 'en': 'en_GB-alan-medium', 'it': 'it_IT-paola-medium', 'fr': 'fr_FR-siwis-medium', 'es': 'es_ES-davefx-medium'}
+VOICES = {
+    'de': 'de_DE-thorsten-medium',
+    # English editions: one British voice for the UK, Ireland, Australia and New
+    # Zealand, one American voice for the US (archive edition_language codes).
+    'en-gb': 'en_GB-jenny_dioco-medium', 'en-ie': 'en_GB-jenny_dioco-medium',
+    'en-au': 'en_GB-jenny_dioco-medium', 'en-nz': 'en_GB-jenny_dioco-medium',
+    'en-us': 'en_US-lessac-medium',
+    'it': 'it_IT-paola-medium', 'fr': 'fr_FR-siwis-medium', 'es': 'es_ES-davefx-medium',
+}
 
 
 def env():
@@ -49,7 +60,8 @@ def main():
     auth = {'apikey': e['SUPABASE_SERVICE_ROLE_KEY'], 'Authorization': f"Bearer {e['SUPABASE_SERVICE_ROLE_KEY']}"}
     rows, offset = [], 0
     while True:
-        req = urllib.request.Request(f"{base}?kind=eq.brief&local_date=eq.{day}&audio_url=is.null&select=id,area_id,language,body&order=id&limit=1000&offset={offset}", headers=auth)
+        country = f"&country=eq.{urllib.parse.quote(sys.argv[4])}" if len(sys.argv) > 4 else ''
+        req = urllib.request.Request(f"{base}?kind=eq.brief&local_date=eq.{day}&audio_url=is.null{country}&select=id,area_id,language,body&order=id&limit=1000&offset={offset}", headers=auth)
         page = json.load(urllib.request.urlopen(req, timeout=60))
         rows += page
         if len(page) < 1000:

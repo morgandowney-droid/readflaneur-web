@@ -30,7 +30,7 @@ const stage = args.stage || 'brief';
 const cc = args.country || 'de';
 const concurrency = Number(args.concurrency || 12);
 const capUsd = Number(args['cap-usd'] || 15);
-const COUNTRY = { de: 'Germany' }[cc];
+const COUNTRY = { de: 'Germany', uk: 'United Kingdom', ie: 'Ireland', au: 'Australia', nz: 'New Zealand', 'us-nyc': 'United States', 'us-dc': 'United States' }[cc];
 if (!COUNTRY) { console.error(`no areas for ${cc}`); process.exit(1); }
 
 const require = createRequire(import.meta.url);
@@ -45,7 +45,9 @@ if (args.ids) { const ids = args.ids.split(','); areas = areas.filter((a) => ids
 if (args.limit) areas = areas.slice(0, Number(args.limit));
 
 const loc = P.localeFor(COUNTRY);
-const date = P.localDate(loc.timezone);
+// Each area is dated by its own local day (Perth and Sydney can differ).
+const dateOf = (area) => P.localDate(P.tzFor(area));
+const dates = Array.from(new Set(areas.map(dateOf)));
 const started = Date.now();
 const counts = { done: 0, with_content: 0, errors: 0, skipped_cap: 0, skipped_existing: 0 };
 const errors = [];
@@ -55,9 +57,9 @@ let spent = 0;
 const done = new Set();
 if (stage !== 'events') {
   for (let from = 0; ; from += 1000) {
-    const { data, error } = await admin.from('archive_editions').select('area_id').eq('local_date', date).eq('kind', stage === 'brief' ? 'brief' : 'look_ahead').range(from, from + 999);
+    const { data, error } = await admin.from('archive_editions').select('area_id, local_date').in('local_date', dates).eq('kind', stage === 'brief' ? 'brief' : 'look_ahead').range(from, from + 999);
     if (error) { console.error(error.message); break; }
-    for (const r of data) done.add(r.area_id);
+    for (const r of data) done.add(`${r.area_id}:${r.local_date}`);
     if (data.length < 1000) break;
   }
 }
@@ -66,7 +68,8 @@ let next = 0;
 async function worker() {
   while (next < areas.length) {
     const area = areas[next++];
-    if (done.has(area.id)) { counts.skipped_existing++; continue; }
+    const date = dateOf(area);
+    if (done.has(`${area.id}:${date}`)) { counts.skipped_existing++; continue; }
     if (spent >= capUsd) { counts.skipped_cap++; continue; }
     try {
       if (stage === 'brief') {
@@ -104,7 +107,7 @@ async function worker() {
 }
 await Promise.all(Array.from({ length: concurrency }, worker));
 
-const summary = { stage, country: COUNTRY, date, areas: areas.length, ...counts, spent_usd: Number(spent.toFixed(4)), cap_usd: capUsd, minutes: Math.round((Date.now() - started) / 60000) };
+const summary = { stage, country: COUNTRY, map: cc, dates, areas: areas.length, ...counts, spent_usd: Number(spent.toFixed(4)), cap_usd: capUsd, minutes: Math.round((Date.now() - started) / 60000) };
 console.log(JSON.stringify(summary));
 await admin.from('cron_executions').insert({
   job_name: 'archive-tier-server', started_at: new Date(started).toISOString(), completed_at: new Date().toISOString(),

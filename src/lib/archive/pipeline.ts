@@ -15,6 +15,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { openRouterChat } from '@/lib/openrouter-chat';
 import { isModelRefusal } from '@/lib/model-refusal';
+import { anglicise, britishStyleBlock, spellingVariantFor } from '@/lib/locale-register';
 import { repairJsonStrings } from '@/lib/translation-service';
 import { fetchPage } from '@/lib/source-check';
 import { langFor, serper, type SerperHit } from '@/lib/open-search';
@@ -35,9 +36,19 @@ const MAX_ITEMS = 16;
 const LOCALE: Record<string, { code: string; language: string; timezone: string; greeting: string; weekday: string }> = {
   Germany: { code: 'de', language: 'German', timezone: 'Europe/Berlin', greeting: 'Guten Morgen', weekday: 'de-DE' },
   Austria: { code: 'de', language: 'German', timezone: 'Europe/Vienna', greeting: 'Guten Morgen', weekday: 'de-AT' },
+  'United Kingdom': { code: 'en-gb', language: 'British English', timezone: 'Europe/London', greeting: 'Good morning', weekday: 'en-GB' },
+  Ireland: { code: 'en-ie', language: 'Irish English (British spelling)', timezone: 'Europe/Dublin', greeting: 'Good morning', weekday: 'en-IE' },
+  Australia: { code: 'en-au', language: 'Australian English', timezone: 'Australia/Sydney', greeting: 'Good morning', weekday: 'en-AU' },
+  'New Zealand': { code: 'en-nz', language: 'New Zealand English (British spelling)', timezone: 'Pacific/Auckland', greeting: 'Good morning', weekday: 'en-NZ' },
+  'United States': { code: 'en-us', language: 'American English', timezone: 'America/New_York', greeting: 'Good morning', weekday: 'en-US' },
 };
 export function localeFor(country: string) {
   return LOCALE[country] || { code: 'en', language: 'English', timezone: 'UTC', greeting: 'Good morning', weekday: 'en-GB' };
+}
+
+/** The area's own zone (Australia has several), else its country's. */
+export function tzFor(area: { timezone?: string; country: string }): string {
+  return area.timezone || localeFor(area.country).timezone;
 }
 
 export function localDate(timezone: string, offsetDays = 0): string {
@@ -134,7 +145,11 @@ export async function writeBrief(admin: SupabaseClient, area: ArchiveArea): Prom
   gathered.kept = items.length;
   if (items.length === 0) return { headline: null, body: null, stories: [], sources: [], gathered, costUsd: cost, error: 'nothing local found' };
 
-  const today = new Date().toLocaleDateString(loc.weekday, { timeZone: loc.timezone, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const tz = tzFor(area);
+  const today = new Date().toLocaleDateString(loc.weekday, { timeZone: tz, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  // English editions get the production register and spelling rules (British, Irish,
+  // Australian, New Zealand); anglicise() enforces the spelling again afterwards.
+  const style = britishStyleBlock({ id: area.id, name: area.name, city: area.kreis || area.city || null, country: area.country });
   const block = items.map((it, i) => `[${i + 1}] (${it.kind}${it.publisher ? `, ${it.publisher}` : ''}${it.date ? `, ${String(it.date).slice(0, 16)}` : ''}) ${it.title}\n${it.text.slice(0, 2000)}`).join('\n\n');
   const prompt = `You write a short local morning news brief in ${loc.language} for ${area.name}${area.city ? ` (${area.city})` : area.kreis ? ` (${area.kreis})` : ''}, ${area.country}. Today is ${today}.
 
@@ -149,7 +164,7 @@ Rules:
 - Never name a private person in a story about crime, an accident or a court case.
 - No em dashes or en dashes. Plain, factual ${loc.language}.
 - If nothing qualifies, return {"stories": []}.
-
+${style ? `\n${style}\n` : ''}
 Return JSON only:
 {"headline": "a short ${loc.language} headline for the lead story", "stories": [{"header": "short header", "text": "two to four sentences", "sources": [1, 3], "crime": false}]}
 
@@ -179,7 +194,8 @@ ${block}`;
   }
   gathered.stories_written = (parsed.stories || []).length;
 
-  const clean = (s: string) => s.replace(/\s*[–—]\s*/g, ', ').replace(/\s+/g, ' ').trim();
+  const variant = spellingVariantFor(area.country);
+  const clean = (s: string) => anglicise(s.replace(/\s*[–—]\s*/g, ', ').replace(/\s+/g, ' ').trim(), variant);
   const placeNames = [...names, area.city || '', area.kreis || ''].filter(Boolean);
   let stories: ArchiveStory[] = [];
   let droppedNoSource = 0, droppedCrimeName = 0, droppedStale = 0;
@@ -189,7 +205,7 @@ ${block}`;
     const text = clean(s.text);
     const crime = !!s.crime || CRIME.test(`${s.header} ${text}`);
     if (crime && namesPerson(`${s.header} ${text}`, placeNames)) { droppedCrimeName++; continue; }
-    if (onlyStaleDates(`${s.header} ${text}`, localDate(loc.timezone))) { droppedStale++; continue; }
+    if (onlyStaleDates(`${s.header} ${text}`, localDate(tz))) { droppedStale++; continue; }
     stories.push({ header: clean(s.header), text, sources: refs, crime });
   }
   stories = [...stories.filter((s) => !s.crime), ...stories.filter((s) => s.crime)];
@@ -251,7 +267,7 @@ export async function gatherEvents(admin: SupabaseClient, area: ArchiveArea): Pr
   }
   if (pages.length === 0) return { stored: 0, costUsd: 0, error: 'no event pages' };
 
-  const from = localDate(loc.timezone), to = localDate(loc.timezone, 14);
+  const from = localDate(tzFor(area)), to = localDate(tzFor(area), 14);
   const prompt = `List the dated public events in ${area.name}${area.city ? ` (${area.city})` : ''}, ${area.country}, between ${from} and ${to}, from the numbered pages below.
 
 Rules: only events the pages state with a date in that window; only in ${area.name} or right next to it; no permanent attractions, opening hours or adverts. Give names and venues as written. Each event gives the number of the page it came from. At most 20 events, soonest first; keep each field short.
@@ -283,7 +299,7 @@ ${pages.map((p, i) => `[${i + 1}] ${p.title}\n${p.text}`).join('\n\n')}`;
 /** The next seven days of stored events as a Look Ahead listing. No model call. */
 export async function buildLookAhead(admin: SupabaseClient, area: ArchiveArea): Promise<{ body: string | null; count: number; sources: Array<{ url: string }> }> {
   const loc = localeFor(area.country);
-  const from = localDate(loc.timezone), to = localDate(loc.timezone, 7);
+  const from = localDate(tzFor(area)), to = localDate(tzFor(area), 7);
   const { data } = await admin.from('archive_events').select('event_date, time_text, name, venue, category, source_url').eq('area_id', area.id).gte('event_date', from).lte('event_date', to).order('event_date').order('time_text');
   const events = data || [];
   if (events.length === 0) return { body: null, count: 0, sources: [] };
