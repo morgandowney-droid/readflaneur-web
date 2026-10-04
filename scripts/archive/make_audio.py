@@ -20,15 +20,31 @@ Voices (download once from huggingface.co/rhasspy/piper-voices):
 import json, os, re, shutil, subprocess, sys, time, urllib.parse, urllib.request, wave
 from datetime import date
 
+# (model, speaker) per edition language; Morgan picked these by ear on 4 Oct 2026.
+# The multi-speaker VCTK model carries the regional accents Piper has no single
+# voice for: speaker 56 is p295 (female, Dublin), 17 is p238 (female, Belfast).
+# The Australian VCTK speakers sounded robotic, so Australia and New Zealand
+# use Jenny until the paid voice takes over on play.
 VOICES = {
-    'de': 'de_DE-thorsten-medium',
-    # English editions: one British voice for the UK, Ireland, Australia and New
-    # Zealand, one American voice for the US (archive edition_language codes).
-    'en-gb': 'en_GB-jenny_dioco-medium', 'en-ie': 'en_GB-jenny_dioco-medium',
-    'en-au': 'en_GB-jenny_dioco-medium', 'en-nz': 'en_GB-jenny_dioco-medium',
-    'en-us': 'en_US-lessac-medium',
-    'it': 'it_IT-paola-medium', 'fr': 'fr_FR-siwis-medium', 'es': 'es_ES-davefx-medium',
+    'de': ('de_DE-thorsten-medium', None),
+    'en-gb': ('en_GB-jenny_dioco-medium', None),
+    'en-ie': ('en_GB-vctk-medium', 56),
+    'en-au': ('en_GB-jenny_dioco-medium', None),
+    'en-nz': ('en_GB-jenny_dioco-medium', None),
+    'en-us': ('en_US-lessac-medium', None),
 }
+# UK nations that get their own accent, by the area's `land` in data/areas/uk.json.
+UK_NATION_VOICES = {
+    'Scotland': ('en_GB-alba-medium', None),
+    'Northern Ireland': ('en_GB-vctk-medium', 17),
+}
+
+
+def uk_nations():
+    path = os.path.join('data', 'areas', 'uk.json')
+    if not os.path.exists(path):
+        return {}
+    return {a['id']: a.get('land') for a in json.load(open(path, encoding='utf-8'))['areas']}
 
 
 def env():
@@ -73,19 +89,26 @@ def main():
         s3 = boto3.client('s3', endpoint_url=e['R2_ENDPOINT'], aws_access_key_id=e['R2_ACCESS_KEY_ID'],
                           aws_secret_access_key=e['R2_SECRET_ACCESS_KEY'], region_name='auto')
     from piper import PiperVoice
+    from piper.config import SynthesisConfig
+    nations = uk_nations()
     loaded = {}
     ffmpeg = shutil.which('ffmpeg')
     total_audio = total_time = 0.0
     for r in rows:
-        voice_name = VOICES.get(r['language'])
-        if not voice_name or not r.get('body'):
+        choice = UK_NATION_VOICES.get(nations.get(r['area_id'])) if r['language'] == 'en-gb' else None
+        choice = choice or VOICES.get(r['language'])
+        if not choice or not r.get('body'):
             continue
+        voice_name, speaker = choice
         if voice_name not in loaded:
             loaded[voice_name] = PiperVoice.load(os.path.join(voices_dir, f'{voice_name}.onnx'))
         wav = os.path.join(out_dir, f"{r['area_id']}.wav")
         t = time.time()
         with wave.open(wav, 'wb') as w:
-            loaded[voice_name].synthesize_wav(spoken(r['body']), w)
+            if speaker is None:
+                loaded[voice_name].synthesize_wav(spoken(r['body']), w)
+            else:
+                loaded[voice_name].synthesize_wav(spoken(r['body']), w, syn_config=SynthesisConfig(speaker_id=speaker))
         took = time.time() - t
         with wave.open(wav) as w:
             secs = w.getnframes() / w.getframerate()

@@ -127,10 +127,20 @@ def town_of(name):
     return t if len(t) >= 3 else name
 
 
+def title_weight(last_year):
+    """Recent papers count more: communities change (fifty years ago almost nobody
+    lived in Tribeca). Weight by the last year a title was published or held."""
+    if last_year >= 2000: return 1.0
+    if last_year >= 1980: return 0.6
+    if last_year >= 1950: return 0.35
+    if last_year >= 1900: return 0.15
+    return 0.05
+
+
 def load_paper_towns(d):
-    """Towns with a strong newspaper history (British Library title list): three or
-    more titles, or one that ran fifteen years or more. A strong paper town is a
-    news market of its own and is never glued to another."""
+    """Towns with a strong, recent newspaper history (British Library title list),
+    weighted by how recently each title was published (title_weight). A strong
+    paper town is a news market of its own and is never glued to another."""
     path = os.path.join(d, 'bl-titles.csv')
     if not os.path.exists(path):
         return set()
@@ -147,7 +157,9 @@ def load_paper_towns(d):
                 a = b = 0
             if len(town) >= 3:
                 runs[town.lower()].append((a, b))
-    return {t for t, v in runs.items() if len(v) >= 3 or any(b - a >= 15 for a, b in v)}
+    # Strong: recency-weighted titles add up to at least 1 (one paper published this
+    # century, or several from the post-war decades).
+    return {t for t, v in runs.items() if sum(title_weight(max(a, b)) for a, b in v) >= 1.0}
 
 
 def conflicts(group, unit):

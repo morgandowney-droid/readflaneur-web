@@ -5,8 +5,9 @@ suburbs), and a mid-size paper town should not be cut across editions.
 
 UK and Ireland: the British Library's title list of British and Irish
 newspapers (CC0, bl.iro.bl.uk, 2019), matched by town name to the editions'
-member names. A paper town is "strong" when it had three or more titles or one
-that ran fifteen years or more.
+member names. A paper town is "strong" when its titles, weighted by how
+recently each was published (title_weight: 1.0 since 2000 down to 0.05 before
+1900), add up to at least 1.
 
   anchored  the edition contains a paper town
   glued     the edition contains two or more strong paper towns (two news
@@ -19,6 +20,16 @@ Usage: python scripts/areas/validate_papers.py <bl-titles.csv> <areas.json> [cou
 """
 import csv, json, re, sys
 from collections import defaultdict
+
+
+def title_weight(last_year):
+    """Recent papers count more: communities change (fifty years ago almost nobody
+    lived in Tribeca). Weight by the last year a title was published or held."""
+    if last_year >= 2000: return 1.0
+    if last_year >= 1980: return 0.6
+    if last_year >= 1950: return 0.35
+    if last_year >= 1900: return 0.15
+    return 0.05
 
 
 def load_papers(path, countries):
@@ -47,8 +58,7 @@ def main():
     pattern = {t: re.compile(r'(?<![A-Za-z])' + re.escape(t) + r'(?![A-Za-z])', re.I) for t in towns}
 
     def strong(t):
-        v = towns[t]
-        return len(v) >= 3 or any(b - a >= 15 for a, b in v)
+        return sum(title_weight(max(a, b)) for a, b in towns[t]) >= 1.0
 
     ed_towns, town_eds = defaultdict(set), defaultdict(list)
     for a in areas:
