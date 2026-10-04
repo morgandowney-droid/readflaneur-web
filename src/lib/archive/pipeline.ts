@@ -134,7 +134,7 @@ export async function writeBrief(admin: SupabaseClient, area: ArchiveArea): Prom
   const [news, council, official, bsky, masto] = await Promise.all([
     newsSearch(area, lang).catch(() => []),
     councilItems(src).catch(() => []),
-    officialItems(src.extra_feeds, names).catch(() => []),
+    officialItems(src.extra_feeds, names, lang).catch(() => []),
     blueskyPosts(area).catch(() => []),
     mastodonPosts(area).catch(() => []),
   ]);

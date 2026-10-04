@@ -316,24 +316,35 @@ async function feedItems(feedUrl: string, kind: ItemKind, days = 3): Promise<Sou
 const officialCache = new Map<string, Promise<SourceItem[]>>();
 
 /** Today's police and fire items for an area: only those that name one of its places. */
-export async function officialItems(feeds: OfficialFeed[] | null | undefined, names: string[]): Promise<SourceItem[]> {
+/** A news item, not a listing, archive, tag page or document. */
+function isOfficialArticle(h: SerperHit): boolean {
+  if ((h.title || '').length < 10 || /\|| archive$|^regions?:|^(news|appeals|incidents|latest)\b/i.test(h.title)) return false;
+  try {
+    const path = new URL(h.link).pathname.toLowerCase();
+    if (path.split('/').filter(Boolean).length < 2) return false;
+    return !/\/(tag|tags|regions?|category|filtered-search|search|media|documents?|downloads?)\/|\.(pdf|docx?|xlsx?)$/.test(path);
+  } catch { return false; }
+}
+
+/** Serper's dates are relative ("2 days ago") or absolute; unknown counts as recent, the writer drops stale stories. */
+function withinDays(date: string | undefined, days: number): boolean {
+  if (!date) return true;
+  const rel = date.match(/(\d+)\s*(minute|hour|day|week|month)/i);
+  if (rel) return /minute|hour/i.test(rel[2]) || (/day/i.test(rel[2]) && Number(rel[1]) <= days);
+  const t = Date.parse(date);
+  return Number.isNaN(t) || Date.now() - t <= days * 86400_000;
+}
+
+export async function officialItems(feeds: OfficialFeed[] | null | undefined, names: string[], lang: Lang): Promise<SourceItem[]> {
   const out: SourceItem[] = [];
   for (const f of feeds || []) {
     const key = f.feed || f.url;
     if (!officialCache.has(key)) {
+      // No feed (most UK, Irish and Australian services): one site search per service per run, shared by every area it covers.
       officialCache.set(key, f.feed ? feedItems(f.feed, 'official').catch(() => []) : (async () => {
-        const page = await fetchPage(f.url).catch(() => null);
-        if (!page?.ok || !page.html) return [];
-        const base = page.finalUrl || f.url;
-        const host = new URL(base).hostname;
-        const items: SourceItem[] = [];
-        for (const m of page.html.matchAll(/<a[^>]+href=["']([^"'#]+)["'][^>]*>([\s\S]{25,200}?)<\/a>/gi)) {
-          const url = absolute(m[1], base);
-          const title = m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-          if (url && title.length >= 25 && url.includes(host) && !items.some((x) => x.url === url)) items.push({ kind: 'official', url, title, text: '', date: null, publisher: host });
-          if (items.length >= 30) break;
-        }
-        return items;
+        const host = new URL(f.url).hostname.replace(/^www\./, '');
+        const hits = await serper('search', `site:${host}`, lang, 'qdr:w', `official:${host}`).catch(() => [] as SerperHit[]);
+        return hits.filter((h) => withinDays(h.date, 3) && isOfficialArticle(h)).map((h) => ({ kind: 'official' as const, url: h.link, title: h.title, text: h.snippet || '', date: h.date || null, publisher: host }));
       })());
     }
     for (const it of await officialCache.get(key)!) if (namesPlace(`${it.title} ${it.text}`, names)) out.push(it);

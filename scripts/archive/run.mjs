@@ -69,7 +69,7 @@ async function worker() {
   while (next < areas.length) {
     const area = areas[next++];
     const date = dateOf(area);
-    if (done.has(`${area.id}:${date}`)) { counts.skipped_existing++; continue; }
+    if (!args.force && done.has(`${area.id}:${date}`)) { counts.skipped_existing++; continue; }
     if (spent >= capUsd) { counts.skipped_cap++; continue; }
     try {
       if (stage === 'brief') {
