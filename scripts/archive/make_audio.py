@@ -12,7 +12,7 @@ archive_editions.audio_url records that key. Editions that already have audio
 are skipped, so a rerun only does what is missing.
 
 Voices (download once from huggingface.co/rhasspy/piper-voices):
-  de -> de_DE-thorsten-medium; en-gb/ie/au/nz -> en_GB-jenny_dioco-medium; en-us -> en_US-lessac-medium
+  de -> de_DE-thorsten-medium; en-gb/au/nz -> en_GB-jenny_dioco-medium; en-ie and Northern Ireland -> en_GB-vctk-medium; Scotland -> en_GB-alba-medium; en-us -> en_US-ryan-high
 
   An optional fourth argument limits the run to one archive country
   ("United Kingdom"), so each country's audio can run in its own morning.
@@ -31,7 +31,7 @@ VOICES = {
     'en-ie': ('en_GB-vctk-medium', 56),
     'en-au': ('en_GB-jenny_dioco-medium', None),
     'en-nz': ('en_GB-jenny_dioco-medium', None),
-    'en-us': ('en_US-lessac-medium', None),
+    'en-us': ('en_US-ryan-high', None),  # Morgan's pick of eight US voices, 4 Oct
 }
 # UK nations that get their own accent, by the area's `land` in data/areas/uk.json.
 UK_NATION_VOICES = {
