@@ -16,6 +16,12 @@ Inputs (England and Wales):
                   (houseofcommonslibrary.github.io/msoanames)
   msoa-pop.csv    Census 2021 usual residents by MSOA (Nomis NM_2021_1)
   msoa-pwc.json   ONS MSOA December 2021 population-weighted centroids
+Inputs (Scotland and Northern Ireland):
+  wards-sni.json  ONS Wards December 2024 (BGC), Scottish and NI wards with LAT/LONG
+  lad-pop.csv     ONS mid-year population by local authority (Nomis NM_2002_1)
+  Wards in both nations are drawn to similar electorates within a council, so
+  each ward takes an equal share of its council's population, marked as an
+  estimate (population_estimated).
 
 Usage: python scripts/areas/build_uk.py <input_dir> [out.json]
 """
@@ -79,6 +85,27 @@ def load_ew(d):
     return out
 
 
+def load_sni(d):
+    wards_path = os.path.join(d, 'wards-sni.json')
+    if not os.path.exists(wards_path):
+        return []
+    lad_pop = {}
+    with open(os.path.join(d, 'lad-pop.csv'), encoding='utf-8') as f:
+        for r in csv.DictReader(f):
+            lad_pop[r['GEOGRAPHY_CODE']] = int(r['OBS_VALUE'])
+    wards = json.load(open(wards_path, encoding='utf-8'))
+    per_lad = Counter(w['LAD24CD'] for w in wards)
+    out = []
+    for w in wards:
+        total = lad_pop.get(w['LAD24CD'])
+        if not total:
+            continue
+        out.append({'code': w['WD24CD'], 'name': w['WD24NM'].strip(), 'la': w['LAD24NM'],
+                    'nation': 'Scotland' if w['WD24CD'].startswith('S') else 'Northern Ireland',
+                    'pop': total // per_lad[w['LAD24CD']], 'lat': w['LAT'], 'lng': w['LONG'], 'estimated': True})
+    return out
+
+
 def group_authority(units):
     """Nearest-neighbour grouping inside one local authority, within a reach
     scaled to its density (three times the median nearest-neighbour spacing)."""
@@ -119,7 +146,7 @@ def group_authority(units):
 
 
 def build(d):
-    units = load_ew(d)
+    units = load_ew(d) + load_sni(d)
     by_la = defaultdict(list)
     for u in units:
         by_la[u['la']].append(u)
@@ -137,6 +164,7 @@ def build(d):
                 'id': aid, 'kind': 'msoa-group', 'name': group_name(g), 'kreis': la, 'land': g[0]['nation'],
                 'country': 'United Kingdom', 'population': pop_of(g), 'lat': round(c[0], 5), 'lng': round(c[1], 5),
                 'split_into': 1,
+                'population_estimated': any(m.get('estimated') for m in g),
                 'members': [{'code': m['code'], 'name': m['name'], 'qualified': f"{m['name']} ({la})", 'pop': m['pop']} for m in g],
             })
     return areas, units
@@ -149,7 +177,7 @@ if __name__ == '__main__':
     per = sorted(a['population'] for a in areas)
     summary = {
         'source': 'Census 2021 (ONS, Nomis NM_2021_1), House of Commons Library MSOA Names 2.2, ONS MSOA 2021 population-weighted centroids',
-        'coverage': 'England and Wales (Scotland and Northern Ireland to follow)',
+        'coverage': 'United Kingdom: England and Wales from census MSOAs; Scotland and Northern Ireland from council wards with estimated populations',
         'msoas': len(units), 'population': sum(u['pop'] for u in units),
         'editions': len(areas), 'by_nation': dict(Counter(a['land'] for a in areas)),
         'median_people_per_edition': per[len(per) // 2], 'p10': per[len(per) // 10], 'p90': per[9 * len(per) // 10],
