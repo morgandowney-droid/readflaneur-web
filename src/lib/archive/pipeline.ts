@@ -56,7 +56,34 @@ export async function areaSources(admin: SupabaseClient, area: ArchiveArea): Pro
 
 // ─── Daily brief ───────────────────────────────────────────────────────────
 
-const CRIME = /\b(polizei|festgenommen|festnahme|verhaftet|einbruch|diebstahl|raub|überfall|messer|mord|totschlag|leiche|unfall|verletzt|gestorben|tödlich|staatsanwaltschaft|gericht|angeklagt|verurteilt|police|arrest|robbery|stabbing|murder|court|charged|injured|killed)\b/i;
+// Crime, courts, accidents and deaths: never lead, and a named private person drops the story.
+const CRIME = /\b(polizei|festgenommen|festnahme|verhaftet|einbruch|diebstahl|raub|überfall|messer|mord|totschlag|leiche|unfall|verletzt|verletzte|gestorben|verstorben|tot|todesfall|trauer|trauert|tödlich|staatsanwaltschaft|gericht|angeklagt|verurteilt|police|arrest|robbery|stabbing|murder|court|charged|injured|killed|died|dies|death|obituary)\b/i;
+/** A death notice: goes last like crime; a private person's name is kept only in an obituary of a public figure, so it is dropped here. */
+const DEATH = /\b(verstorben|gestorben|ist tot|todesfall|trauert|died|dies at|death of|obituary)\b/i;
+
+const MONTHS: Record<string, number> = { januar: 1, jänner: 1, februar: 2, märz: 3, april: 4, mai: 5, juni: 6, juli: 7, august: 8, september: 9, oktober: 10, november: 11, dezember: 12,
+  january: 1, february: 2, march: 3, may: 5, june: 6, july: 7, october: 10, december: 12 };
+/**
+ * True when every calendar date a story names is more than `maxAgeDays` before
+ * today (e.g. "17. September" on 4 October). A story with no date, or with any
+ * date in the window or ahead, passes. The prompt asks for the last three days;
+ * this is the check that it was followed.
+ */
+export function onlyStaleDates(text: string, todayIso: string, maxAgeDays = 7): boolean {
+  const today = Date.parse(`${todayIso}T12:00:00Z`);
+  const year = Number(todayIso.slice(0, 4));
+  const dates: number[] = [];
+  for (const m of text.matchAll(/\b(\d{1,2})\.?\s+(januar|jänner|februar|märz|april|mai|juni|juli|august|september|oktober|november|dezember|january|february|march|may|june|july|october|december)\b(?:\s+(\d{4}))?/gi)) {
+    const month = MONTHS[m[2].toLowerCase()];
+    let y = m[3] ? Number(m[3]) : year;
+    let t = Date.UTC(y, month - 1, Number(m[1]), 12);
+    // "3. Januar" read in late December means next year.
+    if (!m[3] && t - today > 180 * 86400_000) t = Date.UTC(--y, month - 1, Number(m[1]), 12);
+    if (!m[3] && today - t > 180 * 86400_000) t = Date.UTC(y + 1, month - 1, Number(m[1]), 12);
+    dates.push(t);
+  }
+  return dates.length > 0 && dates.every((t) => today - t > maxAgeDays * 86400_000);
+}
 /** A person's full name: two capitalised words in a row that are not a place we cover. */
 function namesPerson(text: string, placeNames: string[]): boolean {
   const re = /\b([A-ZÄÖÜ][a-zäöüß]+) ([A-ZÄÖÜ][a-zäöüß]{2,})\b/g;
@@ -157,17 +184,18 @@ ${block}`;
   const clean = (s: string) => s.replace(/\s*[–—]\s*/g, ', ').replace(/\s+/g, ' ').trim();
   const placeNames = [...names, area.city || '', area.kreis || ''].filter(Boolean);
   let stories: ArchiveStory[] = [];
-  let droppedNoSource = 0, droppedCrimeName = 0;
+  let droppedNoSource = 0, droppedCrimeName = 0, droppedStale = 0;
   for (const s of parsed.stories || []) {
     const refs = (s.sources || []).map(Number).filter((n) => Number.isInteger(n) && n >= 1 && n <= items.length);
     if (!s.header || !s.text || refs.length === 0) { droppedNoSource++; continue; }
     const text = clean(s.text);
     const crime = !!s.crime || CRIME.test(`${s.header} ${text}`);
-    if (crime && namesPerson(text, placeNames)) { droppedCrimeName++; continue; }
+    if (crime && namesPerson(`${s.header} ${text}`, placeNames)) { droppedCrimeName++; continue; }
+    if (onlyStaleDates(`${s.header} ${text}`, localDate(loc.timezone))) { droppedStale++; continue; }
     stories.push({ header: clean(s.header), text, sources: refs, crime });
   }
   stories = [...stories.filter((s) => !s.crime), ...stories.filter((s) => s.crime)];
-  gathered.dropped_no_source = droppedNoSource; gathered.dropped_crime_name = droppedCrimeName;
+  gathered.dropped_no_source = droppedNoSource; gathered.dropped_crime_name = droppedCrimeName; gathered.dropped_stale = droppedStale;
   if (stories.length === 0) gathered.raw = raw.slice(0, 400);
   if (stories.length === 0) return { headline: null, body: null, stories: [], sources: [], gathered, costUsd: cost, error: 'no story survived the checks' };
 
