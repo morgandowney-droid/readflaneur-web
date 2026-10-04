@@ -58,8 +58,6 @@ export async function areaSources(admin: SupabaseClient, area: ArchiveArea): Pro
 
 // Crime, courts, accidents and deaths: never lead, and a named private person drops the story.
 const CRIME = /\b(polizei|festgenommen|festnahme|verhaftet|einbruch|diebstahl|raub|überfall|messer|mord|totschlag|leiche|unfall|verletzt|verletzte|gestorben|verstorben|tot|todesfall|trauer|trauert|tödlich|staatsanwaltschaft|gericht|angeklagt|verurteilt|police|arrest|robbery|stabbing|murder|court|charged|injured|killed|died|dies|death|obituary)\b/i;
-/** A death notice: goes last like crime; a private person's name is kept only in an obituary of a public figure, so it is dropped here. */
-const DEATH = /\b(verstorben|gestorben|ist tot|todesfall|trauert|died|dies at|death of|obituary)\b/i;
 
 const MONTHS: Record<string, number> = { januar: 1, jänner: 1, februar: 2, märz: 3, april: 4, mai: 5, juni: 6, juli: 7, august: 8, september: 9, oktober: 10, november: 11, dezember: 12,
   january: 1, february: 2, march: 3, may: 5, june: 6, july: 7, october: 10, december: 12 };
