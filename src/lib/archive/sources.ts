@@ -64,12 +64,36 @@ const MASTODON_BY_LAND: Record<string, string[]> = {
 };
 
 /** The names an area is searched by: its own name and its largest members, at most four. */
+// Words that join a single place name ("Carrick-on-Shannon", "Pen-y-groes", "Stratford-upon-Avon",
+// "Frankfurt am Main"): a hyphen next to one of these is part of the name, not a list.
+const NAME_CONNECTORS = new Set(['on', 'upon', 'under', 'in', 'by', 'le', 'la', 'les', 'sur', 'y', 'am', 'an', 'im', 'auf', 'bei', 'ob', 'der', 'den', 'de', 'du', 'of', 'the']);
+
+function splitHyphens(part: string): string[] {
+  const bits = part.split(/\s+-\s+|-/).map((x) => x.trim()).filter(Boolean);
+  if (bits.length < 2) return [part];
+  if (part.includes(' - ')) return part.split(/\s+-\s+/).map((x) => x.trim()).filter(Boolean);
+  return bits.some((b) => NAME_CONNECTORS.has(b.toLowerCase()) || b.length < 3) ? [part] : bits;
+}
+
+/**
+ * The places an area's news would name, best first: the edition name's places, then its members'.
+ * Statistical names are cleaned for search and matching (5 Oct: half of the areas empty two nights
+ * running had news that week, lost to these): "Upper West Side-Manhattan Valley" and "Pennant Hills -
+ * Cheltenham" are two places each, "Kingston (ACT) and nearby" is Kingston (and never "nearby", which
+ * matched almost any text), and "Galway City East" or "Harborne West" is searched and matched without
+ * the statistical suffix.
+ */
 export function searchNames(area: ArchiveArea): string[] {
-  const names = [area.name.replace(/ und Umgebung$/, ''), ...area.members.map((m) => m.name)];
+  const names = [area.name, ...area.members.map((m) => m.name)];
   const out: string[] = [];
-  for (const n of names) {
-    for (const part of n.split(/,| und | and | & /).map((x) => x.trim()).filter(Boolean)) {
-      if (part.length >= 3 && !out.includes(part)) out.push(part);
+  for (const raw of names) {
+    const n = raw.replace(/\s*\([^)]*\)/g, '').replace(/\s+(und Umgebung|and nearby)$/i, '');
+    for (const piece of n.split(/,| und | and | & /).map((x) => x.trim()).filter(Boolean)) {
+      // German hyphenated names are one place (Wanne-Eickel, Baden-Baden); elsewhere a hyphen joins a list.
+      for (let part of area.country === 'Germany' ? [piece] : splitHyphens(piece)) {
+        part = part.replace(DIRECTIONAL, '').trim();
+        if (part.length >= 3 && !/^(nearby|umgebung)$/i.test(part) && !out.some((o) => o.toLowerCase() === part.toLowerCase())) out.push(part);
+      }
     }
   }
   return out.slice(0, 4);
@@ -353,18 +377,74 @@ export async function officialItems(feeds: OfficialFeed[] | null | undefined, na
 }
 
 /** Published news: one Serper news query for the last day (Google News results, real article links). */
+// A news hit on another country's site is a namesake (Christchurch, Dorset in a Christchurch, NZ
+// edition; Lismore, New South Wales in Lismore, County Waterford). The UK and Ireland are one market.
+const COUNTRY_TLDS: Record<string, string[]> = {
+  'United Kingdom': ['uk', 'ie'], Ireland: ['ie', 'uk'], Australia: ['au'], 'New Zealand': ['nz'],
+  Germany: ['de', 'at', 'ch'], 'United States': ['us'],
+};
+const NATIONAL_TLDS = ['uk', 'ie', 'au', 'nz', 'de', 'at', 'ch', 'ca', 'us', 'za', 'in', 'fr', 'it', 'es', 'nl', 'se', 'no', 'dk', 'jm', 'bb', 'tt', 'sg', 'hk', 'ph', 'my'];
+
+export function isForeignSite(url: string, country: string): boolean {
+  const own = COUNTRY_TLDS[country];
+  if (!own) return false;
+  let host: string;
+  try { host = new URL(url).hostname.toLowerCase(); } catch { return false; }
+  const tld = host.split('.').pop() || '';
+  return NATIONAL_TLDS.includes(tld) && !own.includes(tld);
+}
+
+const RECENT = /(minute|hour|stunde|minuten|1 day|2 days|3 days|1 tag|2 tagen|3 tagen|vor einem tag)/i;
+
+// Property portals: a listing is an advert, not news (Baringa, 5 Oct: a brief of four listings).
+const LISTING_SITE = /(^|\.)(realestate\.com\.au|domain\.com\.au|allhomes\.com\.au|realcommercial\.com\.au|rightmove\.co\.uk|zoopla\.co\.uk|onthemarket\.com|daft\.ie|myhome\.ie|trademe\.co\.nz|oneroof\.co\.nz|homes\.co\.nz|immobilienscout24\.de|immowelt\.de|kleinanzeigen\.de|zillow\.com|streeteasy\.com|realtor\.com|redfin\.com|trulia\.com|apartments\.com)$/i;
+
+export function isListingSite(url: string): boolean {
+  try { return LISTING_SITE.test(new URL(url).hostname); } catch { return false; }
+}
+
+function toItems(hits: SerperHit[], country: string): SourceItem[] {
+  return hits
+    .filter((h) => (!h.date || RECENT.test(h.date)) && !isForeignSite(h.link, country) && !isListingSite(h.link))
+    .map((h) => ({ kind: 'news' as const, url: h.link, title: h.title, text: h.snippet || '', date: h.date || null, publisher: h.source || null }));
+}
+
 export async function newsSearch(area: ArchiveArea, lang: Lang): Promise<SourceItem[]> {
-  // The lead place and its city or Kreis: "Oberkassel Düsseldorf", not the edition's full name.
-  // Statistical names lose their suffix for search: "Harborne West" is searched as "Harborne".
-  const lead = searchNames(area)[0].replace(DIRECTIONAL, '');
-  const where = area.city || (area.kreis && area.kreis !== lead ? area.kreis : '');
-  const place = `${lead} ${where}`.trim();
-  // The last week from Google News, kept to the last three days by its own date
-  // ("vor 2 Tagen", "5 hours ago"); a quiet district has no news in 24 hours.
-  const recent = /(minute|hour|stunde|minuten|1 day|2 days|3 days|1 tag|2 tagen|3 tagen|vor einem tag)/i;
-  const hits = (await serper('news', place, lang, 'qdr:w', area.id).catch(() => [] as SerperHit[]))
-    .filter((h) => !h.date || recent.test(h.date));
-  return hits.slice(0, 8).map((h) => ({ kind: 'news' as const, url: h.link, title: h.title, text: h.snippet || '', date: h.date || null, publisher: h.source || null }));
+  // The lead place and its city or council: "Oberkassel Düsseldorf", not the edition's full name.
+  // The last week from Google News, kept to the last three days by its own date ("vor 2 Tagen",
+  // "5 hours ago"); a quiet district has no news in 24 hours.
+  const names = searchNames(area);
+  const where = area.city || area.kreis || '';
+  const query = (name: string) => `${name} ${where && where.toLowerCase() !== name.toLowerCase() ? where : ''}`.trim();
+  let items = toItems(await serper('news', query(names[0]), lang, 'qdr:w', area.id).catch(() => [] as SerperHit[]), area.country);
+  // Nothing for the lead place: the area's next place (Timmerlah had nothing, its neighbour Lamme did).
+  if (items.length === 0 && names[1]) items = toItems(await serper('news', query(names[1]), lang, 'qdr:w', area.id).catch(() => [] as SerperHit[]), area.country);
+  return items.slice(0, 8);
+}
+
+/**
+ * One news search per council or city, shared by all its areas: a "Christchurch" search returns
+ * stories that name Merivale or St Albans, which a search per suburb often misses. Run once per
+ * council per process and cached; each area keeps only the items that name one of its places
+ * (the caller's namesPlace filter). Foreign sites are dropped (isForeignSite), and US boroughs and
+ * counties carry their state ("Manhattan" alone is also a city in Kansas).
+ */
+const councilCache = new Map<string, Promise<SourceItem[]>>();
+
+export function councilQuery(area: ArchiveArea): string | null {
+  const base = (area.city || area.kreis || '').replace(/\s*\([^)]*\)/g, '').replace(/\s+(City|District|Suburbs|Council|Borough|County|Shire|Region|Inner|North|South|East|West)$/i, '').trim();
+  if (base.length < 3) return null;
+  return area.country === 'United States' && area.land ? `${base} ${area.land}` : base;
+}
+
+export async function councilNews(area: ArchiveArea, lang: Lang): Promise<SourceItem[]> {
+  const q = councilQuery(area);
+  if (!q) return [];
+  const key = `${area.country}:${q}`;
+  if (!councilCache.has(key)) {
+    councilCache.set(key, serper('news', q, lang, 'qdr:w', `council:${q}`, 40).then((h) => toItems(h, area.country)).catch(() => []));
+  }
+  return councilCache.get(key)!;
 }
 
 /** Read the article pages of non-social items (robots and TDM honoured), up to `max`. */

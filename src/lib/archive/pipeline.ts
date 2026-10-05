@@ -20,7 +20,7 @@ import { repairJsonStrings } from '@/lib/translation-service';
 import { fetchPage } from '@/lib/source-check';
 import { langFor, serper, type SerperHit } from '@/lib/open-search';
 import {
-  blueskyPosts, councilItems, discoverCouncil, discoverOfficial, mastodonPosts, namesPlace, newsSearch, officialItems, readPages, searchNames,
+  blueskyPosts, councilItems, discoverCouncil, discoverOfficial, councilNews, mastodonPosts, namesPlace, newsSearch, officialItems, readPages, searchNames,
   type ArchiveArea, type AreaSources, type SourceItem,
 } from '@/lib/archive/sources';
 
@@ -131,16 +131,19 @@ export async function writeBrief(admin: SupabaseClient, area: ArchiveArea): Prom
   const src = await areaSources(admin, area).catch(() => ({ council_url: null, council_feed: null, events_url: null }) as AreaSources);
   // Published news: one Serper news search (Google News results with real links).
   // GDELT's free index missed the local papers of small towns in testing.
-  const [news, council, official, bsky, masto] = await Promise.all([
+  const [news, pooled, council, official, bsky, masto] = await Promise.all([
     newsSearch(area, lang).catch(() => []),
+    councilNews(area, lang).catch(() => []),
     councilItems(src).catch(() => []),
     officialItems(src.extra_feeds, names, lang).catch(() => []),
     blueskyPosts(area).catch(() => []),
     mastodonPosts(area).catch(() => []),
   ]);
-  gathered.news = news.length; gathered.council = council.length; gathered.official = official.length; gathered.bluesky = bsky.length; gathered.mastodon = masto.length;
+  // The council-wide search returns stories for every area of the council; keep this area's.
+  const pooledHere = pooled.filter((i) => !news.some((n) => n.url === i.url) && namesPlace(`${i.title} ${i.text}`, names)).slice(0, 5);
+  gathered.news = news.length; gathered.pooled = pooledHere.length; gathered.council = council.length; gathered.official = official.length; gathered.bluesky = bsky.length; gathered.mastodon = masto.length;
 
-  let items: SourceItem[] = [...council, ...official, ...news, ...bsky.slice(0, 5), ...masto.slice(0, 3)];
+  let items: SourceItem[] = [...council, ...official, ...news, ...pooledHere, ...bsky.slice(0, 5), ...masto.slice(0, 3)];
   const seen = new Set<string>();
   items = items.filter((i) => (seen.has(i.url) ? false : (seen.add(i.url), true)));
   items = items.slice(0, MAX_ITEMS);

@@ -60,16 +60,16 @@ export function langFor(country: string | null | undefined): Lang {
 
 export interface SerperHit { title: string; link: string; snippet?: string; date?: string; source?: string }
 
-export async function serper(kind: 'news' | 'search', q: string, lang: Lang, tbs: string | null, label: string): Promise<SerperHit[]> {
+export async function serper(kind: 'news' | 'search', q: string, lang: Lang, tbs: string | null, label: string, num = 10): Promise<SerperHit[]> {
   const key = process.env.SERPER_API_KEY?.trim();
   if (!key) throw new Error('SERPER_API_KEY not set');
   const res = await fetch(`${SERPER_URL}/${kind}`, {
     method: 'POST',
     signal: AbortSignal.timeout(15_000),
     headers: { 'X-API-KEY': key, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ q, gl: lang.gl, hl: lang.hl, num: 10, ...(tbs ? { tbs } : {}) }),
+    body: JSON.stringify({ q, gl: lang.gl, hl: lang.hl, num, ...(tbs ? { tbs } : {}) }),
   });
-  recordAiUsage({ provider: 'serper', model: 'serper', operation: 'open_search', kind: 'search', label, inputTokens: 1, metadata: { kind, q, status: res.status } });
+  recordAiUsage({ provider: 'serper', model: 'serper', operation: 'open_search', kind: 'search', label, inputTokens: num > 10 ? 2 : 1, metadata: { kind, q, num, status: res.status } });
   if (!res.ok) throw new Error(`Serper HTTP ${res.status}`);
   const data = await res.json();
   return ((kind === 'news' ? data.news : data.organic) || []) as SerperHit[];
