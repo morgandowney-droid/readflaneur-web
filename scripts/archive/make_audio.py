@@ -102,7 +102,9 @@ def main():
         voice_name, speaker = choice
         if voice_name not in loaded:
             loaded[voice_name] = PiperVoice.load(os.path.join(voices_dir, f'{voice_name}.onnx'))
-        wav = os.path.join(out_dir, f"{r['area_id']}.wav")
+        # Per-process file names: two runs can overlap (a timer catching up while another works), and
+        # one must never delete the other's file mid-upload (UK, 5 Oct: FileNotFoundError, 15 areas lost).
+        wav = os.path.join(out_dir, f"{r['area_id']}.{os.getpid()}.wav")
         t = time.time()
         with wave.open(wav, 'wb') as w:
             if speaker is None:
@@ -123,8 +125,11 @@ def main():
             patch = urllib.request.Request(f"{base}?id=eq.{r['id']}", data=json.dumps({'audio_url': key}).encode(), method='PATCH',
                                            headers={**auth, 'Content-Type': 'application/json', 'Prefer': 'return=minimal'})
             urllib.request.urlopen(patch, timeout=30)
-            os.remove(wav)
-            os.remove(mp3)
+            for f in (wav, mp3):
+                try:
+                    os.remove(f)
+                except FileNotFoundError:
+                    pass
         print(f"{r['area_id']:<44} {secs:6.1f}s audio in {took:5.1f}s")
     if total_audio:
         print(f'{len(rows)} briefs, {total_audio / 60:.1f} min of audio in {total_time:.0f}s (realtime factor {total_time / total_audio:.2f})')

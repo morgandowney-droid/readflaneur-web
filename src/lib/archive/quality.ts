@@ -107,8 +107,9 @@ function confirmedShare(t: Record<Verdict, number>): number | null {
 // ─── Country scorecard ─────────────────────────────────────────────────────
 
 export async function scorecard(admin: SupabaseClient, country: string, areas: ArchiveArea[], date: string) {
-  const rows = await editions(admin, country, date);
   const byId = new Map(areas.map((a) => [a.id, a]));
+  // Two maps can share a country (NYC and DC are both United States): count only this map's areas.
+  const rows = (await editions(admin, country, date)).filter((e) => byId.has(e.area_id));
   const kinds: Record<string, number> = {};
   const drops: Record<string, number> = {};
   let stories = 0, words = 0, cost = 0, naming = 0, crimeLast = 0;
