@@ -29,7 +29,7 @@ export interface ArchiveArea {
   members: Array<{ name: string; qualified: string; pop: number }>;
 }
 
-export type ItemKind = 'news' | 'council' | 'official' | 'bluesky' | 'mastodon' | 'search';
+export type ItemKind = 'news' | 'council' | 'official' | 'bluesky' | 'mastodon' | 'reddit' | 'search';
 
 export interface SourceItem {
   kind: ItemKind;
@@ -39,6 +39,8 @@ export interface SourceItem {
   text: string;
   date?: string | null;
   publisher?: string | null;
+  /** Set when the item is about this area by where it was posted (a subreddit named after the place). */
+  aboutArea?: boolean;
 }
 
 const UA = 'FlaneurArchive/1.0 (+https://readflaneur.com/standards)';
@@ -437,6 +439,54 @@ export function councilQuery(area: ArchiveArea): string | null {
   return area.country === 'United States' && area.land ? `${base} ${area.land}` : base;
 }
 
+/**
+ * Reddit posts about a council's places from the last three days, found through one Google search
+ * per council (site:reddit.com) and shared by its areas: what residents are talking about in the
+ * suburbs where Google News has little. We read only Google's title and snippet, never Reddit's
+ * pages (no Reddit API until a commercial agreement is in place). These are leads: writeBrief
+ * drops any story whose only sources are Reddit posts.
+ */
+const redditCache = new Map<string, Promise<SourceItem[]>>();
+
+// Local subreddits whose names are not the council's: r/chch is Christchurch, r/AskNYC every borough.
+const LOCAL_SUBREDDITS: Record<string, string[]> = {
+  christchurch: ['chch'], 'manhattan new york': ['nyc', 'asknyc'], 'queens new york': ['nyc', 'asknyc'],
+  'brooklyn new york': ['nyc', 'asknyc'], 'bronx new york': ['nyc', 'asknyc', 'thebronx'], 'staten island new york': ['nyc', 'asknyc'],
+  'washington, dc district of columbia': ['washingtondc', 'dc', 'askdc'], dublin: ['dublin', 'dublinireland'],
+  'south canberra': ['canberra'], 'north canberra': ['canberra'], 'belconnen': ['canberra'], 'tuggeranong': ['canberra'], 'woden valley': ['canberra'],
+  'sydney inner city': ['sydney'], 'melbourne city': ['melbourne'], 'brisbane inner': ['brisbane'],
+};
+
+const squash = (x: string) => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+
+/** The subreddits that speak for this area: the council's, its places', and known local aliases. */
+function localSubreddits(area: ArchiveArea, q: string): Set<string> {
+  const base = q.replace(/\s+(New York|District of Columbia)$/i, '');
+  return new Set([squash(base), ...(LOCAL_SUBREDDITS[q.toLowerCase()] || []), ...searchNames(area).map(squash)].filter((x) => x.length >= 3));
+}
+
+export async function redditTips(area: ArchiveArea, lang: Lang): Promise<SourceItem[]> {
+  const q = councilQuery(area);
+  if (!q) return [];
+  const key = `${area.country}:${q}`;
+  if (!redditCache.has(key)) {
+    redditCache.set(key, serper('search', `site:reddit.com ${q.replace(/\s+District of Columbia$/i, '')}`, lang, 'qdr:w', `reddit:${q}`, 20).then((hits) => hits
+      .filter((h) => /reddit\.com\/r\/[^/]+\/comments\//.test(h.link) && withinDays(h.date, 3))
+      .map((h) => ({
+        kind: 'reddit' as const, url: h.link,
+        title: h.title.replace(/^r\/\w+\s*-\s*/i, '').replace(/\s*:\s*r\/\w+\s*$/i, '').replace(/\s*-\s*Reddit\s*$/i, '').trim(),
+        text: h.snippet || '', date: h.date || null,
+        publisher: `r/${h.link.match(/reddit\.com\/r\/([^/]+)/)?.[1] || 'reddit'}`,
+      }))).catch(() => []));
+  }
+  // Only local subreddits: a council name also appears in r/BikeLA, r/coldcases and job boards.
+  const subs = localSubreddits(area, q);
+  const own = new Set(searchNames(area).map(squash));
+  return (await redditCache.get(key)!)
+    .filter((i) => subs.has(squash((i.publisher || '').slice(2))))
+    .map((i) => ({ ...i, aboutArea: own.has(squash((i.publisher || '').slice(2))) }));
+}
+
 export async function councilNews(area: ArchiveArea, lang: Lang): Promise<SourceItem[]> {
   const q = councilQuery(area);
   if (!q) return [];
@@ -449,7 +499,7 @@ export async function councilNews(area: ArchiveArea, lang: Lang): Promise<Source
 
 /** Read the article pages of non-social items (robots and TDM honoured), up to `max`. */
 export async function readPages(items: SourceItem[], max: number): Promise<SourceItem[]> {
-  const toRead = items.filter((i) => i.kind !== 'bluesky' && i.kind !== 'mastodon').slice(0, max);
+  const toRead = items.filter((i) => i.kind !== 'bluesky' && i.kind !== 'mastodon' && i.kind !== 'reddit').slice(0, max);
   await Promise.all(toRead.map(async (it) => {
     const page = await fetchPage(it.url).catch(() => null);
     if (page?.ok && page.text && page.text.length > 200) it.text = page.text.replace(/\s+/g, ' ').slice(0, 2500);

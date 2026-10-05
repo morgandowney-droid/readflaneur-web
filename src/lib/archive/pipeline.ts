@@ -20,7 +20,7 @@ import { repairJsonStrings } from '@/lib/translation-service';
 import { fetchPage } from '@/lib/source-check';
 import { langFor, serper, type SerperHit } from '@/lib/open-search';
 import {
-  blueskyPosts, councilItems, discoverCouncil, discoverOfficial, councilNews, mastodonPosts, namesPlace, newsSearch, officialItems, readPages, searchNames,
+  blueskyPosts, councilItems, discoverCouncil, discoverOfficial, councilNews, mastodonPosts, namesPlace, newsSearch, officialItems, readPages, redditTips, searchNames,
   type ArchiveArea, type AreaSources, type SourceItem,
 } from '@/lib/archive/sources';
 
@@ -131,25 +131,28 @@ export async function writeBrief(admin: SupabaseClient, area: ArchiveArea): Prom
   const src = await areaSources(admin, area).catch(() => ({ council_url: null, council_feed: null, events_url: null }) as AreaSources);
   // Published news: one Serper news search (Google News results with real links).
   // GDELT's free index missed the local papers of small towns in testing.
-  const [news, pooled, council, official, bsky, masto] = await Promise.all([
+  const [news, pooled, council, official, bsky, masto, reddit] = await Promise.all([
     newsSearch(area, lang).catch(() => []),
     councilNews(area, lang).catch(() => []),
     councilItems(src).catch(() => []),
     officialItems(src.extra_feeds, names, lang).catch(() => []),
     blueskyPosts(area).catch(() => []),
     mastodonPosts(area).catch(() => []),
+    redditTips(area, lang).catch(() => []),
   ]);
   // The council-wide search returns stories for every area of the council; keep this area's.
   const pooledHere = pooled.filter((i) => !news.some((n) => n.url === i.url) && namesPlace(`${i.title} ${i.text}`, names)).slice(0, 5);
   gathered.news = news.length; gathered.pooled = pooledHere.length; gathered.council = council.length; gathered.official = official.length; gathered.bluesky = bsky.length; gathered.mastodon = masto.length;
+  const redditHere = reddit.filter((i) => i.aboutArea || namesPlace(`${i.title} ${i.text}`, names)).slice(0, 3);
+  gathered.reddit = redditHere.length;
 
-  let items: SourceItem[] = [...council, ...official, ...news, ...pooledHere, ...bsky.slice(0, 5), ...masto.slice(0, 3)];
+  let items: SourceItem[] = [...council, ...official, ...news, ...pooledHere, ...bsky.slice(0, 5), ...masto.slice(0, 3), ...redditHere];
   const seen = new Set<string>();
   items = items.filter((i) => (seen.has(i.url) ? false : (seen.add(i.url), true)));
   items = items.slice(0, MAX_ITEMS);
   await readPages(items, 10);
   // Keep what names the area, or comes from the area's own council.
-  items = items.filter((i) => i.kind === 'council' || namesPlace(`${i.title} ${i.text}`, names));
+  items = items.filter((i) => i.kind === 'council' || i.aboutArea || namesPlace(`${i.title} ${i.text}`, names));
   gathered.kept = items.length;
   if (items.length === 0) return { headline: null, body: null, stories: [], sources: [], gathered, costUsd: cost, error: 'nothing local found' };
 
@@ -165,6 +168,7 @@ Use ONLY the numbered sources below. Write up to five stories that are local new
 
 Rules:
 - Every story lists the numbers of the sources it is based on. Never write a URL.
+- Sources marked (reddit) are residents' posts: use one only as a lead, alongside at least one source that is not reddit.
 - Names, dates, places and figures exactly as the sources state them. Nothing from your own knowledge.
 - Skip anything elsewhere, older news, adverts, and general descriptions of the place.
 - Skip standing information: opening hours, services, offers that run all year, page navigation. A story reports something new, dated, or about to happen.
@@ -207,10 +211,12 @@ ${block}`;
   const clean = (s: string) => anglicise(s.replace(/\s*[–—]\s*/g, ', ').replace(/\s+/g, ' ').trim(), variant);
   const placeNames = [...names, area.city || '', area.kreis || ''].filter(Boolean);
   let stories: ArchiveStory[] = [];
-  let droppedNoSource = 0, droppedCrimeName = 0, droppedStale = 0;
+  let droppedNoSource = 0, droppedCrimeName = 0, droppedStale = 0, droppedRedditOnly = 0;
   for (const s of parsed.stories || []) {
     const refs = (s.sources || []).map(Number).filter((n) => Number.isInteger(n) && n >= 1 && n <= items.length);
     if (!s.header || !s.text || refs.length === 0) { droppedNoSource++; continue; }
+    // Reddit posts are leads, never the whole basis of a story.
+    if (refs.every((n) => items[n - 1].kind === 'reddit')) { droppedRedditOnly++; continue; }
     const text = clean(s.text);
     const crime = !!s.crime || CRIME.test(`${s.header} ${text}`);
     if (crime && namesPerson(`${s.header} ${text}`, placeNames)) { droppedCrimeName++; continue; }
@@ -218,7 +224,7 @@ ${block}`;
     stories.push({ header: clean(s.header), text, sources: refs, crime });
   }
   stories = [...stories.filter((s) => !s.crime), ...stories.filter((s) => s.crime)];
-  gathered.dropped_no_source = droppedNoSource; gathered.dropped_crime_name = droppedCrimeName; gathered.dropped_stale = droppedStale;
+  gathered.dropped_no_source = droppedNoSource; gathered.dropped_crime_name = droppedCrimeName; gathered.dropped_stale = droppedStale; gathered.dropped_reddit_only = droppedRedditOnly;
   if (stories.length === 0) gathered.raw = raw.slice(0, 400);
   if (stories.length === 0) return { headline: null, body: null, stories: [], sources: [], gathered, costUsd: cost, error: 'no story survived the checks' };
 
