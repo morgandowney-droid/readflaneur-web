@@ -3,6 +3,35 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-10-05: archive tier, first full nights; names, councils, Reddit, police and fire
+
+**Coverage, 5 Oct briefs** (writing cost about $4.40, plus Serper searches): Germany 2,466 of 3,873 areas, UK 1,640 of 2,835, Ireland 101 of 166, Australia 356 of 1,177, NZ 68 of 267, NYC 45 of 197 and DC 13 of 39 (4 Oct). Audio for every brief (Piper at about a tenth of real time). Look Aheads: Germany 1,535, UK 569, Australia 265, Ireland 52, NZ 26; NYC and DC none until their first weekly event search on 5 Oct.
+
+**Which areas come up empty.** Germany (two full nights): 1,901 areas with a brief both nights, 994 empty both, 978 empty one. Persistent empties lean to city districts (56% against 32% of areas with a brief) at the same population. A hand check of 36 areas empty every night, across all six maps: 18 had recent news that week.
+
+**The naming fault and the fix** (`searchNames()`, `newsSearch()` in `src/lib/archive/sources.ts`):
+- Hyphenated statistical names were searched and matched whole ("Upper West Side-Manhattan Valley", "Flushing-Willets Point", "Pennant Hills - Cheltenham", "Firhouse-bohernabreena"); the hits name one part, so the names-the-area check rejected them. Outside Germany a hyphen now splits a list, unless a part is a connector word (on, upon, under, y, sur, am, an, der, of...) or shorter than three letters, so Carrick-on-Shannon, Pen-y-groes, Tal-y-sarn and Stratford-upon-Avon stay whole. German hyphenated names are one place (Wanne-Eickel, Baden-Baden) and are not split.
+- "X and nearby" / "und Umgebung" no longer yields "nearby" as a place name (it matched almost any text); brackets such as "(ACT)" are dropped; North/East/Central-style suffixes are stripped from every part ("Galway City East" is "Galway City").
+- When the lead place has nothing recent, the area's second place is searched (Timmerlah had nothing, Lamme did).
+- Measured on the 36: recent hits for 18 before, 28 after; a re-run produced briefs for 17.
+
+**New sources:**
+- `councilNews()`: one Serper news search per council or city per run (40 results, recorded as 2 credits), cached in the process; each area keeps items that name one of its places. US boroughs carry their state ("Manhattan New York").
+- `redditTips()`: one Serper web search per council, `site:reddit.com`, last week, kept to three days, post pages only. Only local subreddits survive: the council's own (r/wollongong, r/galway), an area's own (r/jacksonheights, which marks the post `aboutArea`), or an alias in `LOCAL_SUBREDDITS` (r/chch, r/AskNYC, r/washingtondc, r/canberra). The first unfiltered test returned r/BikeLA, r/coldcases and job boards. We read Google's title and snippet only, never Reddit's pages. The writer is told Reddit posts are leads, and code drops a story whose only sources are Reddit (`gathered.dropped_reddit_only`).
+- Police and fire (`discoverOfficial()`, `officialItems()`, column `archive_area_sources.extra_feeds`, migration `20261004150000`): found once per area by search on official hosts only. Germany: the Presseportal station feed (`dienststelle_<id>.rss2`). Elsewhere most services publish no feed and draw their lists by script (the Met returns 403), so a service with no feed gets one shared site search per run, last three days, listing, tag and document pages dropped. Items reach a brief only when they name one of the area's places.
+
+**Guards:** `isForeignSite()` drops a hit on another country's national domain (UK and Ireland one market; generic .com not judged); `isListingSite()` drops property portals in all six countries (Baringa's 5 Oct brief was four realestate.com.au listings and was deleted).
+
+**Quality page:** `comparePair()` returns `production_by_platform` and `production_missed_by_platform`; the page shows the missed stories by platform. First reading (before the UK's first full night): web 58, none 6, Facebook 4, X 1, so most misses were areas with no archive brief at all.
+
+**Fixes:** `make_audio.py` names its temporary files per process and tolerates a file already removed (an overlapping UK run stopped with 15 areas unread, filled by hand); the scorecard counts only its own map's areas (NYC and DC are both United States; DC had reported 60 briefs for 39 areas). `run.mjs --force` redoes a brief that already exists.
+
+**Reddit Data API.** Free tier: 100 requests a minute for non-commercial use, which the archive is not (a for-profit product, pre-revenue or not). Commercial access needs a contract reviewed by hand; the commonly reported rate is $0.24 per 1,000 calls. Requested 5 Oct through the Reddit Help Data Access Request form as an enterprise partner/commercial developer: Yous News, Inc., hello@yous.news, under $500 a month, about 1,200 calls a day, disclosed that briefs are licensed to publishers and AI assistants and that Reddit content is not used for training. Reddit's receipt says not every request gets a reply.
+
+**Tests:** `npx tsx scripts/test-archive-names.mts` (naming, foreign sites, listing sites, council queries).
+
+**Rule:** before adding sources for empty areas, check whether the existing sources already had the news; here half of the persistent empties did, and our own naming threw it away.
+
 ## 2026-09-29: the publisher chooses the audio voice (A to E)
 
 **Context.** Morgan picked Isabella Multilingual for Brera in a blind listen, but he is not a native speaker of Italian, German or French. Native editors should choose. During a publisher's setup, besides defining the area, we send them audio samples for that area; they pick a voice labelled A to E. Model and provider names stay hidden. A is the default and always an Azure voice.

@@ -8,6 +8,15 @@ Catchment rule (CLAUDE.md): 10,000 people is a soft floor, about 25,000 the
 target, no ceiling; small places are grouped, a group never absorbs a larger
 town, and every place name carries a qualifier for search.
 
+How an area is searched (`searchNames()` in `src/lib/archive/sources.ts`):
+the edition name and its members, cleaned for search. Outside Germany a
+hyphen joins a list ("Upper West Side-Manhattan Valley" is two places) unless
+a part is a connector word (Carrick-on-Shannon, Pen-y-groes stay whole);
+German hyphenated names are one place. Brackets, "and nearby" / "und
+Umgebung" and North/East/Central-style suffixes are dropped. `kreis` is the
+council or city used for the one shared news and Reddit search per council
+(`councilQuery()`), so it should be a name people search by.
+
 ## Germany (`de.json`)
 
 - 3,958 editions in 3,873 areas from 10,940 Gemeinden (83.6m people).
