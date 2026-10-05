@@ -119,15 +119,46 @@ export interface BriefResult {
   gathered: Record<string, number | string | null>;
   costUsd: number;
   error?: string;
+  /** The sources the writer was given, so a comparison can give another writer the same ones. */
+  items?: SourceItem[];
 }
 
-export async function writeBrief(admin: SupabaseClient, area: ArchiveArea): Promise<BriefResult> {
+/**
+ * How the brief is written. `plain` is the original archive prompt (short factual summaries);
+ * `local` carries production's voice: a resident who knows the place, specific details from the
+ * sources, three to five sentences a story. `model` and `providers` override the writer.
+ */
+export interface WriteOptions {
+  style?: 'plain' | 'local';
+  model?: string;
+  providers?: { order?: string[]; maxPrice?: { prompt: number; completion: number } };
+  /** Reuse sources gathered earlier (a side-by-side of writers on the same inputs). */
+  items?: SourceItem[];
+  timeoutMs?: number;
+}
+
+function localStyleBlock(area: ArchiveArea, language: string): string {
+  const place = area.name.replace(/ und Umgebung$/, '').replace(/ and nearby$/, '');
+  return `Voice: you have lived in ${place} for years and write its morning news for neighbours. Assume the reader lives here and knows it; never explain what the place is or describe it to outsiders.
+- Lead each story with what happened or is about to happen, then the details a local wants: the street or venue, the date and time, who is behind it, what it costs, what changes for residents. Every detail must come from the sources.
+- Three to five sentences a story, in natural ${language}: varied sentence openings, no list-like repetition, no filler ("it remains to be seen", "time will tell", "a testament to").
+- Headers are short and specific to the story ("Ferry halted by low Rhine", not "Transport news").
+- Polished, never slangy. No questions to the reader. Never describe a day as quiet or slow.`;
+}
+
+export async function writeBrief(admin: SupabaseClient, area: ArchiveArea, opts: WriteOptions = {}): Promise<BriefResult> {
   const loc = localeFor(area.country);
   const lang = langFor(area.country);
   const names = searchNames(area);
   const gathered: BriefResult['gathered'] = {};
   let cost = 0;
+  const writeStyle = opts.style || 'plain';
 
+  let items: SourceItem[];
+  if (opts.items) {
+    items = opts.items;
+    gathered.kept = items.length;
+  } else {
   const src = await areaSources(admin, area).catch(() => ({ council_url: null, council_feed: null, events_url: null }) as AreaSources);
   // Published news: one Serper news search (Google News results with real links).
   // GDELT's free index missed the local papers of small towns in testing.
@@ -146,7 +177,7 @@ export async function writeBrief(admin: SupabaseClient, area: ArchiveArea): Prom
   const redditHere = reddit.filter((i) => i.aboutArea || namesPlace(`${i.title} ${i.text}`, names)).slice(0, 3);
   gathered.reddit = redditHere.length;
 
-  let items: SourceItem[] = [...council, ...official, ...news, ...pooledHere, ...bsky.slice(0, 5), ...masto.slice(0, 3), ...redditHere];
+  items = [...council, ...official, ...news, ...pooledHere, ...bsky.slice(0, 5), ...masto.slice(0, 3), ...redditHere];
   const seen = new Set<string>();
   items = items.filter((i) => (seen.has(i.url) ? false : (seen.add(i.url), true)));
   items = items.slice(0, MAX_ITEMS);
@@ -154,6 +185,7 @@ export async function writeBrief(admin: SupabaseClient, area: ArchiveArea): Prom
   // Keep what names the area, or comes from the area's own council.
   items = items.filter((i) => i.kind === 'council' || i.aboutArea || namesPlace(`${i.title} ${i.text}`, names));
   gathered.kept = items.length;
+  }
   if (items.length === 0) return { headline: null, body: null, stories: [], sources: [], gathered, costUsd: cost, error: 'nothing local found' };
 
   const tz = tzFor(area);
@@ -175,11 +207,11 @@ Rules:
 - Skip weather forecasts and general weather.
 - Skip national and state politics and government business. Skip any story where the place's name stands for something else: "Capitol Hill" meaning the US Congress, a club or company that shares the name.
 - Never name a private person in a story about crime, an accident or a court case.
-- No em dashes or en dashes. Plain, factual ${loc.language}.
+- No em dashes or en dashes. ${writeStyle === 'local' ? localStyleBlock(area, loc.language) : `Plain, factual ${loc.language}.`}
 - If nothing qualifies, return {"stories": []}.
 ${style ? `\n${style}\n` : ''}
 Return JSON only:
-{"headline": "a short ${loc.language} headline for the lead story", "stories": [{"header": "short header", "text": "two to four sentences", "sources": [1, 3], "crime": false}]}
+{"headline": "a short ${loc.language} headline for the lead story", "stories": [{"header": "short header", "text": "${writeStyle === 'local' ? 'three to five sentences' : 'two to four sentences'}", "sources": [1, 3], "crime": false}]}
 
 SOURCES:
 ${block}`;
@@ -191,7 +223,7 @@ ${block}`;
   let lastError = '';
   for (let attempt = 0; attempt < 2 && !parsed; attempt++) {
     try {
-      const r = await openRouterChat({ model: ARCHIVE_MODEL, prompt, operation: 'archive_brief', label: area.id, maxTokens: 3000, temperature: 0.3, json: true, timeoutMs: 150_000, reasoningEffort: 'low', providers: ARCHIVE_PROVIDERS });
+      const r = await openRouterChat({ model: opts.model || ARCHIVE_MODEL, prompt, operation: 'archive_brief', label: area.id, maxTokens: 4000, temperature: writeStyle === 'local' ? 0.5 : 0.3, json: true, timeoutMs: opts.timeoutMs || 150_000, reasoningEffort: 'low', providers: opts.providers || ARCHIVE_PROVIDERS });
       raw = r.text;
       cost += r.costUsd ?? 0;
       if (isModelRefusal(raw)) { lastError = 'model refusal'; continue; }
@@ -238,6 +270,7 @@ ${block}`;
     sources: used.map((n) => ({ n, url: items[n - 1].url, title: items[n - 1].title, kind: items[n - 1].kind, publisher: items[n - 1].publisher || null })),
     gathered,
     costUsd: cost,
+    items,
   };
 }
 
