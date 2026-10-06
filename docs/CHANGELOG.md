@@ -3,6 +3,14 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-10-06: CLAUDE.md split under the 150k-character limit
+
+**Why.** Claude Code warned that CLAUDE.md was over its 150k-character limit (237k); the whole file loads into every session.
+
+**What moved, verbatim.** The 27 older "Recent work" entries (3 Oct back to May) to `docs/history/recent-work.md`; feature reference sections to `docs/features/reader-experience.md` (email capture, PWA, homepage, onboarding, auth, translation, brief gating, Look Ahead, mobile UX, referrals, suggestions, community neighbourhoods, house ads), `docs/features/email-and-ads.md` and `docs/features/syndication-and-partners.md`. CLAUDE.md keeps the three newest entries in full, a one-line index with the rule each older session taught, pointers to the feature files, Key Patterns, Critical Gotchas, structure, env vars, tables and deployment: 238k to 80k characters. A line-by-line comparison found nothing lost.
+
+**Rule.** One short Recent work entry per session in CLAUDE.md, the full write-up here; past three full entries, move the oldest to `docs/history/recent-work.md`.
+
 ## 2026-10-05 (evening): archive writer and voice trial
 
 **Why.** Morgan read and listened to four archive editions and found the Piper audio unappealing and the writing poor. They are not shown to anyone until they improve.
