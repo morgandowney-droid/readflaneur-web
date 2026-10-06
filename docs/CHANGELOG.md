@@ -3,6 +3,22 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-10-05 (evening): archive writer and voice trial
+
+**Why.** Morgan read and listened to four archive editions and found the Piper audio unappealing and the writing poor. They are not shown to anyone until they improve.
+
+**Code.** `writeBrief(admin, area, opts)` in `src/lib/archive/pipeline.ts` takes `WriteOptions`: `style` (`plain`, the default and the nightly prompt; `local`, production's voice via `localStyleBlock()`: a resident's details from the sources only, three to five sentences, specific headers, no filler, temperature 0.5), `model`, `providers` (OpenRouter order and price ceiling), `items` (reuse sources gathered earlier so writers compare on identical inputs), `timeoutMs`. `BriefResult.items` returns the sources given to the writer.
+
+**Writers, 5 Oct, four areas, same sources** (page https://claude.ai/artifact/BaabsbiGFVzLMiz8pQKYde):
+- A DeepSeek V4 Flash, plain: ~$0.0008 a brief, about $2,500 a year at 8,500 areas.
+- B DeepSeek V4 Flash, local: same cost; slightly fuller and accurate, still dry; Upper West Side produced no story that passed the checks.
+- D Gemini 2.5 Flash (OpenRouter), local: ~$0.004 a brief, about $12,500 a year; most fluent, but adds unsupported filler ("offering a compelling narrative for local theater enthusiasts").
+- DeepSeek V4 Pro: dropped. Providers: StreamLake $0.21/$0.42 per M but degraded, the rest $1-4 per M; at $1.04/$2.09 (DigitalOcean) it returned unparseable JSON on two of four areas at ~$0.025 each.
+
+**Voices.** Kokoro v1.0 (`kokoro-onnx`, `~/kokoro/kokoro-v1.0.onnx` + `voices-v1.0.bin` on `archive-1`): af_heart, am_michael, bf_emma, bm_george, bf_isabella; English only (no Irish, no German); 0.40 of real time on the CPX22 against Piper medium's 0.11, so nightly audio for all areas needs about four times the CPU (a 16-core server, ~EUR 60 a month). German: Piper `de_DE-thorsten-high` (in `~/voices`) at 0.34.
+
+**Finding.** No writer change fixes it alone: many stories rest on one search snippet, while production reads whole articles. Next: read the article behind each hit and skip areas with one thin source, then choose writer and voice.
+
 ## 2026-10-05: archive tier, first full nights; names, councils, Reddit, police and fire
 
 **Coverage, 5 Oct briefs** (writing cost about $4.40, plus Serper searches): Germany 2,466 of 3,873 areas, UK 1,640 of 2,835, Ireland 101 of 166, Australia 356 of 1,177, NZ 68 of 267, NYC 45 of 197 and DC 13 of 39 (4 Oct). Audio for every brief (Piper at about a tenth of real time). Look Aheads: Germany 1,535, UK 569, Australia 265, Ireland 52, NZ 26; NYC and DC none until their first weekly event search on 5 Oct.
