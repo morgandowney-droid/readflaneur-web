@@ -18,7 +18,7 @@
  * - Los Angeles: LACMA, The Getty, The Broad
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   LinkCandidate,
   injectHyperlinks,
@@ -410,7 +410,7 @@ export async function generateExhibitionStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   // Determine trigger type
   const triggerInfo = shouldTriggerStory(exhibition);

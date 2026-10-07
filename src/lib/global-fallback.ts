@@ -14,7 +14,7 @@
  * This service runs as a catch-all after all custom services have processed.
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   GLOBAL_CITY_CONFIG,
   getAllInternationalNeighborhoodIds,
@@ -207,7 +207,7 @@ export async function generateDevelopmentWatchStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   const searchQuery = `"${neighborhood.name}" AND ("real estate" OR "development" OR "zoning" OR "opening" OR "new restaurant" OR "new store")`;
 
@@ -306,7 +306,7 @@ export async function generateLifestyleWatchStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   const systemPrompt = `${insiderPersona(`${neighborhood.name}, ${neighborhood.city}`, 'Editor')}
 

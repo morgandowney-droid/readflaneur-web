@@ -14,7 +14,7 @@
  * - Other cities via global adapters
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { FLANEUR_NYC_CONFIG, ALL_TARGET_ZIPS } from '@/config/nyc-locations';
 import {
   LinkCandidate,
@@ -442,7 +442,7 @@ export async function generateRetailStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
   const { permit, brand } = opening;
 
   // Calculate estimated opening (3-4 months from permit)

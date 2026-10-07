@@ -16,7 +16,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { AI_MODELS } from '@/config/ai-models';
 import type { UnsplashPhotosMap } from './unsplash';
 
@@ -284,7 +284,7 @@ async function generateAndCacheImage(
   }
 
   const config = CRON_IMAGE_CATEGORIES[category];
-  const genai = new GoogleGenAI({ apiKey: geminiKey });
+  const genai = createGemini({ apiKey: geminiKey });
 
   try {
     console.log(`Generating cached image for category: ${category}`);

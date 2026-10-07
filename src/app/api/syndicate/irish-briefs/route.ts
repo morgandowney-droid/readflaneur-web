@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { AI_MODELS } from '@/config/ai-models';
 import { insiderPersona } from '@/lib/ai-persona';
 import { recordGeminiCall } from '@/lib/ai-cost';
@@ -369,7 +369,7 @@ Return ONLY valid JSON (no markdown fences):
   "previewText": "First sentence or two for card display."
 }`;
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
     try {

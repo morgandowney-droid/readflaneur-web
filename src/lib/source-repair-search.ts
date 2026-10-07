@@ -9,7 +9,7 @@
  * search simply leaves the stories as they were.
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { AI_MODELS } from '@/config/ai-models';
 import { recordGeminiCall } from '@/lib/ai-cost';
 import { extractGroundingChunks, resolveGroundingChunks } from '@/lib/source-links';
@@ -36,7 +36,7 @@ export function geminiRepairSearch(opts: { place: string; label?: string; apiKey
   return async (requests, signal) => {
     const apiKey = opts.apiKey || process.env.GEMINI_API_KEY;
     if (!apiKey || requests.length === 0) return [];
-    const genAI = new GoogleGenAI({ apiKey });
+    const genAI = createGemini({ apiKey });
     const response = await genAI.models.generateContent({
       model: AI_MODELS.GEMINI_FLASH,
       contents: buildRepairPrompt(requests, opts.place),
@@ -74,7 +74,7 @@ export function geminiSecondSourceSearch(opts: { place: string; label?: string; 
   return async (requests, signal) => {
     const apiKey = opts.apiKey || process.env.GEMINI_API_KEY;
     if (!apiKey || requests.length === 0) return [];
-    const genAI = new GoogleGenAI({ apiKey });
+    const genAI = createGemini({ apiKey });
     const response = await genAI.models.generateContent({
       model: AI_MODELS.GEMINI_FLASH,
       contents: buildSecondSourcePrompt(requests, opts.place),

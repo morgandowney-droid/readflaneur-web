@@ -14,7 +14,7 @@
  * - Applicant: Often Trusts or LLCs hiding billionaire names
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { AI_MODELS } from '@/config/ai-models';
 
 /**
@@ -224,7 +224,7 @@ export async function generateBunkerWatchStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   const isObscured = isObscuredApplicant(decision.applicant);
   const targetNeighborhoods = mapToNeighborhoods(decision.location);

@@ -11,7 +11,7 @@
  * Target neighborhoods: vancouver-west-vancouver, vancouver-point-grey
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   LinkCandidate,
   injectHyperlinks,
@@ -279,7 +279,7 @@ export async function generateViewConeStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   // Extract street name from address
   const streetMatch = permit.address.match(/\d+\s+(.+)/);

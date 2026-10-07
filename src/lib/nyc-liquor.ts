@@ -11,7 +11,7 @@
  * Filtered to NYC zip codes within Flâneur coverage areas.
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   ALL_TARGET_ZIPS,
   getNeighborhoodKeyFromZip,
@@ -296,7 +296,7 @@ export async function generateLiquorStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   const statusText = event.isPending
     ? 'has filed a new liquor license application'

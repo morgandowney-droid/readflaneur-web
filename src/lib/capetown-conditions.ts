@@ -11,7 +11,7 @@
  * Target neighborhoods: capetown-atlantic-seaboard, capetown-constantia
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   LinkCandidate,
   injectHyperlinks,
@@ -239,7 +239,7 @@ export async function generateCalmAlertStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   const perfectDay = conditions.isPerfectBeachDay
     ? 'This is a PERFECT beach day - calm winds on a weekend!'
@@ -335,7 +335,7 @@ export async function generateGridWatchStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   const severity =
     status.stage >= 6 ? 'critical' : status.stage >= 4 ? 'warning' : 'info';

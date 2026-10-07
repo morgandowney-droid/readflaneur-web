@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { AI_MODELS } from '@/config/ai-models';
 import { recordGeminiCall, recordAiUsage } from '@/lib/ai-cost';
 import { parseSectionLabel, buildTranslatedHeadline } from '@/lib/section-labels';
@@ -357,7 +357,7 @@ async function callGeminiWithRetry<T>(
   label?: string,
   model: string = AI_MODELS.GEMINI_FLASH,
 ): Promise<T | null> {
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = createGemini({ apiKey });
 
   for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
     try {

@@ -15,7 +15,7 @@
  * Art Basel Hong Kong, Art Basel Paris
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   ArtFair,
   FairState,
@@ -79,7 +79,7 @@ export async function generateFairStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   // Format dates
   const startStr = dates.start.toLocaleDateString('en-US', {

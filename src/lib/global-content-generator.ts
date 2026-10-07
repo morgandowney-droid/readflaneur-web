@@ -5,7 +5,7 @@
  * Injects city-specific vocabulary, cultural context, and editorial tone.
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   GLOBAL_CITY_CONFIG,
   CITY_VOCABULARIES,
@@ -137,7 +137,7 @@ export async function generateGlobalStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
   const cityContext = buildCityContext(input.city, vocabulary);
 
   // Build data section
@@ -263,7 +263,7 @@ export async function generateGlobalWeeklyDigest(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
   const cityContext = buildCityContext(city, vocabulary);
 
   // Build comprehensive data section

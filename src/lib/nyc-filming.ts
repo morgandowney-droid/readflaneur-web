@@ -11,7 +11,7 @@
  * - Generates insider-tone stories via Gemini
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   FLANEUR_NYC_CONFIG,
   ALL_TARGET_ZIPS,
@@ -357,7 +357,7 @@ export async function generateFilmingStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   // Format the shoot date
   const shootDate = new Date(event.startDate);

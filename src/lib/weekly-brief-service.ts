@@ -11,6 +11,7 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getNeighborhoodIdsForQuery } from './combo-utils';
 import { getSearchLocation } from './neighborhood-utils';
@@ -116,7 +117,7 @@ export async function generateWeeklyBrief(
 
   if (!geminiKey) throw new Error('GEMINI_API_KEY not configured');
 
-  const genAI = new GoogleGenAI({ apiKey: geminiKey });
+  const genAI = createGemini({ apiKey: geminiKey });
 
   // Model routing: `model` (Pro by default) is reserved for editorialSynthesis
   // ("The Letter") - the only section where Pro's prose quality is worth the cost.

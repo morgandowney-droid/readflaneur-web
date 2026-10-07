@@ -13,7 +13,7 @@
  * - Residential: Round to "100 Block" (e.g., "100 Block of Perry St")
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { FLANEUR_NYC_CONFIG, ALL_TARGET_ZIPS } from '@/config/nyc-locations';
 import {
   LinkCandidate,
@@ -486,7 +486,7 @@ export async function generateNuisanceStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
   const categoryConfig = COMPLAINT_CATEGORIES[cluster.category];
 
   // Calculate actual date range (7 days ending yesterday - today's data isn't complete)
@@ -632,7 +632,7 @@ export async function generateNuisanceRoundup(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   const totalComplaints = clusters.reduce((sum, c) => sum + c.count, 0);
   const hotspotCount = clusters.length;

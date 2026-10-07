@@ -14,7 +14,7 @@
  * - Generates breezy, social stories via Gemini
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   FLANEUR_NYC_CONFIG,
   ALL_TARGET_ZIPS,
@@ -356,7 +356,7 @@ export async function generateAlfrescoStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   // Get current season for contextual content
   const season = getCurrentSeason();

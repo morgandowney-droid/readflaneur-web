@@ -9,6 +9,7 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { AI_MODELS } from '@/config/ai-models';
 import { recordGeminiCall } from '@/lib/ai-cost';
 import type { StructuredEvent } from './look-ahead-events';
@@ -41,7 +42,7 @@ export async function searchNeighborhoodFacts(
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
   const tz = timezone || 'America/New_York';
   const now = new Date();
   const localDateStr = now.toLocaleDateString('en-US', {
@@ -155,7 +156,7 @@ export async function searchUpcomingEvents(
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
   const tz = timezone || 'America/New_York';
 
   // Compute date range: target date + 7 days

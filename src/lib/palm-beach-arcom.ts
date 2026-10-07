@@ -12,7 +12,7 @@
  * Target neighborhoods: palm-beach-island
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   LinkCandidate,
   injectHyperlinks,
@@ -380,7 +380,7 @@ export async function generateARCOMAlert(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   // Build contention context
   const contentionContext =

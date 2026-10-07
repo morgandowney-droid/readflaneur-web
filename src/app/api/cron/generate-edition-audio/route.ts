@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import type { Edition } from '@/lib/licensee-feed';
 import { AUDIO_EDITION_IDS, audioLanguageFor, azureConfigured, generateEditionAudio, type AudioResult } from '@/lib/edition-audio';
 
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
     if (!azureConfigured()) throw new Error('AZURE_SPEECH_KEY / AZURE_SPEECH_REGION not set');
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) throw new Error('GEMINI_API_KEY not set');
-    const genAI = new GoogleGenAI({ apiKey });
+    const genAI = createGemini({ apiKey });
 
     const asOf = new Date(Date.now() + LOOKAHEAD_MS);
     const results: Array<AudioResult & { local_date?: string; language?: string }> = await Promise.all(

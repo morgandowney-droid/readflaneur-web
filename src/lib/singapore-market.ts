@@ -15,7 +15,7 @@
  * - GCB: URA (Urban Redevelopment Authority) Private Residential Transactions
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   LinkCandidate,
   injectHyperlinks,
@@ -401,7 +401,7 @@ export async function generateMotorWatchAlert(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   const dropAmount = Math.abs(coeResult.change).toLocaleString();
   const premium = coeResult.premium.toLocaleString();
@@ -491,7 +491,7 @@ export async function generateGCBAlert(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   const priceMillions = (transaction.price / 1000000).toFixed(1);
   const psfFormatted = transaction.pricePerSqFt.toLocaleString();

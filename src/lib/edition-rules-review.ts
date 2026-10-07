@@ -16,7 +16,7 @@
  * name a person; the rest keep, because every other rule has already been
  * applied deterministically.
  */
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { AI_MODELS } from '@/config/ai-models';
 import { recordGeminiCall } from '@/lib/ai-cost';
 import type { GroundingChunk } from '@/lib/source-links';
@@ -103,7 +103,7 @@ export async function reviewStoriesWithModel(args: {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = createGemini({ apiKey });
     const result = await ai.models.generateContent({
       model: AI_MODELS.GEMINI_FLASH,
       contents: [{ role: 'user', parts: [{ text: buildReviewPrompt(args.place, args.country, args.stories, args.sourceMaterial, args.chunks, args.today) }] }],

@@ -18,7 +18,7 @@
  * - Hub-to-vacation feed syndication
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   GlobalAuctionEvent,
   ART_HUBS,
@@ -992,7 +992,7 @@ export async function generateNationalChampionStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   // Format date
   const auctionDate = new Date(event.date);
@@ -1113,7 +1113,7 @@ export async function generateVacationMappedStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
   const { sourceEvent, vacationMapping } = vacationEvent;
 
   // Format date

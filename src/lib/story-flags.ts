@@ -18,7 +18,7 @@
  * The flags sit alongside the editions. They do not hold or change anything
  * that publishes.
  */
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { AI_MODELS } from '@/config/ai-models';
 import { recordGeminiCall } from '@/lib/ai-cost';
 // The fixed rules live in sensitive-story-rules.ts so the edition-rules filter
@@ -155,7 +155,7 @@ export async function classifyBriefStories(
 
   let entries: ModelEntry[];
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = createGemini({ apiKey });
     const result = await ai.models.generateContent({
       model: AI_MODELS.GEMINI_FLASH,
       contents: [{ role: 'user', parts: [{ text: buildPrompt(place, country, stories) }] }],

@@ -11,7 +11,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import Anthropic from '@anthropic-ai/sdk';
 import { AI_MODELS } from '@/config/ai-models';
 import { recordClaudeCall } from '@/lib/ai-cost';
@@ -82,7 +82,7 @@ async function callGemini(prompt: string): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
   const response = await genAI.models.generateContent({
     model: AI_MODELS.GEMINI_PRO,
     contents: prompt,

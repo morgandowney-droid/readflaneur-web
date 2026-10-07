@@ -12,7 +12,7 @@
  * - Trigger C: Tree removal mentions in job descriptions
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   ALL_TARGET_ZIPS,
   getNeighborhoodKeyFromZip,
@@ -340,7 +340,7 @@ export async function generateHeritageStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   // Build context based on event type
   let toneGuidance: string;

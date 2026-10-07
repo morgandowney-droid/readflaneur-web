@@ -10,7 +10,7 @@
  */
 
 import { grokEventSearch } from './grok';
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { AI_MODELS } from '@/config/ai-models';
 import { insiderPersona } from '@/lib/ai-persona';
 import {
@@ -124,7 +124,7 @@ export async function generateBlotterStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   const incidentList = incidents
     .map(

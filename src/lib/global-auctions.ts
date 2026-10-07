@@ -18,7 +18,7 @@
  * - Hub-to-Spoke distribution
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   AuctionEvent,
   AuctionHouse,
@@ -424,7 +424,7 @@ export async function generateGlobalAuctionStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
   const hubConfig = ART_HUBS[event.hub];
 
   // Format the auction date

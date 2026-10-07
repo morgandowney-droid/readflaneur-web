@@ -5,7 +5,7 @@
  * Injects editorial tone and contextual instructions per neighborhood.
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   FLANEUR_NYC_CONFIG,
   NEIGHBORHOOD_CONTEXT,
@@ -127,7 +127,7 @@ export async function generateNYCStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
   const tone = getNeighborhoodTone(input.neighborhoodKey);
   const contextualInstruction = getContextualInstructions(input.neighborhoodKey);
 
@@ -262,7 +262,7 @@ export async function generateWeeklyDigest(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
   const tone = getNeighborhoodTone(neighborhoodKey);
   const contextualInstruction = getContextualInstructions(neighborhoodKey);
 

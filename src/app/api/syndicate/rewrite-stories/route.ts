@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { AI_MODELS } from '@/config/ai-models';
 import { insiderPersona } from '@/lib/ai-persona';
 import { recordGeminiCall } from '@/lib/ai-cost';
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
 
   // Cap at 20 stories per request
   const batch = stories.slice(0, 20);
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   const results: RewrittenStory[] = [];
   const errors: { headline: string; error: string }[] = [];

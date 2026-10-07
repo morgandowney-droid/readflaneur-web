@@ -13,7 +13,7 @@
  * - Tier classification (Mega vs Standard)
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   LinkCandidate,
   injectHyperlinks,
@@ -368,7 +368,7 @@ export async function generateAuctionStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   // Format the auction date
   const auctionDate = new Date(event.date);

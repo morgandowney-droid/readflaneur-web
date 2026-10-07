@@ -15,7 +15,7 @@
  * - London: V&A → Shoreditch → Chelsea Harbour
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   LinkCandidate,
   injectHyperlinks,
@@ -469,7 +469,7 @@ export async function generateDesignStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   // Build state-specific guidance
   let stateGuidance: string;

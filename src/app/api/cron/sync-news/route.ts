@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { fetchCityFeeds, RSSItem } from '@/lib/rss-sources';
 import { generateGrokNewsStories, isGrokConfigured } from '@/lib/grok';
 import { AI_MODELS } from '@/config/ai-models';
@@ -132,7 +132,7 @@ export async function GET(request: Request) {
     });
   }
 
-  const genAI = new GoogleGenAI({ apiKey: geminiApiKey });
+  const genAI = createGemini({ apiKey: geminiApiKey });
   const results = {
     cities_processed: 0,
     articles_fetched: 0,

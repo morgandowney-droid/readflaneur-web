@@ -17,7 +17,7 @@
  * - Sydney: Sydney Opera House (Opera Australia)
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   LinkCandidate,
   injectHyperlinks,
@@ -386,7 +386,7 @@ export async function generateOvertureStory(
     return null;
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
 
   // Format date
   const performanceDateStr = performance.date.toLocaleDateString('en-US', {

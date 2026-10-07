@@ -12,7 +12,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import {
   fetchYousNewsStories,
   fetchRecentBulletins,
@@ -80,7 +80,7 @@ export async function GET(request: Request) {
       fetchRecentBulletins(3),
     ]);
 
-    const genAI = new GoogleGenAI({ apiKey });
+    const genAI = createGemini({ apiKey });
 
     bulletin = await generateBulletinScript(
       genAI,

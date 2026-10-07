@@ -4,7 +4,7 @@
  * Generates family-focused content for specific age bands in a neighborhood.
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { grokEventSearch } from '@/lib/grok';
 import { insiderPersona } from '@/lib/ai-persona';
 import { AgeBand, AGE_BAND_DEFS, getBandContentFocus } from './age-bands';
@@ -92,7 +92,7 @@ HEADLINE: [your headline]
 BODY: [your organized paragraphs]`;
 
   try {
-    const genAI = new GoogleGenAI({ apiKey });
+    const genAI = createGemini({ apiKey });
     const response = await genAI.models.generateContent({
       model: AI_MODELS.GEMINI_FLASH,
       contents: prompt,

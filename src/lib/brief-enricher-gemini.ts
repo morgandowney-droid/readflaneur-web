@@ -5,7 +5,7 @@
  * Better at finding local-language sources (Swedish, etc.)
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { isModelRefusal } from '@/lib/model-refusal';
 import {
   LinkCandidate,
@@ -435,7 +435,7 @@ export async function enrichBriefWithGemini(
     throw new Error('GEMINI_API_KEY not configured');
   }
 
-  const genAI = new GoogleGenAI({ apiKey });
+  const genAI = createGemini({ apiKey });
   const blockedDomains = BLOCKED_DOMAINS[neighborhoodSlug.toLowerCase()] || [];
   // Publisher rules (edition-rules.ts). Null for every edition without a group,
   // and then nothing below changes.

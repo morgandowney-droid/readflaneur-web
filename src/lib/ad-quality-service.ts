@@ -6,7 +6,7 @@
  * B. Polish ad copy to match Flaneur's editorial voice
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 interface ImageAnalysis {
@@ -42,7 +42,7 @@ export async function analyzeAdImage(imageUrl: string): Promise<ImageAnalysis | 
     const buffer = await response.arrayBuffer();
     const base64 = Buffer.from(buffer).toString('base64');
 
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = createGemini({ apiKey });
 
     const result = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -107,7 +107,7 @@ export async function polishAdCopy(
   if (!inputText.trim()) return null;
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = createGemini({ apiKey });
 
     const result = await ai.models.generateContent({
       model: 'gemini-2.5-flash',

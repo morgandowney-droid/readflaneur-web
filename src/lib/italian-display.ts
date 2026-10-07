@@ -5,7 +5,7 @@
  * left English event names, weekdays and 12-hour times inside Italian pages.
  * These turn a stored event into what an Italian local paper would print.
  */
-import { GoogleGenAI } from '@google/genai';
+import { createGemini } from '@/lib/gemini-client';
 import { AI_MODELS } from '@/config/ai-models';
 import { recordGeminiCall } from '@/lib/ai-cost';
 
@@ -61,7 +61,7 @@ export async function translateEventNames(names: string[], operation = 'italian_
   const missing = Array.from(new Set(names.filter((n) => n && !nameCache.has(n))));
   if (missing.length && apiKey) {
     try {
-      const ai = new GoogleGenAI({ apiKey });
+      const ai = createGemini({ apiKey });
       const prompt = [
         'Translate these event names from a local events listing into natural Italian, as an Italian local paper would print them.',
         'Keep unchanged: proper names, titles of plays, operas, films, songs, books and exhibitions, venue names, organisation and brand names, and anything already in Italian.',
