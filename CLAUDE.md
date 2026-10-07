@@ -235,6 +235,7 @@ Recent work (2026-10-04): **The archive tier: a private, low-cost edition for ev
 - **Provider docs:** [Anthropic](https://docs.anthropic.com/en/docs/about-claude/models), [Gemini](https://ai.google.dev/gemini-api/docs/models), [xAI/Grok](https://docs.x.ai/developers/models)
 - **Current models:** Claude Sonnet 4.5, Gemini 2.5 Flash (enrichment fallback/translation), Gemini 2.5 Pro (enrichment primary + Sunday Edition, 1K RPD budget), Grok 4.1 Fast. Image library now uses Unsplash API (no AI image generation).
 - **Import pattern:** `import { AI_MODELS } from '@/config/ai-models'` then use `AI_MODELS.GEMINI_FLASH` etc.
+- **Gemini clients:** always `createGemini({ apiKey })` from `src/lib/gemini-client.ts`, never `new GoogleGenAI()`. It passes Gemini 2.x configs through unchanged and rewrites Gemini 3+ to `thinkingLevel` with no temperature/topP/topK (Google: upcoming models return 400 on those). Budget 0 maps to LOW because 3.8 Flash rejects MINIMAL.
 - **Flash thinking disabled:** All Flash calls must include `thinkingConfig: { thinkingBudget: 0 }` to avoid hidden thinking tokens billed at $2.50/M. New SDK (`@google/genai`): add to `config` object. Old SDK (`@google/generative-ai`): use `gemini-2.0-flash` model instead (doesn't support thinkingConfig). Pro keeps thinking enabled for daily brief enrichment quality.
 - **Cron metadata:** DB `ai_model` fields use short names (`'gemini-2.5-flash'`, `'claude-sonnet-4-5'`) not full version IDs
 
