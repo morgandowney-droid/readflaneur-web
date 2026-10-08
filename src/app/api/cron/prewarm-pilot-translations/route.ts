@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { PILOT_LANGUAGES } from '@/lib/generation-cadence';
+import { PILOT_LANGUAGES, SWISS_GERMAN_EDITION_IDS, toSwissSpelling } from '@/lib/generation-cadence';
 import { translateArticle, translateBrief, type LanguageCode } from '@/lib/translation-service';
 
 /**
@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
     const pilots = Object.entries(PILOT_LANGUAGES).filter(([id]) => !only || id === only);
 
     for (const [neighborhoodId, lang] of pilots) {
+      const swiss = <T extends string | null | undefined>(x: T): T => (lang === 'de' && SWISS_GERMAN_EDITION_IDS.has(neighborhoodId) ? toSwissSpelling(x) : x);
       if (Date.now() - startTime > 240_000) { results.errors.push('time budget reached'); break; }
 
       // Articles: today's brief + Look Ahead (and anything else recent)
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
         const t = await translateArticle(a.headline, a.body_text || '', a.preview_text, lang as LanguageCode, 'gemini');
         if (!t) { results.failed++; results.errors.push(`article ${a.id}`); continue; }
         const { error } = await admin.from('article_translations').upsert(
-          { article_id: a.id, language_code: lang, headline: t.headline, body: t.body, preview_text: t.preview_text, translated_at: new Date().toISOString() },
+          { article_id: a.id, language_code: lang, headline: swiss(t.headline), body: swiss(t.body), preview_text: swiss(t.preview_text), translated_at: new Date().toISOString() },
           { onConflict: 'article_id,language_code' },
         );
         if (error) { results.failed++; results.errors.push(`article ${a.id}: ${error.message}`); } else results.articles_translated++;
@@ -88,7 +89,7 @@ export async function GET(request: NextRequest) {
         const t = await translateBrief(b.content || '', b.enriched_content, lang as LanguageCode, 'gemini');
         if (!t) { results.failed++; results.errors.push(`brief ${b.id}`); continue; }
         const { error } = await admin.from('brief_translations').upsert(
-          { brief_id: b.id, language_code: lang, content: t.content, enriched_content: t.enriched_content, translated_at: new Date().toISOString() },
+          { brief_id: b.id, language_code: lang, content: swiss(t.content), enriched_content: swiss(t.enriched_content), translated_at: new Date().toISOString() },
           { onConflict: 'brief_id,language_code' },
         );
         if (error) { results.failed++; results.errors.push(`brief ${b.id}: ${error.message}`); } else results.briefs_translated++;

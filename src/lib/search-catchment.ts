@@ -67,6 +67,11 @@ const SEARCH_CATCHMENTS: Readonly<Record<string, readonly string[]>> = {
   'nrw-neuss': ['Neuss (Rhein-Kreis Neuss, Nordrhein-Westfalen)', 'Fleher Brücke', 'Josef-Kardinal-Frings-Brücke (Neuss Düsseldorf)', 'Rheinbrücke Neuss Düsseldorf'],
   // Duesseldorf Stadtbezirk 4 (Axel Springer, 2026-10-02): the left-bank
   // district bordering Neuss, about 42,000 people, and the bridges into the city.
+  // Waedenswil, canton of Zurich (Tamedia, 2026-10-08): the Gemeinde, about
+  // 25,000 people, with Au, its lakeside village inside the municipality.
+  // Always with the Bezirk and canton. Stops short of Horgen and Richterswil,
+  // which are municipalities of their own, and of the city of Zurich.
+  'zurich-waedenswil': ['Wädenswil (Bezirk Horgen, Kanton Zürich)', 'Au ZH (Wädenswil)', 'Stadt Wädenswil'],
   'duesseldorf-oberkassel': ['Düsseldorf-Oberkassel', 'Düsseldorf-Heerdt', 'Düsseldorf-Lörick', 'Düsseldorf-Niederkassel', 'Oberkasseler Brücke (Düsseldorf)', 'Rheinkniebrücke (Düsseldorf)'],
   // Clerkenwell, London (AP, 2026-09-30). Exmouth Market, Farringdon and
   // Finsbury are the same patch; stops short of the City, Angel and King's Cross.
@@ -226,6 +231,8 @@ export const DISTRICT_SCOPED_EDITION_IDS: ReadonlySet<string> = new Set([
   'provence-gordes',
   // Axel Springer, 2 Oct: a city district keeps the city's listings out.
   'duesseldorf-oberkassel',
+  // Tamedia, 8 Oct: Waedenswil must not fill with Zurich city listings.
+  'zurich-waedenswil',
   // GEDI, 25 Sep: Mirja saw Scicli's edition drift to Ragusa, Modica and
   // towns across Sicily. The fence keeps its Look Ahead inside the comune.
   'sicily-scicli',

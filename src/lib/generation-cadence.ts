@@ -184,6 +184,11 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   'oslo-frogner',
   'oslo-grunerløkka',
   'stockholm-sodermalm',
+  // Tamedia (2026-10-08): Nadia Kohler, Director AI&Data, named Waedenswil in
+  // the canton of Zurich for a call on 8 Dec with Christian Zellweger, who
+  // built Tamedia's own municipality product. About 25,000 people. Promised a
+  // daily edition running until then so they can compare it with their own.
+  'zurich-waedenswil',
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */
@@ -228,7 +233,20 @@ export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' 
   'oslo-frogner': 'nb',
   'oslo-grunerløkka': 'nb',
   'stockholm-sodermalm': 'sv',
+  // Tamedia (2026-10-08), Swiss Standard German: see SWISS_GERMAN_EDITION_IDS.
+  'zurich-waedenswil': 'de',
 };
+
+/**
+ * Editions read in Switzerland. Swiss Standard German has no ß ("Strasse",
+ * "gross"), and a German translation that writes "Straße" reads as written in
+ * Germany. The translation is made in standard German and spelled Swiss here.
+ */
+export const SWISS_GERMAN_EDITION_IDS: ReadonlySet<string> = new Set(['zurich-waedenswil']);
+
+export function toSwissSpelling<T extends string | null | undefined>(text: T): T {
+  return (typeof text === 'string' ? text.replace(/ß/g, 'ss') : text) as T;
+}
 
 export function isPilotNeighborhood(neighborhoodId: string): boolean {
   return PILOT_NEIGHBORHOOD_IDS.has(neighborhoodId);
