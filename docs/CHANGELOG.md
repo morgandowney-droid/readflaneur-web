@@ -3,6 +3,20 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-10-08: Gemini settings per model (`createGemini()`)
+
+**Why.** Google AI Studio emailed on 7 Oct 2026: upcoming Gemini models will return 400 INVALID_ARGUMENT for `thinking_budget` (Gemini 3 models currently remap it to a level) and for `temperature`, `top_p` and `top_k` (ignored since Gemini 3.6 Flash). Production runs Gemini 2.5 Flash and Pro, so nothing was failing; the flagged requests came from the daily shadow writer trial (`shadow-model-trial?stage=writer`) on `gemini-3.8-flash`, which went through `enrichBriefWithGemini()` with `temperature: 0.6` and `thinkingBudget: 0`.
+
+**Trap avoided.** A blanket switch to `thinkingLevel` would have broken cost control: 2.5 models do not take `thinkingLevel`, and `thinkingBudget: 0` is what stops billed thinking on 2.5 Flash (the hidden $1,835 a month found earlier).
+
+**Code.** `src/lib/gemini-client.ts`: `createGemini(opts)` builds a `GoogleGenAI` and wraps `models.generateContent` and `models.generateContentStream` with `geminiParams()`. For a model id whose Gemini major version is 3 or more (`usesThinkingLevel()`), it drops `temperature`, `topP`, `topK` and turns `thinkingBudget` into `thinkingLevel` (up to 1024 LOW, up to 8192 MEDIUM, above HIGH, -1 omitted so the model default applies); an explicit `thinkingLevel` wins. Anything else passes through unchanged. Every `new GoogleGenAI()` in `src` (49 sites in 39 files) now calls `createGemini()`; the same file and swap in yous-news (12 sites, including two dynamic imports on the podcast pages).
+
+**Tested live, 7 Oct.** Through the wrapper, `gemini-2.5-flash` and `gemini-3.8-flash` both answered with 0 thought tokens. `gemini-3.8-flash` accepts LOW, MEDIUM and HIGH and rejects MINIMAL ("Thinking level MINIMAL is not supported for this model"), although Google's notice lists it; so budget 0 maps to LOW. `gemini-3.1-pro` is not a valid id on v1beta (404), so `ai-cost.ts` pricing for it is unused.
+
+**Not changed.** Old-SDK (`@google/generative-ai`) callers on `gemini-2.0-flash` (archive-hunter, escape-index, fashion-week, gala-watch, nimby-alert, political-wallet, residency-radar, review-watch, route-alert, sample-sale): outside the notice, but they need moving before 2.0 retires. The archive's OpenRouter calls set `temperature` through OpenRouter, not the Gemini API. Google's new Interactions API is optional; `generateContent` stays supported.
+
+**Rule.** The client, not each call site, decides which generation settings a model gets; a model upgrade is a change to `src/config/ai-models.ts` only.
+
 ## 2026-10-06: CLAUDE.md split under the 150k-character limit
 
 **Why.** Claude Code warned that CLAUDE.md was over its 150k-character limit (237k); the whole file loads into every session.
