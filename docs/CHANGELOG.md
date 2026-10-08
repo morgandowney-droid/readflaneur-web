@@ -3,6 +3,16 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-10-08: same-country namesakes (`dropFarCitySections()`)
+
+**Why.** The 8 Oct Delicias, Zaragoza brief ran an exhibition "at Espacio Delicias in Madrid": Madrid has its own barrio called Delicias. The search prompt already set the boundary, and `isVenueAbroad()` only rejects other countries. Found while preparing the AMI call; the page was not shown.
+
+**Code.** `src/lib/place-boundary.ts`: `MAJOR_CITIES` (about 70 cities with coordinates across Spain, Germany, Italy, France, UK, Ireland, Australia, New Zealand), `venueInFarCity(text, editionCity)` (matches "at <venue> in <city>" for a table city more than 60 km from the edition's city), `dropFarCitySections(text, editionCity)` (drops each [[section]] that matches, never the greeting, keeps a short sign-off when the dropped section was the last), `keepSignOff()`. An edition whose city is not in the table is never touched, so a Kildare edition can still send readers to Dublin. Wired into `enrichBriefWithGemini()` after the teaser strip, also filtering the same stories out of `enriched_categories`; `diagnostics.farCitySectionsDropped` records it. Tests: `npx tsx scripts/test-far-city.mts`.
+
+**Data.** The 8 Oct Delicias brief, its brief article and both Spanish translations had the section removed (sign-off kept); its espaciodelicias.com row in `article_sources`, its entry in the brief's `sources` and its story in `enriched_categories` deleted.
+
+**Rule.** A boundary check per country needs one per city beside it: namesakes repeat inside a country too.
+
 ## 2026-10-08: Gemini settings per model (`createGemini()`)
 
 **Why.** Google AI Studio emailed on 7 Oct 2026: upcoming Gemini models will return 400 INVALID_ARGUMENT for `thinking_budget` (Gemini 3 models currently remap it to a level) and for `temperature`, `top_p` and `top_k` (ignored since Gemini 3.6 Flash). Production runs Gemini 2.5 Flash and Pro, so nothing was failing; the flagged requests came from the daily shadow writer trial (`shadow-model-trial?stage=writer`) on `gemini-3.8-flash`, which went through `enrichBriefWithGemini()` with `temperature: 0.6` and `thinkingBudget: 0`.

@@ -7,6 +7,7 @@
 
 import { createGemini } from '@/lib/gemini-client';
 import { isModelRefusal } from '@/lib/model-refusal';
+import { dropFarCitySections, venueInFarCity } from '@/lib/place-boundary';
 import {
   LinkCandidate,
   injectHyperlinks,
@@ -105,6 +106,8 @@ export interface EnrichmentDiagnostics {
   thinkingPreambleStripped: boolean;
   /** stripLeakedTeasers changed the text: a teaser leaked into the prose. */
   teaserLeakStripped: boolean;
+  /** Sections dropped because their venue was in a far city of the same country. */
+  farCitySectionsDropped?: string[];
   /** A ```json block was present. */
   jsonFound: boolean;
   /** The ```json block was present but did not parse. */
@@ -1130,6 +1133,19 @@ ${prompt}`,
     if (text !== beforeTeaserStrip) {
       diagnostics.teaserLeakStripped = true;
       console.warn(`Stripped leaked teaser prose for ${neighborhoodName}`);
+    }
+
+    // A namesake in another city of the same country (Delicias, Zaragoza ran
+    // "Espacio Delicias in Madrid"). The prompt states the boundary; this enforces it.
+    const farCity = dropFarCitySections(text, city);
+    if (farCity.dropped.length > 0) {
+      text = farCity.text;
+      // The story list renders too: drop the same stories from it.
+      enrichedData.categories = enrichedData.categories
+        .map((c) => ({ ...c, stories: (c.stories || []).filter((s) => !venueInFarCity(`${s.entity || ''}. ${s.context || ''}`, city)) }))
+        .filter((c) => c.stories.length > 0);
+      diagnostics.farCitySectionsDropped = farCity.dropped;
+      console.warn(`Dropped ${farCity.dropped.length} section(s) set in ${farCity.dropped.join(', ')} for ${neighborhoodName}, ${city}`);
     }
 
     text = sanitizeMarkdownLinks(text);

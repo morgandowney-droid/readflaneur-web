@@ -129,3 +129,161 @@ GEOGRAPHIC BOUNDARY - THIS IS A REJECTION TEST, NOT A PREFERENCE.
     isUS ? '' : `\n- A US state name or two-letter state code in an address (", Michigan", ", NH 03581") means the wrong country. DROP IT.`
   }`;
 }
+
+/**
+ * Keep an edition inside its own city.
+ *
+ * isVenueAbroad() catches a namesake in another country. A namesake can also
+ * sit in another city of the same country: Zaragoza's Delicias edition of
+ * 8 Oct 2026 ran an exhibition "at Espacio Delicias in Madrid", because Madrid
+ * has its own barrio called Delicias. The prompt already said every item must
+ * be in Delicias, Zaragoza; the model framed it as worth the trip.
+ *
+ * The test is narrow on purpose: a venue placed in a named city ("at X in
+ * Madrid") more than OUT_OF_AREA_KM from the edition's own city. Only cities in
+ * this table count, and an edition whose city is not in it is never touched,
+ * so a Kildare edition can still send readers to Dublin.
+ */
+const OUT_OF_AREA_KM = 60;
+const MAJOR_CITIES: Array<{ names: string[]; lat: number; lng: number }> = [
+  // Spain
+  { names: ['Madrid'], lat: 40.4168, lng: -3.7038 },
+  { names: ['Barcelona'], lat: 41.3874, lng: 2.1686 },
+  { names: ['Valencia', 'València'], lat: 39.4699, lng: -0.3763 },
+  { names: ['Seville', 'Sevilla'], lat: 37.3891, lng: -5.9845 },
+  { names: ['Zaragoza'], lat: 41.6488, lng: -0.8891 },
+  { names: ['Málaga', 'Malaga'], lat: 36.7213, lng: -4.4214 },
+  { names: ['Bilbao'], lat: 43.263, lng: -2.935 },
+  { names: ['Murcia'], lat: 37.9922, lng: -1.1307 },
+  { names: ['Palma'], lat: 39.5696, lng: 2.6502 },
+  { names: ['Alicante'], lat: 38.3452, lng: -0.481 },
+  { names: ['Córdoba', 'Cordoba'], lat: 37.8882, lng: -4.7794 },
+  { names: ['Valladolid'], lat: 41.6523, lng: -4.7245 },
+  { names: ['Granada'], lat: 37.1773, lng: -3.5986 },
+  { names: ['Pamplona'], lat: 42.8125, lng: -1.6458 },
+  { names: ['San Sebastián', 'San Sebastian', 'Donostia'], lat: 43.3183, lng: -1.9812 },
+  // Germany
+  { names: ['Berlin'], lat: 52.52, lng: 13.405 },
+  { names: ['Hamburg'], lat: 53.5511, lng: 9.9937 },
+  { names: ['Munich', 'München'], lat: 48.1351, lng: 11.582 },
+  { names: ['Cologne', 'Köln'], lat: 50.9375, lng: 6.9603 },
+  { names: ['Frankfurt'], lat: 50.1109, lng: 8.6821 },
+  { names: ['Stuttgart'], lat: 48.7758, lng: 9.1829 },
+  { names: ['Düsseldorf', 'Dusseldorf'], lat: 51.2277, lng: 6.7735 },
+  { names: ['Leipzig'], lat: 51.3397, lng: 12.3731 },
+  { names: ['Dresden'], lat: 51.0504, lng: 13.7373 },
+  { names: ['Hanover', 'Hannover'], lat: 52.3759, lng: 9.732 },
+  { names: ['Nuremberg', 'Nürnberg'], lat: 49.4521, lng: 11.0767 },
+  { names: ['Bremen'], lat: 53.0793, lng: 8.8017 },
+  // Italy
+  { names: ['Rome', 'Roma'], lat: 41.9028, lng: 12.4964 },
+  { names: ['Milan', 'Milano'], lat: 45.4642, lng: 9.19 },
+  { names: ['Naples', 'Napoli'], lat: 40.8518, lng: 14.2681 },
+  { names: ['Turin', 'Torino'], lat: 45.0703, lng: 7.6869 },
+  { names: ['Palermo'], lat: 38.1157, lng: 13.3615 },
+  { names: ['Genoa', 'Genova'], lat: 44.4056, lng: 8.9463 },
+  { names: ['Bologna'], lat: 44.4949, lng: 11.3426 },
+  { names: ['Florence', 'Firenze'], lat: 43.7696, lng: 11.2558 },
+  { names: ['Venice', 'Venezia'], lat: 45.4408, lng: 12.3155 },
+  // France
+  { names: ['Paris'], lat: 48.8566, lng: 2.3522 },
+  { names: ['Marseille'], lat: 43.2965, lng: 5.3698 },
+  { names: ['Lyon'], lat: 45.764, lng: 4.8357 },
+  { names: ['Toulouse'], lat: 43.6047, lng: 1.4442 },
+  { names: ['Nice'], lat: 43.7102, lng: 7.262 },
+  { names: ['Bordeaux'], lat: 44.8378, lng: -0.5792 },
+  { names: ['Lille'], lat: 50.6292, lng: 3.0573 },
+  { names: ['Strasbourg'], lat: 48.5734, lng: 7.7521 },
+  // UK and Ireland
+  { names: ['London'], lat: 51.5072, lng: -0.1276 },
+  { names: ['Birmingham'], lat: 52.4862, lng: -1.8904 },
+  { names: ['Manchester'], lat: 53.4808, lng: -2.2426 },
+  { names: ['Glasgow'], lat: 55.8642, lng: -4.2518 },
+  { names: ['Edinburgh'], lat: 55.9533, lng: -3.1883 },
+  { names: ['Liverpool'], lat: 53.4084, lng: -2.9916 },
+  { names: ['Leeds'], lat: 53.8008, lng: -1.5491 },
+  { names: ['Bristol'], lat: 51.4545, lng: -2.5879 },
+  { names: ['Cardiff'], lat: 51.4816, lng: -3.1791 },
+  { names: ['Belfast'], lat: 54.5973, lng: -5.9301 },
+  { names: ['Dublin'], lat: 53.3498, lng: -6.2603 },
+  { names: ['Cork'], lat: 51.8985, lng: -8.4756 },
+  { names: ['Limerick'], lat: 52.6638, lng: -8.6267 },
+  { names: ['Galway'], lat: 53.2707, lng: -9.0568 },
+  // Australia and New Zealand
+  { names: ['Sydney'], lat: -33.8688, lng: 151.2093 },
+  { names: ['Melbourne'], lat: -37.8136, lng: 144.9631 },
+  { names: ['Brisbane'], lat: -27.4698, lng: 153.0251 },
+  { names: ['Perth'], lat: -31.9523, lng: 115.8613 },
+  { names: ['Adelaide'], lat: -34.9285, lng: 138.6007 },
+  { names: ['Auckland'], lat: -36.8485, lng: 174.7633 },
+  { names: ['Wellington'], lat: -41.2865, lng: 174.7762 },
+  { names: ['Christchurch'], lat: -43.5321, lng: 172.6362 },
+  { names: ['Queenstown'], lat: -45.0312, lng: 168.6626 },
+];
+
+function findCity(name: string | null | undefined) {
+  const n = (name || '').trim().toLowerCase();
+  if (!n) return null;
+  return MAJOR_CITIES.find((c) => c.names.some((x) => x.toLowerCase() === n)) || null;
+}
+
+function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const rad = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * rad;
+  const dLng = (b.lng - a.lng) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(h));
+}
+
+/** Cities far from the edition's own city, as one alternation; null when the edition's city is not in the table. */
+function farCitiesPattern(editionCity: string | null | undefined): string | null {
+  const home = findCity(editionCity);
+  if (!home) return null;
+  const names = MAJOR_CITIES
+    .filter((c) => distanceKm(home, c) > OUT_OF_AREA_KM)
+    .flatMap((c) => c.names)
+    .map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return names.length ? names.join('|') : null;
+}
+
+/** The far city a passage places a venue in ("at Espacio Delicias in Madrid"), or null. */
+export function venueInFarCity(text: string, editionCity: string | null | undefined): string | null {
+  const far = farCitiesPattern(editionCity);
+  if (!far || !text) return null;
+  const m = text.match(new RegExp(`\\bat\\s+[^.;:!?\\n]{1,80}?\\s+in\\s+(${far})\\b`, 'i'));
+  return m ? m[1] : null;
+}
+
+/**
+ * Drop each [[section]] whose story is set at a venue in a far city. Text before
+ * the first header (the greeting) is never touched. Returns the cities removed.
+ */
+export function dropFarCitySections(
+  text: string,
+  editionCity: string | null | undefined,
+): { text: string; dropped: string[] } {
+  if (!text || !text.includes('[[') || !farCitiesPattern(editionCity)) return { text, dropped: [] };
+  const parts = text.split(/(?=^[ \t]*\[\[[^\]\n]+\]\][ \t]*$)/m);
+  const dropped: string[] = [];
+  const kept: string[] = [];
+  parts.forEach((part, i) => {
+    if (i === 0 && !/^\s*\[\[/.test(part)) { kept.push(part); return; }
+    const city = venueInFarCity(part, editionCity);
+    if (!city) { kept.push(part); return; }
+    dropped.push(city);
+    // The last section also carries the sign-off ("Hasta luego."): keep it.
+    if (i === parts.length - 1) {
+      const signOff = keepSignOff(part);
+      if (signOff) kept.push(`\n${signOff}\n`);
+    }
+  });
+  return { text: dropped.length ? kept.join('').replace(/\n{3,}/g, '\n\n') : text, dropped };
+}
+
+/** A short closing paragraph at the end of a section, or null. */
+export function keepSignOff(section: string): string | null {
+  const paras = section.trim().split(/\n{2,}/);
+  if (paras.length < 2) return null; // the header and its story only
+  const last = paras[paras.length - 1].trim();
+  return last.length <= 80 && !/\[\[/.test(last) && !/\bat\s.+\sin\s/i.test(last) ? last : null;
+}
