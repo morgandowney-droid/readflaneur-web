@@ -3,6 +3,20 @@
 > Full changelog moved here from CLAUDE.md to reduce context overhead.
 > Only read this file when you need to understand how a specific feature was built.
 
+## 2026-10-12: UTC event times, working notes, planning preambles, empty event listings
+
+**Why.** Before the LMA call (Shreveport) the live editions showed: a Christmas parade and a ticketed event at "11:00 PM" (6 PM CDT is 23:00 UTC); a sentence about "the eight local restaurants mentioned in the prompt"; a [[header]] holding a markdown link (fixed by hand, no code change yet). A week-wide sweep then found Le Marais 10 Oct with a full research summary and newsletter plan above the brief, Digbeth 11 Oct with "I couldn't find specific opening hours", and River North with a meeting "from 5:30 am to 7:30 pm". Separately, no Look Ahead since 30 Sep had an event listing.
+
+**Code.** `src/lib/event-times.ts`: `utcOffsetHours()` (Intl shortOffset, DST-aware), `checksLateTimes()` (offset <= -4), `clearSuspectEventTimes()` for listing events, `stripSuspectTimes()` for prose (sentence by sentence; removes ", starting at 11 PM" / "from 11:00 PM to 1:00 AM"; a bare "1:30" takes the meridiem of its range and is otherwise ambiguous; exempt: nightlife words and incidents such as shootings, arrests, crashes). `src/lib/working-notes.ts`: `hasWorkingNotes()`, `stripWorkingNotes()` (references to the prompt, provided sources, search results, first-person could-not-verify; leading While/Although clause removed and the main clause kept; a header whose section is emptied goes too; link targets ignored). Both run in `enrichBriefWithGemini()` after `stripLeakedTeasers()` and on story contexts; `generate-look-ahead` clears listing times before `formatEventListing()`. Prompts: event JSON `time` is local to the timezone, never a copied UTC timestamp; enrichment prompt gets TIMES and NEVER MENTION YOUR INPUTS lines. `stripThinkingPreamble()`: markers for summary of findings, plan for the newsletter, teaser (subject/email), action: drop/include, json: populate; a daily brief now restarts at the last greeting and keeps the intro paragraph (the old code kept only the greeting line). `look-ahead-events.ts`: date regex fixed (`\d`).
+
+**Measured.** Dry run over 1,788 briefs and Look Aheads (6-12 Oct): working notes 2 (both real), times 3 after tuning (first pass 7, with false positives on a 2:09 a.m. shooting, an LA horror night and "1:30-3:30 PM"), planning preamble 1.
+
+**Data.** 9 rows corrected in `neighborhood_briefs` and `articles` (backup `backfill-backup-2026-10-12.json` in the session scratchpad); the two French Le Marais translations deleted to regenerate.
+
+**Not done.** A markdown link inside a [[section header]] still renders as raw brackets.
+
+**Rule.** A page can hold two times for one event; tell the model which one, and check where a wrong one shows.
+
 ## 2026-10-08: same-country namesakes (`dropFarCitySections()`)
 
 **Why.** The 8 Oct Delicias, Zaragoza brief ran an exhibition "at Espacio Delicias in Madrid": Madrid has its own barrio called Delicias. The search prompt already set the boundary, and `isVenueAbroad()` only rejects other countries. Found while preparing the AMI call; the page was not shown.

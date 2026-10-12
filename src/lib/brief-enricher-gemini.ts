@@ -8,6 +8,8 @@
 import { createGemini } from '@/lib/gemini-client';
 import { isModelRefusal } from '@/lib/model-refusal';
 import { dropFarCitySections, venueInFarCity } from '@/lib/place-boundary';
+import { stripWorkingNotes } from '@/lib/working-notes';
+import { stripSuspectTimes } from '@/lib/event-times';
 import {
   LinkCandidate,
   injectHyperlinks,
@@ -108,6 +110,10 @@ export interface EnrichmentDiagnostics {
   teaserLeakStripped: boolean;
   /** Sections dropped because their venue was in a far city of the same country. */
   farCitySectionsDropped?: string[];
+  /** Sentences (or leading clauses) removed for talking about the writer's inputs. */
+  workingNotesStripped?: string[];
+  /** Late-night time phrases removed as likely UTC (editions west of UTC-4). */
+  suspectTimesStripped?: string[];
   /** A ```json block was present. */
   jsonFound: boolean;
   /** The ```json block was present but did not parse. */
@@ -339,6 +345,12 @@ export function stripThinkingPreamble(
     /i am ready to write/i,
     /here'?s (?:my|the) plan/i,
     /here is (?:my|the) plan/i,
+    // Le Marais, 10 Oct 2026: a research summary and a plan published above the brief.
+    /summary of findings/i,
+    /plan for the (?:newsletter|brief|article|edition|update)/i,
+    /\bteaser \((?:subject|email)\)/i,
+    /\baction: (?:drop|include|skip|keep)\b/i,
+    /\bjson: populate\b/i,
   ];
 
   // Find the last position any marker matches, and count distinct markers.
@@ -374,10 +386,14 @@ export function stripThinkingPreamble(
     const gap = text.slice(lastMarkerEnd, contentStart);
     const greetingRe = /(?:^|[.!?\n])\s*((?:good\s+morning|morning|god\s+morg[eo]n|bonjour|buongiorno|guten\s+morgen|buenos\s+d[ií]as|bom\s+dia|goedemorgen|maidin\s+mhaith|dia\s+(?:duit|dhaoibh)|hej|hola|ol[áa]|ciao|salut|moin)\b[^\n]*?[.!?])/gi;
     let gm: RegExpExecArray | null;
-    let lastGreeting: string | null = null;
-    while ((gm = greetingRe.exec(gap)) !== null) lastGreeting = gm[1].trim();
-    if (lastGreeting) {
-      return (lastGreeting + '\n\n' + text.slice(contentStart)).trim();
+    let lastGreetingAt = -1;
+    while ((gm = greetingRe.exec(gap)) !== null) lastGreetingAt = gm.index + gm[0].indexOf(gm[1]);
+    if (lastGreetingAt !== -1) {
+      // Start at the greeting and keep the intro paragraph between it and the
+      // first header. A greeting glued to the plan ("...stories.Bonjour,
+      // voisins.") gets its own paragraph.
+      const fromGreeting = text.slice(lastMarkerEnd + lastGreetingAt).trim();
+      return fromGreeting.replace(/^([^\n]*?[.!?])[ \t]*(?=\S)/, '$1\n\n').trim();
     }
   }
 
@@ -569,6 +585,8 @@ export async function enrichBriefWithGemini(
 
 CRITICAL CONTEXT - CURRENT TIME: It is currently ${contextTimeStr} in ${neighborhoodName}. The LOCAL date today is ${dateStr}. When you refer to "today", "tomorrow", "this week", etc., use this timestamp as your reference point. This is when readers will see your update.
 DATE CORRECTION: The source material below may reference dates/days from when data was collected (which could be a different calendar day in a different timezone). You MUST correct ALL date references to match the LOCAL date above. If the source says "Friday" but the local date is a Saturday, write "Saturday". If the source says "February 20" but the local date is February 21, write "February 21". The local date is always authoritative.
+TIMES: every clock time you write is local time in ${timezone}. If a time in the source material looks like a UTC timestamp (an evening event at 11 PM or later, or a time marked "Z" or "UTC"), leave the time out rather than guess.
+NEVER MENTION YOUR INPUTS: never refer to the prompt, your instructions, the sources or information you were given, or what you could or could not verify. If a detail is unconfirmed, leave it out and write only what is known.
 
 IMPORTANT: Your response will be published directly to readers in a local newsletter for ${neighborhoodName}. You are NOT responding to the person who submitted this query - you are writing content for third-party readers who live in ${neighborhoodName}.${britishBlock}`;
 
@@ -1133,6 +1151,32 @@ ${prompt}`,
     if (text !== beforeTeaserStrip) {
       diagnostics.teaserLeakStripped = true;
       console.warn(`Stripped leaked teaser prose for ${neighborhoodName}`);
+    }
+
+    // The writer talking to us about its inputs mid-sentence (Shreveport, 12 Oct:
+    // "the eight local restaurants mentioned in the prompt couldn't be
+    // independently verified"). Not a refusal, so isModelRefusal misses it.
+    const notes = stripWorkingNotes(text);
+    if (notes.removed.length > 0) {
+      text = notes.text;
+      diagnostics.workingNotesStripped = notes.removed;
+      console.warn(`Stripped ${notes.removed.length} working-note sentence(s) for ${neighborhoodName}: ${notes.removed.join(' | ')}`);
+    }
+
+    // Event times copied from a UTC timestamp (Shreveport: a 6 PM parade as
+    // "11:00 PM"). Only checked west of UTC-4, where the shift is visible.
+    const times = stripSuspectTimes(text, timezone);
+    if (times.removed.length > 0) {
+      text = times.text;
+      diagnostics.suspectTimesStripped = times.removed;
+      console.warn(`Removed ${times.removed.length} late-night time(s) likely in UTC for ${neighborhoodName}: ${times.removed.join(' | ')}`);
+    }
+
+    // The story list renders too, so it gets the same two checks.
+    for (const category of enrichedData.categories) {
+      for (const story of category.stories) {
+        if (story.context) story.context = stripSuspectTimes(stripWorkingNotes(story.context).text, timezone).text;
+      }
     }
 
     // A namesake in another city of the same country (Delicias, Zaragoza ran

@@ -527,7 +527,7 @@ EVENTS_JSON:
 [A JSON array of structured event objects. Each object has these fields:
   - "date": YYYY-MM-DD (required)
   - "day_label": weekday name, e.g. "Saturday" (required)
-  - "time": time string like "10:00", "12:00-15:00", "10:00, 14:00, 16:00", or null if unknown
+  - "time": LOCAL start time at the venue (${timezone || 'America/New_York'}), like "10:00", "12:00-15:00", "10:00, 14:00, 16:00", or null if unknown. Use the time printed on the page. Never copy a machine timestamp in UTC (ending "Z" or "+00:00") as the local time: convert it, or use null.
   - "name": event name (required)
   - "category": type like "Art Exhibition", "Concert", "Food Festival", or null
   - "location": venue name or null

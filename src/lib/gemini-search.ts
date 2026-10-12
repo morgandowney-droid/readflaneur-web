@@ -198,6 +198,8 @@ GALLERY/MUSEUM FILTER: Only include a gallery or museum if there is a specific T
 
 For each event found, provide: the specific date (YYYY-MM-DD), day of week, time if available, event name, category, venue name, address, and price if listed.
 
+TIMES: every time is the LOCAL time at the venue (${tz}). Use the time printed on the page. Listing pages often carry a hidden timestamp in UTC (ending "Z" or "+00:00"); never copy it as the local time. Convert it, or leave the time out.
+
 IMPORTANT: Only include events with confirmed dates within the ${fromStr} to ${toStr} window. Skip anything without a specific date.${geographicBoundaryBlock(neighborhoodName, city, country)}${editionRulesBlock(rulesForEdition(editionId))}
 
 After listing all events, output a JSON array in this exact format:

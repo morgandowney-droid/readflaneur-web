@@ -11,6 +11,7 @@ import { getNeighborhoodSlugFromId } from '@/lib/neighborhood-utils';
 import { selectLibraryImage, getLibraryReadyIds, preloadUnsplashCache } from '@/lib/image-library';
 import { formatEventListing, dropRepeatedDayMentions, dropFencedOutMentions } from '@/lib/look-ahead-events';
 import { isVenueAbroad } from '@/lib/place-boundary';
+import { clearSuspectEventTimes } from '@/lib/event-times';
 import { filterEventsToDistrict } from '@/lib/district-geofence';
 import { searchUpcomingEvents, mergeContent, mergeStructuredEvents } from '@/lib/gemini-search';
 import { toHeadlineCase } from '@/lib/utils';
@@ -528,10 +529,16 @@ export async function GET(request: Request) {
           // match it) over the lossier upstream Grok/Gemini-search extraction,
           // and merge in any upstream events the enrichment missed.
           // mergeStructuredEvents dedups by name.
-          const mergedListing = mergeStructuredEvents(
+          const merged = mergeStructuredEvents(
             enriched.structuredEvents || [],
             lookAheadBrief.structuredEvents || []
           );
+          // A start time copied from a UTC timestamp (a 6 PM Shreveport parade
+          // listed at 23:00) loses its time; the event stays.
+          const { events: mergedListing, cleared: timesCleared } = clearSuspectEventTimes(merged, tz);
+          if (timesCleared.length > 0) {
+            console.warn(`[generate-look-ahead] Cleared ${timesCleared.length} late-night time(s) likely in UTC for ${name}: ${timesCleared.join(', ')}`);
+          }
 
           // Drop anything whose venue is in another country. The prompts ask for
           // this and do not reliably deliver it: a Birmingham edition published
