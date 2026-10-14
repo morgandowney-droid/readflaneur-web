@@ -62,7 +62,7 @@ export function ShowroomCard() {
     <div
       role="dialog"
       aria-label="About this site"
-      className="fixed inset-x-4 bottom-4 z-[60] rounded-lg border border-border-strong bg-surface p-4 shadow-2xl sm:inset-x-auto sm:left-6 sm:bottom-6 sm:max-w-sm"
+      className="fixed inset-x-4 bottom-4 z-[60] rounded-lg border border-border-strong bg-surface p-4 shadow-2xl sm:inset-x-auto sm:left-6 sm:bottom-6 sm:max-w-md"
     >
       <button
         type="button"
@@ -72,19 +72,32 @@ export function ShowroomCard() {
       >
         &times;
       </button>
-      <p className="pr-6 text-sm font-semibold text-fg">This is a working showroom.</p>
+      <p className="pr-6 text-sm font-semibold text-fg">yous.news is a hyperlocal news product.</p>
       <p className="mt-1 text-sm leading-snug text-fg-muted">
-        yous.news is a local news engine licensed to publishers. Every edition here is produced by it, every morning.
+        This website is a working showroom of the content. Every edition here is produced by yous.news, a local news
+        engine we license to publishers. Each morning by about 6am local time, a community of 10,000 to 25,000 people
+        (defined by the publisher) anywhere globally gets three pieces: a daily brief, a look-ahead diary for the next
+        seven days, and a two-minute audio bulletin. Publishers license it neighborhood by neighborhood, priced per neighborhood per
+        month, and run it exclusively under their own masthead.
       </p>
-      <a
-        href="https://yous.news/publishers"
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+        <a
+          href="https://yous.news/publishers"
         target="_blank"
         rel="noopener"
-        onClick={dismiss}
-        className="mt-3 inline-block text-sm font-semibold text-accent underline underline-offset-4 hover:no-underline"
-      >
-        What we license &rarr;
-      </a>
+          onClick={dismiss}
+          className="text-sm font-semibold text-accent underline underline-offset-4 hover:no-underline"
+        >
+          I&apos;m a publisher &rarr;
+        </a>
+        <button
+          type="button"
+          onClick={dismiss}
+          className="text-sm text-fg-muted underline decoration-dotted underline-offset-4 hover:text-fg"
+        >
+          Just reading
+        </button>
+      </div>
     </div>
   );
 }
