@@ -77,7 +77,7 @@ export function ShowroomCard() {
         This website is a working showroom of the content. Every edition here is produced by yous.news, a local news
         engine we license to publishers. Each morning by about 6am local time, a community of 10,000 to 25,000 people
         (defined by the publisher) anywhere globally gets three pieces: a daily brief, a look-ahead diary for the next
-        seven days, and a two-minute audio bulletin. Publishers license it neighborhood by neighborhood, priced per neighborhood per
+        seven days, and a two-minute audio bulletin. Publishers define their neighborhoods, license yous.news neighborhood by neighborhood, priced per neighborhood per
         month, and run it exclusively under their own masthead.
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
