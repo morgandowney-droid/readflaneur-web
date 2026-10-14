@@ -16,7 +16,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { currentUsageTap } from '@/lib/ai-usage-tap';
 
-export type AiProvider = 'gemini' | 'grok' | 'claude' | 'openai' | 'qwen' | 'meta' | 'azure' | 'elevenlabs' | 'deepseek' | 'openrouter' | 'serper';
+export type AiProvider = 'gemini' | 'grok' | 'claude' | 'openai' | 'qwen' | 'meta' | 'azure' | 'elevenlabs' | 'fish' | 'deepseek' | 'openrouter' | 'serper';
 export type AiKind = 'search' | 'generation';
 
 interface ModelPrice {
@@ -61,6 +61,10 @@ const MODEL_PRICING: Record<string, ModelPrice> = {
   // until 12 Oct 2026; we record the list price so estimates do not drop and
   // then jump.)
   eleven_v4: { inputPerM: 80.0, outputPerM: 0, cachedInputPerM: 80.0 },
+  // Fish Audio Drama 3 (edition-audio.ts). Per UTF-8 byte: record bytes as
+  // inputTokens. List $50 per 1M (launch price $10 until 12 Nov 2026; we
+  // record the list price, as for Eleven v4).
+  'drama-3': { inputPerM: 50.0, outputPerM: 0, cachedInputPerM: 50.0 },
   // DeepSeek via OpenRouter (shadow trial of the open-weight route, open-search.ts).
   // OpenRouter prices, 2026-10-03. OpenRouter also returns its billed cost, which
   // the usage tap prefers.

@@ -75,7 +75,19 @@ export interface EditionVoice {
   lang: string;
   /** Speaking rate for <prosody>. */
   rate: string;
+  /**
+   * Fish Audio Drama 3 voice id and a performance direction. When set, Fish
+   * reads the edition and the Azure voice above is the fallback.
+   */
+  fish?: { voice: string; direction: string };
 }
+
+/** Fish Audio stock voices (named in Fish's Drama 3 docs; not library clones of real people). */
+const FISH_ADRIAN = 'bf322df2096a46f18c579d0baa36f41d'; // US English, male
+const FISH_DELIA = 'c70cfb98867a4bfb9ae20d2401257b92'; // US English, female
+/** The direction that won the 14 Oct listen. Speech-to-text confirmed it is not spoken. */
+const FISH_NEWSREADER =
+  '[warm, relaxed local radio newsreader talking to neighbours, natural conversational pace, calm and steady, not dramatic]';
 
 /**
  * One standard it-IT neural voice per edition (Azure lists 16 standard it-IT
@@ -93,8 +105,11 @@ export const EDITION_VOICES: Record<string, EditionVoice> = {
   'rome-prati': { voice: 'it-IT-MarcelloMultilingualNeural', lang: 'it-IT', rate: '+4%' },
   'sicily-scicli': { voice: 'it-IT-GiuseppeMultilingualNeural', lang: 'it-IT', rate: '+2%' },
   // United States, in English (30 Sep 2026, for the AP towns). One US voice per edition.
-  'newjersey-warren': { voice: 'en-US-AvaMultilingualNeural', lang: 'en-US', rate: '+0%' },
-  'louisiana-shreveport': { voice: 'en-US-AndrewMultilingualNeural', lang: 'en-US', rate: '+0%' },
+  // Fish Drama 3 since 14 Oct: on the same scripts Morgan judged Fish with the
+  // newsreader direction "substantially better" and Azure "like a robot in
+  // comparison". Azure stays as the fallback.
+  'newjersey-warren': { voice: 'en-US-AvaMultilingualNeural', lang: 'en-US', rate: '+0%', fish: { voice: FISH_DELIA, direction: FISH_NEWSREADER } },
+  'louisiana-shreveport': { voice: 'en-US-AndrewMultilingualNeural', lang: 'en-US', rate: '+0%', fish: { voice: FISH_ADRIAN, direction: FISH_NEWSREADER } },
   // AP's London and French towns, in British English for an English-reading desk.
   'london-clerkenwell': { voice: 'en-GB-OllieMultilingualNeural', lang: 'en-GB', rate: '+0%' },
   'provence-gordes': { voice: 'en-GB-AdaMultilingualNeural', lang: 'en-GB', rate: '+0%' },
@@ -700,10 +715,68 @@ export async function synthesizeElevenLabs(
   return { audio: r.audio, characters: text.length, cost_usd: cost };
 }
 
+export function fishConfigured(): boolean {
+  return Boolean(process.env.FISH_AUDIO_API_KEY?.trim());
+}
+
+export const FISH_MODEL = 'drama-3';
+export const FISH_BITRATE_BPS = 128_000;
+
+/**
+ * One Fish Audio Drama 3 call, recorded in ai_usage_events. Throws on failure.
+ * The model header must be exactly 'drama-3': a missing or misspelt header
+ * does not fail, it silently falls back to s2.1-pro.
+ */
+export async function synthesizeFish(
+  script: string,
+  voiceId: string,
+  direction: string,
+  operation = 'edition_audio_tts',
+): Promise<{ audio: Buffer; characters: number; cost_usd: number }> {
+  const key = process.env.FISH_AUDIO_API_KEY?.trim();
+  if (!key) throw new Error('FISH_AUDIO_API_KEY not set');
+  const text = `${direction ? `${direction} ` : ''}${elevenLabsText(script)}`;
+  const bytes = Buffer.byteLength(text, 'utf8');
+  let audio: Buffer | null = null;
+  let status = 0;
+  let error: string | null = null;
+  try {
+    const res = await fetch('https://api.fish.audio/v1/tts', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', model: FISH_MODEL },
+      body: JSON.stringify({ text, reference_id: voiceId, format: 'mp3' }),
+      signal: AbortSignal.timeout(120_000),
+    });
+    status = res.status;
+    if (!res.ok) {
+      error = `Fish TTS ${res.status}: ${(await res.text().catch(() => '')).slice(0, 300)}`;
+    } else {
+      audio = Buffer.from(await res.arrayBuffer());
+      if (!audio.length) {
+        audio = null;
+        error = 'Fish TTS returned no audio';
+      }
+    }
+  } catch (e) {
+    error = `Fish TTS: ${e instanceof Error ? e.message : String(e)}`;
+  }
+  recordAiUsage({
+    provider: 'fish',
+    model: FISH_MODEL,
+    operation,
+    kind: 'generation',
+    inputTokens: bytes,
+    metadata: { voice: voiceId, ok: Boolean(audio), status },
+  });
+  if (!audio) throw new Error(error || 'Fish TTS returned no audio');
+  const cost = estimateCost({ provider: 'fish', model: FISH_MODEL, inputTokens: bytes, outputTokens: 0 });
+  return { audio, characters: bytes, cost_usd: cost };
+}
+
 export interface VoiceSynthesis {
   audio: Buffer;
   characters: number;
-  provider: 'azure' | 'elevenlabs';
+  provider: 'azure' | 'elevenlabs' | 'fish';
   voice: string;
   model: string;
   bitrateBps: number;
@@ -714,11 +787,23 @@ export interface VoiceSynthesis {
 }
 
 /**
- * Read the script with the resolved voice. An ElevenLabs failure falls back
- * to the edition's Azure voice so the edition still gets audio.
+ * Read the script with the resolved voice. An ElevenLabs or Fish failure
+ * falls back to the edition's Azure voice so the edition still gets audio.
  */
 export async function synthesizeVoice(script: string, resolved: ResolvedVoice, fallback: EditionVoice): Promise<VoiceSynthesis> {
   let fallbackReason: string | null = null;
+  if (resolved.provider === 'fish') {
+    try {
+      const r = await synthesizeFish(script, resolved.voice, resolved.direction || '');
+      return {
+        audio: r.audio, characters: r.characters, provider: 'fish', voice: resolved.voice, model: FISH_MODEL,
+        bitrateBps: FISH_BITRATE_BPS, fellBack: false, fallbackReason: null, cost_usd: r.cost_usd,
+      };
+    } catch (e) {
+      fallbackReason = e instanceof Error ? e.message : String(e);
+      console.warn('[edition-audio] Fish failed, reading with Azure:', fallbackReason);
+    }
+  }
   if (resolved.provider === 'elevenlabs') {
     const model = resolved.model || 'eleven_v4';
     try {
@@ -736,7 +821,7 @@ export async function synthesizeVoice(script: string, resolved: ResolvedVoice, f
   const tts = await synthesize(script, v);
   return {
     audio: tts.audio, characters: tts.characters, provider: 'azure', voice: v.voice, model: TTS_MODEL,
-    bitrateBps: BITRATE_BPS, fellBack: resolved.provider === 'elevenlabs', fallbackReason,
+    bitrateBps: BITRATE_BPS, fellBack: resolved.provider !== 'azure', fallbackReason,
     cost_usd: estimateCost({ provider: 'azure', model: TTS_MODEL, inputTokens: tts.characters, outputTokens: 0 }),
   };
 }
@@ -831,7 +916,7 @@ export interface AudioResult {
   reason?: string;
   voice?: string;
   /** Which provider produced the audio, and whether a chosen voice fell back to Azure. */
-  provider?: 'azure' | 'elevenlabs';
+  provider?: 'azure' | 'elevenlabs' | 'fish';
   voice_label?: string | null;
   voice_source?: ResolvedVoice['source'];
   fell_back?: boolean;

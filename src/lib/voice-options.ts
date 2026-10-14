@@ -26,7 +26,7 @@
  */
 
 export type VoiceLabel = 'A' | 'B' | 'C' | 'D' | 'E';
-export type VoiceProvider = 'azure' | 'elevenlabs';
+export type VoiceProvider = 'azure' | 'elevenlabs' | 'fish';
 export type VoiceLanguage = 'it' | 'de' | 'fr' | 'es' | 'en' | 'nb' | 'sv' | 'pt';
 
 export const VOICE_LABELS: readonly VoiceLabel[] = ['A', 'B', 'C', 'D', 'E'];
@@ -189,6 +189,8 @@ export interface ConfiguredVoice {
   voice: string;
   lang: string;
   rate: string;
+  /** When set, Fish Audio reads the edition and the Azure voice above is the fallback. */
+  fish?: { voice: string; direction: string };
 }
 
 export interface ResolvedVoice {
@@ -201,6 +203,8 @@ export interface ResolvedVoice {
   /** Catalogue label when the voice is one of the options, else null. */
   label: VoiceLabel | null;
   source: 'choice' | 'edition' | 'default';
+  /** Fish only: a performance direction placed before the script. */
+  direction?: string;
 }
 
 function fromOption(o: VoiceOption, language: string, source: ResolvedVoice['source']): ResolvedVoice {
@@ -245,6 +249,18 @@ export function resolveVoice(
     }
   }
   const configured = Object.prototype.hasOwnProperty.call(editionVoices, editionId) ? editionVoices[editionId] : null;
+  if (configured?.fish) {
+    return {
+      provider: 'fish',
+      voice: configured.fish.voice,
+      model: 'drama-3',
+      lang: configured.lang,
+      rate: configured.rate,
+      label: null,
+      source: 'edition',
+      direction: configured.fish.direction,
+    };
+  }
   if (configured) {
     return {
       provider: 'azure',
