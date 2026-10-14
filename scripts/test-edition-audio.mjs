@@ -121,6 +121,19 @@ test('English editions: US voice, English opening, close and fallback', () => {
   const ed = { name: 'Warren', city: 'New Jersey' };
   assert.equal(A.openingLine(ed, '2026-09-30', 'en'), 'Warren, New Jersey. Wednesday, September 30. Good morning, Warren. Here is the news this morning.');
   assert.ok(A.fullScript(ed, '2026-09-30', 'Body.', 'en').endsWith(A.CLOSING_LINE_EN));
+  // British, Australian and New Zealand editions say the day before the month.
+  assert.equal(A.englishSpokenDate('2026-10-15', 'newjersey-warren'), 'Thursday, October 15');
+  assert.equal(A.englishSpokenDate('2026-10-15', 'victoria-greater-shepparton'), 'Thursday 15 October');
+  assert.equal(A.englishSpokenDate('2026-10-15', 'auckland-remuera'), 'Thursday 15 October');
+  assert.equal(A.englishSpokenDate('2026-10-15', 'london-clerkenwell'), 'Thursday 15 October');
+  assert.equal(A.englishVariety('victoria-greater-shepparton'), 'Australian English');
+  assert.equal(A.englishVariety('auckland-remuera'), 'New Zealand English');
+  assert.equal(A.englishVariety('louisiana-shreveport'), 'American English');
+  assert.equal(A.dayFirstDates('It runs until Saturday, October 24.'), 'It runs until Saturday 24 October.');
+  assert.equal(A.dayFirstDates('The ball is set for December 31 at Goldtower.'), 'The ball is set for 31 December at Goldtower.');
+  assert.equal(A.dayFirstDates('Opened on October 24, and closes soon.'), 'Opened on 24 October, and closes soon.');
+  assert.equal(A.dayFirstDates('Founded October 24, 1998.'), 'Founded October 24, 1998.');
+  assert.equal(A.dayFirstDates('From 7:00 PM in October.'), 'From 7:00 PM in October.');
   assert.ok(A.openingLine({ name: 'Brera', city: 'Milan' }, '2026-09-30').includes('Buongiorno, Brera'), 'Italian stays the default');
   const src = { stories: [{ key: 'k', header: 'Flu Clinic', text: 'A flu clinic runs today at the court room on Mountain Boulevard. Pre-registration is requested. More details online.' }], events: [{ key: 'e', when: 'Thursday, October 1', name: 'Family Storytime', place: 'Warren Township Library' }], prose: null, text: '' };
   assert.ok(A.fallbackBody(src, 'en').includes('Coming up.'));

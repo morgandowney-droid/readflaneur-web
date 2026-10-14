@@ -94,7 +94,13 @@ test('resolution: an invalid stored label falls through to the stored voice, the
 });
 
 test('edition-audio resolves through EDITION_VOICES', () => {
-  assert.equal(A.resolveEditionVoice('sicily-scicli', 'it', null).voice, A.EDITION_VOICES['sicily-scicli'].voice);
+  assert.equal(A.resolveEditionVoice('milan-porta-venezia', 'it', null).voice, A.EDITION_VOICES['milan-porta-venezia'].voice);
+  // An edition with a Fish voice resolves to Fish, with its direction; a publisher's choice still wins.
+  const fish = A.resolveEditionVoice('sicily-scicli', 'it', null);
+  assert.equal(fish.provider, 'fish');
+  assert.equal(fish.voice, A.EDITION_VOICES['sicily-scicli'].fish.voice);
+  assert.ok(fish.direction && fish.direction.startsWith('['));
+  assert.equal(A.azureFallbackVoice('sicily-scicli', 'it').voice, 'it-IT-GiuseppeMultilingualNeural');
   assert.equal(A.resolveEditionVoice('sicily-scicli', 'it', { label: 'C' }).voice, V.optionFor('it', 'C').voice);
   assert.equal(A.resolveEditionVoice('oslo-frogner', 'nb', null).voice, 'nb-NO-PernilleNeural');
 });

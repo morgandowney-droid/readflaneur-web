@@ -87,6 +87,12 @@ const FISH_ADRIAN = 'bf322df2096a46f18c579d0baa36f41d'; // US English, male
 const FISH_DELIA = 'c70cfb98867a4bfb9ae20d2401257b92'; // US English, female
 /** Private voice in our Fish account, made with Voice Design (no real person's voice). */
 const FISH_IT_MILANO = 'dca9ba14c30641debb2b5e1e7cc71ca6'; // Italian, female
+const FISH_IT_ROMA = 'aa4c8510e0e54b0b8668387d9d281b56'; // Italian, male, light Roman cadence
+const FISH_IT_SICILIA = 'c7802f100956463b985681cfd110a577'; // Italian, male, light Sicilian cadence
+const FISH_GB_FEMALE = '89abc08599c84ddf98ed454be47493ef'; // British English, female
+const FISH_AU_FEMALE = 'e2dc168a7c93496ca2db9496126522d9'; // Australian English, female
+const FISH_AU_MALE = 'e9ae1f7bced6488ea799b4c2d01cfec7'; // Australian English, male
+const FISH_NZ_FEMALE = '030af02ceff4484d876c2327a252a831'; // New Zealand English, female
 /** The direction that won the 14 Oct listen. Speech-to-text confirmed it is not spoken. */
 const FISH_NEWSREADER =
   '[warm, relaxed local radio newsreader talking to neighbours, natural conversational pace, calm and steady, not dramatic]';
@@ -106,9 +112,11 @@ export const EDITION_VOICES: Record<string, EditionVoice> = {
   // a voice designed for us from a description of a Milanese radio
   // journalist; Isabella stays as the fallback.
   'milan-brera': { voice: 'it-IT-IsabellaMultilingualNeural', lang: 'it-IT', rate: '+4%', fish: { voice: FISH_IT_MILANO, direction: FISH_NEWSREADER } },
+  // Porta Venezia stays on Azure: both designed Fish voices sounded too high
+  // pitched and nasal (14 Oct). Prati and Scicli: Fish, Azure "too mechanical".
   'milan-porta-venezia': { voice: 'it-IT-AlessioMultilingualNeural', lang: 'it-IT', rate: '+4%' },
-  'rome-prati': { voice: 'it-IT-MarcelloMultilingualNeural', lang: 'it-IT', rate: '+4%' },
-  'sicily-scicli': { voice: 'it-IT-GiuseppeMultilingualNeural', lang: 'it-IT', rate: '+2%' },
+  'rome-prati': { voice: 'it-IT-MarcelloMultilingualNeural', lang: 'it-IT', rate: '+4%', fish: { voice: FISH_IT_ROMA, direction: FISH_NEWSREADER } },
+  'sicily-scicli': { voice: 'it-IT-GiuseppeMultilingualNeural', lang: 'it-IT', rate: '+2%', fish: { voice: FISH_IT_SICILIA, direction: FISH_NEWSREADER } },
   // United States, in English (30 Sep 2026, for the AP towns). One US voice per edition.
   // Fish Drama 3 since 14 Oct: on the same scripts Morgan judged Fish with the
   // newsreader direction "substantially better" and Azure "like a robot in
@@ -117,7 +125,16 @@ export const EDITION_VOICES: Record<string, EditionVoice> = {
   'louisiana-shreveport': { voice: 'en-US-AndrewMultilingualNeural', lang: 'en-US', rate: '+0%', fish: { voice: FISH_ADRIAN, direction: FISH_NEWSREADER } },
   // AP's London and French towns, in British English for an English-reading desk.
   'london-clerkenwell': { voice: 'en-GB-OllieMultilingualNeural', lang: 'en-GB', rate: '+0%' },
-  'provence-gordes': { voice: 'en-GB-AdaMultilingualNeural', lang: 'en-GB', rate: '+0%' },
+  // Clerkenwell stays on Azure Ollie (the Fish voice designed for it sounded American).
+  'provence-gordes': { voice: 'en-GB-AdaMultilingualNeural', lang: 'en-GB', rate: '+0%', fish: { voice: FISH_GB_FEMALE, direction: FISH_NEWSREADER } },
+  // Australia and New Zealand (14 Oct): AAP's pilots and an Auckland edition.
+  // Azure's en-AU and en-NZ voices were "too mechanical"; the Fish voices,
+  // designed as ABC/RNZ-style presenters, kept the accent. Azure is the fallback.
+  // (Also judged good for a NZ male edition: ElevenLabs library "Tane",
+  // 8qfKyXoYXMgepQOP9zda, multilingual v2; the Fish NZ male sounded American.)
+  'victoria-greater-shepparton': { voice: 'en-AU-NatashaNeural', lang: 'en-AU', rate: '+0%', fish: { voice: FISH_AU_FEMALE, direction: FISH_NEWSREADER } },
+  'queensland-charters-towers': { voice: 'en-AU-WilliamMultilingualNeural', lang: 'en-AU', rate: '+0%', fish: { voice: FISH_AU_MALE, direction: FISH_NEWSREADER } },
+  'auckland-remuera': { voice: 'en-NZ-MollyNeural', lang: 'en-NZ', rate: '+0%', fish: { voice: FISH_NZ_FEMALE, direction: FISH_NEWSREADER } },
 };
 
 export const AUDIO_EDITION_IDS = Object.keys(EDITION_VOICES);
@@ -239,18 +256,51 @@ export function italianSpokenDate(date: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-export function englishSpokenDate(date: string): string {
+/**
+ * "Wednesday, September 30" for a US edition; "Wednesday 30 September" for
+ * British, Australian and New Zealand editions, which say the day first.
+ * An edition without an id (tests) gets the US form.
+ */
+export function englishSpokenDate(date: string, editionId?: string): string {
   const [y, m, d] = date.split('-').map(Number);
-  return new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  const us = !editionId || voiceFor(editionId).lang === 'en-US';
+  return new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString(us ? 'en-US' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 }
 
-export function spokenDate(date: string, lang: AudioLanguage = 'it'): string {
-  return lang === 'en' ? englishSpokenDate(date) : italianSpokenDate(date);
+export function spokenDate(date: string, lang: AudioLanguage = 'it', editionId?: string): string {
+  return lang === 'en' ? englishSpokenDate(date, editionId) : italianSpokenDate(date);
 }
 
-function eventWhen(date: string, time: string | null | undefined, lang: AudioLanguage = 'it'): string {
+const MONTHS = 'January|February|March|April|May|June|July|August|September|October|November|December';
+const WEEKDAYS = 'Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday';
+
+/**
+ * Day-first dates for a British, Australian or New Zealand script: the
+ * writer copies "Saturday, October 24" from the published text despite the
+ * prompt, so the order is fixed here. "Saturday, October 24" becomes
+ * "Saturday 24 October" and "December 31 at" becomes "31 December at".
+ * A month followed by a year or another digit is left alone.
+ */
+export function dayFirstDates(text: string): string {
+  return text
+    .replace(new RegExp(`\\b(${WEEKDAYS}),? (${MONTHS}) (\\d{1,2})(?:st|nd|rd|th)?\\b(?![\\d:])`, 'g'), '$1 $3 $2')
+    .replace(new RegExp(`\\b(${MONTHS}) (\\d{1,2})(?:st|nd|rd|th)?\\b(?![\\d:]|, ?\\d)`, 'g'), '$2 $1');
+}
+
+/** The English the script is written in, from the edition's voice locale. */
+export function englishVariety(editionId: string): string {
+  const lang = voiceFor(editionId).lang;
+  if (lang === 'en-US') return 'American English';
+  if (lang === 'en-AU') return 'Australian English';
+  if (lang === 'en-NZ') return 'New Zealand English';
+  return 'British English';
+}
+
+function eventWhen(date: string, time: string | null | undefined, lang: AudioLanguage = 'it', editionId?: string): string {
   const [y, m, d] = date.split('-').map(Number);
-  const day = new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString(lang === 'en' ? 'en-US' : 'it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  const day = lang === 'en'
+    ? englishSpokenDate(date, editionId)
+    : new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   return time ? `${day}, ${time}` : day;
 }
 
@@ -279,7 +329,7 @@ export function buildScriptSource(day: DailyEdition, lang: AudioLanguage = 'it')
       if (events.length >= MAX_EVENTS || e.date < day.date) return;
       events.push({
         key: storyKey(la.article_id, `event:${i}`),
-        when: eventWhen(e.date, e.time, lang),
+        when: eventWhen(e.date, e.time, lang, day.edition.id),
         name: unshout(e.name),
         place: e.location || e.address || null,
       });
@@ -440,9 +490,9 @@ export function scriptProblem(body: string, src: ScriptSource, allowed: string[]
 
 // ─── Script writing ────────────────────────────────────────────────────────
 
-export function openingLine(edition: Pick<Edition, 'name' | 'city'>, date: string, lang: AudioLanguage = 'it'): string {
+export function openingLine(edition: Pick<Edition, 'name' | 'city'> & { id?: string }, date: string, lang: AudioLanguage = 'it'): string {
   if (lang === 'en') {
-    return `${edition.name}, ${edition.city}. ${englishSpokenDate(date)}. Good morning, ${edition.name}. Here is the news this morning.`;
+    return `${edition.name}, ${edition.city}. ${englishSpokenDate(date, edition.id)}. Good morning, ${edition.name}. Here is the news this morning.`;
   }
   const p = spokenPlace(edition);
   return `${p.name}, ${p.city}. ${italianSpokenDate(date)}. Buongiorno, ${p.name}. Ecco le notizie di stamattina.`;
@@ -461,8 +511,8 @@ function buildPromptEn(edition: Edition, date: string, src: ScriptSource, feedba
     : src.prose
       ? 'Then sum up the COMING UP text in one or two sentences.'
       : 'There are no events: do not mention any.';
-  const variety = voiceFor(edition.id).lang === 'en-US' ? 'American English' : 'British English';
-  return `Write the middle section of a morning local radio news bulletin, in ${variety}, for ${edition.name}, ${edition.city}, ${englishSpokenDate(date)}.
+  const variety = englishVariety(edition.id);
+  return `Write the middle section of a morning local radio news bulletin, in ${variety}, for ${edition.name}, ${edition.city}, ${englishSpokenDate(date, edition.id)}.
 
 The opening and the close are already written: do NOT greet, do NOT say the place or the date at the start, do NOT sign off.
 
@@ -480,7 +530,7 @@ STYLE:
 - Write times with digits as in the source, for example 7:00 PM.
 - Do not name any private individual who is not already named in the source.
 - No long dashes; use commas or full stops.
-- One paragraph per story, separated by a blank line.
+- One paragraph per story, separated by a blank line.${variety === 'American English' ? '' : '\n- Say dates day first, for example Saturday 24 October.'}
 ${feedback ? `\nCORRECTION: the previous version was rejected because of ${feedback}. Use only names and figures that appear in the source.\n` : ''}
 THIS MORNING'S EDITION:
 ${src.text}`;
@@ -524,7 +574,7 @@ export async function writeScript(
   lang: AudioLanguage = 'it',
 ): Promise<{ body: string; attempts: number; rejected: string[] }> {
   const p = spokenPlace(edition);
-  const allowed = [p.name, p.city, edition.name, edition.city, 'Flaneur', spokenDate(date, lang), date];
+  const allowed = [p.name, p.city, edition.name, edition.city, 'Flaneur', spokenDate(date, lang, edition.id), date];
   const rejected: string[] = [];
   let feedback: string | null = null;
   for (let attempt = 1; attempt <= 3; attempt++) {
@@ -568,7 +618,7 @@ export function fallbackBody(src: ScriptSource, lang: AudioLanguage = 'it'): str
   return wordCount(body) >= 20 ? body : null;
 }
 
-export function fullScript(edition: Pick<Edition, 'name' | 'city'>, date: string, body: string, lang: AudioLanguage = 'it'): string {
+export function fullScript(edition: Pick<Edition, 'name' | 'city'> & { id?: string }, date: string, body: string, lang: AudioLanguage = 'it'): string {
   return `${openingLine(edition, date, lang)}\n\n${body.trim()}\n\n${closingLine(lang)}`;
 }
 
@@ -978,7 +1028,8 @@ export async function generateEditionAudio(
   const choice = await loadVoiceChoice(db, edition.id);
   const resolved = resolveEditionVoice(edition.id, opts.language, choice);
   const written = await writeScript(genAI, edition, date, src, lang);
-  const script = fullScript(edition, date, written.body, lang);
+  const body = lang === 'en' && englishVariety(edition.id) !== 'American English' ? dayFirstDates(written.body) : written.body;
+  const script = fullScript(edition, date, body, lang);
   const tts = await synthesizeVoice(script, resolved, azureFallbackVoice(edition.id, opts.language));
   const duration = mp3DurationSeconds(tts.audio.length, tts.bitrateBps);
   // Script cost is small and recorded per call in ai_usage_events; the row
