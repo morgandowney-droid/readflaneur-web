@@ -85,6 +85,8 @@ export interface EditionVoice {
 /** Fish Audio stock voices (named in Fish's Drama 3 docs; not library clones of real people). */
 const FISH_ADRIAN = 'bf322df2096a46f18c579d0baa36f41d'; // US English, male
 const FISH_DELIA = 'c70cfb98867a4bfb9ae20d2401257b92'; // US English, female
+/** Private voice in our Fish account, made with Voice Design (no real person's voice). */
+const FISH_IT_MILANO = 'dca9ba14c30641debb2b5e1e7cc71ca6'; // Italian, female
 /** The direction that won the 14 Oct listen. Speech-to-text confirmed it is not spoken. */
 const FISH_NEWSREADER =
   '[warm, relaxed local radio newsreader talking to neighbours, natural conversational pace, calm and steady, not dramatic]';
@@ -100,7 +102,10 @@ export const EDITION_VOICES: Record<string, EditionVoice> = {
   // script, Morgan picked Isabella Multilingual as more human and higher
   // definition than standard Isabella and than the MAI-Voice-2.1 HD previews
   // (which sounded flat). Isabella is the only female Multilingual voice.
-  'milan-brera': { voice: 'it-IT-IsabellaMultilingualNeural', lang: 'it-IT', rate: '+4%' },
+  // Fish Drama 3 since 14 Oct (Morgan: "more natural, like a real person"),
+  // a voice designed for us from a description of a Milanese radio
+  // journalist; Isabella stays as the fallback.
+  'milan-brera': { voice: 'it-IT-IsabellaMultilingualNeural', lang: 'it-IT', rate: '+4%', fish: { voice: FISH_IT_MILANO, direction: FISH_NEWSREADER } },
   'milan-porta-venezia': { voice: 'it-IT-AlessioMultilingualNeural', lang: 'it-IT', rate: '+4%' },
   'rome-prati': { voice: 'it-IT-MarcelloMultilingualNeural', lang: 'it-IT', rate: '+4%' },
   'sicily-scicli': { voice: 'it-IT-GiuseppeMultilingualNeural', lang: 'it-IT', rate: '+2%' },
