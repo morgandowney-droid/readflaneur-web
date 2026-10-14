@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-const DISMISS_KEY = 'flaneur-showroom-card-dismissed';
+const DISMISS_KEY = 'flaneur-showroom-card-dismissed-v2'; // v2 (14 Oct): the product description changed, show it once more
 const DELAY_MS = 3000;
 
 /**
