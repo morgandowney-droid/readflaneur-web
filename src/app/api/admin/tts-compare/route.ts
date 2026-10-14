@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { synthesize } from '@/lib/edition-audio';
+import { azureLocale } from '@/lib/voice-options';
 
 /**
  * Private helper for comparing text-to-speech voices by ear (29 Sep 2026:
@@ -9,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
  *   GET  ?op=models             ElevenLabs models (id, name, whether Italian)
  *   GET  ?op=voices             ElevenLabs voices (id, name, labels)
  *   POST {text, model_id, voice_id}  audio/mpeg
+ *   POST ?provider=azure {text, voice, lang?, rate?}  audio/mpeg (Azure voice)
  *
  * Bearer CRON_SECRET only. Publishes nothing and stores nothing.
  */
@@ -80,6 +83,18 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   if (!authorised(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (req.nextUrl.searchParams.get('provider') === 'azure') {
+    // Azure: {text, voice, lang?, rate?}. The Azure key also lives only in Vercel.
+    const b = await req.json().catch(() => null) as { text?: string; voice?: string; lang?: string; rate?: string } | null;
+    if (!b?.text || !b.voice) return NextResponse.json({ error: 'text and voice required' }, { status: 400 });
+    if (b.text.length > 5000) return NextResponse.json({ error: 'text too long' }, { status: 400 });
+    try {
+      const tts = await synthesize(b.text, { voice: b.voice, lang: b.lang || azureLocale(b.voice, 'en'), rate: b.rate || '+0%' });
+      return new NextResponse(new Uint8Array(tts.audio), { headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store' } });
+    } catch (e) {
+      return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 502 });
+    }
+  }
   const k = key();
   if (!k) return NextResponse.json({ error: 'ELEVENLABS_API_KEY not set' }, { status: 500 });
   const body = await req.json().catch(() => null) as { text?: string; model_id?: string; voice_id?: string } | null;
