@@ -62,6 +62,37 @@ test('elided names are checked on the name', () => {
   assert.deepEqual(A.unknownProperNouns("Serata all'Ariston.", source, allowed), ["all'Ariston"]);
 });
 
+const sourceEn = `STORY 1: Today's Big Sale
+The Maman Pop Up Outlet Sale starts today, Thursday 15 October, with up to 80% off.
+
+STORY 2: A Show by Viktor&Rolf
+Viktor&Rolf show at Ar. Ma. on Remuera Road; Jean Vasseur hosts.
+
+EVENT 1: Special Master Hearing | Thursday 15 October, 14:00-17:30 | City Hall
+EVENT 2: ANASTASIA the Musical | Thursday 15 October, 19:00 | Lyric Theatre`;
+const allowedEn = ['Remuera', 'Auckland', 'Thursday 15 October', '2026-10-15'];
+
+test('English sentence openers before a name are not names', () => {
+  const s = "Today's Big Sale. Also, Thursday 15 October, the sale starts. Tomorrow, Remuera Road is busy.";
+  assert.deepEqual(A.unknownProperNouns(s, sourceEn, allowedEn), []);
+  assert.deepEqual(A.unknownProperNouns('Maria Rossi hosts the sale.', sourceEn, allowedEn), ['Maria', 'Rossi']);
+});
+
+test('an English possessive is checked on the name', () => {
+  assert.deepEqual(A.unknownProperNouns("Vasseur's show is at Ar. Ma.", sourceEn, allowedEn), []);
+  assert.deepEqual(A.unknownProperNouns("The show is Mohri's.", sourceEn, allowedEn), ["Mohri's"]);
+});
+
+test('a 24-hour listing time may be read in 12-hour form', () => {
+  assert.deepEqual(A.unknownProperNouns('The hearing runs from 2:00 PM to 5:30 PM, and the musical is at 7:00 PM.', sourceEn, allowedEn), []);
+  assert.deepEqual(A.unknownProperNouns('The musical is at 8:00 PM.', sourceEn, allowedEn), ['8']);
+});
+
+test('names joined by punctuation are checked word by word', () => {
+  assert.deepEqual(A.unknownProperNouns('Viktor&Rolf show at Ar.Ma on Remuera Road.', sourceEn, allowedEn), []);
+  assert.deepEqual(A.unknownProperNouns('Dolce&Gabbana show at Ar.Ma.', sourceEn, allowedEn), ['Dolce', 'Gabbana']);
+});
+
 test('Italian and English refusals are caught', () => {
   assert.ok(A.isAnyRefusal('Mi dispiace, ma non posso scrivere questo notiziario.'));
   assert.ok(A.isAnyRefusal('I am sorry, but I cannot fulfill your request.'));

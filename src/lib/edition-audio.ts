@@ -412,23 +412,56 @@ const ITALIAN_FUNCTION_WORDS = new Set([
   'anche', 'poi', 'oggi', 'domani', 'infine', 'inoltre', 'sempre', 'ma', 'mentre', 'presso', 'questo', 'questa', 'ecco',
 ]);
 
+/**
+ * English words that open a sentence before a name without being one:
+ * "Today's Big Sale", "Also, Thursday", "Tomorrow, Remuera Road". Without
+ * them the check called the opener a name and the English editions lost
+ * their script to the verbatim fallback (20 of 121 audio editions, 1 to 15 Oct).
+ */
+const ENGLISH_FUNCTION_WORDS = new Set([
+  'the', 'a', 'an', 'and', 'but', 'or', 'so', 'as', 'if', 'when', 'while', 'then', 'now', 'also', 'plus', 'still', 'just',
+  'today', 'tonight', 'tomorrow', 'yesterday', 'this', 'that', 'these', 'those', 'next', 'last', 'first', 'finally',
+  'meanwhile', 'elsewhere', 'nearby', 'here', 'there', 'coming', 'looking', 'ahead', 'later', 'earlier', 'soon',
+  'in', 'on', 'at', 'by', 'for', 'from', 'with', 'to', 'of', 'over', 'after', 'before', 'during', 'until', 'since',
+  'around', 'across', 'along', 'near', 'it', 'its', 'our', 'your', 'their', 'we', 'you', 'they', 'one', 'some', 'every',
+  'each', 'all', 'more', 'other', 'no', 'not',
+]);
+
 export function unknownProperNouns(script: string, sourceText: string, allowed: string[] = []): string[] {
   const hay = ` ${fold(sourceText)} ${fold(allowed.join(' '))} `.replace(/[^\p{L}\p{N}']+/gu, ' ');
   const inSourceExact = (w: string) => hay.includes(` ${fold(w)} `) || hay.includes(` ${fold(w)}'`) || hay.includes(`'${fold(w)} `);
   const inSource = (w: string) => inSourceExact(w) || (ITALIAN_FOR_ENGLISH[fold(w)] || []).some((en) => hay.includes(` ${en} `));
   const bad = new Set<string>();
+  const known = `${sourceText} ${allowed.join(' ')}`;
   // Figures compared as numbers, so "alle 9" matches "09:00" in the source.
-  const figures = new Set((`${sourceText} ${allowed.join(' ')}`.match(/\d+/g) || []).map((n) => String(Number(n))));
+  const figures = new Set((known.match(/\d+/g) || []).map((n) => String(Number(n))));
   // "2:00 PM" in the English listing is read aloud as "14:00" (Prati, 28 Sep).
-  for (const m of `${sourceText} ${allowed.join(' ')}`.matchAll(/\b(\d{1,2})(?::\d{2})?\s*([AaPp])\.?[Mm]\b/g)) {
+  for (const m of known.matchAll(/\b(\d{1,2})(?::\d{2})?\s*([AaPp])\.?[Mm]\b/g)) {
     const h = Number(m[1]) % 12 + (/p/i.test(m[2]) ? 12 : 0);
     figures.add(String(h));
   }
+  // And "18:00" in the listing is read aloud as "6:00 PM" (Remuera and
+  // Charters Towers, 15 Oct), so the 12-hour figure counts too.
+  for (const m of known.matchAll(/\b(\d{1,2}):\d{2}\b/g)) {
+    const h = Number(m[1]);
+    if (h === 0) figures.add('12');
+    else if (h > 12) figures.add(String(h - 12));
+  }
 
   for (const sentence of script.split(/(?<=[.!?:;])\s+|\n+/)) {
-    const words = sentence.split(/[\s/\-]+/).map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')).filter(Boolean);
+    // Split on every character that is not part of a word, so "Viktor&Rolf",
+    // "Ar.Ma" and "C+N" are checked word by word, as the source holds them
+    // (Milan lost 13 scripts to "Viktor&Rolf" alone, 1 to 15 Oct). An
+    // apostrophe stays with its word for the elision and possessive checks.
+    const words = sentence
+      .replace(/\u2019/g, "'")
+      .split(/[^\p{L}\p{N}']+/u)
+      .map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ''))
+      .filter(Boolean);
     words.forEach((raw, i) => {
-      const w = raw.replace(ELISION, '');
+      const base = raw.replace(ELISION, '');
+      // "Vasseur's", "Sunday's": the English possessive is not part of the name.
+      const w = base.replace(/'s$/i, '');
       if (!w) return;
       if (/^\p{N}/u.test(w)) {
         // A figure: every digit run must appear in the source.
@@ -438,10 +471,13 @@ export function unknownProperNouns(script: string, sourceText: string, allowed: 
         return;
       }
       if (!/^\p{Lu}/u.test(w)) return;
-      const initial = i === 0 && w === raw;
-      // "Al Museo...", "Nella Galleria...": an article or preposition opening a
-      // sentence before a name is not itself a name.
-      if (initial && ITALIAN_FUNCTION_WORDS.has(fold(w))) return;
+      // A single letter ("A.C.", "C+N", an initial) and AM or PM are not names.
+      if (w.length === 1 || /^[ap]m$/i.test(w)) return;
+      const initial = i === 0 && base === raw;
+      // "Al Museo...", "Nella Galleria...", "Today's Big Sale": an article,
+      // preposition or time word opening a sentence before a name is not
+      // itself a name.
+      if (initial && (ITALIAN_FUNCTION_WORDS.has(fold(w)) || ENGLISH_FUNCTION_WORDS.has(fold(w)))) return;
       if (initial) {
         const next = words[i + 1];
         if (!next || !/^\p{Lu}/u.test(next)) return;
