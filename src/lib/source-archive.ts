@@ -87,9 +87,23 @@ export function snapshotDate(publishedAt: string | Date | null | undefined, time
   }
 }
 
-/** Folder for an edition and day. */
+/**
+ * Supabase Storage rejects object keys outside ASCII ("Invalid key"), and
+ * oslo-grunerløkka made every archive-article-sources run fail from 25 Sep to
+ * 20 Oct 2026 with nothing archived. Fold an edition id to [A-Za-z0-9._-]:
+ * strip combining marks, map the letters NFD leaves alone, replace the rest.
+ */
+export function storageSafeId(id: string): string {
+  return id
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/ø/g, 'o').replace(/Ø/g, 'O').replace(/æ/g, 'ae').replace(/Æ/g, 'AE').replace(/œ/g, 'oe').replace(/Œ/g, 'OE')
+    .replace(/ß/g, 'ss').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/ł/g, 'l').replace(/Ł/g, 'L').replace(/þ/g, 'th').replace(/Þ/g, 'Th')
+    .replace(/[^A-Za-z0-9._-]+/g, '-');
+}
+
+/** Folder for an edition and day: <storage-safe edition id>/<date>. */
 export function snapshotFolder(neighborhoodId: string, date: string): string {
-  return `${neighborhoodId}/${date}`;
+  return `${storageSafeId(neighborhoodId)}/${date}`;
 }
 
 /** Path without extension for one URL: <neighborhood_id>/<date>/<sha1(url)>. Same key as shadow-source-checks. */

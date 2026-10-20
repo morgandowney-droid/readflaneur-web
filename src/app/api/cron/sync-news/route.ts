@@ -112,6 +112,17 @@ export async function GET(request: Request) {
   await preloadUnsplashCache(supabase);
   const startedAt = new Date().toISOString();
 
+  // Vercel kills the function at maxDuration (300 s) and the finally block never
+  // runs: until 20 Oct 2026 every run died at 300 s with no cron_executions row,
+  // after the same four or five cities (articles always stop at :05:20). Stop at
+  // 240 s, log, and start each run at a different city so all of them get a turn.
+  const BUDGET_MS = 240_000;
+  const runStart = Date.now();
+  const overBudget = () => Date.now() - runStart > BUDGET_MS;
+  // The Grok fallback below never actually ran (the run died first). Reviving it
+  // would add up to 10 Grok searches a run, so it stays off unless asked for.
+  const grokFallbackEnabled = process.env.SYNC_NEWS_GROK_FALLBACK === '1';
+
   const geminiApiKey = process.env.GEMINI_API_KEY;
   if (!geminiApiKey) {
     // Log to cron_executions so monitoring can see the failure
@@ -142,6 +153,9 @@ export async function GET(request: Request) {
     grok_articles_created: 0,
     grok_neighborhoods_filled: 0,
     errors: [] as string[],
+    notes: [] as string[],
+    cities_total: 0,
+    city_offset: 0,
   };
 
   // Track articles created per neighborhood for Grok fallback
@@ -174,7 +188,16 @@ export async function GET(request: Request) {
   }
 
   // Process each city
-  for (const [city, cityNeighborhoods] of Object.entries(neighborhoodsByCity)) {
+  const cityEntries = Object.entries(neighborhoodsByCity).sort(([a], [b]) => a.localeCompare(b));
+  const rotation = cityEntries.length ? Math.floor(Date.now() / 21_600_000) % cityEntries.length : 0;
+  const rotatedCities = [...cityEntries.slice(rotation), ...cityEntries.slice(0, rotation)];
+  results.cities_total = cityEntries.length;
+  results.city_offset = rotation;
+  for (const [city, cityNeighborhoods] of rotatedCities) {
+    if (overBudget()) {
+      results.notes.push(`time budget reached after ${results.cities_processed} of ${cityEntries.length} cities`);
+      break;
+    }
     try {
       // Fetch RSS feeds for this city
       const items = await fetchCityFeeds(city);
@@ -196,6 +219,7 @@ export async function GET(request: Request) {
 
       // Process each item (limit to prevent timeout)
       for (const item of recentItems.slice(0, 15)) {
+        if (overBudget()) break;
         try {
           // Check if we already processed this URL (slug is deterministic on source URL)
           const slug = generateSlug(item.link);
@@ -346,7 +370,7 @@ export async function GET(request: Request) {
   const MIN_ARTICLES_PER_NEIGHBORHOOD = 5;
   const MAX_GROK_ARTICLES = 10; // Max articles to generate per neighborhood
 
-  if (isGrokConfigured()) {
+  if (grokFallbackEnabled && isGrokConfigured() && !overBudget()) {
     // Get today's article count per neighborhood from database
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -378,6 +402,7 @@ export async function GET(request: Request) {
 
     // Generate Grok articles for neighborhoods with low content
     for (const hood of neighborhoodsNeedingContent.slice(0, 10)) { // Limit to prevent timeout
+      if (overBudget()) { results.notes.push('time budget reached in the Grok fallback'); break; }
       const currentCount = dbArticleCounts[hood.id] || 0;
       const needed = Math.min(MAX_GROK_ARTICLES, MIN_ARTICLES_PER_NEIGHBORHOOD - currentCount);
 
@@ -489,6 +514,10 @@ export async function GET(request: Request) {
         grok_neighborhoods_filled: results.grok_neighborhoods_filled,
         skipped_irrelevant: results.skipped_irrelevant,
         skipped_duplicate: results.skipped_duplicate,
+        cities_total: results.cities_total,
+        city_offset: results.city_offset,
+        notes: results.notes,
+        elapsed_ms: Date.now() - runStart,
       },
     }).then(null, (e: unknown) => console.error('Failed to log cron execution:', e));
   }
