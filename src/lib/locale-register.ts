@@ -158,6 +158,14 @@ export const CITY_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
   'louisiana-shreveport',
   // Axel Springer (2026-10-02): the city of Neuss, about 150,000.
   'nrw-neuss',
+  // Mediahuis Aachen (2026-10-30): five of the six Gemeinden are Staedte in their
+  // own right (Stolberg 58,000, Eschweiler 58,000, Erkelenz 43,000, Juelich
+  // 34,000, Geilenkirchen 27,000). Inden, a Gemeinde of villages, is left out.
+  'nrw-stolberg',
+  'nrw-eschweiler',
+  'nrw-erkelenz',
+  'nrw-geilenkirchen',
+  'nrw-juelich',
   // AMI, Spain (2026-09-21): the whole city of Zaragoza, around 680,000 people.
   'aragon-zaragoza',
   // Overstory Media Group, Fraser Valley (named by Shannon Havard, 2026-09-16).

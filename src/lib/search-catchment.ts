@@ -73,6 +73,18 @@ const SEARCH_CATCHMENTS: Readonly<Record<string, readonly string[]>> = {
   // which are municipalities of their own, and of the city of Zurich.
   'zurich-waedenswil': ['Wädenswil (Bezirk Horgen, Kanton Zürich)', 'Au ZH (Wädenswil)', 'Stadt Wädenswil'],
   'duesseldorf-oberkassel': ['Düsseldorf-Oberkassel', 'Düsseldorf-Heerdt', 'Düsseldorf-Lörick', 'Düsseldorf-Niederkassel', 'Oberkasseler Brücke (Düsseldorf)', 'Rheinkniebrücke (Düsseldorf)'],
+  // Mediahuis Aachen (Julia Tran, 2026-10-30): six Gemeinden in the Aachener
+  // Zeitung's area, each named with its Kreis and its larger Stadtteile, because
+  // a bare search drifts: there is a Stolberg in the Harz, an Eschweiler near
+  // Bad Muenstereifel and another near Heinsberg, and Inden is also the name of
+  // the lignite mine. Stops short of Aachen, Dueren, Heinsberg town and
+  // Moenchengladbach, which have their own news.
+  'nrw-stolberg': ['Stolberg (Rheinland)', 'Stolberg (Städteregion Aachen)', 'Stolberg-Altstadt (Rheinland)', 'Büsbach (Stolberg, Rheinland)', 'Breinig (Stolberg, Rheinland)', 'Mausbach (Stolberg, Rheinland)', 'Gressenich (Stolberg, Rheinland)'],
+  'nrw-eschweiler': ['Eschweiler (Städteregion Aachen)', 'Eschweiler Innenstadt', 'Dürwiß (Eschweiler)', 'Weisweiler (Eschweiler)', 'Kinzweiler (Eschweiler)', 'Nothberg (Eschweiler)', 'Röhe (Eschweiler)'],
+  'nrw-erkelenz': ['Erkelenz (Kreis Heinsberg)', 'Gerderath (Erkelenz)', 'Lövenich (Erkelenz)', 'Kückhoven (Erkelenz)', 'Holzweiler (Erkelenz)', 'Keyenberg (Erkelenz)', 'Schwanenberg (Erkelenz)'],
+  'nrw-geilenkirchen': ['Geilenkirchen (Kreis Heinsberg)', 'Teveren (Geilenkirchen)', 'Lindern (Geilenkirchen)', 'Bauchem (Geilenkirchen)', 'Würm (Geilenkirchen)', 'Immendorf (Geilenkirchen)', 'Gillrath (Geilenkirchen)'],
+  'nrw-inden': ['Inden (Kreis Düren)', 'Inden/Altdorf (Kreis Düren)', 'Lamersdorf (Inden)', 'Lucherberg (Inden)', 'Schophoven (Inden)', 'Frenz (Inden)', 'Pier (Inden)'],
+  'nrw-juelich': ['Jülich (Kreis Düren)', 'Koslar (Jülich)', 'Kirchberg (Jülich)', 'Barmen (Jülich)', 'Welldorf (Jülich)', 'Broich (Jülich)', 'Stetternich (Jülich)', 'Forschungszentrum Jülich'],
   // Clerkenwell, London (AP, 2026-09-30). Exmouth Market, Farringdon and
   // Finsbury are the same patch; stops short of the City, Angel and King's Cross.
   'london-clerkenwell': ['Clerkenwell (London EC1)', 'Exmouth Market (Clerkenwell, London EC1)', 'Farringdon (London EC1)', 'Smithfield Market (London EC1)'],
@@ -236,6 +248,14 @@ export const DISTRICT_SCOPED_EDITION_IDS: ReadonlySet<string> = new Set([
   // GEDI, 25 Sep: Mirja saw Scicli's edition drift to Ragusa, Modica and
   // towns across Sicily. The fence keeps its Look Ahead inside the comune.
   'sicily-scicli',
+  // Mediahuis Aachen, 30 Oct: six Gemeinden that must not fill with Aachen,
+  // Dueren, Heinsberg or Moenchengladbach listings.
+  'nrw-stolberg',
+  'nrw-eschweiler',
+  'nrw-erkelenz',
+  'nrw-geilenkirchen',
+  'nrw-inden',
+  'nrw-juelich',
 ]);
 
 export function isDistrictScoped(neighborhoodId: string | null | undefined): boolean {

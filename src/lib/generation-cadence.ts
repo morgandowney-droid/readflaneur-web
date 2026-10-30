@@ -190,6 +190,16 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   // built Tamedia's own municipality product. About 25,000 people. Promised a
   // daily edition running until then so they can compare it with their own.
   'zurich-waedenswil',
+  // Mediahuis Aachen (named by Julia Tran, COO, 2026-10-30) ahead of the 2 Nov
+  // call: six Gemeinden in the Aachener Zeitung's area, two each in the
+  // Staedteregion Aachen, Kreis Heinsberg and Kreis Dueren. Whole-Gemeinde
+  // editions as she named them; the Stadtteil split is a question for the call.
+  'nrw-stolberg',
+  'nrw-eschweiler',
+  'nrw-erkelenz',
+  'nrw-geilenkirchen',
+  'nrw-inden',
+  'nrw-juelich',
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */
@@ -236,6 +246,13 @@ export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' 
   'stockholm-sodermalm': 'sv',
   // Tamedia (2026-10-08), Swiss Standard German: see SWISS_GERMAN_EDITION_IDS.
   'zurich-waedenswil': 'de',
+  // Mediahuis Aachen (2026-10-30)
+  'nrw-stolberg': 'de',
+  'nrw-eschweiler': 'de',
+  'nrw-erkelenz': 'de',
+  'nrw-geilenkirchen': 'de',
+  'nrw-inden': 'de',
+  'nrw-juelich': 'de',
 };
 
 /**
