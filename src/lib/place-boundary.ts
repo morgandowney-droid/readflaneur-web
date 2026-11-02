@@ -287,3 +287,77 @@ export function keepSignOff(section: string): string | null {
   const last = paras[paras.length - 1].trim();
   return last.length <= 80 && !/\[\[/.test(last) && !/\bat\s.+\sin\s/i.test(last) ? last : null;
 }
+
+/**
+ * Gemeinde fences for editions that are one municipality of a Kreis.
+ *
+ * Mediahuis Aachen, 2 Nov 2026: Julia Tran found a Stolberg Daily Brief
+ * section headed "Freie Straßen in Monschau", a road reopening 30 km south in
+ * the same Städteregion. The search names carry the Kreis so the namesakes in
+ * the Harz stay out, which also lets Kreis-wide notices in. The Look Ahead had
+ * a venue fence; the Daily Brief had none.
+ *
+ * `own` is the Gemeinde and its Stadtteile (and its nickname); `others` are the
+ * neighbouring Gemeinden. A section is dropped when its header names another
+ * Gemeinde, or when its first sentence does and the section never names the
+ * edition's own place. A passing mention ("for those driving on to Aachen")
+ * stays: the test is what the story is about, not every place it names.
+ */
+const STAEDTEREGION_AACHEN = ['Aachen', 'Alsdorf', 'Baesweiler', 'Eschweiler', 'Herzogenrath', 'Monschau', 'Roetgen', 'Simmerath', 'Stolberg', 'Würselen'];
+const KREIS_DUEREN = ['Düren', 'Jülich', 'Inden', 'Langerwehe', 'Aldenhoven', 'Linnich', 'Niederzier', 'Merzenich', 'Nörvenich', 'Kreuzau', 'Nideggen', 'Heimbach', 'Hürtgenwald', 'Vettweiß', 'Titz'];
+const KREIS_HEINSBERG = ['Heinsberg', 'Erkelenz', 'Geilenkirchen', 'Hückelhoven', 'Wassenberg', 'Wegberg', 'Übach-Palenberg', 'Gangelt', 'Selfkant', 'Waldfeucht'];
+const NRW_NEIGHBOURS = [...STAEDTEREGION_AACHEN, ...KREIS_DUEREN, ...KREIS_HEINSBERG, 'Mönchengladbach', 'Kerpen', 'Bergheim', 'Elsdorf'];
+
+const GEMEINDE_OWN: Record<string, string[]> = {
+  'nrw-stolberg': ['Stolberg', 'Kupferstadt', 'Kupferstädter', 'Büsbach', 'Breinig', 'Mausbach', 'Gressenich', 'Vicht', 'Zweifall', 'Atsch', 'Donnerberg', 'Münsterbusch', 'Venwegen', 'Schevenhütte', 'Dorff'],
+  'nrw-eschweiler': ['Eschweiler', 'Dürwiß', 'Weisweiler', 'Kinzweiler', 'Nothberg', 'Röhe', 'Hehlrath', 'Bergrath', 'Hastenrath', 'Pumpe-Stich', 'Dürwiss'],
+  'nrw-erkelenz': ['Erkelenz', 'Gerderath', 'Lövenich', 'Kückhoven', 'Holzweiler', 'Keyenberg', 'Schwanenberg', 'Granterath', 'Venrath', 'Golkrath', 'Kuckum', 'Oestrich', 'Immerath'],
+  'nrw-geilenkirchen': ['Geilenkirchen', 'Teveren', 'Lindern', 'Bauchem', 'Würm', 'Immendorf', 'Gillrath', 'Hünshoven', 'Süggerath', 'Tripsrath', 'Prummern'],
+  'nrw-inden': ['Inden', 'Altdorf', 'Lamersdorf', 'Lucherberg', 'Schophoven', 'Frenz', 'Pier', 'Indemann', 'Indesee'],
+  'nrw-juelich': ['Jülich', 'Koslar', 'Kirchberg', 'Barmen', 'Welldorf', 'Broich', 'Stetternich', 'Bourheim', 'Güsten', 'Lich-Steinstraß', 'Merzenhausen', 'Mersch', 'Pattern', 'Selgersdorf', 'Daubenrath', 'Forschungszentrum'],
+};
+
+function wordAlternation(names: string[]): string {
+  return names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+}
+
+/** The other Gemeinde a section is about, or null when it is about the edition's own place. */
+export function sectionAboutOtherGemeinde(section: string, editionId: string | null | undefined): string | null {
+  const own = GEMEINDE_OWN[(editionId || '').toLowerCase()];
+  if (!own || !section) return null;
+  const ownSet = new Set(own.map((n) => n.toLowerCase()));
+  const others = NRW_NEIGHBOURS.filter((n) => !ownSet.has(n.toLowerCase()));
+  // Letters around a name: "Monschauer" names Monschau, "Aachener" names Aachen.
+  const otherRe = new RegExp(`(?<![\\p{L}])(${wordAlternation(others)})(?:er|s)?(?![\\p{L}])`, 'iu');
+  const ownRe = new RegExp(`(?<![\\p{L}])(${wordAlternation(own)})`, 'iu');
+  const header = (section.match(/^[ \t]*\[\[([^\]\n]+)\]\]/m) || [])[1] || '';
+  const body = section.replace(/^[ \t]*\[\[[^\]\n]+\]\][ \t]*$/m, '').trim();
+  const firstSentence = (body.match(/^[^.!?]*[.!?]/) || [body])[0];
+  const inHeader = header.match(otherRe);
+  if (inHeader && !ownRe.test(header)) return inHeader[1];
+  const inFirst = firstSentence.match(otherRe);
+  if (inFirst && !ownRe.test(section)) return inFirst[1];
+  return null;
+}
+
+/** Drop each [[section]] about another Gemeinde. Same shape as dropFarCitySections. */
+export function dropOtherGemeindeSections(
+  text: string,
+  editionId: string | null | undefined,
+): { text: string; dropped: string[] } {
+  if (!text || !text.includes('[[') || !GEMEINDE_OWN[(editionId || '').toLowerCase()]) return { text, dropped: [] };
+  const parts = text.split(/(?=^[ \t]*\[\[[^\]\n]+\]\][ \t]*$)/m);
+  const dropped: string[] = [];
+  const kept: string[] = [];
+  parts.forEach((part, i) => {
+    if (i === 0 && !/^\s*\[\[/.test(part)) { kept.push(part); return; }
+    const other = sectionAboutOtherGemeinde(part, editionId);
+    if (!other) { kept.push(part); return; }
+    dropped.push(other);
+    if (i === parts.length - 1) {
+      const signOff = keepSignOff(part);
+      if (signOff) kept.push(`\n${signOff}\n`);
+    }
+  });
+  return { text: dropped.length ? kept.join('').replace(/\n{3,}/g, '\n\n') : text, dropped };
+}

@@ -90,7 +90,7 @@ export async function translateArticle(
 Rules:
 1. PRESERVE all local language words/phrases from the original (e.g., "God morgon", "Marais", "izakaya", "Stammtisch"). These are deliberately left in the original language by the author.
 2. PRESERVE all proper nouns exactly as written: neighborhood names, venue names, street names, people's names.
-3. PRESERVE all [[section headers]] and **bold markers** exactly as they appear (translate the text inside them).
+3. Keep the [[double square brackets]] around every section header and keep **bold markers**, but TRANSLATE the header text inside the brackets into ${langName} like any other sentence. A header left in English is an error.
 4. Maintain the editorial/literary tone - this is a premium neighborhood newsletter, not a machine translation.
 5. Adapt idioms naturally rather than translating literally.${languageRule(targetLang, 6)}
 
@@ -109,6 +109,12 @@ ${previewText ? `\nPREVIEW TEXT:\n${previewText}` : ''}`;
   // Recombine: prepend the original English event listing to the translated body
   if (result && eventListingBlock) {
     result.body = eventListingBlock + result.body;
+  }
+
+  // A header the model returned unchanged (Inden, 2 Nov 2026: four English
+  // headers over a German body). Translate just those, in one small call.
+  if (result) {
+    result.body = await fixUntranslatedHeaders(bodyToTranslate, result.body, targetLang, provider);
   }
 
   // Restore the parked section label from the canonical table.
@@ -132,7 +138,7 @@ export async function translateBrief(
 Rules:
 1. PRESERVE all local language words/phrases from the original (e.g., "God morgon", greetings in the local language, venue names in the local language). These are deliberately included by the author.
 2. PRESERVE all proper nouns exactly as written: neighborhood names, venue names, street names, people's names.
-3. PRESERVE all [[section headers]] and **bold markers** exactly as they appear (translate the text inside them).
+3. Keep the [[double square brackets]] around every section header and keep **bold markers**, but TRANSLATE the header text inside the brackets into ${langName} like any other sentence. A header left in English is an error.
 4. Maintain the editorial/literary tone - warm, informed, like a knowledgeable neighbor.
 5. Adapt idioms naturally rather than translating literally.${languageRule(targetLang, 6)}
 
@@ -143,7 +149,43 @@ CONTENT:
 ${content}
 ${enrichedContent ? `\nENRICHED CONTENT:\n${enrichedContent}` : ''}`;
 
-  return translateJson<BriefTranslation>(prompt, 'translate_brief', targetLang, provider);
+  const result = await translateJson<BriefTranslation>(prompt, 'translate_brief', targetLang, provider);
+  if (result) {
+    if (result.content) result.content = await fixUntranslatedHeaders(content, result.content, targetLang, provider);
+    if (result.enriched_content && enrichedContent) result.enriched_content = await fixUntranslatedHeaders(enrichedContent, result.enriched_content, targetLang, provider);
+  }
+  return result;
+}
+
+const HEADER_RE = /\[\[([^\]\n]+)\]\]/g;
+
+/**
+ * Headers a translation returned unchanged from the English source. A header
+ * that is a proper noun alone ("[[Arena]]") translates to itself, so only
+ * headers of three or more words are re-sent. Fixed labels (Event Listing) stay.
+ */
+export function untranslatedHeaders(source: string, translated: string): string[] {
+  const src = new Set([...source.matchAll(HEADER_RE)].map((m) => m[1].trim()));
+  return [...new Set([...translated.matchAll(HEADER_RE)].map((m) => m[1].trim()))]
+    .filter((h) => src.has(h) && h !== 'Event Listing' && h.split(/\s+/).length >= 2);
+}
+
+async function fixUntranslatedHeaders(source: string, translated: string, targetLang: LanguageCode, provider: TranslationProvider): Promise<string> {
+  const left = untranslatedHeaders(source, translated);
+  if (left.length === 0) return translated;
+  const langName = LANGUAGE_NAMES[targetLang];
+  const prompt = `Translate each of these newspaper section headers from English to ${langName}. Keep proper nouns (places, venues, people, brands) as written. Return ONLY valid JSON: {"headers": ["...", ...]} in the same order.\n\n${JSON.stringify(left)}`;
+  const out = await translateJson<{ headers: string[] }>(prompt, 'translate_headers', targetLang, provider);
+  if (!out || !Array.isArray(out.headers) || out.headers.length !== left.length) {
+    console.warn(`[translation] ${left.length} header(s) left in English: ${left.join(' | ')}`);
+    return translated;
+  }
+  let fixed = translated;
+  left.forEach((h, i) => {
+    const t = String(out.headers[i] || '').trim().replace(/[\[\]]/g, '');
+    if (t) fixed = fixed.split(`[[${h}]]`).join(`[[${t}]]`);
+  });
+  return fixed;
 }
 
 /** Parse a JSON object out of a model response, tolerating code fences and prose. */

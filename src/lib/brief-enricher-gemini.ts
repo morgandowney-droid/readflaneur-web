@@ -7,7 +7,7 @@
 
 import { createGemini } from '@/lib/gemini-client';
 import { isModelRefusal } from '@/lib/model-refusal';
-import { dropFarCitySections, venueInFarCity } from '@/lib/place-boundary';
+import { dropFarCitySections, venueInFarCity, dropOtherGemeindeSections, sectionAboutOtherGemeinde } from '@/lib/place-boundary';
 import { stripWorkingNotes } from '@/lib/working-notes';
 import { stripSuspectTimes } from '@/lib/event-times';
 import {
@@ -110,6 +110,7 @@ export interface EnrichmentDiagnostics {
   teaserLeakStripped: boolean;
   /** Sections dropped because their venue was in a far city of the same country. */
   farCitySectionsDropped?: string[];
+  otherGemeindeSectionsDropped?: string[];
   /** Sentences (or leading clauses) removed for talking about the writer's inputs. */
   workingNotesStripped?: string[];
   /** Late-night time phrases removed as likely UTC (editions west of UTC-4). */
@@ -1190,6 +1191,18 @@ ${prompt}`,
         .filter((c) => c.stories.length > 0);
       diagnostics.farCitySectionsDropped = farCity.dropped;
       console.warn(`Dropped ${farCity.dropped.length} section(s) set in ${farCity.dropped.join(', ')} for ${neighborhoodName}, ${city}`);
+    }
+
+    // A neighbouring Gemeinde in the same Kreis (Mediahuis Aachen, 2 Nov 2026:
+    // Stolberg ran "Freie Straßen in Monschau"). Applies only to fenced editions.
+    const otherGemeinde = dropOtherGemeindeSections(text, neighborhoodSlug);
+    if (otherGemeinde.dropped.length > 0) {
+      text = otherGemeinde.text;
+      enrichedData.categories = enrichedData.categories
+        .map((c) => ({ ...c, stories: (c.stories || []).filter((st) => !sectionAboutOtherGemeinde(`[[${st.entity || ''}]]\n${st.context || ''}`, neighborhoodSlug)) }))
+        .filter((c) => c.stories.length > 0);
+      diagnostics.otherGemeindeSectionsDropped = otherGemeinde.dropped;
+      console.warn(`Dropped ${otherGemeinde.dropped.length} section(s) about ${otherGemeinde.dropped.join(', ')} for ${neighborhoodName}`);
     }
 
     text = sanitizeMarkdownLinks(text);
