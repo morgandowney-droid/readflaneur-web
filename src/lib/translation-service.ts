@@ -167,7 +167,10 @@ const HEADER_RE = /\[\[([^\]\n]+)\]\]/g;
 export function untranslatedHeaders(source: string, translated: string): string[] {
   const src = new Set([...source.matchAll(HEADER_RE)].map((m) => m[1].trim()));
   return [...new Set([...translated.matchAll(HEADER_RE)].map((m) => m[1].trim()))]
-    .filter((h) => src.has(h) && h !== 'Event Listing' && h.split(/\s+/).length >= 2);
+    // Look Ahead day headers ("Today, Mon Nov 2", "Thu, Nov 5") are parsed as
+    // English dates by look-ahead-events.ts and stay as written.
+    .filter((h) => src.has(h) && h !== 'Event Listing' && h.split(/\s+/).length >= 2
+      && !/^(today\b|(mon|tue|wed|thu|fri|sat|sun)[a-z]*,?\s)/i.test(h));
 }
 
 async function fixUntranslatedHeaders(source: string, translated: string, targetLang: LanguageCode, provider: TranslationProvider): Promise<string> {
