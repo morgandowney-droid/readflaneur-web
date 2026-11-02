@@ -341,17 +341,24 @@ export function sectionAboutOtherGemeinde(section: string, editionId: string | n
   const own = GEMEINDE_OWN[(editionId || '').toLowerCase()];
   if (!own || !section) return null;
   const ownSet = new Set(own.map((n) => n.toLowerCase()));
-  const others = neighboursFor((editionId || '').toLowerCase()).filter((n) => !ownSet.has(n.toLowerCase()));
+  const neighbours = neighboursFor((editionId || '').toLowerCase()).filter((n) => !ownSet.has(n.toLowerCase()));
+  // A town ending in -en makes its adjective in -er: "Eppinger Rathaus" names Eppingen.
+  const others = [...neighbours, ...neighbours.filter((n) => /en$/.test(n)).map((n) => n.slice(0, -2) + 'er')];
   // Letters around a name: "Monschauer" names Monschau, "Aachener" names Aachen.
-  const otherRe = new RegExp(`(?<![\\p{L}])(${wordAlternation(others)})(?:er|s)?(?![\\p{L}])`, 'iu');
+  // A district named after its seat ("Kreis Düren", "Städteregion Aachen",
+  // "Landkreis Heilbronn") covers the edition's own place too, so it is not a neighbour.
+  const otherRe = new RegExp(`(?<![\\p{L}])(?<!(?:kreis|region)\\s)(${wordAlternation(others)})(?:er|s)?(?![\\p{L}])`, 'iu');
   const ownRe = new RegExp(`(?<![\\p{L}])(${wordAlternation(own)})`, 'iu');
-  const header = (section.match(/^[ \t]*\[\[([^\]\n]+)\]\]/m) || [])[1] || '';
-  const body = section.replace(/^[ \t]*\[\[[^\]\n]+\]\][ \t]*$/m, '').trim();
+  // Link targets are search URLs that carry the edition's own name
+  // ("...Beilstein Landkreis Heilbronn"), so read the visible text only.
+  const plain = section.replace(/\]\([^)]*\)/g, ']');
+  const header = (plain.match(/^[ \t]*\[\[([^\]\n]+)\]\]/m) || [])[1] || '';
+  const body = plain.replace(/^[ \t]*\[\[[^\]\n]+\]\][ \t]*$/m, '').trim();
   const firstSentence = (body.match(/^[^.!?]*[.!?]/) || [body])[0];
   const inHeader = header.match(otherRe);
   if (inHeader && !ownRe.test(header)) return inHeader[1];
   const inFirst = firstSentence.match(otherRe);
-  if (inFirst && !ownRe.test(section)) return inFirst[1];
+  if (inFirst && !ownRe.test(plain)) return inFirst[1];
   return null;
 }
 
