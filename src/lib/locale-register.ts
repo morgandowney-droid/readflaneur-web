@@ -166,6 +166,10 @@ export const CITY_LEVEL_EDITION_IDS: ReadonlySet<string> = new Set([
   'nrw-erkelenz',
   'nrw-geilenkirchen',
   'nrw-juelich',
+  // Heilbronner Stimme (2026-11-02): Kuenzelsau (15,000, Kreisstadt of the
+  // Hohenlohekreis) and Eppingen (22,000) are towns in their own right.
+  'bw-kuenzelsau',
+  'bw-eppingen',
   // AMI, Spain (2026-09-21): the whole city of Zaragoza, around 680,000 people.
   'aragon-zaragoza',
   // Overstory Media Group, Fraser Valley (named by Shannon Havard, 2026-09-16).

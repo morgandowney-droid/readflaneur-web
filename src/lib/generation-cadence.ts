@@ -200,6 +200,11 @@ export const PILOT_NEIGHBORHOOD_IDS: ReadonlySet<string> = new Set([
   'nrw-geilenkirchen',
   'nrw-inden',
   'nrw-juelich',
+  // Heilbronner Stimme (Lennart Hinkel, 2026-11-02), from the BDZV AI working
+  // group offer: three municipalities in Hohenlohekreis and Landkreis Heilbronn.
+  'bw-kuenzelsau',
+  'bw-eppingen',
+  'bw-beilstein',
 ]);
 
 /** The language a pilot publisher reads in; translations are pre-warmed in it. */
@@ -253,6 +258,10 @@ export const PILOT_LANGUAGES: Readonly<Record<string, 'sv' | 'fr' | 'de' | 'es' 
   'nrw-geilenkirchen': 'de',
   'nrw-inden': 'de',
   'nrw-juelich': 'de',
+  // Heilbronner Stimme (2026-11-02)
+  'bw-kuenzelsau': 'de',
+  'bw-eppingen': 'de',
+  'bw-beilstein': 'de',
 };
 
 /**

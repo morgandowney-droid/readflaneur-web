@@ -85,6 +85,13 @@ const SEARCH_CATCHMENTS: Readonly<Record<string, readonly string[]>> = {
   'nrw-geilenkirchen': ['Geilenkirchen (Kreis Heinsberg)', 'Teveren (Geilenkirchen)', 'Lindern (Geilenkirchen)', 'Bauchem (Geilenkirchen)', 'Würm (Geilenkirchen)', 'Immendorf (Geilenkirchen)', 'Gillrath (Geilenkirchen)'],
   'nrw-inden': ['Inden (Kreis Düren)', 'Inden/Altdorf (Kreis Düren)', 'Lamersdorf (Inden)', 'Lucherberg (Inden)', 'Schophoven (Inden)', 'Frenz (Inden)', 'Pier (Inden)'],
   'nrw-juelich': ['Jülich (Kreis Düren)', 'Koslar (Jülich)', 'Kirchberg (Jülich)', 'Barmen (Jülich)', 'Welldorf (Jülich)', 'Broich (Jülich)', 'Stetternich (Jülich)', 'Forschungszentrum Jülich'],
+  // Heilbronner Stimme (Lennart Hinkel, 2026-11-02). Each named with its Kreis
+  // and its Stadtteile. Beilstein needs the qualifier: Beilstein an der Mosel
+  // and Beilstein in Hesse would otherwise fill the edition. Stops short of
+  // Heilbronn, Oehringen, Neckarsulm and Sinsheim, which have their own news.
+  'bw-kuenzelsau': ['Künzelsau (Hohenlohekreis)', 'Gaisbach (Künzelsau)', 'Nagelsberg (Künzelsau)', 'Kocherstetten (Künzelsau)', 'Belsenberg (Künzelsau)', 'Amrichshausen (Künzelsau)', 'Morsbach (Künzelsau)'],
+  'bw-eppingen': ['Eppingen (Landkreis Heilbronn)', 'Kleingartach (Eppingen)', 'Mühlbach (Eppingen)', 'Richen (Eppingen)', 'Elsenz (Eppingen)', 'Adelshofen (Eppingen)', 'Rohrbach am Gießhübel (Eppingen)'],
+  'bw-beilstein': ['Beilstein (Württemberg)', 'Beilstein (Landkreis Heilbronn)', 'Burg Hohenbeilstein', 'Schmidhausen (Beilstein)', 'Söhlbach (Beilstein)', 'Stocksberg (Beilstein)'],
   // Clerkenwell, London (AP, 2026-09-30). Exmouth Market, Farringdon and
   // Finsbury are the same patch; stops short of the City, Angel and King's Cross.
   'london-clerkenwell': ['Clerkenwell (London EC1)', 'Exmouth Market (Clerkenwell, London EC1)', 'Farringdon (London EC1)', 'Smithfield Market (London EC1)'],
@@ -256,6 +263,10 @@ export const DISTRICT_SCOPED_EDITION_IDS: ReadonlySet<string> = new Set([
   'nrw-geilenkirchen',
   'nrw-inden',
   'nrw-juelich',
+  // Heilbronner Stimme, 2 Nov: keep Heilbronn and neighbouring towns out.
+  'bw-kuenzelsau',
+  'bw-eppingen',
+  'bw-beilstein',
 ]);
 
 export function isDistrictScoped(neighborhoodId: string | null | undefined): boolean {

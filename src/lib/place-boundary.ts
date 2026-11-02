@@ -308,12 +308,27 @@ const KREIS_DUEREN = ['Düren', 'Jülich', 'Inden', 'Langerwehe', 'Aldenhoven', 
 const KREIS_HEINSBERG = ['Heinsberg', 'Erkelenz', 'Geilenkirchen', 'Hückelhoven', 'Wassenberg', 'Wegberg', 'Übach-Palenberg', 'Gangelt', 'Selfkant', 'Waldfeucht'];
 const NRW_NEIGHBOURS = [...STAEDTEREGION_AACHEN, ...KREIS_DUEREN, ...KREIS_HEINSBERG, 'Mönchengladbach', 'Kerpen', 'Bergheim', 'Elsdorf'];
 
+// Heilbronner Stimme (2026-11-02): Landkreis Heilbronn, Hohenlohekreis, Heilbronn
+// and the nearest towns beyond them.
+const HEILBRONN_NEIGHBOURS = [
+  'Heilbronn', 'Abstatt', 'Bad Friedrichshall', 'Bad Rappenau', 'Bad Wimpfen', 'Beilstein', 'Brackenheim', 'Cleebronn', 'Eberstadt', 'Ellhofen', 'Eppingen', 'Erlenbach', 'Flein', 'Gemmingen', 'Güglingen', 'Gundelsheim', 'Hardthausen', 'Ilsfeld', 'Ittlingen', 'Jagsthausen', 'Kirchardt', 'Langenbrettach', 'Lauffen', 'Lehrensteinsfeld', 'Leingarten', 'Löwenstein', 'Massenbachhausen', 'Möckmühl', 'Neckarsulm', 'Neckarwestheim', 'Neudenau', 'Neuenstadt', 'Nordheim', 'Obersulm', 'Oedheim', 'Offenau', 'Pfaffenhofen', 'Roigheim', 'Schwaigern', 'Siegelsbach', 'Talheim', 'Untereisesheim', 'Untergruppenbach', 'Weinsberg', 'Widdern', 'Wüstenrot', 'Zaberfeld',
+  'Bretzfeld', 'Dörzbach', 'Forchtenberg', 'Ingelfingen', 'Krautheim', 'Kupferzell', 'Künzelsau', 'Mulfingen', 'Neuenstein', 'Niedernhall', 'Öhringen', 'Pfedelbach', 'Schöntal', 'Waldenburg', 'Weißbach', 'Zweiflingen',
+  'Oberstenfeld', 'Großbottwar', 'Sinsheim', 'Bretten', 'Sulzfeld', 'Kürnbach', 'Schwäbisch Hall',
+];
+
+function neighboursFor(editionId: string): string[] {
+  return editionId.startsWith('bw-') ? HEILBRONN_NEIGHBOURS : NRW_NEIGHBOURS;
+}
+
 const GEMEINDE_OWN: Record<string, string[]> = {
   'nrw-stolberg': ['Stolberg', 'Kupferstadt', 'Kupferstädter', 'Büsbach', 'Breinig', 'Mausbach', 'Gressenich', 'Vicht', 'Zweifall', 'Atsch', 'Donnerberg', 'Münsterbusch', 'Venwegen', 'Schevenhütte', 'Dorff'],
   'nrw-eschweiler': ['Eschweiler', 'Dürwiß', 'Weisweiler', 'Kinzweiler', 'Nothberg', 'Röhe', 'Hehlrath', 'Bergrath', 'Hastenrath', 'Pumpe-Stich', 'Dürwiss'],
   'nrw-erkelenz': ['Erkelenz', 'Gerderath', 'Lövenich', 'Kückhoven', 'Holzweiler', 'Keyenberg', 'Schwanenberg', 'Granterath', 'Venrath', 'Golkrath', 'Kuckum', 'Oestrich', 'Immerath'],
   'nrw-geilenkirchen': ['Geilenkirchen', 'Teveren', 'Lindern', 'Bauchem', 'Würm', 'Immendorf', 'Gillrath', 'Hünshoven', 'Süggerath', 'Tripsrath', 'Prummern'],
   'nrw-inden': ['Inden', 'Altdorf', 'Lamersdorf', 'Lucherberg', 'Schophoven', 'Frenz', 'Pier', 'Indemann', 'Indesee'],
+  'bw-kuenzelsau': ['Künzelsau', 'Kuenzelsau', 'Gaisbach', 'Nagelsberg', 'Kocherstetten', 'Belsenberg', 'Amrichshausen', 'Morsbach', 'Mäusdorf', 'Laßbach', 'Steinbach', 'Garnberg', 'Taläcker', 'Hohenlohekreis', 'Würth'],
+  'bw-eppingen': ['Eppingen', 'Adelshofen', 'Elsenz', 'Kleingartach', 'Mühlbach', 'Richen', 'Rohrbach', 'Eppinger'],
+  'bw-beilstein': ['Beilstein', 'Hohenbeilstein', 'Langhans', 'Schmidhausen', 'Söhlbach', 'Stocksberg', 'Billensbach', 'Gagernberg', 'Farnersberg', 'Klingen', 'Etzlenswenden'],
   'nrw-juelich': ['Jülich', 'Koslar', 'Kirchberg', 'Barmen', 'Welldorf', 'Broich', 'Stetternich', 'Bourheim', 'Güsten', 'Lich-Steinstraß', 'Merzenhausen', 'Mersch', 'Pattern', 'Selgersdorf', 'Daubenrath', 'Forschungszentrum'],
 };
 
@@ -326,7 +341,7 @@ export function sectionAboutOtherGemeinde(section: string, editionId: string | n
   const own = GEMEINDE_OWN[(editionId || '').toLowerCase()];
   if (!own || !section) return null;
   const ownSet = new Set(own.map((n) => n.toLowerCase()));
-  const others = NRW_NEIGHBOURS.filter((n) => !ownSet.has(n.toLowerCase()));
+  const others = neighboursFor((editionId || '').toLowerCase()).filter((n) => !ownSet.has(n.toLowerCase()));
   // Letters around a name: "Monschauer" names Monschau, "Aachener" names Aachen.
   const otherRe = new RegExp(`(?<![\\p{L}])(${wordAlternation(others)})(?:er|s)?(?![\\p{L}])`, 'iu');
   const ownRe = new RegExp(`(?<![\\p{L}])(${wordAlternation(own)})`, 'iu');
